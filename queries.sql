@@ -711,3 +711,31 @@ ORDER BY l.listed DESC;
 -- AND ((r.readlevel <= utl.level AND r.viewlevel <= utl.level AND r.seelevel <= utl.level) OR ?)
 -- AND fc.idforumcategory != 0
 -- GROUP BY c.forumthread_idforumthread;
+
+-- name: usernametouid :one
+SELECT idusers FROM users WHERE username = ?
+
+-- name: lang_combobox :many
+SELECT idlanguage, nameof FROM language l
+
+-- name: getSecurityLevel :one
+SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all')
+
+-- name: getLangs :one
+SELECT language_idlanguage FROM userlang WHERE users_idusers = ?
+
+-- name: preferences::refreshPref :many
+SELECT language_idlanguage FROM preferences WHERE users_idusers = ?
+
+-- name: getWordID :one
+SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?)
+
+-- name: addWord :one
+INSERT INTO searchwordlist (word) VALUES (lcase(?))
+
+-- -- name: addToGeneralSearch :exec
+-- INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
+
+-- name: notifyChange :many
+SELECT email FROM users WHERE idusers = ?
+

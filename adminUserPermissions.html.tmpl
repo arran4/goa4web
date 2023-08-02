@@ -1,0 +1,104 @@
+{{- define "headdata"}}
+    <!-- Add any <head> data from cont.headdata here -->
+{{- end}}
+
+{{- define "indexItems"}}
+    {{ range $i := .indexItems }}
+        <a href="{{ $i.link }}">{{ $i.name }}</a><br>
+    {{ end }}
+{{- end}}
+
+{{- define "adminTools"}}
+    {{ if .cont.user.UID }}
+        <hr>
+        <a href="user?do=logout">Logout</a><br>
+        {{ if eq (getSecurityLevel .cont "all") "auth_administrator" }}
+            <a href="admin">Admin page of mystery</a><br>
+        {{ end }}
+    {{ else }}
+        <a href="user?do=register">Register</a><br>
+        <a href="user?do=login">Login</a><br>
+    {{ end }}
+{{- end}}
+
+{{- define "userPermissionsTable"}}
+    <table border=1>
+        <tr>
+            <th>ID
+            <th>User
+            <th>Email
+            <th>Level
+            <th>Where
+            <th>Delete?
+        </tr>
+        {{- range $result := .results }}
+        <tr>
+            <td>{{ $result.idpermissions }}</td>
+            <td>{{ $result.username }}</td>
+            <td>{{ $result.email }}</td>
+            <td>{{ $result.level }}</td>
+            <td>{{ $result.section }}</td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="permid" value="{{ $result.idpermissions }}">
+                    <input type="submit" name="task" value="User Disallow">
+                </form>
+            </td>
+        </tr>
+        {{- end }}
+        <tr>
+            <td>
+                <form method="post">NEW
+            </td>
+            <td><input name="username"></td>
+            <td>?</td>
+            <td>
+                <select name="level">
+                    <option value="reader">reader</option>
+                    <option value="writer">writer</option>
+                    <option value="moderator">moderator</option>
+                    <option value="administrator">administrator</option>
+                </select>
+            </td>
+            <td><input name="where"></td>
+            <td><input type=submit name="task" value="User Allow"></form></td>
+        </tr>
+    </table>
+    Permissions should be valid only.
+{{- end}}
+
+<html>
+<head>
+    <title>Arran4's Website</title>
+    {{ template "headdata" }}
+</head>
+<body>
+    <a NAME="top">
+    <table border=0 width=95%>
+        <tr valign=top>
+            <td width=200px>
+                <hr>
+                {{ template "indexItems" . }}
+                <hr>
+                {{ template "adminTools" . }}
+            </td>
+            <td>
+                <hr>Admin tools:<br>
+                <a href="?section=users">Person Pontrols</a><br>
+                <a href="?section=permissions">Permission Pontrols</a><br>
+                <a href="?section=language">Language Lontrols</a><br>
+                <a href="?section=search">Search Sontrols</a><br>
+                <a href="?section=forum">Forum Fontrols</a><br>
+            <hr>
+            <td>
+            {{ template "userPermissionsTable" . }}
+            </td>
+        </tr>
+    </table>
+    <hr>
+    <center>
+        <i>All content is copyrighted to their respected authors</i>
+    </center>
+    <a NAME="bottom">
+</body>
+</html>

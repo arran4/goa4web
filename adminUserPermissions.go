@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	//go:embed "adminUserPermissions.html.tmpl"
+	//go:embed "template.tmpl"
 	adminUserPermissionsTemplate string
 )
 

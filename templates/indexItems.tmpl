@@ -1,0 +1,5 @@
+{{- define "indexItems"}}
+    {{ range $i := .indexItems }}
+        <a href="{{ $i.link }}">{{ $i.name }}</a><br>
+    {{ end }}
+{{- end}}

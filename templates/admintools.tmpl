@@ -1,0 +1,12 @@
+{{- define "adminTools"}}
+    {{ if .cont.user.UID }}
+        <hr>
+        <a href="user?do=logout">Logout</a><br>
+        {{ if eq (getSecurityLevel .cont "all") "auth_administrator" }}
+            <a href="admin">Admin page of mystery</a><br>
+        {{ end }}
+    {{ else }}
+        <a href="user?do=register">Register</a><br>
+        <a href="user?do=login">Login</a><br>
+    {{ end }}
+{{- end}}

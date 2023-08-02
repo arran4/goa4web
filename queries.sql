@@ -79,3 +79,182 @@ FROM users u;
 SELECT word
 FROM searchwordlist;
 
+-- name: remakeCommentsSearch :exec
+-- This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
+INSERT INTO commentsSearch (text, comments_idcomments)
+SELECT text, idcomments
+FROM comments;
+DELETE FROM commentsSearch;
+
+-- name: remakeNewsSearch :exec
+-- This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
+INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+SELECT news, idsiteNews
+FROM siteNews;
+DELETE FROM siteNewsSearch;
+
+-- name: remakeBlogSearch :exec
+-- This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
+INSERT INTO blogsSearch (text, blogs_idblogs)
+SELECT blog, idblogs
+FROM blogs;
+DELETE FROM blogsSearch;
+
+-- name: remakeWritingSearch :exec
+-- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+INSERT INTO writingSearch (text, writing_idwriting)
+SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+FROM writing;
+DELETE FROM writingSearch;
+
+-- name: remakeLinkerSearch :exec
+-- This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+INSERT INTO linkerSearch (text, linker_idlinker)
+SELECT CONCAT(title, ' ', description), idlinker
+FROM linker;
+DELETE FROM linkerSearch;
+
+-- name: remakeCommentsSearchInsert :exec
+-- This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
+INSERT INTO commentsSearch (text, comments_idcomments)
+SELECT text, idcomments
+FROM comments;
+
+-- name: deleteCommentsSearch :exec
+-- This query deletes all data from the "commentsSearch" table.
+DELETE FROM commentsSearch;
+
+-- name: remakeNewsSearchInsert :exec
+-- This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
+INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+SELECT news, idsiteNews
+FROM siteNews;
+
+-- name: deleteSiteNewsSearch :exec
+-- This query deletes all data from the "siteNewsSearch" table.
+DELETE FROM siteNewsSearch;
+
+-- name: remakeBlogsSearchInsert :exec
+-- This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
+INSERT INTO blogsSearch (text, blogs_idblogs)
+SELECT blog, idblogs
+FROM blogs;
+
+-- name: deleteBlogsSearch :exec
+-- This query deletes all data from the "blogsSearch" table.
+DELETE FROM blogsSearch;
+
+-- name: remakeWritingSearchInsert :exec
+-- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+INSERT INTO writingSearch (text, writing_idwriting)
+SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+FROM writing;
+
+-- name: deleteWritingSearch :exec
+-- This query deletes all data from the "writingSearch" table.
+DELETE FROM writingSearch;
+
+-- name: remakeLinkerSearchInsert :exec
+-- This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+INSERT INTO linkerSearch (text, linker_idlinker)
+SELECT CONCAT(title, ' ', description), idlinker
+FROM linker;
+
+-- name: deleteLinkerSearch :exec
+-- This query deletes all data from the "linkerSearch" table.
+DELETE FROM linkerSearch;
+
+-- name: update_forumthread_lastaddition :exec
+-- This query updates the "lastaddition" column in the "forumthread" table.
+-- It sets the "lastaddition" column to the latest "written" value from the "comments" table for the corresponding "forumthread_idforumthread".
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+);
+
+-- name: update_forumthread_comments :exec
+-- This query updates the "comments" column in the "forumthread" table.
+-- It sets the "comments" column to the count of users (excluding the thread creator) from the "comments" table for the corresponding "forumthread_idforumthread".
+UPDATE forumthread
+SET comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+);
+
+-- name: update_forumthread_lastposter :exec
+-- This query updates the "lastposter" column in the "forumthread" table.
+-- It sets the "lastposter" column to the latest "users_idusers" value from the "comments" table for the corresponding "forumthread_idforumthread".
+UPDATE forumthread
+SET lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+);
+
+-- name: update_forumthread_firstpost :exec
+-- This query updates the "firstpost" column in the "forumthread" table.
+-- It sets the "firstpost" column to the ID of the first comment from the "comments" table for the corresponding "forumthread_idforumthread".
+UPDATE forumthread
+SET firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    LIMIT 1
+);
+
+-- name: update_forumtopic_threads :exec
+-- This query updates the "threads" column in the "forumtopic" table.
+-- It sets the "threads" column to the count of forum threads from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+UPDATE forumtopic
+SET threads = (
+    SELECT COUNT(idforumthread)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+);
+
+-- name: update_forumtopic_comments :exec
+-- This query updates the "comments" column in the "forumtopic" table.
+-- It sets the "comments" column to the sum of comments from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+UPDATE forumtopic
+SET comments = (
+    SELECT SUM(comments)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+);
+
+-- name: update_forumtopic_lastaddition_lastposter :exec
+-- This query updates the "lastaddition" and "lastposter" columns in the "forumtopic" table.
+-- It sets the "lastaddition" column to the latest "lastaddition" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+-- It sets the "lastposter" column to the latest "lastposter" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+UPDATE forumtopic
+SET lastaddition = (
+    SELECT lastaddition
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+),
+lastposter = (
+    SELECT lastposter
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+);

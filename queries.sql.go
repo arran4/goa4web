@@ -176,6 +176,26 @@ func (q *Queries) createLanguage(ctx context.Context) error {
 	return err
 }
 
+const deleteBlogsSearch = `-- name: deleteBlogsSearch :exec
+DELETE FROM blogsSearch
+`
+
+// This query deletes all data from the "blogsSearch" table.
+func (q *Queries) deleteBlogsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteBlogsSearch)
+	return err
+}
+
+const deleteCommentsSearch = `-- name: deleteCommentsSearch :exec
+DELETE FROM commentsSearch
+`
+
+// This query deletes all data from the "commentsSearch" table.
+func (q *Queries) deleteCommentsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteCommentsSearch)
+	return err
+}
+
 const deleteLanguage = `-- name: deleteLanguage :exec
 DELETE FROM language
 WHERE idlanguage = $1
@@ -187,6 +207,166 @@ WHERE idlanguage = $1
 //	$1 - Language ID to be deleted (int)
 func (q *Queries) deleteLanguage(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteLanguage)
+	return err
+}
+
+const deleteLinkerSearch = `-- name: deleteLinkerSearch :exec
+DELETE FROM linkerSearch
+`
+
+// This query deletes all data from the "linkerSearch" table.
+func (q *Queries) deleteLinkerSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteLinkerSearch)
+	return err
+}
+
+const deleteSiteNewsSearch = `-- name: deleteSiteNewsSearch :exec
+DELETE FROM siteNewsSearch
+`
+
+// This query deletes all data from the "siteNewsSearch" table.
+func (q *Queries) deleteSiteNewsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteSiteNewsSearch)
+	return err
+}
+
+const deleteWritingSearch = `-- name: deleteWritingSearch :exec
+DELETE FROM writingSearch
+`
+
+// This query deletes all data from the "writingSearch" table.
+func (q *Queries) deleteWritingSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteWritingSearch)
+	return err
+}
+
+const remakeBlogSearch = `-- name: remakeBlogSearch :exec
+INSERT INTO blogsSearch (text, blogs_idblogs)
+SELECT blog, idblogs
+FROM blogs
+`
+
+// This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
+func (q *Queries) remakeBlogSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeBlogSearch)
+	return err
+}
+
+const remakeBlogsSearchInsert = `-- name: remakeBlogsSearchInsert :exec
+INSERT INTO blogsSearch (text, blogs_idblogs)
+SELECT blog, idblogs
+FROM blogs
+`
+
+// This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
+func (q *Queries) remakeBlogsSearchInsert(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeBlogsSearchInsert)
+	return err
+}
+
+const remakeCommentsSearch = `-- name: remakeCommentsSearch :exec
+INSERT INTO commentsSearch (text, comments_idcomments)
+SELECT text, idcomments
+FROM comments
+`
+
+// This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
+func (q *Queries) remakeCommentsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeCommentsSearch)
+	return err
+}
+
+const remakeCommentsSearchInsert = `-- name: remakeCommentsSearchInsert :exec
+INSERT INTO commentsSearch (text, comments_idcomments)
+SELECT text, idcomments
+FROM comments
+`
+
+// This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
+func (q *Queries) remakeCommentsSearchInsert(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeCommentsSearchInsert)
+	return err
+}
+
+const remakeLinkerSearch = `-- name: remakeLinkerSearch :exec
+INSERT INTO linkerSearch (text, linker_idlinker)
+SELECT CONCAT(title, ' ', description), idlinker
+FROM linker
+`
+
+// This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+func (q *Queries) remakeLinkerSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeLinkerSearch)
+	return err
+}
+
+const remakeLinkerSearchInsert = `-- name: remakeLinkerSearchInsert :exec
+INSERT INTO linkerSearch (text, linker_idlinker)
+SELECT CONCAT(title, ' ', description), idlinker
+FROM linker
+`
+
+// This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+func (q *Queries) remakeLinkerSearchInsert(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeLinkerSearchInsert)
+	return err
+}
+
+const remakeNewsSearch = `-- name: remakeNewsSearch :exec
+INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+SELECT news, idsiteNews
+FROM siteNews
+`
+
+// This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
+func (q *Queries) remakeNewsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeNewsSearch)
+	return err
+}
+
+const remakeNewsSearchInsert = `-- name: remakeNewsSearchInsert :exec
+INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+SELECT news, idsiteNews
+FROM siteNews
+`
+
+// This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
+func (q *Queries) remakeNewsSearchInsert(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeNewsSearchInsert)
+	return err
+}
+
+const remakeWritingSearch = `-- name: remakeWritingSearch :exec
+INSERT INTO writingSearch (text, writing_idwriting)
+SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+FROM writing
+`
+
+// This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+func (q *Queries) remakeWritingSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeWritingSearch)
+	return err
+}
+
+const remakeWritingSearchInsert = `-- name: remakeWritingSearchInsert :exec
+INSERT INTO writingSearch (text, writing_idwriting)
+SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+FROM writing
+`
+
+// This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+func (q *Queries) remakeWritingSearchInsert(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeWritingSearchInsert)
 	return err
 }
 
@@ -203,6 +383,133 @@ WHERE idlanguage = $2
 //	$2 - Language ID to be updated (int)
 func (q *Queries) renameLanguage(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, renameLanguage)
+	return err
+}
+
+const update_forumthread_comments = `-- name: update_forumthread_comments :exec
+UPDATE forumthread
+SET comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+)
+`
+
+// This query updates the "comments" column in the "forumthread" table.
+// It sets the "comments" column to the count of users (excluding the thread creator) from the "comments" table for the corresponding "forumthread_idforumthread".
+func (q *Queries) update_forumthread_comments(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumthread_comments)
+	return err
+}
+
+const update_forumthread_firstpost = `-- name: update_forumthread_firstpost :exec
+UPDATE forumthread
+SET firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    LIMIT 1
+)
+`
+
+// This query updates the "firstpost" column in the "forumthread" table.
+// It sets the "firstpost" column to the ID of the first comment from the "comments" table for the corresponding "forumthread_idforumthread".
+func (q *Queries) update_forumthread_firstpost(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumthread_firstpost)
+	return err
+}
+
+const update_forumthread_lastaddition = `-- name: update_forumthread_lastaddition :exec
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+)
+`
+
+// This query updates the "lastaddition" column in the "forumthread" table.
+// It sets the "lastaddition" column to the latest "written" value from the "comments" table for the corresponding "forumthread_idforumthread".
+func (q *Queries) update_forumthread_lastaddition(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumthread_lastaddition)
+	return err
+}
+
+const update_forumthread_lastposter = `-- name: update_forumthread_lastposter :exec
+UPDATE forumthread
+SET lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+)
+`
+
+// This query updates the "lastposter" column in the "forumthread" table.
+// It sets the "lastposter" column to the latest "users_idusers" value from the "comments" table for the corresponding "forumthread_idforumthread".
+func (q *Queries) update_forumthread_lastposter(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumthread_lastposter)
+	return err
+}
+
+const update_forumtopic_comments = `-- name: update_forumtopic_comments :exec
+UPDATE forumtopic
+SET comments = (
+    SELECT SUM(comments)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+)
+`
+
+// This query updates the "comments" column in the "forumtopic" table.
+// It sets the "comments" column to the sum of comments from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+func (q *Queries) update_forumtopic_comments(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumtopic_comments)
+	return err
+}
+
+const update_forumtopic_lastaddition_lastposter = `-- name: update_forumtopic_lastaddition_lastposter :exec
+UPDATE forumtopic
+SET lastaddition = (
+    SELECT lastaddition
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+),
+lastposter = (
+    SELECT lastposter
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+)
+`
+
+// This query updates the "lastaddition" and "lastposter" columns in the "forumtopic" table.
+// It sets the "lastaddition" column to the latest "lastaddition" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+// It sets the "lastposter" column to the latest "lastposter" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+func (q *Queries) update_forumtopic_lastaddition_lastposter(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumtopic_lastaddition_lastposter)
+	return err
+}
+
+const update_forumtopic_threads = `-- name: update_forumtopic_threads :exec
+UPDATE forumtopic
+SET threads = (
+    SELECT COUNT(idforumthread)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+)
+`
+
+// This query updates the "threads" column in the "forumtopic" table.
+// It sets the "threads" column to the count of forum threads from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+func (q *Queries) update_forumtopic_threads(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumtopic_threads)
 	return err
 }
 

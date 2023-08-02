@@ -7,7 +7,144 @@ package main
 
 import (
 	"context"
+	"database/sql"
 )
+
+const selectLanguages = `-- name: SelectLanguages :many
+SELECT idlanguage, nameof
+FROM language
+`
+
+// This query selects all languages from the "language" table.
+// Result:
+//
+//	idlanguage (int)
+//	nameof (string)
+func (q *Queries) SelectLanguages(ctx context.Context) ([]*Language, error) {
+	rows, err := q.db.QueryContext(ctx, selectLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminUserPermissions = `-- name: adminUserPermissions :many
+SELECT p.idpermissions, p.level, u.username, u.email, p.section
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers
+ORDER BY p.level
+`
+
+type adminUserPermissionsRow struct {
+	Idpermissions int32
+	Level         sql.NullString
+	Username      sql.NullString
+	Email         sql.NullString
+	Section       sql.NullString
+}
+
+// This query selects permissions information for admin users.
+// Result:
+//
+//	idpermissions (int)
+//	level (int)
+//	username (string)
+//	email (string)
+//	section (string)
+func (q *Queries) adminUserPermissions(ctx context.Context) ([]*adminUserPermissionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminUserPermissions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*adminUserPermissionsRow
+	for rows.Next() {
+		var i adminUserPermissionsRow
+		if err := rows.Scan(
+			&i.Idpermissions,
+			&i.Level,
+			&i.Username,
+			&i.Email,
+			&i.Section,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminUsers = `-- name: adminUsers :many
+SELECT u.idusers, u.username, u.email
+FROM users u
+`
+
+type adminUsersRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    sql.NullString
+}
+
+// This query selects all admin users from the "users" table.
+// Result:
+//
+//	idusers (int)
+//	username (string)
+//	email (string)
+func (q *Queries) adminUsers(ctx context.Context) ([]*adminUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*adminUsersRow
+	for rows.Next() {
+		var i adminUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const completeWordList = `-- name: completeWordList :exec
+SELECT word
+FROM searchwordlist
+`
+
+// This query selects all words from the "searchwordlist" table and prints them.
+func (q *Queries) completeWordList(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, completeWordList)
+	return err
+}
 
 const countCategories = `-- name: countCategories :one
 SELECT COUNT(*) AS count
@@ -66,5 +203,35 @@ WHERE idlanguage = $2
 //	$2 - Language ID to be updated (int)
 func (q *Queries) renameLanguage(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, renameLanguage)
+	return err
+}
+
+const userAllow = `-- name: userAllow :exec
+INSERT INTO permissions (users_idusers, section, level)
+VALUES ($1, $2, $3)
+`
+
+// This query inserts a new permission into the "permissions" table.
+// Parameters:
+//
+//	$1 - User ID to be associated with the permission (int)
+//	$2 - Section for which the permission is granted (string)
+//	$3 - Level of the permission (string)
+func (q *Queries) userAllow(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, userAllow)
+	return err
+}
+
+const userDisallow = `-- name: userDisallow :exec
+DELETE FROM permissions
+WHERE idpermissions = $1
+`
+
+// This query deletes a permission from the "permissions" table based on the provided "permid".
+// Parameters:
+//
+//	$1 - Permission ID to be deleted (int)
+func (q *Queries) userDisallow(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, userDisallow)
 	return err
 }

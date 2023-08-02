@@ -75,6 +75,22 @@ func (q *Queries) add_bookmarks(ctx context.Context, arg add_bookmarksParams) er
 	return err
 }
 
+const add_question = `-- name: add_question :exec
+INSERT INTO faq (question, users_idusers, language_idlanguage)
+VALUES (?, ?, ?)
+`
+
+type add_questionParams struct {
+	Question           sql.NullString
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+}
+
+func (q *Queries) add_question(ctx context.Context, arg add_questionParams) error {
+	_, err := q.db.ExecContext(ctx, add_question, arg.Question, arg.UsersIdusers, arg.LanguageIdlanguage)
+	return err
+}
+
 const adminUserPermissions = `-- name: adminUserPermissions :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
@@ -167,6 +183,34 @@ func (q *Queries) adminUsers(ctx context.Context) ([]*adminUsersRow, error) {
 	return items, nil
 }
 
+const admin_categories = `-- name: admin_categories :many
+SELECT idfaqCategories, name
+FROM faqCategories
+`
+
+func (q *Queries) admin_categories(ctx context.Context) ([]*Faqcategory, error) {
+	rows, err := q.db.QueryContext(ctx, admin_categories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faqcategory
+	for rows.Next() {
+		var i Faqcategory
+		if err := rows.Scan(&i.Idfaqcategories, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const admin_user_permissions = `-- name: admin_user_permissions :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
@@ -211,6 +255,22 @@ func (q *Queries) admin_user_permissions(ctx context.Context, section sql.NullSt
 	return items, nil
 }
 
+const assign_answer = `-- name: assign_answer :exec
+UPDATE faq
+SET answer = ?
+WHERE idfaq = ?
+`
+
+type assign_answerParams struct {
+	Answer sql.NullString
+	Idfaq  int32
+}
+
+func (q *Queries) assign_answer(ctx context.Context, arg assign_answerParams) error {
+	_, err := q.db.ExecContext(ctx, assign_answer, arg.Answer, arg.Idfaq)
+	return err
+}
+
 const assign_blog_to_thread = `-- name: assign_blog_to_thread :exec
 UPDATE blogs
 SET forumthread_idforumthread = ?
@@ -240,6 +300,59 @@ func (q *Queries) blogid_to_userid(ctx context.Context, idblogs int32) (int32, e
 	return idusers, err
 }
 
+const categories = `-- name: categories :one
+SELECT idfaqCategories, name
+FROM faqCategories
+`
+
+func (q *Queries) categories(ctx context.Context) (*Faqcategory, error) {
+	row := q.db.QueryRowContext(ctx, categories)
+	var i Faqcategory
+	err := row.Scan(&i.Idfaqcategories, &i.Name)
+	return &i, err
+}
+
+const category_faqs = `-- name: category_faqs :many
+SELECT question, idfaq, answer, faqCategories_idfaqCategories
+FROM faq
+WHERE faqCategories_idfaqCategories = ? OR answer IS NULL
+`
+
+type category_faqsRow struct {
+	Question                     sql.NullString
+	Idfaq                        int32
+	Answer                       sql.NullString
+	FaqcategoriesIdfaqcategories int32
+}
+
+func (q *Queries) category_faqs(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*category_faqsRow, error) {
+	rows, err := q.db.QueryContext(ctx, category_faqs, faqcategoriesIdfaqcategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*category_faqsRow
+	for rows.Next() {
+		var i category_faqsRow
+		if err := rows.Scan(
+			&i.Question,
+			&i.Idfaq,
+			&i.Answer,
+			&i.FaqcategoriesIdfaqcategories,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const completeWordList = `-- name: completeWordList :exec
 SELECT word
 FROM searchwordlist
@@ -267,6 +380,17 @@ func (q *Queries) countCategories(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const count_categories = `-- name: count_categories :one
+SELECT COUNT(*) FROM faqCategories
+`
+
+func (q *Queries) count_categories(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, count_categories)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLanguage = `-- name: createLanguage :exec
 INSERT INTO language (nameof)
 VALUES ($1)
@@ -278,6 +402,16 @@ VALUES ($1)
 //	$1 - Name of the new language (string)
 func (q *Queries) createLanguage(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, createLanguage)
+	return err
+}
+
+const create_category = `-- name: create_category :exec
+INSERT INTO faqCategories (name)
+VALUES (?)
+`
+
+func (q *Queries) create_category(ctx context.Context, name sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, create_category, name)
 	return err
 }
 
@@ -383,6 +517,55 @@ WHERE users_idusers = ?
 // This query deletes all entries from the "bookmarks" table for a specific user based on their "users_idusers".
 func (q *Queries) delete_bookmarks(ctx context.Context, usersIdusers int32) error {
 	_, err := q.db.ExecContext(ctx, delete_bookmarks, usersIdusers)
+	return err
+}
+
+const delete_category = `-- name: delete_category :exec
+DELETE FROM faqCategories
+WHERE idfaqCategories = ?
+`
+
+func (q *Queries) delete_category(ctx context.Context, idfaqcategories int32) error {
+	_, err := q.db.ExecContext(ctx, delete_category, idfaqcategories)
+	return err
+}
+
+const modify_faq = `-- name: modify_faq :exec
+UPDATE faq
+SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
+WHERE idfaq = ?
+`
+
+type modify_faqParams struct {
+	Answer                       sql.NullString
+	Question                     sql.NullString
+	FaqcategoriesIdfaqcategories int32
+	Idfaq                        int32
+}
+
+func (q *Queries) modify_faq(ctx context.Context, arg modify_faqParams) error {
+	_, err := q.db.ExecContext(ctx, modify_faq,
+		arg.Answer,
+		arg.Question,
+		arg.FaqcategoriesIdfaqcategories,
+		arg.Idfaq,
+	)
+	return err
+}
+
+const reassign_category = `-- name: reassign_category :exec
+UPDATE faq
+SET faqCategories_idfaqCategories = ?
+WHERE idfaq = ?
+`
+
+type reassign_categoryParams struct {
+	FaqcategoriesIdfaqcategories int32
+	Idfaq                        int32
+}
+
+func (q *Queries) reassign_category(ctx context.Context, arg reassign_categoryParams) error {
+	_, err := q.db.ExecContext(ctx, reassign_category, arg.FaqcategoriesIdfaqcategories, arg.Idfaq)
 	return err
 }
 
@@ -529,6 +712,22 @@ WHERE idlanguage = $2
 //	$2 - Language ID to be updated (int)
 func (q *Queries) renameLanguage(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, renameLanguage)
+	return err
+}
+
+const rename_category = `-- name: rename_category :exec
+UPDATE faqCategories
+SET name = ?
+WHERE idfaqCategories = ?
+`
+
+type rename_categoryParams struct {
+	Name            sql.NullString
+	Idfaqcategories int32
+}
+
+func (q *Queries) rename_category(ctx context.Context, arg rename_categoryParams) error {
+	_, err := q.db.ExecContext(ctx, rename_category, arg.Name, arg.Idfaqcategories)
 	return err
 }
 
@@ -704,6 +903,53 @@ func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsPa
 			&i.Idblogs,
 			&i.If,
 			&i.UsersIdusers,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const show_questions = `-- name: show_questions :many
+SELECT c.idfaqCategories, c.name, f.question, f.answer
+FROM faq f, faqCategories c
+WHERE c.idfaqCategories <> ? AND f.answer IS NOT NULL AND c.idfaqCategories = f.faqCategories_idfaqCategories AND (c.idfaqCategories = ?)
+ORDER BY c.idfaqCategories
+`
+
+type show_questionsParams struct {
+	Idfaqcategories   int32
+	Idfaqcategories_2 int32
+}
+
+type show_questionsRow struct {
+	Idfaqcategories int32
+	Name            sql.NullString
+	Question        sql.NullString
+	Answer          sql.NullString
+}
+
+func (q *Queries) show_questions(ctx context.Context, arg show_questionsParams) ([]*show_questionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, show_questions, arg.Idfaqcategories, arg.Idfaqcategories_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*show_questionsRow
+	for rows.Next() {
+		var i show_questionsRow
+		if err := rows.Scan(
+			&i.Idfaqcategories,
+			&i.Name,
+			&i.Question,
+			&i.Answer,
 		); err != nil {
 			return nil, err
 		}

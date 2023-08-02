@@ -371,3 +371,57 @@ WHERE users_idusers = ?;
 SELECT list
 FROM bookmarks
 WHERE users_idusers = ?;
+
+-- name: rename_category :exec
+UPDATE faqCategories
+SET name = ?
+WHERE idfaqCategories = ?;
+
+-- name: delete_category :exec
+DELETE FROM faqCategories
+WHERE idfaqCategories = ?;
+
+-- name: count_categories :one
+SELECT COUNT(*) FROM faqCategories;
+
+-- name: create_category :exec
+INSERT INTO faqCategories (name)
+VALUES (?);
+
+-- name: add_question :exec
+INSERT INTO faq (question, users_idusers, language_idlanguage)
+VALUES (?, ?, ?);
+
+-- name: reassign_category :exec
+UPDATE faq
+SET faqCategories_idfaqCategories = ?
+WHERE idfaq = ?;
+
+-- name: modify_faq :exec
+UPDATE faq
+SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
+WHERE idfaq = ?;
+
+-- name: assign_answer :exec
+UPDATE faq
+SET answer = ?
+WHERE idfaq = ?;
+
+-- name: categories :one
+SELECT idfaqCategories, name
+FROM faqCategories;
+
+-- name: category_faqs :many
+SELECT question, idfaq, answer, faqCategories_idfaqCategories
+FROM faq
+WHERE faqCategories_idfaqCategories = ? OR answer IS NULL;
+
+-- name: show_questions :many
+SELECT c.idfaqCategories, c.name, f.question, f.answer
+FROM faq f, faqCategories c
+WHERE c.idfaqCategories <> ? AND f.answer IS NOT NULL AND c.idfaqCategories = f.faqCategories_idfaqCategories AND (c.idfaqCategories = ?)
+ORDER BY c.idfaqCategories;
+
+-- name: admin_categories :many
+SELECT idfaqCategories, name
+FROM faqCategories;

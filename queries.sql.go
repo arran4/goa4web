@@ -43,6 +43,22 @@ func (q *Queries) SelectLanguages(ctx context.Context) ([]*Language, error) {
 	return items, nil
 }
 
+const add_blog = `-- name: add_blog :exec
+INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
+VALUES (?, ?, ?, NOW())
+`
+
+type add_blogParams struct {
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+}
+
+func (q *Queries) add_blog(ctx context.Context, arg add_blogParams) error {
+	_, err := q.db.ExecContext(ctx, add_blog, arg.UsersIdusers, arg.LanguageIdlanguage, arg.Blog)
+	return err
+}
+
 const adminUserPermissions = `-- name: adminUserPermissions :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
@@ -133,6 +149,79 @@ func (q *Queries) adminUsers(ctx context.Context) ([]*adminUsersRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const admin_user_permissions = `-- name: admin_user_permissions :many
+SELECT p.idpermissions, p.level, u.username, u.email, p.section
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND p.section = ?
+ORDER BY p.level
+`
+
+type admin_user_permissionsRow struct {
+	Idpermissions int32
+	Level         sql.NullString
+	Username      sql.NullString
+	Email         sql.NullString
+	Section       sql.NullString
+}
+
+func (q *Queries) admin_user_permissions(ctx context.Context, section sql.NullString) ([]*admin_user_permissionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, admin_user_permissions, section)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*admin_user_permissionsRow
+	for rows.Next() {
+		var i admin_user_permissionsRow
+		if err := rows.Scan(
+			&i.Idpermissions,
+			&i.Level,
+			&i.Username,
+			&i.Email,
+			&i.Section,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const assign_blog_to_thread = `-- name: assign_blog_to_thread :exec
+UPDATE blogs
+SET forumthread_idforumthread = ?
+WHERE idblogs = ?
+`
+
+type assign_blog_to_threadParams struct {
+	ForumthreadIdforumthread int32
+	Idblogs                  int32
+}
+
+func (q *Queries) assign_blog_to_thread(ctx context.Context, arg assign_blog_to_threadParams) error {
+	_, err := q.db.ExecContext(ctx, assign_blog_to_thread, arg.ForumthreadIdforumthread, arg.Idblogs)
+	return err
+}
+
+const blogid_to_userid = `-- name: blogid_to_userid :one
+SELECT idusers
+FROM users u, blogs b
+WHERE u.idusers = b.users_idusers AND b.idblogs = ?
+`
+
+func (q *Queries) blogid_to_userid(ctx context.Context, idblogs int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, blogid_to_userid, idblogs)
+	var idusers int32
+	err := row.Scan(&idusers)
+	return idusers, err
 }
 
 const completeWordList = `-- name: completeWordList :exec
@@ -237,6 +326,36 @@ DELETE FROM writingSearch
 // This query deletes all data from the "writingSearch" table.
 func (q *Queries) deleteWritingSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteWritingSearch)
+	return err
+}
+
+const delete_blog = `-- name: delete_blog :exec
+DELETE FROM blogs
+WHERE idblogs = ?
+`
+
+func (q *Queries) delete_blog(ctx context.Context, idblogs int32) error {
+	_, err := q.db.ExecContext(ctx, delete_blog, idblogs)
+	return err
+}
+
+const delete_blog_comments = `-- name: delete_blog_comments :exec
+DELETE FROM comments
+WHERE forumthread_idforumthread = ?
+`
+
+func (q *Queries) delete_blog_comments(ctx context.Context, forumthreadIdforumthread int32) error {
+	_, err := q.db.ExecContext(ctx, delete_blog_comments, forumthreadIdforumthread)
+	return err
+}
+
+const delete_blog_search = `-- name: delete_blog_search :exec
+DELETE FROM blogsSearch
+WHERE blogs_idblogs = ?
+`
+
+func (q *Queries) delete_blog_search(ctx context.Context, blogsIdblogs int32) error {
+	_, err := q.db.ExecContext(ctx, delete_blog_search, blogsIdblogs)
 	return err
 }
 
@@ -383,6 +502,195 @@ WHERE idlanguage = $2
 //	$2 - Language ID to be updated (int)
 func (q *Queries) renameLanguage(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, renameLanguage)
+	return err
+}
+
+const show_blog_comments = `-- name: show_blog_comments :many
+SELECT b.blog, b.written, u.username, b.idblogs, b.forumthread_idforumthread
+FROM blogs b, users u
+WHERE b.users_idusers = u.idusers AND b.idblogs = ?
+`
+
+type show_blog_commentsRow struct {
+	Blog                     sql.NullString
+	Written                  sql.NullTime
+	Username                 sql.NullString
+	Idblogs                  int32
+	ForumthreadIdforumthread int32
+}
+
+func (q *Queries) show_blog_comments(ctx context.Context, idblogs int32) ([]*show_blog_commentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, show_blog_comments, idblogs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*show_blog_commentsRow
+	for rows.Next() {
+		var i show_blog_commentsRow
+		if err := rows.Scan(
+			&i.Blog,
+			&i.Written,
+			&i.Username,
+			&i.Idblogs,
+			&i.ForumthreadIdforumthread,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const show_blog_edit = `-- name: show_blog_edit :many
+SELECT b.blog, b.language_idlanguage
+FROM blogs b, users u
+WHERE b.users_idusers = u.idusers AND b.idblogs = ?
+`
+
+type show_blog_editRow struct {
+	Blog               sql.NullString
+	LanguageIdlanguage int32
+}
+
+func (q *Queries) show_blog_edit(ctx context.Context, idblogs int32) ([]*show_blog_editRow, error) {
+	rows, err := q.db.QueryContext(ctx, show_blog_edit, idblogs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*show_blog_editRow
+	for rows.Next() {
+		var i show_blog_editRow
+		if err := rows.Scan(&i.Blog, &i.LanguageIdlanguage); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const show_blogger_list = `-- name: show_blogger_list :many
+SELECT u.username, COUNT(b.idblogs)
+FROM blogs b, users u
+WHERE b.users_idusers = u.idusers
+GROUP BY u.idusers
+`
+
+type show_blogger_listRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+func (q *Queries) show_blogger_list(ctx context.Context) ([]*show_blogger_listRow, error) {
+	rows, err := q.db.QueryContext(ctx, show_blogger_list)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*show_blogger_listRow
+	for rows.Next() {
+		var i show_blogger_listRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const show_latest_blogs = `-- name: show_latest_blogs :many
+SELECT b.blog, b.written, u.username, b.idblogs, IF(th.comments IS NULL, 0, th.comments + 1), b.users_idusers
+FROM blogs b, users u
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE b.users_idusers = ? AND (b.language_idlanguage = ?)
+ORDER BY b.written DESC
+LIMIT ? OFFSET ?
+`
+
+type show_latest_blogsParams struct {
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Limit              int32
+	Offset             int32
+}
+
+type show_latest_blogsRow struct {
+	Blog         sql.NullString
+	Written      sql.NullTime
+	Username     sql.NullString
+	Idblogs      int32
+	If           interface{}
+	UsersIdusers int32
+}
+
+func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsParams) ([]*show_latest_blogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, show_latest_blogs,
+		arg.UsersIdusers,
+		arg.LanguageIdlanguage,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*show_latest_blogsRow
+	for rows.Next() {
+		var i show_latest_blogsRow
+		if err := rows.Scan(
+			&i.Blog,
+			&i.Written,
+			&i.Username,
+			&i.Idblogs,
+			&i.If,
+			&i.UsersIdusers,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const update_blog = `-- name: update_blog :exec
+UPDATE blogs
+SET language_idlanguage = ?, blog = ?
+WHERE idblogs = ?
+`
+
+type update_blogParams struct {
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Idblogs            int32
+}
+
+func (q *Queries) update_blog(ctx context.Context, arg update_blogParams) error {
+	_, err := q.db.ExecContext(ctx, update_blog, arg.LanguageIdlanguage, arg.Blog, arg.Idblogs)
 	return err
 }
 
@@ -541,4 +849,131 @@ WHERE idpermissions = $1
 func (q *Queries) userDisallow(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, userDisallow)
 	return err
+}
+
+const user_allow = `-- name: user_allow :exec
+INSERT INTO permissions (users_idusers, section, level)
+VALUES (?, ?, ?)
+`
+
+type user_allowParams struct {
+	UsersIdusers int32
+	Section      sql.NullString
+	Level        sql.NullString
+}
+
+func (q *Queries) user_allow(ctx context.Context, arg user_allowParams) error {
+	_, err := q.db.ExecContext(ctx, user_allow, arg.UsersIdusers, arg.Section, arg.Level)
+	return err
+}
+
+const user_disallow = `-- name: user_disallow :exec
+DELETE FROM permissions
+WHERE idpermissions = ? AND section = ?
+`
+
+type user_disallowParams struct {
+	Idpermissions int32
+	Section       sql.NullString
+}
+
+func (q *Queries) user_disallow(ctx context.Context, arg user_disallowParams) error {
+	_, err := q.db.ExecContext(ctx, user_disallow, arg.Idpermissions, arg.Section)
+	return err
+}
+
+const write_blog_atom = `-- name: write_blog_atom :many
+SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
+FROM blogs b, users u
+WHERE u.idusers = b.users_idusers AND b.users_idusers = ?
+ORDER BY b.written DESC
+LIMIT ?
+`
+
+type write_blog_atomParams struct {
+	UsersIdusers int32
+	Limit        int32
+}
+
+type write_blog_atomRow struct {
+	Idblogs  int32
+	Left     string
+	Blog     sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) write_blog_atom(ctx context.Context, arg write_blog_atomParams) ([]*write_blog_atomRow, error) {
+	rows, err := q.db.QueryContext(ctx, write_blog_atom, arg.UsersIdusers, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*write_blog_atomRow
+	for rows.Next() {
+		var i write_blog_atomRow
+		if err := rows.Scan(
+			&i.Idblogs,
+			&i.Left,
+			&i.Blog,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const write_blog_rss = `-- name: write_blog_rss :many
+SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
+FROM blogs b, users u
+WHERE u.idusers = b.users_idusers AND b.users_idusers= ?
+ORDER BY b.written DESC
+LIMIT ?
+`
+
+type write_blog_rssParams struct {
+	UsersIdusers int32
+	Limit        int32
+}
+
+type write_blog_rssRow struct {
+	Idblogs  int32
+	Left     string
+	Blog     sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) write_blog_rss(ctx context.Context, arg write_blog_rssParams) ([]*write_blog_rssRow, error) {
+	rows, err := q.db.QueryContext(ctx, write_blog_rss, arg.UsersIdusers, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*write_blog_rssRow
+	for rows.Next() {
+		var i write_blog_rssRow
+		if err := rows.Scan(
+			&i.Idblogs,
+			&i.Left,
+			&i.Blog,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

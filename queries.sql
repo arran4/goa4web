@@ -258,3 +258,87 @@ lastposter = (
     ORDER BY lastaddition DESC
     LIMIT 1
 );
+
+-- name: blogid_to_userid :one
+SELECT idusers
+FROM users u, blogs b
+WHERE u.idusers = b.users_idusers AND b.idblogs = ?;
+
+-- name: delete_blog :exec
+DELETE FROM blogs
+WHERE idblogs = ?;
+
+-- name: delete_blog_search :exec
+DELETE FROM blogsSearch
+WHERE blogs_idblogs = ?;
+
+-- name: update_blog :exec
+UPDATE blogs
+SET language_idlanguage = ?, blog = ?
+WHERE idblogs = ?;
+
+-- name: delete_blog_comments :exec
+DELETE FROM comments
+WHERE forumthread_idforumthread = ?;
+
+-- name: add_blog :exec
+INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
+VALUES (?, ?, ?, NOW());
+SELECT LAST_INSERT_ID() AS value;
+
+-- name: assign_blog_to_thread :exec
+UPDATE blogs
+SET forumthread_idforumthread = ?
+WHERE idblogs = ?;
+
+-- name: show_latest_blogs :many
+SELECT b.blog, b.written, u.username, b.idblogs, IF(th.comments IS NULL, 0, th.comments + 1), b.users_idusers
+FROM blogs b, users u
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE b.users_idusers = ? AND (b.language_idlanguage = ?)
+ORDER BY b.written DESC
+LIMIT ? OFFSET ?;
+
+-- name: show_blog_comments :many
+SELECT b.blog, b.written, u.username, b.idblogs, b.forumthread_idforumthread
+FROM blogs b, users u
+WHERE b.users_idusers = u.idusers AND b.idblogs = ?;
+
+-- name: show_blogger_list :many
+SELECT u.username, COUNT(b.idblogs)
+FROM blogs b, users u
+WHERE b.users_idusers = u.idusers
+GROUP BY u.idusers;
+
+-- name: write_blog_atom :many
+SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
+FROM blogs b, users u
+WHERE u.idusers = b.users_idusers AND b.users_idusers = ?
+ORDER BY b.written DESC
+LIMIT ?;
+
+-- name: write_blog_rss :many
+SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
+FROM blogs b, users u
+WHERE u.idusers = b.users_idusers AND b.users_idusers= ?
+ORDER BY b.written DESC
+LIMIT ?;
+
+-- name: admin_user_permissions :many
+SELECT p.idpermissions, p.level, u.username, u.email, p.section
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND p.section = ?
+ORDER BY p.level;
+
+-- name: user_allow :exec
+INSERT INTO permissions (users_idusers, section, level)
+VALUES (?, ?, ?);
+
+-- name: user_disallow :exec
+DELETE FROM permissions
+WHERE idpermissions = ? AND section = ?;
+
+-- name: show_blog_edit :many
+SELECT b.blog, b.language_idlanguage
+FROM blogs b, users u
+WHERE b.users_idusers = u.idusers AND b.idblogs = ?;

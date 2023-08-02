@@ -43,6 +43,16 @@ func (q *Queries) SelectLanguages(ctx context.Context) ([]*Language, error) {
 	return items, nil
 }
 
+const addImage = `-- name: addImage :exec
+INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
+VALUES ($1, $2, $3, $4, $5, NOW())
+`
+
+func (q *Queries) addImage(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, addImage)
+	return err
+}
+
 const addTopicRestrictions = `-- name: addTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -275,6 +285,15 @@ func (q *Queries) admin_user_permissions(ctx context.Context, section sql.NullSt
 	return items, nil
 }
 
+const assignImagePostThisThreadId = `-- name: assignImagePostThisThreadId :exec
+UPDATE imagepost SET forumthread_idforumthread = $1 WHERE idimagepost = $2
+`
+
+func (q *Queries) assignImagePostThisThreadId(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, assignImagePostThisThreadId)
+	return err
+}
+
 const assign_answer = `-- name: assign_answer :exec
 UPDATE faq
 SET answer = ?
@@ -379,6 +398,15 @@ UPDATE forumcategory SET title = $2, description = $3 WHERE idforumcategory = $1
 
 func (q *Queries) changeCategory(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, changeCategory)
+	return err
+}
+
+const changeImageBoard = `-- name: changeImageBoard :exec
+UPDATE imageboard SET title = $2, description = $3, imageboard_idimageboard = $4 WHERE idimageboard = $1
+`
+
+func (q *Queries) changeImageBoard(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, changeImageBoard)
 	return err
 }
 
@@ -653,6 +681,15 @@ func (q *Queries) getUsersTopicLevelInviteMax(ctx context.Context) (sql.NullInt3
 	return invitemax, err
 }
 
+const makeImageBoard = `-- name: makeImageBoard :exec
+INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES ($1, $2, $3)
+`
+
+func (q *Queries) makeImageBoard(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, makeImageBoard)
+	return err
+}
+
 const modify_faq = `-- name: modify_faq :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
@@ -674,6 +711,56 @@ func (q *Queries) modify_faq(ctx context.Context, arg modify_faqParams) error {
 		arg.Idfaq,
 	)
 	return err
+}
+
+const printBoardPosts = `-- name: printBoardPosts :many
+SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.idimagepost, IF(th.comments IS NULL, 0, th.comments + 1)
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+WHERE i.imageboard_idimageboard = $1
+ORDER BY i.posted DESC
+`
+
+type printBoardPostsRow struct {
+	Description sql.NullString
+	Thumbnail   sql.NullString
+	Fullimage   sql.NullString
+	Username    sql.NullString
+	Posted      sql.NullTime
+	Idimagepost int32
+	If          interface{}
+}
+
+func (q *Queries) printBoardPosts(ctx context.Context) ([]*printBoardPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printBoardPosts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*printBoardPostsRow
+	for rows.Next() {
+		var i printBoardPostsRow
+		if err := rows.Scan(
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.Username,
+			&i.Posted,
+			&i.Idimagepost,
+			&i.If,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const printCategoryRoots = `-- name: printCategoryRoots :many
@@ -708,6 +795,87 @@ func (q *Queries) printCategoryRoots(ctx context.Context) ([]*printCategoryRoots
 			&i.Title_2,
 			&i.Title_3,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const printImagePost = `-- name: printImagePost :many
+SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.forumthread_idforumthread, i.idimagepost
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+WHERE i.idimagepost = $1
+`
+
+type printImagePostRow struct {
+	Description              sql.NullString
+	Thumbnail                sql.NullString
+	Fullimage                sql.NullString
+	Username                 sql.NullString
+	Posted                   sql.NullTime
+	ForumthreadIdforumthread int32
+	Idimagepost              int32
+}
+
+func (q *Queries) printImagePost(ctx context.Context) ([]*printImagePostRow, error) {
+	rows, err := q.db.QueryContext(ctx, printImagePost)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*printImagePostRow
+	for rows.Next() {
+		var i printImagePostRow
+		if err := rows.Scan(
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.Username,
+			&i.Posted,
+			&i.ForumthreadIdforumthread,
+			&i.Idimagepost,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const printSubBoards = `-- name: printSubBoards :many
+SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = $1
+`
+
+type printSubBoardsRow struct {
+	Idimageboard int32
+	Title        sql.NullString
+	Description  sql.NullString
+}
+
+func (q *Queries) printSubBoards(ctx context.Context) ([]*printSubBoardsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printSubBoards)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*printSubBoardsRow
+	for rows.Next() {
+		var i printSubBoardsRow
+		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Description); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -1079,6 +1247,50 @@ UPDATE userstopiclevel SET level = $3, invitemax = $4 WHERE forumtopic_idforumto
 func (q *Queries) setUsersTopicLevel(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, setUsersTopicLevel)
 	return err
+}
+
+const showAllBoards = `-- name: showAllBoards :many
+SELECT b.idimageboard, b.title, b.description, b.imageboard_idimageboard, pb.title
+FROM imageboard b
+LEFT JOIN imageboard pb ON b.imageboard_idimageboard = pb.idimageboard OR b.imageboard_idimageboard = 0
+GROUP BY b.idimageboard
+`
+
+type showAllBoardsRow struct {
+	Idimageboard           int32
+	Title                  sql.NullString
+	Description            sql.NullString
+	ImageboardIdimageboard int32
+	Title_2                sql.NullString
+}
+
+func (q *Queries) showAllBoards(ctx context.Context) ([]*showAllBoardsRow, error) {
+	rows, err := q.db.QueryContext(ctx, showAllBoards)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*showAllBoardsRow
+	for rows.Next() {
+		var i showAllBoardsRow
+		if err := rows.Scan(
+			&i.Idimageboard,
+			&i.Title,
+			&i.Description,
+			&i.ImageboardIdimageboard,
+			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const showAllCategories = `-- name: showAllCategories :many
@@ -1795,6 +2007,20 @@ func (q *Queries) users_bookmarks(ctx context.Context, usersIdusers int32) (sql.
 	var list sql.NullString
 	err := row.Scan(&list)
 	return list, err
+}
+
+const writeRSS = `-- name: writeRSS :exec
+SELECT title, description FROM imageboard WHERE idimageboard = $1
+`
+
+type writeRSSRow struct {
+	Title       sql.NullString
+	Description sql.NullString
+}
+
+func (q *Queries) writeRSS(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, writeRSS)
+	return err
 }
 
 const write_blog_atom = `-- name: write_blog_atom :many

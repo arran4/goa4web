@@ -536,3 +536,43 @@ LEFT JOIN forumcategory c1 ON c1.idforumcategory = t.forumcategory_idforumcatego
 LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
 LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
 WHERE t.idforumtopic = $1;
+
+
+-- name: writeRSS :exec
+SELECT title, description FROM imageboard WHERE idimageboard = $1;
+
+-- name: makeImageBoard :exec
+INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES ($1, $2, $3);
+
+-- name: changeImageBoard :exec
+UPDATE imageboard SET title = $2, description = $3, imageboard_idimageboard = $4 WHERE idimageboard = $1;
+
+-- name: printSubBoards :many
+SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = $1;
+
+-- name: printImagePost :many
+SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.forumthread_idforumthread, i.idimagepost
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+WHERE i.idimagepost = $1;
+
+-- name: printBoardPosts :many
+SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.idimagepost, IF(th.comments IS NULL, 0, th.comments + 1)
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+WHERE i.imageboard_idimageboard = $1
+ORDER BY i.posted DESC;
+
+-- name: addImage :exec
+INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
+VALUES ($1, $2, $3, $4, $5, NOW());
+
+-- name: assignImagePostThisThreadId :exec
+UPDATE imagepost SET forumthread_idforumthread = $1 WHERE idimagepost = $2;
+
+-- name: showAllBoards :many
+SELECT b.idimageboard, b.title, b.description, b.imageboard_idimageboard, pb.title
+FROM imageboard b
+LEFT JOIN imageboard pb ON b.imageboard_idimageboard = pb.idimageboard OR b.imageboard_idimageboard = 0
+GROUP BY b.idimageboard;

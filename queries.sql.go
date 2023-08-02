@@ -59,6 +59,22 @@ func (q *Queries) add_blog(ctx context.Context, arg add_blogParams) error {
 	return err
 }
 
+const add_bookmarks = `-- name: add_bookmarks :exec
+INSERT INTO bookmarks (users_idusers, list)
+VALUES (?, ?)
+`
+
+type add_bookmarksParams struct {
+	UsersIdusers int32
+	List         sql.NullString
+}
+
+// This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".
+func (q *Queries) add_bookmarks(ctx context.Context, arg add_bookmarksParams) error {
+	_, err := q.db.ExecContext(ctx, add_bookmarks, arg.UsersIdusers, arg.List)
+	return err
+}
+
 const adminUserPermissions = `-- name: adminUserPermissions :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
@@ -359,6 +375,17 @@ func (q *Queries) delete_blog_search(ctx context.Context, blogsIdblogs int32) er
 	return err
 }
 
+const delete_bookmarks = `-- name: delete_bookmarks :exec
+DELETE FROM bookmarks
+WHERE users_idusers = ?
+`
+
+// This query deletes all entries from the "bookmarks" table for a specific user based on their "users_idusers".
+func (q *Queries) delete_bookmarks(ctx context.Context, usersIdusers int32) error {
+	_, err := q.db.ExecContext(ctx, delete_bookmarks, usersIdusers)
+	return err
+}
+
 const remakeBlogSearch = `-- name: remakeBlogSearch :exec
 INSERT INTO blogsSearch (text, blogs_idblogs)
 SELECT blog, idblogs
@@ -617,6 +644,20 @@ func (q *Queries) show_blogger_list(ctx context.Context) ([]*show_blogger_listRo
 	return items, nil
 }
 
+const show_bookmarks = `-- name: show_bookmarks :one
+SELECT list
+FROM bookmarks
+WHERE users_idusers = ?
+`
+
+// This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
+func (q *Queries) show_bookmarks(ctx context.Context, usersIdusers int32) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, show_bookmarks, usersIdusers)
+	var list sql.NullString
+	err := row.Scan(&list)
+	return list, err
+}
+
 const show_latest_blogs = `-- name: show_latest_blogs :many
 SELECT b.blog, b.written, u.username, b.idblogs, IF(th.comments IS NULL, 0, th.comments + 1), b.users_idusers
 FROM blogs b, users u
@@ -691,6 +732,23 @@ type update_blogParams struct {
 
 func (q *Queries) update_blog(ctx context.Context, arg update_blogParams) error {
 	_, err := q.db.ExecContext(ctx, update_blog, arg.LanguageIdlanguage, arg.Blog, arg.Idblogs)
+	return err
+}
+
+const update_bookmarks = `-- name: update_bookmarks :exec
+UPDATE bookmarks
+SET list = ?
+WHERE users_idusers = ?
+`
+
+type update_bookmarksParams struct {
+	List         sql.NullString
+	UsersIdusers int32
+}
+
+// This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
+func (q *Queries) update_bookmarks(ctx context.Context, arg update_bookmarksParams) error {
+	_, err := q.db.ExecContext(ctx, update_bookmarks, arg.List, arg.UsersIdusers)
 	return err
 }
 
@@ -880,6 +938,20 @@ type user_disallowParams struct {
 func (q *Queries) user_disallow(ctx context.Context, arg user_disallowParams) error {
 	_, err := q.db.ExecContext(ctx, user_disallow, arg.Idpermissions, arg.Section)
 	return err
+}
+
+const users_bookmarks = `-- name: users_bookmarks :one
+SELECT list
+FROM bookmarks
+WHERE users_idusers = ?
+`
+
+// This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
+func (q *Queries) users_bookmarks(ctx context.Context, usersIdusers int32) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, users_bookmarks, usersIdusers)
+	var list sql.NullString
+	err := row.Scan(&list)
+	return list, err
 }
 
 const write_blog_atom = `-- name: write_blog_atom :many

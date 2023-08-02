@@ -342,3 +342,32 @@ WHERE idpermissions = ? AND section = ?;
 SELECT b.blog, b.language_idlanguage
 FROM blogs b, users u
 WHERE b.users_idusers = u.idusers AND b.idblogs = ?;
+
+-- name: add_bookmarks :exec
+-- This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".
+INSERT INTO bookmarks (users_idusers, list)
+VALUES (?, ?);
+SELECT LAST_INSERT_ID() AS returnthis;
+
+-- name: update_bookmarks :exec
+-- This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
+UPDATE bookmarks
+SET list = ?
+WHERE users_idusers = ?;
+
+-- name: delete_bookmarks :exec
+-- This query deletes all entries from the "bookmarks" table for a specific user based on their "users_idusers".
+DELETE FROM bookmarks
+WHERE users_idusers = ?;
+
+-- name: show_bookmarks :one
+-- This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
+SELECT list
+FROM bookmarks
+WHERE users_idusers = ?;
+
+-- name: users_bookmarks :one
+-- This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
+SELECT list
+FROM bookmarks
+WHERE users_idusers = ?;

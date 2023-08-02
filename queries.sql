@@ -713,29 +713,92 @@ ORDER BY l.listed DESC;
 -- GROUP BY c.forumthread_idforumthread;
 
 -- name: usernametouid :one
-SELECT idusers FROM users WHERE username = ?
+SELECT idusers FROM users WHERE username = ?;
 
 -- name: lang_combobox :many
-SELECT idlanguage, nameof FROM language l
+SELECT l.idlanguage, l.nameof FROM language l;
 
 -- name: getSecurityLevel :one
-SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all')
+SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all');
 
 -- name: getLangs :one
-SELECT language_idlanguage FROM userlang WHERE users_idusers = ?
+SELECT language_idlanguage FROM userlang WHERE users_idusers = ?;
 
--- name: preferences::refreshPref :many
-SELECT language_idlanguage FROM preferences WHERE users_idusers = ?
+-- name: preferencesRefreshPref :many
+SELECT language_idlanguage FROM preferences WHERE users_idusers = ?;
 
 -- name: getWordID :one
-SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?)
+SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?);
 
--- name: addWord :one
-INSERT INTO searchwordlist (word) VALUES (lcase(?))
+-- name: addWord :exec
+INSERT INTO searchwordlist (word) VALUES (lcase(?));
 
 -- -- name: addToGeneralSearch :exec
 -- INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
 
 -- name: notifyChange :many
-SELECT email FROM users WHERE idusers = ?
+SELECT email FROM users WHERE idusers = ?;
 
+-- name: postUpdate :exec
+UPDATE comments c, forumthread th, forumtopic t
+SET
+th.lastposter=c.users_idusers, t.lastposter=c.users_idusers,
+th.lastaddition=c.written, t.lastaddition=c.written,
+t.comments=IF(th.comments IS NULL, 0, t.comments+1),
+t.threads=IF(th.comments IS NULL, IF(t.threads IS NULL, 1, t.threads+1), t.threads),
+th.comments=IF(th.comments IS NULL, 0, th.comments+1),
+th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
+WHERE c.idcomments=?;
+
+-- name: topicAllowThis :one
+SELECT r.*, u.level FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic=r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic=t.idforumtopic AND u.users_idusers=?
+WHERE t.idforumtopic=? LIMIT 1;
+
+-- name: threadAllowThis :one
+SELECT r.*, u.level FROM forumthread t
+LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic=r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic=t.forumtopic_idforumtopic AND u.users_idusers=?
+WHERE t.idforumthread=? LIMIT 1;
+
+-- name: makePost :exec
+INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
+VALUES (?, ?, ?, ?, NOW());
+
+-- name: makeThread :exec
+INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
+
+-- name: makeCategory :exec
+INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
+
+-- name: makeTopic :exec
+INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
+
+-- name: findForumTopicByName :one
+SELECT idforumtopic FROM forumtopic WHERE title=?;
+
+-- name: printThread :many
+SELECT c.idcomments, c.text, c.written, u.username, u.idusers FROM comments c, users u
+WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
+ORDER BY c.written;
+
+-- name: somethingNotifyBlogs :exec
+SELECT u.email FROM blogs t, users u, preferences p
+WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers;
+
+-- name: somethingNotifyLinker :exec
+SELECT u.email FROM linker t, users u, preferences p
+WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers;
+
+-- name: somethingNotifyWriting :exec
+SELECT u.email FROM writing t, users u, preferences p
+WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers;
+
+-- name: threadNotify :exec
+SELECT u.email FROM comments c, users u, preferences p
+WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
+GROUP BY u.idusers;

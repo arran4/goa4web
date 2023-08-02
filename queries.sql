@@ -802,3 +802,42 @@ GROUP BY u.idusers;
 SELECT u.email FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
+
+-- name: deleteUserLanguage :exec
+DELETE FROM userlang WHERE users_idusers = ?;
+
+-- name: fetchLanguages :query
+SELECT idlanguage, nameof FROM language;
+
+-- name: updateOrInsertUserLanguage :exec
+WITH pref_count AS (
+  SELECT COUNT(users_idusers) AS prefcount FROM preferences WHERE users_idusers = ?
+)
+INSERT INTO preferences (language_idlanguage, users_idusers)
+VALUES (?, ?)
+ON DUPLICATE KEY UPDATE
+  language_idlanguage = VALUES(language_idlanguage);
+
+-- name: fetchUserLanguagePreferences :query
+SELECT idlanguage, nameof, (
+  SELECT COUNT(sul.iduserlang) FROM userlang sul
+  WHERE sul.language_idlanguage = l.idlanguage AND sul.users_idusers = ?
+) AS user_lang_pref
+FROM language l;
+
+-- name: updateOrInsertEmailForumUpdates :exec
+WITH email_updates AS (
+  SELECT emailforumupdates FROM preferences WHERE users_idusers = ?
+)
+INSERT INTO preferences (emailforumupdates, users_idusers)
+VALUES (?, ?)
+ON DUPLICATE KEY UPDATE
+  emailforumupdates = VALUES(emailforumupdates);
+
+-- name: fetchUserEmailForumUpdates :query
+SELECT emailforumupdates FROM preferences WHERE users_idusers = ?;
+
+
+
+
+

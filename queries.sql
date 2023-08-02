@@ -577,7 +577,7 @@ FROM imageboard b
 LEFT JOIN imageboard pb ON b.imageboard_idimageboard = pb.idimageboard OR b.imageboard_idimageboard = 0
 GROUP BY b.idimageboard;
 
--- name: writeRSS :many
+-- name: writeSiteNewsRSS :many
 SELECT s.idsiteNews, s.occured, s.news
 FROM siteNews s
 ORDER BY s.occured DESC LIMIT 15;
@@ -620,3 +620,74 @@ LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
 WHERE $1 AND $2
 ORDER BY s.occured DESC
 LIMIT 10;
+
+-- name: countLinkerCategories :one
+SELECT COUNT(*) FROM linkerCategory;
+
+-- name: deleteCategory :exec
+DELETE FROM linkerCategory WHERE idlinkerCategory = $1;
+
+-- name: renameCategory :exec
+UPDATE linkerCategory SET title = $1 WHERE idlinkerCategory = $2;
+
+-- name: createCategory :exec
+INSERT INTO linkerCategory (title) VALUES ($1);
+
+-- name: showCategories :many
+SELECT idlinkerCategory, title FROM linkerCategory;
+
+-- name: category_combobox :many
+SELECT idlinkerCategory, title FROM linkerCategory;
+
+-- name: adminCategories :many
+SELECT idlinkerCategory, title FROM linkerCategory;
+
+-- name: deleteQueueItem :exec
+DELETE FROM linkerQueue WHERE idlinkerQueue = $1;
+
+-- name: updateQueue :exec
+UPDATE linkerQueue SET linkerCategory_idlinkerCategory = $1, title = $2, url = $3, description = $4 WHERE idlinkerQueue = $5;
+
+-- name: addToQueue :exec
+INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES ($1, $2, $3, $4, $5);
+
+-- name: showAdminQueue :many
+SELECT l.title, l.url, l.description, u.username, l.idlinkerQueue, c.title, c.idlinkerCategory
+FROM linkerQueue l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory;
+
+-- name: moveToLinker :many
+SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
+FROM linkerQueue l WHERE l.idlinkerQueue = $1;
+
+-- name: addToLinker :exec
+INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
+VALUES ($1, $2, $3, $4, $5, NOW());
+
+-- name: assignLinkerThisThreadId :exec
+UPDATE linker SET forumthread_idforumthread = $1 WHERE idlinker = $2;
+
+-- name: showLatest :many
+SELECT l.title, l.url, l.description, u.username, l.idlinker, l.listed,
+       IF(th.comments IS NULL, 0, th.comments+1), lc.title
+FROM linker l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+WHERE l.linkerCategory_idlinkerCategory = $1
+ORDER BY l.listed DESC;
+
+-- name: showLinkComments :many
+SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforumthread, lc.title
+FROM linker l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+WHERE l.idlinker = $1;
+
+-- name: writeLinkerRSS :many
+SELECT l.idlinker, l.title, l.description, l.url
+FROM linker l
+WHERE l.linkerCategory_idlinkerCategory = $1
+ORDER BY l.listed DESC;
+
+

@@ -53,6 +53,25 @@ func (q *Queries) addImage(ctx context.Context) error {
 	return err
 }
 
+const addToLinker = `-- name: addToLinker :exec
+INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
+VALUES ($1, $2, $3, $4, $5, NOW())
+`
+
+func (q *Queries) addToLinker(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, addToLinker)
+	return err
+}
+
+const addToQueue = `-- name: addToQueue :exec
+INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES ($1, $2, $3, $4, $5)
+`
+
+func (q *Queries) addToQueue(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, addToQueue)
+	return err
+}
+
 const addTopicRestrictions = `-- name: addTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -119,6 +138,33 @@ type add_questionParams struct {
 func (q *Queries) add_question(ctx context.Context, arg add_questionParams) error {
 	_, err := q.db.ExecContext(ctx, add_question, arg.Question, arg.UsersIdusers, arg.LanguageIdlanguage)
 	return err
+}
+
+const adminCategories = `-- name: adminCategories :many
+SELECT idlinkerCategory, title FROM linkerCategory
+`
+
+func (q *Queries) adminCategories(ctx context.Context) ([]*Linkercategory, error) {
+	rows, err := q.db.QueryContext(ctx, adminCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Linkercategory
+	for rows.Next() {
+		var i Linkercategory
+		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const adminUserPermissions = `-- name: adminUserPermissions :many
@@ -294,6 +340,24 @@ func (q *Queries) assignImagePostThisThreadId(ctx context.Context) error {
 	return err
 }
 
+const assignLinkerThisThreadId = `-- name: assignLinkerThisThreadId :exec
+UPDATE linker SET forumthread_idforumthread = $1 WHERE idlinker = $2
+`
+
+func (q *Queries) assignLinkerThisThreadId(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, assignLinkerThisThreadId)
+	return err
+}
+
+const assignNewsThisThreadId = `-- name: assignNewsThisThreadId :exec
+UPDATE siteNews SET forumthread_idforumthread = $1 WHERE idsiteNews = $2
+`
+
+func (q *Queries) assignNewsThisThreadId(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, assignNewsThisThreadId)
+	return err
+}
+
 const assign_answer = `-- name: assign_answer :exec
 UPDATE faq
 SET answer = ?
@@ -349,6 +413,33 @@ func (q *Queries) categories(ctx context.Context) (*Faqcategory, error) {
 	var i Faqcategory
 	err := row.Scan(&i.Idfaqcategories, &i.Name)
 	return &i, err
+}
+
+const category_combobox = `-- name: category_combobox :many
+SELECT idlinkerCategory, title FROM linkerCategory
+`
+
+func (q *Queries) category_combobox(ctx context.Context) ([]*Linkercategory, error) {
+	rows, err := q.db.QueryContext(ctx, category_combobox)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Linkercategory
+	for rows.Next() {
+		var i Linkercategory
+		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const category_faqs = `-- name: category_faqs :many
@@ -446,6 +537,17 @@ func (q *Queries) countCategories(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countLinkerCategories = `-- name: countLinkerCategories :one
+SELECT COUNT(*) FROM linkerCategory
+`
+
+func (q *Queries) countLinkerCategories(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLinkerCategories)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const count_categories = `-- name: count_categories :one
 SELECT COUNT(*) FROM faqCategories
 `
@@ -455,6 +557,15 @@ func (q *Queries) count_categories(ctx context.Context) (int64, error) {
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const createCategory = `-- name: createCategory :exec
+INSERT INTO linkerCategory (title) VALUES ($1)
+`
+
+func (q *Queries) createCategory(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, createCategory)
+	return err
 }
 
 const createLanguage = `-- name: createLanguage :exec
@@ -491,6 +602,15 @@ func (q *Queries) deleteBlogsSearch(ctx context.Context) error {
 	return err
 }
 
+const deleteCategory = `-- name: deleteCategory :exec
+DELETE FROM linkerCategory WHERE idlinkerCategory = $1
+`
+
+func (q *Queries) deleteCategory(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteCategory)
+	return err
+}
+
 const deleteCommentsSearch = `-- name: deleteCommentsSearch :exec
 DELETE FROM commentsSearch
 `
@@ -522,6 +642,15 @@ DELETE FROM linkerSearch
 // This query deletes all data from the "linkerSearch" table.
 func (q *Queries) deleteLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteLinkerSearch)
+	return err
+}
+
+const deleteQueueItem = `-- name: deleteQueueItem :exec
+DELETE FROM linkerQueue WHERE idlinkerQueue = $1
+`
+
+func (q *Queries) deleteQueueItem(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteQueueItem)
 	return err
 }
 
@@ -614,6 +743,57 @@ func (q *Queries) delete_category(ctx context.Context, idfaqcategories int32) er
 	return err
 }
 
+const doCalled = `-- name: doCalled :many
+SELECT s.news, s.idsiteNews, u.idusers, s.language_idlanguage
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+WHERE s.idsiteNews = $1
+`
+
+type doCalledRow struct {
+	News               sql.NullString
+	Idsitenews         int32
+	Idusers            sql.NullInt32
+	LanguageIdlanguage int32
+}
+
+func (q *Queries) doCalled(ctx context.Context) ([]*doCalledRow, error) {
+	rows, err := q.db.QueryContext(ctx, doCalled)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*doCalledRow
+	for rows.Next() {
+		var i doCalledRow
+		if err := rows.Scan(
+			&i.News,
+			&i.Idsitenews,
+			&i.Idusers,
+			&i.LanguageIdlanguage,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const editNewsPost = `-- name: editNewsPost :exec
+UPDATE siteNews SET news = $1, language_idlanguage = $2 WHERE idsiteNews = $3
+`
+
+func (q *Queries) editNewsPost(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, editNewsPost)
+	return err
+}
+
 const existsTopicRestrictions = `-- name: existsTopicRestrictions :one
 SELECT (forumtopic_idforumtopic) FROM topicrestrictions WHERE forumtopic_idforumtopic = $1
 `
@@ -657,6 +837,18 @@ func (q *Queries) expandCategories(ctx context.Context) ([]*expandCategoriesRow,
 		return nil, err
 	}
 	return items, nil
+}
+
+const getNewsThreadId = `-- name: getNewsThreadId :one
+SELECT s.forumthread_idforumthread FROM siteNews s, users u
+WHERE s.users_idusers = u.idusers AND s.idsiteNews = $1
+`
+
+func (q *Queries) getNewsThreadId(ctx context.Context) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getNewsThreadId)
+	var forumthread_idforumthread int32
+	err := row.Scan(&forumthread_idforumthread)
+	return forumthread_idforumthread, err
 }
 
 const getUsersTopicLevel = `-- name: getUsersTopicLevel :one
@@ -711,6 +903,50 @@ func (q *Queries) modify_faq(ctx context.Context, arg modify_faqParams) error {
 		arg.Idfaq,
 	)
 	return err
+}
+
+const moveToLinker = `-- name: moveToLinker :many
+SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
+FROM linkerQueue l WHERE l.idlinkerQueue = $1
+`
+
+type moveToLinkerRow struct {
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	LanguageIdlanguage             int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+}
+
+func (q *Queries) moveToLinker(ctx context.Context) ([]*moveToLinkerRow, error) {
+	rows, err := q.db.QueryContext(ctx, moveToLinker)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*moveToLinkerRow
+	for rows.Next() {
+		var i moveToLinkerRow
+		if err := rows.Scan(
+			&i.UsersIdusers,
+			&i.LinkercategoryIdlinkercategory,
+			&i.LanguageIdlanguage,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const printBoardPosts = `-- name: printBoardPosts :many
@@ -1198,6 +1434,15 @@ func (q *Queries) remakeWritingSearchInsert(ctx context.Context) error {
 	return err
 }
 
+const renameCategory = `-- name: renameCategory :exec
+UPDATE linkerCategory SET title = $1 WHERE idlinkerCategory = $2
+`
+
+func (q *Queries) renameCategory(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, renameCategory)
+	return err
+}
+
 const renameLanguage = `-- name: renameLanguage :exec
 UPDATE language
 SET nameof = $1
@@ -1247,6 +1492,54 @@ UPDATE userstopiclevel SET level = $3, invitemax = $4 WHERE forumtopic_idforumto
 func (q *Queries) setUsersTopicLevel(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, setUsersTopicLevel)
 	return err
+}
+
+const showAdminQueue = `-- name: showAdminQueue :many
+SELECT l.title, l.url, l.description, u.username, l.idlinkerQueue, c.title, c.idlinkerCategory
+FROM linkerQueue l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
+`
+
+type showAdminQueueRow struct {
+	Title            sql.NullString
+	Url              sql.NullString
+	Description      sql.NullString
+	Username         sql.NullString
+	Idlinkerqueue    int32
+	Title_2          sql.NullString
+	Idlinkercategory int32
+}
+
+func (q *Queries) showAdminQueue(ctx context.Context) ([]*showAdminQueueRow, error) {
+	rows, err := q.db.QueryContext(ctx, showAdminQueue)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*showAdminQueueRow
+	for rows.Next() {
+		var i showAdminQueueRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Username,
+			&i.Idlinkerqueue,
+			&i.Title_2,
+			&i.Idlinkercategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const showAllBoards = `-- name: showAllBoards :many
@@ -1366,6 +1659,242 @@ func (q *Queries) showAllTopics(ctx context.Context) ([]*showAllTopicsRow, error
 			&i.Description,
 			&i.ForumcategoryIdforumcategory,
 			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const showCategories = `-- name: showCategories :many
+SELECT idlinkerCategory, title FROM linkerCategory
+`
+
+func (q *Queries) showCategories(ctx context.Context) ([]*Linkercategory, error) {
+	rows, err := q.db.QueryContext(ctx, showCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Linkercategory
+	for rows.Next() {
+		var i Linkercategory
+		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const showLatest = `-- name: showLatest :many
+SELECT l.title, l.url, l.description, u.username, l.idlinker, l.listed,
+       IF(th.comments IS NULL, 0, th.comments+1), lc.title
+FROM linker l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+WHERE l.linkerCategory_idlinkerCategory = $1
+ORDER BY l.listed DESC
+`
+
+type showLatestRow struct {
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Username    sql.NullString
+	Idlinker    int32
+	Listed      sql.NullTime
+	If          interface{}
+	Title_2     sql.NullString
+}
+
+func (q *Queries) showLatest(ctx context.Context) ([]*showLatestRow, error) {
+	rows, err := q.db.QueryContext(ctx, showLatest)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*showLatestRow
+	for rows.Next() {
+		var i showLatestRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Username,
+			&i.Idlinker,
+			&i.Listed,
+			&i.If,
+			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const showLinkComments = `-- name: showLinkComments :many
+SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforumthread, lc.title
+FROM linker l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+WHERE l.idlinker = $1
+`
+
+type showLinkCommentsRow struct {
+	Title                    sql.NullString
+	Url                      sql.NullString
+	Description              sql.NullString
+	Username                 sql.NullString
+	Listed                   sql.NullTime
+	ForumthreadIdforumthread int32
+	Title_2                  sql.NullString
+}
+
+func (q *Queries) showLinkComments(ctx context.Context) ([]*showLinkCommentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, showLinkComments)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*showLinkCommentsRow
+	for rows.Next() {
+		var i showLinkCommentsRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Username,
+			&i.Listed,
+			&i.ForumthreadIdforumthread,
+			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const showNews = `-- name: showNews :one
+SELECT count(idsiteNews) FROM siteNews
+WHERE $1 AND $2
+`
+
+func (q *Queries) showNews(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, showNews)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const showNewsPosts = `-- name: showNewsPosts :many
+SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, IF(th.comments IS NULL, 0, th.comments + 1)
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+WHERE $1 AND $2
+ORDER BY s.occured DESC
+LIMIT 10
+`
+
+type showNewsPostsRow struct {
+	Username   sql.NullString
+	News       sql.NullString
+	Occured    sql.NullTime
+	Idsitenews int32
+	Idusers    sql.NullInt32
+	If         interface{}
+}
+
+func (q *Queries) showNewsPosts(ctx context.Context) ([]*showNewsPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, showNewsPosts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*showNewsPostsRow
+	for rows.Next() {
+		var i showNewsPostsRow
+		if err := rows.Scan(
+			&i.Username,
+			&i.News,
+			&i.Occured,
+			&i.Idsitenews,
+			&i.Idusers,
+			&i.If,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const showPost = `-- name: showPost :many
+SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, s.forumthread_idforumthread
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+WHERE s.idsiteNews = $1
+`
+
+type showPostRow struct {
+	Username                 sql.NullString
+	News                     sql.NullString
+	Occured                  sql.NullTime
+	Idsitenews               int32
+	Idusers                  sql.NullInt32
+	ForumthreadIdforumthread int32
+}
+
+func (q *Queries) showPost(ctx context.Context) ([]*showPostRow, error) {
+	rows, err := q.db.QueryContext(ctx, showPost)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*showPostRow
+	for rows.Next() {
+		var i showPostRow
+		if err := rows.Scan(
+			&i.Username,
+			&i.News,
+			&i.Occured,
+			&i.Idsitenews,
+			&i.Idusers,
+			&i.ForumthreadIdforumthread,
 		); err != nil {
 			return nil, err
 		}
@@ -1773,6 +2302,15 @@ func (q *Queries) show_topics(ctx context.Context) ([]*show_topicsRow, error) {
 	return items, nil
 }
 
+const updateQueue = `-- name: updateQueue :exec
+UPDATE linkerQueue SET linkerCategory_idlinkerCategory = $1, title = $2, url = $3, description = $4 WHERE idlinkerQueue = $5
+`
+
+func (q *Queries) updateQueue(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, updateQueue)
+	return err
+}
+
 const update_blog = `-- name: update_blog :exec
 UPDATE blogs
 SET language_idlanguage = ?, blog = ?
@@ -2009,6 +2547,58 @@ func (q *Queries) users_bookmarks(ctx context.Context, usersIdusers int32) (sql.
 	return list, err
 }
 
+const writeLinkerRSS = `-- name: writeLinkerRSS :many
+SELECT l.idlinker, l.title, l.description, l.url
+FROM linker l
+WHERE l.linkerCategory_idlinkerCategory = $1
+ORDER BY l.listed DESC
+`
+
+type writeLinkerRSSRow struct {
+	Idlinker    int32
+	Title       sql.NullString
+	Description sql.NullString
+	Url         sql.NullString
+}
+
+func (q *Queries) writeLinkerRSS(ctx context.Context) ([]*writeLinkerRSSRow, error) {
+	rows, err := q.db.QueryContext(ctx, writeLinkerRSS)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*writeLinkerRSSRow
+	for rows.Next() {
+		var i writeLinkerRSSRow
+		if err := rows.Scan(
+			&i.Idlinker,
+			&i.Title,
+			&i.Description,
+			&i.Url,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const writeNewsPost = `-- name: writeNewsPost :exec
+INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
+VALUES ($1, $2, NOW(), $3)
+`
+
+func (q *Queries) writeNewsPost(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, writeNewsPost)
+	return err
+}
+
 const writeRSS = `-- name: writeRSS :exec
 SELECT title, description FROM imageboard WHERE idimageboard = $1
 `
@@ -2021,6 +2611,41 @@ type writeRSSRow struct {
 func (q *Queries) writeRSS(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, writeRSS)
 	return err
+}
+
+const writeSiteNewsRSS = `-- name: writeSiteNewsRSS :many
+SELECT s.idsiteNews, s.occured, s.news
+FROM siteNews s
+ORDER BY s.occured DESC LIMIT 15
+`
+
+type writeSiteNewsRSSRow struct {
+	Idsitenews int32
+	Occured    sql.NullTime
+	News       sql.NullString
+}
+
+func (q *Queries) writeSiteNewsRSS(ctx context.Context) ([]*writeSiteNewsRSSRow, error) {
+	rows, err := q.db.QueryContext(ctx, writeSiteNewsRSS)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*writeSiteNewsRSSRow
+	for rows.Next() {
+		var i writeSiteNewsRSSRow
+		if err := rows.Scan(&i.Idsitenews, &i.Occured, &i.News); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const write_blog_atom = `-- name: write_blog_atom :many

@@ -691,3 +691,23 @@ WHERE l.linkerCategory_idlinkerCategory = $1
 ORDER BY l.listed DESC;
 
 
+-- -- name: forumTopicSearch :many
+-- SELECT * FROM comments c
+-- LEFT JOIN forumthread th ON th.idforumthread = c.forumthread_idforumthread
+-- LEFT JOIN forumtopic t ON t.idforumtopic = th.forumtopic_idforumtopic
+-- LEFT JOIN userstopiclevel utl ON t.idforumtopic = utl.forumtopic_idforumtopic AND utl.users_idusers = ?
+-- LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+--  WHERE c.idcomments IN (?) AND th.idforumthread != 0 AND t.idforumtopic = ?
+-- AND ((r.readlevel <= utl.level AND r.viewlevel <= utl.level AND r.seelevel <= utl.level));
+--
+-- -- name: forumSearch :many
+-- SELECT c.forumthread_idforumthread FROM comments c
+-- LEFT JOIN forumthread th ON th.idforumthread = c.forumthread_idforumthread
+-- LEFT JOIN forumtopic t ON t.idforumtopic = th.forumtopic_idforumtopic
+-- LEFT JOIN forumcategory fc ON fc.idforumcategory = t.forumcategory_idforumcategory
+-- LEFT JOIN userstopiclevel utl ON t.idforumtopic = utl.forumtopic_idforumtopic AND utl.users_idusers = ?
+-- LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+-- WHERE c.idcomments IN (?) AND th.idforumthread != 0 AND t.idforumtopic != 0
+-- AND ((r.readlevel <= utl.level AND r.viewlevel <= utl.level AND r.seelevel <= utl.level) OR ?)
+-- AND fc.idforumcategory != 0
+-- GROUP BY c.forumthread_idforumthread;

@@ -80,7 +80,7 @@ func adminUserPermissions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Query the database (replace "your-db-connection-string" with the actual connection string).
-	db, err := sql.Open("mysql", "your-db-connection-string")
+	db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -126,8 +126,4 @@ func adminUserPermissions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-}
-
-func init() {
-	//http.HandleFunc("/adminUserPermissions", adminUserPermissions)
 }

@@ -36,7 +36,9 @@ var (
 func main() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", homeHandler)
+	r.HandleFunc("/", indexHandler)
+	r.HandleFunc("/adminUserPermissions", adminUserPermissions)
+	//r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/login", loginHandler)
 	r.HandleFunc("/callback", callbackHandler)
 	r.HandleFunc("/logout", logoutHandler)
@@ -47,7 +49,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
+func oauthHomeHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if user is authenticated
 	if !isAuthenticated(r) {
 		http.Redirect(w, r, "/login", http.StatusFound)

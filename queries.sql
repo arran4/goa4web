@@ -425,3 +425,114 @@ ORDER BY c.idfaqCategories;
 -- name: admin_categories :many
 SELECT idfaqCategories, name
 FROM faqCategories;
+
+-- name: show_categories :exec
+SELECT f.idforumcategory, f.title, f.description
+FROM forumcategory f WHERE f.forumcategory_idforumcategory = $1;
+
+-- name: changeCategory :exec
+UPDATE forumcategory SET title = $2, description = $3 WHERE idforumcategory = $1;
+
+-- name: showAllCategories :many
+SELECT c.idforumcategory, c.title, c.description, c.forumcategory_idforumcategory, c2.title
+FROM forumcategory c
+LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory;
+
+-- name: showAllTopics :many
+SELECT t.idforumtopic, t.title, t.description, t.forumcategory_idforumcategory, c.title
+FROM forumtopic t
+LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
+GROUP BY t.idforumtopic;
+
+-- name: changeTopic :exec
+UPDATE forumtopic SET title = $2, description = $3 WHERE idforumtopic = $1;
+
+-- name: show_topics :many
+SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = $1
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE t.forumcategory_idforumcategory = $2
+ORDER BY t.lastaddition DESC;
+
+-- name: printTopic :many
+SELECT LEFT(c.text, 255), fu.username, c.written, lu.username, t.lastaddition, t.idforumthread, t.comments, r.viewlevel, u.level
+FROM forumthread t
+LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.forumtopic_idforumtopic AND u.users_idusers = $1
+LEFT JOIN comments c ON c.idcomments = t.firstpost
+LEFT JOIN users fu ON fu.idusers = c.users_idusers
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE t.forumtopic_idforumcategory = $2
+ORDER BY t.lastaddition DESC;
+
+-- name: deleteTopicRestrictions :exec
+DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = $1;
+
+-- name: existsTopicRestrictions :one
+SELECT (forumtopic_idforumtopic) FROM topicrestrictions WHERE forumtopic_idforumtopic = $1;
+
+-- name: addTopicRestrictions :exec
+INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: setTopicRestrictions :exec
+UPDATE topicrestrictions SET viewlevel = $1, replylevel = $2, newthreadlevel = $3, seelevel = $4, invitelevel = $5, readlevel = $6, modlevel = $7, adminlevel = $8
+WHERE forumtopic_idforumtopic = $9;
+
+-- name: printTopicRestrictions :many
+SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+WHERE idforumtopic = $1;
+
+-- name: deleteUsersTopicLevel :exec
+DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+
+-- name: addUsersTopicLevel :exec
+INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
+VALUES ($1, $2, $3, $4);
+
+-- name: setUsersTopicLevel :exec
+UPDATE userstopiclevel SET level = $3, invitemax = $4 WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+
+-- name: getUsersTopicLevelInviteMax :one
+SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+
+-- name: getUsersTopicLevel :one
+SELECT level FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+
+-- name: showTopicUserLevels :one
+SELECT r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+WHERE idforumtopic = $1;
+
+-- name: showTableTopics :many
+SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = $1
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE forumcategory_idforumcategory = $2 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY t.lastaddition DESC;
+
+-- name: expandCategories :many
+SELECT f.idforumcategory, f.title, f.description
+FROM forumcategory f WHERE f.forumcategory_idforumcategory = $1;
+
+-- name: printCategoryRoots :many
+SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.title
+FROM forumcategory c1
+LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
+LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
+WHERE c1.idforumcategory = $1;
+
+-- name: printTopicRoots :many
+SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.idforumcategory, c1.title, t.title
+FROM forumtopic t
+LEFT JOIN forumcategory c1 ON c1.idforumcategory = t.forumcategory_idforumcategory
+LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
+LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
+WHERE t.idforumtopic = $1;

@@ -654,6 +654,20 @@ func (q *Queries) deleteLinkerSearch(ctx context.Context) error {
 	return err
 }
 
+const deletePagePermission = `-- name: deletePagePermission :exec
+DELETE FROM permissions WHERE idpermissions = ? AND section = ?
+`
+
+type deletePagePermissionParams struct {
+	Idpermissions int32
+	Section       sql.NullString
+}
+
+func (q *Queries) deletePagePermission(ctx context.Context, arg deletePagePermissionParams) error {
+	_, err := q.db.ExecContext(ctx, deletePagePermission, arg.Idpermissions, arg.Section)
+	return err
+}
+
 const deleteQueueItem = `-- name: deleteQueueItem :exec
 DELETE FROM linkerQueue WHERE idlinkerQueue = $1
 `
@@ -682,12 +696,36 @@ func (q *Queries) deleteTopicRestrictions(ctx context.Context) error {
 	return err
 }
 
+const deleteUserLanguage = `-- name: deleteUserLanguage :exec
+DELETE FROM userlang WHERE users_idusers = ?
+`
+
+func (q *Queries) deleteUserLanguage(ctx context.Context, usersIdusers int32) error {
+	_, err := q.db.ExecContext(ctx, deleteUserLanguage, usersIdusers)
+	return err
+}
+
 const deleteUsersTopicLevel = `-- name: deleteUsersTopicLevel :exec
 DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2
 `
 
 func (q *Queries) deleteUsersTopicLevel(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteUsersTopicLevel)
+	return err
+}
+
+const deleteWritingApproval = `-- name: deleteWritingApproval :exec
+DELETE FROM writtingApprovedUsers
+WHERE writing_idwriting = ? AND users_idusers = ?
+`
+
+type deleteWritingApprovalParams struct {
+	WritingIdwriting int32
+	UsersIdusers     int32
+}
+
+func (q *Queries) deleteWritingApproval(ctx context.Context, arg deleteWritingApprovalParams) error {
+	_, err := q.db.ExecContext(ctx, deleteWritingApproval, arg.WritingIdwriting, arg.UsersIdusers)
 	return err
 }
 
@@ -848,6 +886,589 @@ func (q *Queries) expandCategories(ctx context.Context) ([]*expandCategoriesRow,
 	return items, nil
 }
 
+const fetchCategories = `-- name: fetchCategories :many
+SELECT idwritingCategory, title, description
+FROM writingCategory
+WHERE writingCategory_idwritingCategory = ?
+`
+
+type fetchCategoriesRow struct {
+	Idwritingcategory int32
+	Title             sql.NullString
+	Description       sql.NullString
+}
+
+func (q *Queries) fetchCategories(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*fetchCategoriesRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchCategories, writingcategoryIdwritingcategory)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchCategoriesRow
+	for rows.Next() {
+		var i fetchCategoriesRow
+		if err := rows.Scan(&i.Idwritingcategory, &i.Title, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchChildCategories = `-- name: fetchChildCategories :many
+SELECT c3.idwritingCategory, c3.title, c2.idwritingCategory, c2.title
+FROM writingCategory c1
+LEFT JOIN writingCategory c2 ON c2.idwritingCategory = c1.writingCategory_idwritingCategory
+LEFT JOIN writingCategory c3 ON c3.idwritingCategory = c2.writingCategory_idwritingCategory
+WHERE c1.idwritingCategory = ?
+`
+
+type fetchChildCategoriesRow struct {
+	Idwritingcategory   sql.NullInt32
+	Title               sql.NullString
+	Idwritingcategory_2 sql.NullInt32
+	Title_2             sql.NullString
+}
+
+func (q *Queries) fetchChildCategories(ctx context.Context, idwritingcategory int32) ([]*fetchChildCategoriesRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchChildCategories, idwritingcategory)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchChildCategoriesRow
+	for rows.Next() {
+		var i fetchChildCategoriesRow
+		if err := rows.Scan(
+			&i.Idwritingcategory,
+			&i.Title,
+			&i.Idwritingcategory_2,
+			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchLanguages = `-- name: fetchLanguages :many
+SELECT idlanguage, nameof FROM language
+`
+
+func (q *Queries) fetchLanguages(ctx context.Context) ([]*Language, error) {
+	rows, err := q.db.QueryContext(ctx, fetchLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchPagePermissions = `-- name: fetchPagePermissions :many
+SELECT p.idpermissions, p.level, u.username, u.email, p.section
+FROM permissions p
+JOIN users u ON u.idusers = p.users_idusers
+WHERE p.section = ?
+ORDER BY p.level
+`
+
+type fetchPagePermissionsRow struct {
+	Idpermissions int32
+	Level         sql.NullString
+	Username      sql.NullString
+	Email         sql.NullString
+	Section       sql.NullString
+}
+
+func (q *Queries) fetchPagePermissions(ctx context.Context, section sql.NullString) ([]*fetchPagePermissionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchPagePermissions, section)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchPagePermissionsRow
+	for rows.Next() {
+		var i fetchPagePermissionsRow
+		if err := rows.Scan(
+			&i.Idpermissions,
+			&i.Level,
+			&i.Username,
+			&i.Email,
+			&i.Section,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchPublicWritings = `-- name: fetchPublicWritings :many
+SELECT w.title, w.abstract, w.idwriting, w.private, w.writingCategory_idwritingCategory
+FROM writing w
+WHERE w.private = 0
+ORDER BY w.published DESC LIMIT 15
+`
+
+type fetchPublicWritingsRow struct {
+	Title                            sql.NullString
+	Abstract                         sql.NullString
+	Idwriting                        int32
+	Private                          sql.NullBool
+	WritingcategoryIdwritingcategory int32
+}
+
+func (q *Queries) fetchPublicWritings(ctx context.Context) ([]*fetchPublicWritingsRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchPublicWritings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchPublicWritingsRow
+	for rows.Next() {
+		var i fetchPublicWritingsRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Abstract,
+			&i.Idwriting,
+			&i.Private,
+			&i.WritingcategoryIdwritingcategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchPublicWritingsByCategory = `-- name: fetchPublicWritingsByCategory :many
+SELECT w.title, w.abstract, u.username, w.published, w.idwriting, w.private, IF(th.comments IS NULL, 0, th.comments + 1)
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN forumthread th ON w.forumthread_idforumthread = th.idforumthread
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+WHERE w.writingCategory_idwritingCategory = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC
+`
+
+type fetchPublicWritingsByCategoryParams struct {
+	UsersIdusers                     int32
+	WritingcategoryIdwritingcategory int32
+	UsersIdusers_2                   int32
+}
+
+type fetchPublicWritingsByCategoryRow struct {
+	Title     sql.NullString
+	Abstract  sql.NullString
+	Username  sql.NullString
+	Published sql.NullTime
+	Idwriting int32
+	Private   sql.NullBool
+	If        interface{}
+}
+
+func (q *Queries) fetchPublicWritingsByCategory(ctx context.Context, arg fetchPublicWritingsByCategoryParams) ([]*fetchPublicWritingsByCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchPublicWritingsByCategory, arg.UsersIdusers, arg.WritingcategoryIdwritingcategory, arg.UsersIdusers_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchPublicWritingsByCategoryRow
+	for rows.Next() {
+		var i fetchPublicWritingsByCategoryRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Abstract,
+			&i.Username,
+			&i.Published,
+			&i.Idwriting,
+			&i.Private,
+			&i.If,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchUserEmailForumUpdates = `-- name: fetchUserEmailForumUpdates :many
+
+SELECT emailforumupdates FROM preferences WHERE users_idusers = ?
+`
+
+// -- name: updateOrInsertEmailForumUpdates :exec
+// WITH email_updates AS (
+//
+//	SELECT emailforumupdates FROM preferences WHERE users_idusers = ?
+//
+// )
+// INSERT INTO preferences (emailforumupdates, users_idusers)
+// VALUES (?, ?)
+// ON DUPLICATE KEY UPDATE
+//
+//	emailforumupdates = VALUES(emailforumupdates);
+func (q *Queries) fetchUserEmailForumUpdates(ctx context.Context, usersIdusers int32) ([]sql.NullBool, error) {
+	rows, err := q.db.QueryContext(ctx, fetchUserEmailForumUpdates, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullBool
+	for rows.Next() {
+		var emailforumupdates sql.NullBool
+		if err := rows.Scan(&emailforumupdates); err != nil {
+			return nil, err
+		}
+		items = append(items, emailforumupdates)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchUserLanguagePreferences = `-- name: fetchUserLanguagePreferences :many
+
+SELECT idlanguage, nameof, (
+  SELECT COUNT(sul.iduserlang) FROM userlang sul
+  WHERE sul.language_idlanguage = l.idlanguage AND sul.users_idusers = ?
+) AS user_lang_pref
+FROM language l
+`
+
+type fetchUserLanguagePreferencesRow struct {
+	Idlanguage   int32
+	Nameof       sql.NullString
+	UserLangPref int64
+}
+
+// -- name: updateOrInsertUserLanguage :exec
+// WITH pref_count AS (
+//
+//	SELECT COUNT(users_idusers) AS prefcount FROM preferences WHERE users_idusers = ?
+//
+// )
+// INSERT INTO preferences (language_idlanguage, users_idusers)
+// VALUES (?, ?)
+// ON DUPLICATE KEY UPDATE
+//
+//	language_idlanguage = VALUES(language_idlanguage);
+func (q *Queries) fetchUserLanguagePreferences(ctx context.Context, usersIdusers int32) ([]*fetchUserLanguagePreferencesRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchUserLanguagePreferences, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchUserLanguagePreferencesRow
+	for rows.Next() {
+		var i fetchUserLanguagePreferencesRow
+		if err := rows.Scan(&i.Idlanguage, &i.Nameof, &i.UserLangPref); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchWritingApproval = `-- name: fetchWritingApproval :many
+SELECT editdoc
+FROM writtingApprovedUsers
+WHERE writing_idwriting = ? AND users_idusers = ?
+`
+
+type fetchWritingApprovalParams struct {
+	WritingIdwriting int32
+	UsersIdusers     int32
+}
+
+func (q *Queries) fetchWritingApproval(ctx context.Context, arg fetchWritingApprovalParams) ([]sql.NullBool, error) {
+	rows, err := q.db.QueryContext(ctx, fetchWritingApproval, arg.WritingIdwriting, arg.UsersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullBool
+	for rows.Next() {
+		var editdoc sql.NullBool
+		if err := rows.Scan(&editdoc); err != nil {
+			return nil, err
+		}
+		items = append(items, editdoc)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchWritingApprovals = `-- name: fetchWritingApprovals :many
+SELECT idusers, u.username, wau.readdoc, wau.editdoc
+FROM writtingApprovedUsers wau
+LEFT JOIN users u ON idusers = wau.users_idusers
+WHERE writing_idwriting = ?
+`
+
+type fetchWritingApprovalsRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Readdoc  sql.NullBool
+	Editdoc  sql.NullBool
+}
+
+func (q *Queries) fetchWritingApprovals(ctx context.Context, writingIdwriting int32) ([]*fetchWritingApprovalsRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchWritingApprovals, writingIdwriting)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchWritingApprovalsRow
+	for rows.Next() {
+		var i fetchWritingApprovalsRow
+		if err := rows.Scan(
+			&i.Idusers,
+			&i.Username,
+			&i.Readdoc,
+			&i.Editdoc,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchWritingById = `-- name: fetchWritingById :many
+SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
+u.idusers, w.writingCategory_idwritingCategory
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC
+`
+
+type fetchWritingByIdParams struct {
+	UsersIdusers   int32
+	Idwriting      int32
+	UsersIdusers_2 int32
+}
+
+type fetchWritingByIdRow struct {
+	Title                            sql.NullString
+	Abstract                         sql.NullString
+	Writting                         sql.NullString
+	Username                         sql.NullString
+	Published                        sql.NullTime
+	Idwriting                        int32
+	Private                          sql.NullBool
+	Editdoc                          sql.NullBool
+	ForumthreadIdforumthread         int32
+	Idusers                          int32
+	WritingcategoryIdwritingcategory int32
+}
+
+func (q *Queries) fetchWritingById(ctx context.Context, arg fetchWritingByIdParams) ([]*fetchWritingByIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchWritingById, arg.UsersIdusers, arg.Idwriting, arg.UsersIdusers_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchWritingByIdRow
+	for rows.Next() {
+		var i fetchWritingByIdRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Abstract,
+			&i.Writting,
+			&i.Username,
+			&i.Published,
+			&i.Idwriting,
+			&i.Private,
+			&i.Editdoc,
+			&i.ForumthreadIdforumthread,
+			&i.Idusers,
+			&i.WritingcategoryIdwritingcategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchWritingByIdWithEdit = `-- name: fetchWritingByIdWithEdit :many
+SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
+u.idusers, w.writingCategory_idwritingCategory
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+WHERE w.idwriting = ? AND w.users_idusers = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+AND (wau.editdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC
+`
+
+type fetchWritingByIdWithEditParams struct {
+	UsersIdusers   int32
+	Idwriting      int32
+	UsersIdusers_2 int32
+	UsersIdusers_3 int32
+	UsersIdusers_4 int32
+}
+
+type fetchWritingByIdWithEditRow struct {
+	Title                            sql.NullString
+	Abstract                         sql.NullString
+	Writting                         sql.NullString
+	Username                         sql.NullString
+	Published                        sql.NullTime
+	Idwriting                        int32
+	Private                          sql.NullBool
+	Editdoc                          sql.NullBool
+	ForumthreadIdforumthread         int32
+	Idusers                          int32
+	WritingcategoryIdwritingcategory int32
+}
+
+func (q *Queries) fetchWritingByIdWithEdit(ctx context.Context, arg fetchWritingByIdWithEditParams) ([]*fetchWritingByIdWithEditRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchWritingByIdWithEdit,
+		arg.UsersIdusers,
+		arg.Idwriting,
+		arg.UsersIdusers_2,
+		arg.UsersIdusers_3,
+		arg.UsersIdusers_4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchWritingByIdWithEditRow
+	for rows.Next() {
+		var i fetchWritingByIdWithEditRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Abstract,
+			&i.Writting,
+			&i.Username,
+			&i.Published,
+			&i.Idwriting,
+			&i.Private,
+			&i.Editdoc,
+			&i.ForumthreadIdforumthread,
+			&i.Idusers,
+			&i.WritingcategoryIdwritingcategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchWritingOwner = `-- name: fetchWritingOwner :many
+SELECT users_idusers
+FROM writing
+WHERE idwriting = ?
+`
+
+func (q *Queries) fetchWritingOwner(ctx context.Context, idwriting int32) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, fetchWritingOwner, idwriting)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var users_idusers int32
+		if err := rows.Scan(&users_idusers); err != nil {
+			return nil, err
+		}
+		items = append(items, users_idusers)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findForumTopicByName = `-- name: findForumTopicByName :one
 SELECT idforumtopic FROM forumtopic WHERE title=?
 `
@@ -929,6 +1550,88 @@ func (q *Queries) getWordID(ctx context.Context, lcase string) (int32, error) {
 	var idsearchwordlist int32
 	err := row.Scan(&idsearchwordlist)
 	return idsearchwordlist, err
+}
+
+const insertPagePermission = `-- name: insertPagePermission :exec
+INSERT INTO permissions (users_idusers, section, level)
+VALUES (?, ?, ?)
+`
+
+type insertPagePermissionParams struct {
+	UsersIdusers int32
+	Section      sql.NullString
+	Level        sql.NullString
+}
+
+func (q *Queries) insertPagePermission(ctx context.Context, arg insertPagePermissionParams) error {
+	_, err := q.db.ExecContext(ctx, insertPagePermission, arg.UsersIdusers, arg.Section, arg.Level)
+	return err
+}
+
+const insertWriting = `-- name: insertWriting :exec
+INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
+VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
+`
+
+type insertWritingParams struct {
+	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Abstract                         sql.NullString
+	Writting                         sql.NullString
+	Private                          sql.NullBool
+	LanguageIdlanguage               int32
+	UsersIdusers                     int32
+}
+
+func (q *Queries) insertWriting(ctx context.Context, arg insertWritingParams) error {
+	_, err := q.db.ExecContext(ctx, insertWriting,
+		arg.WritingcategoryIdwritingcategory,
+		arg.Title,
+		arg.Abstract,
+		arg.Writting,
+		arg.Private,
+		arg.LanguageIdlanguage,
+		arg.UsersIdusers,
+	)
+	return err
+}
+
+const insertWritingApproval = `-- name: insertWritingApproval :exec
+INSERT INTO writtingApprovedUsers (writing_idwriting, users_idusers, readdoc, editdoc)
+VALUES (?, ?, ?, ?)
+`
+
+type insertWritingApprovalParams struct {
+	WritingIdwriting int32
+	UsersIdusers     int32
+	Readdoc          sql.NullBool
+	Editdoc          sql.NullBool
+}
+
+func (q *Queries) insertWritingApproval(ctx context.Context, arg insertWritingApprovalParams) error {
+	_, err := q.db.ExecContext(ctx, insertWritingApproval,
+		arg.WritingIdwriting,
+		arg.UsersIdusers,
+		arg.Readdoc,
+		arg.Editdoc,
+	)
+	return err
+}
+
+const insertWritingCategory = `-- name: insertWritingCategory :exec
+INSERT INTO writingCategory (writingCategory_idwritingCategory, title, description)
+VALUES (?, ?, ?)
+`
+
+type insertWritingCategoryParams struct {
+	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Description                      sql.NullString
+}
+
+func (q *Queries) insertWritingCategory(ctx context.Context, arg insertWritingCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, insertWritingCategory, arg.WritingcategoryIdwritingcategory, arg.Title, arg.Description)
+	return err
 }
 
 const lang_combobox = `-- name: lang_combobox :many
@@ -2721,6 +3424,97 @@ UPDATE linkerQueue SET linkerCategory_idlinkerCategory = $1, title = $2, url = $
 
 func (q *Queries) updateQueue(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, updateQueue)
+	return err
+}
+
+const updateWriting = `-- name: updateWriting :exec
+UPDATE writing
+SET writingCategory_idwritingCategory = ?, title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
+WHERE idwriting = ?
+`
+
+type updateWritingParams struct {
+	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Abstract                         sql.NullString
+	Writting                         sql.NullString
+	Private                          sql.NullBool
+	LanguageIdlanguage               int32
+	Idwriting                        int32
+}
+
+func (q *Queries) updateWriting(ctx context.Context, arg updateWritingParams) error {
+	_, err := q.db.ExecContext(ctx, updateWriting,
+		arg.WritingcategoryIdwritingcategory,
+		arg.Title,
+		arg.Abstract,
+		arg.Writting,
+		arg.Private,
+		arg.LanguageIdlanguage,
+		arg.Idwriting,
+	)
+	return err
+}
+
+const updateWritingApproval = `-- name: updateWritingApproval :exec
+UPDATE writtingApprovedUsers
+SET readdoc = ?, editdoc = ?
+WHERE writing_idwriting = ? AND users_idusers = ?
+`
+
+type updateWritingApprovalParams struct {
+	Readdoc          sql.NullBool
+	Editdoc          sql.NullBool
+	WritingIdwriting int32
+	UsersIdusers     int32
+}
+
+func (q *Queries) updateWritingApproval(ctx context.Context, arg updateWritingApprovalParams) error {
+	_, err := q.db.ExecContext(ctx, updateWritingApproval,
+		arg.Readdoc,
+		arg.Editdoc,
+		arg.WritingIdwriting,
+		arg.UsersIdusers,
+	)
+	return err
+}
+
+const updateWritingCategory = `-- name: updateWritingCategory :exec
+UPDATE writingCategory
+SET title = ?, description = ?, writingCategory_idwritingCategory = ?
+WHERE idwritingCategory = ?
+`
+
+type updateWritingCategoryParams struct {
+	Title                            sql.NullString
+	Description                      sql.NullString
+	WritingcategoryIdwritingcategory int32
+	Idwritingcategory                int32
+}
+
+func (q *Queries) updateWritingCategory(ctx context.Context, arg updateWritingCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, updateWritingCategory,
+		arg.Title,
+		arg.Description,
+		arg.WritingcategoryIdwritingcategory,
+		arg.Idwritingcategory,
+	)
+	return err
+}
+
+const updateWritingForumThreadId = `-- name: updateWritingForumThreadId :exec
+UPDATE writing
+SET forumthread_idforumthread = ?
+WHERE idwriting = ?
+`
+
+type updateWritingForumThreadIdParams struct {
+	ForumthreadIdforumthread int32
+	Idwriting                int32
+}
+
+func (q *Queries) updateWritingForumThreadId(ctx context.Context, arg updateWritingForumThreadIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateWritingForumThreadId, arg.ForumthreadIdforumthread, arg.Idwriting)
 	return err
 }
 

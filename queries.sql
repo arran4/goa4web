@@ -806,38 +806,149 @@ GROUP BY u.idusers;
 -- name: deleteUserLanguage :exec
 DELETE FROM userlang WHERE users_idusers = ?;
 
--- name: fetchLanguages :query
+-- name: fetchLanguages :many
 SELECT idlanguage, nameof FROM language;
 
--- name: updateOrInsertUserLanguage :exec
-WITH pref_count AS (
-  SELECT COUNT(users_idusers) AS prefcount FROM preferences WHERE users_idusers = ?
-)
-INSERT INTO preferences (language_idlanguage, users_idusers)
-VALUES (?, ?)
-ON DUPLICATE KEY UPDATE
-  language_idlanguage = VALUES(language_idlanguage);
+-- -- name: updateOrInsertUserLanguage :exec
+-- WITH pref_count AS (
+--   SELECT COUNT(users_idusers) AS prefcount FROM preferences WHERE users_idusers = ?
+-- )
+-- INSERT INTO preferences (language_idlanguage, users_idusers)
+-- VALUES (?, ?)
+-- ON DUPLICATE KEY UPDATE
+--   language_idlanguage = VALUES(language_idlanguage);
 
--- name: fetchUserLanguagePreferences :query
+-- name: fetchUserLanguagePreferences :many
 SELECT idlanguage, nameof, (
   SELECT COUNT(sul.iduserlang) FROM userlang sul
   WHERE sul.language_idlanguage = l.idlanguage AND sul.users_idusers = ?
 ) AS user_lang_pref
 FROM language l;
 
--- name: updateOrInsertEmailForumUpdates :exec
-WITH email_updates AS (
-  SELECT emailforumupdates FROM preferences WHERE users_idusers = ?
-)
-INSERT INTO preferences (emailforumupdates, users_idusers)
-VALUES (?, ?)
-ON DUPLICATE KEY UPDATE
-  emailforumupdates = VALUES(emailforumupdates);
+-- -- name: updateOrInsertEmailForumUpdates :exec
+-- WITH email_updates AS (
+--   SELECT emailforumupdates FROM preferences WHERE users_idusers = ?
+-- )
+-- INSERT INTO preferences (emailforumupdates, users_idusers)
+-- VALUES (?, ?)
+-- ON DUPLICATE KEY UPDATE
+--   emailforumupdates = VALUES(emailforumupdates);
 
--- name: fetchUserEmailForumUpdates :query
+-- name: fetchUserEmailForumUpdates :many
 SELECT emailforumupdates FROM preferences WHERE users_idusers = ?;
 
 
 
+-- name: fetchPublicWritings :many
+SELECT w.title, w.abstract, w.idwriting, w.private, w.writingCategory_idwritingCategory
+FROM writing w
+WHERE w.private = 0
+ORDER BY w.published DESC LIMIT 15;
+
+-- name: updateWriting :exec
+UPDATE writing
+SET writingCategory_idwritingCategory = ?, title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
+WHERE idwriting = ?;
+
+-- name: insertWriting :exec
+INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
+VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
+
+-- name: fetchWritingById :many
+SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
+u.idusers, w.writingCategory_idwritingCategory
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC;
+
+-- name: fetchPublicWritingsByCategory :many
+SELECT w.title, w.abstract, u.username, w.published, w.idwriting, w.private, IF(th.comments IS NULL, 0, th.comments + 1)
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN forumthread th ON w.forumthread_idforumthread = th.idforumthread
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+WHERE w.writingCategory_idwritingCategory = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC;
+
+-- name: fetchWritingApproval :many
+SELECT editdoc
+FROM writtingApprovedUsers
+WHERE writing_idwriting = ? AND users_idusers = ?;
+
+-- name: fetchWritingOwner :many
+SELECT users_idusers
+FROM writing
+WHERE idwriting = ?;
+
+-- name: fetchWritingByIdWithEdit :many
+SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
+u.idusers, w.writingCategory_idwritingCategory
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+WHERE w.idwriting = ? AND w.users_idusers = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+AND (wau.editdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC;
+
+-- name: fetchChildCategories :many
+SELECT c3.idwritingCategory, c3.title, c2.idwritingCategory, c2.title
+FROM writingCategory c1
+LEFT JOIN writingCategory c2 ON c2.idwritingCategory = c1.writingCategory_idwritingCategory
+LEFT JOIN writingCategory c3 ON c3.idwritingCategory = c2.writingCategory_idwritingCategory
+WHERE c1.idwritingCategory = ?;
+
+-- name: insertWritingCategory :exec
+INSERT INTO writingCategory (writingCategory_idwritingCategory, title, description)
+VALUES (?, ?, ?);
+
+-- name: updateWritingCategory :exec
+UPDATE writingCategory
+SET title = ?, description = ?, writingCategory_idwritingCategory = ?
+WHERE idwritingCategory = ?;
+
+-- name: fetchCategories :many
+SELECT idwritingCategory, title, description
+FROM writingCategory
+WHERE writingCategory_idwritingCategory = ?;
+
+-- name: deleteWritingApproval :exec
+DELETE FROM writtingApprovedUsers
+WHERE writing_idwriting = ? AND users_idusers = ?;
+
+-- name: insertWritingApproval :exec
+INSERT INTO writtingApprovedUsers (writing_idwriting, users_idusers, readdoc, editdoc)
+VALUES (?, ?, ?, ?);
+
+-- name: updateWritingApproval :exec
+UPDATE writtingApprovedUsers
+SET readdoc = ?, editdoc = ?
+WHERE writing_idwriting = ? AND users_idusers = ?;
+
+-- name: fetchWritingApprovals :many
+SELECT idusers, u.username, wau.readdoc, wau.editdoc
+FROM writtingApprovedUsers wau
+LEFT JOIN users u ON idusers = wau.users_idusers
+WHERE writing_idwriting = ?;
+
+-- name: fetchPagePermissions :many
+SELECT p.idpermissions, p.level, u.username, u.email, p.section
+FROM permissions p
+JOIN users u ON u.idusers = p.users_idusers
+WHERE p.section = ?
+ORDER BY p.level;
+
+-- name: insertPagePermission :exec
+INSERT INTO permissions (users_idusers, section, level)
+VALUES (?, ?, ?);
+
+-- name: deletePagePermission :exec
+DELETE FROM permissions WHERE idpermissions = ? AND section = ?;
+
+-- name: updateWritingForumThreadId :exec
+UPDATE writing
+SET forumthread_idforumthread = ?
+WHERE idwriting = ?;
 
 

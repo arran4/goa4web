@@ -576,3 +576,47 @@ SELECT b.idimageboard, b.title, b.description, b.imageboard_idimageboard, pb.tit
 FROM imageboard b
 LEFT JOIN imageboard pb ON b.imageboard_idimageboard = pb.idimageboard OR b.imageboard_idimageboard = 0
 GROUP BY b.idimageboard;
+
+-- name: writeRSS :many
+SELECT s.idsiteNews, s.occured, s.news
+FROM siteNews s
+ORDER BY s.occured DESC LIMIT 15;
+
+-- name: writeNewsPost :exec
+INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
+VALUES ($1, $2, NOW(), $3);
+
+-- name: editNewsPost :exec
+UPDATE siteNews SET news = $1, language_idlanguage = $2 WHERE idsiteNews = $3;
+
+-- name: doCalled :many
+SELECT s.news, s.idsiteNews, u.idusers, s.language_idlanguage
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+WHERE s.idsiteNews = $1;
+
+-- name: getNewsThreadId :one
+SELECT s.forumthread_idforumthread FROM siteNews s, users u
+WHERE s.users_idusers = u.idusers AND s.idsiteNews = $1;
+
+-- name: assignNewsThisThreadId :exec
+UPDATE siteNews SET forumthread_idforumthread = $1 WHERE idsiteNews = $2;
+
+-- name: showPost :many
+SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, s.forumthread_idforumthread
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+WHERE s.idsiteNews = $1;
+
+-- name: showNews :one
+SELECT count(idsiteNews) FROM siteNews
+WHERE $1 AND $2;
+
+-- name: showNewsPosts :many
+SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, IF(th.comments IS NULL, 0, th.comments + 1)
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+WHERE $1 AND $2
+ORDER BY s.occured DESC
+LIMIT 10;

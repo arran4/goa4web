@@ -20,9 +20,14 @@ type AdminUserPermissionsData struct {
 }
 
 func adminUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	if cd.SecurityLevel != "all" {
+		http.Error(w, "Incorrect security level", http.StatusForbidden)
+		return
+	}
 	// Prepare the index items.
 	data := AdminUserPermissionsData{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: cd,
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)

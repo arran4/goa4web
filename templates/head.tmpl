@@ -1,0 +1,19 @@
+{{define "head"}}
+<html>
+	<head>
+		<title>{{title}}</title>
+		{{template "headdata"}}
+		<style type="text/css">
+        <!--
+        @import url("main.css");
+        -->
+        </style>
+	</head>
+	<body>
+			{{template "header"}}
+			<br>
+		<table border=0>
+			<tr valign=top>
+				<td width=200px>{{template "index"}}
+				<td>
+{{end}}

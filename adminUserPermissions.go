@@ -55,7 +55,7 @@ type PermissionRow struct {
 	Delete template.HTML // Store the Delete button as raw HTML.
 }
 
-func adminUserPermissions(w http.ResponseWriter, r *http.Request) {
+func adminUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the session.
 	session, err := store.Get(r, sessionName)
 	if err != nil {

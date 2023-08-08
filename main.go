@@ -41,7 +41,7 @@ func main() {
 	r.HandleFunc("/news/{id:[0-9]+}", newsPostHandler).Methods("GET")
 	r.HandleFunc("/user", userHandler).Methods("GET")
 	r.HandleFunc("/user/permissions", userPermissionsHandler).Methods("GET")
-	r.HandleFunc("/adminUserPermissions", adminUserPermissions)
+	r.HandleFunc("/adminUserPermissions", adminUserPermissionsHandler)
 	//r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/login", loginHandler)
 	r.HandleFunc("/callback", callbackHandler)

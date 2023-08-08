@@ -10,6 +10,82 @@ import (
 	"database/sql"
 )
 
+const checkExistingUser = `-- name: CheckExistingUser :one
+SELECT username FROM users WHERE username = ?
+`
+
+func (q *Queries) CheckExistingUser(ctx context.Context, username sql.NullString) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, checkExistingUser, username)
+	err := row.Scan(&username)
+	return username, err
+}
+
+const insertSID = `-- name: InsertSID :exec
+INSERT INTO sidTable (sid, loginTime, users_idusers)
+VALUES (?, NOW(), ?)
+`
+
+type InsertSIDParams struct {
+	Sid          sql.NullString
+	UsersIdusers int32
+}
+
+func (q *Queries) InsertSID(ctx context.Context, arg InsertSIDParams) error {
+	_, err := q.db.ExecContext(ctx, insertSID, arg.Sid, arg.UsersIdusers)
+	return err
+}
+
+const insertUser = `-- name: InsertUser :exec
+INSERT INTO users (username, passwd, email)
+VALUES (?, MD5(?), ?)
+`
+
+type InsertUserParams struct {
+	Username sql.NullString
+	MD5      string
+	Email    sql.NullString
+}
+
+func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) error {
+	_, err := q.db.ExecContext(ctx, insertUser, arg.Username, arg.MD5, arg.Email)
+	return err
+}
+
+const login = `-- name: Login :one
+SELECT idusers FROM users
+WHERE username = ? AND passwd = md5(?)
+`
+
+type LoginParams struct {
+	Username sql.NullString
+	MD5      string
+}
+
+func (q *Queries) Login(ctx context.Context, arg LoginParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, login, arg.Username, arg.MD5)
+	var idusers int32
+	err := row.Scan(&idusers)
+	return idusers, err
+}
+
+const sIDExpired = `-- name: SIDExpired :one
+SELECT idsidTable, loginTime, users_idusers FROM sidTable
+WHERE sid = ? LIMIT 1
+`
+
+type SIDExpiredRow struct {
+	Idsidtable   int32
+	Logintime    sql.NullTime
+	UsersIdusers int32
+}
+
+func (q *Queries) SIDExpired(ctx context.Context, sid sql.NullString) (*SIDExpiredRow, error) {
+	row := q.db.QueryRowContext(ctx, sIDExpired, sid)
+	var i SIDExpiredRow
+	err := row.Scan(&i.Idsidtable, &i.Logintime, &i.UsersIdusers)
+	return &i, err
+}
+
 const selectLanguages = `-- name: SelectLanguages :many
 SELECT idlanguage, nameof
 FROM language
@@ -43,52 +119,162 @@ func (q *Queries) SelectLanguages(ctx context.Context) ([]*Language, error) {
 	return items, nil
 }
 
-const addImage = `-- name: addImage :exec
-INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
-VALUES ($1, $2, $3, $4, $5, NOW())
+const selectUserBySID = `-- name: SelectUserBySID :one
+SELECT idsidTable, loginTime, users_idusers
+FROM sidTable
+WHERE sid = ?
 `
 
-func (q *Queries) addImage(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, addImage)
+type SelectUserBySIDRow struct {
+	Idsidtable   int32
+	Logintime    sql.NullTime
+	UsersIdusers int32
+}
+
+func (q *Queries) SelectUserBySID(ctx context.Context, sid sql.NullString) (*SelectUserBySIDRow, error) {
+	row := q.db.QueryRowContext(ctx, selectUserBySID, sid)
+	var i SelectUserBySIDRow
+	err := row.Scan(&i.Idsidtable, &i.Logintime, &i.UsersIdusers)
+	return &i, err
+}
+
+const updateLoginTimeAndUser = `-- name: UpdateLoginTimeAndUser :exec
+UPDATE sidTable SET loginTime = NOW(), users_idusers = ?
+WHERE sid = ?
+`
+
+type UpdateLoginTimeAndUserParams struct {
+	UsersIdusers int32
+	Sid          sql.NullString
+}
+
+func (q *Queries) UpdateLoginTimeAndUser(ctx context.Context, arg UpdateLoginTimeAndUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateLoginTimeAndUser, arg.UsersIdusers, arg.Sid)
+	return err
+}
+
+const addImage = `-- name: addImage :exec
+INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
+VALUES (?, ?, ?, ?, ?, NOW())
+`
+
+type addImageParams struct {
+	ImageboardIdimageboard int32
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	UsersIdusers           int32
+	Description            sql.NullString
+}
+
+func (q *Queries) addImage(ctx context.Context, arg addImageParams) error {
+	_, err := q.db.ExecContext(ctx, addImage,
+		arg.ImageboardIdimageboard,
+		arg.Thumbnail,
+		arg.Fullimage,
+		arg.UsersIdusers,
+		arg.Description,
+	)
 	return err
 }
 
 const addToLinker = `-- name: addToLinker :exec
 INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
-VALUES ($1, $2, $3, $4, $5, NOW())
+VALUES (?, ?, ?, ?, ?, NOW())
 `
 
-func (q *Queries) addToLinker(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, addToLinker)
+type addToLinkerParams struct {
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+}
+
+func (q *Queries) addToLinker(ctx context.Context, arg addToLinkerParams) error {
+	_, err := q.db.ExecContext(ctx, addToLinker,
+		arg.UsersIdusers,
+		arg.LinkercategoryIdlinkercategory,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+	)
 	return err
 }
 
 const addToQueue = `-- name: addToQueue :exec
-INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES ($1, $2, $3, $4, $5)
+INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?)
 `
 
-func (q *Queries) addToQueue(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, addToQueue)
+type addToQueueParams struct {
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+}
+
+func (q *Queries) addToQueue(ctx context.Context, arg addToQueueParams) error {
+	_, err := q.db.ExecContext(ctx, addToQueue,
+		arg.UsersIdusers,
+		arg.LinkercategoryIdlinkercategory,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+	)
 	return err
 }
 
 const addTopicRestrictions = `-- name: addTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
-func (q *Queries) addTopicRestrictions(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, addTopicRestrictions)
+type addTopicRestrictionsParams struct {
+	ForumtopicIdforumtopic int32
+	Viewlevel              sql.NullInt32
+	Replylevel             sql.NullInt32
+	Newthreadlevel         sql.NullInt32
+	Seelevel               sql.NullInt32
+	Invitelevel            sql.NullInt32
+	Readlevel              sql.NullInt32
+	Modlevel               sql.NullInt32
+	Adminlevel             sql.NullInt32
+}
+
+func (q *Queries) addTopicRestrictions(ctx context.Context, arg addTopicRestrictionsParams) error {
+	_, err := q.db.ExecContext(ctx, addTopicRestrictions,
+		arg.ForumtopicIdforumtopic,
+		arg.Viewlevel,
+		arg.Replylevel,
+		arg.Newthreadlevel,
+		arg.Seelevel,
+		arg.Invitelevel,
+		arg.Readlevel,
+		arg.Modlevel,
+		arg.Adminlevel,
+	)
 	return err
 }
 
 const addUsersTopicLevel = `-- name: addUsersTopicLevel :exec
 INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
-VALUES ($1, $2, $3, $4)
+VALUES (?, ?, ?, ?)
 `
 
-func (q *Queries) addUsersTopicLevel(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, addUsersTopicLevel)
+type addUsersTopicLevelParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+	Level                  sql.NullInt32
+	Invitemax              sql.NullInt32
+}
+
+func (q *Queries) addUsersTopicLevel(ctx context.Context, arg addUsersTopicLevelParams) error {
+	_, err := q.db.ExecContext(ctx, addUsersTopicLevel,
+		arg.ForumtopicIdforumtopic,
+		arg.UsersIdusers,
+		arg.Level,
+		arg.Invitemax,
+	)
 	return err
 }
 
@@ -341,29 +527,44 @@ func (q *Queries) admin_user_permissions(ctx context.Context, section sql.NullSt
 }
 
 const assignImagePostThisThreadId = `-- name: assignImagePostThisThreadId :exec
-UPDATE imagepost SET forumthread_idforumthread = $1 WHERE idimagepost = $2
+UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?
 `
 
-func (q *Queries) assignImagePostThisThreadId(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, assignImagePostThisThreadId)
+type assignImagePostThisThreadIdParams struct {
+	ForumthreadIdforumthread int32
+	Idimagepost              int32
+}
+
+func (q *Queries) assignImagePostThisThreadId(ctx context.Context, arg assignImagePostThisThreadIdParams) error {
+	_, err := q.db.ExecContext(ctx, assignImagePostThisThreadId, arg.ForumthreadIdforumthread, arg.Idimagepost)
 	return err
 }
 
 const assignLinkerThisThreadId = `-- name: assignLinkerThisThreadId :exec
-UPDATE linker SET forumthread_idforumthread = $1 WHERE idlinker = $2
+UPDATE linker SET forumthread_idforumthread = ? WHERE idlinker = ?
 `
 
-func (q *Queries) assignLinkerThisThreadId(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, assignLinkerThisThreadId)
+type assignLinkerThisThreadIdParams struct {
+	ForumthreadIdforumthread int32
+	Idlinker                 int32
+}
+
+func (q *Queries) assignLinkerThisThreadId(ctx context.Context, arg assignLinkerThisThreadIdParams) error {
+	_, err := q.db.ExecContext(ctx, assignLinkerThisThreadId, arg.ForumthreadIdforumthread, arg.Idlinker)
 	return err
 }
 
 const assignNewsThisThreadId = `-- name: assignNewsThisThreadId :exec
-UPDATE siteNews SET forumthread_idforumthread = $1 WHERE idsiteNews = $2
+UPDATE siteNews SET forumthread_idforumthread = ? WHERE idsiteNews = ?
 `
 
-func (q *Queries) assignNewsThisThreadId(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, assignNewsThisThreadId)
+type assignNewsThisThreadIdParams struct {
+	ForumthreadIdforumthread int32
+	Idsitenews               int32
+}
+
+func (q *Queries) assignNewsThisThreadId(ctx context.Context, arg assignNewsThisThreadIdParams) error {
+	_, err := q.db.ExecContext(ctx, assignNewsThisThreadId, arg.ForumthreadIdforumthread, arg.Idsitenews)
 	return err
 }
 
@@ -493,29 +694,53 @@ func (q *Queries) category_faqs(ctx context.Context, faqcategoriesIdfaqcategorie
 }
 
 const changeCategory = `-- name: changeCategory :exec
-UPDATE forumcategory SET title = $2, description = $3 WHERE idforumcategory = $1
+UPDATE forumcategory SET title = ?, description = ? WHERE idforumcategory = ?
 `
 
-func (q *Queries) changeCategory(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, changeCategory)
+type changeCategoryParams struct {
+	Title           sql.NullString
+	Description     sql.NullString
+	Idforumcategory int32
+}
+
+func (q *Queries) changeCategory(ctx context.Context, arg changeCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, changeCategory, arg.Title, arg.Description, arg.Idforumcategory)
 	return err
 }
 
 const changeImageBoard = `-- name: changeImageBoard :exec
-UPDATE imageboard SET title = $2, description = $3, imageboard_idimageboard = $4 WHERE idimageboard = $1
+UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?
 `
 
-func (q *Queries) changeImageBoard(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, changeImageBoard)
+type changeImageBoardParams struct {
+	Title                  sql.NullString
+	Description            sql.NullString
+	ImageboardIdimageboard int32
+	Idimageboard           int32
+}
+
+func (q *Queries) changeImageBoard(ctx context.Context, arg changeImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, changeImageBoard,
+		arg.Title,
+		arg.Description,
+		arg.ImageboardIdimageboard,
+		arg.Idimageboard,
+	)
 	return err
 }
 
 const changeTopic = `-- name: changeTopic :exec
-UPDATE forumtopic SET title = $2, description = $3 WHERE idforumtopic = $1
+UPDATE forumtopic SET title = ?, description = ? WHERE idforumtopic = ?
 `
 
-func (q *Queries) changeTopic(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, changeTopic)
+type changeTopicParams struct {
+	Title        sql.NullString
+	Description  sql.NullString
+	Idforumtopic int32
+}
+
+func (q *Queries) changeTopic(ctx context.Context, arg changeTopicParams) error {
+	_, err := q.db.ExecContext(ctx, changeTopic, arg.Title, arg.Description, arg.Idforumtopic)
 	return err
 }
 
@@ -547,9 +772,22 @@ func (q *Queries) countCategories(ctx context.Context) (int64, error) {
 }
 
 const countLinkerCategories = `-- name: countLinkerCategories :one
+
+
 SELECT COUNT(*) FROM linkerCategory
 `
 
+// -- name: showNews :one
+// SELECT count(idsiteNews) FROM siteNews
+// WHERE ? AND ?;
+// -- name: showNewsPosts :many
+// SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, IF(th.comments IS NULL, 0, th.comments + 1)
+// FROM siteNews s
+// LEFT JOIN users u ON s.users_idusers = u.idusers
+// LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+// WHERE ? AND ?
+// ORDER BY s.occured DESC
+// LIMIT 10;
 func (q *Queries) countLinkerCategories(ctx context.Context) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countLinkerCategories)
 	var count int64
@@ -569,25 +807,25 @@ func (q *Queries) count_categories(ctx context.Context) (int64, error) {
 }
 
 const createCategory = `-- name: createCategory :exec
-INSERT INTO linkerCategory (title) VALUES ($1)
+INSERT INTO linkerCategory (title) VALUES (?)
 `
 
-func (q *Queries) createCategory(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createCategory)
+func (q *Queries) createCategory(ctx context.Context, title sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, createCategory, title)
 	return err
 }
 
 const createLanguage = `-- name: createLanguage :exec
 INSERT INTO language (nameof)
-VALUES ($1)
+VALUES (?)
 `
 
 // This query inserts a new record into the "language" table.
 // Parameters:
 //
-//	$1 - Name of the new language (string)
-func (q *Queries) createLanguage(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createLanguage)
+//	? - Name of the new language (string)
+func (q *Queries) createLanguage(ctx context.Context, nameof sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, createLanguage, nameof)
 	return err
 }
 
@@ -612,11 +850,11 @@ func (q *Queries) deleteBlogsSearch(ctx context.Context) error {
 }
 
 const deleteCategory = `-- name: deleteCategory :exec
-DELETE FROM linkerCategory WHERE idlinkerCategory = $1
+DELETE FROM linkerCategory WHERE idlinkerCategory = ?
 `
 
-func (q *Queries) deleteCategory(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteCategory)
+func (q *Queries) deleteCategory(ctx context.Context, idlinkercategory int32) error {
+	_, err := q.db.ExecContext(ctx, deleteCategory, idlinkercategory)
 	return err
 }
 
@@ -632,15 +870,15 @@ func (q *Queries) deleteCommentsSearch(ctx context.Context) error {
 
 const deleteLanguage = `-- name: deleteLanguage :exec
 DELETE FROM language
-WHERE idlanguage = $1
+WHERE idlanguage = ?
 `
 
 // This query deletes a record from the "language" table based on the provided "cid".
 // Parameters:
 //
-//	$1 - Language ID to be deleted (int)
-func (q *Queries) deleteLanguage(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteLanguage)
+//	? - Language ID to be deleted (int)
+func (q *Queries) deleteLanguage(ctx context.Context, idlanguage int32) error {
+	_, err := q.db.ExecContext(ctx, deleteLanguage, idlanguage)
 	return err
 }
 
@@ -669,11 +907,11 @@ func (q *Queries) deletePagePermission(ctx context.Context, arg deletePagePermis
 }
 
 const deleteQueueItem = `-- name: deleteQueueItem :exec
-DELETE FROM linkerQueue WHERE idlinkerQueue = $1
+DELETE FROM linkerQueue WHERE idlinkerQueue = ?
 `
 
-func (q *Queries) deleteQueueItem(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteQueueItem)
+func (q *Queries) deleteQueueItem(ctx context.Context, idlinkerqueue int32) error {
+	_, err := q.db.ExecContext(ctx, deleteQueueItem, idlinkerqueue)
 	return err
 }
 
@@ -688,11 +926,11 @@ func (q *Queries) deleteSiteNewsSearch(ctx context.Context) error {
 }
 
 const deleteTopicRestrictions = `-- name: deleteTopicRestrictions :exec
-DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = $1
+DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?
 `
 
-func (q *Queries) deleteTopicRestrictions(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteTopicRestrictions)
+func (q *Queries) deleteTopicRestrictions(ctx context.Context, forumtopicIdforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, deleteTopicRestrictions, forumtopicIdforumtopic)
 	return err
 }
 
@@ -706,11 +944,16 @@ func (q *Queries) deleteUserLanguage(ctx context.Context, usersIdusers int32) er
 }
 
 const deleteUsersTopicLevel = `-- name: deleteUsersTopicLevel :exec
-DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2
+DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
 `
 
-func (q *Queries) deleteUsersTopicLevel(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteUsersTopicLevel)
+type deleteUsersTopicLevelParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+}
+
+func (q *Queries) deleteUsersTopicLevel(ctx context.Context, arg deleteUsersTopicLevelParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUsersTopicLevel, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
 	return err
 }
 
@@ -794,7 +1037,7 @@ const doCalled = `-- name: doCalled :many
 SELECT s.news, s.idsiteNews, u.idusers, s.language_idlanguage
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = $1
+WHERE s.idsiteNews = ?
 `
 
 type doCalledRow struct {
@@ -804,8 +1047,8 @@ type doCalledRow struct {
 	LanguageIdlanguage int32
 }
 
-func (q *Queries) doCalled(ctx context.Context) ([]*doCalledRow, error) {
-	rows, err := q.db.QueryContext(ctx, doCalled)
+func (q *Queries) doCalled(ctx context.Context, idsitenews int32) ([]*doCalledRow, error) {
+	rows, err := q.db.QueryContext(ctx, doCalled, idsitenews)
 	if err != nil {
 		return nil, err
 	}
@@ -833,20 +1076,26 @@ func (q *Queries) doCalled(ctx context.Context) ([]*doCalledRow, error) {
 }
 
 const editNewsPost = `-- name: editNewsPost :exec
-UPDATE siteNews SET news = $1, language_idlanguage = $2 WHERE idsiteNews = $3
+UPDATE siteNews SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?
 `
 
-func (q *Queries) editNewsPost(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, editNewsPost)
+type editNewsPostParams struct {
+	News               sql.NullString
+	LanguageIdlanguage int32
+	Idsitenews         int32
+}
+
+func (q *Queries) editNewsPost(ctx context.Context, arg editNewsPostParams) error {
+	_, err := q.db.ExecContext(ctx, editNewsPost, arg.News, arg.LanguageIdlanguage, arg.Idsitenews)
 	return err
 }
 
 const existsTopicRestrictions = `-- name: existsTopicRestrictions :one
-SELECT (forumtopic_idforumtopic) FROM topicrestrictions WHERE forumtopic_idforumtopic = $1
+SELECT (forumtopic_idforumtopic) FROM topicrestrictions WHERE forumtopic_idforumtopic = ?
 `
 
-func (q *Queries) existsTopicRestrictions(ctx context.Context) (int32, error) {
-	row := q.db.QueryRowContext(ctx, existsTopicRestrictions)
+func (q *Queries) existsTopicRestrictions(ctx context.Context, forumtopicIdforumtopic int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, existsTopicRestrictions, forumtopicIdforumtopic)
 	var forumtopic_idforumtopic int32
 	err := row.Scan(&forumtopic_idforumtopic)
 	return forumtopic_idforumtopic, err
@@ -854,7 +1103,7 @@ func (q *Queries) existsTopicRestrictions(ctx context.Context) (int32, error) {
 
 const expandCategories = `-- name: expandCategories :many
 SELECT f.idforumcategory, f.title, f.description
-FROM forumcategory f WHERE f.forumcategory_idforumcategory = $1
+FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?
 `
 
 type expandCategoriesRow struct {
@@ -863,8 +1112,8 @@ type expandCategoriesRow struct {
 	Description     sql.NullString
 }
 
-func (q *Queries) expandCategories(ctx context.Context) ([]*expandCategoriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, expandCategories)
+func (q *Queries) expandCategories(ctx context.Context, forumcategoryIdforumcategory int32) ([]*expandCategoriesRow, error) {
+	rows, err := q.db.QueryContext(ctx, expandCategories, forumcategoryIdforumcategory)
 	if err != nil {
 		return nil, err
 	}
@@ -1493,11 +1742,11 @@ func (q *Queries) getLangs(ctx context.Context, usersIdusers int32) (int32, erro
 
 const getNewsThreadId = `-- name: getNewsThreadId :one
 SELECT s.forumthread_idforumthread FROM siteNews s, users u
-WHERE s.users_idusers = u.idusers AND s.idsiteNews = $1
+WHERE s.users_idusers = u.idusers AND s.idsiteNews = ?
 `
 
-func (q *Queries) getNewsThreadId(ctx context.Context) (int32, error) {
-	row := q.db.QueryRowContext(ctx, getNewsThreadId)
+func (q *Queries) getNewsThreadId(ctx context.Context, idsitenews int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getNewsThreadId, idsitenews)
 	var forumthread_idforumthread int32
 	err := row.Scan(&forumthread_idforumthread)
 	return forumthread_idforumthread, err
@@ -1520,22 +1769,32 @@ func (q *Queries) getSecurityLevel(ctx context.Context, arg getSecurityLevelPara
 }
 
 const getUsersTopicLevel = `-- name: getUsersTopicLevel :one
-SELECT level FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2
+SELECT level FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
 `
 
-func (q *Queries) getUsersTopicLevel(ctx context.Context) (sql.NullInt32, error) {
-	row := q.db.QueryRowContext(ctx, getUsersTopicLevel)
+type getUsersTopicLevelParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+}
+
+func (q *Queries) getUsersTopicLevel(ctx context.Context, arg getUsersTopicLevelParams) (sql.NullInt32, error) {
+	row := q.db.QueryRowContext(ctx, getUsersTopicLevel, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
 	var level sql.NullInt32
 	err := row.Scan(&level)
 	return level, err
 }
 
 const getUsersTopicLevelInviteMax = `-- name: getUsersTopicLevelInviteMax :one
-SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2
+SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
 `
 
-func (q *Queries) getUsersTopicLevelInviteMax(ctx context.Context) (sql.NullInt32, error) {
-	row := q.db.QueryRowContext(ctx, getUsersTopicLevelInviteMax)
+type getUsersTopicLevelInviteMaxParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+}
+
+func (q *Queries) getUsersTopicLevelInviteMax(ctx context.Context, arg getUsersTopicLevelInviteMaxParams) (sql.NullInt32, error) {
+	row := q.db.QueryRowContext(ctx, getUsersTopicLevelInviteMax, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
 	var invitemax sql.NullInt32
 	err := row.Scan(&invitemax)
 	return invitemax, err
@@ -1677,11 +1936,17 @@ func (q *Queries) makeCategory(ctx context.Context, arg makeCategoryParams) erro
 }
 
 const makeImageBoard = `-- name: makeImageBoard :exec
-INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES ($1, $2, $3)
+INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, ?, ?)
 `
 
-func (q *Queries) makeImageBoard(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, makeImageBoard)
+type makeImageBoardParams struct {
+	ImageboardIdimageboard int32
+	Title                  sql.NullString
+	Description            sql.NullString
+}
+
+func (q *Queries) makeImageBoard(ctx context.Context, arg makeImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, makeImageBoard, arg.ImageboardIdimageboard, arg.Title, arg.Description)
 	return err
 }
 
@@ -1756,7 +2021,7 @@ func (q *Queries) modify_faq(ctx context.Context, arg modify_faqParams) error {
 
 const moveToLinker = `-- name: moveToLinker :many
 SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
-FROM linkerQueue l WHERE l.idlinkerQueue = $1
+FROM linkerQueue l WHERE l.idlinkerQueue = ?
 `
 
 type moveToLinkerRow struct {
@@ -1768,8 +2033,8 @@ type moveToLinkerRow struct {
 	Description                    sql.NullString
 }
 
-func (q *Queries) moveToLinker(ctx context.Context) ([]*moveToLinkerRow, error) {
-	rows, err := q.db.QueryContext(ctx, moveToLinker)
+func (q *Queries) moveToLinker(ctx context.Context, idlinkerqueue int32) ([]*moveToLinkerRow, error) {
+	rows, err := q.db.QueryContext(ctx, moveToLinker, idlinkerqueue)
 	if err != nil {
 		return nil, err
 	}
@@ -1877,7 +2142,7 @@ SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.idimagep
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
-WHERE i.imageboard_idimageboard = $1
+WHERE i.imageboard_idimageboard = ?
 ORDER BY i.posted DESC
 `
 
@@ -1891,8 +2156,8 @@ type printBoardPostsRow struct {
 	If          interface{}
 }
 
-func (q *Queries) printBoardPosts(ctx context.Context) ([]*printBoardPostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printBoardPosts)
+func (q *Queries) printBoardPosts(ctx context.Context, imageboardIdimageboard int32) ([]*printBoardPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printBoardPosts, imageboardIdimageboard)
 	if err != nil {
 		return nil, err
 	}
@@ -1927,7 +2192,7 @@ SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.title
 FROM forumcategory c1
 LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
 LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE c1.idforumcategory = $1
+WHERE c1.idforumcategory = ?
 `
 
 type printCategoryRootsRow struct {
@@ -1938,8 +2203,8 @@ type printCategoryRootsRow struct {
 	Title_3           sql.NullString
 }
 
-func (q *Queries) printCategoryRoots(ctx context.Context) ([]*printCategoryRootsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printCategoryRoots)
+func (q *Queries) printCategoryRoots(ctx context.Context, idforumcategory int32) ([]*printCategoryRootsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printCategoryRoots, idforumcategory)
 	if err != nil {
 		return nil, err
 	}
@@ -1971,7 +2236,7 @@ const printImagePost = `-- name: printImagePost :many
 SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.forumthread_idforumthread, i.idimagepost
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-WHERE i.idimagepost = $1
+WHERE i.idimagepost = ?
 `
 
 type printImagePostRow struct {
@@ -1984,8 +2249,8 @@ type printImagePostRow struct {
 	Idimagepost              int32
 }
 
-func (q *Queries) printImagePost(ctx context.Context) ([]*printImagePostRow, error) {
-	rows, err := q.db.QueryContext(ctx, printImagePost)
+func (q *Queries) printImagePost(ctx context.Context, idimagepost int32) ([]*printImagePostRow, error) {
+	rows, err := q.db.QueryContext(ctx, printImagePost, idimagepost)
 	if err != nil {
 		return nil, err
 	}
@@ -2016,7 +2281,7 @@ func (q *Queries) printImagePost(ctx context.Context) ([]*printImagePostRow, err
 }
 
 const printSubBoards = `-- name: printSubBoards :many
-SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = $1
+SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?
 `
 
 type printSubBoardsRow struct {
@@ -2025,8 +2290,8 @@ type printSubBoardsRow struct {
 	Description  sql.NullString
 }
 
-func (q *Queries) printSubBoards(ctx context.Context) ([]*printSubBoardsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printSubBoards)
+func (q *Queries) printSubBoards(ctx context.Context, imageboardIdimageboard int32) ([]*printSubBoardsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printSubBoards, imageboardIdimageboard)
 	if err != nil {
 		return nil, err
 	}
@@ -2095,11 +2360,10 @@ const printTopic = `-- name: printTopic :many
 SELECT LEFT(c.text, 255), fu.username, c.written, lu.username, t.lastaddition, t.idforumthread, t.comments, r.viewlevel, u.level
 FROM forumthread t
 LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.forumtopic_idforumtopic AND u.users_idusers = $1
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.forumtopic_idforumtopic AND u.users_idusers = ?
 LEFT JOIN comments c ON c.idcomments = t.firstpost
 LEFT JOIN users fu ON fu.idusers = c.users_idusers
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumtopic_idforumcategory = $2
 ORDER BY t.lastaddition DESC
 `
 
@@ -2115,8 +2379,9 @@ type printTopicRow struct {
 	Level         sql.NullInt32
 }
 
-func (q *Queries) printTopic(ctx context.Context) ([]*printTopicRow, error) {
-	rows, err := q.db.QueryContext(ctx, printTopic)
+// WHERE t.forumtopic_idforumcategory = ?
+func (q *Queries) printTopic(ctx context.Context, usersIdusers int32) ([]*printTopicRow, error) {
+	rows, err := q.db.QueryContext(ctx, printTopic, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
@@ -2152,7 +2417,7 @@ const printTopicRestrictions = `-- name: printTopicRestrictions :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-WHERE idforumtopic = $1
+WHERE idforumtopic = ?
 `
 
 type printTopicRestrictionsRow struct {
@@ -2169,8 +2434,8 @@ type printTopicRestrictionsRow struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) printTopicRestrictions(ctx context.Context) ([]*printTopicRestrictionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printTopicRestrictions)
+func (q *Queries) printTopicRestrictions(ctx context.Context, idforumtopic int32) ([]*printTopicRestrictionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printTopicRestrictions, idforumtopic)
 	if err != nil {
 		return nil, err
 	}
@@ -2210,7 +2475,7 @@ FROM forumtopic t
 LEFT JOIN forumcategory c1 ON c1.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
 LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE t.idforumtopic = $1
+WHERE t.idforumtopic = ?
 `
 
 type printTopicRootsRow struct {
@@ -2223,8 +2488,8 @@ type printTopicRootsRow struct {
 	Title_4           sql.NullString
 }
 
-func (q *Queries) printTopicRoots(ctx context.Context) ([]*printTopicRootsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printTopicRoots)
+func (q *Queries) printTopicRoots(ctx context.Context, idforumtopic int32) ([]*printTopicRootsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printTopicRoots, idforumtopic)
 	if err != nil {
 		return nil, err
 	}
@@ -2401,27 +2666,37 @@ func (q *Queries) remakeWritingSearchInsert(ctx context.Context) error {
 }
 
 const renameCategory = `-- name: renameCategory :exec
-UPDATE linkerCategory SET title = $1 WHERE idlinkerCategory = $2
+UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?
 `
 
-func (q *Queries) renameCategory(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, renameCategory)
+type renameCategoryParams struct {
+	Title            sql.NullString
+	Idlinkercategory int32
+}
+
+func (q *Queries) renameCategory(ctx context.Context, arg renameCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, renameCategory, arg.Title, arg.Idlinkercategory)
 	return err
 }
 
 const renameLanguage = `-- name: renameLanguage :exec
 UPDATE language
-SET nameof = $1
-WHERE idlanguage = $2
+SET nameof = ?
+WHERE idlanguage = ?
 `
+
+type renameLanguageParams struct {
+	Nameof     sql.NullString
+	Idlanguage int32
+}
 
 // This query updates the "nameof" field in the "language" table based on the provided "cid".
 // Parameters:
 //
-//	$1 - New name for the language (string)
-//	$2 - Language ID to be updated (int)
-func (q *Queries) renameLanguage(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, renameLanguage)
+//	? - New name for the language (string)
+//	? - Language ID to be updated (int)
+func (q *Queries) renameLanguage(ctx context.Context, arg renameLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, renameLanguage, arg.Nameof, arg.Idlanguage)
 	return err
 }
 
@@ -2442,21 +2717,55 @@ func (q *Queries) rename_category(ctx context.Context, arg rename_categoryParams
 }
 
 const setTopicRestrictions = `-- name: setTopicRestrictions :exec
-UPDATE topicrestrictions SET viewlevel = $1, replylevel = $2, newthreadlevel = $3, seelevel = $4, invitelevel = $5, readlevel = $6, modlevel = $7, adminlevel = $8
-WHERE forumtopic_idforumtopic = $9
+UPDATE topicrestrictions SET viewlevel = ?, replylevel = ?, newthreadlevel = ?, seelevel = ?, invitelevel = ?, readlevel = ?, modlevel = ?, adminlevel = ?
+WHERE forumtopic_idforumtopic = ?
 `
 
-func (q *Queries) setTopicRestrictions(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, setTopicRestrictions)
+type setTopicRestrictionsParams struct {
+	Viewlevel              sql.NullInt32
+	Replylevel             sql.NullInt32
+	Newthreadlevel         sql.NullInt32
+	Seelevel               sql.NullInt32
+	Invitelevel            sql.NullInt32
+	Readlevel              sql.NullInt32
+	Modlevel               sql.NullInt32
+	Adminlevel             sql.NullInt32
+	ForumtopicIdforumtopic int32
+}
+
+func (q *Queries) setTopicRestrictions(ctx context.Context, arg setTopicRestrictionsParams) error {
+	_, err := q.db.ExecContext(ctx, setTopicRestrictions,
+		arg.Viewlevel,
+		arg.Replylevel,
+		arg.Newthreadlevel,
+		arg.Seelevel,
+		arg.Invitelevel,
+		arg.Readlevel,
+		arg.Modlevel,
+		arg.Adminlevel,
+		arg.ForumtopicIdforumtopic,
+	)
 	return err
 }
 
 const setUsersTopicLevel = `-- name: setUsersTopicLevel :exec
-UPDATE userstopiclevel SET level = $3, invitemax = $4 WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2
+UPDATE userstopiclevel SET level = ?, invitemax = ? WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
 `
 
-func (q *Queries) setUsersTopicLevel(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, setUsersTopicLevel)
+type setUsersTopicLevelParams struct {
+	Level                  sql.NullInt32
+	Invitemax              sql.NullInt32
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+}
+
+func (q *Queries) setUsersTopicLevel(ctx context.Context, arg setUsersTopicLevelParams) error {
+	_, err := q.db.ExecContext(ctx, setUsersTopicLevel,
+		arg.Level,
+		arg.Invitemax,
+		arg.ForumtopicIdforumtopic,
+		arg.UsersIdusers,
+	)
 	return err
 }
 
@@ -2672,7 +2981,7 @@ SELECT l.title, l.url, l.description, u.username, l.idlinker, l.listed,
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
-WHERE l.linkerCategory_idlinkerCategory = $1
+WHERE l.linkerCategory_idlinkerCategory = ?
 ORDER BY l.listed DESC
 `
 
@@ -2687,8 +2996,8 @@ type showLatestRow struct {
 	Title_2     sql.NullString
 }
 
-func (q *Queries) showLatest(ctx context.Context) ([]*showLatestRow, error) {
-	rows, err := q.db.QueryContext(ctx, showLatest)
+func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory int32) ([]*showLatestRow, error) {
+	rows, err := q.db.QueryContext(ctx, showLatest, linkercategoryIdlinkercategory)
 	if err != nil {
 		return nil, err
 	}
@@ -2724,7 +3033,7 @@ SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforu
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
-WHERE l.idlinker = $1
+WHERE l.idlinker = ?
 `
 
 type showLinkCommentsRow struct {
@@ -2737,8 +3046,8 @@ type showLinkCommentsRow struct {
 	Title_2                  sql.NullString
 }
 
-func (q *Queries) showLinkComments(ctx context.Context) ([]*showLinkCommentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showLinkComments)
+func (q *Queries) showLinkComments(ctx context.Context, idlinker int32) ([]*showLinkCommentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, showLinkComments, idlinker)
 	if err != nil {
 		return nil, err
 	}
@@ -2768,72 +3077,11 @@ func (q *Queries) showLinkComments(ctx context.Context) ([]*showLinkCommentsRow,
 	return items, nil
 }
 
-const showNews = `-- name: showNews :one
-SELECT count(idsiteNews) FROM siteNews
-WHERE $1 AND $2
-`
-
-func (q *Queries) showNews(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, showNews)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const showNewsPosts = `-- name: showNewsPosts :many
-SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, IF(th.comments IS NULL, 0, th.comments + 1)
-FROM siteNews s
-LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
-WHERE $1 AND $2
-ORDER BY s.occured DESC
-LIMIT 10
-`
-
-type showNewsPostsRow struct {
-	Username   sql.NullString
-	News       sql.NullString
-	Occured    sql.NullTime
-	Idsitenews int32
-	Idusers    sql.NullInt32
-	If         interface{}
-}
-
-func (q *Queries) showNewsPosts(ctx context.Context) ([]*showNewsPostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showNewsPosts)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*showNewsPostsRow
-	for rows.Next() {
-		var i showNewsPostsRow
-		if err := rows.Scan(
-			&i.Username,
-			&i.News,
-			&i.Occured,
-			&i.Idsitenews,
-			&i.Idusers,
-			&i.If,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const showPost = `-- name: showPost :many
 SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, s.forumthread_idforumthread
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = $1
+WHERE s.idsiteNews = ?
 `
 
 type showPostRow struct {
@@ -2845,8 +3093,8 @@ type showPostRow struct {
 	ForumthreadIdforumthread int32
 }
 
-func (q *Queries) showPost(ctx context.Context) ([]*showPostRow, error) {
-	rows, err := q.db.QueryContext(ctx, showPost)
+func (q *Queries) showPost(ctx context.Context, idsitenews int32) ([]*showPostRow, error) {
+	rows, err := q.db.QueryContext(ctx, showPost, idsitenews)
 	if err != nil {
 		return nil, err
 	}
@@ -2879,11 +3127,16 @@ const showTableTopics = `-- name: showTableTopics :many
 SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = $1
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE forumcategory_idforumcategory = $2 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY t.lastaddition DESC
 `
+
+type showTableTopicsParams struct {
+	UsersIdusers                 int32
+	ForumcategoryIdforumcategory int32
+}
 
 type showTableTopicsRow struct {
 	Idforumtopic int32
@@ -2897,8 +3150,8 @@ type showTableTopicsRow struct {
 	Level        sql.NullInt32
 }
 
-func (q *Queries) showTableTopics(ctx context.Context) ([]*showTableTopicsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showTableTopics)
+func (q *Queries) showTableTopics(ctx context.Context, arg showTableTopicsParams) ([]*showTableTopicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, showTableTopics, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
 	if err != nil {
 		return nil, err
 	}
@@ -2934,7 +3187,7 @@ const showTopicUserLevels = `-- name: showTopicUserLevels :one
 SELECT r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-WHERE idforumtopic = $1
+WHERE idforumtopic = ?
 `
 
 type showTopicUserLevelsRow struct {
@@ -2948,8 +3201,8 @@ type showTopicUserLevelsRow struct {
 	Adminlevel     sql.NullInt32
 }
 
-func (q *Queries) showTopicUserLevels(ctx context.Context) (*showTopicUserLevelsRow, error) {
-	row := q.db.QueryRowContext(ctx, showTopicUserLevels)
+func (q *Queries) showTopicUserLevels(ctx context.Context, idforumtopic int32) (*showTopicUserLevelsRow, error) {
+	row := q.db.QueryRowContext(ctx, showTopicUserLevels, idforumtopic)
 	var i showTopicUserLevelsRow
 	err := row.Scan(
 		&i.Viewlevel,
@@ -3092,7 +3345,7 @@ func (q *Queries) show_bookmarks(ctx context.Context, usersIdusers int32) (sql.N
 
 const show_categories = `-- name: show_categories :exec
 SELECT f.idforumcategory, f.title, f.description
-FROM forumcategory f WHERE f.forumcategory_idforumcategory = $1
+FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?
 `
 
 type show_categoriesRow struct {
@@ -3101,8 +3354,8 @@ type show_categoriesRow struct {
 	Description     sql.NullString
 }
 
-func (q *Queries) show_categories(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, show_categories)
+func (q *Queries) show_categories(ctx context.Context, forumcategoryIdforumcategory int32) error {
+	_, err := q.db.ExecContext(ctx, show_categories, forumcategoryIdforumcategory)
 	return err
 }
 
@@ -3217,11 +3470,16 @@ const show_topics = `-- name: show_topics :many
 SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = $1
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumcategory_idforumcategory = $2
+WHERE t.forumcategory_idforumcategory = ?
 ORDER BY t.lastaddition DESC
 `
+
+type show_topicsParams struct {
+	UsersIdusers                 int32
+	ForumcategoryIdforumcategory int32
+}
 
 type show_topicsRow struct {
 	Idforumtopic int32
@@ -3235,8 +3493,8 @@ type show_topicsRow struct {
 	Level        sql.NullInt32
 }
 
-func (q *Queries) show_topics(ctx context.Context) ([]*show_topicsRow, error) {
-	rows, err := q.db.QueryContext(ctx, show_topics)
+func (q *Queries) show_topics(ctx context.Context, arg show_topicsParams) ([]*show_topicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, show_topics, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
 	if err != nil {
 		return nil, err
 	}
@@ -3419,11 +3677,25 @@ func (q *Queries) topicAllowThis(ctx context.Context, arg topicAllowThisParams) 
 }
 
 const updateQueue = `-- name: updateQueue :exec
-UPDATE linkerQueue SET linkerCategory_idlinkerCategory = $1, title = $2, url = $3, description = $4 WHERE idlinkerQueue = $5
+UPDATE linkerQueue SET linkerCategory_idlinkerCategory = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?
 `
 
-func (q *Queries) updateQueue(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, updateQueue)
+type updateQueueParams struct {
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Idlinkerqueue                  int32
+}
+
+func (q *Queries) updateQueue(ctx context.Context, arg updateQueueParams) error {
+	_, err := q.db.ExecContext(ctx, updateQueue,
+		arg.LinkercategoryIdlinkercategory,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+		arg.Idlinkerqueue,
+	)
 	return err
 }
 
@@ -3681,31 +3953,37 @@ func (q *Queries) update_forumtopic_threads(ctx context.Context) error {
 
 const userAllow = `-- name: userAllow :exec
 INSERT INTO permissions (users_idusers, section, level)
-VALUES ($1, $2, $3)
+VALUES (?, ?, ?)
 `
+
+type userAllowParams struct {
+	UsersIdusers int32
+	Section      sql.NullString
+	Level        sql.NullString
+}
 
 // This query inserts a new permission into the "permissions" table.
 // Parameters:
 //
-//	$1 - User ID to be associated with the permission (int)
-//	$2 - Section for which the permission is granted (string)
-//	$3 - Level of the permission (string)
-func (q *Queries) userAllow(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, userAllow)
+//	? - User ID to be associated with the permission (int)
+//	? - Section for which the permission is granted (string)
+//	? - Level of the permission (string)
+func (q *Queries) userAllow(ctx context.Context, arg userAllowParams) error {
+	_, err := q.db.ExecContext(ctx, userAllow, arg.UsersIdusers, arg.Section, arg.Level)
 	return err
 }
 
 const userDisallow = `-- name: userDisallow :exec
 DELETE FROM permissions
-WHERE idpermissions = $1
+WHERE idpermissions = ?
 `
 
 // This query deletes a permission from the "permissions" table based on the provided "permid".
 // Parameters:
 //
-//	$1 - Permission ID to be deleted (int)
-func (q *Queries) userDisallow(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, userDisallow)
+//	? - Permission ID to be deleted (int)
+func (q *Queries) userDisallow(ctx context.Context, idpermissions int32) error {
+	_, err := q.db.ExecContext(ctx, userDisallow, idpermissions)
 	return err
 }
 
@@ -3791,7 +4069,7 @@ func (q *Queries) users_bookmarks(ctx context.Context, usersIdusers int32) (sql.
 const writeLinkerRSS = `-- name: writeLinkerRSS :many
 SELECT l.idlinker, l.title, l.description, l.url
 FROM linker l
-WHERE l.linkerCategory_idlinkerCategory = $1
+WHERE l.linkerCategory_idlinkerCategory = ?
 ORDER BY l.listed DESC
 `
 
@@ -3802,8 +4080,8 @@ type writeLinkerRSSRow struct {
 	Url         sql.NullString
 }
 
-func (q *Queries) writeLinkerRSS(ctx context.Context) ([]*writeLinkerRSSRow, error) {
-	rows, err := q.db.QueryContext(ctx, writeLinkerRSS)
+func (q *Queries) writeLinkerRSS(ctx context.Context, linkercategoryIdlinkercategory int32) ([]*writeLinkerRSSRow, error) {
+	rows, err := q.db.QueryContext(ctx, writeLinkerRSS, linkercategoryIdlinkercategory)
 	if err != nil {
 		return nil, err
 	}
@@ -3832,16 +4110,22 @@ func (q *Queries) writeLinkerRSS(ctx context.Context) ([]*writeLinkerRSSRow, err
 
 const writeNewsPost = `-- name: writeNewsPost :exec
 INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
-VALUES ($1, $2, NOW(), $3)
+VALUES (?, ?, NOW(), ?)
 `
 
-func (q *Queries) writeNewsPost(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, writeNewsPost)
+type writeNewsPostParams struct {
+	News               sql.NullString
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+}
+
+func (q *Queries) writeNewsPost(ctx context.Context, arg writeNewsPostParams) error {
+	_, err := q.db.ExecContext(ctx, writeNewsPost, arg.News, arg.UsersIdusers, arg.LanguageIdlanguage)
 	return err
 }
 
 const writeRSS = `-- name: writeRSS :exec
-SELECT title, description FROM imageboard WHERE idimageboard = $1
+SELECT title, description FROM imageboard WHERE idimageboard = ?
 `
 
 type writeRSSRow struct {
@@ -3849,8 +4133,8 @@ type writeRSSRow struct {
 	Description sql.NullString
 }
 
-func (q *Queries) writeRSS(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, writeRSS)
+func (q *Queries) writeRSS(ctx context.Context, idimageboard int32) error {
+	_, err := q.db.ExecContext(ctx, writeRSS, idimageboard)
 	return err
 }
 

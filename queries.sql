@@ -1,18 +1,18 @@
 -- name: renameLanguage :exec
 -- This query updates the "nameof" field in the "language" table based on the provided "cid".
 -- Parameters:
---   $1 - New name for the language (string)
---   $2 - Language ID to be updated (int)
+--   ? - New name for the language (string)
+--   ? - Language ID to be updated (int)
 UPDATE language
-SET nameof = $1
-WHERE idlanguage = $2;
+SET nameof = ?
+WHERE idlanguage = ?;
 
 -- name: deleteLanguage :exec
 -- This query deletes a record from the "language" table based on the provided "cid".
 -- Parameters:
---   $1 - Language ID to be deleted (int)
+--   ? - Language ID to be deleted (int)
 DELETE FROM language
-WHERE idlanguage = $1;
+WHERE idlanguage = ?;
 
 -- name: countCategories :one
 -- This query returns the count of all records in the "language" table.
@@ -24,9 +24,9 @@ FROM language;
 -- name: createLanguage :exec
 -- This query inserts a new record into the "language" table.
 -- Parameters:
---   $1 - Name of the new language (string)
+--   ? - Name of the new language (string)
 INSERT INTO language (nameof)
-VALUES ($1);
+VALUES (?);
 
 -- name: SelectLanguages :many
 -- This query selects all languages from the "language" table.
@@ -52,18 +52,18 @@ ORDER BY p.level;
 -- name: userAllow :exec
 -- This query inserts a new permission into the "permissions" table.
 -- Parameters:
---   $1 - User ID to be associated with the permission (int)
---   $2 - Section for which the permission is granted (string)
---   $3 - Level of the permission (string)
+--   ? - User ID to be associated with the permission (int)
+--   ? - Section for which the permission is granted (string)
+--   ? - Level of the permission (string)
 INSERT INTO permissions (users_idusers, section, level)
-VALUES ($1, $2, $3);
+VALUES (?, ?, ?);
 
 -- name: userDisallow :exec
 -- This query deletes a permission from the "permissions" table based on the provided "permid".
 -- Parameters:
---   $1 - Permission ID to be deleted (int)
+--   ? - Permission ID to be deleted (int)
 DELETE FROM permissions
-WHERE idpermissions = $1;
+WHERE idpermissions = ?;
 
 -- name: adminUsers :many
 -- This query selects all admin users from the "users" table.
@@ -428,10 +428,10 @@ FROM faqCategories;
 
 -- name: show_categories :exec
 SELECT f.idforumcategory, f.title, f.description
-FROM forumcategory f WHERE f.forumcategory_idforumcategory = $1;
+FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?;
 
 -- name: changeCategory :exec
-UPDATE forumcategory SET title = $2, description = $3 WHERE idforumcategory = $1;
+UPDATE forumcategory SET title = ?, description = ? WHERE idforumcategory = ?;
 
 -- name: showAllCategories :many
 SELECT c.idforumcategory, c.title, c.description, c.forumcategory_idforumcategory, c2.title
@@ -445,89 +445,89 @@ LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
 GROUP BY t.idforumtopic;
 
 -- name: changeTopic :exec
-UPDATE forumtopic SET title = $2, description = $3 WHERE idforumtopic = $1;
+UPDATE forumtopic SET title = ?, description = ? WHERE idforumtopic = ?;
 
 -- name: show_topics :many
 SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = $1
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumcategory_idforumcategory = $2
+WHERE t.forumcategory_idforumcategory = ?
 ORDER BY t.lastaddition DESC;
 
 -- name: printTopic :many
 SELECT LEFT(c.text, 255), fu.username, c.written, lu.username, t.lastaddition, t.idforumthread, t.comments, r.viewlevel, u.level
 FROM forumthread t
 LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.forumtopic_idforumtopic AND u.users_idusers = $1
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.forumtopic_idforumtopic AND u.users_idusers = ?
 LEFT JOIN comments c ON c.idcomments = t.firstpost
 LEFT JOIN users fu ON fu.idusers = c.users_idusers
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumtopic_idforumcategory = $2
+-- WHERE t.forumtopic_idforumcategory = ?
 ORDER BY t.lastaddition DESC;
 
 -- name: deleteTopicRestrictions :exec
-DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = $1;
+DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
 
 -- name: existsTopicRestrictions :one
-SELECT (forumtopic_idforumtopic) FROM topicrestrictions WHERE forumtopic_idforumtopic = $1;
+SELECT (forumtopic_idforumtopic) FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
 
 -- name: addTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: setTopicRestrictions :exec
-UPDATE topicrestrictions SET viewlevel = $1, replylevel = $2, newthreadlevel = $3, seelevel = $4, invitelevel = $5, readlevel = $6, modlevel = $7, adminlevel = $8
-WHERE forumtopic_idforumtopic = $9;
+UPDATE topicrestrictions SET viewlevel = ?, replylevel = ?, newthreadlevel = ?, seelevel = ?, invitelevel = ?, readlevel = ?, modlevel = ?, adminlevel = ?
+WHERE forumtopic_idforumtopic = ?;
 
 -- name: printTopicRestrictions :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-WHERE idforumtopic = $1;
+WHERE idforumtopic = ?;
 
 -- name: deleteUsersTopicLevel :exec
-DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
 -- name: addUsersTopicLevel :exec
 INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
-VALUES ($1, $2, $3, $4);
+VALUES (?, ?, ?, ?);
 
 -- name: setUsersTopicLevel :exec
-UPDATE userstopiclevel SET level = $3, invitemax = $4 WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+UPDATE userstopiclevel SET level = ?, invitemax = ? WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
 -- name: getUsersTopicLevelInviteMax :one
-SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
 -- name: getUsersTopicLevel :one
-SELECT level FROM userstopiclevel WHERE forumtopic_idforumtopic = $1 AND users_idusers = $2;
+SELECT level FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
 -- name: showTopicUserLevels :one
 SELECT r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-WHERE idforumtopic = $1;
+WHERE idforumtopic = ?;
 
 -- name: showTableTopics :many
 SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = $1
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE forumcategory_idforumcategory = $2 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY t.lastaddition DESC;
 
 -- name: expandCategories :many
 SELECT f.idforumcategory, f.title, f.description
-FROM forumcategory f WHERE f.forumcategory_idforumcategory = $1;
+FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?;
 
 -- name: printCategoryRoots :many
 SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.title
 FROM forumcategory c1
 LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
 LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE c1.idforumcategory = $1;
+WHERE c1.idforumcategory = ?;
 
 -- name: printTopicRoots :many
 SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.idforumcategory, c1.title, t.title
@@ -535,41 +535,41 @@ FROM forumtopic t
 LEFT JOIN forumcategory c1 ON c1.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
 LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE t.idforumtopic = $1;
+WHERE t.idforumtopic = ?;
 
 
 -- name: writeRSS :exec
-SELECT title, description FROM imageboard WHERE idimageboard = $1;
+SELECT title, description FROM imageboard WHERE idimageboard = ?;
 
 -- name: makeImageBoard :exec
-INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES ($1, $2, $3);
+INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, ?, ?);
 
 -- name: changeImageBoard :exec
-UPDATE imageboard SET title = $2, description = $3, imageboard_idimageboard = $4 WHERE idimageboard = $1;
+UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?;
 
 -- name: printSubBoards :many
-SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = $1;
+SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?;
 
 -- name: printImagePost :many
 SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.forumthread_idforumthread, i.idimagepost
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-WHERE i.idimagepost = $1;
+WHERE i.idimagepost = ?;
 
 -- name: printBoardPosts :many
 SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.idimagepost, IF(th.comments IS NULL, 0, th.comments + 1)
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
-WHERE i.imageboard_idimageboard = $1
+WHERE i.imageboard_idimageboard = ?
 ORDER BY i.posted DESC;
 
 -- name: addImage :exec
 INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
-VALUES ($1, $2, $3, $4, $5, NOW());
+VALUES (?, ?, ?, ?, ?, NOW());
 
 -- name: assignImagePostThisThreadId :exec
-UPDATE imagepost SET forumthread_idforumthread = $1 WHERE idimagepost = $2;
+UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?;
 
 -- name: showAllBoards :many
 SELECT b.idimageboard, b.title, b.description, b.imageboard_idimageboard, pb.title
@@ -584,54 +584,54 @@ ORDER BY s.occured DESC LIMIT 15;
 
 -- name: writeNewsPost :exec
 INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
-VALUES ($1, $2, NOW(), $3);
+VALUES (?, ?, NOW(), ?);
 
 -- name: editNewsPost :exec
-UPDATE siteNews SET news = $1, language_idlanguage = $2 WHERE idsiteNews = $3;
+UPDATE siteNews SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?;
 
 -- name: doCalled :many
 SELECT s.news, s.idsiteNews, u.idusers, s.language_idlanguage
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = $1;
+WHERE s.idsiteNews = ?;
 
 -- name: getNewsThreadId :one
 SELECT s.forumthread_idforumthread FROM siteNews s, users u
-WHERE s.users_idusers = u.idusers AND s.idsiteNews = $1;
+WHERE s.users_idusers = u.idusers AND s.idsiteNews = ?;
 
 -- name: assignNewsThisThreadId :exec
-UPDATE siteNews SET forumthread_idforumthread = $1 WHERE idsiteNews = $2;
+UPDATE siteNews SET forumthread_idforumthread = ? WHERE idsiteNews = ?;
 
 -- name: showPost :many
 SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, s.forumthread_idforumthread
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = $1;
+WHERE s.idsiteNews = ?;
 
--- name: showNews :one
-SELECT count(idsiteNews) FROM siteNews
-WHERE $1 AND $2;
+-- -- name: showNews :one
+-- SELECT count(idsiteNews) FROM siteNews
+-- WHERE ? AND ?;
 
--- name: showNewsPosts :many
-SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, IF(th.comments IS NULL, 0, th.comments + 1)
-FROM siteNews s
-LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
-WHERE $1 AND $2
-ORDER BY s.occured DESC
-LIMIT 10;
+-- -- name: showNewsPosts :many
+-- SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, IF(th.comments IS NULL, 0, th.comments + 1)
+-- FROM siteNews s
+-- LEFT JOIN users u ON s.users_idusers = u.idusers
+-- LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+-- WHERE ? AND ?
+-- ORDER BY s.occured DESC
+-- LIMIT 10;
 
 -- name: countLinkerCategories :one
 SELECT COUNT(*) FROM linkerCategory;
 
 -- name: deleteCategory :exec
-DELETE FROM linkerCategory WHERE idlinkerCategory = $1;
+DELETE FROM linkerCategory WHERE idlinkerCategory = ?;
 
 -- name: renameCategory :exec
-UPDATE linkerCategory SET title = $1 WHERE idlinkerCategory = $2;
+UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?;
 
 -- name: createCategory :exec
-INSERT INTO linkerCategory (title) VALUES ($1);
+INSERT INTO linkerCategory (title) VALUES (?);
 
 -- name: showCategories :many
 SELECT idlinkerCategory, title FROM linkerCategory;
@@ -643,13 +643,13 @@ SELECT idlinkerCategory, title FROM linkerCategory;
 SELECT idlinkerCategory, title FROM linkerCategory;
 
 -- name: deleteQueueItem :exec
-DELETE FROM linkerQueue WHERE idlinkerQueue = $1;
+DELETE FROM linkerQueue WHERE idlinkerQueue = ?;
 
 -- name: updateQueue :exec
-UPDATE linkerQueue SET linkerCategory_idlinkerCategory = $1, title = $2, url = $3, description = $4 WHERE idlinkerQueue = $5;
+UPDATE linkerQueue SET linkerCategory_idlinkerCategory = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?;
 
 -- name: addToQueue :exec
-INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES ($1, $2, $3, $4, $5);
+INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?);
 
 -- name: showAdminQueue :many
 SELECT l.title, l.url, l.description, u.username, l.idlinkerQueue, c.title, c.idlinkerCategory
@@ -659,14 +659,14 @@ JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory;
 
 -- name: moveToLinker :many
 SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
-FROM linkerQueue l WHERE l.idlinkerQueue = $1;
+FROM linkerQueue l WHERE l.idlinkerQueue = ?;
 
 -- name: addToLinker :exec
 INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
-VALUES ($1, $2, $3, $4, $5, NOW());
+VALUES (?, ?, ?, ?, ?, NOW());
 
 -- name: assignLinkerThisThreadId :exec
-UPDATE linker SET forumthread_idforumthread = $1 WHERE idlinker = $2;
+UPDATE linker SET forumthread_idforumthread = ? WHERE idlinker = ?;
 
 -- name: showLatest :many
 SELECT l.title, l.url, l.description, u.username, l.idlinker, l.listed,
@@ -674,7 +674,7 @@ SELECT l.title, l.url, l.description, u.username, l.idlinker, l.listed,
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
-WHERE l.linkerCategory_idlinkerCategory = $1
+WHERE l.linkerCategory_idlinkerCategory = ?
 ORDER BY l.listed DESC;
 
 -- name: showLinkComments :many
@@ -682,12 +682,12 @@ SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforu
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
-WHERE l.idlinker = $1;
+WHERE l.idlinker = ?;
 
 -- name: writeLinkerRSS :many
 SELECT l.idlinker, l.title, l.description, l.url
 FROM linker l
-WHERE l.linkerCategory_idlinkerCategory = $1
+WHERE l.linkerCategory_idlinkerCategory = ?
 ORDER BY l.listed DESC;
 
 
@@ -952,3 +952,30 @@ SET forumthread_idforumthread = ?
 WHERE idwriting = ?;
 
 
+-- name: SIDExpired :one
+SELECT idsidTable, loginTime, users_idusers FROM sidTable
+WHERE sid = ? LIMIT 1;
+
+-- name: SelectUserBySID :one
+SELECT idsidTable, loginTime, users_idusers
+FROM sidTable
+WHERE sid = ?;
+
+-- name: UpdateLoginTimeAndUser :exec
+UPDATE sidTable SET loginTime = NOW(), users_idusers = ?
+WHERE sid = ?;
+
+-- name: InsertSID :exec
+INSERT INTO sidTable (sid, loginTime, users_idusers)
+VALUES (?, NOW(), ?);
+
+-- name: Login :one
+SELECT idusers FROM users
+WHERE username = ? AND passwd = md5(?);
+
+-- name: CheckExistingUser :one
+SELECT username FROM users WHERE username = ?;
+
+-- name: InsertUser :exec
+INSERT INTO users (username, passwd, email)
+VALUES (?, MD5(?), ?);

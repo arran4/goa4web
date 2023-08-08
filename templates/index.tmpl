@@ -10,7 +10,7 @@
         <a href="/register">Register</a><br>
         <a href="/login">Login</a><br>
     {{ end }}
-        {{ if eq $.SecurityLevel "administrator"}}
+        {{ if and (eq $.SecurityLevel "administrator") $.AdminChecked}}
             <hr>Admin tools:<br>
             <a href="/admin/users">Person Controls</a><br>
             <a href="/admin/users/permissions">Permission Controls</a><br>

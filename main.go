@@ -49,15 +49,17 @@ func main() {
 	r.Use(DBAdderMiddleware)
 	r.Use(UserAdderMiddleware)
 	r.Use(CoreAdderMiddleware)
-	r.HandleFunc("/", indexHandler).Methods("GET")
+
 	r.HandleFunc("/main.css", func(writer http.ResponseWriter, request *http.Request) {
 		_, _ = writer.Write(mainCSSData)
 	}).Methods("GET")
-	r.HandleFunc("/news", newsHandler).Methods("GET")
-	r.HandleFunc("/news/{id:[0-9]+}", newsPostHandler).Methods("GET")
-	r.HandleFunc("/user", userHandler).Methods("GET")
-	ar := r.PathPrefix("/admin").Subrouter()
 
+	r.HandleFunc("/", newsHandler).Methods("GET")
+	nr := r.PathPrefix("/news").Subrouter()
+	nr.HandleFunc("", newsHandler).Methods("GET")
+	//nr.HandleFunc("{id:[0-9]+}", newsPostHandler).Methods("GET")
+
+	ar := r.PathPrefix("/admin").Subrouter()
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminHandler).Methods("GET")
 	//ar.HandleFunc("/users", adminUserHandler).Methods("GET")

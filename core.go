@@ -36,7 +36,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
 			SecurityLevel: "administrator",
-			Items:         indexItems,
+			IndexItems:    indexItems,
 			UserID:        1,
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
@@ -44,7 +44,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 }
 
 type CoreData struct {
-	Items         []indexitem
+	IndexItems    []indexitem
 	UserID        int
 	SecurityLevel string
 	Title         string

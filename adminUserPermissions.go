@@ -21,7 +21,7 @@ type AdminUserPermissionsData struct {
 
 func adminUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
-	if cd.SecurityLevel != "all" {
+	if cd.SecurityLevel != "administrator" {
 		http.Error(w, "Incorrect security level", http.StatusForbidden)
 		return
 	}

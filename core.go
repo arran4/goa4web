@@ -35,7 +35,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
-			SecurityLevel: "all",
+			SecurityLevel: "administrator",
 			Items:         indexItems,
 			UserID:        1,
 		})

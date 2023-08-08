@@ -20,21 +20,6 @@ func (q *Queries) CheckExistingUser(ctx context.Context, username sql.NullString
 	return username, err
 }
 
-const insertSID = `-- name: InsertSID :exec
-INSERT INTO sidTable (sid, loginTime, users_idusers)
-VALUES (?, NOW(), ?)
-`
-
-type InsertSIDParams struct {
-	Sid          sql.NullString
-	UsersIdusers int32
-}
-
-func (q *Queries) InsertSID(ctx context.Context, arg InsertSIDParams) error {
-	_, err := q.db.ExecContext(ctx, insertSID, arg.Sid, arg.UsersIdusers)
-	return err
-}
-
 const insertUser = `-- name: InsertUser :execresult
 INSERT INTO users (username, passwd, email)
 VALUES (?, MD5(?), ?)
@@ -65,24 +50,6 @@ func (q *Queries) Login(ctx context.Context, arg LoginParams) (int32, error) {
 	var idusers int32
 	err := row.Scan(&idusers)
 	return idusers, err
-}
-
-const sIDExpired = `-- name: SIDExpired :one
-SELECT idsidTable, loginTime, users_idusers FROM sidTable
-WHERE sid = ? LIMIT 1
-`
-
-type SIDExpiredRow struct {
-	Idsidtable   int32
-	Logintime    sql.NullTime
-	UsersIdusers int32
-}
-
-func (q *Queries) SIDExpired(ctx context.Context, sid sql.NullString) (*SIDExpiredRow, error) {
-	row := q.db.QueryRowContext(ctx, sIDExpired, sid)
-	var i SIDExpiredRow
-	err := row.Scan(&i.Idsidtable, &i.Logintime, &i.UsersIdusers)
-	return &i, err
 }
 
 const selectLanguages = `-- name: SelectLanguages :many
@@ -116,40 +83,6 @@ func (q *Queries) SelectLanguages(ctx context.Context) ([]*Language, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const selectUserBySID = `-- name: SelectUserBySID :one
-SELECT idsidTable, loginTime, users_idusers
-FROM sidTable
-WHERE sid = ?
-`
-
-type SelectUserBySIDRow struct {
-	Idsidtable   int32
-	Logintime    sql.NullTime
-	UsersIdusers int32
-}
-
-func (q *Queries) SelectUserBySID(ctx context.Context, sid sql.NullString) (*SelectUserBySIDRow, error) {
-	row := q.db.QueryRowContext(ctx, selectUserBySID, sid)
-	var i SelectUserBySIDRow
-	err := row.Scan(&i.Idsidtable, &i.Logintime, &i.UsersIdusers)
-	return &i, err
-}
-
-const updateLoginTimeAndUser = `-- name: UpdateLoginTimeAndUser :exec
-UPDATE sidTable SET loginTime = NOW(), users_idusers = ?
-WHERE sid = ?
-`
-
-type UpdateLoginTimeAndUserParams struct {
-	UsersIdusers int32
-	Sid          sql.NullString
-}
-
-func (q *Queries) UpdateLoginTimeAndUser(ctx context.Context, arg UpdateLoginTimeAndUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateLoginTimeAndUser, arg.UsersIdusers, arg.Sid)
-	return err
 }
 
 const addImage = `-- name: addImage :exec

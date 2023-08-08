@@ -163,13 +163,6 @@ type SearchwordlistHasLinker struct {
 	LinkerIdlinker                 int32
 }
 
-type Sidtable struct {
-	Idsidtable   int32
-	UsersIdusers int32
-	Logintime    sql.NullTime
-	Sid          sql.NullString
-}
-
 type Sitenews struct {
 	Idsitenews               int32
 	ForumthreadIdforumthread int32

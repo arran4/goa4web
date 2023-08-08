@@ -16,13 +16,31 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		// TODO login user
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+
+		username := request.FormValue("username")
+		password := request.FormValue("password")
+		if username != "" || password != "" {
+			UID, err := loginUser(request.Context(), queries, username, password)
+			if err != nil {
+				http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			if UID != 0 {
+				session.Values["UID"] = UID
+				session.Values["LoginTime"] = time.Now().Unix()
+				session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
+			}
+		}
+
+		// TODO session.Values["ExpiryTime"]
+
 		ctx := context.WithValue(request.Context(), ContextValues("session"), session)
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }
 
-func loginUser(ctx context.Context, queries Queries, username, password string) (int32, error) {
+func loginUser(ctx context.Context, queries *Queries, username, password string) (int32, error) {
 	userID, err := queries.Login(ctx, LoginParams{
 		Username: sql.NullString{
 			String: username,
@@ -36,37 +54,37 @@ func loginUser(ctx context.Context, queries Queries, username, password string) 
 	return userID, nil
 }
 
-func verifyUser(ctx context.Context, w http.ResponseWriter, queries Queries, sid string) (int, error) {
-	if sid == "" {
-		t := time.Now().AddDate(1, 0, 0)
-		var err error
-		sid, err = generateSID(ctx, queries)
-		if err != nil {
-			return 0, fmt.Errorf("verifyUser: %w", err)
-		}
-		http.SetCookie(w, &http.Cookie{
-			Name:    "SID",
-			Value:   sid,
-			Expires: t,
-		})
-	}
+//func verifyUser(ctx context.Context, w http.ResponseWriter, queries *Queries, sid string) (int, error) {
+//	if sid == "" {
+//		t := time.Now().AddDate(1, 0, 0)
+//		var err error
+//		sid, err = generateSID(ctx, queries)
+//		if err != nil {
+//			return 0, fmt.Errorf("verifyUser: %w", err)
+//		}
+//		http.SetCookie(w, &http.Cookie{
+//			Name:    "SID",
+//			Value:   sid,
+//			Expires: t,
+//		})
+//	}
+//
+//	user, err := queries.SelectUserBySID(ctx, sql.NullString{
+//		String: sid,
+//		Valid:  true,
+//	})
+//	if err != nil {
+//		return 0, fmt.Errorf("verifyUser: %w", err)
+//	}
+//
+//	if user.Logintime.Time.AddDate(1, 0, 0).After(time.Now()) {
+//		return int(user.UsersIdusers), nil
+//	}
+//
+//	return 0, nil
+//}
 
-	user, err := queries.SelectUserBySID(ctx, sql.NullString{
-		String: sid,
-		Valid:  true,
-	})
-	if err != nil {
-		return 0, fmt.Errorf("verifyUser: %w", err)
-	}
-
-	if user.Logintime.Time.AddDate(1, 0, 0).After(time.Now()) {
-		return int(user.UsersIdusers), nil
-	}
-
-	return 0, nil
-}
-
-func registerUser(ctx context.Context, queries Queries, username, password, email string) (int, error) {
+func registerUser(ctx context.Context, queries *Queries, username, password, email string) (int, error) {
 	userID, err := queries.Login(ctx, LoginParams{
 		Username: sql.NullString{
 			String: username,

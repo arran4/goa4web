@@ -951,24 +951,6 @@ UPDATE writing
 SET forumthread_idforumthread = ?
 WHERE idwriting = ?;
 
-
--- name: SIDExpired :one
-SELECT idsidTable, loginTime, users_idusers FROM sidTable
-WHERE sid = ? LIMIT 1;
-
--- name: SelectUserBySID :one
-SELECT idsidTable, loginTime, users_idusers
-FROM sidTable
-WHERE sid = ?;
-
--- name: UpdateLoginTimeAndUser :exec
-UPDATE sidTable SET loginTime = NOW(), users_idusers = ?
-WHERE sid = ?;
-
--- name: InsertSID :exec
-INSERT INTO sidTable (sid, loginTime, users_idusers)
-VALUES (?, NOW(), ?);
-
 -- name: Login :one
 SELECT idusers FROM users
 WHERE username = ? AND passwd = md5(?);

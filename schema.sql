@@ -228,15 +228,6 @@ CREATE TABLE `searchwordlist_has_linker` (
   KEY `searchwordlist_has_linker_FKIndex2` (`linker_idlinker`)
 );
 
-CREATE TABLE `sidTable` (
-  `idsidTable` int(10) NOT NULL AUTO_INCREMENT,
-  `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `loginTime` datetime DEFAULT NULL,
-  `sid` tinytext DEFAULT NULL,
-  PRIMARY KEY (`idsidTable`),
-  KEY `sidTable_FKIndex1` (`users_idusers`)
-);
-
 CREATE TABLE `siteNews` (
   `idsiteNews` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,

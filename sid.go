@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 const set = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -23,7 +24,7 @@ func generateSID(ctx context.Context, q Queries) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("generateSID: %w", err)
 		}
-		if r == nil {
+		if r == nil || !r.Logintime.Valid || r.Logintime.Time.Before(time.Now()) {
 			break
 		}
 		for i := 0; i < 64; i++ {

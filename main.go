@@ -1,7 +1,9 @@
 package main
 
 import (
+	"embed"
 	"github.com/gorilla/sessions"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -26,12 +28,29 @@ var (
 	//		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 	//		Endpoint:     endpoints.Google,
 	//	}
+	//go:embed "templates/*.tmpl"
+	templateFS        embed.FS
+	compiledTemplates = template.Must(template.New("").Funcs(NewFuncs()).ParseFS(templateFS, "templates/*.tmpl"))
+	//go:embed "main.css"
+	mainCSSData []byte
 )
+
+func NewFuncs() template.FuncMap {
+	return map[string]any{
+		//"getSecurityLevel":
+	}
+}
 
 func main() {
 	r := mux.NewRouter()
 
+	r.Use(DBAdderMiddleware)
+	r.Use(UserAdderMiddleware)
+	r.Use(CoreAdderMiddleware)
 	r.HandleFunc("/", indexHandler).Methods("GET")
+	r.HandleFunc("/main.css", func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = writer.Write(mainCSSData)
+	}).Methods("GET")
 	r.HandleFunc("/news", newsHandler).Methods("GET")
 	r.HandleFunc("/news/{id:[0-9]+}", newsPostHandler).Methods("GET")
 	r.HandleFunc("/user", userHandler).Methods("GET")

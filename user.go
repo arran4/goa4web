@@ -8,6 +8,20 @@ import (
 	"time"
 )
 
+func UserAdderMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		// Get the session.
+		session, err := store.Get(request, sessionName)
+		if err != nil {
+			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		// TODO login user
+		ctx := context.WithValue(request.Context(), ContextValues("session"), session)
+		next.ServeHTTP(writer, request.WithContext(ctx))
+	})
+}
+
 func loginUser(ctx context.Context, queries Queries, username, password string) (int32, error) {
 	userID, err := queries.Login(ctx, LoginParams{
 		Username: sql.NullString{

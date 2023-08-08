@@ -8,16 +8,16 @@
             <th>Where
             <th>Delete?
         </tr>
-        {{- range $result := .results }}
+        {{- range $result := .Rows }}
         <tr>
-            <td>{{ $result.idpermissions }}</td>
-            <td>{{ $result.username }}</td>
-            <td>{{ $result.email }}</td>
-            <td>{{ $result.level }}</td>
-            <td>{{ $result.section }}</td>
+            <td>{{ $result.Idpermissions }}</td>
+            <td>{{ $result.Username.String }}</td>
+            <td>{{ $result.Email.String }}</td>
+            <td>{{ $result.Level.String }}</td>
+            <td>{{ $result.Section.String }}</td>
             <td>
                 <form method="post">
-                    <input type="hidden" name="permid" value="{{ $result.idpermissions }}">
+                    <input type="hidden" name="permid" value="{{ $result.Idpermissions }}">
                     <input type="submit" name="task" value="User Disallow">
                 </form>
             </td>

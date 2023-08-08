@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -38,6 +39,7 @@ var (
 func NewFuncs() template.FuncMap {
 	return map[string]any{
 		//"getSecurityLevel":
+		"now": func() time.Time { return time.Now() },
 	}
 }
 
@@ -54,7 +56,7 @@ func main() {
 	r.HandleFunc("/news", newsHandler).Methods("GET")
 	r.HandleFunc("/news/{id:[0-9]+}", newsPostHandler).Methods("GET")
 	r.HandleFunc("/user", userHandler).Methods("GET")
-	ar := r.Path("/admin").Subrouter()
+	ar := r.PathPrefix("/admin").Subrouter()
 
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminHandler).Methods("GET")

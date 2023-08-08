@@ -1,0 +1,8 @@
+{{ template "head" $ }}
+			Ran, errors:<ul>
+			{{range $.Errors}}
+				<li>{{- .}}</li>
+			{{- end}}
+			</ul>
+			<a href="{{$.Back}}">Back</a>
+{{ template "tail" $ }}

@@ -62,7 +62,14 @@ func main() {
 	ar := r.PathPrefix("/admin").Subrouter()
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminHandler).Methods("GET")
+	ar.HandleFunc("/", adminHandler).Methods("GET")
 	ar.HandleFunc("/forum", adminForumHandler).Methods("GET")
+	ar.HandleFunc("/forum", adminForumRemakeForumThreadHandler).Methods("POST").MatcherFunc(func(request *http.Request, match *mux.RouteMatch) bool {
+		return request.PostFormValue("task") == "Remake statistic information on forumthread"
+	})
+	ar.HandleFunc("/forum", adminForumRemakeForumTopicHandler).Methods("POST").MatcherFunc(func(request *http.Request, match *mux.RouteMatch) bool {
+		return request.PostFormValue("task") == "Remake statistic information on forumtopic"
+	})
 	ar.HandleFunc("/forum/list", adminForumWordListHandler).Methods("GET")
 	//ar.HandleFunc("/users", adminUserHandler).Methods("GET")
 	ar.HandleFunc("/users/permissions", adminUserPermissionsHandler).Methods("GET")

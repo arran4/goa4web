@@ -1,0 +1,25 @@
+package main
+
+import (
+	_ "embed"
+	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
+	"log"
+	"net/http"
+)
+
+func adminHandler(w http.ResponseWriter, r *http.Request) {
+	// AdminUserPermissionsData holds the data needed for rendering the template.
+	type AdminUserPermissionsData struct {
+		*CoreData
+	}
+
+	data := AdminUserPermissionsData{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+	}
+	err := compiledTemplates.ExecuteTemplate(w, "adminPage.tmpl", data)
+	if err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}

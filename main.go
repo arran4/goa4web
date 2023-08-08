@@ -54,8 +54,17 @@ func main() {
 	r.HandleFunc("/news", newsHandler).Methods("GET")
 	r.HandleFunc("/news/{id:[0-9]+}", newsPostHandler).Methods("GET")
 	r.HandleFunc("/user", userHandler).Methods("GET")
-	r.HandleFunc("/user/permissions", userPermissionsHandler).Methods("GET")
-	r.HandleFunc("/adminUserPermissions", adminUserPermissionsHandler)
+	ar := r.Path("/admin").Subrouter()
+
+	ar.Use(AdminCheckerMiddleware)
+	ar.HandleFunc("", adminHandler).Methods("GET")
+	//ar.HandleFunc("/users", adminUserHandler).Methods("GET")
+	ar.HandleFunc("/users/permissions", adminUserPermissionsHandler).Methods("GET")
+	//ar.HandleFunc("/language", adminLanguageHandler).Methods("GET")
+	//ar.HandleFunc("/search", adminSearchHandler).Methods("GET")
+	//ar.HandleFunc("/forum", adminForumHandler).Methods("GET")
+
+	// oauth shit
 	//r.HandleFunc("/", homeHandler)
 	//r.HandleFunc("/login", loginHandler)
 	//r.HandleFunc("/callback", callbackHandler)

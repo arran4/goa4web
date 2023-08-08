@@ -16,8 +16,14 @@ func handleDie(w http.ResponseWriter, message string) {
 	fmt.Fprint(w, "<b><font color=red>You encountered an error: "+message+"....</font></b>")
 }
 
-// Your index items.
-var indexItems = []indexitem{
+// IndexItem struct.
+type IndexItem struct {
+	Name string // Name of URL displayed in <a href>
+	Link string // URL for link.
+}
+
+// indexItems.
+var indexItems = []IndexItem{
 	{Name: "News", Link: "/"},
 	{Name: "FAQ", Link: "/faq"},
 	{Name: "Blogs", Link: "/blogs"},
@@ -44,7 +50,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 }
 
 type CoreData struct {
-	IndexItems    []indexitem
+	IndexItems    []IndexItem
 	UserID        int
 	SecurityLevel string
 	Title         string

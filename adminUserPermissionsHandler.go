@@ -7,27 +7,15 @@ import (
 	"net/http"
 )
 
-// Define your indexitem struct.
-type indexitem struct {
-	Name string // Name of URL displayed in <a href>
-	Link string // URL for link.
-}
-
-// AdminUserPermissionsData holds the data needed for rendering the template.
-type AdminUserPermissionsData struct {
-	*CoreData
-	Rows []*adminUserPermissionsRow
-}
-
 func adminUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
-	if cd.SecurityLevel != "administrator" {
-		http.Error(w, "Incorrect security level", http.StatusForbidden)
-		return
+	// AdminUserPermissionsData holds the data needed for rendering the template.
+	type AdminUserPermissionsData struct {
+		*CoreData
+		Rows []*adminUserPermissionsRow
 	}
-	// Prepare the index items.
+
 	data := AdminUserPermissionsData{
-		CoreData: cd,
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -39,7 +27,7 @@ func adminUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = compiledTemplates.ExecuteTemplate(w, "adminUserPermissionsPage.tmpl", data)
+	err = compiledTemplates.ExecuteTemplate(w, "adminUsersPermissionsPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

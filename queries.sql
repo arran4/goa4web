@@ -74,7 +74,7 @@ WHERE idpermissions = ?;
 SELECT u.idusers, u.username, u.email
 FROM users u;
 
--- name: completeWordList :exec
+-- name: completeWordList :many
 -- This query selects all words from the "searchwordlist" table and prints them.
 SELECT word
 FROM searchwordlist;

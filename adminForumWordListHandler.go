@@ -1,17 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	_ "embed"
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 	"log"
 	"net/http"
 )
 
-func adminUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
+func adminForumWordListHandler(w http.ResponseWriter, r *http.Request) {
 	// Data holds the data needed for rendering the template.
 	type Data struct {
 		*CoreData
-		Rows []*adminUserPermissionsRow
+		Rows []sql.NullString
 	}
 
 	data := Data{
@@ -20,14 +21,14 @@ func adminUserPermissionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.adminUserPermissions(r.Context())
+	rows, err := queries.completeWordList(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data.Rows = rows
 
-	err = compiledTemplates.ExecuteTemplate(w, "adminUsersPermissionsPage.tmpl", data)
+	err = compiledTemplates.ExecuteTemplate(w, "adminForumWordListPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

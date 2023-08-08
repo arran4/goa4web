@@ -6,13 +6,13 @@ import (
 )
 
 func newsHandler(w http.ResponseWriter, r *http.Request) {
-	// AdminUserPermissionsData holds the data needed for rendering the template.
-	type AdminUserPermissionsData struct {
+	// Data holds the data needed for rendering the template.
+	type Data struct {
 		*CoreData
 		Rows []*adminUserPermissionsRow
 	}
 
-	data := AdminUserPermissionsData{
+	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 

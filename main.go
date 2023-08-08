@@ -62,6 +62,8 @@ func main() {
 	ar := r.PathPrefix("/admin").Subrouter()
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminHandler).Methods("GET")
+	ar.HandleFunc("/forum", adminForumHandler).Methods("GET")
+	ar.HandleFunc("/forum/list", adminForumWordListHandler).Methods("GET")
 	//ar.HandleFunc("/users", adminUserHandler).Methods("GET")
 	ar.HandleFunc("/users/permissions", adminUserPermissionsHandler).Methods("GET")
 	//ar.HandleFunc("/language", adminLanguageHandler).Methods("GET")

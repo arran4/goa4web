@@ -676,15 +676,33 @@ func (q *Queries) changeTopic(ctx context.Context, arg changeTopicParams) error 
 	return err
 }
 
-const completeWordList = `-- name: completeWordList :exec
+const completeWordList = `-- name: completeWordList :many
 SELECT word
 FROM searchwordlist
 `
 
 // This query selects all words from the "searchwordlist" table and prints them.
-func (q *Queries) completeWordList(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, completeWordList)
-	return err
+func (q *Queries) completeWordList(ctx context.Context) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, completeWordList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var word sql.NullString
+		if err := rows.Scan(&word); err != nil {
+			return nil, err
+		}
+		items = append(items, word)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const countCategories = `-- name: countCategories :one

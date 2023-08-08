@@ -8,12 +8,12 @@ import (
 )
 
 func adminHandler(w http.ResponseWriter, r *http.Request) {
-	// AdminUserPermissionsData holds the data needed for rendering the template.
-	type AdminUserPermissionsData struct {
+	// Data holds the data needed for rendering the template.
+	type Data struct {
 		*CoreData
 	}
 
-	data := AdminUserPermissionsData{
+	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 	err := compiledTemplates.ExecuteTemplate(w, "adminPage.tmpl", data)

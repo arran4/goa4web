@@ -976,6 +976,8 @@ WHERE username = ? AND passwd = md5(?);
 -- name: CheckExistingUser :one
 SELECT username FROM users WHERE username = ?;
 
--- name: InsertUser :exec
+
+-- name: InsertUser :execresult
 INSERT INTO users (username, passwd, email)
-VALUES (?, MD5(?), ?);
+VALUES (?, MD5(?), ?)
+;

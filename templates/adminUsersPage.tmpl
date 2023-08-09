@@ -1,3 +1,23 @@
 {{ template "head" $ }}
-
+			<table border="1">
+				<tr>
+					<th>ID</th>
+					<th>User</th>
+					<th>Email</th>
+					<th>Options?</th>
+				</tr>
+				{{range $.Rows}}
+					<tr>
+						<td>{{.Idusers}}</td>
+						<td>{{.Username.String}}</td>
+						<td>{{.Email.String}}</td>
+						<td>
+							<form method="post">
+								<input type="hidden" name="uid" value="{{.Idusers}}">
+								<input type="submit" name="task" value="User do nothing">
+							</form>
+						</td>
+					</tr>
+				{{end}}
+			</table>
 {{ template "tail" $ }}

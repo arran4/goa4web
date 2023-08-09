@@ -18,9 +18,10 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 		}
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
 
+		task := request.FormValue("task")
 		username := request.FormValue("username")
 		password := request.FormValue("password")
-		if username != "" || password != "" {
+		if task == "Login" && username != "" || password != "" {
 			UID, err := loginUser(request.Context(), queries, username, password)
 			if err != nil {
 				http.Error(writer, "Internal Server Error", http.StatusInternalServerError)

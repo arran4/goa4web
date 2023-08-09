@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func adminLanguageHandler(w http.ResponseWriter, r *http.Request) {
+func adminLanguagesHandler(w http.ResponseWriter, r *http.Request) {
 	// Data holds the data needed for rendering the template.
 	type Data struct {
 		*CoreData
@@ -38,7 +38,7 @@ func adminLanguageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminLanguageRenameHandler(w http.ResponseWriter, r *http.Request) {
+func adminLanguagesRenameHandler(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	cid := r.PostFormValue("cid")
 	cname := r.PostFormValue("cname")
@@ -65,7 +65,7 @@ func adminLanguageRenameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func adminLanguageDeleteHandler(w http.ResponseWriter, r *http.Request) {
+func adminLanguagesDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	cid := r.PostFormValue("cid")
 	data := struct {
@@ -88,7 +88,7 @@ func adminLanguageDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func adminLanguageCreateHandler(w http.ResponseWriter, r *http.Request) {
+func adminLanguagesCreateHandler(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	cname := r.PostFormValue("cname")
 	data := struct {

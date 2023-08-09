@@ -1,0 +1,35 @@
+{{ template "head" $ }}
+		<table>
+			<tr>
+				<th>ID</th>
+				<th>Name</th>
+				<th>Options</th>
+			</tr>
+			{{range $.Rows}}
+				<tr>
+					<td>{{.Idlanguage}}</td>
+					<td>
+						<form method="post">
+							<input type="hidden" name="cid" value="{{.Idlanguage}}">
+							<input name="cname" value="{{.Nameof.String}}">
+					</td>
+					<td>
+						<input type="submit" name="task" value="Rename Language">
+						<input type="submit" name="task" value="Delete Language">
+						</form>
+					</td>
+				</tr>
+			{{end}}
+			<tr>
+				<td>NEW</td>
+				<td>
+					<form method="post">
+						<input name="cname" value="">
+				</td>
+				<td>
+					<input type="submit" name="task" value="Create Language">
+					</form>
+				</td>
+			</tr>
+		</table>
+{{ template "tail" $ }}

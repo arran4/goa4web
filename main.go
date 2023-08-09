@@ -64,16 +64,15 @@ func main() {
 	ar.HandleFunc("", adminHandler).Methods("GET")
 	ar.HandleFunc("/", adminHandler).Methods("GET")
 	ar.HandleFunc("/forum", adminForumHandler).Methods("GET")
-	ar.HandleFunc("/forum", adminForumRemakeForumThreadHandler).Methods("POST").MatcherFunc(func(request *http.Request, match *mux.RouteMatch) bool {
-		return request.PostFormValue("task") == "Remake statistic information on forumthread"
-	})
-	ar.HandleFunc("/forum", adminForumRemakeForumTopicHandler).Methods("POST").MatcherFunc(func(request *http.Request, match *mux.RouteMatch) bool {
-		return request.PostFormValue("task") == "Remake statistic information on forumtopic"
-	})
+	ar.HandleFunc("/forum", adminForumRemakeForumThreadHandler).Methods("POST").MatcherFunc(taskMatcher("Remake statistic information on forumthread"))
+	ar.HandleFunc("/forum", adminForumRemakeForumTopicHandler).Methods("POST").MatcherFunc(taskMatcher("Remake statistic information on forumtopic"))
 	ar.HandleFunc("/forum/list", adminForumWordListHandler).Methods("GET")
 	//ar.HandleFunc("/users", adminUserHandler).Methods("GET")
 	ar.HandleFunc("/users/permissions", adminUserPermissionsHandler).Methods("GET")
-	//ar.HandleFunc("/language", adminLanguageHandler).Methods("GET")
+	ar.HandleFunc("/languages", adminLanguageHandler).Methods("GET")
+	ar.HandleFunc("/languages", adminLanguageRenameHandler).Methods("POST").MatcherFunc(taskMatcher("Rename Language"))
+	ar.HandleFunc("/languages", adminLanguageDeleteHandler).Methods("POST").MatcherFunc(taskMatcher("Delete Language"))
+	ar.HandleFunc("/languages", adminLanguageCreateHandler).Methods("POST").MatcherFunc(taskMatcher("Create Language"))
 	//ar.HandleFunc("/search", adminSearchHandler).Methods("GET")
 	//ar.HandleFunc("/forum", adminForumHandler).Methods("GET")
 
@@ -87,6 +86,12 @@ func main() {
 
 	log.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func taskMatcher(taskName string) mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		return request.PostFormValue("task") == taskName
+	}
 }
 
 //func oauthHomeHandler(w http.ResponseWriter, r *http.Request) {

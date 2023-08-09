@@ -51,7 +51,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	for _, row := range rows {
 		data.Rows = append(data.Rows, &BlogRow{
 			show_latest_blogsRow: row,
-			IsEditable:           true,
+			IsEditable:           true, // TODO
 		})
 	}
 

@@ -1,0 +1,15 @@
+{{ template "head" $ }}
+		<strong>What shall we do?</strong><br>
+		View something:<br>
+		<a href="/admin/search/list">Show complete word list</a><br>
+		<br>
+		Preform something:<br>
+		<form method="post">
+			<input type="submit" name="task" value="Remake comments search"><br>
+			<input type="submit" name="task" value="Remake news search"><br>
+			<input type="submit" name="task" value="Remake blog search"><br>
+			<input type="submit" name="task" value="Remake linker search"><br>
+			<input type="submit" name="task" value="Remake writing search">
+		</form>
+
+{{ template "tail" $ }}

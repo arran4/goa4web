@@ -76,8 +76,13 @@ func main() {
 	ar.HandleFunc("/languages", adminLanguagesRenameHandler).Methods("POST").MatcherFunc(taskMatcher("Rename Language"))
 	ar.HandleFunc("/languages", adminLanguagesDeleteHandler).Methods("POST").MatcherFunc(taskMatcher("Delete Language"))
 	ar.HandleFunc("/languages", adminLanguagesCreateHandler).Methods("POST").MatcherFunc(taskMatcher("Create Language"))
-	//ar.HandleFunc("/search", adminSearchHandler).Methods("GET")
-	//ar.HandleFunc("/forum", adminForumHandler).Methods("GET")
+	ar.HandleFunc("/search", adminSearchHandler).Methods("GET")
+	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchHandler).Methods("POST").MatcherFunc(taskMatcher("Remake comments search"))
+	ar.HandleFunc("/search", adminSearchRemakeNewsSearchHandler).Methods("POST").MatcherFunc(taskMatcher("Remake news search"))
+	ar.HandleFunc("/search", adminSearchRemakeBlogSearchHandler).Methods("POST").MatcherFunc(taskMatcher("Remake blog search"))
+	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchHandler).Methods("POST").MatcherFunc(taskMatcher("Remake linker search"))
+	ar.HandleFunc("/search", adminSearchRemakeWritingSearchHandler).Methods("POST").MatcherFunc(taskMatcher("Remake writing search"))
+	ar.HandleFunc("/search/list", adminSearchWordListHandler).Methods("GET")
 
 	// oauth shit
 	//r.HandleFunc("/", homeHandler)

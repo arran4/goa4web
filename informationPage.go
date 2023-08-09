@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func informationHandler(w http.ResponseWriter, r *http.Request) {
+func informationPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

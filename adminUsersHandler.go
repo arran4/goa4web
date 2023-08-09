@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
+func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Rows []*adminUsersRow
@@ -34,7 +34,7 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminUsersDoNothingHandler(w http.ResponseWriter, r *http.Request) {
+func adminUsersDoNothingPage(w http.ResponseWriter, r *http.Request) {
 	uid := r.PostFormValue("uid")
 	data := struct {
 		*CoreData

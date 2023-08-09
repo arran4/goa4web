@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func adminSearchHandler(w http.ResponseWriter, r *http.Request) {
+func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
@@ -132,23 +132,23 @@ static void remakeLinkerSearch(a4webcont &cont)
 
 */
 
-func adminSearchRemakeCommentsSearchHandler(w http.ResponseWriter, r *http.Request) {
+func adminSearchRemakeCommentsSearchPage(w http.ResponseWriter, r *http.Request) {
 	//TODO
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
-func adminSearchRemakeNewsSearchHandler(w http.ResponseWriter, r *http.Request) {
+func adminSearchRemakeNewsSearchPage(w http.ResponseWriter, r *http.Request) {
 	//TODO
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
-func adminSearchRemakeBlogSearchHandler(w http.ResponseWriter, r *http.Request) {
+func adminSearchRemakeBlogSearchPage(w http.ResponseWriter, r *http.Request) {
 	//TODO
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
-func adminSearchRemakeLinkerSearchHandler(w http.ResponseWriter, r *http.Request) {
+func adminSearchRemakeLinkerSearchPage(w http.ResponseWriter, r *http.Request) {
 	//TODO
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
-func adminSearchRemakeWritingSearchHandler(w http.ResponseWriter, r *http.Request) {
+func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) {
 	//TODO
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

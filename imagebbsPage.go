@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func imagebbsHandler(w http.ResponseWriter, r *http.Request) {
+func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

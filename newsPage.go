@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func newsHandler(w http.ResponseWriter, r *http.Request) {
+func newsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

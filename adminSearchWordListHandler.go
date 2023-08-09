@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func adminSearchWordListHandler(w http.ResponseWriter, r *http.Request) {
+func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Rows []sql.NullString

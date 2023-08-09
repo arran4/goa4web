@@ -6,32 +6,21 @@ import (
 	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 )
 
-func blogsHandler(w http.ResponseWriter, r *http.Request) {
+func blogsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		CustomIndexItems []IndexItem
-		RSSFeedUrl       string
-		AtomFeedUrl      string
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		CustomIndexItems: []IndexItem{
-			{
-				Name: "Atom Feed",
-				Link: "/blogs/atom",
-			},
-			{
-				Name: "RSS Feed",
-				Link: "/blogs/rss",
-			},
-		},
-		RSSFeedUrl:  "/blogs/rss",
-		AtomFeedUrl: "/blogs/atom",
 	}
+
+	CustomIndex(data.CoreData, r)
 
 	if err := compiledTemplates.ExecuteTemplate(w, "blogsPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -40,7 +29,80 @@ func blogsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func blogsRssHandler(w http.ResponseWriter, r *http.Request) {
+func CustomIndex(data *CoreData, r *http.Request) {
+	user := r.URL.Query().Get("user")
+	if user == "" {
+		data.CustomIndexItems = append(data.CustomIndexItems,
+			IndexItem{
+				Name: "Everyones Atom Feed",
+				Link: "/blogs/atom",
+			},
+			IndexItem{
+				Name: "Everyones RSS Feed",
+				Link: "/blogs/rss",
+			},
+		)
+	} else {
+		data.CustomIndexItems = append(data.CustomIndexItems,
+			IndexItem{
+				Name: fmt.Sprintf("%s Atom Feed", user),
+				Link: fmt.Sprintf("/blogs/atom?user=%s", url.QueryEscape(user)),
+			},
+			IndexItem{
+				Name: fmt.Sprintf("%s RSS Feed", user),
+				Link: fmt.Sprintf("/blogs/rss?user=%s", url.QueryEscape(user)),
+			},
+		)
+	}
+	data.RSSFeedUrl = "/blogs/rss"
+	data.AtomFeedUrl = "/blogs/atom"
+
+	userHasAdmin := true // TODO
+	if userHasAdmin {
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: "User Permissions",
+			Link: "/blogs/user/permissions",
+		})
+	}
+	userHasWriter := true // TODO
+	if userHasWriter {
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: "Write blog",
+			Link: "/blogs/add",
+		})
+
+	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		Name: "List bloggers",
+		Link: "/blogs/users",
+	})
+	if user == "" {
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: "Next 15",
+			Link: fmt.Sprintf("/blogs?offset=%d", offset+15),
+		})
+		if offset > 0 {
+			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+				Name: "Previous 15",
+				Link: fmt.Sprintf("/blogs?offset=%d", offset-15),
+			})
+		}
+	} else {
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: "Next 15",
+			Link: fmt.Sprintf("/blogs?user=%s&offset=%d", url.QueryEscape(user), offset+15),
+		})
+		if offset > 0 {
+			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+				Name: "Previous 15",
+				Link: fmt.Sprintf("/blogs?user=%s&offset=%d", url.QueryEscape(user), offset-15),
+			})
+		}
+	}
+}
+
+func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	uid, err := queries.usernametouid(r.Context(), sql.NullString{
@@ -63,7 +125,7 @@ func blogsRssHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func blogsAtomHandler(w http.ResponseWriter, r *http.Request) {
+func blogsAtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	uid, err := queries.usernametouid(r.Context(), sql.NullString{
@@ -124,4 +186,58 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		})
 	}
 	return feed, nil
+}
+
+func blogsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*CoreData
+	}
+
+	data := Data{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+	}
+
+	CustomIndex(data.CoreData, r)
+
+	if err := compiledTemplates.ExecuteTemplate(w, "blogsUserPermissionsPage.tmpl", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func blogsAddPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*CoreData
+	}
+
+	data := Data{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+	}
+
+	CustomIndex(data.CoreData, r)
+
+	if err := compiledTemplates.ExecuteTemplate(w, "blogsAddPage.tmpl", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func blogsUsersPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*CoreData
+	}
+
+	data := Data{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+	}
+
+	CustomIndex(data.CoreData, r)
+
+	if err := compiledTemplates.ExecuteTemplate(w, "blogsUsersPage.tmpl", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }

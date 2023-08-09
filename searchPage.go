@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func searchHandler(w http.ResponseWriter, r *http.Request) {
+func searchPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func userHandler(w http.ResponseWriter, r *http.Request) {
+func userPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

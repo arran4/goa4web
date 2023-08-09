@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func forumHandler(w http.ResponseWriter, r *http.Request) {
+func forumPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

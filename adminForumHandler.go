@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func adminForumHandler(w http.ResponseWriter, r *http.Request) {
+func adminForumPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
@@ -24,7 +24,7 @@ func adminForumHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminForumRemakeForumThreadHandler(w http.ResponseWriter, r *http.Request) {
+func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := struct {
 		*CoreData
@@ -54,7 +54,7 @@ func adminForumRemakeForumThreadHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func adminForumRemakeForumTopicHandler(w http.ResponseWriter, r *http.Request) {
+func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := struct {
 		*CoreData

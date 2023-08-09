@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func linkerHandler(w http.ResponseWriter, r *http.Request) {
+func linkerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func adminHandler(w http.ResponseWriter, r *http.Request) {
+func adminPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

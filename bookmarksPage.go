@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func bookmarksHandler(w http.ResponseWriter, r *http.Request) {
+func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

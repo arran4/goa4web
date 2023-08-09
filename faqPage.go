@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func faqHandler(w http.ResponseWriter, r *http.Request) {
+func faqPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

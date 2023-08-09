@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func adminUsersPermissionsHandler(w http.ResponseWriter, r *http.Request) {
+func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Rows []*adminUserPermissionsRow
@@ -35,7 +35,7 @@ func adminUsersPermissionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminUsersPermissionsUserAllowHandler(w http.ResponseWriter, r *http.Request) {
+func adminUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
@@ -71,7 +71,7 @@ func adminUsersPermissionsUserAllowHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func adminUsersPermissionsDisallowHandler(w http.ResponseWriter, r *http.Request) {
+func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {

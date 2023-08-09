@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func adminForumWordListHandler(w http.ResponseWriter, r *http.Request) {
+func adminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Rows []sql.NullString

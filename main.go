@@ -54,10 +54,41 @@ func main() {
 		_, _ = writer.Write(mainCSSData)
 	}).Methods("GET")
 
+	// News
 	r.HandleFunc("/", newsHandler).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.HandleFunc("", newsHandler).Methods("GET")
 	//nr.HandleFunc("{id:[0-9]+}", newsPostHandler).Methods("GET")
+
+	faqr := r.PathPrefix("/faq").Subrouter()
+	faqr.HandleFunc("", faqHandler).Methods("GET")
+
+	br := r.PathPrefix("/blogs").Subrouter()
+	br.HandleFunc("", blogsHandler).Methods("GET")
+
+	fr := r.PathPrefix("/forum").Subrouter()
+	fr.HandleFunc("", forumHandler).Methods("GET")
+
+	lr := r.PathPrefix("/linker").Subrouter()
+	lr.HandleFunc("", linkerHandler).Methods("GET")
+
+	bmr := r.PathPrefix("/bookmarks").Subrouter()
+	bmr.HandleFunc("", bookmarksHandler).Methods("GET")
+
+	ibr := r.PathPrefix("/imagebbs").Subrouter()
+	ibr.HandleFunc("", imagebbsHandler).Methods("GET")
+
+	sr := r.PathPrefix("/search").Subrouter()
+	sr.HandleFunc("", searchHandler).Methods("GET")
+
+	wr := r.PathPrefix("/writings").Subrouter()
+	wr.HandleFunc("", writingsHandler).Methods("GET")
+
+	ir := r.PathPrefix("/information").Subrouter()
+	ir.HandleFunc("", informationHandler).Methods("GET")
+
+	ur := r.PathPrefix("/user").Subrouter()
+	ur.HandleFunc("", userHandler).Methods("GET")
 
 	ar := r.PathPrefix("/admin").Subrouter()
 	ar.Use(AdminCheckerMiddleware)

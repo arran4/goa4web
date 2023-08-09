@@ -82,7 +82,7 @@ func main() {
 	br.HandleFunc("/add", blogsAddBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))
 	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET")
-	br.HandleFunc("/comment/{comment}", blogsCommentPage).Methods("GET")
+	br.HandleFunc("/comment/{blog}", blogsCommentPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}/edit", blogsEditBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))
 
 	fr := r.PathPrefix("/forum").Subrouter()

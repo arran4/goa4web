@@ -1,0 +1,19 @@
+{{ define "comment" }}
+    <table width="100%">
+        <tr bgcolor="lightgrey">
+            <th>{{.Written}}</th>
+        </tr>
+        <tr>
+            <td>
+                {{.Text.String | a4code2html}}<br>-<br>{{.Username.String}}.
+                {{if .ShowReply}}
+                    [<a href="?do=reply&thread={{.ForumthreadIdforumthread}}&offset={{.Offset}}&fullquote={{.Idcomments}}#reply">FULL REPLY</a>]
+                    [<a href="?do=reply&thread={{.ForumthreadIdforumthread}}&offset={{.Offset}}&parquote={{.Idcomments}}#reply">PARAGRAPH REPLY</a>]
+                {{end}}
+                {{if $.Editable }}
+                    [<a href="?do=edit&id={{.ForumthreadIdforumthread}}">EDIT</a>]
+                {{end}}
+            </td>
+        </tr>
+    </table><br>
+{{ end }}

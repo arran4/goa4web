@@ -1,14 +1,14 @@
 {{ template "head" $ }}
 		{{if .Rows}}
 			{{if .UID}}
-				<font size="5">{{(index $.Blogs 0).Username.String}}'s blogs.</font><br>
+				<font size="5"><a href="/blogs/bloggers/{{(index $.Blogs 0).Username.String}}">{{(index $.Blogs 0).Username.String}}</a>'s blogs.</font><br>
 			{{else}}
-				<font size="5"><a href="?section=bloggers">All bloggers</a>' blogs.</font><br>
+				<font size="5"><a href="/blogs/bloggers/">All bloggers</a>' blogs.</font><br>
 			{{end}}
 			<table width="100%">
 				{{range .Rows}}
 					<tr>
-						<th bgcolor="lightgrey">{{.Username.String}}</th>
+						<th bgcolor="lightgrey">{{.Written}}</th>
 					</tr>
 					<tr>
 						<td>

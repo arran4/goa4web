@@ -1,0 +1,8 @@
+{{ define "printThread" }}
+    {{ if gt $.Offset 0 }}
+        <br>Skipping {{ $.Offset }} comments.<br><br><br>
+    {{ end }}
+    {{range $.Comments }}
+		{{ template "comment" . }}
+    {{end}}
+{{ end }}

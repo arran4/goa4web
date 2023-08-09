@@ -300,10 +300,13 @@ WHERE (b.language_idlanguage = sqlc.arg(Language_idlanguage) OR sqlc.arg(Languag
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
--- name: show_blog_comments :many
-SELECT b.blog, b.written, u.username, b.idblogs, b.forumthread_idforumthread
-FROM blogs b, users u
-WHERE b.users_idusers = u.idusers AND b.idblogs = ?;
+-- name: show_blog :one
+SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers, b.forumthread_idforumthread
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE b.idblogs = ?
+LIMIT 1;
 
 -- name: show_blogger_list :many
 SELECT u.username, COUNT(b.idblogs)
@@ -780,7 +783,8 @@ INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUE
 SELECT idforumtopic FROM forumtopic WHERE title=?;
 
 -- name: printThread :many
-SELECT c.idcomments, c.text, c.written, u.username, u.idusers FROM comments c, users u
+SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread
+FROM comments c, users u
 WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
 ORDER BY c.written;
 

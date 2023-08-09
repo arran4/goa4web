@@ -2265,17 +2265,19 @@ func (q *Queries) printSubBoards(ctx context.Context, imageboardIdimageboard int
 }
 
 const printThread = `-- name: printThread :many
-SELECT c.idcomments, c.text, c.written, u.username, u.idusers FROM comments c, users u
+SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread
+FROM comments c, users u
 WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
 ORDER BY c.written
 `
 
 type printThreadRow struct {
-	Idcomments int32
-	Text       sql.NullString
-	Written    sql.NullTime
-	Username   sql.NullString
-	Idusers    int32
+	Idcomments               int32
+	Text                     sql.NullString
+	Written                  sql.NullTime
+	Username                 sql.NullString
+	Idusers                  int32
+	ForumthreadIdforumthread int32
 }
 
 func (q *Queries) printThread(ctx context.Context, forumthreadIdforumthread int32) ([]*printThreadRow, error) {
@@ -2293,6 +2295,7 @@ func (q *Queries) printThread(ctx context.Context, forumthreadIdforumthread int3
 			&i.Written,
 			&i.Username,
 			&i.Idusers,
+			&i.ForumthreadIdforumthread,
 		); err != nil {
 			return nil, err
 		}
@@ -3168,47 +3171,38 @@ func (q *Queries) showTopicUserLevels(ctx context.Context, idforumtopic int32) (
 	return &i, err
 }
 
-const show_blog_comments = `-- name: show_blog_comments :many
-SELECT b.blog, b.written, u.username, b.idblogs, b.forumthread_idforumthread
-FROM blogs b, users u
-WHERE b.users_idusers = u.idusers AND b.idblogs = ?
+const show_blog = `-- name: show_blog :one
+SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers, b.forumthread_idforumthread
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE b.idblogs = ?
+LIMIT 1
 `
 
-type show_blog_commentsRow struct {
+type show_blogRow struct {
 	Blog                     sql.NullString
 	Written                  time.Time
 	Username                 sql.NullString
 	Idblogs                  int32
+	Comments                 int32
+	UsersIdusers             int32
 	ForumthreadIdforumthread int32
 }
 
-func (q *Queries) show_blog_comments(ctx context.Context, idblogs int32) ([]*show_blog_commentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, show_blog_comments, idblogs)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*show_blog_commentsRow
-	for rows.Next() {
-		var i show_blog_commentsRow
-		if err := rows.Scan(
-			&i.Blog,
-			&i.Written,
-			&i.Username,
-			&i.Idblogs,
-			&i.ForumthreadIdforumthread,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) show_blog(ctx context.Context, idblogs int32) (*show_blogRow, error) {
+	row := q.db.QueryRowContext(ctx, show_blog, idblogs)
+	var i show_blogRow
+	err := row.Scan(
+		&i.Blog,
+		&i.Written,
+		&i.Username,
+		&i.Idblogs,
+		&i.Comments,
+		&i.UsersIdusers,
+		&i.ForumthreadIdforumthread,
+	)
+	return &i, err
 }
 
 const show_blog_edit = `-- name: show_blog_edit :many

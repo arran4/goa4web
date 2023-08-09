@@ -11,7 +11,6 @@ import (
 )
 
 func adminLanguagesHandler(w http.ResponseWriter, r *http.Request) {
-	// Data holds the data needed for rendering the template.
 	type Data struct {
 		*CoreData
 		Rows []*Language

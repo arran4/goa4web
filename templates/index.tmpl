@@ -10,8 +10,8 @@
         <a href="/register">Register</a><br>
         <a href="/login">Login</a><br>
     {{ end }}
-    {{ if $.FeedUrl }}
-        <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{{$.FeedUrl}}">
+    {{ range $i := $.CustomIndexItems }}
+        <a href="{{ $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}
     {{ if and (eq $.SecurityLevel "administrator") $.AdminChecked}}
         <hr>Admin tools:<br>

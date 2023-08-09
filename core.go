@@ -50,12 +50,14 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 }
 
 type CoreData struct {
-	IndexItems    []IndexItem
-	UserID        int
-	SecurityLevel string
-	Title         string
-	AdminChecked  bool
-	FeedUrl       string
+	IndexItems       []IndexItem
+	CustomIndexItems []IndexItem
+	UserID           int
+	SecurityLevel    string
+	Title            string
+	AdminChecked     bool
+	RSSFeedUrl       string
+	AtomFeedUrl      string
 }
 
 func (cd *CoreData) GetSecurityLevel() string {

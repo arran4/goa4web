@@ -43,6 +43,10 @@ func NewFuncs() template.FuncMap {
 	}
 }
 
+func init() {
+	log.SetFlags(log.Flags() | log.Lshortfile)
+}
+
 func main() {
 	r := mux.NewRouter()
 
@@ -57,6 +61,7 @@ func main() {
 	// News
 	r.HandleFunc("/", newsHandler).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
+	//nr.HandleFunc(".rss", newsRssHandler).Methods("GET")
 	nr.HandleFunc("", newsHandler).Methods("GET")
 	//nr.HandleFunc("{id:[0-9]+}", newsPostHandler).Methods("GET")
 
@@ -64,24 +69,34 @@ func main() {
 	faqr.HandleFunc("", faqHandler).Methods("GET")
 
 	br := r.PathPrefix("/blogs").Subrouter()
+	br.HandleFunc("/rss", blogsRssHandler).Methods("GET")
+	br.HandleFunc("/atom", blogsAtomHandler).Methods("GET")
 	br.HandleFunc("", blogsHandler).Methods("GET")
 
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("", forumHandler).Methods("GET")
 
 	lr := r.PathPrefix("/linker").Subrouter()
+	//lr.HandleFunc(".rss", linkerRssHandler).Methods("GET")
+	//lr.HandleFunc(".atom", linkerAtomHandler).Methods("GET")
 	lr.HandleFunc("", linkerHandler).Methods("GET")
 
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
 	bmr.HandleFunc("", bookmarksHandler).Methods("GET")
 
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
+	//ibr.HandleFunc(".rss", imagebbsRssHandler).Methods("GET")
+	//ibr.HandleFunc("/board/{boardno:[0-9+}.rss", imagebbsBoardRssHandler).Methods("GET")
+	//ibr.HandleFunc(".atom", imagebbsAtomHandler).Methods("GET")
+	//ibr.HandleFunc("/board/{boardno:[0-9+}.atom", imagebbsBoardAtomHandler).Methods("GET")
 	ibr.HandleFunc("", imagebbsHandler).Methods("GET")
 
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", searchHandler).Methods("GET")
 
 	wr := r.PathPrefix("/writings").Subrouter()
+	//wr.HandleFunc(".rss", writingsRssHandler).Methods("GET")
+	//wr.HandleFunc(".atom", writingsAtomHandler).Methods("GET")
 	wr.HandleFunc("", writingsHandler).Methods("GET")
 
 	ir := r.PathPrefix("/information").Subrouter()

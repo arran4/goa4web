@@ -6,7 +6,6 @@ import (
 )
 
 func newsHandler(w http.ResponseWriter, r *http.Request) {
-	// Data holds the data needed for rendering the template.
 	type Data struct {
 		*CoreData
 	}

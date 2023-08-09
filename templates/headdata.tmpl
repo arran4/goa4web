@@ -1,3 +1,8 @@
 {{- define "headdata"}}
-    <!-- Add any <head> data from cont.headdata here -->
+    {{ if $.RSSFeedUrl }}
+        <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{{$.RSSFeedUrl}}">
+    {{ end }}
+    {{ if $.AtomFeedUrl }}
+        <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="{{$.AtomFeedUrl}}">
+    {{ end }}
 {{- end}}

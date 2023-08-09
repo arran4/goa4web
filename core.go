@@ -55,6 +55,7 @@ type CoreData struct {
 	SecurityLevel string
 	Title         string
 	AdminChecked  bool
+	FeedUrl       string
 }
 
 func (cd *CoreData) GetSecurityLevel() string {

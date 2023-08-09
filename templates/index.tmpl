@@ -10,12 +10,15 @@
         <a href="/register">Register</a><br>
         <a href="/login">Login</a><br>
     {{ end }}
-        {{ if and (eq $.SecurityLevel "administrator") $.AdminChecked}}
-            <hr>Admin tools:<br>
-            <a href="/admin/users">Person Controls</a><br>
-            <a href="/admin/users/permissions">Permission Controls</a><br>
-            <a href="/admin/language">Language Controls</a><br>
-            <a href="/admin/search">Search Controls</a><br>
-            <a href="/admin/forum">Forum Controls</a><br>
-        {{ end }}
+    {{ if $.FeedUrl }}
+        <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{{$.FeedUrl}}">
+    {{ end }}
+    {{ if and (eq $.SecurityLevel "administrator") $.AdminChecked}}
+        <hr>Admin tools:<br>
+        <a href="/admin/users">Person Controls</a><br>
+        <a href="/admin/users/permissions">Permission Controls</a><br>
+        <a href="/admin/language">Language Controls</a><br>
+        <a href="/admin/search">Search Controls</a><br>
+        <a href="/admin/forum">Forum Controls</a><br>
+    {{ end }}
 {{- end}}

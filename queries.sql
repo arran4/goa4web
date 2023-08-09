@@ -292,10 +292,11 @@ SET forumthread_idforumthread = ?
 WHERE idblogs = ?;
 
 -- name: show_latest_blogs :many
-SELECT b.blog, b.written, u.username, b.idblogs, IF(th.comments IS NULL, 0, th.comments + 1), b.users_idusers
-FROM blogs b, users u
+SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
-WHERE b.users_idusers = ? AND (b.language_idlanguage = ?)
+WHERE (b.language_idlanguage = sqlc.arg(Language_idlanguage) OR sqlc.arg(Language_idlanguage) = 0) and (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 

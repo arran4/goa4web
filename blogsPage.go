@@ -12,12 +12,47 @@ import (
 )
 
 func blogsPage(w http.ResponseWriter, r *http.Request) {
+	type BlogRow struct {
+		*show_latest_blogsRow
+		IsEditable bool
+	}
 	type Data struct {
 		*CoreData
+		Rows     []*BlogRow
+		IsOffset bool
+		UID      string
+	}
+
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	uid := r.URL.Query().Get("uid")
+	userId, _ := strconv.Atoi(uid)
+
+	userLanguagePref := 0
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	rows, err := queries.show_latest_blogs(r.Context(), show_latest_blogsParams{
+		UsersIdusers:       int32(userId),
+		LanguageIdlanguage: int32(userLanguagePref),
+		Limit:              15,
+		Offset:             int32(offset),
+	})
+	if err != nil {
+		log.Printf("Query Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		IsOffset: offset != 0,
+		UID:      uid,
+	}
+
+	for _, row := range rows {
+		data.Rows = append(data.Rows, &BlogRow{
+			show_latest_blogsRow: row,
+			IsEditable:           true,
+		})
 	}
 
 	CustomIndex(data.CoreData, r)
@@ -75,7 +110,7 @@ func CustomIndex(data *CoreData, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 		Name: "List bloggers",
-		Link: "/blogs/users",
+		Link: "/blogs/bloggers",
 	})
 	if user == "" {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{

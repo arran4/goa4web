@@ -1,2 +1,36 @@
 {{ template "head" $ }}
+		{{if .Rows}}
+			{{if .UID}}
+				<font size="5">{{(index $.Blogs 0).Username.String}}'s blogs.</font><br>
+			{{else}}
+				<font size="5"><a href="?section=bloggers">All bloggers</a>' blogs.</font><br>
+			{{end}}
+			<table width="100%">
+				{{range .Rows}}
+					<tr>
+						<th bgcolor="lightgrey">{{.Username.String}}</th>
+					</tr>
+					<tr>
+						<td>
+							{{.Blog.String | a4code2html}}<br><br>{{.Username}} - [<a href="/blogs/comment/{{.Idblogs}}">{{.Comments}} COMMENTS</a>]
+							{{if .IsEditable}} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{end}}
+						</td>
+					</tr>
+				{{end}}
+			</table><br>
+		{{else}}
+			{{if .IsOffset}}
+				{{if .UID}}
+					There are no more blogs under this user.<br>
+				{{else}}
+					There are no more blogs.<br>
+				{{end}}
+			{{else}}
+				{{if .UID}}
+					Nothing under this blog.<br>
+				{{else}}
+					There are no blogs here.<br>
+				{{end}}
+			{{end}}
+		{{end}}
 {{ template "tail" $ }}

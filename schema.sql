@@ -20,7 +20,7 @@ CREATE TABLE `blogs` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `blog` longtext DEFAULT NULL,
-  `written` datetime DEFAULT NULL,
+  `written` DATETIME NOT NULL DEFAULT NOW(),
   PRIMARY KEY (`idblogs`),
   KEY `blogs_FKIndex1` (`language_idlanguage`),
   KEY `blogs_FKIndex2` (`users_idusers`),

@@ -6,6 +6,7 @@ package main
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Blog struct {
@@ -14,7 +15,7 @@ type Blog struct {
 	UsersIdusers             int32
 	LanguageIdlanguage       int32
 	Blog                     sql.NullString
-	Written                  sql.NullTime
+	Written                  time.Time
 }
 
 type Blogssearch struct {

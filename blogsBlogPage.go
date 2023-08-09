@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func blogsUsersPage(w http.ResponseWriter, r *http.Request) {
+func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
@@ -16,7 +16,7 @@ func blogsUsersPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomIndex(data.CoreData, r)
 
-	if err := compiledTemplates.ExecuteTemplate(w, "blogsUsersPage.tmpl", data); err != nil {
+	if err := compiledTemplates.ExecuteTemplate(w, "blogsBlogPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

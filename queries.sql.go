@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const checkExistingUser = `-- name: CheckExistingUser :one
@@ -3175,7 +3176,7 @@ WHERE b.users_idusers = u.idusers AND b.idblogs = ?
 
 type show_blog_commentsRow struct {
 	Blog                     sql.NullString
-	Written                  sql.NullTime
+	Written                  time.Time
 	Username                 sql.NullString
 	Idblogs                  int32
 	ForumthreadIdforumthread int32
@@ -3310,34 +3311,37 @@ func (q *Queries) show_categories(ctx context.Context, forumcategoryIdforumcateg
 }
 
 const show_latest_blogs = `-- name: show_latest_blogs :many
-SELECT b.blog, b.written, u.username, b.idblogs, IF(th.comments IS NULL, 0, th.comments + 1), b.users_idusers
-FROM blogs b, users u
+SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
-WHERE b.users_idusers = ? AND (b.language_idlanguage = ?)
+WHERE (b.language_idlanguage = ? OR ? = 0) and (b.users_idusers = ? OR ? = 0)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?
 `
 
 type show_latest_blogsParams struct {
-	UsersIdusers       int32
 	LanguageIdlanguage int32
+	UsersIdusers       int32
 	Limit              int32
 	Offset             int32
 }
 
 type show_latest_blogsRow struct {
 	Blog         sql.NullString
-	Written      sql.NullTime
+	Written      time.Time
 	Username     sql.NullString
 	Idblogs      int32
-	If           interface{}
+	Comments     int32
 	UsersIdusers int32
 }
 
 func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsParams) ([]*show_latest_blogsRow, error) {
 	rows, err := q.db.QueryContext(ctx, show_latest_blogs,
-		arg.UsersIdusers,
 		arg.LanguageIdlanguage,
+		arg.LanguageIdlanguage,
+		arg.UsersIdusers,
+		arg.UsersIdusers,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -3353,7 +3357,7 @@ func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsPa
 			&i.Written,
 			&i.Username,
 			&i.Idblogs,
-			&i.If,
+			&i.Comments,
 			&i.UsersIdusers,
 		); err != nil {
 			return nil, err

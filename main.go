@@ -40,6 +40,12 @@ func NewFuncs() template.FuncMap {
 	return map[string]any{
 		//"getSecurityLevel":
 		"now": func() time.Time { return time.Now() },
+		"a4code2html": func(s string) template.HTML {
+			c := a4code2html{}
+			c.input = s
+			c.process()
+			return template.HTML(c.output.String())
+		},
 	}
 }
 
@@ -72,9 +78,12 @@ func main() {
 	br.HandleFunc("/rss", blogsRssPage).Methods("GET")
 	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
 	br.HandleFunc("", blogsPage).Methods("GET")
-	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET")
-	br.HandleFunc("/add", blogsAddPage).Methods("GET")
-	br.HandleFunc("/users", blogsUsersPage).Methods("GET")
+	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET").MatcherFunc(requiredAccess("administrator"))
+	br.HandleFunc("/add", blogsAddBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))
+	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
+	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET")
+	br.HandleFunc("/comment/{comment}", blogsCommentPage).Methods("GET")
+	br.HandleFunc("/blog/{blog}/edit", blogsEditBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))
 
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("", forumPage).Methods("GET")
@@ -143,6 +152,13 @@ func main() {
 
 	log.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func requiredAccess(accessLevels ...string) mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		// TODO
+		return true
+	}
 }
 
 func taskMatcher(taskName string) mux.MatcherFunc {

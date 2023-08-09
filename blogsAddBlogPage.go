@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func blogsAddPage(w http.ResponseWriter, r *http.Request) {
+func blogsAddBlogPage(w http.ResponseWriter, r *http.Request) {
 	// TODO add guard
 	type Data struct {
 		*CoreData
@@ -17,7 +17,7 @@ func blogsAddPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomIndex(data.CoreData, r)
 
-	if err := compiledTemplates.ExecuteTemplate(w, "blogsAddPage.tmpl", data); err != nil {
+	if err := compiledTemplates.ExecuteTemplate(w, "blogsAddBlogPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

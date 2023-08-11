@@ -968,3 +968,10 @@ SELECT username FROM users WHERE username = ?;
 INSERT INTO users (username, passwd, email)
 VALUES (?, MD5(?), ?)
 ;
+
+-- name: blogsUserPermissions :many
+SELECT p.idpermissions, p.level, u.username, u.email, p.section
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND p.section = "blogs"
+ORDER BY p.level
+;

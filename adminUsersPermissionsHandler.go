@@ -80,7 +80,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 		Back   string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		Back:     "/admin/users",
+		Back:     "/admin/users/permissions",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())

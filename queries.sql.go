@@ -546,6 +546,50 @@ func (q *Queries) blogid_to_userid(ctx context.Context, idblogs int32) (int32, e
 	return idusers, err
 }
 
+const blogsUserPermissions = `-- name: blogsUserPermissions :many
+SELECT p.idpermissions, p.level, u.username, u.email, p.section
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND p.section = "blogs"
+ORDER BY p.level
+`
+
+type blogsUserPermissionsRow struct {
+	Idpermissions int32
+	Level         sql.NullString
+	Username      sql.NullString
+	Email         sql.NullString
+	Section       sql.NullString
+}
+
+func (q *Queries) blogsUserPermissions(ctx context.Context) ([]*blogsUserPermissionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, blogsUserPermissions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*blogsUserPermissionsRow
+	for rows.Next() {
+		var i blogsUserPermissionsRow
+		if err := rows.Scan(
+			&i.Idpermissions,
+			&i.Level,
+			&i.Username,
+			&i.Email,
+			&i.Section,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const categories = `-- name: categories :one
 SELECT idfaqCategories, name
 FROM faqCategories

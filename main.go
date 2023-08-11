@@ -79,15 +79,17 @@ func main() {
 	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
 	br.HandleFunc("", blogsPage).Methods("GET")
 	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET").MatcherFunc(requiredAccess("administrator"))
-	br.HandleFunc("/add", blogsAddBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(taskMatcher("User Allow"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(taskMatcher("User Disallow"))
+	br.HandleFunc("/add", blogsAddBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer")) // TODO
 	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
-	br.HandleFunc("/blogs/blogger/{blogger}", blogsBloggersPage).Methods("GET")
+	br.HandleFunc("/blogs/blogger/{blogger}", blogsBloggersPage).Methods("GET") // TODO
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyFullPage).Queries("type", "full").Methods("GET")
-	br.HandleFunc("/blog/{blog}/edit", blogsEditBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))
+	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).Methods("GET")                               // TODO
+	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyPage).Methods("GET")                             // TODO
+	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyFullPage).Queries("type", "full").Methods("GET") // TODO
+	br.HandleFunc("/blog/{blog}/edit", blogsEditBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))              // TODO
 
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("", forumPage).Methods("GET")

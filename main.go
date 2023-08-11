@@ -81,6 +81,7 @@ func main() {
 	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET").MatcherFunc(requiredAccess("administrator"))
 	br.HandleFunc("/add", blogsAddBlogPage).Methods("GET").MatcherFunc(requiredAccess("writer"))
 	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
+	br.HandleFunc("/blogs/blogger/{blogger}", blogsBloggersPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).Methods("GET")

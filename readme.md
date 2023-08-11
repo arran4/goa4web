@@ -1,0 +1,1 @@
+Compare with: https://web.archive.org/web/20060820031518/http://arran4.homeip.net/cgi-bin/blogs.cgi

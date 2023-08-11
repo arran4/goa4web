@@ -3336,6 +3336,28 @@ func (q *Queries) show_categories(ctx context.Context, forumcategoryIdforumcateg
 	return err
 }
 
+const show_comment = `-- name: show_comment :one
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
+FROM comments c
+LEFT JOIN users u ON c.users_idusers=u.idusers
+WHERE c.idcomments = ?
+LIMIT 1
+`
+
+func (q *Queries) show_comment(ctx context.Context, idcomments int32) (*Comment, error) {
+	row := q.db.QueryRowContext(ctx, show_comment, idcomments)
+	var i Comment
+	err := row.Scan(
+		&i.Idcomments,
+		&i.ForumthreadIdforumthread,
+		&i.UsersIdusers,
+		&i.LanguageIdlanguage,
+		&i.Written,
+		&i.Text,
+	)
+	return &i, err
+}
+
 const show_latest_blogs = `-- name: show_latest_blogs :many
 SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers
 FROM blogs b

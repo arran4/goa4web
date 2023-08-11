@@ -307,6 +307,13 @@ LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
 WHERE b.idblogs = ?
 LIMIT 1;
 
+-- name: show_comment :one
+SELECT c.*
+FROM comments c
+LEFT JOIN users u ON c.users_idusers=u.idusers
+WHERE c.idcomments = ?
+LIMIT 1;
+
 -- name: show_blogger_list :many
 SELECT u.username, COUNT(b.idblogs)
 FROM blogs b, users u

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -78,20 +79,20 @@ func main() {
 	br.HandleFunc("/rss", blogsRssPage).Methods("GET")
 	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
 	br.HandleFunc("", blogsPage).Methods("GET")
-	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET").MatcherFunc(requiredAccess("administrator"))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(requiredAccess("administrator")).MatcherFunc(taskMatcher("User Allow"))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(requiredAccess("administrator")).MatcherFunc(taskMatcher("User Disallow"))
-	br.HandleFunc("/add", blogsBlogAddPage).Methods("GET").MatcherFunc(requiredAccess("writer", "administrator"))
-	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(requiredAccess("writer", "administrator")).MatcherFunc(taskMatcher("Add"))
+	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(taskMatcher("User Allow"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(taskMatcher("User Disallow"))
+	br.HandleFunc("/add", blogsBlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
+	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(taskMatcher("Add"))
 	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
 	br.HandleFunc("/blogs/blogger/{blogger}", blogsBloggersPage).Methods("GET") // TODO
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).Methods("GET")                                                                           // TODO
-	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyPage).Methods("GET")                                                                         // TODO
-	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyFullPage).Queries("type", "full").Methods("GET")                                             // TODO
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(requiredAccess("writer", "administrator"))                                         // TODO
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(requiredAccess("writer", "administrator")).MatcherFunc(taskMatcher("Edit")) // TODO
+	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")                                                // TODO
+	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyPage).Methods("GET")                                                                                                                // TODO
+	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyFullPage).Queries("type", "full").Methods("GET")                                                                                    // TODO
+	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))                                                                                // TODO
+	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(taskMatcher("Edit")) // TODO
 
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("", forumPage).Methods("GET")
@@ -125,7 +126,7 @@ func main() {
 	ur := r.PathPrefix("/user").Subrouter()
 	ur.HandleFunc("", userPage).Methods("GET")
 
-	ar := r.PathPrefix("/admin").MatcherFunc(requiredAccess("administrator")).Subrouter()
+	ar := r.PathPrefix("/admin").MatcherFunc(RequiredAccess("administrator")).Subrouter()
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminPage).Methods("GET")
 	ar.HandleFunc("/", adminPage).Methods("GET")
@@ -162,10 +163,74 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func requiredAccess(accessLevels ...string) mux.MatcherFunc {
+func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		// TODO
 		return true
+	}
+}
+
+func BlogAuthor() mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		vars := mux.Vars(request)
+		blogId, _ := strconv.Atoi(vars["blog"])
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		uid, _ := session.Values["UID"].(int32)
+
+		row, err := queries.show_blog(request.Context(), int32(blogId))
+		if err != nil {
+			log.Printf("Error: %s", err)
+			return false
+		}
+
+		return row.UsersIdusers == uid
+	}
+}
+
+func CommentAuthor() mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		vars := mux.Vars(request)
+		commentId, _ := strconv.Atoi(vars["comment"])
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		uid, _ := session.Values["UID"].(int32)
+
+		row, err := queries.show_comment(request.Context(), int32(commentId))
+		if err != nil {
+			log.Printf("Error: %s", err)
+			return false
+		}
+
+		return row.UsersIdusers == uid
+	}
+}
+
+func And(matchers ...mux.MatcherFunc) mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		for _, m := range matchers {
+			if !m(request, match) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func Or(matchers ...mux.MatcherFunc) mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		for _, m := range matchers {
+			if m(request, match) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func Not(matcher mux.MatcherFunc) mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		return !matcher(request, match)
 	}
 }
 

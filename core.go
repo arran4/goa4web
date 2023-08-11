@@ -44,6 +44,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			SecurityLevel: "administrator",
 			IndexItems:    indexItems,
 			UserID:        1,
+			Title:         "Arran4's Website",
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
@@ -87,7 +88,12 @@ func (c *Configuration) readConfiguration(filename string) {
 	if err != nil {
 		return
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Printf("File close error: %s", err)
+		}
+	}(file)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

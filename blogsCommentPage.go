@@ -18,7 +18,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 		ShowReply bool
 		Editable  bool
 		Offset    int
-		BlogId    int32
+		Idblogs   int32
 	}
 	type Data struct {
 		*CoreData
@@ -66,7 +66,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 			ShowReply:      true,
 			Editable:       true,
 			Offset:         i + offset,
-			BlogId:         blog.Idblogs,
+			Idblogs:        blog.Idblogs,
 		})
 	}
 

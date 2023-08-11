@@ -71,7 +71,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	CustomIndex(data.CoreData, r)
+	CustomBlogIndex(data.CoreData, r)
 
 	if err := compiledTemplates.ExecuteTemplate(w, "blogsCommentPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)

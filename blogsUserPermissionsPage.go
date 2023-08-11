@@ -28,6 +28,7 @@ func blogsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
+	CustomBlogIndex(data.CoreData, r)
 	err = compiledTemplates.ExecuteTemplate(w, "adminUsersPermissionsPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
@@ -64,6 +65,9 @@ func blogsUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) 
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("user_allow: %w", err).Error())
 	}
+
+	CustomBlogIndex(data.CoreData, r)
+
 	err := compiledTemplates.ExecuteTemplate(w, "adminRunTaskPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
@@ -88,6 +92,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.userDisallow(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("createLanguage: %w", err).Error())
 	}
+	CustomBlogIndex(data.CoreData, r)
 	err := compiledTemplates.ExecuteTemplate(w, "adminRunTaskPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)

@@ -281,10 +281,9 @@ WHERE idblogs = ?;
 DELETE FROM comments
 WHERE forumthread_idforumthread = ?;
 
--- name: add_blog :exec
+-- name: add_blog :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
 VALUES (?, ?, ?, NOW());
-SELECT LAST_INSERT_ID() AS value;
 
 -- name: assign_blog_to_thread :exec
 UPDATE blogs

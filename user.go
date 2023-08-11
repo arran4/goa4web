@@ -34,6 +34,11 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		// TODO once login works.
+		session.Values["UID"] = int32(1)
+		session.Values["LoginTime"] = time.Now().Unix()
+		session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
+
 		// TODO session.Values["ExpiryTime"]
 
 		ctx := context.WithValue(request.Context(), ContextValues("session"), session)

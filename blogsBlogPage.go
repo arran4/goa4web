@@ -50,26 +50,28 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	data.Blog = &BlogRow{
 		show_blogRow: blog,
 		IsEditable:   true, // TODO
-		IsReplyable:  true,
+		IsReplyable:  true, // TODO
 	}
 
-	rows, err := queries.printThread(r.Context(), blog.ForumthreadIdforumthread)
-	if err != nil {
-		log.Printf("show_blog_comments Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	if blog.ForumthreadIdforumthread > 0 {
+		rows, err := queries.printThread(r.Context(), blog.ForumthreadIdforumthread)
+		if err != nil {
+			log.Printf("show_blog_comments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		for i, row := range rows {
+			data.Comments = append(data.Comments, &BlogComment{
+				printThreadRow: row,
+				ShowReply:      true,
+				Editable:       true,
+				Offset:         i + offset,
+			})
+		}
 	}
 
-	for i, row := range rows {
-		data.Comments = append(data.Comments, &BlogComment{
-			printThreadRow: row,
-			ShowReply:      true,
-			Editable:       true,
-			Offset:         i + offset,
-		})
-	}
-
-	CustomIndex(data.CoreData, r)
+	CustomBlogIndex(data.CoreData, r)
 
 	if err := compiledTemplates.ExecuteTemplate(w, "blogsBlogPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)

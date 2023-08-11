@@ -55,7 +55,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	CustomIndex(data.CoreData, r)
+	CustomBlogIndex(data.CoreData, r)
 
 	if err := compiledTemplates.ExecuteTemplate(w, "blogsPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -64,7 +64,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CustomIndex(data *CoreData, r *http.Request) {
+func CustomBlogIndex(data *CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
 	if user == "" {
 		data.CustomIndexItems = append(data.CustomIndexItems,

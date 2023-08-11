@@ -24,7 +24,7 @@ func blogsBloggersPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	CustomIndex(data.CoreData, r)
+	CustomBlogIndex(data.CoreData, r)
 
 	if err := compiledTemplates.ExecuteTemplate(w, "blogsBloggersPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)

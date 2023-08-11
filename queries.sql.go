@@ -220,7 +220,7 @@ func (q *Queries) addWord(ctx context.Context, lcase string) error {
 	return err
 }
 
-const add_blog = `-- name: add_blog :exec
+const add_blog = `-- name: add_blog :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
 VALUES (?, ?, ?, NOW())
 `
@@ -231,9 +231,12 @@ type add_blogParams struct {
 	Blog               sql.NullString
 }
 
-func (q *Queries) add_blog(ctx context.Context, arg add_blogParams) error {
-	_, err := q.db.ExecContext(ctx, add_blog, arg.UsersIdusers, arg.LanguageIdlanguage, arg.Blog)
-	return err
+func (q *Queries) add_blog(ctx context.Context, arg add_blogParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, add_blog, arg.UsersIdusers, arg.LanguageIdlanguage, arg.Blog)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const add_bookmarks = `-- name: add_bookmarks :exec

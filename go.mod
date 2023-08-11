@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	github.com/arran4/gorillamuxlogic v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 )

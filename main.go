@@ -2,14 +2,14 @@ package main
 
 import (
 	"embed"
+	. "github.com/arran4/gorillamuxlogic"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 var (
@@ -80,10 +80,10 @@ func main() {
 	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
 	br.HandleFunc("", blogsPage).Methods("GET")
 	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(taskMatcher("User Allow"))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(taskMatcher("User Disallow"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 	br.HandleFunc("/add", blogsBlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
-	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(taskMatcher("Add"))
+	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher("Add"))
 	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
 	br.HandleFunc("/blogs/blogger/{blogger}", blogsBloggersPage).Methods("GET") // TODO
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET", "POST")
@@ -92,7 +92,7 @@ func main() {
 	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyPage).Methods("GET")                                                                                                                // TODO
 	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyFullPage).Queries("type", "full").Methods("GET")                                                                                    // TODO
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))                                                                                // TODO
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(taskMatcher("Edit")) // TODO
+	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher("Edit")) // TODO
 
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("", forumPage).Methods("GET")
@@ -131,24 +131,24 @@ func main() {
 	ar.HandleFunc("", adminPage).Methods("GET")
 	ar.HandleFunc("/", adminPage).Methods("GET")
 	ar.HandleFunc("/forum", adminForumPage).Methods("GET")
-	ar.HandleFunc("/forum", adminForumRemakeForumThreadPage).Methods("POST").MatcherFunc(taskMatcher("Remake statistic information on forumthread"))
-	ar.HandleFunc("/forum", adminForumRemakeForumTopicPage).Methods("POST").MatcherFunc(taskMatcher("Remake statistic information on forumtopic"))
+	ar.HandleFunc("/forum", adminForumRemakeForumThreadPage).Methods("POST").MatcherFunc(TaskMatcher("Remake statistic information on forumthread"))
+	ar.HandleFunc("/forum", adminForumRemakeForumTopicPage).Methods("POST").MatcherFunc(TaskMatcher("Remake statistic information on forumtopic"))
 	ar.HandleFunc("/forum/list", adminForumWordListPage).Methods("GET")
 	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
-	ar.HandleFunc("/users", adminUsersDoNothingPage).Methods("POST").MatcherFunc(taskMatcher("User do nothing"))
+	ar.HandleFunc("/users", adminUsersDoNothingPage).Methods("POST").MatcherFunc(TaskMatcher("User do nothing"))
 	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(taskMatcher("User Allow"))
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(taskMatcher("User Disallow"))
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher("User Allow"))
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher("User Disallow"))
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
-	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(taskMatcher("Rename Language"))
-	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(taskMatcher("Delete Language"))
-	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(taskMatcher("Create Language"))
+	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(TaskMatcher("Rename Language"))
+	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(TaskMatcher("Delete Language"))
+	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(TaskMatcher("Create Language"))
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
-	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(taskMatcher("Remake comments search"))
-	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(taskMatcher("Remake news search"))
-	ar.HandleFunc("/search", adminSearchRemakeBlogSearchPage).Methods("POST").MatcherFunc(taskMatcher("Remake blog search"))
-	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchPage).Methods("POST").MatcherFunc(taskMatcher("Remake linker search"))
-	ar.HandleFunc("/search", adminSearchRemakeWritingSearchPage).Methods("POST").MatcherFunc(taskMatcher("Remake writing search"))
+	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake comments search"))
+	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake news search"))
+	ar.HandleFunc("/search", adminSearchRemakeBlogSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake blog search"))
+	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake linker search"))
+	ar.HandleFunc("/search", adminSearchRemakeWritingSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake writing search"))
 	ar.HandleFunc("/search/list", adminSearchWordListPage).Methods("GET")
 
 	// oauth shit
@@ -206,35 +206,7 @@ func CommentAuthor() mux.MatcherFunc {
 	}
 }
 
-func And(matchers ...mux.MatcherFunc) mux.MatcherFunc {
-	return func(request *http.Request, match *mux.RouteMatch) bool {
-		for _, m := range matchers {
-			if !m(request, match) {
-				return false
-			}
-		}
-		return true
-	}
-}
-
-func Or(matchers ...mux.MatcherFunc) mux.MatcherFunc {
-	return func(request *http.Request, match *mux.RouteMatch) bool {
-		for _, m := range matchers {
-			if m(request, match) {
-				return true
-			}
-		}
-		return false
-	}
-}
-
-func Not(matcher mux.MatcherFunc) mux.MatcherFunc {
-	return func(request *http.Request, match *mux.RouteMatch) bool {
-		return !matcher(request, match)
-	}
-}
-
-func taskMatcher(taskName string) mux.MatcherFunc {
+func TaskMatcher(taskName string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		return request.PostFormValue("task") == taskName
 	}

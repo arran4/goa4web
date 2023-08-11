@@ -50,6 +50,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	data.Blog = &BlogRow{
 		show_blogRow: blog,
 		IsEditable:   true, // TODO
+		IsReplyable:  true,
 	}
 
 	rows, err := queries.printThread(r.Context(), blog.ForumthreadIdforumthread)

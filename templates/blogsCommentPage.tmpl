@@ -6,7 +6,7 @@
                 </tr>
                 <tr>
                     <td>
-                        {{$.Blog.Blog.String | a4code2html}}<br><br>{{$.Blog.Username.String}} - [<a href="/blogs/comment/{{$.Blog.Idblogs}}">{{$.Blog.Comments}} COMMENTS</a>]
+                        {{$.Blog.Blog.String | a4code2html}}<br><br>{{$.Blog.Username.String}} - [<a href="/blogs/{{$.Blog.Idblogs}}/comments">{{$.Blog.Comments}} COMMENTS</a>]
                         {{if $.Blog.IsEditable}} - [<a href="/blogs/blog/{{$.Blog.Idblogs}}/edit">EDIT</a>]{{end}}
                     </td>
                 </tr>

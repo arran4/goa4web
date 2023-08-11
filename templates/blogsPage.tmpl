@@ -12,7 +12,7 @@
 					</tr>
 					<tr>
 						<td>
-							{{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/comment/{{.Idblogs}}">{{.Comments}} COMMENTS</a>]
+                        {{$.Blog.String | a4code2html}}<br><br>{{$.Blog.Username.String}} - [<a href="/blogs/{{$.Idblogs}}/comments">{{$.Comments}} COMMENTS</a>]
 							{{if .IsEditable}} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{end}}
 						</td>
 					</tr>

@@ -341,10 +341,11 @@ VALUES (?, ?, ?);
 DELETE FROM permissions
 WHERE idpermissions = ? AND section = ?;
 
--- name: show_blog_edit :many
+-- name: show_blog_edit :one
 SELECT b.blog, b.language_idlanguage
 FROM blogs b, users u
-WHERE b.users_idusers = u.idusers AND b.idblogs = ?;
+WHERE b.users_idusers = u.idusers AND b.idblogs = ?
+LIMIT 1;
 
 -- name: add_bookmarks :exec
 -- This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".

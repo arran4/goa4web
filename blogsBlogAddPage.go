@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func blogsAddBlogPage(w http.ResponseWriter, r *http.Request) {
+func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
 	// TODO add guard
 	type Data struct {
 		*CoreData
@@ -26,23 +26,23 @@ func blogsAddBlogPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.fetchLanguages(r.Context())
+	languageRows, err := queries.fetchLanguages(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	data.Languages = rows
+	data.Languages = languageRows
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := compiledTemplates.ExecuteTemplate(w, "blogsAddBlogPage.tmpl", data); err != nil {
+	if err := compiledTemplates.ExecuteTemplate(w, "blogsBlogAddPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func blogsAddBlogActionPage(w http.ResponseWriter, r *http.Request) {
+func blogsBlogAddActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

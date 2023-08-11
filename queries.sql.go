@@ -3252,10 +3252,11 @@ func (q *Queries) show_blog(ctx context.Context, idblogs int32) (*show_blogRow, 
 	return &i, err
 }
 
-const show_blog_edit = `-- name: show_blog_edit :many
+const show_blog_edit = `-- name: show_blog_edit :one
 SELECT b.blog, b.language_idlanguage
 FROM blogs b, users u
 WHERE b.users_idusers = u.idusers AND b.idblogs = ?
+LIMIT 1
 `
 
 type show_blog_editRow struct {
@@ -3263,27 +3264,11 @@ type show_blog_editRow struct {
 	LanguageIdlanguage int32
 }
 
-func (q *Queries) show_blog_edit(ctx context.Context, idblogs int32) ([]*show_blog_editRow, error) {
-	rows, err := q.db.QueryContext(ctx, show_blog_edit, idblogs)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*show_blog_editRow
-	for rows.Next() {
-		var i show_blog_editRow
-		if err := rows.Scan(&i.Blog, &i.LanguageIdlanguage); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) show_blog_edit(ctx context.Context, idblogs int32) (*show_blog_editRow, error) {
+	row := q.db.QueryRowContext(ctx, show_blog_edit, idblogs)
+	var i show_blog_editRow
+	err := row.Scan(&i.Blog, &i.LanguageIdlanguage)
+	return &i, err
 }
 
 const show_blogger_list = `-- name: show_blogger_list :many

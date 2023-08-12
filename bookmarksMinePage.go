@@ -85,6 +85,7 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
+	bookmarksCustomIndex(data.CoreData)
 
 	if err := compiledTemplates.ExecuteTemplate(w, "bookmarksMinePage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)

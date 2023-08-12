@@ -36,6 +36,7 @@ func bookmarksEditPage(w http.ResponseWriter, r *http.Request) {
 		data.BookmarkContent = bookmarks.List.String
 		data.Bid = bookmarks.Idbookmarks
 	}
+	bookmarksCustomIndex(data.CoreData)
 
 	if err := compiledTemplates.ExecuteTemplate(w, "bookmarksEditPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)

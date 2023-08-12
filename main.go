@@ -75,6 +75,8 @@ func main() {
 
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.HandleFunc("", faqPage).Methods("GET")
+	//faqr.HandleFunc("/admin/answer", faqAnswerPage).Methods("GET")
+	//faqr.HandleFunc("/admin/categories", faqCategoriesPage).Methods("GET")
 
 	br := r.PathPrefix("/blogs").Subrouter()
 	br.HandleFunc("/rss", blogsRssPage).Methods("GET")

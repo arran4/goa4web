@@ -105,6 +105,9 @@ func main() {
 
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
 	bmr.HandleFunc("", bookmarksPage).Methods("GET")
+	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET")
+	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET")
+	bmr.HandleFunc("/edit", bookmarksEditActionPage).Methods("POST")
 
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	//ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")

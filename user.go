@@ -70,7 +70,7 @@ func loginUser(ctx context.Context, queries *Queries, username, password string)
 //		}
 //		http.SetCookie(w, &http.Cookie{
 //			Name:    "SID",
-//			Value:   sid,
+//			Name:   sid,
 //			Expires: t,
 //		})
 //	}

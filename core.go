@@ -126,7 +126,7 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web?parseTime=true")
 		if err != nil {
-			log.Printf("error sql init: %w", err)
+			log.Printf("error sql init: %s", err)
 			http.Error(writer, "ERROR", 500)
 			return
 		}

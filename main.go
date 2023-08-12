@@ -90,8 +90,8 @@ func main() {
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/reply", blogsBlogReplyPostPage).Methods("POST")
-	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")      // TODO
-	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST") // TODO
+	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")
+	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST")
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher("Edit"))
 

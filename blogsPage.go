@@ -208,10 +208,10 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 	for _, row := range rows {
 		u := r.URL
 		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
-		var text = &a4code2html{}
+		var text = &A4code2html{}
 		text.codeType = ct_tagstrip
 		text.input = row.Blog.String
-		text.process()
+		text.Process()
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title: row.Left,
 			Link: &feeds.Link{

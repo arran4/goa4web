@@ -42,9 +42,10 @@ func NewFuncs() template.FuncMap {
 		//"getSecurityLevel":
 		"now": func() time.Time { return time.Now() },
 		"a4code2html": func(s string) template.HTML {
-			c := a4code2html{}
+			c := NewA4Code2HTML()
+			c.codeType = ct_html
 			c.input = s
-			c.process()
+			c.Process()
 			return template.HTML(c.output.String())
 		},
 	}

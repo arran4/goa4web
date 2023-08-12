@@ -27,7 +27,7 @@ void breakupTextToWords(a4webcont &cont, char*text, a4hashtable &words, a4hashta
 	a4code2html decoder;
 	decoder.codeType = ct_wordsonly;
 	decoder.input.set("%s", text);
-	decoder.process();
+	decoder.Process();
 	a4string word;
 	decoder.output.itteratorGotoStart();
 	int loop = 1;

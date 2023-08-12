@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 )
 
@@ -14,7 +15,7 @@ const (
 	ct_wordsonly
 )
 
-type a4code2html struct {
+type A4code2html struct {
 	input    string
 	output   bytes.Buffer
 	codeType codetype
@@ -22,19 +23,19 @@ type a4code2html struct {
 	stack    []string
 }
 
-func newA4Code2HTML() *a4code2html {
-	return &a4code2html{
+func NewA4Code2HTML() *A4code2html {
+	return &A4code2html{
 		codeType: ct_html,
 	}
 }
 
-func (c *a4code2html) clear() {
+func (c *A4code2html) clear() {
 	c.input = ""
 	c.output.Reset()
 	c.stack = nil
 }
 
-func (c *a4code2html) htmlelement(ch byte) string {
+func (c *A4code2html) Escape(ch byte) string {
 	if c.codeType == ct_wordsonly {
 		return " "
 	}
@@ -57,7 +58,7 @@ func (c *a4code2html) htmlelement(ch byte) string {
 	}
 }
 
-func (c *a4code2html) getNext(endAtEqual bool) string {
+func (c *A4code2html) getNext(endAtEqual bool) string {
 	result := new(bytes.Buffer)
 	var ch byte
 	loop := true
@@ -83,7 +84,7 @@ func (c *a4code2html) getNext(endAtEqual bool) string {
 	return result.String()
 }
 
-func (c *a4code2html) directOutput(terminator string) {
+func (c *A4code2html) directOutput(terminator string) {
 	lensomething := len(terminator)
 	var last string
 
@@ -97,7 +98,7 @@ func (c *a4code2html) directOutput(terminator string) {
 			c.input = c.input[1:]
 			c.output.WriteByte(ch)
 		case '<', '>', '&':
-			c.output.WriteString(c.htmlelement(ch))
+			c.output.WriteString(c.Escape(ch))
 		default:
 			c.output.WriteByte(ch)
 			if i := len(c.output.Bytes()) - lensomething; i >= 0 {
@@ -111,40 +112,114 @@ func (c *a4code2html) directOutput(terminator string) {
 	}
 }
 
-func (c *a4code2html) acomm() {
-	command := c.getNext(true)
-
-	switch {
-	case command == "*" || command == "b" || strings.EqualFold(command, "bold"):
-		switch c.codeType {
+func (a *A4code2html) acomm() int {
+	command := a.getNext(true)
+	switch command {
+	case "*", "b", "bold":
+		switch a.codeType {
 		case ct_tableOfContents:
 		case ct_tagstrip, ct_wordsonly:
-			c.output.WriteString("<strong>")
-			c.stack = append(c.stack, "</strong>")
+		default:
+			a.output.WriteString("<strong>")
+			a.stack = append(a.stack, "</strong>")
 		}
-	case command == "/" || command == "i" || strings.EqualFold(command, "italic"):
-		switch c.codeType {
+	case "/", "i", "italic":
+		switch a.codeType {
 		case ct_tableOfContents:
 		case ct_tagstrip, ct_wordsonly:
-			c.output.WriteString("<i>")
-			c.stack = append(c.stack, "</i>")
+		default:
+			a.output.WriteString("<i>")
+			a.stack = append(a.stack, "</i>")
 		}
-	case command == "_" || command == "u" || strings.EqualFold(command, "underline"):
-		switch c.codeType {
+	case "_", "u", "underline":
+		switch a.codeType {
 		case ct_tableOfContents:
 		case ct_tagstrip, ct_wordsonly:
-			c.output.WriteString("<u>")
-			c.stack = append(c.stack, "</u>")
+		default:
+			a.output.WriteString("<u>")
+			a.stack = append(a.stack, "</u>")
 		}
-	// Add more cases for other commands
+	case "^", "p", "power", "sup":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<sup>")
+			a.stack = append(a.stack, "</sup>")
+		}
+	case ".", "s", "sub":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<sub>")
+			a.stack = append(a.stack, "</sub>")
+		}
+	case "img", "image":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<img src=\"")
+			a.stack = append(a.stack, "\" />")
+		}
+	case "a", "link", "url":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+			a.getNext(false)
+		default:
+			// TODO make URL safe
+			a.output.WriteString("<a href=\"" + a.getNext(false) + "\" target=\"_BLANK\">")
+			a.stack = append(a.stack, "</a>")
+		}
+	case "code":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>")
+			a.output.WriteString("</pre></table>")
+		}
+	case "quoteof":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString(fmt.Sprintf("<table width=90%% align=center bgcolor=lightgreen><tr><th>Quote of %s: <tr><td>", a.getNext(false)))
+			a.stack = append(a.stack, "</table>")
+		}
+	case "quote", "q":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<table width=90% align=center bgcolor=lightgreen><tr><th>Quote: <tr><td>")
+			a.stack = append(a.stack, "</table>")
+		}
+	case "indent":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<table width=90% align=center><tr><td>")
+			a.stack = append(a.stack, "</table>")
+		}
+	case "hr":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<hr>")
+			a.stack = append(a.stack, "/>")
+		}
 	default:
-		c.stack = append(c.stack, "")
+		a.stack = append(a.stack, "")
 	}
-
-	// Don't forget to free the memory allocated for 'command'
+	return 0
 }
 
-func (c *a4code2html) nextcomm() {
+func (c *A4code2html) nextcomm() {
 	for len(c.input) > 0 {
 		ch := c.input[0]
 		c.input = c.input[1:]
@@ -159,7 +234,7 @@ func (c *a4code2html) nextcomm() {
 				c.output.WriteString(last)
 			}
 		case '<', '>', '\n', '&':
-			c.output.WriteString(c.htmlelement(ch))
+			c.output.WriteString(c.Escape(ch))
 		case '\\':
 			ch = c.input[0]
 			c.input = c.input[1:]
@@ -172,7 +247,11 @@ func (c *a4code2html) nextcomm() {
 	}
 }
 
-func (c *a4code2html) process() {
+func (c *A4code2html) Output() string {
+	return c.output.String()
+}
+
+func (c *A4code2html) Process() {
 	c.nextcomm()
 	for len(c.stack) > 0 {
 		last := c.stack[len(c.stack)-1]

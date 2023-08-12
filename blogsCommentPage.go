@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,10 +16,13 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type BlogComment struct {
 		*printThreadRow
-		ShowReply bool
-		Editable  bool
-		Offset    int
-		Idblogs   int32
+		ShowReply          bool
+		Editable           bool
+		Editing            bool
+		Offset             int
+		Idblogs            int32
+		Languages          []*Language
+		SelectedLanguageId int32
 	}
 	type Data struct {
 		*CoreData
@@ -51,6 +55,8 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 
 	blog, err := queries.show_blog(r.Context(), int32(blogId))
 	if err != nil {
@@ -61,7 +67,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Blog = &BlogRow{
 		show_blogRow: blog,
-		IsEditable:   true, // TODO
+		IsEditable:   uid == blog.UsersIdusers,
 		IsReplyable:  true,
 	}
 
@@ -96,7 +102,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 			data.Comments = append(data.Comments, &BlogComment{
 				printThreadRow: row,
 				ShowReply:      true,
-				Editable:       true,
+				Editable:       uid == row.Idusers,
 				Offset:         i + offset,
 				Idblogs:        blog.Idblogs,
 			})

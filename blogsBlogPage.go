@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,7 +21,9 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 		*printThreadRow
 		ShowReply bool
 		Editable  bool
+		Editing   bool
 		Offset    int
+		Idblogs   int32
 	}
 	type Data struct {
 		*CoreData
@@ -53,6 +56,8 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 
 	blog, err := queries.show_blog(r.Context(), int32(blogId))
 	if err != nil {
@@ -63,7 +68,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Blog = &BlogRow{
 		show_blogRow: blog,
-		IsEditable:   true, // TODO
+		IsEditable:   uid == blog.UsersIdusers,
 		IsReplyable:  true, // TODO
 	}
 

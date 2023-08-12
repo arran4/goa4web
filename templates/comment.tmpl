@@ -5,13 +5,22 @@
         </tr>
         <tr>
             <td>
-                {{.Text.String | a4code2html}}<br>-<br>{{.Username.String}}.
-                {{if .ShowReply}}
-                    [<a href="?comment={{.Idcomments}}&type=full#reply">FULL REPLY</a>]
-                    [<a href="?comment={{.Idcomments}}#reply">PARAGRAPH REPLY</a>]
-                {{end}}
-                {{if $.Editable }}
-                    [<a href="/blogs/blog/{{.Idblogs}}/comment/{{.Idcomments}}/edit#edit">EDIT</a>]
+                {{ if .Editing }}
+                    <font size="4">Edit:</font><br>
+                    <form method="post" action="">
+                        <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text.String}}</textarea><br>
+                        {{ template "languageCombobox" $ }}
+                        <input type="submit" name="task" value="Edit Reply">
+                    </form>
+                {{ else }}
+                    {{.Text.String | a4code2html}}<br>-<br>{{.Username.String}}.
+                    {{if .ShowReply}}
+                        [<a href="?comment={{.Idcomments}}&type=full#reply">FULL REPLY</a>]
+                        [<a href="?comment={{.Idcomments}}#reply">PARAGRAPH REPLY</a>]
+                    {{end}}
+                    {{if $.Editable }}
+                        [<a href="/blogs/blog/{{.Idblogs}}/comment/{{.Idcomments}}/edit#edit">EDIT</a>]
+                    {{end}}
                 {{end}}
             </td>
         </tr>

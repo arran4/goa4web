@@ -277,6 +277,11 @@ UPDATE blogs
 SET language_idlanguage = ?, blog = ?
 WHERE idblogs = ?;
 
+-- name: update_comment :exec
+UPDATE comments
+SET language_idlanguage = ?, text = ?
+WHERE idcomments = ?;
+
 -- name: delete_blog_comments :exec
 DELETE FROM comments
 WHERE forumthread_idforumthread = ?;
@@ -787,7 +792,7 @@ INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUE
 SELECT idforumtopic FROM forumtopic WHERE title=?;
 
 -- name: printThread :many
-SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread
+SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread, c.language_idlanguage
 FROM comments c, users u
 WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
 ORDER BY c.written;

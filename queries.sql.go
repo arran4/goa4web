@@ -2291,7 +2291,7 @@ func (q *Queries) printSubBoards(ctx context.Context, imageboardIdimageboard int
 }
 
 const printThread = `-- name: printThread :many
-SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread
+SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread, c.language_idlanguage
 FROM comments c, users u
 WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
 ORDER BY c.written
@@ -2304,6 +2304,7 @@ type printThreadRow struct {
 	Username                 sql.NullString
 	Idusers                  int32
 	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
 }
 
 func (q *Queries) printThread(ctx context.Context, forumthreadIdforumthread int32) ([]*printThreadRow, error) {
@@ -2322,6 +2323,7 @@ func (q *Queries) printThread(ctx context.Context, forumthreadIdforumthread int3
 			&i.Username,
 			&i.Idusers,
 			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
 		); err != nil {
 			return nil, err
 		}
@@ -3849,6 +3851,23 @@ type update_bookmarksParams struct {
 // This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
 func (q *Queries) update_bookmarks(ctx context.Context, arg update_bookmarksParams) error {
 	_, err := q.db.ExecContext(ctx, update_bookmarks, arg.List, arg.UsersIdusers)
+	return err
+}
+
+const update_comment = `-- name: update_comment :exec
+UPDATE comments
+SET language_idlanguage = ?, text = ?
+WHERE idcomments = ?
+`
+
+type update_commentParams struct {
+	LanguageIdlanguage int32
+	Text               sql.NullString
+	Idcomments         int32
+}
+
+func (q *Queries) update_comment(ctx context.Context, arg update_commentParams) error {
+	_, err := q.db.ExecContext(ctx, update_comment, arg.LanguageIdlanguage, arg.Text, arg.Idcomments)
 	return err
 }
 

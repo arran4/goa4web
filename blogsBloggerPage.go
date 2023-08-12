@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,18 +24,20 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
 	username, _ := vars["username"]
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 
 	userLanguagePref := 0
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	uid, err := queries.usernametouid(r.Context(), sql.NullString{
+	buid, err := queries.usernametouid(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
 
 	rows, err := queries.show_latest_blogs(r.Context(), show_latest_blogsParams{
-		UsersIdusers:       uid,
+		UsersIdusers:       buid,
 		LanguageIdlanguage: int32(userLanguagePref),
 		Limit:              15,
 		Offset:             int32(offset),
@@ -48,13 +51,13 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		IsOffset: offset != 0,
-		UID:      strconv.Itoa(int(uid)),
+		UID:      strconv.Itoa(int(buid)),
 	}
 
 	for _, row := range rows {
 		data.Rows = append(data.Rows, &BlogRow{
 			show_latest_blogsRow: row,
-			IsEditable:           true, // TODO atoiornull(result->getColumn(4)) == cont.user.UID || level == auth_administrator || level == auth_moderator
+			IsEditable:           uid == row.UsersIdusers,
 		})
 	}
 	CustomBlogIndex(data.CoreData, r)

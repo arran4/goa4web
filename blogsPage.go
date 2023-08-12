@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gorilla/feeds"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"net/url"
@@ -24,8 +25,10 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	uid := r.URL.Query().Get("uid")
-	userId, _ := strconv.Atoi(uid)
+	buid := r.URL.Query().Get("uid")
+	userId, _ := strconv.Atoi(buid)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 
 	userLanguagePref := 0
 
@@ -45,13 +48,13 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		IsOffset: offset != 0,
-		UID:      uid,
+		UID:      buid,
 	}
 
 	for _, row := range rows {
 		data.Rows = append(data.Rows, &BlogRow{
 			show_latest_blogsRow: row,
-			IsEditable:           true, // TODO atoiornull(result->getColumn(4)) == cont.user.UID || level == auth_administrator || level == auth_moderator
+			IsEditable:           uid == row.UsersIdusers,
 		})
 	}
 

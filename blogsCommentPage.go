@@ -54,21 +54,24 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable:  true,
 	}
 
-	rows, err := queries.printThread(r.Context(), blog.ForumthreadIdforumthread)
-	if err != nil {
-		log.Printf("show_blog_comments Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	if blog.ForumthreadIdforumthread > 0 { // TODO make nullable.
 
-	for i, row := range rows {
-		data.Comments = append(data.Comments, &BlogComment{
-			printThreadRow: row,
-			ShowReply:      true,
-			Editable:       true,
-			Offset:         i + offset,
-			Idblogs:        blog.Idblogs,
-		})
+		rows, err := queries.printThread(r.Context(), blog.ForumthreadIdforumthread)
+		if err != nil {
+			log.Printf("show_blog_comments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		for i, row := range rows {
+			data.Comments = append(data.Comments, &BlogComment{
+				printThreadRow: row,
+				ShowReply:      true,
+				Editable:       true,
+				Offset:         i + offset,
+				Idblogs:        blog.Idblogs,
+			})
+		}
 	}
 
 	CustomBlogIndex(data.CoreData, r)

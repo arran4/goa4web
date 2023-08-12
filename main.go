@@ -74,9 +74,19 @@ func main() {
 	//nr.HandleFunc("{id:[0-9]+}", newsPostPage).Methods("GET")
 
 	faqr := r.PathPrefix("/faq").Subrouter()
-	faqr.HandleFunc("", faqPage).Methods("GET")
-	//faqr.HandleFunc("/admin/answer", faqAnswerPage).Methods("GET")
-	//faqr.HandleFunc("/admin/categories", faqCategoriesPage).Methods("GET")
+	faqr.HandleFunc("", faqPage).Methods("GET", "POST")
+	faqr.HandleFunc("/ask", faqAskPage).Methods("GET")
+	faqr.HandleFunc("/ask", faqAskActionPage).Methods("POST").MatcherFunc(TaskMatcher("Ask"))
+	faqr.HandleFunc("/admin/answer", faqAdminAnswerPage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(NoTask())
+	faqr.HandleFunc("/admin/answer", faqAnswerAnswerActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Answer"))
+	faqr.HandleFunc("/admin/answer", faqAnswerRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Remove"))
+	faqr.HandleFunc("/admin/categories", faqAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	faqr.HandleFunc("/admin/categories", faqCategoriesRenameActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Rename Category"))
+	faqr.HandleFunc("/admin/categories", faqCategoriesDeleteActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete Category"))
+	faqr.HandleFunc("/admin/categories", faqCategoriesCreateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Create Category"))
+	faqr.HandleFunc("/admin/questions", faqAdminQuestionsPage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(NoTask())
+	faqr.HandleFunc("/admin/questions", faqQuestionsEditActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Edit"))
+	faqr.HandleFunc("/admin/questions", faqQuestionsDeleteActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Remove"))
 
 	br := r.PathPrefix("/blogs").Subrouter()
 	br.HandleFunc("/rss", blogsRssPage).Methods("GET")
@@ -95,7 +105,7 @@ func main() {
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST")
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher("Edit"))
+	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher("Edit Reply"))
 
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("", forumPage).Methods("GET")
@@ -223,6 +233,12 @@ func CommentAuthor() mux.MatcherFunc {
 func TaskMatcher(taskName string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		return request.PostFormValue("task") == taskName
+	}
+}
+
+func NoTask() mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		return request.PostFormValue("task") == ""
 	}
 }
 

@@ -11,6 +11,41 @@ import (
 	"time"
 )
 
+const allQuestions = `-- name: AllQuestions :many
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+`
+
+func (q *Queries) AllQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, allQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const checkExistingUser = `-- name: CheckExistingUser :one
 SELECT username FROM users WHERE username = ?
 `
@@ -73,6 +108,42 @@ func (q *Queries) SelectLanguages(ctx context.Context) ([]*Language, error) {
 	for rows.Next() {
 		var i Language
 		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const selectUnansweredQuestions = `-- name: SelectUnansweredQuestions :many
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL
+`
+
+func (q *Queries) SelectUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, selectUnansweredQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -504,22 +575,6 @@ func (q *Queries) assignNewsThisThreadId(ctx context.Context, arg assignNewsThis
 	return err
 }
 
-const assign_answer = `-- name: assign_answer :exec
-UPDATE faq
-SET answer = ?
-WHERE idfaq = ?
-`
-
-type assign_answerParams struct {
-	Answer sql.NullString
-	Idfaq  int32
-}
-
-func (q *Queries) assign_answer(ctx context.Context, arg assign_answerParams) error {
-	_, err := q.db.ExecContext(ctx, assign_answer, arg.Answer, arg.Idfaq)
-	return err
-}
-
 const assign_blog_to_thread = `-- name: assign_blog_to_thread :exec
 UPDATE blogs
 SET forumthread_idforumthread = ?
@@ -591,18 +646,6 @@ func (q *Queries) blogsUserPermissions(ctx context.Context) ([]*blogsUserPermiss
 		return nil, err
 	}
 	return items, nil
-}
-
-const categories = `-- name: categories :one
-SELECT idfaqCategories, name
-FROM faqCategories
-`
-
-func (q *Queries) categories(ctx context.Context) (*Faqcategory, error) {
-	row := q.db.QueryRowContext(ctx, categories)
-	var i Faqcategory
-	err := row.Scan(&i.Idfaqcategories, &i.Name)
-	return &i, err
 }
 
 const category_combobox = `-- name: category_combobox :many
@@ -1031,6 +1074,16 @@ func (q *Queries) delete_category(ctx context.Context, idfaqcategories int32) er
 	return err
 }
 
+const delete_faq = `-- name: delete_faq :exec
+DELETE FROM faq
+WHERE idfaq = ?
+`
+
+func (q *Queries) delete_faq(ctx context.Context, idfaq int32) error {
+	_, err := q.db.ExecContext(ctx, delete_faq, idfaq)
+	return err
+}
+
 const doCalled = `-- name: doCalled :many
 SELECT s.news, s.idsiteNews, u.idusers, s.language_idlanguage
 FROM siteNews s
@@ -1120,6 +1173,34 @@ func (q *Queries) expandCategories(ctx context.Context, forumcategoryIdforumcate
 	for rows.Next() {
 		var i expandCategoriesRow
 		if err := rows.Scan(&i.Idforumcategory, &i.Title, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const faq_categories = `-- name: faq_categories :many
+SELECT idfaqCategories, name
+FROM faqCategories
+`
+
+func (q *Queries) faq_categories(ctx context.Context) ([]*Faqcategory, error) {
+	rows, err := q.db.QueryContext(ctx, faq_categories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faqcategory
+	for rows.Next() {
+		var i Faqcategory
+		if err := rows.Scan(&i.Idfaqcategories, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -3420,25 +3501,21 @@ func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsPa
 
 const show_questions = `-- name: show_questions :many
 SELECT c.idfaqCategories, c.name, f.question, f.answer
-FROM faq f, faqCategories c
-WHERE c.idfaqCategories <> ? AND f.answer IS NOT NULL AND c.idfaqCategories = f.faqCategories_idfaqCategories AND (c.idfaqCategories = ?)
+FROM faq f
+LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
+WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories
 `
 
-type show_questionsParams struct {
-	Idfaqcategories   int32
-	Idfaqcategories_2 int32
-}
-
 type show_questionsRow struct {
-	Idfaqcategories int32
+	Idfaqcategories sql.NullInt32
 	Name            sql.NullString
 	Question        sql.NullString
 	Answer          sql.NullString
 }
 
-func (q *Queries) show_questions(ctx context.Context, arg show_questionsParams) ([]*show_questionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, show_questions, arg.Idfaqcategories, arg.Idfaqcategories_2)
+func (q *Queries) show_questions(ctx context.Context) ([]*show_questionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, show_questions)
 	if err != nil {
 		return nil, err
 	}

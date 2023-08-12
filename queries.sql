@@ -418,12 +418,11 @@ UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
 WHERE idfaq = ?;
 
--- name: assign_answer :exec
-UPDATE faq
-SET answer = ?
+-- name: delete_faq :exec
+DELETE FROM faq
 WHERE idfaq = ?;
 
--- name: categories :one
+-- name: faq_categories :many
 SELECT idfaqCategories, name
 FROM faqCategories;
 
@@ -434,8 +433,9 @@ WHERE faqCategories_idfaqCategories = ? OR answer IS NULL;
 
 -- name: show_questions :many
 SELECT c.idfaqCategories, c.name, f.question, f.answer
-FROM faq f, faqCategories c
-WHERE c.idfaqCategories <> ? AND f.answer IS NOT NULL AND c.idfaqCategories = f.faqCategories_idfaqCategories AND (c.idfaqCategories = ?)
+FROM faq f
+LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
+WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories;
 
 -- name: admin_categories :many
@@ -984,3 +984,12 @@ FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
 ;
+
+-- name: SelectUnansweredQuestions :many
+SELECT *
+FROM faq
+WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL;
+
+-- name: AllQuestions :many
+SELECT *
+FROM faq;

@@ -8,6 +8,9 @@
         @import url("/main.css");
         -->
         </style>
+        {{ if $.AutoRefresh }}
+            <meta http-equiv="refresh" content="1">
+        {{ end }}
 	</head>
 	<body>
 			{{template "header"}}

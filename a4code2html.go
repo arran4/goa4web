@@ -241,6 +241,7 @@ func (c *A4code2html) nextcomm() {
 			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' {
 				c.output.WriteByte('\\')
 			}
+			fallthrough
 		default:
 			c.output.WriteByte(ch)
 		}

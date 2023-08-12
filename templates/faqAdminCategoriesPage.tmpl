@@ -1,0 +1,35 @@
+{{ template "head" $ }}
+		<table>
+			<tr>
+				<th>ID
+				<th>Name
+				<th>Options
+			</tr>
+			{{- range .Rows }}
+			<tr>
+				<td>{{ .Idfaqcategories }}</td>
+				<td>
+					<form method="post">
+						<input type="hidden" name="cid" value="{{ .Idfaqcategories }}">
+						<input name="cname" value="{{ .Name.String }}">
+				</td>
+				<td>
+					<input type="submit" name="task" value="Rename Category">
+					<input type="submit" name="task" value="Delete Category">
+					</form>
+				</td>
+			</tr>
+			{{- end }}
+			<tr>
+				<td>NEW</td>
+				<td>
+					<form method="post">
+						<input name="cname" value="">
+				</td>
+				<td>
+					<input type="submit" name="task" value="Create Category">
+					</form>
+				</td>
+			</tr>
+		</table>
+{{ template "tail" $ }}

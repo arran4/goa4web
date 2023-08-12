@@ -18,7 +18,7 @@ func Test_preprocessBookmarks(t *testing.T) {
 				Categories: []*BookmarkCategory{
 					{
 						Name: "Search",
-						Entries: []BookmarkEntry{
+						Entries: []*BookmarkEntry{
 							{
 								Url:  "http://www.google.com.au",
 								Name: "Google",
@@ -27,7 +27,7 @@ func Test_preprocessBookmarks(t *testing.T) {
 					},
 					{
 						Name: "Wikies",
-						Entries: []BookmarkEntry{
+						Entries: []*BookmarkEntry{
 							{
 								Url:  "http://en.wikipedia.org/wiki/Main_Page",
 								Name: "Wikipedia",

@@ -57,6 +57,7 @@ type CoreData struct {
 	SecurityLevel    string
 	Title            string
 	AdminChecked     bool
+	AutoRefresh      bool
 	RSSFeedUrl       string
 	AtomFeedUrl      string
 }

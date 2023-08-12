@@ -88,11 +88,9 @@ func main() {
 	br.HandleFunc("/blogger/{blogger}", blogsBloggerPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyPage).Methods("GET")                                                                                                                // TODO
-	br.HandleFunc("/blog/{blog}/comment/{comment}/reply", blogsCommentReplyFullPage).Queries("type", "full").Methods("GET")                                                                                    // TODO
 	br.HandleFunc("/blog/{blog}/reply", blogsBlogReplyPostPage).Methods("POST")                                                                                                                                // TODO
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")                                                // TODO
-	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")                                            // TODO
+	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST")                                           // TODO
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))                                         // TODO
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher("Edit")) // TODO
 

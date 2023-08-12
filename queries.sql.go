@@ -3337,16 +3337,26 @@ func (q *Queries) show_categories(ctx context.Context, forumcategoryIdforumcateg
 }
 
 const show_comment = `-- name: show_comment :one
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, u.Username
 FROM comments c
 LEFT JOIN users u ON c.users_idusers=u.idusers
 WHERE c.idcomments = ?
 LIMIT 1
 `
 
-func (q *Queries) show_comment(ctx context.Context, idcomments int32) (*Comment, error) {
+type show_commentRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	Username                 sql.NullString
+}
+
+func (q *Queries) show_comment(ctx context.Context, idcomments int32) (*show_commentRow, error) {
 	row := q.db.QueryRowContext(ctx, show_comment, idcomments)
-	var i Comment
+	var i show_commentRow
 	err := row.Scan(
 		&i.Idcomments,
 		&i.ForumthreadIdforumthread,
@@ -3354,6 +3364,7 @@ func (q *Queries) show_comment(ctx context.Context, idcomments int32) (*Comment,
 		&i.LanguageIdlanguage,
 		&i.Written,
 		&i.Text,
+		&i.Username,
 	)
 	return &i, err
 }

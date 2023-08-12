@@ -26,6 +26,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 		Comments    []*BlogComment
 		Offset      int
 		IsReplyable bool
+		Text        string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -55,6 +56,24 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if blog.ForumthreadIdforumthread > 0 { // TODO make nullable.
+
+		replyType := r.URL.Query().Get("type")
+		commentIdString := r.URL.Query().Get("comment")
+		if commentIdString != "" {
+			commentId, _ := strconv.Atoi(commentIdString)
+			comment, err := queries.show_comment(r.Context(), int32(commentId))
+			if err != nil {
+				log.Printf("show_comment Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			switch replyType {
+			case "full":
+				data.Text = processCommentFullQuote(comment.Username.String, comment.Text.String)
+			default:
+				data.Text = processCommentQuote(comment.Username.String, comment.Text.String)
+			}
+		}
 
 		rows, err := queries.printThread(r.Context(), blog.ForumthreadIdforumthread)
 		if err != nil {

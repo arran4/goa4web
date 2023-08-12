@@ -308,7 +308,7 @@ WHERE b.idblogs = ?
 LIMIT 1;
 
 -- name: show_comment :one
-SELECT c.*
+SELECT c.*, u.Username
 FROM comments c
 LEFT JOIN users u ON c.users_idusers=u.idusers
 WHERE c.idcomments = ?

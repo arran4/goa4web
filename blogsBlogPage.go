@@ -25,6 +25,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 		Comments    []*BlogComment
 		Offset      int
 		IsReplyable bool
+		Text        string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

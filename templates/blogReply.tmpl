@@ -2,7 +2,7 @@
 		{{if $.Blog.IsReplyable}}
 			<font size="4">Reply:</font><br>
 			<form method="post" action="/blogs/blog/{{$.Blog.Idblogs}}/reply">
-				<textarea name="replytext" cols="40" rows="20"></textarea><br>
+				<textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
 				<input type=hidden name="bid" value="{{$.Blog.Idblogs}}">
 				<input type="submit" name="task" value="Reply">
 			</form>

@@ -7,8 +7,8 @@
             <td>
                 {{.Text.String | a4code2html}}<br>-<br>{{.Username.String}}.
                 {{if .ShowReply}}
-                    [<a href="/blogs/blog/{{.Idblogs}}/comment/{{.Idcomments}}/reply?offset={{.Offset}}&type=full#reply">FULL REPLY</a>]
-                    [<a href="/blogs/blog/{{.Idblogs}}/comment/{{.Idcomments}}/reply?offset={{.Offset}}#reply">PARAGRAPH REPLY</a>]
+                    [<a href="?comment={{.Idcomments}}&type=full#reply">FULL REPLY</a>]
+                    [<a href="?comment={{.Idcomments}}#reply">PARAGRAPH REPLY</a>]
                 {{end}}
                 {{if $.Editable }}
                     [<a href="/blogs/blog/{{.Idblogs}}/comment/{{.Idcomments}}/edit#edit">EDIT</a>]

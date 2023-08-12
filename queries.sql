@@ -378,7 +378,7 @@ WHERE users_idusers = ?;
 
 -- name: show_bookmarks :one
 -- This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
-SELECT list
+SELECT Idbookmarks, list
 FROM bookmarks
 WHERE users_idusers = ?;
 

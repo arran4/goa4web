@@ -89,7 +89,7 @@ func main() {
 	br.HandleFunc("/blogger/{blogger}", blogsBloggerPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET", "POST")
-	br.HandleFunc("/blog/{blog}/reply", blogsBlogReplyPostPage).Methods("POST")
+	br.HandleFunc("/blog/{blog}/reply", blogsBlogReplyPostPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST")
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))
@@ -104,10 +104,11 @@ func main() {
 	lr.HandleFunc("", linkerPage).Methods("GET")
 
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
-	bmr.HandleFunc("", bookmarksPage).Methods("GET")
-	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET")
-	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET")
-	bmr.HandleFunc("/edit", bookmarksEditActionPage).Methods("POST")
+	bmr.HandleFunc("", bookmarksPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET", "POST").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/edit", bookmarksEditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Save"))
+	bmr.HandleFunc("/edit", bookmarksEditCreateActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Create"))
 
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	//ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
@@ -168,6 +169,13 @@ func main() {
 }
 
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		// TODO
+		return true
+	}
+}
+
+func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		// TODO
 		return true

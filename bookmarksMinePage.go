@@ -83,7 +83,7 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		Columns:  preprocessBookmarks(bookmarks.String),
+		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
 
 	if err := compiledTemplates.ExecuteTemplate(w, "bookmarksMinePage.tmpl", data); err != nil {

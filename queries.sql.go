@@ -3288,17 +3288,22 @@ func (q *Queries) show_blogger_list(ctx context.Context) ([]*show_blogger_listRo
 }
 
 const show_bookmarks = `-- name: show_bookmarks :one
-SELECT list
+SELECT Idbookmarks, list
 FROM bookmarks
 WHERE users_idusers = ?
 `
 
+type show_bookmarksRow struct {
+	Idbookmarks int32
+	List        sql.NullString
+}
+
 // This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
-func (q *Queries) show_bookmarks(ctx context.Context, usersIdusers int32) (sql.NullString, error) {
+func (q *Queries) show_bookmarks(ctx context.Context, usersIdusers int32) (*show_bookmarksRow, error) {
 	row := q.db.QueryRowContext(ctx, show_bookmarks, usersIdusers)
-	var list sql.NullString
-	err := row.Scan(&list)
-	return list, err
+	var i show_bookmarksRow
+	err := row.Scan(&i.Idbookmarks, &i.List)
+	return &i, err
 }
 
 const show_categories = `-- name: show_categories :exec

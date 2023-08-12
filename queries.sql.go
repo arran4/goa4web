@@ -1970,16 +1970,19 @@ func (q *Queries) makePost(ctx context.Context, arg makePostParams) error {
 	return err
 }
 
-const makeThread = `-- name: makeThread :exec
+const makeThread = `-- name: makeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `
 
-func (q *Queries) makeThread(ctx context.Context, forumtopicIdforumtopic int32) error {
-	_, err := q.db.ExecContext(ctx, makeThread, forumtopicIdforumtopic)
-	return err
+func (q *Queries) makeThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {
+	result, err := q.db.ExecContext(ctx, makeThread, forumtopicIdforumtopic)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
-const makeTopic = `-- name: makeTopic :exec
+const makeTopic = `-- name: makeTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
 
@@ -1989,9 +1992,12 @@ type makeTopicParams struct {
 	Description                  sql.NullString
 }
 
-func (q *Queries) makeTopic(ctx context.Context, arg makeTopicParams) error {
-	_, err := q.db.ExecContext(ctx, makeTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
-	return err
+func (q *Queries) makeTopic(ctx context.Context, arg makeTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, makeTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const modify_faq = `-- name: modify_faq :exec
@@ -2061,37 +2067,8 @@ func (q *Queries) moveToLinker(ctx context.Context, idlinkerqueue int32) ([]*mov
 	return items, nil
 }
 
-const notifyChange = `-- name: notifyChange :many
-
-SELECT email FROM users WHERE idusers = ?
-`
-
-// -- name: addToGeneralSearch :exec
-// INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
-func (q *Queries) notifyChange(ctx context.Context, idusers int32) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, notifyChange, idusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []sql.NullString
-	for rows.Next() {
-		var email sql.NullString
-		if err := rows.Scan(&email); err != nil {
-			return nil, err
-		}
-		items = append(items, email)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const postUpdate = `-- name: postUpdate :exec
+
 UPDATE comments c, forumthread th, forumtopic t
 SET
 th.lastposter=c.users_idusers, t.lastposter=c.users_idusers,
@@ -2103,6 +2080,8 @@ th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 WHERE c.idcomments=?
 `
 
+// -- name: addToGeneralSearch :exec
+// INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
 func (q *Queries) postUpdate(ctx context.Context, idcomments int32) error {
 	_, err := q.db.ExecContext(ctx, postUpdate, idcomments)
 	return err
@@ -3539,7 +3518,7 @@ func (q *Queries) show_topics(ctx context.Context, arg show_topicsParams) ([]*sh
 	return items, nil
 }
 
-const somethingNotifyBlogs = `-- name: somethingNotifyBlogs :exec
+const somethingNotifyBlogs = `-- name: somethingNotifyBlogs :many
 SELECT u.email FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -3550,9 +3529,27 @@ type somethingNotifyBlogsParams struct {
 	Idusers int32
 }
 
-func (q *Queries) somethingNotifyBlogs(ctx context.Context, arg somethingNotifyBlogsParams) error {
-	_, err := q.db.ExecContext(ctx, somethingNotifyBlogs, arg.Idblogs, arg.Idusers)
-	return err
+func (q *Queries) somethingNotifyBlogs(ctx context.Context, arg somethingNotifyBlogsParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, somethingNotifyBlogs, arg.Idblogs, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const somethingNotifyLinker = `-- name: somethingNotifyLinker :exec
@@ -3630,7 +3627,7 @@ func (q *Queries) threadAllowThis(ctx context.Context, arg threadAllowThisParams
 	return &i, err
 }
 
-const threadNotify = `-- name: threadNotify :exec
+const threadNotify = `-- name: threadNotify :many
 SELECT u.email FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -3641,9 +3638,27 @@ type threadNotifyParams struct {
 	Idusers                  int32
 }
 
-func (q *Queries) threadNotify(ctx context.Context, arg threadNotifyParams) error {
-	_, err := q.db.ExecContext(ctx, threadNotify, arg.ForumthreadIdforumthread, arg.Idusers)
-	return err
+func (q *Queries) threadNotify(ctx context.Context, arg threadNotifyParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, threadNotify, arg.ForumthreadIdforumthread, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const topicAllowThis = `-- name: topicAllowThis :one

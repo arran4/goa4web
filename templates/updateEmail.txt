@@ -1,0 +1,10 @@
+To: {{.To}}
+From: {{.To}}
+Subject: [A4] {{.Subject}}
+
+There has been an update on my site on some page you either requested to be notified
+or were directly involved with. Please visit the URL to find out in relation to what:
+{{.URL}}
+
+- Arran4
+.

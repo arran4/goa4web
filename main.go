@@ -87,7 +87,7 @@ func main() {
 	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
 	br.HandleFunc("/blogger/{blogger}", blogsBloggerPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET", "POST")
-	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET")
+	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/reply", blogsBlogReplyPostPage).Methods("POST")                                                                                                                                // TODO
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("GET")                                                // TODO
 	br.HandleFunc("/blog/{blog}/comment/{comment}/edit", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST")                                           // TODO

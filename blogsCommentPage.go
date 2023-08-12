@@ -22,22 +22,32 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Blog        *BlogRow
-		Comments    []*BlogComment
-		Offset      int
-		IsReplyable bool
-		Text        string
+		Blog               *BlogRow
+		Comments           []*BlogComment
+		Offset             int
+		IsReplyable        bool
+		Text               string
+		Languages          []*Language
+		SelectedLanguageId int
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	data := Data{
-		CoreData:    r.Context().Value(ContextValues("coreData")).(*CoreData),
-		Offset:      offset,
-		IsReplyable: true,
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Offset:             offset,
+		IsReplyable:        true,
+		SelectedLanguageId: 1,
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	languageRows, err := queries.fetchLanguages(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Languages = languageRows
 
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])

@@ -747,9 +747,6 @@ INSERT INTO searchwordlist (word) VALUES (lcase(?));
 -- -- name: addToGeneralSearch :exec
 -- INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
 
--- name: notifyChange :many
-SELECT email FROM users WHERE idusers = ?;
-
 -- name: postUpdate :exec
 UPDATE comments c, forumthread th, forumtopic t
 SET
@@ -777,13 +774,13 @@ WHERE t.idforumthread=? LIMIT 1;
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
 VALUES (?, ?, ?, ?, NOW());
 
--- name: makeThread :exec
+-- name: makeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 
 -- name: makeCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
 
--- name: makeTopic :exec
+-- name: makeTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
 
 -- name: findForumTopicByName :one
@@ -795,7 +792,7 @@ FROM comments c, users u
 WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
 ORDER BY c.written;
 
--- name: somethingNotifyBlogs :exec
+-- name: somethingNotifyBlogs :many
 SELECT u.email FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
@@ -810,7 +807,7 @@ SELECT u.email FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
--- name: threadNotify :exec
+-- name: threadNotify :many
 SELECT u.email FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;

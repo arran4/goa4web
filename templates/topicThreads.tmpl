@@ -1,21 +1,26 @@
 {{ define "topicThreads" }}
     <font size="4">Threads:</font><br>
     {{- range .Threads }}
-		<table width="100%">
+		<table width="100%" border=1>
 			<tr>
 				<td bgcolor="lightgrey">
+                    First poster: <font color="green">{{ .Firstpostusername.String }}</font> At <font color="green">{{ .Firstpostwritten.Time }}</font><br />
+                    Contents:
+				</td>
+            </tr>
+			<tr>
+				<td bgcolor="">
 					{{ .Firstposttext.String | a4code2html }}<br>
-					( [<a href="/forum/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>] )
-				</td>
-				<td width="350px" bgcolor="lightgrey">
-					Creator: <font color="green">{{ .Firstpostusername.String }}</font><br />
-					At <font color="green">{{ .Firstpostwritten.Time }}</font>
-				</td>
-				<td width="350px" bgcolor="lightgrey">
-					Lastposter: <font color="blue">{{ .Lastposterusername.String }}</font><br />
-					At <font color="blue">{{ .Lastaddition.Time }}</font>
 				</td>
 			</tr>
-		</table><br>
+			<tr>
+				<td bgcolor="">
+					Lastposter: <font color="blue">{{ .Lastposterusername.String }}</font>
+					At <font color="blue">{{ .Lastaddition.Time }}</font>
+					[<a href="/forum/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
+				</td>
+            </tr>
+		</table>
+		<br />
     {{- end }}
 {{ end }}

@@ -53,3 +53,55 @@ func processCommentFullQuote(username, text string) string {
 func processCommentQuote(username string, text string) string {
 	return fmt.Sprintf("[quoteof \"%s\" %s]\n", username, text)
 }
+
+type ForumtopicPlus struct {
+	*showTableTopicsRow
+	Edit bool
+}
+
+type ForumcategoryPlus struct {
+	*Forumcategory
+	Categories []*ForumcategoryPlus
+	Topics     []*ForumtopicPlus
+	Edit       bool
+}
+
+type CategoryTree struct {
+	//Categories           []*ForumcategoryPlus
+	//Topics               []*ForumtopicPlus
+	CategoryParentLookup map[int32][]*ForumcategoryPlus
+	CategoryLookup       map[int32]*ForumcategoryPlus
+}
+
+func NewCategoryTree(categoryRows []*Forumcategory, topicRows []*showTableTopicsRow) *CategoryTree {
+	categoryTree := new(CategoryTree)
+	categoryTree.CategoryParentLookup = map[int32][]*ForumcategoryPlus{}
+	categoryTree.CategoryLookup = map[int32]*ForumcategoryPlus{}
+	for _, row := range categoryRows {
+		fcp := &ForumcategoryPlus{
+			Forumcategory: row,
+			Categories:    nil,
+			Edit:          false,
+		}
+		categoryTree.CategoryParentLookup[row.ForumcategoryIdforumcategory] = append(categoryTree.CategoryParentLookup[row.ForumcategoryIdforumcategory], fcp)
+		categoryTree.CategoryLookup[row.Idforumcategory] = fcp
+	}
+	for _, row := range topicRows {
+		tp := &ForumtopicPlus{
+			showTableTopicsRow: row,
+		}
+		c, ok := categoryTree.CategoryLookup[row.ForumcategoryIdforumcategory]
+		if !ok || c == nil {
+			continue
+		}
+		c.Topics = append(c.Topics, tp)
+	}
+	for parentId, children := range categoryTree.CategoryParentLookup {
+		parent, ok := categoryTree.CategoryLookup[parentId]
+		if !ok {
+			continue
+		}
+		parent.Categories = children
+	}
+	return categoryTree
+}

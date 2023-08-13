@@ -11,18 +11,6 @@ import (
 
 func forumPage(w http.ResponseWriter, r *http.Request) {
 
-	type ForumtopicPlus struct {
-		*showTableTopicsRow
-		Edit bool
-	}
-
-	type ForumcategoryPlus struct {
-		*Forumcategory
-		Categories []*ForumcategoryPlus
-		Topics     []*ForumtopicPlus
-		Edit       bool
-	}
-
 	type Data struct {
 		*CoreData
 		Categories              []*ForumcategoryPlus
@@ -64,37 +52,12 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
 		return
 	}
-	categoryParents := map[int32][]*ForumcategoryPlus{}
-	categories := map[int32]*ForumcategoryPlus{}
-	for _, row := range categoryRows {
-		fcp := &ForumcategoryPlus{
-			Forumcategory: row,
-			Categories:    nil,
-			Edit:          false,
-		}
-		categoryParents[row.ForumcategoryIdforumcategory] = append(categoryParents[row.ForumcategoryIdforumcategory], fcp)
-		categories[row.Idforumcategory] = fcp
-	}
-	for _, row := range topicRows {
-		tp := &ForumtopicPlus{
-			showTableTopicsRow: row,
-		}
-		c, ok := categories[row.ForumcategoryIdforumcategory]
-		if !ok || c == nil {
-			continue
-		}
-		c.Topics = append(c.Topics, tp)
-	}
-	for parentId, children := range categoryParents {
-		parent, ok := categories[parentId]
-		if !ok {
-			continue
-		}
-		parent.Categories = children
-	}
+
+	categoryTree := NewCategoryTree(categoryRows, topicRows)
+
 	if categoryId == 0 {
-		data.Categories = categoryParents[int32(categoryId)]
-	} else if cat, ok := categories[int32(categoryId)]; ok && cat != nil {
+		data.Categories = categoryTree.CategoryParentLookup[int32(categoryId)]
+	} else if cat, ok := categoryTree.CategoryLookup[int32(categoryId)]; ok && cat != nil {
 		data.Categories = []*ForumcategoryPlus{cat}
 		data.Category = cat
 		data.Back = true

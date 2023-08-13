@@ -110,7 +110,7 @@ func main() {
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("", forumPage).Methods("GET")
 	fr.HandleFunc("/category/{category}", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/{topic}", forumPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}", forumTopicPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/topic/%s/new", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/topic/%s/thread/%s", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/topic/%s/thread/%s/reply", forumPage).Methods("GET")

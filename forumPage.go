@@ -14,6 +14,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Categories              []*ForumcategoryPlus
+		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		Category                *ForumcategoryPlus
@@ -60,6 +61,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	} else if cat, ok := categoryTree.CategoryLookup[int32(categoryId)]; ok && cat != nil {
 		data.Categories = []*ForumcategoryPlus{cat}
 		data.Category = cat
+		data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(categoryId))
 		data.Back = true
 	}
 

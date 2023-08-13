@@ -1,4 +1,7 @@
 {{ define "forumCategories" }}
+    {{ if .Category}}
+        {{ template "categoryBreadcrumbs" . }}
+    {{ end }}
     {{ if .Categories }}
         <table align="center" width="90%" border="1">
             {{ range .Categories }}

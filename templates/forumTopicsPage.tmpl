@@ -1,0 +1,8 @@
+{{ template "head" $ }}
+    {{ template "topicBreadcrumbs" $ }}
+    {{ if $.Admin }}
+        <a href="/forum/admin/topics/create?category={{ .Idforumcategory }}">Create Topic</a><br>
+    {{ end }}
+    <a href="/forum/topics/{{.Idforumtopic}}/new">New Thread</a><br>
+    {{ template "topicThreads" $ }}
+{{ template "tail" $ }}

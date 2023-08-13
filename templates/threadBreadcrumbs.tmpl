@@ -1,0 +1,10 @@
+{{ define "threadBreadcrumbs" }}
+    [
+        <a href="/forum">Forum:</a>
+        {{ range .CategoryBreadcrumbs }}
+            <a href="/forum/category/{{.Idforumcategory}}">{{.Title.String}}</a>:
+        {{ end }}
+        <a href="/forum/topic/{{.Topic.Idforumtopic}}">{{.Topic.Name.String}}</a>:
+        <a href="/forum/topic/{{.Thread.Idforumthread}}">(This thread/Refresh)</a>
+    ]<br />
+{{ end }}

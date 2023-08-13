@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 )
 
@@ -55,8 +56,18 @@ func processCommentQuote(username string, text string) string {
 }
 
 type ForumtopicPlus struct {
-	*showTableTopicsRow
-	Edit bool
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Lastposterusername           sql.NullString
+	Seelevel                     sql.NullInt32
+	Level                        sql.NullInt32
+	Edit                         bool
 }
 
 type ForumcategoryPlus struct {
@@ -74,7 +85,7 @@ type CategoryTree struct {
 	//TopicLookup         map[int32]*ForumtopicPlus
 }
 
-func NewCategoryTree(categoryRows []*Forumcategory, topicRows []*showTableTopicsRow) *CategoryTree {
+func NewCategoryTree(categoryRows []*Forumcategory, topicRows []*ForumtopicPlus) *CategoryTree {
 	categoryTree := new(CategoryTree)
 	categoryTree.CategoryChildrenLookup = map[int32][]*ForumcategoryPlus{}
 	categoryTree.CategoryLookup = map[int32]*ForumcategoryPlus{}
@@ -88,14 +99,11 @@ func NewCategoryTree(categoryRows []*Forumcategory, topicRows []*showTableTopics
 		categoryTree.CategoryLookup[row.Idforumcategory] = fcp
 	}
 	for _, row := range topicRows {
-		tp := &ForumtopicPlus{
-			showTableTopicsRow: row,
-		}
 		c, ok := categoryTree.CategoryLookup[row.ForumcategoryIdforumcategory]
 		if !ok || c == nil {
 			continue
 		}
-		c.Topics = append(c.Topics, tp)
+		c.Topics = append(c.Topics, row)
 	}
 	for parentId, children := range categoryTree.CategoryChildrenLookup {
 		parent, ok := categoryTree.CategoryLookup[parentId]

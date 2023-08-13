@@ -1807,6 +1807,50 @@ func (q *Queries) forumCategories(ctx context.Context) ([]*Forumcategory, error)
 	return items, nil
 }
 
+const getAllTopics = `-- name: getAllTopics :many
+SELECT t.idforumtopic, t.title, t.description, t.forumcategory_idforumcategory, c.title
+FROM forumtopic t
+LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
+GROUP BY t.idforumtopic
+`
+
+type getAllTopicsRow struct {
+	Idforumtopic                 int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	ForumcategoryIdforumcategory int32
+	Title_2                      sql.NullString
+}
+
+func (q *Queries) getAllTopics(ctx context.Context) ([]*getAllTopicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllTopics)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getAllTopicsRow
+	for rows.Next() {
+		var i getAllTopicsRow
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Title,
+			&i.Description,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLangs = `-- name: getLangs :one
 SELECT language_idlanguage FROM userlang WHERE users_idusers = ?
 `
@@ -1887,6 +1931,306 @@ func (q *Queries) getWordID(ctx context.Context, lcase string) (int32, error) {
 	var idsearchwordlist int32
 	err := row.Scan(&idsearchwordlist)
 	return idsearchwordlist, err
+}
+
+const get_all_user_topics = `-- name: get_all_user_topics :many
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY t.lastaddition DESC
+`
+
+type get_all_user_topicsRow struct {
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Lastposterusername           sql.NullString
+	Seelevel                     sql.NullInt32
+	Level                        sql.NullInt32
+}
+
+func (q *Queries) get_all_user_topics(ctx context.Context, usersIdusers int32) ([]*get_all_user_topicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, get_all_user_topics, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*get_all_user_topicsRow
+	for rows.Next() {
+		var i get_all_user_topicsRow
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Lastposterusername,
+			&i.Seelevel,
+			&i.Level,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const get_all_user_topics_for_category = `-- name: get_all_user_topics_for_category :many
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE t.forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY t.lastaddition DESC
+`
+
+type get_all_user_topics_for_categoryParams struct {
+	UsersIdusers                 int32
+	ForumcategoryIdforumcategory int32
+}
+
+type get_all_user_topics_for_categoryRow struct {
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Lastposterusername           sql.NullString
+	Seelevel                     sql.NullInt32
+	Level                        sql.NullInt32
+}
+
+func (q *Queries) get_all_user_topics_for_category(ctx context.Context, arg get_all_user_topics_for_categoryParams) ([]*get_all_user_topics_for_categoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, get_all_user_topics_for_category, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*get_all_user_topics_for_categoryRow
+	for rows.Next() {
+		var i get_all_user_topics_for_categoryRow
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Lastposterusername,
+			&i.Seelevel,
+			&i.Level,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const get_user_all_comments_for_thread = `-- name: get_user_all_comments_for_thread :many
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.forumthread_idforumthread=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY c.written
+`
+
+type get_user_all_comments_for_threadParams struct {
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+}
+
+type get_user_all_comments_for_threadRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	Posterusername           sql.NullString
+}
+
+func (q *Queries) get_user_all_comments_for_thread(ctx context.Context, arg get_user_all_comments_for_threadParams) ([]*get_user_all_comments_for_threadRow, error) {
+	rows, err := q.db.QueryContext(ctx, get_user_all_comments_for_thread, arg.UsersIdusers, arg.ForumthreadIdforumthread)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*get_user_all_comments_for_threadRow
+	for rows.Next() {
+		var i get_user_all_comments_for_threadRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+			&i.Posterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const get_user_threads_for_topic = `-- name: get_user_threads_for_topic :many
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext, th.Comments
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+LEFT JOIN comments fc ON th.firstpost=fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
+WHERE th.forumtopic_idforumtopic=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY th.lastaddition DESC
+`
+
+type get_user_threads_for_topicParams struct {
+	UsersIdusers           int32
+	ForumtopicIdforumtopic int32
+}
+
+type get_user_threads_for_topicRow struct {
+	Idforumthread          int32
+	Firstpost              int32
+	Lastposter             int32
+	ForumtopicIdforumtopic int32
+	Comments               sql.NullInt32
+	Lastaddition           sql.NullTime
+	Locked                 sql.NullBool
+	Lastposterusername     sql.NullString
+	Lastposterid           sql.NullInt32
+	Firstpostusername      sql.NullString
+	Firstpostwritten       sql.NullTime
+	Firstposttext          sql.NullString
+	Comments_2             sql.NullInt32
+}
+
+func (q *Queries) get_user_threads_for_topic(ctx context.Context, arg get_user_threads_for_topicParams) ([]*get_user_threads_for_topicRow, error) {
+	rows, err := q.db.QueryContext(ctx, get_user_threads_for_topic, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*get_user_threads_for_topicRow
+	for rows.Next() {
+		var i get_user_threads_for_topicRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+			&i.Lastposterusername,
+			&i.Lastposterid,
+			&i.Firstpostusername,
+			&i.Firstpostwritten,
+			&i.Firstposttext,
+			&i.Comments_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const get_user_topic = `-- name: get_user_topic :one
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND t.idforumtopic=?
+ORDER BY t.lastaddition DESC
+`
+
+type get_user_topicParams struct {
+	UsersIdusers int32
+	Idforumtopic int32
+}
+
+type get_user_topicRow struct {
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Lastposterusername           sql.NullString
+	Seelevel                     sql.NullInt32
+	Level                        sql.NullInt32
+}
+
+func (q *Queries) get_user_topic(ctx context.Context, arg get_user_topicParams) (*get_user_topicRow, error) {
+	row := q.db.QueryRowContext(ctx, get_user_topic, arg.UsersIdusers, arg.Idforumtopic)
+	var i get_user_topicRow
+	err := row.Scan(
+		&i.Idforumtopic,
+		&i.Lastposter,
+		&i.ForumcategoryIdforumcategory,
+		&i.Title,
+		&i.Description,
+		&i.Threads,
+		&i.Comments,
+		&i.Lastaddition,
+		&i.Lastposterusername,
+		&i.Seelevel,
+		&i.Level,
+	)
+	return &i, err
 }
 
 const insertPagePermission = `-- name: insertPagePermission :exec
@@ -2244,51 +2588,6 @@ func (q *Queries) printBoardPosts(ctx context.Context, imageboardIdimageboard in
 	return items, nil
 }
 
-const printCategoryRoots = `-- name: printCategoryRoots :many
-SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.title
-FROM forumcategory c1
-LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
-LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE c1.idforumcategory = ?
-`
-
-type printCategoryRootsRow struct {
-	Idforumcategory   sql.NullInt32
-	Title             sql.NullString
-	Idforumcategory_2 sql.NullInt32
-	Title_2           sql.NullString
-	Title_3           sql.NullString
-}
-
-func (q *Queries) printCategoryRoots(ctx context.Context, idforumcategory int32) ([]*printCategoryRootsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printCategoryRoots, idforumcategory)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*printCategoryRootsRow
-	for rows.Next() {
-		var i printCategoryRootsRow
-		if err := rows.Scan(
-			&i.Idforumcategory,
-			&i.Title,
-			&i.Idforumcategory_2,
-			&i.Title_2,
-			&i.Title_3,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const printImagePost = `-- name: printImagePost :many
 SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.forumthread_idforumthread, i.idimagepost
 FROM imagepost i
@@ -2370,111 +2669,6 @@ func (q *Queries) printSubBoards(ctx context.Context, imageboardIdimageboard int
 	return items, nil
 }
 
-const printThread = `-- name: printThread :many
-SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread, c.language_idlanguage
-FROM comments c, users u
-WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
-ORDER BY c.written
-`
-
-type printThreadRow struct {
-	Idcomments               int32
-	Text                     sql.NullString
-	Written                  sql.NullTime
-	Username                 sql.NullString
-	Idusers                  int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-}
-
-func (q *Queries) printThread(ctx context.Context, forumthreadIdforumthread int32) ([]*printThreadRow, error) {
-	rows, err := q.db.QueryContext(ctx, printThread, forumthreadIdforumthread)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*printThreadRow
-	for rows.Next() {
-		var i printThreadRow
-		if err := rows.Scan(
-			&i.Idcomments,
-			&i.Text,
-			&i.Written,
-			&i.Username,
-			&i.Idusers,
-			&i.ForumthreadIdforumthread,
-			&i.LanguageIdlanguage,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const printTopic = `-- name: printTopic :many
-SELECT LEFT(c.text, 255), fu.username, c.written, lu.username, t.lastaddition, t.idforumthread, t.comments, r.viewlevel, u.level
-FROM forumthread t
-LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.forumtopic_idforumtopic AND u.users_idusers = ?
-LEFT JOIN comments c ON c.idcomments = t.firstpost
-LEFT JOIN users fu ON fu.idusers = c.users_idusers
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-ORDER BY t.lastaddition DESC
-`
-
-type printTopicRow struct {
-	Left          string
-	Username      sql.NullString
-	Written       sql.NullTime
-	Username_2    sql.NullString
-	Lastaddition  sql.NullTime
-	Idforumthread int32
-	Comments      sql.NullInt32
-	Viewlevel     sql.NullInt32
-	Level         sql.NullInt32
-}
-
-// WHERE t.forumtopic_idforumcategory = ?
-func (q *Queries) printTopic(ctx context.Context, usersIdusers int32) ([]*printTopicRow, error) {
-	rows, err := q.db.QueryContext(ctx, printTopic, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*printTopicRow
-	for rows.Next() {
-		var i printTopicRow
-		if err := rows.Scan(
-			&i.Left,
-			&i.Username,
-			&i.Written,
-			&i.Username_2,
-			&i.Lastaddition,
-			&i.Idforumthread,
-			&i.Comments,
-			&i.Viewlevel,
-			&i.Level,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const printTopicRestrictions = `-- name: printTopicRestrictions :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
@@ -2517,56 +2711,6 @@ func (q *Queries) printTopicRestrictions(ctx context.Context, idforumtopic int32
 			&i.ForumtopicIdforumtopic,
 			&i.Modlevel,
 			&i.Adminlevel,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const printTopicRoots = `-- name: printTopicRoots :many
-SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.idforumcategory, c1.title, t.title
-FROM forumtopic t
-LEFT JOIN forumcategory c1 ON c1.idforumcategory = t.forumcategory_idforumcategory
-LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
-LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE t.idforumtopic = ?
-`
-
-type printTopicRootsRow struct {
-	Idforumcategory   sql.NullInt32
-	Title             sql.NullString
-	Idforumcategory_2 sql.NullInt32
-	Title_2           sql.NullString
-	Idforumcategory_3 sql.NullInt32
-	Title_3           sql.NullString
-	Title_4           sql.NullString
-}
-
-func (q *Queries) printTopicRoots(ctx context.Context, idforumtopic int32) ([]*printTopicRootsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printTopicRoots, idforumtopic)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*printTopicRootsRow
-	for rows.Next() {
-		var i printTopicRootsRow
-		if err := rows.Scan(
-			&i.Idforumcategory,
-			&i.Title,
-			&i.Idforumcategory_2,
-			&i.Title_2,
-			&i.Idforumcategory_3,
-			&i.Title_3,
-			&i.Title_4,
 		); err != nil {
 			return nil, err
 		}
@@ -2966,50 +3110,6 @@ func (q *Queries) showAllCategories(ctx context.Context) ([]*showAllCategoriesRo
 	return items, nil
 }
 
-const showAllTopics = `-- name: showAllTopics :many
-SELECT t.idforumtopic, t.title, t.description, t.forumcategory_idforumcategory, c.title
-FROM forumtopic t
-LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
-GROUP BY t.idforumtopic
-`
-
-type showAllTopicsRow struct {
-	Idforumtopic                 int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	ForumcategoryIdforumcategory int32
-	Title_2                      sql.NullString
-}
-
-func (q *Queries) showAllTopics(ctx context.Context) ([]*showAllTopicsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showAllTopics)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*showAllTopicsRow
-	for rows.Next() {
-		var i showAllTopicsRow
-		if err := rows.Scan(
-			&i.Idforumtopic,
-			&i.Title,
-			&i.Description,
-			&i.ForumcategoryIdforumcategory,
-			&i.Title_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const showCategories = `-- name: showCategories :many
 SELECT idlinkerCategory, title FROM linkerCategory
 `
@@ -3171,65 +3271,6 @@ func (q *Queries) showPost(ctx context.Context, idsitenews int32) ([]*showPostRo
 			&i.Idsitenews,
 			&i.Idusers,
 			&i.ForumthreadIdforumthread,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const showTableTopics = `-- name: showTableTopics :many
-SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
-FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
-ORDER BY t.lastaddition DESC
-`
-
-type showTableTopicsRow struct {
-	Idforumtopic                 int32
-	Lastposter                   int32
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	Threads                      sql.NullInt32
-	Comments                     sql.NullInt32
-	Lastaddition                 sql.NullTime
-	Lastposterusername           sql.NullString
-	Seelevel                     sql.NullInt32
-	Level                        sql.NullInt32
-}
-
-func (q *Queries) showTableTopics(ctx context.Context, usersIdusers int32) ([]*showTableTopicsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showTableTopics, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*showTableTopicsRow
-	for rows.Next() {
-		var i showTableTopicsRow
-		if err := rows.Scan(
-			&i.Idforumtopic,
-			&i.Lastposter,
-			&i.ForumcategoryIdforumcategory,
-			&i.Title,
-			&i.Description,
-			&i.Threads,
-			&i.Comments,
-			&i.Lastaddition,
-			&i.Lastposterusername,
-			&i.Seelevel,
-			&i.Level,
 		); err != nil {
 			return nil, err
 		}
@@ -3540,66 +3581,6 @@ func (q *Queries) show_questions(ctx context.Context) ([]*show_questionsRow, err
 	return items, nil
 }
 
-const show_topics = `-- name: show_topics :many
-SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
-FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumcategory_idforumcategory = ?
-ORDER BY t.lastaddition DESC
-`
-
-type show_topicsParams struct {
-	UsersIdusers                 int32
-	ForumcategoryIdforumcategory int32
-}
-
-type show_topicsRow struct {
-	Idforumtopic int32
-	Title        sql.NullString
-	Description  sql.NullString
-	Comments     sql.NullInt32
-	Threads      sql.NullInt32
-	Lastaddition sql.NullTime
-	Username     sql.NullString
-	Seelevel     sql.NullInt32
-	Level        sql.NullInt32
-}
-
-func (q *Queries) show_topics(ctx context.Context, arg show_topicsParams) ([]*show_topicsRow, error) {
-	rows, err := q.db.QueryContext(ctx, show_topics, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*show_topicsRow
-	for rows.Next() {
-		var i show_topicsRow
-		if err := rows.Scan(
-			&i.Idforumtopic,
-			&i.Title,
-			&i.Description,
-			&i.Comments,
-			&i.Threads,
-			&i.Lastaddition,
-			&i.Username,
-			&i.Seelevel,
-			&i.Level,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const somethingNotifyBlogs = `-- name: somethingNotifyBlogs :many
 SELECT u.email FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
@@ -3744,7 +3725,8 @@ func (q *Queries) threadNotify(ctx context.Context, arg threadNotifyParams) ([]s
 }
 
 const topicAllowThis = `-- name: topicAllowThis :one
-SELECT r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel, u.level FROM forumtopic t
+SELECT r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel, u.level
+FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic=r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic=t.idforumtopic AND u.users_idusers=?
 WHERE t.idforumtopic=? LIMIT 1

@@ -17,7 +17,7 @@ func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable bool
 	}
 	type BlogComment struct {
-		*printThreadRow
+		*get_user_all_comments_for_threadRow
 		ShowReply          bool
 		Editable           bool
 		Editing            bool
@@ -93,7 +93,10 @@ func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		rows, err := queries.printThread(r.Context(), blog.ForumthreadIdforumthread)
+		rows, err := queries.get_user_all_comments_for_thread(r.Context(), get_user_all_comments_for_threadParams{
+			UsersIdusers:             uid,
+			ForumthreadIdforumthread: blog.ForumthreadIdforumthread,
+		})
 		if err != nil {
 			log.Printf("show_blog_comments Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -102,14 +105,14 @@ func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 
 		for i, row := range rows {
 			data.Comments = append(data.Comments, &BlogComment{
-				printThreadRow:     row,
-				ShowReply:          true,
-				Editable:           uid == row.Idusers,
-				Editing:            commentId != 0 && int32(commentId) == row.Idcomments,
-				Offset:             i + offset,
-				Idblogs:            blog.Idblogs,
-				Languages:          languageRows,
-				SelectedLanguageId: row.LanguageIdlanguage,
+				get_user_all_comments_for_threadRow: row,
+				ShowReply:                           true,
+				Editable:                            uid == row.UsersIdusers,
+				Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
+				Offset:                              i + offset,
+				Idblogs:                             blog.Idblogs,
+				Languages:                           languageRows,
+				SelectedLanguageId:                  row.LanguageIdlanguage,
 			})
 		}
 	}

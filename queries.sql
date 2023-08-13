@@ -454,7 +454,7 @@ SELECT c.idforumcategory, c.title, c.description, c.forumcategory_idforumcategor
 FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory;
 
--- name: showAllTopics :many
+-- name: getAllTopics :many
 SELECT t.idforumtopic, t.title, t.description, t.forumcategory_idforumcategory, c.title
 FROM forumtopic t
 LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
@@ -463,24 +463,31 @@ GROUP BY t.idforumtopic;
 -- name: changeTopic :exec
 UPDATE forumtopic SET title = ?, description = ? WHERE idforumtopic = ?;
 
--- name: show_topics :many
-SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
+-- name: get_all_user_topics_for_category :many
+SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumcategory_idforumcategory = ?
+WHERE t.forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY t.lastaddition DESC;
 
--- name: printTopic :many
-SELECT LEFT(c.text, 255), fu.username, c.written, lu.username, t.lastaddition, t.idforumthread, t.comments, r.viewlevel, u.level
-FROM forumthread t
-LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.forumtopic_idforumtopic AND u.users_idusers = ?
-LEFT JOIN comments c ON c.idcomments = t.firstpost
-LEFT JOIN users fu ON fu.idusers = c.users_idusers
+-- name: get_all_user_topics :many
+SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
--- WHERE t.forumtopic_idforumcategory = ?
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY t.lastaddition DESC;
+
+-- name: get_user_topic :one
+SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND t.idforumtopic=?
 ORDER BY t.lastaddition DESC;
 
 -- name: deleteTopicRestrictions :exec
@@ -525,34 +532,9 @@ FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?;
 
--- name: showTableTopics :many
-SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
-FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
-ORDER BY t.lastaddition DESC;
-
 -- name: forumCategories :many
 SELECT f.*
 FROM forumcategory f;
-
--- name: printCategoryRoots :many
-SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.title
-FROM forumcategory c1
-LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
-LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE c1.idforumcategory = ?;
-
--- name: printTopicRoots :many
-SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.idforumcategory, c1.title, t.title
-FROM forumtopic t
-LEFT JOIN forumcategory c1 ON c1.idforumcategory = t.forumcategory_idforumcategory
-LEFT JOIN forumcategory c2 ON c2.idforumcategory = c1.forumcategory_idforumcategory
-LEFT JOIN forumcategory c3 ON c3.idforumcategory = c2.forumcategory_idforumcategory
-WHERE t.idforumtopic = ?;
-
 
 -- name: writeRSS :exec
 SELECT title, description FROM imageboard WHERE idimageboard = ?;
@@ -764,7 +746,8 @@ th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 WHERE c.idcomments=?;
 
 -- name: topicAllowThis :one
-SELECT r.*, u.level FROM forumtopic t
+SELECT r.*, u.level
+FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic=r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic=t.idforumtopic AND u.users_idusers=?
 WHERE t.idforumtopic=? LIMIT 1;
@@ -791,11 +774,28 @@ INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUE
 -- name: findForumTopicByName :one
 SELECT idforumtopic FROM forumtopic WHERE title=?;
 
--- name: printThread :many
-SELECT c.idcomments, c.text, c.written, u.username, u.idusers, c.forumthread_idforumthread, c.language_idlanguage
-FROM comments c, users u
-WHERE c.users_idusers=u.idusers AND c.forumthread_idforumthread=?
+-- name: get_user_all_comments_for_thread :many
+SELECT c.*, pu.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.forumthread_idforumthread=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY c.written;
+
+-- name: get_user_threads_for_topic :many
+SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext, th.Comments
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+LEFT JOIN comments fc ON th.firstpost=fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
+WHERE th.forumtopic_idforumtopic=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY th.lastaddition DESC;
 
 -- name: somethingNotifyBlogs :many
 SELECT u.email FROM blogs t, users u, preferences p

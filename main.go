@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -47,6 +48,23 @@ func NewFuncs() template.FuncMap {
 			c.input = s
 			c.Process()
 			return template.HTML(c.output.String())
+		},
+		"a4code2string": func(s string) string {
+			c := NewA4Code2HTML()
+			c.codeType = ct_wordsonly
+			c.input = s
+			c.Process()
+			return c.output.String()
+		},
+		"firstline": func(s string) string {
+			return strings.Split(s, "\n")[0]
+		},
+		"left": func(i int, s string) string {
+			l := len(s)
+			if l > i {
+				l = i
+			}
+			return s[:l]
 		},
 	}
 }
@@ -111,12 +129,12 @@ func main() {
 	fr.HandleFunc("", forumPage).Methods("GET")
 	fr.HandleFunc("/category/{category}", forumPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", forumTopicsPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/%s/new", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/%s/thread/%s", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/%s/thread/%s/reply", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/%s/thread/%s/reply", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
-	/*TODO*/ fr.HandleFunc("/topic/%s/thread/%s/edit", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/%s/thread/%s/edit", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/new", forumPage).Methods("GET")
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}", forumPage).Methods("GET")
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumPage).Methods("GET")
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/edit", forumPage).Methods("GET")
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/edit", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))
 	/*TODO*/ fr.HandleFunc("/admin", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/categories", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/categories/create", forumPage).Methods("GET")

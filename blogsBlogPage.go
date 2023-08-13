@@ -18,7 +18,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable bool
 	}
 	type BlogComment struct {
-		*printThreadRow
+		*get_user_all_comments_for_threadRow
 		ShowReply bool
 		Editable  bool
 		Editing   bool

@@ -47,11 +47,48 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
 		return
 	}
-	topicRows, err := queries.showTableTopics(r.Context(), uid)
-	if err != nil {
-		log.Printf("showTableTopics Error: %s", err)
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return
+	var topicRows []*ForumtopicPlus
+	if categoryId == 0 {
+		rows, err := queries.get_all_user_topics(r.Context(), uid)
+		if err != nil {
+			log.Printf("showTableTopics Error: %s", err)
+			http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+			return
+		}
+		for _, row := range rows {
+			topicRows = append(topicRows, &ForumtopicPlus{
+				Idforumtopic:                 row.Idforumtopic,
+				Lastposter:                   row.Lastposter,
+				ForumcategoryIdforumcategory: row.ForumcategoryIdforumcategory,
+				Title:                        row.Title,
+				Description:                  row.Description,
+				Threads:                      row.Threads,
+				Comments:                     row.Comments,
+				Lastaddition:                 row.Lastaddition,
+			})
+		}
+	} else {
+		rows, err := queries.get_all_user_topics_for_category(r.Context(), get_all_user_topics_for_categoryParams{
+			UsersIdusers:                 uid,
+			ForumcategoryIdforumcategory: int32(categoryId),
+		})
+		if err != nil {
+			log.Printf("showTableTopics Error: %s", err)
+			http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+			return
+		}
+		for _, row := range rows {
+			topicRows = append(topicRows, &ForumtopicPlus{
+				Idforumtopic:                 row.Idforumtopic,
+				Lastposter:                   row.Lastposter,
+				ForumcategoryIdforumcategory: row.ForumcategoryIdforumcategory,
+				Title:                        row.Title,
+				Description:                  row.Description,
+				Threads:                      row.Threads,
+				Comments:                     row.Comments,
+				Lastaddition:                 row.Lastaddition,
+			})
+		}
 	}
 
 	categoryTree := NewCategoryTree(categoryRows, topicRows)

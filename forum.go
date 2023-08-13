@@ -116,16 +116,17 @@ func NewCategoryTree(categoryRows []*Forumcategory, topicRows []*ForumtopicPlus)
 }
 
 func (ct *CategoryTree) CategoryRoots(categoryId int32) (result []*ForumcategoryPlus) {
-	cat, ok := ct.CategoryLookup[categoryId]
-	if !ok {
-		return []*ForumcategoryPlus{}
-	}
-	for cat.Idforumcategory != 0 {
-		cat, ok := ct.CategoryLookup[cat.ForumcategoryIdforumcategory]
+	catId := categoryId
+	for {
+		cat, ok := ct.CategoryLookup[catId]
 		if !ok {
 			break
 		}
 		result = append(result, cat)
+		catId = cat.ForumcategoryIdforumcategory
+		if catId == 0 {
+			break
+		}
 	}
 	return
 }

@@ -11,11 +11,14 @@ import (
 func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		CategoryBreadcrumbs []*ForumcategoryPlus
-		Admin               bool
-		Back                bool
-		Topic               *ForumtopicPlus
-		Threads             []*get_user_threads_for_topicRow
+		CategoryBreadcrumbs     []*ForumcategoryPlus
+		Admin                   bool
+		Back                    bool
+		Topic                   *ForumtopicPlus
+		Threads                 []*get_user_threads_for_topicRow
+		Categories              []*ForumcategoryPlus
+		Category                *ForumcategoryPlus
+		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -28,6 +31,15 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Admin:    true,
 	}
+
+	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
+		d := *data
+		d.Categories = []*ForumcategoryPlus{}
+		d.Category = rootCategory
+		d.Back = false
+		return &d
+	}
+	data.CopyDataToSubCategories = copyDataToSubCategories
 
 	categoryRows, err := queries.forumCategories(r.Context())
 	if err != nil {
@@ -59,17 +71,16 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Edit:                         false,
 	}
 
-	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{{
-		Idforumtopic:                 topicRow.Idforumtopic,
-		Lastposter:                   topicRow.Lastposter,
-		ForumcategoryIdforumcategory: topicRow.ForumcategoryIdforumcategory,
-		Title:                        topicRow.Title,
-		Description:                  topicRow.Description,
-		Threads:                      topicRow.Threads,
-		Comments:                     topicRow.Comments,
-		Lastaddition:                 topicRow.Lastaddition,
-	}})
+	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
 	data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(topicRow.ForumcategoryIdforumcategory))
+	if category, ok := categoryTree.CategoryLookup[topicRow.ForumcategoryIdforumcategory]; ok {
+		category.Topics = []*ForumtopicPlus{
+			data.Topic,
+		}
+		data.Categories = []*ForumcategoryPlus{
+			category,
+		}
+	}
 
 	threadRows, err := queries.get_user_threads_for_topic(r.Context(), get_user_threads_for_topicParams{
 		UsersIdusers:           uid,

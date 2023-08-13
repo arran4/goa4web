@@ -1,5 +1,5 @@
 {{ define "forumCategories" }}
-    {{ if .Category}}
+    {{ if and .Category .CategoryBreadcrumbs }}
         {{ template "categoryBreadcrumbs" . }}
     {{ end }}
     {{ if .Categories }}

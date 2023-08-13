@@ -162,7 +162,7 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			IndexItem{
-				Name: "Administer restrictions",
+				Name: "Administer user restrictions",
 				Link: "/forum/admin/restrictions/users",
 			},
 		)

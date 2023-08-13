@@ -14,13 +14,13 @@ import (
 func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*show_blogRow
-		IsEditable  bool
+		EditUrl     string
 		IsReplyable bool
 	}
 	type BlogComment struct {
-		*get_user_all_comments_for_threadRow
+		*user_get_all_comments_for_threadRow
 		ShowReply bool
-		Editable  bool
+		EditUrl   string
 		Editing   bool
 		Offset    int
 		Idblogs   int32
@@ -66,9 +66,14 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	editUrl := ""
+	if uid == blog.UsersIdusers {
+		editUrl = fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs)
+	}
+
 	data.Blog = &BlogRow{
 		show_blogRow: blog,
-		IsEditable:   uid == blog.UsersIdusers,
+		EditUrl:      editUrl,
 		IsReplyable:  true, // TODO
 	}
 

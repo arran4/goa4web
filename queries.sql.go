@@ -2056,183 +2056,6 @@ func (q *Queries) get_all_user_topics_for_category(ctx context.Context, arg get_
 	return items, nil
 }
 
-const get_user_all_comments_for_thread = `-- name: get_user_all_comments_for_thread :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername
-FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
-LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.forumthread_idforumthread=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
-ORDER BY c.written
-`
-
-type get_user_all_comments_for_threadParams struct {
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-}
-
-type get_user_all_comments_for_threadRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	Posterusername           sql.NullString
-}
-
-func (q *Queries) get_user_all_comments_for_thread(ctx context.Context, arg get_user_all_comments_for_threadParams) ([]*get_user_all_comments_for_threadRow, error) {
-	rows, err := q.db.QueryContext(ctx, get_user_all_comments_for_thread, arg.UsersIdusers, arg.ForumthreadIdforumthread)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*get_user_all_comments_for_threadRow
-	for rows.Next() {
-		var i get_user_all_comments_for_threadRow
-		if err := rows.Scan(
-			&i.Idcomments,
-			&i.ForumthreadIdforumthread,
-			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
-			&i.Written,
-			&i.Text,
-			&i.Posterusername,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const get_user_threads_for_topic = `-- name: get_user_threads_for_topic :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext, th.Comments
-FROM forumthread th
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-LEFT JOIN comments fc ON th.firstpost=fc.idcomments
-LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
-WHERE th.forumtopic_idforumtopic=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
-ORDER BY th.lastaddition DESC
-`
-
-type get_user_threads_for_topicParams struct {
-	UsersIdusers           int32
-	ForumtopicIdforumtopic int32
-}
-
-type get_user_threads_for_topicRow struct {
-	Idforumthread          int32
-	Firstpost              int32
-	Lastposter             int32
-	ForumtopicIdforumtopic int32
-	Comments               sql.NullInt32
-	Lastaddition           sql.NullTime
-	Locked                 sql.NullBool
-	Lastposterusername     sql.NullString
-	Lastposterid           sql.NullInt32
-	Firstpostusername      sql.NullString
-	Firstpostwritten       sql.NullTime
-	Firstposttext          sql.NullString
-	Comments_2             sql.NullInt32
-}
-
-func (q *Queries) get_user_threads_for_topic(ctx context.Context, arg get_user_threads_for_topicParams) ([]*get_user_threads_for_topicRow, error) {
-	rows, err := q.db.QueryContext(ctx, get_user_threads_for_topic, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*get_user_threads_for_topicRow
-	for rows.Next() {
-		var i get_user_threads_for_topicRow
-		if err := rows.Scan(
-			&i.Idforumthread,
-			&i.Firstpost,
-			&i.Lastposter,
-			&i.ForumtopicIdforumtopic,
-			&i.Comments,
-			&i.Lastaddition,
-			&i.Locked,
-			&i.Lastposterusername,
-			&i.Lastposterid,
-			&i.Firstpostusername,
-			&i.Firstpostwritten,
-			&i.Firstposttext,
-			&i.Comments_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const get_user_topic = `-- name: get_user_topic :one
-SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
-FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND t.idforumtopic=?
-ORDER BY t.lastaddition DESC
-`
-
-type get_user_topicParams struct {
-	UsersIdusers int32
-	Idforumtopic int32
-}
-
-type get_user_topicRow struct {
-	Idforumtopic                 int32
-	Lastposter                   int32
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	Threads                      sql.NullInt32
-	Comments                     sql.NullInt32
-	Lastaddition                 sql.NullTime
-	Lastposterusername           sql.NullString
-	Seelevel                     sql.NullInt32
-	Level                        sql.NullInt32
-}
-
-func (q *Queries) get_user_topic(ctx context.Context, arg get_user_topicParams) (*get_user_topicRow, error) {
-	row := q.db.QueryRowContext(ctx, get_user_topic, arg.UsersIdusers, arg.Idforumtopic)
-	var i get_user_topicRow
-	err := row.Scan(
-		&i.Idforumtopic,
-		&i.Lastposter,
-		&i.ForumcategoryIdforumcategory,
-		&i.Title,
-		&i.Description,
-		&i.Threads,
-		&i.Comments,
-		&i.Lastaddition,
-		&i.Lastposterusername,
-		&i.Seelevel,
-		&i.Level,
-	)
-	return &i, err
-}
-
 const insertPagePermission = `-- name: insertPagePermission :exec
 INSERT INTO permissions (users_idusers, section, level)
 VALUES (?, ?, ?)
@@ -3442,39 +3265,6 @@ func (q *Queries) show_categories(ctx context.Context, forumcategoryIdforumcateg
 	return err
 }
 
-const show_comment = `-- name: show_comment :one
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, u.Username
-FROM comments c
-LEFT JOIN users u ON c.users_idusers=u.idusers
-WHERE c.idcomments = ?
-LIMIT 1
-`
-
-type show_commentRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	Username                 sql.NullString
-}
-
-func (q *Queries) show_comment(ctx context.Context, idcomments int32) (*show_commentRow, error) {
-	row := q.db.QueryRowContext(ctx, show_comment, idcomments)
-	var i show_commentRow
-	err := row.Scan(
-		&i.Idcomments,
-		&i.ForumthreadIdforumthread,
-		&i.UsersIdusers,
-		&i.LanguageIdlanguage,
-		&i.Written,
-		&i.Text,
-		&i.Username,
-	)
-	return &i, err
-}
-
 const show_latest_blogs = `-- name: show_latest_blogs :many
 SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers
 FROM blogs b
@@ -4125,6 +3915,270 @@ type user_disallowParams struct {
 func (q *Queries) user_disallow(ctx context.Context, arg user_disallowParams) error {
 	_, err := q.db.ExecContext(ctx, user_disallow, arg.Idpermissions, arg.Section)
 	return err
+}
+
+const user_get_all_comments_for_thread = `-- name: user_get_all_comments_for_thread :many
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.forumthread_idforumthread=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY c.written
+`
+
+type user_get_all_comments_for_threadParams struct {
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+}
+
+type user_get_all_comments_for_threadRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	Posterusername           sql.NullString
+}
+
+func (q *Queries) user_get_all_comments_for_thread(ctx context.Context, arg user_get_all_comments_for_threadParams) ([]*user_get_all_comments_for_threadRow, error) {
+	rows, err := q.db.QueryContext(ctx, user_get_all_comments_for_thread, arg.UsersIdusers, arg.ForumthreadIdforumthread)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*user_get_all_comments_for_threadRow
+	for rows.Next() {
+		var i user_get_all_comments_for_threadRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+			&i.Posterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const user_get_comment = `-- name: user_get_comment :one
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.Username
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.idcomments = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+LIMIT 1
+`
+
+type user_get_commentParams struct {
+	UsersIdusers int32
+	Idcomments   int32
+}
+
+type user_get_commentRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	Username                 sql.NullString
+}
+
+func (q *Queries) user_get_comment(ctx context.Context, arg user_get_commentParams) (*user_get_commentRow, error) {
+	row := q.db.QueryRowContext(ctx, user_get_comment, arg.UsersIdusers, arg.Idcomments)
+	var i user_get_commentRow
+	err := row.Scan(
+		&i.Idcomments,
+		&i.ForumthreadIdforumthread,
+		&i.UsersIdusers,
+		&i.LanguageIdlanguage,
+		&i.Written,
+		&i.Text,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const user_get_thread = `-- name: user_get_thread :one
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND th.idforumthread=?
+ORDER BY t.lastaddition DESC
+`
+
+type user_get_threadParams struct {
+	UsersIdusers  int32
+	Idforumthread int32
+}
+
+type user_get_threadRow struct {
+	Idforumthread          int32
+	Firstpost              int32
+	Lastposter             int32
+	ForumtopicIdforumtopic int32
+	Comments               sql.NullInt32
+	Lastaddition           sql.NullTime
+	Locked                 sql.NullBool
+	Lastposterusername     sql.NullString
+	Seelevel               sql.NullInt32
+	Level                  sql.NullInt32
+}
+
+func (q *Queries) user_get_thread(ctx context.Context, arg user_get_threadParams) (*user_get_threadRow, error) {
+	row := q.db.QueryRowContext(ctx, user_get_thread, arg.UsersIdusers, arg.Idforumthread)
+	var i user_get_threadRow
+	err := row.Scan(
+		&i.Idforumthread,
+		&i.Firstpost,
+		&i.Lastposter,
+		&i.ForumtopicIdforumtopic,
+		&i.Comments,
+		&i.Lastaddition,
+		&i.Locked,
+		&i.Lastposterusername,
+		&i.Seelevel,
+		&i.Level,
+	)
+	return &i, err
+}
+
+const user_get_threads_for_topic = `-- name: user_get_threads_for_topic :many
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+LEFT JOIN comments fc ON th.firstpost=fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
+WHERE th.forumtopic_idforumtopic=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+ORDER BY th.lastaddition DESC
+`
+
+type user_get_threads_for_topicParams struct {
+	UsersIdusers           int32
+	ForumtopicIdforumtopic int32
+}
+
+type user_get_threads_for_topicRow struct {
+	Idforumthread          int32
+	Firstpost              int32
+	Lastposter             int32
+	ForumtopicIdforumtopic int32
+	Comments               sql.NullInt32
+	Lastaddition           sql.NullTime
+	Locked                 sql.NullBool
+	Lastposterusername     sql.NullString
+	Lastposterid           sql.NullInt32
+	Firstpostusername      sql.NullString
+	Firstpostwritten       sql.NullTime
+	Firstposttext          sql.NullString
+}
+
+func (q *Queries) user_get_threads_for_topic(ctx context.Context, arg user_get_threads_for_topicParams) ([]*user_get_threads_for_topicRow, error) {
+	rows, err := q.db.QueryContext(ctx, user_get_threads_for_topic, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*user_get_threads_for_topicRow
+	for rows.Next() {
+		var i user_get_threads_for_topicRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+			&i.Lastposterusername,
+			&i.Lastposterid,
+			&i.Firstpostusername,
+			&i.Firstpostwritten,
+			&i.Firstposttext,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const user_get_topic = `-- name: user_get_topic :one
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND t.idforumtopic=?
+ORDER BY t.lastaddition DESC
+`
+
+type user_get_topicParams struct {
+	UsersIdusers int32
+	Idforumtopic int32
+}
+
+type user_get_topicRow struct {
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Lastposterusername           sql.NullString
+	Seelevel                     sql.NullInt32
+	Level                        sql.NullInt32
+}
+
+func (q *Queries) user_get_topic(ctx context.Context, arg user_get_topicParams) (*user_get_topicRow, error) {
+	row := q.db.QueryRowContext(ctx, user_get_topic, arg.UsersIdusers, arg.Idforumtopic)
+	var i user_get_topicRow
+	err := row.Scan(
+		&i.Idforumtopic,
+		&i.Lastposter,
+		&i.ForumcategoryIdforumcategory,
+		&i.Title,
+		&i.Description,
+		&i.Threads,
+		&i.Comments,
+		&i.Lastaddition,
+		&i.Lastposterusername,
+		&i.Seelevel,
+		&i.Level,
+	)
+	return &i, err
 }
 
 const usernametouid = `-- name: usernametouid :one

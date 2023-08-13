@@ -15,7 +15,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Admin                   bool
 		Back                    bool
 		Topic                   *ForumtopicPlus
-		Threads                 []*get_user_threads_for_topicRow
+		Threads                 []*user_get_threads_for_topicRow
 		Categories              []*ForumcategoryPlus
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
@@ -47,7 +47,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
 		return
 	}
-	topicRow, err := queries.get_user_topic(r.Context(), get_user_topicParams{
+	topicRow, err := queries.user_get_topic(r.Context(), user_get_topicParams{
 		UsersIdusers: uid,
 		Idforumtopic: int32(topicId),
 	})
@@ -82,7 +82,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRows, err := queries.get_user_threads_for_topic(r.Context(), get_user_threads_for_topicParams{
+	threadRows, err := queries.user_get_threads_for_topic(r.Context(), user_get_threads_for_topicParams{
 		UsersIdusers:           uid,
 		ForumtopicIdforumtopic: int32(topicId),
 	})

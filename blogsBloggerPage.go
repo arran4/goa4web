@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
@@ -12,7 +13,7 @@ import (
 func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*show_latest_blogsRow
-		IsEditable bool
+		EditUrl string
 	}
 	type Data struct {
 		*CoreData
@@ -55,9 +56,13 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, row := range rows {
+		editUrl := ""
+		if uid == row.UsersIdusers {
+			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
+		}
 		data.Rows = append(data.Rows, &BlogRow{
 			show_latest_blogsRow: row,
-			IsEditable:           uid == row.UsersIdusers,
+			EditUrl:              editUrl,
 		})
 	}
 	CustomBlogIndex(data.CoreData, r)

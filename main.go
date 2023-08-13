@@ -129,12 +129,12 @@ func main() {
 	fr.HandleFunc("", forumPage).Methods("GET")
 	fr.HandleFunc("/category/{category}", forumPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", forumTopicsPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/new", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}", forumPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/thread/{thread}", forumThreadPage).Methods("GET", "POST")
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/edit", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/edit", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumPage).Methods("GET")
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))
+	/*TODO*/ fr.HandleFunc("/topic/{topic}/new", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/categories", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/categories/create", forumPage).Methods("GET")
@@ -255,7 +255,10 @@ func CommentAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.show_comment(request.Context(), int32(commentId))
+		row, err := queries.user_get_comment(request.Context(), user_get_commentParams{
+			UsersIdusers: uid,
+			Idcomments:   int32(commentId),
+		})
 		if err != nil {
 			log.Printf("Error: %s", err)
 			return false

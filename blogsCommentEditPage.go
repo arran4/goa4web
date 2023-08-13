@@ -13,13 +13,13 @@ import (
 func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*show_blogRow
-		IsEditable  bool
+		EditUrl     string
 		IsReplyable bool
 	}
 	type BlogComment struct {
-		*get_user_all_comments_for_threadRow
+		*user_get_all_comments_for_threadRow
 		ShowReply          bool
-		Editable           bool
+		EditUrl            string
 		Editing            bool
 		Offset             int
 		Idblogs            int32
@@ -67,9 +67,13 @@ func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	editUrl := ""
+	if uid == blog.UsersIdusers {
+		editUrl = fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs)
+	}
 	data.Blog = &BlogRow{
 		show_blogRow: blog,
-		IsEditable:   uid == blog.UsersIdusers,
+		EditUrl:      editUrl,
 		IsReplyable:  true,
 	}
 
@@ -79,9 +83,12 @@ func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 		commentIdString := vars["comment"]
 		commentId, _ := strconv.Atoi(commentIdString)
 		if commentIdString != "" {
-			comment, err := queries.show_comment(r.Context(), int32(commentId))
+			comment, err := queries.user_get_comment(r.Context(), user_get_commentParams{
+				UsersIdusers: uid,
+				Idcomments:   int32(commentId),
+			})
 			if err != nil {
-				log.Printf("show_comment Error: %s", err)
+				log.Printf("user_get_comment Error: %s", err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
@@ -93,7 +100,7 @@ func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		rows, err := queries.get_user_all_comments_for_thread(r.Context(), get_user_all_comments_for_threadParams{
+		rows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
 			UsersIdusers:             uid,
 			ForumthreadIdforumthread: blog.ForumthreadIdforumthread,
 		})
@@ -104,10 +111,15 @@ func blogsCommentEditPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for i, row := range rows {
+			editUrl := ""
+			if uid == row.UsersIdusers {
+				editUrl = fmt.Sprintf("/blogs/blog/%d/comment/%d/edit#edit", blog.Idblogs, row.Idcomments)
+			}
+
 			data.Comments = append(data.Comments, &BlogComment{
-				get_user_all_comments_for_threadRow: row,
+				user_get_all_comments_for_threadRow: row,
 				ShowReply:                           true,
-				Editable:                            uid == row.UsersIdusers,
+				EditUrl:                             editUrl,
 				Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
 				Offset:                              i + offset,
 				Idblogs:                             blog.Idblogs,

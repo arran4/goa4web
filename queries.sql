@@ -312,11 +312,15 @@ LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
 WHERE b.idblogs = ?
 LIMIT 1;
 
--- name: show_comment :one
-SELECT c.*, u.Username
+-- name: user_get_comment :one
+SELECT c.*, pu.Username
 FROM comments c
-LEFT JOIN users u ON c.users_idusers=u.idusers
-WHERE c.idcomments = ?
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.idcomments = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 LIMIT 1;
 
 -- name: show_blogger_list :many
@@ -481,13 +485,23 @@ LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY t.lastaddition DESC;
 
--- name: get_user_topic :one
+-- name: user_get_topic :one
 SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND t.idforumtopic=?
+ORDER BY t.lastaddition DESC;
+
+-- name: user_get_thread :one
+SELECT th.*, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND th.idforumthread=?
 ORDER BY t.lastaddition DESC;
 
 -- name: deleteTopicRestrictions :exec
@@ -774,7 +788,7 @@ INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUE
 -- name: findForumTopicByName :one
 SELECT idforumtopic FROM forumtopic WHERE title=?;
 
--- name: get_user_all_comments_for_thread :many
+-- name: user_get_all_comments_for_thread :many
 SELECT c.*, pu.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
@@ -785,8 +799,8 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_idforumthread=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY c.written;
 
--- name: get_user_threads_for_topic :many
-SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext, th.Comments
+-- name: user_get_threads_for_topic :many
+SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic

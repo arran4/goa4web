@@ -1,0 +1,7 @@
+{{ template "head" $ }}
+    {{ template "threadBreadcrumbs" $ }}
+    {{ template "threadComments" $ }}
+
+    <a href="/forum/topic/{{.Topic.Idforumtopic}}">Back</a>
+
+{{ template "tail" $ }}

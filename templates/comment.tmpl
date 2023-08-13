@@ -18,9 +18,7 @@
                         [<a href="?comment={{.Idcomments}}&type=full#reply">FULL REPLY</a>]
                         [<a href="?comment={{.Idcomments}}#reply">PARAGRAPH REPLY</a>]
                     {{end}}
-                    {{if $.Editable }}
-                        [<a href="/blogs/blog/{{.Idblogs}}/comment/{{.Idcomments}}/edit#edit">EDIT</a>]
-                    {{end}}
+                    {{if .EditUrl}}[<a href="{{.EditUrl}}">EDIT</a>]{{end}}
                 {{end}}
             </td>
         </tr>

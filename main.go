@@ -121,6 +121,7 @@ func main() {
 	/*TODO*/ fr.HandleFunc("/admin/categories", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/categories/create", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/topics", forumPage).Methods("GET")
+	/*TODO*/ fr.HandleFunc("/admin/topics/create", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/user", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/restrictions", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/restrictions/users", forumPage).Methods("GET")

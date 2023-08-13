@@ -14,8 +14,8 @@
                         <input name="name" value="{{ .Title.String }}"><br>
                         <textarea name="desc" cols="30" rows="3">{{ .Description.String }}</textarea><br>
                 {{ else }}
-                    <a href="/topic/{{ .Idforumtopic }}">{{ .Title.String }}</a><br>
-                    <i>{{ .Description.String }}</i>
+                    <a href="/topic/{{ .Idforumtopic }}">{{ .Title.String | a4code2html }}</a><br>
+                    <i>{{ .Description.String | a4code2html }}</i>
                 {{ end }}
             </td>
             <td align="center">{{ .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>

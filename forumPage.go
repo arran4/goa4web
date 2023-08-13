@@ -56,7 +56,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	categoryTree := NewCategoryTree(categoryRows, topicRows)
 
 	if categoryId == 0 {
-		data.Categories = categoryTree.CategoryParentLookup[int32(categoryId)]
+		data.Categories = categoryTree.CategoryChildrenLookup[int32(categoryId)]
 	} else if cat, ok := categoryTree.CategoryLookup[int32(categoryId)]; ok && cat != nil {
 		data.Categories = []*ForumcategoryPlus{cat}
 		data.Category = cat

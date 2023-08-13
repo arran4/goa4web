@@ -1,0 +1,27 @@
+{{ define "tableTopics" }}
+    <table>
+        <tr>
+            <th width="400px">Thread name<br>Description
+            <th width="300px">Last reply<br>By
+            <th>Threads
+            <th>Replies
+        </tr>
+        {{ range .Category.Topics }}
+        <tr>
+            <td>
+                {{ if and $.Admin .Edit }}
+                    <form method="post">
+                        <input name="name" value="{{ .Title.String }}"><br>
+                        <textarea name="desc" cols="30" rows="3">{{ .Description.String }}</textarea><br>
+                {{ else }}
+                    <a href="/topic/{{ .Idforumtopic }}">{{ .Title.String }}</a><br>
+                    <i>{{ .Description.String }}</i>
+                {{ end }}
+            </td>
+            <td align="center">{{ .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>
+            <td align="center">{{ .Threads.Int32 }}</td>
+            <td align="center">{{ .Comments.Int32 }}</td>
+        </tr>
+        {{ end }}
+    </table>
+{{ end }}

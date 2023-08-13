@@ -1,0 +1,22 @@
+{{ define "printTopics" }}
+    <font size="4">Threads:</font><br>
+    {{- range .Threads }}
+		<table width="100%">
+			<tr>
+				<td width="200px" bgcolor="lightgrey">
+					Lastposter: <font color="blue">{{ .LastPoster }}</font> on <font color="blue">{{ .LastAddition }}</font><br>
+					Creator: <font color="green">{{ .Creator }}</font> on <font color="green">{{ .Created }}</font><br>
+				</td>
+				<td>
+					{{ .FormattedText }}<br>
+					(
+					[<a href="?thread={{ .ThreadID }}">MORE TEXT. {{ .CommentCount }} COMMENTS.</a>]
+					{{- if gt .CommentCount 10 }}
+                        [<a href="?thread={{ .ThreadID }}&offset={{ .CommentCountMinusTen }}#bottom">LAST 10 REPLIES.</a>]
+					{{- end }}
+					)
+				</td>
+			</tr>
+		</table><br>
+    {{- end }}
+{{ end }}

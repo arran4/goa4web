@@ -526,17 +526,17 @@ LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?;
 
 -- name: showTableTopics :many
-SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
+SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY t.lastaddition DESC;
 
--- name: expandCategories :many
-SELECT f.idforumcategory, f.title, f.description
-FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?;
+-- name: forumCategories :many
+SELECT f.*
+FROM forumcategory f;
 
 -- name: printCategoryRoots :many
 SELECT c3.idforumcategory, c3.title, c2.idforumcategory, c2.title, c1.title

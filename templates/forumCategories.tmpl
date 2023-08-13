@@ -1,0 +1,34 @@
+{{ define "forumCategories" }}
+    {{ if .Categories }}
+        <table align="center" width="90%" border="1">
+            {{ range .Categories }}
+            <tr>
+                <td>
+                    {{ if and $.Admin .Edit }}
+                        <form method="post">
+                            Title <input name="name" value="{{ .Title.String }}">: -
+                            Description: <textarea name="desc" cols="30" rows="2">{{ .Description.String }}</textarea>
+                            <input type="hidden" name="cid" value="{{ .Idforumcategory }}">
+                            <input type="submit" name="task" value="Forum category change">
+                        </form>
+                    {{ else }}
+                        <strong>{{ .Title.String }}:</strong> - {{ .Description.String }}<br>
+                    {{ end }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{ template "forumCategories" (call $.CopyDataToSubCategories .) }}
+                    {{ template "tableTopics" (call $.CopyDataToSubCategories .) }}
+                    {{ if $.Admin }}
+                        <a href="/forum/admin/categories/create?category={{ .Idforumcategory }}">Create Category</a><br>
+                        {{ if ne .Idforumcategory 0 }}
+                            <a href="/forum/admin/topics/create?category={{ .Idforumcategory }}">Create Topic</a><br>
+                        {{ end }}
+                    {{ end }}
+                </td>
+            </tr>
+            {{ end }}
+        </table>
+    {{ end }}
+{{ end }}

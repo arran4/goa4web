@@ -1152,40 +1152,6 @@ func (q *Queries) existsTopicRestrictions(ctx context.Context, forumtopicIdforum
 	return forumtopic_idforumtopic, err
 }
 
-const expandCategories = `-- name: expandCategories :many
-SELECT f.idforumcategory, f.title, f.description
-FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?
-`
-
-type expandCategoriesRow struct {
-	Idforumcategory int32
-	Title           sql.NullString
-	Description     sql.NullString
-}
-
-func (q *Queries) expandCategories(ctx context.Context, forumcategoryIdforumcategory int32) ([]*expandCategoriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, expandCategories, forumcategoryIdforumcategory)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*expandCategoriesRow
-	for rows.Next() {
-		var i expandCategoriesRow
-		if err := rows.Scan(&i.Idforumcategory, &i.Title, &i.Description); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const faq_categories = `-- name: faq_categories :many
 SELECT idfaqCategories, name
 FROM faqCategories
@@ -1806,6 +1772,39 @@ func (q *Queries) findForumTopicByName(ctx context.Context, title sql.NullString
 	var idforumtopic int32
 	err := row.Scan(&idforumtopic)
 	return idforumtopic, err
+}
+
+const forumCategories = `-- name: forumCategories :many
+SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.title, f.description
+FROM forumcategory f
+`
+
+func (q *Queries) forumCategories(ctx context.Context) ([]*Forumcategory, error) {
+	rows, err := q.db.QueryContext(ctx, forumCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Forumcategory
+	for rows.Next() {
+		var i Forumcategory
+		if err := rows.Scan(
+			&i.Idforumcategory,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getLangs = `-- name: getLangs :one
@@ -3187,34 +3186,31 @@ func (q *Queries) showPost(ctx context.Context, idsitenews int32) ([]*showPostRo
 }
 
 const showTableTopics = `-- name: showTableTopics :many
-SELECT t.idforumtopic, t.title, t.description, t.comments, t.threads, t.lastaddition, lu.username, r.seelevel, u.level
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY t.lastaddition DESC
 `
 
-type showTableTopicsParams struct {
-	UsersIdusers                 int32
-	ForumcategoryIdforumcategory int32
-}
-
 type showTableTopicsRow struct {
-	Idforumtopic int32
-	Title        sql.NullString
-	Description  sql.NullString
-	Comments     sql.NullInt32
-	Threads      sql.NullInt32
-	Lastaddition sql.NullTime
-	Username     sql.NullString
-	Seelevel     sql.NullInt32
-	Level        sql.NullInt32
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Lastposterusername           sql.NullString
+	Seelevel                     sql.NullInt32
+	Level                        sql.NullInt32
 }
 
-func (q *Queries) showTableTopics(ctx context.Context, arg showTableTopicsParams) ([]*showTableTopicsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showTableTopics, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
+func (q *Queries) showTableTopics(ctx context.Context, usersIdusers int32) ([]*showTableTopicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, showTableTopics, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
@@ -3224,12 +3220,14 @@ func (q *Queries) showTableTopics(ctx context.Context, arg showTableTopicsParams
 		var i showTableTopicsRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
 			&i.Title,
 			&i.Description,
-			&i.Comments,
 			&i.Threads,
+			&i.Comments,
 			&i.Lastaddition,
-			&i.Username,
+			&i.Lastposterusername,
 			&i.Seelevel,
 			&i.Level,
 		); err != nil {

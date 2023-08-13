@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func forumPage(w http.ResponseWriter, r *http.Request) {
@@ -28,11 +29,14 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		Admin                   bool
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		Category                *ForumcategoryPlus
+		Back                    bool
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
+	vars := mux.Vars(r)
+	categoryId, _ := strconv.Atoi(vars["category"])
 
 	data := &Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
@@ -43,6 +47,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		d := *data
 		d.Categories = rootCategory.Categories
 		d.Category = rootCategory
+		d.Back = false
 		return &d
 	}
 	data.CopyDataToSubCategories = copyDataToSubCategories
@@ -87,7 +92,13 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		}
 		parent.Categories = children
 	}
-	data.Categories = categoryParents[0]
+	if categoryId == 0 {
+		data.Categories = categoryParents[int32(categoryId)]
+	} else if cat, ok := categories[int32(categoryId)]; ok && cat != nil {
+		data.Categories = []*ForumcategoryPlus{cat}
+		data.Category = cat
+		data.Back = true
+	}
 
 	CustomForumIndex(data.CoreData, r)
 

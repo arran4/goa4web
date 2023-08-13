@@ -12,7 +12,7 @@
                             <input type="submit" name="task" value="Forum category change">
                         </form>
                     {{ else }}
-                        <strong>{{ .Title.String }}:</strong> - {{ .Description.String }}<br>
+                        <strong><a href="/forum/category/{{ .Idforumcategory }}">{{ .Title.String }}</a>:</strong> - {{ .Description.String }}<br>
                     {{ end }}
                 </td>
             </tr>
@@ -28,6 +28,13 @@
                     {{ end }}
                 </td>
             </tr>
+            {{ end }}
+            {{ if .Back }}
+                <tr>
+                    <td>
+                        <a href="/forum">Back</a>
+                    </td>
+                </tr>
             {{ end }}
         </table>
     {{ end }}

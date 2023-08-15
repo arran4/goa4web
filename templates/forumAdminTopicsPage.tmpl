@@ -1,0 +1,26 @@
+{{ template "head" $ }}
+    <table border="1">
+        <tr>
+            <th>ID
+            <th>Title
+            <th>Description
+            <th>Category
+            <th>Options?
+        </tr>
+        {{ range .Topics }}
+        <tr>
+            <form method="post">
+                <td>{{ .Idforumtopic }}
+                <td><input name="name" value="{{ .Title.String }}">
+                <td><textarea name="desc">{{ .Description.String }}</textarea>
+                <td>{{ $fcid := .ForumcategoryIdforumcategory }} {{ $fcid }} <select name="cid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
+
+                <td>
+                    <input type="hidden" name="tid" value="{{ .Idforumtopic }}">
+                    <input type="submit" name="task" value="Forum topic change">
+                </td>
+            </form>
+        </tr>
+        {{ end }}
+    </table>
+{{ template "tail" $ }}

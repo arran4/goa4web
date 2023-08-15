@@ -1814,35 +1814,30 @@ func (q *Queries) forumCategories(ctx context.Context) ([]*Forumcategory, error)
 }
 
 const getAllTopics = `-- name: getAllTopics :many
-SELECT t.idforumtopic, t.title, t.description, t.forumcategory_idforumcategory, c.title
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition
 FROM forumtopic t
 LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
 GROUP BY t.idforumtopic
 `
 
-type getAllTopicsRow struct {
-	Idforumtopic                 int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	ForumcategoryIdforumcategory int32
-	Title_2                      sql.NullString
-}
-
-func (q *Queries) getAllTopics(ctx context.Context) ([]*getAllTopicsRow, error) {
+func (q *Queries) getAllTopics(ctx context.Context) ([]*Forumtopic, error) {
 	rows, err := q.db.QueryContext(ctx, getAllTopics)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getAllTopicsRow
+	var items []*Forumtopic
 	for rows.Next() {
-		var i getAllTopicsRow
+		var i Forumtopic
 		if err := rows.Scan(
 			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
 			&i.Title,
 			&i.Description,
-			&i.ForumcategoryIdforumcategory,
-			&i.Title_2,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
 		); err != nil {
 			return nil, err
 		}

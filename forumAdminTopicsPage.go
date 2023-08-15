@@ -8,10 +8,11 @@ import (
 	"strconv"
 )
 
-func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
+func forumAdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Categories []*showAllCategoriesRow
+		Topics     []*Forumtopic
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -28,28 +29,32 @@ func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
+	topicRows, err := queries.getAllTopics(r.Context())
+	if err != nil {
+		log.Printf("forumTopics Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	data.Topics = topicRows
+
 	CustomForumIndex(data.CoreData, r)
 
-	if err := compiledTemplates.ExecuteTemplate(w, "forumAdminCategoriesPage.tmpl", data); err != nil {
+	if err := compiledTemplates.ExecuteTemplate(w, "forumAdminTopicsPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func forumAdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
+func forumAdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
-	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	vars := mux.Vars(r)
-	categoryId, _ := strconv.Atoi(vars["category"])
+	topicId, _ := strconv.Atoi(vars["topic"])
 
-	if err := queries.changeCategory(r.Context(), changeCategoryParams{
+	if err := queries.changeTopic(r.Context(), changeTopicParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -58,13 +63,12 @@ func forumAdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 			Valid:  true,
 			String: desc,
 		},
-		Idforumcategory:              int32(categoryId),
-		ForumcategoryIdforumcategory: int32(pcid),
+		Idforumtopic: int32(topicId),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
 
 }

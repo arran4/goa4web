@@ -460,7 +460,7 @@ LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcatego
 GROUP BY c.idforumcategory;
 
 -- name: getAllTopics :many
-SELECT t.idforumtopic, t.title, t.description, t.forumcategory_idforumcategory, c.title
+SELECT t.*
 FROM forumtopic t
 LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
 GROUP BY t.idforumtopic;

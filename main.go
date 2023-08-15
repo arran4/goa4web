@@ -136,7 +136,7 @@ func main() {
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/new", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/admin/categories", forumPage).Methods("GET")
+	fr.HandleFunc("/admin/categories", forumAdminCategoriesPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/categories/create", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/topics", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/admin/topics/create", forumPage).Methods("GET")

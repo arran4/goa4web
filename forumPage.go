@@ -44,7 +44,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	categoryRows, err := queries.forumCategories(r.Context())
 	if err != nil {
 		log.Printf("forumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 	var topicRows []*ForumtopicPlus
@@ -52,7 +52,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		rows, err := queries.get_all_user_topics(r.Context(), uid)
 		if err != nil {
 			log.Printf("showTableTopics Error: %s", err)
-			http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 		for _, row := range rows {
@@ -74,7 +74,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Printf("showTableTopics Error: %s", err)
-			http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 		for _, row := range rows {

@@ -1,0 +1,25 @@
+{{ template "head" $ }}
+		<table border="1">
+			<tr>
+				<th>ID
+				<th>Title
+				<th>Description
+				<th>Sub-category of
+				<th>Options?
+			</tr>
+			{{ range .Categories }}
+			<tr>
+				<form method="post">
+					<td>{{ .ForumcategoryIdforumcategory }}
+					<td><input name="name" value="{{ .Title.String }}">
+					<td><textarea name="desc">{{ .Description.String }}</textarea>
+					<td>{{ .Subcategorycount }}
+					<td>
+						<input type="hidden" name="cid" value="{{ .ForumcategoryIdforumcategory }}">
+						<input type="submit" name="task" value="Forum category change">
+					</td>
+				</form>
+			</tr>
+			{{ end }}
+		</table>
+{{ template "tail" $ }}

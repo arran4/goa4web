@@ -454,9 +454,10 @@ FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?;
 UPDATE forumcategory SET title = ?, description = ? WHERE idforumcategory = ?;
 
 -- name: showAllCategories :many
-SELECT c.idforumcategory, c.title, c.description, c.forumcategory_idforumcategory, c2.title
+SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount
 FROM forumcategory c
-LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory;
+LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory
+GROUP BY c.idforumcategory;
 
 -- name: getAllTopics :many
 SELECT t.idforumtopic, t.title, t.description, t.forumcategory_idforumcategory, c.title

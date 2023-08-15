@@ -112,7 +112,7 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	blog, err := queries.show_blog(r.Context(), int32(bid))
 	if err != nil {
 		log.Printf("show_blog_comments Error: %s", err)
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 

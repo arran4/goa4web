@@ -2891,17 +2891,18 @@ func (q *Queries) showAllBoards(ctx context.Context) ([]*showAllBoardsRow, error
 }
 
 const showAllCategories = `-- name: showAllCategories :many
-SELECT c.idforumcategory, c.title, c.description, c.forumcategory_idforumcategory, c2.title
+SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, c.description, COUNT(c2.idforumcategory) as SubcategoryCount
 FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory
+GROUP BY c.idforumcategory
 `
 
 type showAllCategoriesRow struct {
 	Idforumcategory              int32
+	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
 	Description                  sql.NullString
-	ForumcategoryIdforumcategory int32
-	Title_2                      sql.NullString
+	Subcategorycount             int64
 }
 
 func (q *Queries) showAllCategories(ctx context.Context) ([]*showAllCategoriesRow, error) {
@@ -2915,10 +2916,10 @@ func (q *Queries) showAllCategories(ctx context.Context) ([]*showAllCategoriesRo
 		var i showAllCategoriesRow
 		if err := rows.Scan(
 			&i.Idforumcategory,
+			&i.ForumcategoryIdforumcategory,
 			&i.Title,
 			&i.Description,
-			&i.ForumcategoryIdforumcategory,
-			&i.Title_2,
+			&i.Subcategorycount,
 		); err != nil {
 			return nil, err
 		}

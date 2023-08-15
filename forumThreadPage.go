@@ -72,7 +72,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("showTableThreads Error: %s", err)
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -82,7 +82,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("showTableTopics Error: %s", err)
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -122,7 +122,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	categoryRows, err := queries.forumCategories(r.Context())
 	if err != nil {
 		log.Printf("forumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 

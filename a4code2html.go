@@ -179,6 +179,7 @@ func (a *A4code2html) acomm() int {
 		case ct_tagstrip, ct_wordsonly:
 		default:
 			a.output.WriteString("<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>")
+			a.directOutput("code]")
 			a.output.WriteString("</pre></table>")
 		}
 	case "quoteof":

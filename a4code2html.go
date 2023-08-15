@@ -63,7 +63,7 @@ func (c *A4code2html) getNext(endAtEqual bool) string {
 	var ch byte
 	loop := true
 
-	for loop {
+	for loop && len(c.input) > 0 {
 		ch = c.input[0]
 		c.input = c.input[1:]
 

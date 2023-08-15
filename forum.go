@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"golang.org/x/exp/slices"
 )
 
 func processCommentFullQuote(username, text string) string {
@@ -128,5 +129,6 @@ func (ct *CategoryTree) CategoryRoots(categoryId int32) (result []*Forumcategory
 			break
 		}
 	}
+	slices.Reverse(result)
 	return
 }

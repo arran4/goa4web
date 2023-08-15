@@ -466,7 +466,7 @@ LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
 GROUP BY t.idforumtopic;
 
 -- name: changeTopic :exec
-UPDATE forumtopic SET title = ?, description = ? WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?;
 
 -- name: get_all_user_topics_for_category :many
 SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level

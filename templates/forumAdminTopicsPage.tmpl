@@ -9,7 +9,7 @@
         </tr>
         {{ range .Topics }}
         <tr>
-            <form method="post">
+            <form method="post" action="/forum/admin/topic/{{ .Idforumtopic }}/edit">
                 <td>{{ .Idforumtopic }}
                 <td><input name="name" value="{{ .Title.String }}">
                 <td><textarea name="desc">{{ .Description.String }}</textarea>

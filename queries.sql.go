@@ -759,17 +759,23 @@ func (q *Queries) changeImageBoard(ctx context.Context, arg changeImageBoardPara
 }
 
 const changeTopic = `-- name: changeTopic :exec
-UPDATE forumtopic SET title = ?, description = ? WHERE idforumtopic = ?
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?
 `
 
 type changeTopicParams struct {
-	Title        sql.NullString
-	Description  sql.NullString
-	Idforumtopic int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	ForumcategoryIdforumcategory int32
+	Idforumtopic                 int32
 }
 
 func (q *Queries) changeTopic(ctx context.Context, arg changeTopicParams) error {
-	_, err := q.db.ExecContext(ctx, changeTopic, arg.Title, arg.Description, arg.Idforumtopic)
+	_, err := q.db.ExecContext(ctx, changeTopic,
+		arg.Title,
+		arg.Description,
+		arg.ForumcategoryIdforumcategory,
+		arg.Idforumtopic,
+	)
 	return err
 }
 

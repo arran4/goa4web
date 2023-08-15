@@ -50,6 +50,11 @@ func forumAdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 func forumAdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
+	cid, err := strconv.Atoi(r.PostFormValue("cid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
@@ -63,7 +68,8 @@ func forumAdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 			Valid:  true,
 			String: desc,
 		},
-		Idforumtopic: int32(topicId),
+		Idforumtopic:                 int32(topicId),
+		ForumcategoryIdforumcategory: int32(cid),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

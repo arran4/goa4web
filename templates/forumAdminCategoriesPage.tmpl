@@ -10,9 +10,9 @@
         </tr>
         {{ range .Categories }}
         <tr>
-            <form method="post">
+            <form method="post" action="/forum/admin/category/{{ .Idforumcategory }}/edit">
                 <td>{{ .Idforumcategory }}
-                <td>{{ .ForumcategoryIdforumcategory }} <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>  {{ end }}</select>
+                <td>{{ $fcid := .ForumcategoryIdforumcategory }} {{ $fcid }} <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
                 <td><input name="name" value="{{ .Title.String }}">
                 <td><textarea name="desc">{{ .Description.String }}</textarea>
                 <td>{{ .Subcategorycount }}

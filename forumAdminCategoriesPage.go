@@ -1,8 +1,11 @@
 package main
 
 import (
+	"database/sql"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -32,4 +35,36 @@ func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func forumAdminCategoriesEditPage(w http.ResponseWriter, r *http.Request) {
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	vars := mux.Vars(r)
+	categoryId, _ := strconv.Atoi(vars["category"])
+
+	if err := queries.changeCategory(r.Context(), changeCategoryParams{
+		Title: sql.NullString{
+			Valid:  true,
+			String: name,
+		},
+		Description: sql.NullString{
+			Valid:  true,
+			String: desc,
+		},
+		Idforumcategory:              int32(categoryId),
+		ForumcategoryIdforumcategory: int32(pcid),
+	}); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+
 }

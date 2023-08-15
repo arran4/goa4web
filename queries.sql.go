@@ -717,17 +717,23 @@ func (q *Queries) category_faqs(ctx context.Context, faqcategoriesIdfaqcategorie
 }
 
 const changeCategory = `-- name: changeCategory :exec
-UPDATE forumcategory SET title = ?, description = ? WHERE idforumcategory = ?
+UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?
 `
 
 type changeCategoryParams struct {
-	Title           sql.NullString
-	Description     sql.NullString
-	Idforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	ForumcategoryIdforumcategory int32
+	Idforumcategory              int32
 }
 
 func (q *Queries) changeCategory(ctx context.Context, arg changeCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, changeCategory, arg.Title, arg.Description, arg.Idforumcategory)
+	_, err := q.db.ExecContext(ctx, changeCategory,
+		arg.Title,
+		arg.Description,
+		arg.ForumcategoryIdforumcategory,
+		arg.Idforumcategory,
+	)
 	return err
 }
 

@@ -451,7 +451,7 @@ SELECT f.idforumcategory, f.title, f.description
 FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?;
 
 -- name: changeCategory :exec
-UPDATE forumcategory SET title = ?, description = ? WHERE idforumcategory = ?;
+UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?;
 
 -- name: showAllCategories :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount

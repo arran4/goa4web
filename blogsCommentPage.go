@@ -12,8 +12,7 @@ import (
 func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*show_blogRow
-		EditUrl     string
-		IsReplyable bool
+		EditUrl string
 	}
 	type BlogComment struct {
 		*user_get_all_comments_for_threadRow
@@ -24,6 +23,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 		Idblogs            int32
 		Languages          []*Language
 		SelectedLanguageId int32
+		EditSaveUrl        string
 	}
 	type Data struct {
 		*CoreData
@@ -76,15 +76,14 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	data.Blog = &BlogRow{
 		show_blogRow: blog,
 		EditUrl:      editUrl,
-		IsReplyable:  true,
 	}
 
+	replyType := r.URL.Query().Get("type")
+	commentIdString := r.URL.Query().Get("comment")
+	commentId, _ := strconv.Atoi(commentIdString)
 	if blog.ForumthreadIdforumthread > 0 { // TODO make nullable.
 
-		replyType := r.URL.Query().Get("type")
-		commentIdString := r.URL.Query().Get("comment")
 		if commentIdString != "" {
-			commentId, _ := strconv.Atoi(commentIdString)
 			comment, err := queries.user_get_comment(r.Context(), user_get_commentParams{
 				UsersIdusers: uid,
 				Idcomments:   int32(commentId),
@@ -114,15 +113,24 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 
 		for i, row := range rows {
 			editUrl := ""
+			editSaveUrl := ""
 			if uid == row.UsersIdusers {
-				editUrl = fmt.Sprintf("/blogs/blog/%d/comment/%d/edit#edit", blog.Idblogs, row.Idcomments)
+				editUrl = fmt.Sprintf("/blogs/blog/%d/comments?comment=%d#edit", blog.Idblogs, row.Idcomments)
+				editSaveUrl = fmt.Sprintf("/blogs/blog/%d/comment/%d", blog.Idblogs, row.Idcomments)
+				if commentId != 0 && int32(commentId) == row.Idcomments {
+					data.IsReplyable = false
+				}
 			}
 			data.Comments = append(data.Comments, &BlogComment{
 				user_get_all_comments_for_threadRow: row,
 				ShowReply:                           true,
 				EditUrl:                             editUrl,
+				EditSaveUrl:                         editSaveUrl,
+				Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
 				Offset:                              i + offset,
 				Idblogs:                             blog.Idblogs,
+				Languages:                           languageRows,
+				SelectedLanguageId:                  row.LanguageIdlanguage,
 			})
 		}
 	}

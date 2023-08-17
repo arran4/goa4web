@@ -845,12 +845,12 @@ SELECT u.email FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
--- name: somethingNotifyLinker :exec
+-- name: somethingNotifyLinker :many
 SELECT u.email FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
--- name: somethingNotifyWriting :exec
+-- name: somethingNotifyWriting :many
 SELECT u.email FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;

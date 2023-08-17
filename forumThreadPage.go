@@ -23,13 +23,13 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
+		Thread              *user_get_threadRow
 		Comments            []*CommentPlus
 		Offset              int
 		IsReplyable         bool
 		Text                string
 		Languages           []*Language
 		SelectedLanguageId  int
-		Thread              *user_get_threadRow
 		CategoryBreadcrumbs []*ForumcategoryPlus
 	}
 
@@ -52,6 +52,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	data.Languages = languageRows
 
 	vars := mux.Vars(r)
+	//topicId, _ := strconv.Atoi(vars["topic"])
 	threadId, _ := strconv.Atoi(vars["thread"])
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
@@ -84,6 +85,21 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("showTableTopics Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
+	}
+
+	data.Topic = &ForumtopicPlus{
+		Idforumtopic:                 topicRow.Idforumtopic,
+		Lastposter:                   topicRow.Lastposter,
+		ForumcategoryIdforumcategory: topicRow.ForumcategoryIdforumcategory,
+		Title:                        topicRow.Title,
+		Description:                  topicRow.Description,
+		Threads:                      topicRow.Threads,
+		Comments:                     topicRow.Comments,
+		Lastaddition:                 topicRow.Lastaddition,
+		Lastposterusername:           topicRow.Lastposterusername,
+		Seelevel:                     topicRow.Seelevel,
+		Level:                        topicRow.Level,
+		Edit:                         false,
 	}
 
 	for i, row := range commentRows {
@@ -128,6 +144,28 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
 	data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(topicRow.ForumcategoryIdforumcategory))
+
+	replyType := r.URL.Query().Get("type")
+	commentIdString := r.URL.Query().Get("comment")
+	if commentIdString != "" {
+		commentId, _ := strconv.Atoi(commentIdString)
+		comment, err := queries.user_get_comment(r.Context(), user_get_commentParams{
+			UsersIdusers: uid,
+			Idcomments:   int32(commentId),
+		})
+		if err != nil {
+			log.Printf("user_get_comment Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		switch replyType {
+		case "full":
+			data.Text = processCommentFullQuote(comment.Username.String, comment.Text.String)
+		default:
+			data.Text = processCommentQuote(comment.Username.String, comment.Text.String)
+		}
+	}
+
 	CustomBlogIndex(data.CoreData, r)
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "forumThreadPage.tmpl", data); err != nil {

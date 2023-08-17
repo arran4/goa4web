@@ -32,17 +32,21 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 		Offset             int
 		IsReplyable        bool
 		Text               string
+		EditUrl            string
 		Languages          []*Language
 		SelectedLanguageId int
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	vars := mux.Vars(r)
+	blogId, _ := strconv.Atoi(vars["blog"])
 
 	data := Data{
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
 		SelectedLanguageId: 1,
+		EditUrl:            fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -54,8 +58,6 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	vars := mux.Vars(r)
-	blogId, _ := strconv.Atoi(vars["blog"])
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 

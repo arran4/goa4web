@@ -3633,7 +3633,7 @@ func (q *Queries) somethingNotifyBlogs(ctx context.Context, arg somethingNotifyB
 	return items, nil
 }
 
-const somethingNotifyLinker = `-- name: somethingNotifyLinker :exec
+const somethingNotifyLinker = `-- name: somethingNotifyLinker :many
 SELECT u.email FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -3644,12 +3644,30 @@ type somethingNotifyLinkerParams struct {
 	Idusers  int32
 }
 
-func (q *Queries) somethingNotifyLinker(ctx context.Context, arg somethingNotifyLinkerParams) error {
-	_, err := q.db.ExecContext(ctx, somethingNotifyLinker, arg.Idlinker, arg.Idusers)
-	return err
+func (q *Queries) somethingNotifyLinker(ctx context.Context, arg somethingNotifyLinkerParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, somethingNotifyLinker, arg.Idlinker, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-const somethingNotifyWriting = `-- name: somethingNotifyWriting :exec
+const somethingNotifyWriting = `-- name: somethingNotifyWriting :many
 SELECT u.email FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -3660,9 +3678,27 @@ type somethingNotifyWritingParams struct {
 	Idusers   int32
 }
 
-func (q *Queries) somethingNotifyWriting(ctx context.Context, arg somethingNotifyWritingParams) error {
-	_, err := q.db.ExecContext(ctx, somethingNotifyWriting, arg.Idwriting, arg.Idusers)
-	return err
+func (q *Queries) somethingNotifyWriting(ctx context.Context, arg somethingNotifyWritingParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, somethingNotifyWriting, arg.Idwriting, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const threadAllowThis = `-- name: threadAllowThis :one

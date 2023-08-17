@@ -77,3 +77,12 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
+func forumTopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	topicId, _ := strconv.Atoi(vars["topic"])
+	threadId, _ := strconv.Atoi(vars["thread"])
+
+	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicId, threadId)
+
+	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+}

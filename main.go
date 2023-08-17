@@ -127,14 +127,14 @@ func main() {
 	fr.HandleFunc("/topic/{topic}", forumTopicsPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread/{thread}", forumThreadPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread/{thread}", taskDoneAutoRefreshPage).Methods("POST")
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyPage).Methods("POST")
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
-	br.HandleFunc("/topic/{topic}/thread/{thread}/reply", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumTopicThreadCommentEditPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", taskDoneAutoRefreshPage).Methods("POST")
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumTopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/new", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/new", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Create"))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyCancelPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Reply")).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor()))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionCancelPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
+
+	/*TODO*/
+	fr.HandleFunc("/topic/{topic}/thread", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Create Thread"))
+
 	fr.HandleFunc("/admin", forumAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/categories", forumAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/categories", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))

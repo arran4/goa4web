@@ -18,6 +18,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		Offset             int
 		Languages          []*Language
 		SelectedLanguageId int32
+		EditSaveUrl        string
 	}
 	type Data struct {
 		*CoreData
@@ -102,18 +103,26 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		Edit:                         false,
 	}
 
+	commentIdString := r.URL.Query().Get("comment")
+	commentId, _ := strconv.Atoi(commentIdString)
 	for i, row := range commentRows {
 		editUrl := ""
+		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d/edit#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
+			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
+			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			if commentId != 0 && int32(commentId) == row.Idcomments {
+				data.IsReplyable = false
+			}
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
 			user_get_all_comments_for_threadRow: row,
 			ShowReply:                           true,
 			EditUrl:                             editUrl,
+			EditSaveUrl:                         editSaveUrl,
+			Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
 			Offset:                              i + offset,
-			Editing:                             false,
 			Languages:                           nil,
 			SelectedLanguageId:                  0,
 		})
@@ -146,9 +155,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(topicRow.ForumcategoryIdforumcategory))
 
 	replyType := r.URL.Query().Get("type")
-	commentIdString := r.URL.Query().Get("comment")
 	if commentIdString != "" {
-		commentId, _ := strconv.Atoi(commentIdString)
 		comment, err := queries.user_get_comment(r.Context(), user_get_commentParams{
 			UsersIdusers: uid,
 			Idcomments:   int32(commentId),

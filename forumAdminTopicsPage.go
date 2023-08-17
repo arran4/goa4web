@@ -78,3 +78,32 @@ func forumAdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
 
 }
+
+func forumTopicCreatePage(w http.ResponseWriter, r *http.Request) {
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	if _, err := queries.makeTopic(r.Context(), makeTopicParams{
+		Title: sql.NullString{
+			Valid:  true,
+			String: name,
+		},
+		Description: sql.NullString{
+			Valid:  true,
+			String: desc,
+		},
+		ForumcategoryIdforumcategory: int32(pcid),
+	}); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
+
+}

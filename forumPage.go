@@ -132,20 +132,8 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			IndexItem{
-				Name: "Administer create category",
-				Link: "/forum/admin/categories/create",
-			},
-		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
 				Name: "Administer topics",
 				Link: "/forum/admin/topics",
-			},
-		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: "Administer create topic",
-				Link: "/forum/admin/topics/create",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,

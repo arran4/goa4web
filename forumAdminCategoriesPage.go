@@ -66,5 +66,32 @@ func forumAdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+}
 
+func forumAdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	if err := queries.makeCategory(r.Context(), makeCategoryParams{
+		ForumcategoryIdforumcategory: int32(pcid),
+		Title: sql.NullString{
+			Valid:  true,
+			String: name,
+		},
+		Description: sql.NullString{
+			Valid:  true,
+			String: desc,
+		},
+	}); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
 }

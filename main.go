@@ -1,7 +1,6 @@
 package main
 
 import (
-	"embed"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -31,11 +30,6 @@ var (
 	//		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 	//		Endpoint:     endpoints.Google,
 	//	}
-	//go:embed "templates/*.tmpl"
-	templateFS        embed.FS
-	compiledTemplates = template.Must(template.New("").Funcs(NewFuncs()).ParseFS(templateFS, "templates/*.tmpl"))
-	//go:embed "main.css"
-	mainCSSData []byte
 )
 
 func NewFuncs() template.FuncMap {
@@ -81,7 +75,7 @@ func main() {
 	r.Use(CoreAdderMiddleware)
 
 	r.HandleFunc("/main.css", func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = writer.Write(mainCSSData)
+		_, _ = writer.Write(getMainCSSData())
 	}).Methods("GET")
 
 	// News
@@ -135,17 +129,30 @@ func main() {
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumPage).Methods("GET")
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/new", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/admin", forumPage).Methods("GET")
-	fr.HandleFunc("/admin/categories", forumAdminCategoriesPage).Methods("GET", "POST")
+	/*TODO*/ fr.HandleFunc("/admin", forumPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/categories", forumAdminCategoriesPage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/category/{category}/edit", forumAdminCategoryEditPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Forum category change"))
-	/*TODO*/ fr.HandleFunc("/admin/categories/create", forumPage).Methods("GET")
-	fr.HandleFunc("/admin/topics", forumAdminTopicsPage).Methods("GET", "POST")
+	/*TODO*/ fr.HandleFunc("/admin/categories/create", forumPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/topics", forumAdminTopicsPage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/topic/{topic}/edit", forumAdminTopicEditPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Forum topic change"))
-	/*TODO*/ fr.HandleFunc("/admin/topics/create", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/admin/user", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/admin/restrictions", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/admin/restrictions/users", forumPage).Methods("GET")
-	/*TODO*/ fr.HandleFunc("/admin/restrictions/user/{user}", forumPage).Methods("GET")
+	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update topic restriction"))
+	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set topic restriction"))
+	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete topic restriction"))
+	/*TODO*/ fr.HandleFunc("/admin/topics/create", forumPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/users", forumAdminUserPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set user level"))
+	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update user level"))
+	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelDeletePage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete user level"))
+	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete user level"))
+	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update user level"))
+	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set user level"))
+	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update topic restriction"))
+	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete topic restriction"))
+	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set topic restriction"))
 
 	lr := r.PathPrefix("/linker").Subrouter()
 	//lr.HandleFunc(".rss", linkerRssPage).Methods("GET")

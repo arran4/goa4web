@@ -12,7 +12,7 @@ func AdminCheckerMiddleware(next http.Handler) http.Handler {
 		cd.AdminChecked = true
 		levelRequired := []string{"administrator"}
 		if !slices.Contains(levelRequired, cd.SecurityLevel) {
-			err := compiledTemplates.ExecuteTemplate(writer, "adminNoAccessPage.tmpl", request.Context().Value(ContextValues("coreData")).(*CoreData))
+			err := getCompiledTemplates().ExecuteTemplate(writer, "adminNoAccessPage.tmpl", request.Context().Value(ContextValues("coreData")).(*CoreData))
 			if err != nil {
 				log.Printf("Template Error: %s", err)
 				http.Error(writer, "Internal Server Error", http.StatusInternalServerError)

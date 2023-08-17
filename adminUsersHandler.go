@@ -10,7 +10,7 @@ import (
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows []*adminUsersRow
+		Rows []*User
 	}
 
 	data := Data{
@@ -19,14 +19,14 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.adminUsers(r.Context())
+	rows, err := queries.allUsers(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data.Rows = rows
 
-	err = compiledTemplates.ExecuteTemplate(w, "adminUsersPage.tmpl", data)
+	err = getCompiledTemplates().ExecuteTemplate(w, "adminUsersPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -47,7 +47,7 @@ func adminUsersDoNothingPage(w http.ResponseWriter, r *http.Request) {
 	if _, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	}
-	err := compiledTemplates.ExecuteTemplate(w, "adminRunTaskPage.tmpl", data)
+	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

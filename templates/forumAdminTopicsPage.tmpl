@@ -5,6 +5,7 @@
             <th>Title
             <th>Description
             <th>Category
+            <th>Restrictions
             <th>Options?
         </tr>
         {{ range .Topics }}
@@ -14,7 +15,7 @@
                 <td><input name="name" value="{{ .Title.String }}">
                 <td><textarea name="desc">{{ .Description.String }}</textarea>
                 <td>{{ $fcid := .ForumcategoryIdforumcategory }} {{ $fcid }} <select name="cid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
-
+                <td><a href="/forum/admin/topic/{{ .Idforumtopic }}/levels">Permission Levels</a>
                 <td>
                     <input type="hidden" name="tid" value="{{ .Idforumtopic }}">
                     <input type="submit" name="task" value="Forum topic change">

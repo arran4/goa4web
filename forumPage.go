@@ -104,7 +104,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := compiledTemplates.ExecuteTemplate(w, "forumPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "forumPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -151,13 +151,13 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			IndexItem{
 				Name: "Administer users",
-				Link: "/forum/admin/user",
+				Link: "/forum/admin/users",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			IndexItem{
-				Name: "Administer restrictions",
-				Link: "/forum/admin/restrictions",
+				Name: "Administer topic restrictions",
+				Link: "/forum/admin/restrictions/topics",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,

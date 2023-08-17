@@ -1,17 +1,15 @@
 package main
 
 import (
-	"database/sql"
-	_ "embed"
-	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 	"log"
 	"net/http"
 )
 
-func adminForumWordListPage(w http.ResponseWriter, r *http.Request) {
+func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
+
 	type Data struct {
 		*CoreData
-		Rows []sql.NullString
+		Rows []*User
 	}
 
 	data := Data{
@@ -20,15 +18,16 @@ func adminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.completeWordList(r.Context())
+	rows, err := queries.allUsers(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data.Rows = rows
 
-	err = getCompiledTemplates().ExecuteTemplate(w, "adminForumWordListPage.tmpl", data)
-	if err != nil {
+	CustomForumIndex(data.CoreData, r)
+
+	if err := getCompiledTemplates().ExecuteTemplate(w, "forumAdminUserPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

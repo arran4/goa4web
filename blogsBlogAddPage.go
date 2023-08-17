@@ -35,7 +35,7 @@ func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := compiledTemplates.ExecuteTemplate(w, "blogsBlogAddPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "blogsBlogAddPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

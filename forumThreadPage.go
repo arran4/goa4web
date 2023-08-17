@@ -130,7 +130,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(topicRow.ForumcategoryIdforumcategory))
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := compiledTemplates.ExecuteTemplate(w, "forumThreadPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "forumThreadPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

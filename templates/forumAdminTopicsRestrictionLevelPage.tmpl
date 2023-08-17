@@ -1,0 +1,43 @@
+{{ template "head" $ }}
+    <font size="4">Topic Restrictions:</font><br>
+    <table width="100%">
+        <tr>
+            <th>Topic<th>view level<th>reply level<th>new thread level<th>see level<th>invite level<th>read level
+            <th>Moderator Level<th>Administrator level<th>Options
+            {{- range .Restrictions }}
+                {{- $format := printf "%s" .Title.String | a4code2html }}
+                <tr>
+                    <form method="post">
+                        <td><input type="hidden" name="ftid" value="{{ .Idforumtopic }}">{{ $format }}</td>
+                        <td><input name="view" value="{{ .Viewlevel.Int32 }}" size="8"></td>
+                        <td><input name="reply" value="{{ .Replylevel.Int32 }}" size="8"></td>
+                        <td><input name="newthread" value="{{ .Newthreadlevel.Int32 }}" size="8"></td>
+                        <td><input name="see" value="{{ .Seelevel.Int32 }}" size="8"></td>
+                        <td><input name="invite" value="{{ .Invitelevel.Int32 }}" size="8"></td>
+                        <td><input name="read" value="{{ .Readlevel.Int32 }}" size="8"></td>
+                        <td><input name="mod" value="{{ .Modlevel.Int32 }}" size="8"></td>
+                        <td><input name="admin" value="{{ .Adminlevel.Int32 }}" size="8"></td>
+                        <td>
+                            {{- if .ForumtopicIdforumtopic.Valid }}
+                                <input type="submit" name="task" value="Update topic restriction">
+                                <input type="submit" name="task" value="Delete topic restriction">
+                            {{- else }}
+                                <input type="submit" name="task" value="Set topic restriction">
+                            {{- end }}
+                        </td>
+                    </form>
+                </tr>
+            {{- end }}
+    </table><br>
+    Remember:
+    <ul>
+        <li>View threads
+        <li>Reply to thread
+        <li>Create new threads
+        <li>See the topic
+        <li>Invite new user to restricted topic
+        <li>Read threads
+        <li>Moderate threads
+        <li>Administrate users
+    </ul>
+{{ template "tail" $ }}

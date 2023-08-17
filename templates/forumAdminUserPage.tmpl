@@ -11,12 +11,7 @@
                 <td>{{.Idusers}}</td>
                 <td>{{.Username.String}}</td>
                 <td>{{.Email.String}}</td>
-                <td>
-                    <form method="post">
-                        <input type="hidden" name="uid" value="{{.Idusers}}">
-                        <input type="submit" name="task" value="User do nothing">
-                    </form>
-                </td>
+                <td><a href="/forum/admin/user/{{.Idusers}}/levels">Configure users access levels</a>
             </tr>
         {{end}}
     </table>

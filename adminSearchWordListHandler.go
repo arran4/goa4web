@@ -27,7 +27,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = compiledTemplates.ExecuteTemplate(w, "adminSearchWordListPage.tmpl", data)
+	err = getCompiledTemplates().ExecuteTemplate(w, "adminSearchWordListPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

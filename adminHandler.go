@@ -15,7 +15,7 @@ func adminPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	err := compiledTemplates.ExecuteTemplate(w, "adminPage.tmpl", data)
+	err := getCompiledTemplates().ExecuteTemplate(w, "adminPage.tmpl", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

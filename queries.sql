@@ -65,13 +65,13 @@ VALUES (?, ?, ?);
 DELETE FROM permissions
 WHERE idpermissions = ?;
 
--- name: adminUsers :many
+-- name: allUsers :many
 -- This query selects all admin users from the "users" table.
 -- Result:
 --   idusers (int)
 --   username (string)
 --   email (string)
-SELECT u.idusers, u.username, u.email
+SELECT u.*
 FROM users u;
 
 -- name: completeWordList :many
@@ -516,14 +516,28 @@ INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, n
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: setTopicRestrictions :exec
-UPDATE topicrestrictions SET viewlevel = ?, replylevel = ?, newthreadlevel = ?, seelevel = ?, invitelevel = ?, readlevel = ?, modlevel = ?, adminlevel = ?
-WHERE forumtopic_idforumtopic = ?;
+INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+    viewlevel = VALUES(viewlevel),
+    replylevel = VALUES(replylevel),
+    newthreadlevel = VALUES(newthreadlevel),
+    seelevel = VALUES(seelevel),
+    invitelevel = VALUES(invitelevel),
+    readlevel = VALUES(readlevel),
+    modlevel = VALUES(modlevel),
+    adminlevel = VALUES(adminlevel);
 
--- name: printTopicRestrictions :many
+-- name: getTopicRestrictions :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?;
+
+-- name: getAllTopicRestrictions :many
+SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 
 -- name: deleteUsersTopicLevel :exec
 DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
@@ -533,13 +547,27 @@ INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invi
 VALUES (?, ?, ?, ?);
 
 -- name: setUsersTopicLevel :exec
-UPDATE userstopiclevel SET level = ?, invitemax = ? WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
+INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
+VALUES (?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax);
 
--- name: getUsersTopicLevelInviteMax :one
+-- name: getAllUsersTopicLevelInviteMax :one
 SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
--- name: getUsersTopicLevel :one
-SELECT level FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
+-- name: getUsersAllTopicLevels :many
+SELECT u.*, t.*, utl.*, tr.*
+FROM users u
+JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
+JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
+JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
+WHERE u.idusers = ?;
+
+-- name: getAllUsersAllTopicLevels :many
+SELECT u.*, t.*, utl.*, tr.*
+FROM users u
+JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
+JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic;
 
 -- name: showTopicUserLevels :one
 SELECT r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel

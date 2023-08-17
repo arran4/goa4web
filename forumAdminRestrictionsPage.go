@@ -1,0 +1,129 @@
+package main
+
+import (
+	"database/sql"
+	"log"
+	"net/http"
+	"strconv"
+)
+
+func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*CoreData
+		MaxUserLevel    int32
+		UserTopicLevels []*getAllUsersAllTopicLevelsRow
+		Users           []*User
+		Topics          []*Forumtopic
+	}
+
+	data := Data{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+	}
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	rows, err := queries.getAllUsersAllTopicLevels(r.Context())
+	if err != nil {
+		log.Printf("getAllUsersTopicLevels Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.UserTopicLevels = rows
+
+	userRows, err := queries.allUsers(r.Context())
+	if err != nil {
+		log.Printf("allUsers Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Users = userRows
+
+	topicRows, err := queries.getAllTopics(r.Context())
+	if err != nil {
+		log.Printf("allTopics Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Topics = topicRows
+
+	CustomForumIndex(data.CoreData, r)
+
+	if err := getCompiledTemplates().ExecuteTemplate(w, "forumAdminUsersRestrictionsPage.tmpl", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Request) {
+	tid, err := strconv.Atoi(r.PostFormValue("tid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	uid, err := strconv.Atoi(r.PostFormValue("uid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	inviteMax, err := strconv.Atoi(r.PostFormValue("inviteMax"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	level, err := strconv.Atoi(r.PostFormValue("level"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	if err := queries.setUsersTopicLevel(r.Context(), setUsersTopicLevelParams{
+		Level: sql.NullInt32{
+			Valid: true,
+			Int32: int32(level),
+		},
+		Invitemax: sql.NullInt32{
+			Valid: true,
+			Int32: int32(inviteMax),
+		},
+		ForumtopicIdforumtopic: int32(tid),
+		UsersIdusers:           int32(uid),
+	}); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	// TODO notify admin
+
+	taskDoneAutoRefreshPage(w, r)
+
+}
+
+func forumAdminUsersRestrictionsDeletePage(w http.ResponseWriter, r *http.Request) {
+	tid, err := strconv.Atoi(r.PostFormValue("tid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	uid, err := strconv.Atoi(r.PostFormValue("uid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	if err := queries.deleteUsersTopicLevel(r.Context(), deleteUsersTopicLevelParams{
+		ForumtopicIdforumtopic: int32(tid),
+		UsersIdusers:           int32(uid),
+	}); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	// TODO notify admin
+
+	taskDoneAutoRefreshPage(w, r)
+
+}

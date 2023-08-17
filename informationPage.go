@@ -57,7 +57,7 @@ func informationPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.System.Processors = cpuInfo
 
-	if err := compiledTemplates.ExecuteTemplate(w, "informationPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "informationPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

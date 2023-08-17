@@ -421,46 +421,6 @@ func (q *Queries) adminUserPermissions(ctx context.Context) ([]*adminUserPermiss
 	return items, nil
 }
 
-const adminUsers = `-- name: adminUsers :many
-SELECT u.idusers, u.username, u.email
-FROM users u
-`
-
-type adminUsersRow struct {
-	Idusers  int32
-	Username sql.NullString
-	Email    sql.NullString
-}
-
-// This query selects all admin users from the "users" table.
-// Result:
-//
-//	idusers (int)
-//	username (string)
-//	email (string)
-func (q *Queries) adminUsers(ctx context.Context) ([]*adminUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*adminUsersRow
-	for rows.Next() {
-		var i adminUsersRow
-		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const admin_categories = `-- name: admin_categories :many
 SELECT idfaqCategories, name
 FROM faqCategories
@@ -519,6 +479,45 @@ func (q *Queries) admin_user_permissions(ctx context.Context, section sql.NullSt
 			&i.Username,
 			&i.Email,
 			&i.Section,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const allUsers = `-- name: allUsers :many
+SELECT u.idusers, u.email, u.passwd, u.username
+FROM users u
+`
+
+// This query selects all admin users from the "users" table.
+// Result:
+//
+//	idusers (int)
+//	username (string)
+//	email (string)
+func (q *Queries) allUsers(ctx context.Context) ([]*User, error) {
+	rows, err := q.db.QueryContext(ctx, allUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
 		); err != nil {
 			return nil, err
 		}
@@ -1819,6 +1818,61 @@ func (q *Queries) forumCategories(ctx context.Context) ([]*Forumcategory, error)
 	return items, nil
 }
 
+const getAllTopicRestrictions = `-- name: getAllTopicRestrictions :many
+SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+`
+
+type getAllTopicRestrictionsRow struct {
+	Idforumtopic           int32
+	Viewlevel              sql.NullInt32
+	Replylevel             sql.NullInt32
+	Newthreadlevel         sql.NullInt32
+	Seelevel               sql.NullInt32
+	Invitelevel            sql.NullInt32
+	Readlevel              sql.NullInt32
+	Title                  sql.NullString
+	ForumtopicIdforumtopic sql.NullInt32
+	Modlevel               sql.NullInt32
+	Adminlevel             sql.NullInt32
+}
+
+func (q *Queries) getAllTopicRestrictions(ctx context.Context) ([]*getAllTopicRestrictionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllTopicRestrictions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getAllTopicRestrictionsRow
+	for rows.Next() {
+		var i getAllTopicRestrictionsRow
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Viewlevel,
+			&i.Replylevel,
+			&i.Newthreadlevel,
+			&i.Seelevel,
+			&i.Invitelevel,
+			&i.Readlevel,
+			&i.Title,
+			&i.ForumtopicIdforumtopic,
+			&i.Modlevel,
+			&i.Adminlevel,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllTopics = `-- name: getAllTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition
 FROM forumtopic t
@@ -1856,6 +1910,107 @@ func (q *Queries) getAllTopics(ctx context.Context) ([]*Forumtopic, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getAllUsersAllTopicLevels = `-- name: getAllUsersAllTopicLevels :many
+SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
+FROM users u
+JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
+JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
+`
+
+type getAllUsersAllTopicLevelsRow struct {
+	Idusers                      int32
+	Email                        sql.NullString
+	Passwd                       sql.NullString
+	Username                     sql.NullString
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	UsersIdusers                 int32
+	ForumtopicIdforumtopic       int32
+	Level                        sql.NullInt32
+	Invitemax                    sql.NullInt32
+	ForumtopicIdforumtopic_2     sql.NullInt32
+	Viewlevel                    sql.NullInt32
+	Replylevel                   sql.NullInt32
+	Newthreadlevel               sql.NullInt32
+	Seelevel                     sql.NullInt32
+	Invitelevel                  sql.NullInt32
+	Readlevel                    sql.NullInt32
+	Modlevel                     sql.NullInt32
+	Adminlevel                   sql.NullInt32
+}
+
+func (q *Queries) getAllUsersAllTopicLevels(ctx context.Context) ([]*getAllUsersAllTopicLevelsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsersAllTopicLevels)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getAllUsersAllTopicLevelsRow
+	for rows.Next() {
+		var i getAllUsersAllTopicLevelsRow
+		if err := rows.Scan(
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.UsersIdusers,
+			&i.ForumtopicIdforumtopic,
+			&i.Level,
+			&i.Invitemax,
+			&i.ForumtopicIdforumtopic_2,
+			&i.Viewlevel,
+			&i.Replylevel,
+			&i.Newthreadlevel,
+			&i.Seelevel,
+			&i.Invitelevel,
+			&i.Readlevel,
+			&i.Modlevel,
+			&i.Adminlevel,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllUsersTopicLevelInviteMax = `-- name: getAllUsersTopicLevelInviteMax :one
+SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
+`
+
+type getAllUsersTopicLevelInviteMaxParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+}
+
+func (q *Queries) getAllUsersTopicLevelInviteMax(ctx context.Context, arg getAllUsersTopicLevelInviteMaxParams) (sql.NullInt32, error) {
+	row := q.db.QueryRowContext(ctx, getAllUsersTopicLevelInviteMax, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
+	var invitemax sql.NullInt32
+	err := row.Scan(&invitemax)
+	return invitemax, err
 }
 
 const getLangs = `-- name: getLangs :one
@@ -1897,36 +2052,146 @@ func (q *Queries) getSecurityLevel(ctx context.Context, arg getSecurityLevelPara
 	return level, err
 }
 
-const getUsersTopicLevel = `-- name: getUsersTopicLevel :one
-SELECT level FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
+const getTopicRestrictions = `-- name: getTopicRestrictions :many
+SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+WHERE idforumtopic = ?
 `
 
-type getUsersTopicLevelParams struct {
-	ForumtopicIdforumtopic int32
-	UsersIdusers           int32
+type getTopicRestrictionsRow struct {
+	Idforumtopic           int32
+	Viewlevel              sql.NullInt32
+	Replylevel             sql.NullInt32
+	Newthreadlevel         sql.NullInt32
+	Seelevel               sql.NullInt32
+	Invitelevel            sql.NullInt32
+	Readlevel              sql.NullInt32
+	Title                  sql.NullString
+	ForumtopicIdforumtopic sql.NullInt32
+	Modlevel               sql.NullInt32
+	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) getUsersTopicLevel(ctx context.Context, arg getUsersTopicLevelParams) (sql.NullInt32, error) {
-	row := q.db.QueryRowContext(ctx, getUsersTopicLevel, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
-	var level sql.NullInt32
-	err := row.Scan(&level)
-	return level, err
+func (q *Queries) getTopicRestrictions(ctx context.Context, idforumtopic int32) ([]*getTopicRestrictionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTopicRestrictions, idforumtopic)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getTopicRestrictionsRow
+	for rows.Next() {
+		var i getTopicRestrictionsRow
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Viewlevel,
+			&i.Replylevel,
+			&i.Newthreadlevel,
+			&i.Seelevel,
+			&i.Invitelevel,
+			&i.Readlevel,
+			&i.Title,
+			&i.ForumtopicIdforumtopic,
+			&i.Modlevel,
+			&i.Adminlevel,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-const getUsersTopicLevelInviteMax = `-- name: getUsersTopicLevelInviteMax :one
-SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
+const getUsersAllTopicLevels = `-- name: getUsersAllTopicLevels :many
+SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
+FROM users u
+JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
+JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
+JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
+WHERE u.idusers = ?
 `
 
-type getUsersTopicLevelInviteMaxParams struct {
-	ForumtopicIdforumtopic int32
-	UsersIdusers           int32
+type getUsersAllTopicLevelsRow struct {
+	Idusers                      int32
+	Email                        sql.NullString
+	Passwd                       sql.NullString
+	Username                     sql.NullString
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	UsersIdusers                 int32
+	ForumtopicIdforumtopic       int32
+	Level                        sql.NullInt32
+	Invitemax                    sql.NullInt32
+	ForumtopicIdforumtopic_2     int32
+	Viewlevel                    sql.NullInt32
+	Replylevel                   sql.NullInt32
+	Newthreadlevel               sql.NullInt32
+	Seelevel                     sql.NullInt32
+	Invitelevel                  sql.NullInt32
+	Readlevel                    sql.NullInt32
+	Modlevel                     sql.NullInt32
+	Adminlevel                   sql.NullInt32
 }
 
-func (q *Queries) getUsersTopicLevelInviteMax(ctx context.Context, arg getUsersTopicLevelInviteMaxParams) (sql.NullInt32, error) {
-	row := q.db.QueryRowContext(ctx, getUsersTopicLevelInviteMax, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
-	var invitemax sql.NullInt32
-	err := row.Scan(&invitemax)
-	return invitemax, err
+func (q *Queries) getUsersAllTopicLevels(ctx context.Context, idusers int32) ([]*getUsersAllTopicLevelsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersAllTopicLevels, idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getUsersAllTopicLevelsRow
+	for rows.Next() {
+		var i getUsersAllTopicLevelsRow
+		if err := rows.Scan(
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.UsersIdusers,
+			&i.ForumtopicIdforumtopic,
+			&i.Level,
+			&i.Invitemax,
+			&i.ForumtopicIdforumtopic_2,
+			&i.Viewlevel,
+			&i.Replylevel,
+			&i.Newthreadlevel,
+			&i.Seelevel,
+			&i.Invitelevel,
+			&i.Readlevel,
+			&i.Modlevel,
+			&i.Adminlevel,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getWordID = `-- name: getWordID :one
@@ -2499,62 +2764,6 @@ func (q *Queries) printSubBoards(ctx context.Context, imageboardIdimageboard int
 	return items, nil
 }
 
-const printTopicRestrictions = `-- name: printTopicRestrictions :many
-SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
-FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-WHERE idforumtopic = ?
-`
-
-type printTopicRestrictionsRow struct {
-	Idforumtopic           int32
-	Viewlevel              sql.NullInt32
-	Replylevel             sql.NullInt32
-	Newthreadlevel         sql.NullInt32
-	Seelevel               sql.NullInt32
-	Invitelevel            sql.NullInt32
-	Readlevel              sql.NullInt32
-	Title                  sql.NullString
-	ForumtopicIdforumtopic sql.NullInt32
-	Modlevel               sql.NullInt32
-	Adminlevel             sql.NullInt32
-}
-
-func (q *Queries) printTopicRestrictions(ctx context.Context, idforumtopic int32) ([]*printTopicRestrictionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printTopicRestrictions, idforumtopic)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*printTopicRestrictionsRow
-	for rows.Next() {
-		var i printTopicRestrictionsRow
-		if err := rows.Scan(
-			&i.Idforumtopic,
-			&i.Viewlevel,
-			&i.Replylevel,
-			&i.Newthreadlevel,
-			&i.Seelevel,
-			&i.Invitelevel,
-			&i.Readlevel,
-			&i.Title,
-			&i.ForumtopicIdforumtopic,
-			&i.Modlevel,
-			&i.Adminlevel,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const reassign_category = `-- name: reassign_category :exec
 UPDATE faq
 SET faqCategories_idfaqCategories = ?
@@ -2753,11 +2962,21 @@ func (q *Queries) rename_category(ctx context.Context, arg rename_categoryParams
 }
 
 const setTopicRestrictions = `-- name: setTopicRestrictions :exec
-UPDATE topicrestrictions SET viewlevel = ?, replylevel = ?, newthreadlevel = ?, seelevel = ?, invitelevel = ?, readlevel = ?, modlevel = ?, adminlevel = ?
-WHERE forumtopic_idforumtopic = ?
+INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+    viewlevel = VALUES(viewlevel),
+    replylevel = VALUES(replylevel),
+    newthreadlevel = VALUES(newthreadlevel),
+    seelevel = VALUES(seelevel),
+    invitelevel = VALUES(invitelevel),
+    readlevel = VALUES(readlevel),
+    modlevel = VALUES(modlevel),
+    adminlevel = VALUES(adminlevel)
 `
 
 type setTopicRestrictionsParams struct {
+	ForumtopicIdforumtopic int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
 	Newthreadlevel         sql.NullInt32
@@ -2766,11 +2985,11 @@ type setTopicRestrictionsParams struct {
 	Readlevel              sql.NullInt32
 	Modlevel               sql.NullInt32
 	Adminlevel             sql.NullInt32
-	ForumtopicIdforumtopic int32
 }
 
 func (q *Queries) setTopicRestrictions(ctx context.Context, arg setTopicRestrictionsParams) error {
 	_, err := q.db.ExecContext(ctx, setTopicRestrictions,
+		arg.ForumtopicIdforumtopic,
 		arg.Viewlevel,
 		arg.Replylevel,
 		arg.Newthreadlevel,
@@ -2779,28 +2998,29 @@ func (q *Queries) setTopicRestrictions(ctx context.Context, arg setTopicRestrict
 		arg.Readlevel,
 		arg.Modlevel,
 		arg.Adminlevel,
-		arg.ForumtopicIdforumtopic,
 	)
 	return err
 }
 
 const setUsersTopicLevel = `-- name: setUsersTopicLevel :exec
-UPDATE userstopiclevel SET level = ?, invitemax = ? WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
+INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
+VALUES (?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax)
 `
 
 type setUsersTopicLevelParams struct {
-	Level                  sql.NullInt32
-	Invitemax              sql.NullInt32
 	ForumtopicIdforumtopic int32
 	UsersIdusers           int32
+	Level                  sql.NullInt32
+	Invitemax              sql.NullInt32
 }
 
 func (q *Queries) setUsersTopicLevel(ctx context.Context, arg setUsersTopicLevelParams) error {
 	_, err := q.db.ExecContext(ctx, setUsersTopicLevel,
-		arg.Level,
-		arg.Invitemax,
 		arg.ForumtopicIdforumtopic,
 		arg.UsersIdusers,
+		arg.Level,
+		arg.Invitemax,
 	)
 	return err
 }

@@ -1,0 +1,10 @@
+{{ template "head" $ }}
+    <font size="4">New Thread:</font><br>
+    <form method="post" action="">
+        <textarea id="reply" name="replytext" cols="40" rows="20"></textarea><br>
+        {{ template "languageCombobox" $ }}
+        <input type="submit" name="task" value="Create Thread">
+        <input type="submit" name="task" value="Cancel">
+    </form>
+
+{{ template "tail" $ }}

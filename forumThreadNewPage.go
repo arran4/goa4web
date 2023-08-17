@@ -4,35 +4,62 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
 )
 
-func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, sessionName)
-	if err != nil {
-		log.Printf("Error: store.Get: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+func forumThreadNewPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*CoreData
+		Languages          []*Language
+		SelectedLanguageId int
 	}
 
-	vars := mux.Vars(r)
-	topicId, _ := strconv.Atoi(vars["topic"])
-	threadId, _ := strconv.Atoi(vars["thread"])
-
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	data := Data{
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		SelectedLanguageId: 1, // TODO update these from user prefs and make it an optional filter
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	text := r.PostFormValue("replytext")
-	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+	languageRows, err := queries.fetchLanguages(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Languages = languageRows
+
+	CustomBlogIndex(data.CoreData, r)
+
+	if err := getCompiledTemplates().ExecuteTemplate(w, "forumThreadNewPage.tmpl", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	vars := mux.Vars(r)
+	topicId, err := strconv.Atoi(vars["topic"])
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicId, threadId)
+	// TODO check if the user has the right right to topic
+
+	threadId, err := queries.makeThread(r.Context(), int32(topicId))
+	if err != nil {
+		log.Printf("Error: makeThread: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	text := r.PostFormValue("replytext")
+	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+
+	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
 
 	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
 		ForumthreadIdforumthread: int32(threadId),
@@ -101,12 +128,12 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
-func forumTopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
+
+func forumThreadNewCancelPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
-	threadId, _ := strconv.Atoi(vars["thread"])
 
-	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicId, threadId)
+	endUrl := fmt.Sprintf("/forum/topic/%d", topicId)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

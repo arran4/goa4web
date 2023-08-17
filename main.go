@@ -122,19 +122,19 @@ func main() {
 	br.HandleFunc("/blog/{blog}/edit", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
 
 	fr := r.PathPrefix("/forum").Subrouter()
+	// TODO RSS & ATOM
 	fr.HandleFunc("", forumPage).Methods("GET")
 	fr.HandleFunc("/category/{category}", forumPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", forumTopicsPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewActionPage).Methods("POST").MatcherFunc(TaskMatcher("Create Thread"))
+	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewCancelPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
 	fr.HandleFunc("/topic/{topic}/thread/{thread}", forumThreadPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread/{thread}", taskDoneAutoRefreshPage).Methods("POST")
 	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
 	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyCancelPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
 	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Reply")).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor()))
 	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionCancelPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
-
-	/*TODO*/
-	fr.HandleFunc("/topic/{topic}/thread", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Create Thread"))
-
 	fr.HandleFunc("/admin", forumAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/categories", forumAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/categories", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))

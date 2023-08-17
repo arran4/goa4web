@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -31,6 +32,30 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 		},
 	})
 	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	if err := queries.update_forumthread(r.Context(), makePostParams{
+		ForumthreadIdforumthread: pthid,
+	}); err != nil {
+		log.Printf("Error: update_forumthread: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	if err := queries.update_forumtopic(r.Context(), makePostParams{
+		ForumthreadIdforumthread: pthid,
+	}); err != nil {
+		log.Printf("Error: update_forumtopic: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	if err := queries.update_forumcategory(r.Context(), makePostParams{
+		ForumthreadIdforumthread: pthid,
+	}); err != nil {
+		log.Printf("Error: update_forumcategory: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

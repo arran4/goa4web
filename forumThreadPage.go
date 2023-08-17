@@ -83,7 +83,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		Idforumtopic: int32(threadRow.ForumtopicIdforumtopic),
 	})
 	if err != nil {
-		log.Printf("showTableTopics Error: %s", err)
+		log.Printf("user_get_topic Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

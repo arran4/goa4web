@@ -3,5 +3,7 @@
 
     {{ template "forumCategories" $ }}
 
+    <a href="/forum/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a><br />
+
     {{ template "topicThreads" $ }}
 {{ template "tail" $ }}

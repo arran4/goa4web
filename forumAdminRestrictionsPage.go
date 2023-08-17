@@ -79,6 +79,14 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
+	if !(existsTopicRestrictions(cont, topicid) && (level == auth_administrator || topicAllowAdmin(cont, topicid))) {
+		printf("Unable to view document or file.<br>\n")
+	} else if level != auth_administrator && getUsersTopicLevel(cont, topicid, uid) >= getUsersTopicLevel(cont, topicid, cont.user.UID) {
+		printf("Unable to modify someone with a higher level then your own.<br>\n")
+	} else if level != auth_administrator && getUsersTopicLevel(cont, topicid, uid) >= getUsersTopicLevelInviteMax(cont, topicid, cont.user.UID) {
+		printf("Unable to modify someone with a higher level then your have been allowed to modify.<br>\n")
+	}
+
 	if err := queries.setUsersTopicLevel(r.Context(), setUsersTopicLevelParams{
 		Level: sql.NullInt32{
 			Valid: true,
@@ -113,6 +121,14 @@ func forumAdminUsersRestrictionsDeletePage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	if !(existsTopicRestrictions(cont, topicid) && (level == auth_administrator || topicAllowAdmin(cont, topicid))) {
+		printf("Unable to view document or file.<br>\n")
+	} else if level != auth_administrator && getUsersTopicLevel(cont, topicid, uid) >= getUsersTopicLevel(cont, topicid, cont.user.UID) {
+		printf("Unable to modify someone with a higher level then your own.<br>\n")
+	} else if level != auth_administrator && getUsersTopicLevel(cont, topicid, uid) >= getUsersTopicLevelInviteMax(cont, topicid, cont.user.UID) {
+		printf("Unable to modify someone with a higher level then your have been allowed to modify.<br>\n")
+	}
 
 	if err := queries.deleteUsersTopicLevel(r.Context(), deleteUsersTopicLevelParams{
 		ForumtopicIdforumtopic: int32(tid),

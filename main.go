@@ -127,7 +127,7 @@ func main() {
 	fr.HandleFunc("/topic/{topic}/thread/{thread}", forumThreadPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread/{thread}", taskDoneAutoRefreshPage).Methods("POST")
 	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyPage).Methods("POST")
-	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", taskDoneAutoRefreshPage).Methods("POST")
 	/*TODO*/ fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}/edit", forumPage).Methods("POST").MatcherFunc(TaskMatcher("Edit Post"))

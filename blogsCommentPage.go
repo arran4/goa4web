@@ -105,7 +105,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 			ForumthreadIdforumthread: blog.ForumthreadIdforumthread,
 		})
 		if err != nil {
-			log.Printf("show_blog_comments Error: %s", err)
+			log.Printf("user_get_all_comments_for_thread Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

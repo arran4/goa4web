@@ -136,6 +136,8 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO threadNotify
+
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
 

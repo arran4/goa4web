@@ -233,6 +233,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
+// TODO we could do better
 func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {
 		session := r.Context().Value(ContextValues("session")).(*sessions.Session)
@@ -270,6 +271,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 	}
 }
 
+// TODO we could do better
 func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {
 		session := r.Context().Value(ContextValues("session")).(*sessions.Session)

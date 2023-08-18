@@ -369,58 +369,6 @@ func (q *Queries) adminCategories(ctx context.Context) ([]*Linkercategory, error
 	return items, nil
 }
 
-const adminUserPermissions = `-- name: adminUserPermissions :many
-SELECT p.idpermissions, p.level, u.username, u.email, p.section
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers
-ORDER BY p.level
-`
-
-type adminUserPermissionsRow struct {
-	Idpermissions int32
-	Level         sql.NullString
-	Username      sql.NullString
-	Email         sql.NullString
-	Section       sql.NullString
-}
-
-// This query selects permissions information for admin users.
-// Result:
-//
-//	idpermissions (int)
-//	level (int)
-//	username (string)
-//	email (string)
-//	section (string)
-func (q *Queries) adminUserPermissions(ctx context.Context) ([]*adminUserPermissionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminUserPermissions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*adminUserPermissionsRow
-	for rows.Next() {
-		var i adminUserPermissionsRow
-		if err := rows.Scan(
-			&i.Idpermissions,
-			&i.Level,
-			&i.Username,
-			&i.Email,
-			&i.Section,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const admin_categories = `-- name: admin_categories :many
 SELECT idfaqCategories, name
 FROM faqCategories
@@ -2128,6 +2076,32 @@ func (q *Queries) getTopicRestrictions(ctx context.Context, idforumtopic int32) 
 	return items, nil
 }
 
+const getUserPermissions = `-- name: getUserPermissions :one
+SELECT p.idpermissions, p.users_idusers, p.section, p.level
+FROM permissions p
+WHERE p.users_idusers = ?
+`
+
+// This query selects permissions information for admin users.
+// Result:
+//
+//	idpermissions (int)
+//	level (int)
+//	username (string)
+//	email (string)
+//	section (string)
+func (q *Queries) getUserPermissions(ctx context.Context, usersIdusers int32) (*Permission, error) {
+	row := q.db.QueryRowContext(ctx, getUserPermissions, usersIdusers)
+	var i Permission
+	err := row.Scan(
+		&i.Idpermissions,
+		&i.UsersIdusers,
+		&i.Section,
+		&i.Level,
+	)
+	return &i, err
+}
+
 const getUsersAllTopicLevels = `-- name: getUsersAllTopicLevels :many
 SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
@@ -2212,6 +2186,78 @@ func (q *Queries) getUsersAllTopicLevels(ctx context.Context, idusers int32) ([]
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUsersPermissions = `-- name: getUsersPermissions :many
+SELECT p.idpermissions, p.users_idusers, p.section, p.level
+FROM permissions p
+`
+
+// This query selects permissions information for admin users.
+// Result:
+//
+//	idpermissions (int)
+//	level (int)
+//	username (string)
+//	email (string)
+//	section (string)
+func (q *Queries) getUsersPermissions(ctx context.Context) ([]*Permission, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersPermissions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Permission
+	for rows.Next() {
+		var i Permission
+		if err := rows.Scan(
+			&i.Idpermissions,
+			&i.UsersIdusers,
+			&i.Section,
+			&i.Level,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersTopicLevel = `-- name: getUsersTopicLevel :one
+SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax
+FROM userstopiclevel utl
+WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
+`
+
+type getUsersTopicLevelParams struct {
+	UsersIdusers           int32
+	ForumtopicIdforumtopic int32
+}
+
+// This query selects permissions information for admin users.
+// Result:
+//
+//	idpermissions (int)
+//	level (int)
+//	username (string)
+//	email (string)
+//	section (string)
+func (q *Queries) getUsersTopicLevel(ctx context.Context, arg getUsersTopicLevelParams) (*Userstopiclevel, error) {
+	row := q.db.QueryRowContext(ctx, getUsersTopicLevel, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
+	var i Userstopiclevel
+	err := row.Scan(
+		&i.UsersIdusers,
+		&i.ForumtopicIdforumtopic,
+		&i.Level,
+		&i.Invitemax,
+	)
+	return &i, err
 }
 
 const getWordID = `-- name: getWordID :one

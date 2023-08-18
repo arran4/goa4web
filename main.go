@@ -150,13 +150,13 @@ func main() {
 	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set topic restriction"))
 	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete topic restriction"))
 	fr.HandleFunc("/admin/users", forumAdminUserPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set user level"))
-	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update user level"))
-	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelDeletePage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete user level"))
+	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher("Set user level"))
+	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher("Update user level"))
+	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelDeletePage).Methods("GET", "POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel())).MatcherFunc(TaskMatcher("Delete user level"))
 	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete user level"))
-	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update user level"))
-	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set user level"))
+	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsDeletePage).Methods("POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel())).MatcherFunc(TaskMatcher("Delete user level"))
+	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher("Update user level"))
+	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher("Set user level"))
 	fr.HandleFunc("/admin/restrictions/users", forumAdminUsersRestrictionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update topic restriction"))
@@ -231,6 +231,74 @@ func main() {
 
 	log.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
+	return func(r *http.Request, match *mux.RouteMatch) bool {
+		session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+		adminUid, _ := session.Values["UID"].(int32)
+
+		targetUid, err := strconv.Atoi(r.PostFormValue("uid"))
+		if err != nil {
+			return false
+		}
+
+		tid, err := strconv.Atoi(r.PostFormValue("tid"))
+		if err != nil {
+			return false
+		}
+
+		queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+		targetUser, err := queries.getUsersTopicLevel(r.Context(), getUsersTopicLevelParams{
+			ForumtopicIdforumtopic: int32(tid),
+			UsersIdusers:           int32(targetUid),
+		})
+		if err != nil {
+			return false
+		}
+
+		adminUser, err := queries.getUsersTopicLevel(r.Context(), getUsersTopicLevelParams{
+			ForumtopicIdforumtopic: int32(tid),
+			UsersIdusers:           int32(adminUid),
+		})
+		if err != nil {
+			return false
+		}
+
+		return adminUser.Invitemax.Int32 >= targetUser.Level.Int32
+	}
+}
+
+func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
+	return func(r *http.Request, match *mux.RouteMatch) bool {
+		session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+		adminUid, _ := session.Values["UID"].(int32)
+
+		inviteMax, err := strconv.Atoi(r.PostFormValue("inviteMax"))
+		if err != nil {
+			return false
+		}
+		level, err := strconv.Atoi(r.PostFormValue("level"))
+		if err != nil {
+			return false
+		}
+		tid, err := strconv.Atoi(r.PostFormValue("tid"))
+		if err != nil {
+			return false
+		}
+		queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+		adminUser, err := queries.getUsersTopicLevel(r.Context(), getUsersTopicLevelParams{
+			ForumtopicIdforumtopic: int32(tid),
+			UsersIdusers:           int32(adminUid),
+		})
+		if err != nil {
+			return false
+		}
+
+		return int(adminUser.Invitemax.Int32) >= level && int(adminUser.Invitemax.Int32) >= inviteMax
+	}
 }
 
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {

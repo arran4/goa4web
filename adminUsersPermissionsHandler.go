@@ -11,7 +11,7 @@ import (
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows []*adminUserPermissionsRow
+		Rows []*Permission
 	}
 
 	data := Data{
@@ -20,7 +20,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.adminUserPermissions(r.Context())
+	rows, err := queries.getUsersPermissions(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

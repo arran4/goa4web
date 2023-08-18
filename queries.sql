@@ -36,7 +36,7 @@ VALUES (?);
 SELECT idlanguage, nameof
 FROM language;
 
--- name: adminUserPermissions :many
+-- name: getUserPermissions :one
 -- This query selects permissions information for admin users.
 -- Result:
 --   idpermissions (int)
@@ -44,10 +44,35 @@ FROM language;
 --   username (string)
 --   email (string)
 --   section (string)
-SELECT p.idpermissions, p.level, u.username, u.email, p.section
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers
-ORDER BY p.level;
+SELECT p.*
+FROM permissions p
+WHERE p.users_idusers = ?
+;
+
+-- name: getUsersPermissions :many
+-- This query selects permissions information for admin users.
+-- Result:
+--   idpermissions (int)
+--   level (int)
+--   username (string)
+--   email (string)
+--   section (string)
+SELECT p.*
+FROM permissions p
+;
+
+-- name: getUsersTopicLevel :one
+-- This query selects permissions information for admin users.
+-- Result:
+--   idpermissions (int)
+--   level (int)
+--   username (string)
+--   email (string)
+--   section (string)
+SELECT utl.*
+FROM userstopiclevel utl
+WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
+;
 
 -- name: userAllow :exec
 -- This query inserts a new permission into the "permissions" table.

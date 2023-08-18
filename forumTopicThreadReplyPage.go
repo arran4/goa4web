@@ -61,7 +61,7 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := queries.makePost(r.Context(), makePostParams{
+	cid, err := queries.makePost(r.Context(), makePostParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(threadId),
@@ -69,7 +69,8 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 			String: text,
 			Valid:  true,
 		},
-	}); err != nil {
+	})
+	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -99,8 +100,18 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+	if done {
+		return
+	}
+
+	if InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+		return
+	}
+
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
+
 func forumTopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])

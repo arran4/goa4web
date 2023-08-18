@@ -119,7 +119,7 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := queries.makePost(r.Context(), makePostParams{
+	cid, err := queries.makePost(r.Context(), makePostParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -127,7 +127,8 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 			String: text,
 			Valid:  true,
 		},
-	}); err != nil {
+	})
+	if err != nil {
 		log.Printf("Error: makePost: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -154,6 +155,15 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.update_forumtopic(r.Context(), ptid); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+	if done {
+		return
+	}
+
+	if InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

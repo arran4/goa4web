@@ -110,7 +110,6 @@ FROM searchwordlist;
 INSERT INTO commentsSearch (text, comments_idcomments)
 SELECT text, idcomments
 FROM comments;
-DELETE FROM commentsSearch;
 
 -- name: remakeNewsSearch :exec
 -- This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
@@ -118,7 +117,6 @@ DELETE FROM commentsSearch;
 INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
 SELECT news, idsiteNews
 FROM siteNews;
-DELETE FROM siteNewsSearch;
 
 -- name: remakeBlogSearch :exec
 -- This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
@@ -126,7 +124,6 @@ DELETE FROM siteNewsSearch;
 INSERT INTO blogsSearch (text, blogs_idblogs)
 SELECT blog, idblogs
 FROM blogs;
-DELETE FROM blogsSearch;
 
 -- name: remakeWritingSearch :exec
 -- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
@@ -134,7 +131,6 @@ DELETE FROM blogsSearch;
 INSERT INTO writingSearch (text, writing_idwriting)
 SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
 FROM writing;
-DELETE FROM writingSearch;
 
 -- name: remakeLinkerSearch :exec
 -- This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
@@ -142,7 +138,6 @@ DELETE FROM writingSearch;
 INSERT INTO linkerSearch (text, linker_idlinker)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker;
-DELETE FROM linkerSearch;
 
 -- name: remakeCommentsSearchInsert :exec
 -- This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
@@ -811,11 +806,17 @@ SELECT language_idlanguage FROM preferences WHERE users_idusers = ?;
 -- name: getWordID :one
 SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?);
 
--- name: addWord :exec
-INSERT INTO searchwordlist (word) VALUES (lcase(?));
+-- name: addWord :execlastid
+INSERT IGNORE INTO searchwordlist (word)
+VALUES (lcase(sqlc.arg(word)));
 
 -- -- name: addToGeneralSearch :exec
 -- INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
+
+-- name: addToForumCommentSearch :exec
+INSERT IGNORE INTO commentsSearch
+(comments_idcomments, searchwordlist_idsearchwordlist)
+VALUES (?, ?);
 
 -- name: topicAllowThis :one
 SELECT r.*, u.level
@@ -830,7 +831,7 @@ LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic=r.forumtopic_idforumt
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic=t.forumtopic_idforumtopic AND u.users_idusers=?
 WHERE t.idforumthread=? LIMIT 1;
 
--- name: makePost :exec
+-- name: makePost :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
 VALUES (?, ?, ?, ?, NOW());
 

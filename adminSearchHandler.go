@@ -22,34 +22,6 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-void breakupTextToWords(a4webcont &cont, char*text, a4hashtable &words, a4hashtable &nowords)
-{
-	a4code2html decoder;
-	decoder.codeType = ct_wordsonly;
-	decoder.input.set("%s", text);
-	decoder.Process();
-	a4string word;
-	decoder.output.itteratorGotoStart();
-	int loop = 1;
-	int c;
-	for (c = decoder.output.itteratorGet(); loop; c = decoder.output.itteratorGetNext())
-	{
-		if (c == EOF)
-		{
-			loop = 0;
-		}
-		if (isalnum(c))
-		{
-			word.pushf("%c", tolower(c));
-		} else {
-			if (word.length() > 2)
-				if (nowords.get(word.raw()) == NULL)
-					words.set(word.raw(), (void*)1);
-			word.clear();
-		}
-	}
-}
-
 void addToGeneralSearch(a4webcont &cont, char *text, int fid, char *dbtable, char *forgienkey)
 {
 	if (fid == 0) return;

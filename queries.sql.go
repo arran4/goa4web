@@ -181,6 +181,25 @@ func (q *Queries) addImage(ctx context.Context, arg addImageParams) error {
 	return err
 }
 
+const addToForumCommentSearch = `-- name: addToForumCommentSearch :exec
+
+INSERT IGNORE INTO commentsSearch
+(comments_idcomments, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
+
+type addToForumCommentSearchParams struct {
+	CommentsIdcomments             int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+// -- name: addToGeneralSearch :exec
+// INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
+func (q *Queries) addToForumCommentSearch(ctx context.Context, arg addToForumCommentSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentsIdcomments, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
 const addToLinker = `-- name: addToLinker :exec
 INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
 VALUES (?, ?, ?, ?, ?, NOW())
@@ -282,13 +301,17 @@ func (q *Queries) addUsersTopicLevel(ctx context.Context, arg addUsersTopicLevel
 	return err
 }
 
-const addWord = `-- name: addWord :exec
-INSERT INTO searchwordlist (word) VALUES (lcase(?))
+const addWord = `-- name: addWord :execlastid
+INSERT IGNORE INTO searchwordlist (word)
+VALUES (lcase(?))
 `
 
-func (q *Queries) addWord(ctx context.Context, lcase string) error {
-	_, err := q.db.ExecContext(ctx, addWord, lcase)
-	return err
+func (q *Queries) addWord(ctx context.Context, word string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, addWord, word)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const add_blog = `-- name: add_blog :execlastid
@@ -2533,7 +2556,7 @@ func (q *Queries) makeImageBoard(ctx context.Context, arg makeImageBoardParams) 
 	return err
 }
 
-const makePost = `-- name: makePost :exec
+const makePost = `-- name: makePost :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
 VALUES (?, ?, ?, ?, NOW())
 `
@@ -2545,14 +2568,17 @@ type makePostParams struct {
 	Text                     sql.NullString
 }
 
-func (q *Queries) makePost(ctx context.Context, arg makePostParams) error {
-	_, err := q.db.ExecContext(ctx, makePost,
+func (q *Queries) makePost(ctx context.Context, arg makePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, makePost,
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
 		arg.ForumthreadIdforumthread,
 		arg.Text,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const makeThread = `-- name: makeThread :execlastid
@@ -2650,26 +2676,6 @@ func (q *Queries) moveToLinker(ctx context.Context, idlinkerqueue int32) ([]*mov
 		return nil, err
 	}
 	return items, nil
-}
-
-const postUpdate = `-- name: postUpdate :exec
-
-UPDATE comments c, forumthread th, forumtopic t
-SET
-th.lastposter=c.users_idusers, t.lastposter=c.users_idusers,
-th.lastaddition=c.written, t.lastaddition=c.written,
-t.comments=IF(th.comments IS NULL, 0, t.comments+1),
-t.threads=IF(th.comments IS NULL, IF(t.threads IS NULL, 1, t.threads+1), t.threads),
-th.comments=IF(th.comments IS NULL, 0, th.comments+1),
-th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
-WHERE c.idcomments=?
-`
-
-// -- name: addToGeneralSearch :exec
-// INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
-func (q *Queries) postUpdate(ctx context.Context, idcomments int32) error {
-	_, err := q.db.ExecContext(ctx, postUpdate, idcomments)
-	return err
 }
 
 const preferencesRefreshPref = `-- name: preferencesRefreshPref :many

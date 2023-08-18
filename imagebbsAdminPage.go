@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func forumAdminPage(w http.ResponseWriter, r *http.Request) {
+func imagebbsAdminPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
@@ -14,9 +14,9 @@ func forumAdminPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	CustomForumIndex(data.CoreData, r)
+	CustomImageBBSIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates().ExecuteTemplate(w, "forumAdminPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "imagebbsAdminPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

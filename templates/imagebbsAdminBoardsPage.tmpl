@@ -1,0 +1,22 @@
+{{ template "head" $ }}
+		<table border="1">
+			<tr>
+				<th>ID
+				<th>Title
+				<th>Description
+				<th>Parent board
+				<th>Options?
+			{{ range .Boards }}
+				<tr>
+					<form method="post" action="/imagebbs/admin/board/{{.Idimageboard}}">
+						<td>{{ .Idimageboard }}
+						<td><input name="name" value="{{ .Title.String }}">
+						<td><textarea name="desc">{{ .Description.String }}</textarea>
+                        <td>{{ $pbid := .ImageboardIdimageboard }} {{ $pbid }} <select name="pbid" value="{{ .ImageboardIdimageboard }}"><option value="0">None</option>{{ range $.Boards }}<option value="{{.Idimageboard}}" {{if eq $pbid .Idimageboard}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
+						<td>
+							<input type="hidden" name="bid" value="{{ .Idimageboard }}">
+							<input type="submit" name="task" value="Modify board">
+						</form>
+			{{ end }}
+		</table>
+{{ template "tail" $ }}

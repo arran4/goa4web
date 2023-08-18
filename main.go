@@ -187,8 +187,7 @@ func main() {
 	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("New board"))
 	ibr.HandleFunc("/admin/board", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Modify board"))
+	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Modify board"))
 
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", searchPage).Methods("GET")

@@ -34,16 +34,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/forum",
 	}
-	if err := queries.update_forumthread_lastaddition(r.Context()); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update_forumthread_lastaddition: %w", err).Error())
-	}
-	if err := queries.update_forumthread_comments(r.Context()); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update_forumthread_comments: %w", err).Error())
-	}
-	if err := queries.update_forumthread_lastposter(r.Context()); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update_forumthread_lastposter: %w", err).Error())
-	}
-	if err := queries.update_forumthread_firstpost(r.Context()); err != nil {
+	if err := queries.update_forumthreads(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update_forumthread_firstpost: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.tmpl", data)
@@ -64,13 +55,7 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/forum",
 	}
-	if err := queries.update_forumtopic_threads(r.Context()); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update_forumtopic_threads: %w", err).Error())
-	}
-	if err := queries.update_forumtopic_comments(r.Context()); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update_forumtopic_comments: %w", err).Error())
-	}
-	if err := queries.update_forumtopic_lastaddition_lastposter(r.Context()); err != nil {
+	if err := queries.update_forumtopics(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update_forumtopic_lastaddition_lastposter: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.tmpl", data)

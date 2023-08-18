@@ -121,6 +121,7 @@ func main() {
 	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher("Edit"))
 	br.HandleFunc("/blog/{blog}/edit", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(TaskMatcher("Cancel"))
 
+	// TODO a matcher check to ensure topics and threads align.
 	fr := r.PathPrefix("/forum").Subrouter()
 	// TODO RSS & ATOM
 	fr.HandleFunc("", forumPage).Methods("GET")

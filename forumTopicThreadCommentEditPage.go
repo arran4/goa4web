@@ -36,26 +36,14 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := queries.update_forumthread(r.Context(), makePostParams{
-		ForumthreadIdforumthread: pthid,
-	}); err != nil {
+	if err := queries.update_forumthread(r.Context(), int32(threadId)); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), makePostParams{
-		ForumthreadIdforumthread: pthid,
-	}); err != nil {
+	if err := queries.update_forumtopic(r.Context(), int32(topicId)); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	if err := queries.update_forumcategory(r.Context(), makePostParams{
-		ForumthreadIdforumthread: pthid,
-	}); err != nil {
-		log.Printf("Error: update_forumcategory: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

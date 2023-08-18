@@ -2013,6 +2013,26 @@ func (q *Queries) getAllUsersTopicLevelInviteMax(ctx context.Context, arg getAll
 	return invitemax, err
 }
 
+const getComment = `-- name: getComment :one
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
+FROM comments c
+WHERE c.Idcomments=?
+`
+
+func (q *Queries) getComment(ctx context.Context, idcomments int32) (*Comment, error) {
+	row := q.db.QueryRowContext(ctx, getComment, idcomments)
+	var i Comment
+	err := row.Scan(
+		&i.Idcomments,
+		&i.ForumthreadIdforumthread,
+		&i.UsersIdusers,
+		&i.LanguageIdlanguage,
+		&i.Written,
+		&i.Text,
+	)
+	return &i, err
+}
+
 const getLangs = `-- name: getLangs :one
 SELECT language_idlanguage FROM userlang WHERE users_idusers = ?
 `
@@ -3987,40 +4007,7 @@ func (q *Queries) update_comment(ctx context.Context, arg update_commentParams) 
 	return err
 }
 
-const update_forumthread_comments = `-- name: update_forumthread_comments :exec
-UPDATE forumthread
-SET comments = (
-    SELECT COUNT(users_idusers) - 1
-    FROM comments
-    WHERE forumthread_idforumthread = idforumthread
-)
-`
-
-// This query updates the "comments" column in the "forumthread" table.
-// It sets the "comments" column to the count of users (excluding the thread creator) from the "comments" table for the corresponding "forumthread_idforumthread".
-func (q *Queries) update_forumthread_comments(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumthread_comments)
-	return err
-}
-
-const update_forumthread_firstpost = `-- name: update_forumthread_firstpost :exec
-UPDATE forumthread
-SET firstpost = (
-    SELECT idcomments
-    FROM comments
-    WHERE forumthread_idforumthread = idforumthread
-    LIMIT 1
-)
-`
-
-// This query updates the "firstpost" column in the "forumthread" table.
-// It sets the "firstpost" column to the ID of the first comment from the "comments" table for the corresponding "forumthread_idforumthread".
-func (q *Queries) update_forumthread_firstpost(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumthread_firstpost)
-	return err
-}
-
-const update_forumthread_lastaddition = `-- name: update_forumthread_lastaddition :exec
+const update_forumthread = `-- name: update_forumthread :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -4028,60 +4015,109 @@ SET lastaddition = (
     WHERE forumthread_idforumthread = idforumthread
     ORDER BY written DESC
     LIMIT 1
-)
-`
-
-// This query updates the "lastaddition" column in the "forumthread" table.
-// It sets the "lastaddition" column to the latest "written" value from the "comments" table for the corresponding "forumthread_idforumthread".
-func (q *Queries) update_forumthread_lastaddition(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumthread_lastaddition)
-	return err
-}
-
-const update_forumthread_lastposter = `-- name: update_forumthread_lastposter :exec
-UPDATE forumthread
-SET lastposter = (
+), comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+), lastposter = (
     SELECT users_idusers
     FROM comments
     WHERE forumthread_idforumthread = idforumthread
     ORDER BY written DESC
     LIMIT 1
+), firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    LIMIT 1
 )
+WHERE idforumthread = ?
 `
 
-// This query updates the "lastposter" column in the "forumthread" table.
-// It sets the "lastposter" column to the latest "users_idusers" value from the "comments" table for the corresponding "forumthread_idforumthread".
-func (q *Queries) update_forumthread_lastposter(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumthread_lastposter)
+func (q *Queries) update_forumthread(ctx context.Context, idforumthread int32) error {
+	_, err := q.db.ExecContext(ctx, update_forumthread, idforumthread)
 	return err
 }
 
-const update_forumtopic_comments = `-- name: update_forumtopic_comments :exec
+const update_forumthreads = `-- name: update_forumthreads :exec
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+), lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    LIMIT 1
+)
+`
+
+func (q *Queries) update_forumthreads(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumthreads)
+	return err
+}
+
+const update_forumtopic = `-- name: update_forumtopic :exec
 UPDATE forumtopic
-SET comments = (
+SET threads = (
+    SELECT COUNT(idforumthread)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+), comments = (
     SELECT SUM(comments)
     FROM forumthread
     WHERE forumtopic_idforumtopic = idforumtopic
-)
-`
-
-// This query updates the "comments" column in the "forumtopic" table.
-// It sets the "comments" column to the sum of comments from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
-func (q *Queries) update_forumtopic_comments(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumtopic_comments)
-	return err
-}
-
-const update_forumtopic_lastaddition_lastposter = `-- name: update_forumtopic_lastaddition_lastposter :exec
-UPDATE forumtopic
-SET lastaddition = (
+), lastaddition = (
     SELECT lastaddition
     FROM forumthread
     WHERE forumtopic_idforumtopic = idforumtopic
     ORDER BY lastaddition DESC
     LIMIT 1
-),
-lastposter = (
+), lastposter = (
+    SELECT lastposter
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+)
+WHERE idforumtopic = ?
+`
+
+func (q *Queries) update_forumtopic(ctx context.Context, idforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, update_forumtopic, idforumtopic)
+	return err
+}
+
+const update_forumtopics = `-- name: update_forumtopics :exec
+UPDATE forumtopic
+SET threads = (
+    SELECT COUNT(idforumthread)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+), comments = (
+    SELECT SUM(comments)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+), lastaddition = (
+    SELECT lastaddition
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+), lastposter = (
     SELECT lastposter
     FROM forumthread
     WHERE forumtopic_idforumtopic = idforumtopic
@@ -4090,27 +4126,8 @@ lastposter = (
 )
 `
 
-// This query updates the "lastaddition" and "lastposter" columns in the "forumtopic" table.
-// It sets the "lastaddition" column to the latest "lastaddition" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
-// It sets the "lastposter" column to the latest "lastposter" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
-func (q *Queries) update_forumtopic_lastaddition_lastposter(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumtopic_lastaddition_lastposter)
-	return err
-}
-
-const update_forumtopic_threads = `-- name: update_forumtopic_threads :exec
-UPDATE forumtopic
-SET threads = (
-    SELECT COUNT(idforumthread)
-    FROM forumthread
-    WHERE forumtopic_idforumtopic = idforumtopic
-)
-`
-
-// This query updates the "threads" column in the "forumtopic" table.
-// It sets the "threads" column to the count of forum threads from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
-func (q *Queries) update_forumtopic_threads(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumtopic_threads)
+func (q *Queries) update_forumtopics(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, update_forumtopics)
 	return err
 }
 

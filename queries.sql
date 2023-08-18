@@ -174,9 +174,7 @@ FROM linker;
 -- This query deletes all data from the "linkerSearch" table.
 DELETE FROM linkerSearch;
 
--- name: update_forumthread_lastaddition :exec
--- This query updates the "lastaddition" column in the "forumthread" table.
--- It sets the "lastaddition" column to the latest "written" value from the "comments" table for the corresponding "forumthread_idforumthread".
+-- name: update_forumthreads :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -184,80 +182,97 @@ SET lastaddition = (
     WHERE forumthread_idforumthread = idforumthread
     ORDER BY written DESC
     LIMIT 1
-);
-
--- name: update_forumthread_comments :exec
--- This query updates the "comments" column in the "forumthread" table.
--- It sets the "comments" column to the count of users (excluding the thread creator) from the "comments" table for the corresponding "forumthread_idforumthread".
-UPDATE forumthread
-SET comments = (
+), comments = (
     SELECT COUNT(users_idusers) - 1
     FROM comments
     WHERE forumthread_idforumthread = idforumthread
-);
-
--- name: update_forumthread_lastposter :exec
--- This query updates the "lastposter" column in the "forumthread" table.
--- It sets the "lastposter" column to the latest "users_idusers" value from the "comments" table for the corresponding "forumthread_idforumthread".
-UPDATE forumthread
-SET lastposter = (
+), lastposter = (
     SELECT users_idusers
     FROM comments
     WHERE forumthread_idforumthread = idforumthread
     ORDER BY written DESC
     LIMIT 1
-);
-
--- name: update_forumthread_firstpost :exec
--- This query updates the "firstpost" column in the "forumthread" table.
--- It sets the "firstpost" column to the ID of the first comment from the "comments" table for the corresponding "forumthread_idforumthread".
-UPDATE forumthread
-SET firstpost = (
+), firstpost = (
     SELECT idcomments
     FROM comments
     WHERE forumthread_idforumthread = idforumthread
     LIMIT 1
 );
 
--- name: update_forumtopic_threads :exec
--- This query updates the "threads" column in the "forumtopic" table.
--- It sets the "threads" column to the count of forum threads from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
+-- name: update_forumtopics :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)
     FROM forumthread
     WHERE forumtopic_idforumtopic = idforumtopic
-);
-
--- name: update_forumtopic_comments :exec
--- This query updates the "comments" column in the "forumtopic" table.
--- It sets the "comments" column to the sum of comments from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
-UPDATE forumtopic
-SET comments = (
+), comments = (
     SELECT SUM(comments)
     FROM forumthread
     WHERE forumtopic_idforumtopic = idforumtopic
-);
-
--- name: update_forumtopic_lastaddition_lastposter :exec
--- This query updates the "lastaddition" and "lastposter" columns in the "forumtopic" table.
--- It sets the "lastaddition" column to the latest "lastaddition" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
--- It sets the "lastposter" column to the latest "lastposter" value from the "forumthread" table for the corresponding "forumtopic_idforumtopic".
-UPDATE forumtopic
-SET lastaddition = (
+), lastaddition = (
     SELECT lastaddition
     FROM forumthread
     WHERE forumtopic_idforumtopic = idforumtopic
     ORDER BY lastaddition DESC
     LIMIT 1
-),
-lastposter = (
+), lastposter = (
     SELECT lastposter
     FROM forumthread
     WHERE forumtopic_idforumtopic = idforumtopic
     ORDER BY lastaddition DESC
     LIMIT 1
 );
+
+-- name: update_forumthread :exec
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+), lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    LIMIT 1
+)
+WHERE idforumthread = ?;
+
+-- name: update_forumtopic :exec
+UPDATE forumtopic
+SET threads = (
+    SELECT COUNT(idforumthread)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+), comments = (
+    SELECT SUM(comments)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+), lastaddition = (
+    SELECT lastaddition
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+), lastposter = (
+    SELECT lastposter
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+)
+WHERE idforumtopic = ?;
 
 -- name: blogid_to_userid :one
 SELECT idusers
@@ -804,6 +819,11 @@ WHERE t.idforumthread=? LIMIT 1;
 -- name: makePost :exec
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
 VALUES (?, ?, ?, ?, NOW());
+
+-- name: getComment :one
+SELECT c.*
+FROM comments c
+WHERE c.Idcomments=?;
 
 -- name: makeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);

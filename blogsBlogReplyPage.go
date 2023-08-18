@@ -41,34 +41,34 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var pthid int32 = blog.ForumthreadIdforumthread
-	if pthid == 0 {
-		ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
-			String: "A BLOGGER TOPIC",
-			Valid:  true,
+	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
+		String: "A BLOGGER TOPIC",
+		Valid:  true,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
+			ForumcategoryIdforumcategory: 0,
+			Title: sql.NullString{
+				String: "A BLOGGER TOPIC",
+				Valid:  true,
+			},
+			Description: sql.NullString{
+				String: "THIS IS A HIDDEN FORUM FOR A BLOGGER TOPIC",
+				Valid:  true,
+			},
 		})
-		if errors.Is(err, sql.ErrNoRows) {
-			ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
-				ForumcategoryIdforumcategory: 0,
-				Title: sql.NullString{
-					String: "A BLOGGER TOPIC",
-					Valid:  true,
-				},
-				Description: sql.NullString{
-					String: "THIS IS A HIDDEN FORUM FOR A BLOGGER TOPIC",
-					Valid:  true,
-				},
-			})
-			if err != nil {
-				log.Printf("Error: makeTopic: %s", err)
-				http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-				return
-			}
-			ptid = int32(ptidi)
-		} else if err != nil {
-			log.Printf("Error: findForumTopicByName: %s", err)
+		if err != nil {
+			log.Printf("Error: makeTopic: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
+		ptid = int32(ptidi)
+	} else if err != nil {
+		log.Printf("Error: findForumTopicByName: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if pthid == 0 {
 		pthidi, err := queries.makeThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
@@ -133,26 +133,14 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := queries.update_forumthread(r.Context(), makePostParams{
-		ForumthreadIdforumthread: pthid,
-	}); err != nil {
+	if err := queries.update_forumthread(r.Context(), pthid); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), makePostParams{
-		ForumthreadIdforumthread: pthid,
-	}); err != nil {
+	if err := queries.update_forumtopic(r.Context(), ptid); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	if err := queries.update_forumcategory(r.Context(), makePostParams{
-		ForumthreadIdforumthread: pthid,
-	}); err != nil {
-		log.Printf("Error: update_forumcategory: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

@@ -34,6 +34,19 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/forum",
 	}
+	/* TODO
+	-- name: postUpdate :exec
+	UPDATE comments c, forumthread th, forumtopic t
+	SET
+	th.lastposter=c.users_idusers, t.lastposter=c.users_idusers,
+	th.lastaddition=c.written, t.lastaddition=c.written,
+	t.comments=IF(th.comments IS NULL, 0, t.comments+1),
+	t.threads=IF(th.comments IS NULL, IF(t.threads IS NULL, 1, t.threads+1), t.threads),
+	th.comments=IF(th.comments IS NULL, 0, th.comments+1),
+	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
+	WHERE c.idcomments=?;
+	*/
+
 	if err := queries.update_forumthreads(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update_forumthread_firstpost: %w", err).Error())
 	}

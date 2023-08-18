@@ -102,6 +102,18 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	/* TODO
+	-- name: postUpdate :exec
+	UPDATE comments c, forumthread th, forumtopic t
+	SET
+	th.lastposter=c.users_idusers, t.lastposter=c.users_idusers,
+	th.lastaddition=c.written, t.lastaddition=c.written,
+	t.comments=IF(th.comments IS NULL, 0, t.comments+1),
+	t.threads=IF(th.comments IS NULL, IF(t.threads IS NULL, 1, t.threads+1), t.threads),
+	th.comments=IF(th.comments IS NULL, 0, th.comments+1),
+	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
+	WHERE c.idcomments=?;
+	*/
 	if err := queries.update_forumthread(r.Context(), int32(threadId)); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

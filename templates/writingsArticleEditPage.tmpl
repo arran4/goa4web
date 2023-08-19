@@ -1,0 +1,22 @@
+{{ template "head" $ }}
+    {{ if or (eq .Category 0) (eq .WritingID 0) }}
+        Please use the normal "Writing browser" to find the category you want your document to be in, then click "write writing."
+    {{ else }}
+        {{ if .Results }}
+            <font size="4">New writing:</font><br>
+            (Please select an appropriate section before writing this.)<br>
+            <form method="post" action="?category={{ .Category }}&section=list">
+                <input type="hidden" name="pwcid" value="{{ .Category }}">
+                <input type="hidden" name="wid" value="{{ .WritingID }}">
+                Title:<br><input name="title" value="{{ .Title }}"><br>
+                Abstract:<br><textarea name="abstract" cols="60" rows="10">{{ .Abstract }}</textarea><br>
+                Writing:<br><textarea name="body" cols="60" rows="30">{{ .Writing }}</textarea><br>
+                Private writing: <input type="checkbox" name="isitprivate" {{ if .Private }}checked{{ end }}><br>
+                {{ lang_combobox .Context .Context.Pref.DefaultLang }}
+                <input type="submit" name="task" value="Update writing">
+            </form>
+        {{ else }}
+            Sorry, there is no article that you can edit here.
+        {{ end }}
+    {{ end }}
+{{ template "tail" $ }}

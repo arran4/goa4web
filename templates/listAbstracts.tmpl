@@ -1,0 +1,28 @@
+{{ define "listAbstracts" }}
+    {{ if eq .Level "auth_administrator" }}
+        [<a href="?section=addwriting&category={{ .Category }}">Write writing here.</a>]<br>
+    {{ end }}
+    {{ if .Results }}
+        <font size="4">Writing abstracts:</font><br>
+    {{ else }}
+        {{ .Results | len | eq 0 }}
+        {{- return -}}
+    {{ end }}
+    {{ range .Results }}
+        {{ $title := .Title | html }}
+        {{ $username := .Username }}
+        {{ $published := .Published }}
+        {{ $abstract := .Abstract | html }}
+        {{ $idwriting := .IDWriting }}
+        {{ $private := .Private }}
+        {{ $comments := .Comments }}
+        <table width="100%">
+            <tr><th bgcolor="lightgrey">{{ $title }} By {{ $username }} on {{ $published }}
+                {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}
+            </th></tr>
+            <tr><td>Abstract:<br>{{ $abstract }}
+                <br>-<br><a href="?category={{ $.Category }}&section=read&article={{ $idwriting }}">Read now</a> - {{ $comments }} comments exist.
+            </td></tr>
+        </table>
+    {{ end }}
+{{ end }}

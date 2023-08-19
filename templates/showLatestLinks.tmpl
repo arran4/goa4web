@@ -1,0 +1,39 @@
+{{ define "showLatestLinks" }}
+    <table width="100%">
+        {{- if .Links }}
+            {{- range .Links }}
+                <tr>
+                    <th bgcolor="lightgrey">{{ .CategoryTitle }}: <a href="{{ .URL }}" target="_BLANK">{{ .Title }}</a></th>
+                </tr>
+                <tr>
+                    <td>
+                        {{ .Description | code2html }}<hr>
+                        {{ .Username }} - Listed: {{ .Listed }} - [<a href="?section=comment&link={{ .Idlinker }}">COMMENTS</a>]<br>
+                    </td>
+                </tr>
+            {{- end }}
+        {{- else }}
+            {{- if .Offset }}
+                {{- if .CatId }}
+                    <tr>
+                        <td>There are no more links under this category.</td>
+                    </tr>
+                {{- else }}
+                    <tr>
+                        <td>There are no more links.</td>
+                    </tr>
+                {{- end }}
+            {{- else }}
+                {{- if .CatId }}
+                    <tr>
+                        <td>Nothing under this category.</td>
+                    </tr>
+                {{- else }}
+                    <tr>
+                        <td>There are no links here.</td>
+                    </tr>
+                {{- end }}
+            {{- end }}
+        {{- end }}
+    </table><br>
+{{ end }}

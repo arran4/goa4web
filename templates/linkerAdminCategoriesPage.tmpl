@@ -1,0 +1,35 @@
+{{ template "head" $ }}
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Options</th>
+        </tr>
+        {{- range .Categories }}
+            <tr>
+                <td>{{ .Idlinkercategory }}</td>
+                <td>
+                    <form method="post">
+                        <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
+                        <input name="cname" value="{{ .Title.String }}">
+                </td>
+                <td>
+                    <input type="submit" name="task" value="Rename Category">
+                    <input type="submit" name="task" value="Delete Category">
+                    </form>
+                </td>
+            </tr>
+        {{- end }}
+        <tr>
+            <td>NEW</td>
+            <td>
+                <form method="post">
+                    <input name="cname" value="">
+            </td>
+            <td>
+                <input type="submit" name="task" value="Create Category">
+                </form>
+            </td>
+        </tr>
+    </table>
+{{ template "tail" $ }}

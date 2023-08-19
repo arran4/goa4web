@@ -1,0 +1,25 @@
+{{ template "head" $ }}
+    {{ if .ImagePosts }}
+        <font size="4">Picture:</font><br>
+        {{ range .ImagePosts }}
+            <table>
+                <tr>
+                    <th><a href="{{ .FullImage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
+                    <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ .Posted.Time }}
+            </table><br>
+        {{ end }}
+    {{ end }}
+    {{ if .ForumthreadIdforumthread }}
+		{{ template "threadComments" $ }}
+    {{ end }}
+    {{ if .UserUID }}
+        <font size="4">Reply:</font><br>
+        <form method="post" action="?board={{ .BoardNo }}">
+            <input type="hidden" name="replyTo" value="{{ .ForumthreadIdforumthread }}">
+            <input type="hidden" name="ipid" value="{{ .Imagepost.Idimagepost }}">
+            <textarea name="replytext" cols="40" rows="20"></textarea><br>
+            {{ template "languageCombobox" $ }}
+            <input type="submit" name="task" value="Reply">
+        </form>
+    {{ end }}
+{{ template "tail" $ }}

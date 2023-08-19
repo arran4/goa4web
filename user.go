@@ -41,6 +41,60 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 
 		// TODO session.Values["ExpiryTime"]
 
+		// TODO inject user security levels / scopes into session and context
+		/*
+
+			if (section == NULL)
+				section = "all";
+			a4string query("SELECT level FROM permissions "
+					"WHERE users_idusers=\"%d\" AND (section=\"%s\" OR section=\"all\")",
+					cont.user.UID, section);
+			a4mysqlResult *result = cont.sql.query(query.raw());
+			enum authlevels returnthis = auth_reader;
+			if (result->hasRow())
+			{
+				char *tmp = result->getColumn(0);
+				if (!strcasecmp(tmp, "reader"))
+					returnthis = auth_reader;
+				else if (!strcasecmp(tmp, "writer"))
+					returnthis = auth_writer;
+				else if (!strcasecmp(tmp, "moderator"))
+					returnthis = auth_moderator;
+				else if (!strcasecmp(tmp, "administrator"))
+					returnthis = auth_administrator;
+			}
+			delete result;
+			return returnthis;
+
+
+		*/
+		// TODO inject user preferences into session and context
+		/*
+
+				a4string query("SELECT language_idlanguage FROM preferences WHERE users_idusers=\"%d\"", user.UID);
+			a4mysqlResult *result = sql.query(query.raw());
+			if (result->hasRow())
+			{
+				defaultLang = atoiornull(result->getColumn(0));
+				while (result->nextRow());
+			}
+			delete result;
+			query.set("SELECT language_idlanguage FROM userlang WHERE users_idusers=\"%d\"", user.UID);
+			result = sql.query(query.raw());
+			if (result->hasRow())
+			{
+				setlangMod++;
+				langMod.push("language_idlanguage IN (");
+				langMod.pushf("0");
+				do
+					langMod.pushf(", %s", result->getColumn(0));
+				while (result->nextRow());
+				langMod.push(") ");
+			}
+			delete result;
+
+		*/
+
 		ctx := context.WithValue(request.Context(), ContextValues("session"), session)
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})

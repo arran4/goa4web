@@ -1,0 +1,44 @@
+{{ template "head" $ }}
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Level</th>
+            <th>Delete?</th>
+        </tr>
+        {{- range .Results }}
+        <tr>
+            <td>{{ .Idpermissions }}</td>
+            <td>{{ .Username }}</td>
+            <td>{{ .Email }}</td>
+            <td>{{ .Level }}</td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="permid" value="{{ .Idpermissions }}">
+                    <input type="submit" name="task" value="User Disallow">
+                </form>
+            </td>
+        </tr>
+        {{- end }}
+        <tr>
+            <td>
+                <form method="post">NEW</td>
+            <td><input name="username"></td>
+            <td>?</td>
+            <td>
+                <select name="level">
+                    <option value="reader">reader</option>
+                    <option value="writer">writer</option>
+                    <option value="moderator">moderator</option>
+                    <option value="administrator">administrator</option>
+                </select>
+            </td>
+            <td>
+                <input type="submit" name="task" value="User Allow">
+            </td>
+            </form>
+        </tr>
+    </table>
+    Permissions should be valid only.
+{{ template "tail" $ }}

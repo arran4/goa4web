@@ -1,0 +1,37 @@
+{{ define "showLinkComments" }}
+    {{ with .Result }}
+        {{ range . }}
+            <table width="100%">
+                <tr>
+                    <th bgcolor="lightgrey">{{ .LinkerCategoryTitle }}: <a href="{{ .LinkURL }}" target="_BLANK">{{ .LinkTitle }}</a></th>
+                </tr>
+                <tr>
+                    <td>
+                        {{ .LinkDescriptionHTML }}
+                        <hr>
+                        {{ .LinkUsername }} - Listed: {{ .LinkListed }}
+                    </td>
+                </tr>
+            </table><br>
+        {{ end }}
+    {{ else }}
+        Dead. No LINK!<br>
+    {{ end }}
+
+    {{ with .ThreadID }}
+        {{ if . }}
+            {{ template "printThread" . }}
+        {{ end }}
+    {{ end }}
+
+    {{ if .UserUID }}
+        <font size="4">Reply:</font><br>
+        <form method="post">
+            <input type="hidden" name="replyTo" value="{{ .ThreadID }}">
+            <input type="hidden" name="lpid" value="{{ .LinkID }}">
+            <textarea name="replytext" cols="40" rows="20"></textarea><br>
+            {{ lang_combobox . .Pref.DefaultLang }}
+            <input type="submit" name="task" value="Reply">
+        </form>
+    {{ end }}
+{{ end }}

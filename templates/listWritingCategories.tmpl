@@ -1,0 +1,59 @@
+{{ define "listWritingCategory" }}
+    {{ with .Result }}
+        {{ if . }}
+            {{ range . }}
+                <font size="4">{{ if .IDWritingCategory }}Sub-{{ end }}Categories:</font><br>
+                <table>
+                    {{ range . }}
+                        {{ $title := .Title }}
+                        {{ $description := .Description }}
+                        {{ $id := .IDWritingCategory }}
+                        {{ if .Admin }}
+                            <tr>
+                                <th><a href="?section=modifycategories&category={{ $id }}">{{ $title }}</a></th>
+                                <td>{{ $description }}</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <form method="post">
+                                        <input name="name" value="{{ $title }}">
+                                    </td>
+                                    <td>
+                                        <textarea name="desc">{{ $description }}</textarea>
+                                    </td>
+                                    <input type="hidden" name="wcid" value="{{ $id }}">
+                                    <input type="hidden" name="pwcid" value="{{ .IDWritingCategory }}">
+                                    <td>
+                                        <input type="submit" name="task" value="Modify category">
+                                    </form>
+                                </td>
+                            </tr>
+                        {{ else }}
+                            <tr>
+                                <th><a href="?section=list&category={{ $id }}">{{ $title }}</a></th>
+                                <td>{{ $description }}</td>
+                            </tr>
+                        {{ end }}
+                    {{ end }}
+                    {{ if .Admin }}
+                        <tr>
+                            <td>
+                                <form method="post">
+                                    <input name="name" value="New">
+                                </td>
+                                <td>
+                                    <textarea name="desc">New</textarea>
+                                </td>
+                                <input type="hidden" name="wcid" value="0">
+                                <input type="hidden" name="pwcid" value="{{ .IDWritingCategory }}">
+                                <td>
+                                    <input type="submit" name="task" value="New category">
+                                </form>
+                            </td>
+                        </tr>
+                    {{ end }}
+                </table><br>
+            {{ end }}
+        {{ end }}
+    {{ end }}
+{{ end }}

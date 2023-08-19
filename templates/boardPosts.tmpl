@@ -1,0 +1,12 @@
+{{ define "boardPosts" }}
+    {{ if .Posts }}
+        <font size="4">Pictures:</font><br>
+        {{ range .Posts }}
+            <table>
+                <tr>
+                    <th><a href="{{ .FullImage }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
+                    <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ .Posted }} - [<a href="?section=reply&image={{ .ID }}&board={{ .BoardID }}">{{ .Comments }} COMMENTS</a>]
+            </table><br>
+        {{ end }}
+    {{ end }}
+{{ end }}

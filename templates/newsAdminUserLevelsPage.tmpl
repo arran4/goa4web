@@ -1,0 +1,41 @@
+{{ template "head" $ }}
+    {{ with .PermissionResult }}
+        <table border=1>
+        <tr>
+            <th>ID
+            <th>User
+            <th>Email
+            <th>Level
+            <th>Delete?
+        {{ range .Rows }}
+            <tr>
+            <td>{{ .GetColumn "idpermissions" }}
+            <td>{{ .GetColumn "username" }}
+            <td>{{ .GetColumn "email" }}
+            <td>{{ .GetColumn "level" }}
+            <td>
+                <form method="post">
+                <input type="hidden" name="id" value="{{ .GetColumn "idpermissions" }}">
+                <input type="submit" name="exec" value="remove">
+                </form>
+            </tr>
+        {{ end }}
+        <tr>
+            <td><form method="post">NEW</td>
+            <td><input name="username"></td>
+            <td>?</td>
+            <td>
+                <select name="level">
+                    <option value="{{ .auth_reader }}">reader
+                    <option value="{{ .auth_writer }}">writer
+                    <option value="{{ .auth_moderator }}">moderator
+                    <option value="{{ .auth_administrator }}">administrator
+                </select>
+            </td>
+            <td><input type="submit" name="exec" value="allow"></form></td>
+        </tr>
+        </table>
+    {{ else }}
+        Oddly, no permissions granted. {{ .Errors }}<br>
+    {{ end }}
+{{ template "tail" $ }}

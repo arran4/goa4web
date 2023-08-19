@@ -22,6 +22,7 @@ const (
 )
 
 func notifyChange(ctx context.Context, svc sesiface.SESAPI, email string, page string) error {
+	// TODO Make this periodically check db to see if there is anything queued, and normally queue up messages
 	if email == "" {
 		return fmt.Errorf("no email specified")
 	}

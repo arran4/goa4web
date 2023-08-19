@@ -74,6 +74,8 @@ func main() {
 	r.Use(UserAdderMiddleware)
 	r.Use(CoreAdderMiddleware)
 
+	// TODO consider adsense / adwords / etc
+
 	r.HandleFunc("/main.css", func(writer http.ResponseWriter, request *http.Request) {
 		_, _ = writer.Write(getMainCSSData())
 	}).Methods("GET")
@@ -81,9 +83,18 @@ func main() {
 	// News
 	r.HandleFunc("/", newsPage).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
-	//nr.HandleFunc(".rss", newsRssPage).Methods("GET")
+	//TODO nr.HandleFunc(".rss", newsRssPage).Methods("GET")
 	nr.HandleFunc("", newsPage).Methods("GET")
-	//nr.HandleFunc("{id:[0-9]+}", newsPostPage).Methods("GET")
+	nr.HandleFunc("", taskDoneAutoRefreshPage).Methods("POST")
+	//TODO nr.HandleFunc("/news/{id:[0-9]+}", newsPostPage).Methods("GET")
+	nr.HandleFunc("/news/{post}", newsPostPage).Methods("GET")
+	nr.HandleFunc("/news/{post}", taskDoneAutoRefreshPage).Methods("POST")
+	nr.HandleFunc("/news/{post}", newsPostReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Reply"))
+	nr.HandleFunc("/news/{post}", newsPostEditActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher("Edit"))
+	nr.HandleFunc("/news/{post}", newsPostNewActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher("New Post"))
+	nr.HandleFunc("/news/admin/users/levels", newsAdminUserLevelsPage).Methods("GET")
+	nr.HandleFunc("/news/admin/users/levels", newsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("allow"))
+	nr.HandleFunc("/news/admin/users/levels", newsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("remove"))
 
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.HandleFunc("", faqPage).Methods("GET", "POST")
@@ -167,19 +178,45 @@ func main() {
 	//lr.HandleFunc(".rss", linkerRssPage).Methods("GET")
 	//lr.HandleFunc(".atom", linkerAtomPage).Methods("GET")
 	lr.HandleFunc("", linkerPage).Methods("GET")
+	lr.HandleFunc("/categories", linkerCategoriesPage).Methods("GET")
+	lr.HandleFunc("/category/{category}", linkerCategoryPage).Methods("GET")
+	lr.HandleFunc("/comments/{link}", linkerCommentsPage).Methods("GET")
+	lr.HandleFunc("/comments/{link}", linkerCommentsReplyPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
+	lr.HandleFunc("/show/{link}", linkerShowPage).Methods("GET")
+	lr.HandleFunc("/show/{link}", linkerShowReplyPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
+	lr.HandleFunc("/suggest", linkerSuggestPage).Methods("GET")
+	lr.HandleFunc("/suggest", linkerSuggestActionPage).Methods("POST").MatcherFunc(TaskMatcher("Suggest"))
+	lr.HandleFunc("/admin/categories", linkerAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	lr.HandleFunc("/admin/categories", linkerAdminCategoriesUpdatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update"))
+	lr.HandleFunc("/admin/categories", linkerAdminCategoriesRenamePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Rename Category"))
+	lr.HandleFunc("/admin/categories", linkerAdminCategoriesDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete Category"))
+	lr.HandleFunc("/admin/categories", linkerAdminCategoriesCreatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Create Category"))
+	lr.HandleFunc("/admin/add", linkerAdminAddPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	lr.HandleFunc("/admin/add", linkerAdminAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Add"))
+	lr.HandleFunc("/admin/queue", linkerAdminQueuePage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	lr.HandleFunc("/admin/queue", linkerAdminQueueDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete"))
+	lr.HandleFunc("/admin/queue", linkerAdminQueueApprovePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Approve"))
+	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
 	bmr.HandleFunc("", bookmarksPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET", "POST").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	bmr.HandleFunc("/edit", bookmarksEditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Save"))
 	bmr.HandleFunc("/edit", bookmarksEditCreateActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Create"))
+	bmr.HandleFunc("/edit", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiresAnAccount())
 
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	//ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
 	//ibr.HandleFunc("/board/{boardno:[0-9+}.rss", imagebbsBoardRssPage).Methods("GET")
 	//ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")
 	//ibr.HandleFunc("/board/{boardno:[0-9+}.atom", imagebbsBoardAtomPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPostImageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Add offsite image"))
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Reply"))
 	ibr.HandleFunc("", imagebbsPage).Methods("GET")
 	ibr.HandleFunc("/admin", imagebbsAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	ibr.HandleFunc("/admin/boards", imagebbsAdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
@@ -191,17 +228,55 @@ func main() {
 
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", searchPage).Methods("GET")
+	sr.HandleFunc("", searchResultForumActionPage).Methods("POST").MatcherFunc(TaskMatcher("Search forum"))
+	sr.HandleFunc("", searchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher("Search news"))
+	sr.HandleFunc("", searchResultLinkerActionPage).Methods("POST").MatcherFunc(TaskMatcher("Search linker"))
+	sr.HandleFunc("", searchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher("Search blogs"))
+	sr.HandleFunc("", searchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher("Search writings"))
 
 	wr := r.PathPrefix("/writings").Subrouter()
 	//wr.HandleFunc(".rss", writingsRssPage).Methods("GET")
 	//wr.HandleFunc(".atom", writingsAtomPage).Methods("GET")
 	wr.HandleFunc("", writingsPage).Methods("GET")
+	wr.HandleFunc("/add", writingsArticleAddPage).Methods("GET").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator")))
+	wr.HandleFunc("/add", writingsArticleAddActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher("Update writing"))
+	wr.HandleFunc("/article/{article}", writingsArticlePage).Methods("GET")
+	wr.HandleFunc("/article/{article}", writingsArticleReplyActionPage).Methods("POST").MatcherFunc(TaskMatcher("Reply"))
+	wr.HandleFunc("/article/{article}/edit", writingsArticleEditPage).Methods("GET").MatcherFunc(Or(And(RequiredAccess("writer"), WritingAuthor()), RequiredAccess("administrator")))
+	wr.HandleFunc("/article/{article}/edit", writingsArticleEditActionPage).Methods("POST").MatcherFunc(Or(And(RequiredAccess("writer"), WritingAuthor()), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher("Update writing"))
+	wr.HandleFunc("/categories", writingsCategoriesPage).Methods("GET")
+	wr.HandleFunc("/category", writingsCategoryPage).Methods("GET")
+	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
+	wr.HandleFunc("/admin/users/access", writingsAdminUserAccessPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/admin/users/access", writingsAdminUserAccessAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	wr.HandleFunc("/admin/users/access", writingsAdminUserAccessRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
+	wr.HandleFunc("/admin/categories", writingsAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/admin/categories", writingsAdminCategoriesUpdatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Update"))
+	wr.HandleFunc("/admin/categories", writingsAdminCategoriesModifyPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Modify Category"))
+	wr.HandleFunc("/admin/categories", writingsAdminCategoriesDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Delete Category"))
+	wr.HandleFunc("/admin/categories", writingsAdminCategoriesCreatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Create Category"))
 
 	ir := r.PathPrefix("/information").Subrouter()
 	ir.HandleFunc("", informationPage).Methods("GET")
 
 	ur := r.PathPrefix("/user").Subrouter()
-	ur.HandleFunc("", userPage).Methods("GET")
+	ur.HandleFunc("", userPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
+	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Save languages"))
+	ur.HandleFunc("/email", userEmailPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("/email", userEmailSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Save all"))
+	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Test mail"))
+
+	rr := r.PathPrefix("/register").Subrouter()
+	rr.HandleFunc("", registerPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
+	rr.HandleFunc("", registerActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(TaskMatcher("Register"))
+
+	ulr := r.PathPrefix("/login").Subrouter()
+	ulr.HandleFunc("", loginPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
+	ulr.HandleFunc("", loginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(TaskMatcher("Login"))
 
 	ar := r.PathPrefix("/admin").MatcherFunc(RequiredAccess("administrator")).Subrouter()
 	ar.Use(AdminCheckerMiddleware)
@@ -324,6 +399,24 @@ func RequiresAnAccount() mux.MatcherFunc {
 	}
 }
 
+func NewsPostAuthor() mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		vars := mux.Vars(request)
+		newsPostId, _ := strconv.Atoi(vars["post"])
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		uid, _ := session.Values["UID"].(int32)
+
+		row, err := queries.getNewsById(request.Context(), int32(newsPostId))
+		if err != nil {
+			log.Printf("Error: %s", err)
+			return false
+		}
+
+		return row.UsersIdusers == uid
+	}
+}
+
 func BlogAuthor() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		vars := mux.Vars(request)
@@ -333,6 +426,29 @@ func BlogAuthor() mux.MatcherFunc {
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.show_blog(request.Context(), int32(blogId))
+		if err != nil {
+			log.Printf("Error: %s", err)
+			return false
+		}
+
+		return row.UsersIdusers == uid
+	}
+}
+
+func WritingAuthor() mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		vars := mux.Vars(request)
+		writingId, _ := strconv.Atoi(vars["writing"])
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		uid, _ := session.Values["UID"].(int32)
+
+		row, err := queries.fetchWritingById(request.Context(), fetchWritingByIdParams{
+			// TODO wtf? Fix query
+			UsersIdusers:   uid,
+			Idwriting:      int32(writingId),
+			UsersIdusers_2: uid,
+		})
 		if err != nil {
 			log.Printf("Error: %s", err)
 			return false

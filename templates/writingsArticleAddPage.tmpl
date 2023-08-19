@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+    <font size="4">New writing:</font><br>
+    (Please select an appropriate section before writing this.)<br>
+    <form method="post" action="?category={{ .Category }}&section=list">
+        <input type="hidden" name="pwcid" value="{{ .Category }}">
+        Title:<br><input name="title"><br>
+        Abstract:<br><textarea name="abstract" cols="60" rows="10"></textarea><br>
+        Writing:<br><textarea name="body" cols="60" rows="30"></textarea><br>
+        Private writing: <input type="checkbox" name="isitprivate"><br>
+        {{ template "lang_combobox" .LangOptions }}
+        <input type="submit" name="task" value="Submit writing">
+    </form>
+{{ template "tail" $ }}

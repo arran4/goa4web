@@ -1,0 +1,8 @@
+{{ define "categoryCombobox" }}
+    Please select appropriate category:
+    <select name="category">
+        {{- range .Categories }}
+            <option value="{{ .Idlinkercategory }}"{{ if eq .Idlinkercategory $.Selected }} selected{{ end }}>{{ .Title.String }}</option>
+        {{- end }}
+    </select><br>
+{{ end }}

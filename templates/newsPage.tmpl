@@ -1,2 +1,5 @@
 {{ template "head" $ }}
+    {{ range .News }}
+        {{ template "newsPost" $ }}
+    {{ end }}
 {{ template "tail" $ }}

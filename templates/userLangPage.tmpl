@@ -1,0 +1,18 @@
+{{ template "head" $ }}
+    <form method="post">
+    {{ range .LanguageOptions }}
+        <input type="checkbox" name="language{{ .ID }}"{{ if .IsSelected }} checked{{ end }}>{{ .Name }}<br>
+    {{ end }}
+    <input type="submit" name="dothis" value="Save languages"><br>
+    <br>
+    Please pick your default language:
+    <select name="defaultLanguage">
+    {{ range .LanguageOptions }}
+        <option value="{{ .ID }}"{{ if .IsDefault }} selected{{ end }}>{{ .Name }}</option>
+    {{ end }}
+    </select>
+    <input type="submit" name="dothis" value="Save language"><br>
+    <br>
+    <input type="submit" name="dothis" value="Save all">
+    </form>
+{{ template "tail" $ }}

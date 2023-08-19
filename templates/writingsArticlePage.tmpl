@@ -1,0 +1,38 @@
+{{ template "head" $ }}
+    {{ template "writingCategoryBreadcrumbs" $ }}
+    {{ with .Result }}
+        {{ if . }}
+            {{ range . }}
+                <font size="4">At {{ .WritingPublished }}, By {{ .WritingUsername }}; {{ .WritingTitleHTML }}</font>:
+                {{ if .WritingPrivate }} (Restricted access) {{ end }}
+                {{ if or .EditDoc .IsAuthor }}
+                    [<a href="?section=edit&category={{ .WritingCategoryID }}&article={{ .WritingID }}">EDIT</a>]
+                    {{ if .IsAuthor }} [<a href="?section=approvedusers&category={{ .WritingCategoryID }}&article={{ .WritingID }}">APPROVED USERS</a>] {{ end }}
+                {{ end }}
+                <br>
+                <strong>Abstract:</strong><br>
+                {{ .WritingAbstractHTML }}
+                <hr>
+                {{ .WritingWrittingHTML }}
+                {{ if .WritingForumThreadID }}
+                    <hr>Comments:<br>
+                    {{ template "threadComments" $ }}
+                    {{ if .UserUID }}
+                        <hr><font size="4">Reply:</font><br>
+                        <form method="post">
+                            <input type="hidden" name="replyTo" value="{{ .WritingForumThreadID }}">
+                            <textarea name="replytext" cols="40" rows="20"></textarea><br>
+                            {{ lang_combobox . .Pref.DefaultLang }}
+                            <input type="submit" name="task" value="Reply">
+                        </form>
+                    {{ else }}
+                        Please sign-in (or sign-up) to write a reply.<br>
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+        {{ else }}
+            Article doesn't exist.<br>
+        {{ end }}
+    {{ end }}
+
+{{ template "tail" $ }}

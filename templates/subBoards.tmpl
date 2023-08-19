@@ -1,0 +1,12 @@
+{{ define "subBoards" }}
+		{{ if .Boards }}
+			<font size="4">{{ if .IsSubBoard }}Sub-{{ end }}Boards:</font><br>
+			<table>
+				{{ range .Boards }}
+					<tr>
+						<th><a href="?board={{ .ID }}">{{ .Title }}</a>
+						<td>{{ .Description }}
+				{{ end }}
+			</table><br>
+		{{ end }}
+{{ end }}

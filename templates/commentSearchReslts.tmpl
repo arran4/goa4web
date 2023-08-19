@@ -1,0 +1,13 @@
+{{ define "commentSearchResults" }}
+	{{- if eq . "noResults" }}
+		<p>Nothing found.</p>
+	{{- else if eq . "emptyWords" }}
+		<p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+	{{- else }}
+		<ul>
+		{{- range $result := . }}
+			<li>thread: <a href="{{ printf "%s%s" $.urlequals $result }}">{{ $result }}</a></li>
+		{{- end }}
+		</ul>
+	{{ end }}
+{{ end }}

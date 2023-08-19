@@ -3313,7 +3313,7 @@ func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory
 	return items, nil
 }
 
-const showLinkComments = `-- name: showLinkComments :many
+const showLinkComments = `-- name: showLinkComments.tmpl :many
 SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforumthread, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers

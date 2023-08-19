@@ -1,0 +1,8 @@
+{{ define "showCategories" }}
+    Please select a category:<br>
+    <a href="/linker">All</a><br>
+    {{- range .Categories }}
+        <a href="/linker/category/{{ .Idlinkercategory }}">{{ .Title.String }}</a><br>
+    {{- end }}
+    <br>
+{{ end }}

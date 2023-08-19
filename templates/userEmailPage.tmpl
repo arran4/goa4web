@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+    Your registered email address is: {{ .UserData.Email }}<br>
+
+    <form method="post">
+        <input type="checkbox" name="emailupdates" {{ if .UserPreferences.EmailUpdates }}checked{{ end }}>Receive replies notifications via email<br>
+        <input type="submit" name="task" value="Save all"><br>
+        <input type="submit" name="task" value="Test mail"><br>
+    </form>
+{{ template "tail" $ }}

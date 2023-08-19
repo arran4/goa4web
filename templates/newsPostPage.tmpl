@@ -1,0 +1,15 @@
+{{ template "head" $ }}
+    {{ template "newsPost" $ }}
+    <hr><font size=4>Replies:</font>
+    {{ template "threadComments" $ }}
+    {{ if .Post.IsReplying }}
+        <a name="reply">
+        <font size=4>Reply:</font>
+        <form method="post" action="?show={{ .NewsID }}">
+            <input type="hidden" name="replyto" value="{{ .NewsID }}">
+            <textarea name="replytext" cols=40 rows=20></textarea><br>
+                {{ template "languageCombobox" $ }}
+            <input type="submit" name="dowhat" value="Reply">
+        </form>
+    {{ end }}
+{{ template "tail" $ }}

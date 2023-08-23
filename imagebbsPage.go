@@ -8,11 +8,27 @@ import (
 func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Boards      []*printSubBoardsRow
+		IsSubBoard  bool
+		BoardNumber int
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:    r.Context().Value(ContextValues("coreData")).(*CoreData),
+		IsSubBoard:  false,
+		BoardNumber: 0,
 	}
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	subBoardRows, err := queries.printSubBoards(r.Context(), 0)
+	if err != nil {
+		log.Printf("printSubBoards Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.Boards = subBoardRows
 
 	CustomImageBBSIndex(data.CoreData, r)
 

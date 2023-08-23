@@ -4,8 +4,8 @@
 			<table>
 				{{ range .Boards }}
 					<tr>
-						<th><a href="?board={{ .ID }}">{{ .Title }}</a>
-						<td>{{ .Description }}
+						<th><a href="/imagebbs/board/{{ .Idimageboard }}">{{ .Title.String }}</a>
+						<td>{{ .Description.String }}
 				{{ end }}
 			</table><br>
 		{{ end }}

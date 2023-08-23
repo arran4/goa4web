@@ -1577,7 +1577,7 @@ func (q *Queries) fetchWritingApprovals(ctx context.Context, writingIdwriting in
 	return items, nil
 }
 
-const fetchWritingById = `-- name: fetchWritingById :many
+const fetchWritingById = `-- name: fetchWritingById :one
 SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
 u.idusers, w.writingCategory_idwritingCategory
 FROM writing w
@@ -1607,39 +1607,23 @@ type fetchWritingByIdRow struct {
 	WritingcategoryIdwritingcategory int32
 }
 
-func (q *Queries) fetchWritingById(ctx context.Context, arg fetchWritingByIdParams) ([]*fetchWritingByIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, fetchWritingById, arg.UsersIdusers, arg.Idwriting, arg.UsersIdusers_2)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*fetchWritingByIdRow
-	for rows.Next() {
-		var i fetchWritingByIdRow
-		if err := rows.Scan(
-			&i.Title,
-			&i.Abstract,
-			&i.Writting,
-			&i.Username,
-			&i.Published,
-			&i.Idwriting,
-			&i.Private,
-			&i.Editdoc,
-			&i.ForumthreadIdforumthread,
-			&i.Idusers,
-			&i.WritingcategoryIdwritingcategory,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) fetchWritingById(ctx context.Context, arg fetchWritingByIdParams) (*fetchWritingByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, fetchWritingById, arg.UsersIdusers, arg.Idwriting, arg.UsersIdusers_2)
+	var i fetchWritingByIdRow
+	err := row.Scan(
+		&i.Title,
+		&i.Abstract,
+		&i.Writting,
+		&i.Username,
+		&i.Published,
+		&i.Idwriting,
+		&i.Private,
+		&i.Editdoc,
+		&i.ForumthreadIdforumthread,
+		&i.Idusers,
+		&i.WritingcategoryIdwritingcategory,
+	)
+	return &i, err
 }
 
 const fetchWritingByIdWithEdit = `-- name: fetchWritingByIdWithEdit :many
@@ -2016,15 +2000,22 @@ func (q *Queries) getLangs(ctx context.Context, usersIdusers int32) (int32, erro
 }
 
 const getNewsThreadId = `-- name: getNewsThreadId :one
-SELECT s.forumthread_idforumthread FROM siteNews s, users u
-WHERE s.users_idusers = u.idusers AND s.idsiteNews = ?
+SELECT s.forumthread_idforumthread, u.idusers
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+WHERE s.idsiteNews = ?
 `
 
-func (q *Queries) getNewsThreadId(ctx context.Context, idsitenews int32) (int32, error) {
+type getNewsThreadIdRow struct {
+	ForumthreadIdforumthread int32
+	Idusers                  sql.NullInt32
+}
+
+func (q *Queries) getNewsThreadId(ctx context.Context, idsitenews int32) (*getNewsThreadIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getNewsThreadId, idsitenews)
-	var forumthread_idforumthread int32
-	err := row.Scan(&forumthread_idforumthread)
-	return forumthread_idforumthread, err
+	var i getNewsThreadIdRow
+	err := row.Scan(&i.ForumthreadIdforumthread, &i.Idusers)
+	return &i, err
 }
 
 const getSecurityLevel = `-- name: getSecurityLevel :one
@@ -2756,20 +2747,24 @@ func (q *Queries) printBoardPosts(ctx context.Context, imageboardIdimageboard in
 }
 
 const printImagePost = `-- name: printImagePost :many
-SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.forumthread_idforumthread, i.idimagepost
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.idimagepost = ?
 `
 
 type printImagePostRow struct {
+	Idimagepost              int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	ImageboardIdimageboard   int32
+	Posted                   sql.NullTime
 	Description              sql.NullString
 	Thumbnail                sql.NullString
 	Fullimage                sql.NullString
 	Username                 sql.NullString
-	Posted                   sql.NullTime
-	ForumthreadIdforumthread int32
-	Idimagepost              int32
+	Comments                 sql.NullInt32
 }
 
 func (q *Queries) printImagePost(ctx context.Context, idimagepost int32) ([]*printImagePostRow, error) {
@@ -2782,13 +2777,16 @@ func (q *Queries) printImagePost(ctx context.Context, idimagepost int32) ([]*pri
 	for rows.Next() {
 		var i printImagePostRow
 		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.ImageboardIdimageboard,
+			&i.Posted,
 			&i.Description,
 			&i.Thumbnail,
 			&i.Fullimage,
 			&i.Username,
-			&i.Posted,
-			&i.ForumthreadIdforumthread,
-			&i.Idimagepost,
+			&i.Comments,
 		); err != nil {
 			return nil, err
 		}
@@ -3313,7 +3311,7 @@ func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory
 	return items, nil
 }
 
-const showLinkComments = `-- name: showLinkComments.tmpl :many
+const showLinkComments = `-- name: showLinkComments :many
 SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforumthread, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers

@@ -627,9 +627,10 @@ UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WH
 SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?;
 
 -- name: printImagePost :many
-SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.forumthread_idforumthread, i.idimagepost
+SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.idimagepost = ?;
 
 -- name: printBoardPosts :many
@@ -672,8 +673,10 @@ LEFT JOIN users u ON s.users_idusers = u.idusers
 WHERE s.idsiteNews = ?;
 
 -- name: getNewsThreadId :one
-SELECT s.forumthread_idforumthread FROM siteNews s, users u
-WHERE s.users_idusers = u.idusers AND s.idsiteNews = ?;
+SELECT s.forumthread_idforumthread, u.idusers
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+WHERE s.idsiteNews = ?;
 
 -- name: assignNewsThisThreadId :exec
 UPDATE siteNews SET forumthread_idforumthread = ? WHERE idsiteNews = ?;
@@ -946,7 +949,7 @@ WHERE idwriting = ?;
 INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
--- name: fetchWritingById :many
+-- name: fetchWritingById :one
 SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
 u.idusers, w.writingCategory_idwritingCategory
 FROM writing w

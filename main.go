@@ -407,13 +407,13 @@ func NewsPostAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.getNewsById(request.Context(), int32(newsPostId))
+		row, err := queries.getNewsThreadId(request.Context(), int32(newsPostId))
 		if err != nil {
 			log.Printf("Error: %s", err)
 			return false
 		}
 
-		return row.UsersIdusers == uid
+		return row.Idusers.Int32 == uid
 	}
 }
 
@@ -454,7 +454,7 @@ func WritingAuthor() mux.MatcherFunc {
 			return false
 		}
 
-		return row.UsersIdusers == uid
+		return row.Idusers == uid
 	}
 }
 

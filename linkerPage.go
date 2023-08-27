@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,18 +11,32 @@ import (
 func linkerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Offset      int
+		CatId       int
+		CommentOnId int
+		ReplyToId   int
+		Links       []*showLatestRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	data.CatId, _ = strconv.Atoi(r.URL.Query().Get("category"))
+	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
+	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	// TODO show latest
+
+	linkerPosts, err := queries.showLatest(r.Context(), int32(data.CatId))
+	if err != nil {
+		log.Printf("showLatest Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.Links = linkerPosts
 
 	CustomLinkerIndex(data.CoreData, r)
 

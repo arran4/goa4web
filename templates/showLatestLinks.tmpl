@@ -8,7 +8,7 @@
                 <tr>
                     <td>
                         {{ .Description | code2html }}<hr>
-                        {{ .Username }} - Listed: {{ .Listed }} - [<a href="?section=comment&link={{ .Idlinker }}">COMMENTS</a>]<br>
+                        {{ .Username }} - Listed: {{ .Listed }} - [<a href="?section=comment&link={{ .Idlinker }}">{{.Comments}}COMMENTS</a>]<br>
                     </td>
                 </tr>
             {{- end }}

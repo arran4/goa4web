@@ -750,8 +750,8 @@ INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, 
 SELECT l.title, l.url, l.description, u.username, l.idlinkerQueue, c.title, c.idlinkerCategory
 FROM linkerQueue l
 JOIN users u ON l.users_idusers = u.idusers
-JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory;
-
+JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
+;
 -- name: moveToLinker :many
 SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
 FROM linkerQueue l WHERE l.idlinkerQueue = ?;
@@ -764,16 +764,16 @@ VALUES (?, ?, ?, ?, ?, NOW());
 UPDATE linker SET forumthread_idforumthread = ? WHERE idlinker = ?;
 
 -- name: showLatest :many
-SELECT l.title, l.url, l.description, u.username, l.idlinker, l.listed,
-       IF(th.comments IS NULL, 0, th.comments+1), lc.title
+SELECT l.*, th.Comments, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
 WHERE l.linkerCategory_idlinkerCategory = ?
 ORDER BY l.listed DESC;
 
--- name: showLinkComments :many
-SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforumthread, lc.title
+-- name: showLink :one
+SELECT l.*, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory

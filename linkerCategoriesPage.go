@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -10,18 +8,23 @@ import (
 func linkerCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Categories []*Linkercategory
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	// Custom Index???
+
+	categories, err := queries.showCategories(r.Context())
+	if err != nil {
+		log.Printf("showCategories Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.Categories = categories
 
 	CustomLinkerIndex(data.CoreData, r)
 	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerCategoriesPage.tmpl", data); err != nil {

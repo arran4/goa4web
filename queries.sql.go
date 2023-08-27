@@ -3387,24 +3387,27 @@ func (q *Queries) showCategories(ctx context.Context) ([]*Linkercategory, error)
 }
 
 const showLatest = `-- name: showLatest :many
-SELECT l.title, l.url, l.description, u.username, l.idlinker, l.listed,
-       IF(th.comments IS NULL, 0, th.comments+1), lc.title
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
 WHERE l.linkerCategory_idlinkerCategory = ?
 ORDER BY l.listed DESC
 `
 
 type showLatestRow struct {
-	Title       sql.NullString
-	Url         sql.NullString
-	Description sql.NullString
-	Username    sql.NullString
-	Idlinker    int32
-	Listed      sql.NullTime
-	If          interface{}
-	Title_2     sql.NullString
+	Idlinker                       int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	ForumthreadIdforumthread       int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Listed                         sql.NullTime
+	Comments                       sql.NullInt32
+	Title_2                        sql.NullString
 }
 
 func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory int32) ([]*showLatestRow, error) {
@@ -3417,13 +3420,16 @@ func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory
 	for rows.Next() {
 		var i showLatestRow
 		if err := rows.Scan(
+			&i.Idlinker,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkercategoryIdlinkercategory,
+			&i.ForumthreadIdforumthread,
 			&i.Title,
 			&i.Url,
 			&i.Description,
-			&i.Username,
-			&i.Idlinker,
 			&i.Listed,
-			&i.If,
+			&i.Comments,
 			&i.Title_2,
 		); err != nil {
 			return nil, err
@@ -3439,53 +3445,45 @@ func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory
 	return items, nil
 }
 
-const showLinkComments = `-- name: showLinkComments :many
-SELECT l.title, l.url, l.description, u.username, l.listed, l.forumthread_idforumthread, lc.title
+const showLink = `-- name: showLink :one
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 WHERE l.idlinker = ?
 `
 
-type showLinkCommentsRow struct {
-	Title                    sql.NullString
-	Url                      sql.NullString
-	Description              sql.NullString
-	Username                 sql.NullString
-	Listed                   sql.NullTime
-	ForumthreadIdforumthread int32
-	Title_2                  sql.NullString
+type showLinkRow struct {
+	Idlinker                       int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	ForumthreadIdforumthread       int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Listed                         sql.NullTime
+	Username                       sql.NullString
+	Title_2                        sql.NullString
 }
 
-func (q *Queries) showLinkComments(ctx context.Context, idlinker int32) ([]*showLinkCommentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showLinkComments, idlinker)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*showLinkCommentsRow
-	for rows.Next() {
-		var i showLinkCommentsRow
-		if err := rows.Scan(
-			&i.Title,
-			&i.Url,
-			&i.Description,
-			&i.Username,
-			&i.Listed,
-			&i.ForumthreadIdforumthread,
-			&i.Title_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) showLink(ctx context.Context, idlinker int32) (*showLinkRow, error) {
+	row := q.db.QueryRowContext(ctx, showLink, idlinker)
+	var i showLinkRow
+	err := row.Scan(
+		&i.Idlinker,
+		&i.LanguageIdlanguage,
+		&i.UsersIdusers,
+		&i.LinkercategoryIdlinkercategory,
+		&i.ForumthreadIdforumthread,
+		&i.Title,
+		&i.Url,
+		&i.Description,
+		&i.Listed,
+		&i.Username,
+		&i.Title_2,
+	)
+	return &i, err
 }
 
 const showTopicUserLevels = `-- name: showTopicUserLevels :one

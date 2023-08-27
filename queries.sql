@@ -626,7 +626,14 @@ UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WH
 -- name: printSubBoards :many
 SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?;
 
--- name: printImagePost :many
+-- name: printImagePosts :many
+SELECT i.*, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+WHERE i.imageboard_idimageboard = ?;
+
+-- name: printImagePost :one
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers

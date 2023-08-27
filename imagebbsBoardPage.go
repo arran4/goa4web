@@ -13,9 +13,9 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Boards      []*printSubBoardsRow
-		Posts       []*printImagePostRow
 		IsSubBoard  bool
 		BoardNumber int
+		Posts       []*printImagePostsRow
 	}
 
 	vars := mux.Vars(r)
@@ -38,7 +38,7 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = subBoardRows
 
-	posts, err := queries.printImagePost(r.Context(), int32(bid))
+	posts, err := queries.printImagePosts(r.Context(), int32(bid))
 	if err != nil {
 		log.Printf("printSubBoards Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

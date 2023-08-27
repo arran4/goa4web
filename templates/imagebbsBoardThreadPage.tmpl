@@ -1,7 +1,7 @@
 {{ template "head" $ }}
-    {{ if .ImagePosts }}
+    {{ if .ImagePost }}
         <font size="4">Picture:</font><br>
-        {{ range .ImagePosts }}
+        {{ range .Post }}
             <table>
                 <tr>
                     <th><a href="{{ .FullImage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
@@ -9,14 +9,14 @@
             </table><br>
         {{ end }}
     {{ end }}
-    {{ if .ForumthreadIdforumthread }}
+    {{ if .Comments }}
 		{{ template "threadComments" $ }}
     {{ end }}
-    {{ if .UserUID }}
+    {{ if .Replyable }}
         <font size="4">Reply:</font><br>
         <form method="post" action="?board={{ .BoardNo }}">
-            <input type="hidden" name="replyTo" value="{{ .ForumthreadIdforumthread }}">
-            <input type="hidden" name="ipid" value="{{ .Imagepost.Idimagepost }}">
+            <input type="hidden" name="replyTo" value="{{ .ForumThreadId }}">
+            <input type="hidden" name="ipid" value="{{ .ImagePost.Idimagepost }}">
             <textarea name="replytext" cols="40" rows="20"></textarea><br>
             {{ template "languageCombobox" $ }}
             <input type="submit" name="task" value="Reply">

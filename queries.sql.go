@@ -2746,7 +2746,7 @@ func (q *Queries) printBoardPosts(ctx context.Context, imageboardIdimageboard in
 	return items, nil
 }
 
-const printImagePost = `-- name: printImagePost :many
+const printImagePost = `-- name: printImagePost :one
 SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
@@ -2767,15 +2767,54 @@ type printImagePostRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) printImagePost(ctx context.Context, idimagepost int32) ([]*printImagePostRow, error) {
-	rows, err := q.db.QueryContext(ctx, printImagePost, idimagepost)
+func (q *Queries) printImagePost(ctx context.Context, idimagepost int32) (*printImagePostRow, error) {
+	row := q.db.QueryRowContext(ctx, printImagePost, idimagepost)
+	var i printImagePostRow
+	err := row.Scan(
+		&i.Idimagepost,
+		&i.ForumthreadIdforumthread,
+		&i.UsersIdusers,
+		&i.ImageboardIdimageboard,
+		&i.Posted,
+		&i.Description,
+		&i.Thumbnail,
+		&i.Fullimage,
+		&i.Username,
+		&i.Comments,
+	)
+	return &i, err
+}
+
+const printImagePosts = `-- name: printImagePosts :many
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+WHERE i.imageboard_idimageboard = ?
+`
+
+type printImagePostsRow struct {
+	Idimagepost              int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	ImageboardIdimageboard   int32
+	Posted                   sql.NullTime
+	Description              sql.NullString
+	Thumbnail                sql.NullString
+	Fullimage                sql.NullString
+	Username                 sql.NullString
+	Comments                 sql.NullInt32
+}
+
+func (q *Queries) printImagePosts(ctx context.Context, imageboardIdimageboard int32) ([]*printImagePostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, printImagePosts, imageboardIdimageboard)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*printImagePostRow
+	var items []*printImagePostsRow
 	for rows.Next() {
-		var i printImagePostRow
+		var i printImagePostsRow
 		if err := rows.Scan(
 			&i.Idimagepost,
 			&i.ForumthreadIdforumthread,

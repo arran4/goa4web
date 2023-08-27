@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 )
@@ -24,41 +25,63 @@ func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	username := r.PostFormValue("username")
+	where := r.PostFormValue("where")
+	level := r.PostFormValue("level")
+	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	if err != nil {
+		log.Printf("usernametouid Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
-		int wid = atoiornull(cont.post.getS("wid"));
-		//int uid = atoiornull(cont.post.getS("uid"));
-		char *username = cont.post.getS("username");
-		if (username == NULL)
-			return;
-		int uid = usernametouid(cont, username);
-		if (!uid)
-			return;
-		int readdoc = cont.post.getS("readdoc") != NULL;
-		int editdoc = cont.post.getS("editdoc") != NULL;
-		int isuserwriter = iswriter(cont, cont.user.UID, wid);
-		if (level == auth_administrator || isuserwriter)
-			addApprovedUser(cont, wid, uid, readdoc, editdoc);
-
-	*/
+	if err := queries.user_allow(r.Context(), user_allowParams{
+		UsersIdusers: uid,
+		Section: sql.NullString{
+			String: where,
+			Valid:  true,
+		},
+		Level: sql.NullString{
+			String: level,
+			Valid:  true,
+		},
+	}); err != nil {
+		log.Printf("user_allow Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func writingsAdminUserUpdateAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	username := r.PostFormValue("username")
+	where := r.PostFormValue("where")
+	level := r.PostFormValue("level")
+	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	if err != nil {
+		log.Printf("usernametouid Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
-			int wid = atoiornull(cont.post.getS("wid"));
-		int uid = atoiornull(cont.post.getS("uid"));
-		if (!uid)
-			return;
-		int readdoc = cont.post.getS("readdoc") != NULL;
-		int editdoc = cont.post.getS("editdoc") != NULL;
-		int isuserwriter = iswriter(cont, cont.user.UID, wid);
-		if (level == auth_administrator || isuserwriter)
-			setApprovedUser(cont, wid, uid, readdoc, editdoc);
-
-	*/
+	if err := queries.user_allow(r.Context(), user_allowParams{
+		UsersIdusers: uid,
+		Section: sql.NullString{
+			String: where,
+			Valid:  true,
+		},
+		Level: sql.NullString{
+			String: level,
+			Valid:  true,
+		},
+	}); err != nil {
+		log.Printf("user_allow Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func writingsAdminUserAccessRemoveActionPage(w http.ResponseWriter, r *http.Request) {

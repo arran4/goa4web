@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 )
@@ -25,37 +26,34 @@ func newsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func newsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
-			char *postusername = cont.post.getS("username");
-		if (postusername == NULL)
-			postusername = "0";
-		int userid = usernametouid(cont, postusername);
-		char *postlevel = cont.post.getS("level");
-		if (postlevel == NULL)
-			postlevel = "0";
-		s = cont.sql.mysqlEscapeString(postlevel);
-		if (userid && s != NULL)
-		{
-			a4string query("INSERT INTO permissions "
-					"(users_idusers, section, level)"
-					"VALUES (\"%d\",\"%s\",\"%s\")",
-					userid, pageName, s);
-			a4mysqlResult *result = cont.sql.query(query.raw());
-			if (cont.sql.errno())
-				printf("Error with query: %s<br>\n",
-						cont.sql.error());
-			delete result;
-		} else {
-			if (s == NULL)
-				printf("Error with encoding string.<br>\n");
-			if (userid == 0)
-				printf("Error with username %s<br>\n",
-						cont.sql.error());
-		}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	username := r.PostFormValue("username")
+	where := r.PostFormValue("where")
+	level := r.PostFormValue("level")
+	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	if err != nil {
+		log.Printf("usernametouid Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
-	*/
+	if err := queries.user_allow(r.Context(), user_allowParams{
+		UsersIdusers: uid,
+		Section: sql.NullString{
+			String: where,
+			Valid:  true,
+		},
+		Level: sql.NullString{
+			String: level,
+			Valid:  true,
+		},
+	}); err != nil {
+		log.Printf("user_allow Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	taskDoneAutoRefreshPage(w, r)
+
 }
 
 func newsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {

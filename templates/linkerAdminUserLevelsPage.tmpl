@@ -7,13 +7,13 @@
             <th>Level</th>
             <th>Delete?</th>
         </tr>
-        {{- if .results }}
-            {{- range $result := .results }}
+        {{- if .Rows }}
+            {{- range $result := .Rows }}
                 <tr>
                     <td>{{ $result.ID }}</td>
-                    <td>{{ $result.Username }}</td>
-                    <td>{{ $result.Email }}</td>
-                    <td>{{ $result.Level }}</td>
+                    <td>{{ $result.Username.String }}</td>
+                    <td>{{ $result.Email.String }}</td>
+                    <td>{{ $result.Level.String }}</td>
                     <td>
                         <form method="post">
                             <input type="hidden" name="permid" value="{{ $result.ID }}">

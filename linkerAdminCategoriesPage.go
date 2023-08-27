@@ -1,27 +1,33 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
+	"database/sql"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Categories []*Linkercategory
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	// Custom Index???
+
+	categoryRows, err := queries.adminCategories(r.Context())
+	if err != nil {
+		log.Printf("adminCategories Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.Categories = categoryRows
+
 	CustomLinkerIndex(data.CoreData, r)
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerAdminCategoriesPage.tmpl", data); err != nil {
@@ -32,37 +38,53 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	// TODO
+	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
+	title := r.PostFormValue("title")
+	if err := queries.renameCategory(r.Context(), renameCategoryParams{
+		Title:            sql.NullString{Valid: true, String: title},
+		Idlinkercategory: int32(cid),
+	}); err != nil {
+		log.Printf("renameCategory Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func linkerAdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	// TODO
+	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
+	title := r.PostFormValue("title")
+	if err := queries.renameCategory(r.Context(), renameCategoryParams{
+		Title:            sql.NullString{Valid: true, String: title},
+		Idlinkercategory: int32(cid),
+	}); err != nil {
+		log.Printf("renameCategory Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	// TODO
+	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
+	if err := queries.deleteCategory(r.Context(), int32(cid)); err != nil {
+		log.Printf("renameCategory Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func linkerAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	// TODO
+	title := r.PostFormValue("title")
+	if err := queries.createCategory(r.Context(), sql.NullString{Valid: true, String: title}); err != nil {
+		log.Printf("renameCategory Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }

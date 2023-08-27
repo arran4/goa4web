@@ -747,14 +747,17 @@ UPDATE linkerQueue SET linkerCategory_idlinkerCategory = ?, title = ?, url = ?, 
 INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?);
 
 -- name: showAdminQueue :many
-SELECT l.title, l.url, l.description, u.username, l.idlinkerQueue, c.title, c.idlinkerCategory
+SELECT l.*, u.username, c.title as category_title, c.idlinkerCategory
 FROM linkerQueue l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
 ;
--- name: moveToLinker :many
+-- name: moveToLinker :exec
+INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, language_idlanguage, title, `url`, description)
 SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
-FROM linkerQueue l WHERE l.idlinkerQueue = ?;
+FROM linkerQueue l
+WHERE l.idlinkerQueue = ?
+;
 
 -- name: addToLinker :exec
 INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)

@@ -2714,48 +2714,16 @@ func (q *Queries) modify_faq(ctx context.Context, arg modify_faqParams) error {
 	return err
 }
 
-const moveToLinker = `-- name: moveToLinker :many
+const moveToLinker = `-- name: moveToLinker :exec
+INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, language_idlanguage, title, ` + "`" + `url` + "`" + `, description)
 SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
-FROM linkerQueue l WHERE l.idlinkerQueue = ?
+FROM linkerQueue l
+WHERE l.idlinkerQueue = ?
 `
 
-type moveToLinkerRow struct {
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	LanguageIdlanguage             int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-}
-
-func (q *Queries) moveToLinker(ctx context.Context, idlinkerqueue int32) ([]*moveToLinkerRow, error) {
-	rows, err := q.db.QueryContext(ctx, moveToLinker, idlinkerqueue)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*moveToLinkerRow
-	for rows.Next() {
-		var i moveToLinkerRow
-		if err := rows.Scan(
-			&i.UsersIdusers,
-			&i.LinkercategoryIdlinkercategory,
-			&i.LanguageIdlanguage,
-			&i.Title,
-			&i.Url,
-			&i.Description,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) moveToLinker(ctx context.Context, idlinkerqueue int32) error {
+	_, err := q.db.ExecContext(ctx, moveToLinker, idlinkerqueue)
+	return err
 }
 
 const preferencesRefreshPref = `-- name: preferencesRefreshPref :many
@@ -3224,20 +3192,23 @@ func (q *Queries) setUsersTopicLevel(ctx context.Context, arg setUsersTopicLevel
 }
 
 const showAdminQueue = `-- name: showAdminQueue :many
-SELECT l.title, l.url, l.description, u.username, l.idlinkerQueue, c.title, c.idlinkerCategory
+SELECT l.idlinkerqueue, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.title, l.url, l.description, u.username, c.title as category_title, c.idlinkerCategory
 FROM linkerQueue l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
 `
 
 type showAdminQueueRow struct {
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Username         sql.NullString
-	Idlinkerqueue    int32
-	Title_2          sql.NullString
-	Idlinkercategory int32
+	Idlinkerqueue                  int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Username                       sql.NullString
+	CategoryTitle                  sql.NullString
+	Idlinkercategory               int32
 }
 
 func (q *Queries) showAdminQueue(ctx context.Context) ([]*showAdminQueueRow, error) {
@@ -3250,12 +3221,15 @@ func (q *Queries) showAdminQueue(ctx context.Context) ([]*showAdminQueueRow, err
 	for rows.Next() {
 		var i showAdminQueueRow
 		if err := rows.Scan(
+			&i.Idlinkerqueue,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkercategoryIdlinkercategory,
 			&i.Title,
 			&i.Url,
 			&i.Description,
 			&i.Username,
-			&i.Idlinkerqueue,
-			&i.Title_2,
+			&i.CategoryTitle,
 			&i.Idlinkercategory,
 		); err != nil {
 			return nil, err

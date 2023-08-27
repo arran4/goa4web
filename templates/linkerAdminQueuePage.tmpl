@@ -13,11 +13,11 @@
             <tr>
                 <form method="post">
                     <td><input type="hidden" name="qid" value="{{ .Idlinkerqueue }}">{{ .Idlinkerqueue }}</td>
-                    <td><input name="title" value="{{ .Title }}"></td>
-                    <td><input name="URL" value="{{ .URL }}"></td>
-                    <td><textarea name="desc">{{ .Description }}</textarea></td>
-                    <td>{{ .Username }}</td>
-                    <td><input type="hidden" name="category" value="{{ .IdlinkerCategory }}">{{ .CategoryTitle }}</td>
+                    <td><input name="title" value="{{ .Title.String }}"></td>
+                    <td><input name="URL" value="{{ .URL.String }}"></td>
+                    <td><textarea name="desc">{{ .Description.String }}</textarea></td>
+                    <td>{{ .Username.String }}</td>
+                    <td><input type="hidden" name="category" value="{{ .IdlinkerCategory }}">{{ .CategoryTitle.String }}</td>
                     <td>
                         <input type="submit" name="task" value="Update"><br>
                         <input type="submit" name="task" value="Approve"><br>

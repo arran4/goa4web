@@ -688,11 +688,20 @@ WHERE s.idsiteNews = ?;
 -- name: assignNewsThisThreadId :exec
 UPDATE siteNews SET forumthread_idforumthread = ? WHERE idsiteNews = ?;
 
--- name: showPost :many
-SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, s.forumthread_idforumthread
+-- name: getNewsPost :one
+SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = ?;
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+WHERE s.idsiteNews = ?
+;
+
+-- name: getNewsPosts :many
+SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comments
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+;
 
 -- -- name: showNews :one
 -- SELECT count(idsiteNews) FROM siteNews

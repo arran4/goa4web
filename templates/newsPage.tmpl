@@ -1,5 +1,5 @@
 {{ template "head" $ }}
     {{ range .News }}
-        {{ template "newsPost" $ }}
+        {{ template "newsPost" . }}
     {{ end }}
 {{ template "tail" $ }}

@@ -1999,6 +1999,95 @@ func (q *Queries) getLangs(ctx context.Context, usersIdusers int32) (int32, erro
 	return language_idlanguage, err
 }
 
+const getNewsPost = `-- name: getNewsPost :one
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+WHERE s.idsiteNews = ?
+`
+
+type getNewsPostRow struct {
+	Writername               sql.NullString
+	Writerid                 sql.NullInt32
+	Idsitenews               int32
+	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
+	UsersIdusers             int32
+	News                     sql.NullString
+	Occured                  sql.NullTime
+	Comments                 sql.NullInt32
+}
+
+func (q *Queries) getNewsPost(ctx context.Context, idsitenews int32) (*getNewsPostRow, error) {
+	row := q.db.QueryRowContext(ctx, getNewsPost, idsitenews)
+	var i getNewsPostRow
+	err := row.Scan(
+		&i.Writername,
+		&i.Writerid,
+		&i.Idsitenews,
+		&i.ForumthreadIdforumthread,
+		&i.LanguageIdlanguage,
+		&i.UsersIdusers,
+		&i.News,
+		&i.Occured,
+		&i.Comments,
+	)
+	return &i, err
+}
+
+const getNewsPosts = `-- name: getNewsPosts :many
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+`
+
+type getNewsPostsRow struct {
+	Writername               sql.NullString
+	Writerid                 sql.NullInt32
+	Idsitenews               int32
+	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
+	UsersIdusers             int32
+	News                     sql.NullString
+	Occured                  sql.NullTime
+	Comments                 sql.NullInt32
+}
+
+func (q *Queries) getNewsPosts(ctx context.Context) ([]*getNewsPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getNewsPosts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getNewsPostsRow
+	for rows.Next() {
+		var i getNewsPostsRow
+		if err := rows.Scan(
+			&i.Writername,
+			&i.Writerid,
+			&i.Idsitenews,
+			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.News,
+			&i.Occured,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getNewsThreadId = `-- name: getNewsThreadId :one
 SELECT s.forumthread_idforumthread, u.idusers
 FROM siteNews s
@@ -3385,52 +3474,6 @@ func (q *Queries) showLinkComments(ctx context.Context, idlinker int32) ([]*show
 			&i.Listed,
 			&i.ForumthreadIdforumthread,
 			&i.Title_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const showPost = `-- name: showPost :many
-SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, s.forumthread_idforumthread
-FROM siteNews s
-LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = ?
-`
-
-type showPostRow struct {
-	Username                 sql.NullString
-	News                     sql.NullString
-	Occured                  sql.NullTime
-	Idsitenews               int32
-	Idusers                  sql.NullInt32
-	ForumthreadIdforumthread int32
-}
-
-func (q *Queries) showPost(ctx context.Context, idsitenews int32) ([]*showPostRow, error) {
-	rows, err := q.db.QueryContext(ctx, showPost, idsitenews)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*showPostRow
-	for rows.Next() {
-		var i showPostRow
-		if err := rows.Scan(
-			&i.Username,
-			&i.News,
-			&i.Occured,
-			&i.Idsitenews,
-			&i.Idusers,
-			&i.ForumthreadIdforumthread,
 		); err != nil {
 			return nil, err
 		}

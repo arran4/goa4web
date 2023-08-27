@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -16,11 +14,7 @@ func newsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	// SKIP. TODO replace completely
 	// Custom Index???
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "newsAdminUserLevelsPage.tmpl", data); err != nil {
@@ -31,11 +25,6 @@ func newsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func newsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	// TODO
 	/*
 			char *postusername = cont.post.getS("username");
@@ -70,11 +59,6 @@ func newsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func newsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	// TODO
 	/*
 			char *postid = cont.post.getS("id");

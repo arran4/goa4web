@@ -1,19 +1,19 @@
 {{ define "newsPost" $ }}
-		<table width="100%">
-			<tr bgcolor="lightgrey">
-				<th>{{ .Post.Date.Date }}</th>
-			</tr>
-			<tr>
-				<td>{{ .Post.Text.String }}<br>-<br>{{ .Post.Poster.String }}
-				-
-                [<a href="/news/{{ .Post.IdNewspost }}/comments">{{ .Post.Comments }} COMMENTS</a>]
-                {{ if .Post.ShowReply }}
-                    [<a href="?show={{ .NewsID }}&dothis=reply#reply">REPLY</a>]
-                {{ end }}
+    <table width="100%">
+        <tr bgcolor="lightgrey">
+            <th>{{ .Occured.Date }}</th>
+        </tr>
+        <tr>
+            <td>{{ .News.String }}<br>-<br>{{ .Writername.String }}
+            -
+            [<a href="/news/{{ .Idsitenews }}/comments">{{ .Comments.Int32 }} COMMENTS</a>]
+            {{ if .ShowReply }}
+                [<a href="?reply={{ .Idsitenews }}#reply">REPLY</a>]
+            {{ end }}
 
-                {{ if .Post.ShowEdit }}
-                    [<a href="/news/{{ .Post.PID }}/edit">EDIT</a>]
-                {{ end }}
-			</tr>
-		</table><br>
+            {{ if .ShowEdit }}
+                [<a href="/news/{{ .Idsitenews }}/edit">EDIT</a>]
+            {{ end }}
+        </tr>
+    </table><br>
 {{ end }}

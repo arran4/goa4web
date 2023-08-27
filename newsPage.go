@@ -3,27 +3,45 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
 )
 
 func newsPage(w http.ResponseWriter, r *http.Request) {
+	type Post struct {
+		*getNewsPostsRow
+		ShowReply bool
+		ShowEdit  bool
+		Editing   bool
+	}
 	type Data struct {
 		*CoreData
+		News []*Post
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	Get news
+	posts, err := queries.getNewsPosts(r.Context())
+	if err != nil {
+		log.Printf("getNewsPosts Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
+
+	for _, post := range posts {
+		data.News = append(data.News, &Post{
+			getNewsPostsRow: post,
+			ShowReply:       true, // TODO
+			ShowEdit:        true, // TODO
+			Editing:         editingId == int(post.Idsitenews),
+		})
+	}
 
 	CustomNewsIndex(data.CoreData, r)
 

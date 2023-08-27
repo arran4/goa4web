@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -15,6 +17,11 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Custom Index???
+	vars := mux.Vars(r)
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	CustomLinkerIndex(data.CoreData, r)
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerAdminAddPage.tmpl", data); err != nil {
@@ -24,6 +31,11 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func linkerAdminAddActionPage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	// TODO
 	/*
 		static int addToLinker(a4webcont &cont, int userid, int langid, int catid, char *title, char* url, char *description)

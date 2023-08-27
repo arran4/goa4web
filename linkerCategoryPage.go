@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
@@ -14,6 +15,11 @@ func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
+	vars := mux.Vars(r)
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	// Custom Index???
 
 	CustomLinkerIndex(data.CoreData, r)

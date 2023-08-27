@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -14,6 +16,11 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
+	vars := mux.Vars(r)
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	/* TODO General search
 		int count = 0;
 	while (*keys != NULL)

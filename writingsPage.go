@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,6 +18,11 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
+	vars := mux.Vars(r)
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	CustomWritingsIndex(data.CoreData, r)
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "writingsPage.tmpl", data); err != nil {

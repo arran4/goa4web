@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -181,8 +182,23 @@ func (q *Queries) addImage(ctx context.Context, arg addImageParams) error {
 	return err
 }
 
-const addToForumCommentSearch = `-- name: addToForumCommentSearch :exec
+const addToForumBlogSearch = `-- name: addToForumBlogSearch :exec
+INSERT IGNORE INTO blogsSearch
+(blogs_idblogs, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
 
+type addToForumBlogSearchParams struct {
+	BlogsIdblogs                   int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+func (q *Queries) addToForumBlogSearch(ctx context.Context, arg addToForumBlogSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToForumBlogSearch, arg.BlogsIdblogs, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
+const addToForumCommentSearch = `-- name: addToForumCommentSearch :exec
 INSERT IGNORE INTO commentsSearch
 (comments_idcomments, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
@@ -193,10 +209,40 @@ type addToForumCommentSearchParams struct {
 	SearchwordlistIdsearchwordlist int32
 }
 
-// -- name: addToGeneralSearch :exec
-// INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
 func (q *Queries) addToForumCommentSearch(ctx context.Context, arg addToForumCommentSearchParams) error {
 	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentsIdcomments, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
+const addToForumSiteNewsearch = `-- name: addToForumSiteNewsearch :exec
+INSERT IGNORE INTO siteNewsSearch
+(siteNews_idsiteNews, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
+
+type addToForumSiteNewsearchParams struct {
+	SitenewsIdsitenews             int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+func (q *Queries) addToForumSiteNewsearch(ctx context.Context, arg addToForumSiteNewsearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToForumSiteNewsearch, arg.SitenewsIdsitenews, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
+const addToForumWritingSearch = `-- name: addToForumWritingSearch :exec
+INSERT IGNORE INTO writingSearch
+(writing_idwriting, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
+
+type addToForumWritingSearchParams struct {
+	WritingIdwriting               int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+func (q *Queries) addToForumWritingSearch(ctx context.Context, arg addToForumWritingSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingIdwriting, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
@@ -574,6 +620,93 @@ func (q *Queries) blogid_to_userid(ctx context.Context, idblogs int32) (int32, e
 	return idusers, err
 }
 
+const blogsSearchDelete = `-- name: blogsSearchDelete :exec
+DELETE FROM blogsSearch
+WHERE blogs_idblogs=?
+`
+
+func (q *Queries) blogsSearchDelete(ctx context.Context, blogsIdblogs int32) error {
+	_, err := q.db.ExecContext(ctx, blogsSearchDelete, blogsIdblogs)
+	return err
+}
+
+const blogsSearchFirst = `-- name: blogsSearchFirst :many
+SELECT DISTINCT cs.blogs_idblogs
+FROM blogsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+`
+
+func (q *Queries) blogsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, blogsSearchFirst, word)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var blogs_idblogs int32
+		if err := rows.Scan(&blogs_idblogs); err != nil {
+			return nil, err
+		}
+		items = append(items, blogs_idblogs)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const blogsSearchNext = `-- name: blogsSearchNext :many
+SELECT DISTINCT cs.blogs_idblogs
+FROM blogsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.blogs_idblogs IN (/*SLICE:ids*/?)
+`
+
+type blogsSearchNextParams struct {
+	Word sql.NullString
+	Ids  []int32
+}
+
+func (q *Queries) blogsSearchNext(ctx context.Context, arg blogsSearchNextParams) ([]int32, error) {
+	query := blogsSearchNext
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var blogs_idblogs int32
+		if err := rows.Scan(&blogs_idblogs); err != nil {
+			return nil, err
+		}
+		items = append(items, blogs_idblogs)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const blogsUserPermissions = `-- name: blogsUserPermissions :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
@@ -747,6 +880,209 @@ func (q *Queries) changeTopic(ctx context.Context, arg changeTopicParams) error 
 		arg.Idforumtopic,
 	)
 	return err
+}
+
+const commentsSearchDelete = `-- name: commentsSearchDelete :exec
+DELETE FROM commentsSearch
+WHERE comments_idcomments=?
+`
+
+func (q *Queries) commentsSearchDelete(ctx context.Context, commentsIdcomments int32) error {
+	_, err := q.db.ExecContext(ctx, commentsSearchDelete, commentsIdcomments)
+	return err
+}
+
+const commentsSearchFirstInRestrictedTopic = `-- name: commentsSearchFirstInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+WHERE swl.word=?
+AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+`
+
+type commentsSearchFirstInRestrictedTopicParams struct {
+	Word  sql.NullString
+	Ftids []int32
+}
+
+func (q *Queries) commentsSearchFirstInRestrictedTopic(ctx context.Context, arg commentsSearchFirstInRestrictedTopicParams) ([]int32, error) {
+	query := commentsSearchFirstInRestrictedTopic
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ftids) > 0 {
+		for _, v := range arg.Ftids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comments_idcomments int32
+		if err := rows.Scan(&comments_idcomments); err != nil {
+			return nil, err
+		}
+		items = append(items, comments_idcomments)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const commentsSearchFirstNotInRestrictedTopic = `-- name: commentsSearchFirstNotInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumthread_idforumthread
+WHERE swl.word=?
+AND ft.forumcategory_idforumcategory!=0
+`
+
+func (q *Queries) commentsSearchFirstNotInRestrictedTopic(ctx context.Context, word sql.NullString) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, commentsSearchFirstNotInRestrictedTopic, word)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comments_idcomments int32
+		if err := rows.Scan(&comments_idcomments); err != nil {
+			return nil, err
+		}
+		items = append(items, comments_idcomments)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const commentsSearchNextInRestrictedTopic = `-- name: commentsSearchNextInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+WHERE swl.word=?
+AND cs.comments_idcomments IN (/*SLICE:ids*/?)
+AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+`
+
+type commentsSearchNextInRestrictedTopicParams struct {
+	Word  sql.NullString
+	Ids   []int32
+	Ftids []int32
+}
+
+func (q *Queries) commentsSearchNextInRestrictedTopic(ctx context.Context, arg commentsSearchNextInRestrictedTopicParams) ([]int32, error) {
+	query := commentsSearchNextInRestrictedTopic
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	if len(arg.Ftids) > 0 {
+		for _, v := range arg.Ftids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comments_idcomments int32
+		if err := rows.Scan(&comments_idcomments); err != nil {
+			return nil, err
+		}
+		items = append(items, comments_idcomments)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const commentsSearchNextNotInRestrictedTopic = `-- name: commentsSearchNextNotInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumthread_idforumthread
+WHERE swl.word=?
+AND cs.comments_idcomments IN (/*SLICE:ids*/?)
+AND ft.forumcategory_idforumcategory!=0
+`
+
+type commentsSearchNextNotInRestrictedTopicParams struct {
+	Word sql.NullString
+	Ids  []int32
+}
+
+func (q *Queries) commentsSearchNextNotInRestrictedTopic(ctx context.Context, arg commentsSearchNextNotInRestrictedTopicParams) ([]int32, error) {
+	query := commentsSearchNextNotInRestrictedTopic
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comments_idcomments int32
+		if err := rows.Scan(&comments_idcomments); err != nil {
+			return nil, err
+		}
+		items = append(items, comments_idcomments)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const completeWordList = `-- name: completeWordList :many
@@ -1988,6 +2324,132 @@ func (q *Queries) getComment(ctx context.Context, idcomments int32) (*Comment, e
 	return &i, err
 }
 
+const getComments = `-- name: getComments :many
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
+FROM comments c
+WHERE c.Idcomments IN (/*SLICE:ids*/?)
+`
+
+func (q *Queries) getComments(ctx context.Context, ids []int32) ([]*Comment, error) {
+	query := getComments
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Comment
+	for rows.Next() {
+		var i Comment
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCommentsWithThreadInfo = `-- name: getCommentsWithThreadInfo :many
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+WHERE c.Idcomments IN (/*SLICE:ids*/?)
+ORDER BY c.written DESC
+`
+
+type getCommentsWithThreadInfoParams struct {
+	UsersIdusers int32
+	Ids          []int32
+}
+
+type getCommentsWithThreadInfoRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	Posterusername           sql.NullString
+	Idforumthread            sql.NullInt32
+	Idforumtopic             sql.NullInt32
+	ForumtopicTitle          sql.NullString
+	Idforumcategory          sql.NullInt32
+	ForumcategoryTitle       sql.NullString
+}
+
+func (q *Queries) getCommentsWithThreadInfo(ctx context.Context, arg getCommentsWithThreadInfoParams) ([]*getCommentsWithThreadInfoRow, error) {
+	query := getCommentsWithThreadInfo
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.UsersIdusers)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getCommentsWithThreadInfoRow
+	for rows.Next() {
+		var i getCommentsWithThreadInfoRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+			&i.Posterusername,
+			&i.Idforumthread,
+			&i.Idforumtopic,
+			&i.ForumtopicTitle,
+			&i.Idforumcategory,
+			&i.ForumcategoryTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLangs = `-- name: getLangs :one
 SELECT language_idlanguage FROM userlang WHERE users_idusers = ?
 `
@@ -2606,6 +3068,93 @@ func (q *Queries) lang_combobox(ctx context.Context) ([]*Language, error) {
 	return items, nil
 }
 
+const linkerSearchDelete = `-- name: linkerSearchDelete :exec
+DELETE FROM linkerSearch
+WHERE linker_idlinker=?
+`
+
+func (q *Queries) linkerSearchDelete(ctx context.Context, linkerIdlinker int32) error {
+	_, err := q.db.ExecContext(ctx, linkerSearchDelete, linkerIdlinker)
+	return err
+}
+
+const linkerSearchFirst = `-- name: linkerSearchFirst :many
+SELECT DISTINCT cs.linker_idlinker
+FROM linkerSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+`
+
+func (q *Queries) linkerSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, linkerSearchFirst, word)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var linker_idlinker int32
+		if err := rows.Scan(&linker_idlinker); err != nil {
+			return nil, err
+		}
+		items = append(items, linker_idlinker)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const linkerSearchNext = `-- name: linkerSearchNext :many
+SELECT DISTINCT cs.linker_idlinker
+FROM linkerSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.linker_idlinker IN (/*SLICE:ids*/?)
+`
+
+type linkerSearchNextParams struct {
+	Word sql.NullString
+	Ids  []int32
+}
+
+func (q *Queries) linkerSearchNext(ctx context.Context, arg linkerSearchNextParams) ([]int32, error) {
+	query := linkerSearchNext
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var linker_idlinker int32
+		if err := rows.Scan(&linker_idlinker); err != nil {
+			return nil, err
+		}
+		items = append(items, linker_idlinker)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const makeCategory = `-- name: makeCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
@@ -2662,6 +3211,8 @@ func (q *Queries) makePost(ctx context.Context, arg makePostParams) (int64, erro
 }
 
 const makeThread = `-- name: makeThread :execlastid
+;
+
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `
 
@@ -3713,6 +4264,93 @@ func (q *Queries) show_questions(ctx context.Context) ([]*show_questionsRow, err
 			return nil, err
 		}
 		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const siteNewsSearchDelete = `-- name: siteNewsSearchDelete :exec
+DELETE FROM siteNewsSearch
+WHERE siteNews_idsiteNews=?
+`
+
+func (q *Queries) siteNewsSearchDelete(ctx context.Context, sitenewsIdsitenews int32) error {
+	_, err := q.db.ExecContext(ctx, siteNewsSearchDelete, sitenewsIdsitenews)
+	return err
+}
+
+const siteNewsSearchFirst = `-- name: siteNewsSearchFirst :many
+SELECT DISTINCT cs.siteNews_idsiteNews
+FROM siteNewsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+`
+
+func (q *Queries) siteNewsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, siteNewsSearchFirst, word)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var sitenews_idsitenews int32
+		if err := rows.Scan(&sitenews_idsitenews); err != nil {
+			return nil, err
+		}
+		items = append(items, sitenews_idsitenews)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const siteNewsSearchNext = `-- name: siteNewsSearchNext :many
+SELECT DISTINCT cs.siteNews_idsiteNews
+FROM siteNewsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.siteNews_idsiteNews IN (/*SLICE:ids*/?)
+`
+
+type siteNewsSearchNextParams struct {
+	Word sql.NullString
+	Ids  []int32
+}
+
+func (q *Queries) siteNewsSearchNext(ctx context.Context, arg siteNewsSearchNextParams) ([]int32, error) {
+	query := siteNewsSearchNext
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var sitenews_idsitenews int32
+		if err := rows.Scan(&sitenews_idsitenews); err != nil {
+			return nil, err
+		}
+		items = append(items, sitenews_idsitenews)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -4807,6 +5445,93 @@ func (q *Queries) write_blog_rss(ctx context.Context, arg write_blog_rssParams) 
 			return nil, err
 		}
 		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const writingSearchDelete = `-- name: writingSearchDelete :exec
+DELETE FROM writingSearch
+WHERE writing_idwriting=?
+`
+
+func (q *Queries) writingSearchDelete(ctx context.Context, writingIdwriting int32) error {
+	_, err := q.db.ExecContext(ctx, writingSearchDelete, writingIdwriting)
+	return err
+}
+
+const writingSearchFirst = `-- name: writingSearchFirst :many
+SELECT DISTINCT cs.writing_idwriting
+FROM writingSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+`
+
+func (q *Queries) writingSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, writingSearchFirst, word)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var writing_idwriting int32
+		if err := rows.Scan(&writing_idwriting); err != nil {
+			return nil, err
+		}
+		items = append(items, writing_idwriting)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const writingSearchNext = `-- name: writingSearchNext :many
+SELECT DISTINCT cs.writing_idwriting
+FROM writingSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.writing_idwriting IN (/*SLICE:ids*/?)
+`
+
+type writingSearchNextParams struct {
+	Word sql.NullString
+	Ids  []int32
+}
+
+func (q *Queries) writingSearchNext(ctx context.Context, arg writingSearchNextParams) ([]int32, error) {
+	query := writingSearchNext
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var writing_idwriting int32
+		if err := rows.Scan(&writing_idwriting); err != nil {
+			return nil, err
+		}
+		items = append(items, writing_idwriting)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

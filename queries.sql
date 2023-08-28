@@ -832,13 +832,154 @@ SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?);
 INSERT IGNORE INTO searchwordlist (word)
 VALUES (lcase(sqlc.arg(word)));
 
--- -- name: addToGeneralSearch :exec
--- INSERT INTO ? (?, searchwordlist_idsearchwordlist) VALUES (?, ?)
-
 -- name: addToForumCommentSearch :exec
 INSERT IGNORE INTO commentsSearch
 (comments_idcomments, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
+
+-- name: commentsSearchDelete :exec
+DELETE FROM commentsSearch
+WHERE comments_idcomments=?
+;
+
+-- name: commentsSearchFirstNotInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumthread_idforumthread
+WHERE swl.word=?
+AND ft.forumcategory_idforumcategory!=0
+;
+
+-- name: commentsSearchNextNotInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumthread_idforumthread
+WHERE swl.word=?
+AND cs.comments_idcomments IN (sqlc.slice('ids'))
+AND ft.forumcategory_idforumcategory!=0
+;
+
+-- name: commentsSearchFirstInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+WHERE swl.word=?
+AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
+;
+
+-- name: commentsSearchNextInRestrictedTopic :many
+SELECT DISTINCT cs.comments_idcomments
+FROM commentsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+WHERE swl.word=?
+AND cs.comments_idcomments IN (sqlc.slice('ids'))
+AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
+;
+
+-- name: addToForumWritingSearch :exec
+INSERT IGNORE INTO writingSearch
+(writing_idwriting, searchwordlist_idsearchwordlist)
+VALUES (?, ?);
+
+-- name: writingSearchDelete :exec
+DELETE FROM writingSearch
+WHERE writing_idwriting=?
+;
+
+-- name: writingSearchFirst :many
+SELECT DISTINCT cs.writing_idwriting
+FROM writingSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+;
+
+-- name: writingSearchNext :many
+SELECT DISTINCT cs.writing_idwriting
+FROM writingSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.writing_idwriting IN (sqlc.slice('ids'))
+;
+
+-- name: addToForumSiteNewsearch :exec
+INSERT IGNORE INTO siteNewsSearch
+(siteNews_idsiteNews, searchwordlist_idsearchwordlist)
+VALUES (?, ?);
+
+-- name: siteNewsSearchDelete :exec
+DELETE FROM siteNewsSearch
+WHERE siteNews_idsiteNews=?
+;
+
+-- name: siteNewsSearchFirst :many
+SELECT DISTINCT cs.siteNews_idsiteNews
+FROM siteNewsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+;
+
+-- name: siteNewsSearchNext :many
+SELECT DISTINCT cs.siteNews_idsiteNews
+FROM siteNewsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.siteNews_idsiteNews IN (sqlc.slice('ids'))
+;
+
+-- name: linkerSearchDelete :exec
+DELETE FROM linkerSearch
+WHERE linker_idlinker=?
+;
+
+-- name: linkerSearchFirst :many
+SELECT DISTINCT cs.linker_idlinker
+FROM linkerSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+;
+
+-- name: linkerSearchNext :many
+SELECT DISTINCT cs.linker_idlinker
+FROM linkerSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.linker_idlinker IN (sqlc.slice('ids'))
+;
+
+-- name: addToForumBlogSearch :exec
+INSERT IGNORE INTO blogsSearch
+(blogs_idblogs, searchwordlist_idsearchwordlist)
+VALUES (?, ?);
+
+-- name: blogsSearchDelete :exec
+DELETE FROM blogsSearch
+WHERE blogs_idblogs=?
+;
+
+-- name: blogsSearchFirst :many
+SELECT DISTINCT cs.blogs_idblogs
+FROM blogsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+;
+
+-- name: blogsSearchNext :many
+SELECT DISTINCT cs.blogs_idblogs
+FROM blogsSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.blogs_idblogs IN (sqlc.slice('ids'))
+;
 
 -- name: topicAllowThis :one
 SELECT r.*, u.level
@@ -861,6 +1002,25 @@ VALUES (?, ?, ?, ?, NOW());
 SELECT c.*
 FROM comments c
 WHERE c.Idcomments=?;
+
+-- name: getComments :many
+SELECT c.*
+FROM comments c
+WHERE c.Idcomments IN (sqlc.slice('ids'))
+;
+
+-- name: getCommentsWithThreadInfo :many
+SELECT c.*, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+WHERE c.Idcomments IN (sqlc.slice('ids'))
+ORDER BY c.written DESC;
+;
 
 -- name: makeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);

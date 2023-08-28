@@ -1,13 +1,15 @@
 {{ define "commentSearchResults" }}
-	{{- if eq . "noResults" }}
-		<p>Nothing found.</p>
-	{{- else if eq . "emptyWords" }}
-		<p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
-	{{- else }}
-		<ul>
-		{{- range $result := . }}
-			<li>thread: <a href="{{ printf "%s%s" $.urlequals $result }}">{{ $result }}</a></li>
-		{{- end }}
-		</ul>
-	{{ end }}
+    Forum search:<br>
+    {{- if .NoResults }}
+        <p>Nothing found.</p>
+    {{- else if .EmptyWords }}
+        <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+    {{- else }}
+        <ul>
+        {{- range $i, $result := .Comments }}
+            <li>{{ $i }}: <a href="/forum/category/{{$result.Idforumcategory}}">{{ $result.ForumcategoryTitle.String }}</a>: <a href="/forum/topic/{{$result.Idforumtopic}}">{{ $result.ForumtopicTitle.String }}</a>: {{$result.posterusername.String}} on {{$result.written.Time}}: <a href="/forum/topic/{{$result.Idforumtopic}}/thread/{{$result.Idforumthread}}">{{$result.Text.String}}</a></li>
+        {{- end }}
+        </ul>
+    {{ end }}
+    {{- end }}
 {{ end }}

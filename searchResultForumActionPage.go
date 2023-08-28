@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"database/sql"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -9,137 +10,82 @@ import (
 func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Comments   []*getCommentsWithThreadInfoRow
+		NoResults  bool
+		EmptyWords bool
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 
-	/* TODO General search
-		int count = 0;
-	while (*keys != NULL)
-	{
-		char *s1 = cont.sql.mysqlEscapeString(*keys);
-		query.set("SELECT st.%s_id%s FROM searchwordlist swl, %s st WHERE swl.word=\"%s\" AND "
-				"swl.idsearchwordlist=st.searchwordlist_idsearchwordlist" , table, table, searchtable, s1);
-		if (count++)
-		{
-			query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-		}
-		free(s1);
-		result = cont.sql.query(query.raw(), false);
-		inlist.clear();
-		int i = 0;
-		while (result->hasRow())
-		{
-			i++;
-			inlist.pushf("%s", result->getColumn(0));
-			if (result->nextRow())
-				inlist.pushf(", ");
-		}
-		delete result;
-		if (i == 0)
-		{
-			printf("Nothing found.<br>\n");
-			return;
-		}
-		keys++;
+	if comments, emptyWords, noResults, err := ForumCommentSearchNotInRestrictedTopic(w, r, queries, uid); err != nil {
+		return
+	} else {
+		data.Comments = comments
+		data.EmptyWords = emptyWords
+		data.NoResults = noResults
 	}
-
-	*/
-	/*
-
-		comment search
-		int topicid = findForumTopicByName(cont, topicName);
-		a4string query, inlist;
-		a4mysqlResult *result;
-		a4hashtable words;
-		a4hashtable nowords;
-		//nowords.set("this", (void*)1);
-		breakupTextToWords(cont, sw, words, nowords);
-		char **keys = words.keys();
-		int count = 0;
-		while (*keys != NULL)
-		{
-			char *s1 = cont.sql.mysqlEscapeString(*keys);
-			query.set("SELECT cs.comments_idcomments FROM searchwordlist swl, commentsSearch cs WHERE swl.word=\"%s\" AND "
-					"swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist" , s1);
-			if (count++)
-			{
-				query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-			}
-			free(s1);
-			result = cont.sql.query(query.raw(), false);
-			inlist.clear();
-			int i = 0;
-			while (result->hasRow())
-			{
-				i++;
-				inlist.pushf("%s", result->getColumn(0));
-				if (result->nextRow())
-					inlist.pushf(", ");
-			}
-			delete result;
-			if (i == 0)
-			{
-				printf("Nothing found.<br>\n");
-				return;
-			}
-			keys++;
-		}
-
-
-	*/
-	/* TODO
-	a4string query, inlist;
-	a4mysqlResult *result;
-	a4hashtable words;
-	a4hashtable nowords;
-	//nowords.set("this", (void*)1);
-	breakupTextToWords(cont, sw, words, nowords);
-	char **keys = words.keys();
-	int count = 0;
-	while (*keys != NULL)
-	{
-		char *s1 = cont.sql.mysqlEscapeString(*keys);
-		query.set("SELECT cs.comments_idcomments FROM searchwordlist swl, commentsSearch cs WHERE swl.word=\"%s\" AND "
-				"swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist" , s1);
-		if (count++)
-		{
-			query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-		}
-		free(s1);
-		result = cont.sql.query(query.raw(), false);
-		inlist.clear();
-		int i = 0;
-		while (result->hasRow())
-		{
-			i++;
-			inlist.pushf("%s", result->getColumn(0));
-			if (result->nextRow())
-				inlist.pushf(", ");
-		}
-		delete result;
-		if (i == 0)
-		{
-			printf("Nothing found.<br>\n");
-			return;
-		}
-		keys++;
-	}
-
-	*/
-
-	// Custom Index???
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "searchResultForumActionPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*getCommentsWithThreadInfoRow, bool, bool, error) {
+	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	var commentIds []int32
+
+	if len(searchWords) == 0 {
+		return nil, true, false, nil
+	}
+
+	for i, word := range searchWords {
+		if i == 0 {
+			ids, err := queries.commentsSearchFirstNotInRestrictedTopic(r.Context(), sql.NullString{
+				String: word,
+				Valid:  true,
+			})
+			if err != nil {
+				log.Printf("commentsSearchFirst Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			commentIds = ids
+		} else {
+			ids, err := queries.commentsSearchNextNotInRestrictedTopic(r.Context(), commentsSearchNextNotInRestrictedTopicParams{
+				Word: sql.NullString{
+					String: word,
+					Valid:  true,
+				},
+				Ids: commentIds,
+			})
+			if err != nil {
+				log.Printf("commentsSearchNext Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			commentIds = ids
+		}
+		if len(commentIds) == 0 {
+			return nil, false, true, nil
+		}
+	}
+
+	comments, err := queries.getCommentsWithThreadInfo(r.Context(), getCommentsWithThreadInfoParams{
+		UsersIdusers: uid,
+		Ids:          commentIds,
+	})
+	if err != nil {
+		log.Printf("getComments Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return nil, false, false, err
+	}
+
+	return comments, false, false, nil
 }

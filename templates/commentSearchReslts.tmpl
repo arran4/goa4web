@@ -1,8 +1,8 @@
 {{ define "commentSearchResults" }}
     Forum search:<br>
-    {{- if .NoResults }}
+    {{- if .CommentsNoResults }}
         <p>Nothing found.</p>
-    {{- else if .EmptyWords }}
+    {{- else if .CommentsEmptyWords }}
         <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
     {{- else }}
         <ul>

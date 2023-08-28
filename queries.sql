@@ -335,9 +335,23 @@ SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.use
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
-WHERE (b.language_idlanguage = sqlc.arg(Language_idlanguage) OR sqlc.arg(Language_idlanguage) = 0) and (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
+WHERE (b.language_idlanguage = sqlc.arg(Language_idlanguage) OR sqlc.arg(Language_idlanguage) = 0)
+AND (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
+
+-- name: getBlogs :many
+SELECT b.*
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+-- WHERE (b.language_idlanguage = sqlc.arg(Language_idlanguage) OR sqlc.arg(Language_idlanguage) = 0)
+-- AND (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
+-- AND b.idblogs IN (sqlc.slice(blogIds))
+WHERE b.idblogs IN (sqlc.slice(blogIds))
+ORDER BY b.written DESC
+-- LIMIT ? OFFSET ?
+;
 
 -- name: show_blog :one
 SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers, b.forumthread_idforumthread

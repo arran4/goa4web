@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"database/sql"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -10,99 +10,97 @@ import (
 func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Comments           []*getCommentsWithThreadInfoRow
+		Blogs              []*Blog
+		CommentsNoResults  bool
+		CommentsEmptyWords bool
+		NoResults          bool
+		EmptyWords         bool
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	/* TODO General search
-		int count = 0;
-	while (*keys != NULL)
-	{
-		char *s1 = cont.sql.mysqlEscapeString(*keys);
-		query.set("SELECT st.%s_id%s FROM searchwordlist swl, %s st WHERE swl.word=\"%s\" AND "
-				"swl.idsearchwordlist=st.searchwordlist_idsearchwordlist" , table, table, searchtable, s1);
-		if (count++)
-		{
-			query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-		}
-		free(s1);
-		result = cont.sql.query(query.raw(), false);
-		inlist.clear();
-		int i = 0;
-		while (result->hasRow())
-		{
-			i++;
-			inlist.pushf("%s", result->getColumn(0));
-			if (result->nextRow())
-				inlist.pushf(", ");
-		}
-		delete result;
-		if (i == 0)
-		{
-			printf("Nothing found.<br>\n");
-			return;
-		}
-		keys++;
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: "A BLOGGER TOPIC"})
+	if err != nil {
+		log.Printf("findForumTopicByName Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	*/
-	/*
+	if comments, emptyWords, noResults, err := ForumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbnId}, uid); err != nil {
+		return
+	} else {
+		data.Comments = comments
+		data.CommentsNoResults = emptyWords
+		data.CommentsEmptyWords = noResults
+	}
 
-		comment search
-			forumTopicSearch(cont, searchwords, "A BLOGGER TOPIC", "b.idblogs",
-					"LEFT JOIN blogs b ON th.idforumthread=b.forumthread_idforumthread", "blogs.cgi?section=comment&blog=");
-		int topicid = findForumTopicByName(cont, topicName);
-		a4string query, inlist;
-		a4mysqlResult *result;
-		a4hashtable words;
-		a4hashtable nowords;
-		//nowords.set("this", (void*)1);
-		breakupTextToWords(cont, sw, words, nowords);
-		char **keys = words.keys();
-		int count = 0;
-		while (*keys != NULL)
-		{
-			char *s1 = cont.sql.mysqlEscapeString(*keys);
-			query.set("SELECT cs.comments_idcomments FROM searchwordlist swl, commentsSearch cs WHERE swl.word=\"%s\" AND "
-					"swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist" , s1);
-			if (count++)
-			{
-				query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-			}
-			free(s1);
-			result = cont.sql.query(query.raw(), false);
-			inlist.clear();
-			int i = 0;
-			while (result->hasRow())
-			{
-				i++;
-				inlist.pushf("%s", result->getColumn(0));
-				if (result->nextRow())
-					inlist.pushf(", ");
-			}
-			delete result;
-			if (i == 0)
-			{
-				printf("Nothing found.<br>\n");
-				return;
-			}
-			keys++;
-		}
-
-
-	*/
-	// Custom Index???
+	if blogs, emptyWords, noResults, err := BlogSearch(w, r, queries, uid); err != nil {
+		return
+	} else {
+		data.Blogs = blogs
+		data.NoResults = emptyWords
+		data.EmptyWords = noResults
+	}
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "searchResultBlogsActionPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*Blog, bool, bool, error) {
+	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	var blogIds []int32
+
+	if len(searchWords) == 0 {
+		return nil, true, false, nil
+	}
+
+	for i, word := range searchWords {
+		if i == 0 {
+			ids, err := queries.blogsSearchFirst(r.Context(), sql.NullString{
+				String: word,
+				Valid:  true,
+			})
+			if err != nil {
+				log.Printf("blogsSearchFirst Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			blogIds = ids
+		} else {
+			ids, err := queries.blogsSearchNext(r.Context(), blogsSearchNextParams{
+				Word: sql.NullString{
+					String: word,
+					Valid:  true,
+				},
+				Ids: blogIds,
+			})
+			if err != nil {
+				log.Printf("blogsSearchNext Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			blogIds = ids
+		}
+		if len(blogIds) == 0 {
+			return nil, false, true, nil
+		}
+	}
+
+	blogs, err := queries.getBlogs(r.Context(), blogIds)
+	if err != nil {
+		log.Printf("getBlogs Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return nil, false, false, err
+	}
+
+	return blogs, false, false, nil
 }

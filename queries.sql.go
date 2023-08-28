@@ -2304,6 +2304,59 @@ func (q *Queries) getAllUsersTopicLevelInviteMax(ctx context.Context, arg getAll
 	return invitemax, err
 }
 
+const getBlogs = `-- name: getBlogs :many
+SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE b.idblogs IN (/*SLICE:blogids*/?)
+ORDER BY b.written DESC
+`
+
+// WHERE (b.language_idlanguage = sqlc.arg(Language_idlanguage) OR sqlc.arg(Language_idlanguage) = 0)
+// AND (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
+// AND b.idblogs IN (sqlc.slice(blogIds))
+// LIMIT ? OFFSET ?
+func (q *Queries) getBlogs(ctx context.Context, blogids []int32) ([]*Blog, error) {
+	query := getBlogs
+	var queryParams []interface{}
+	if len(blogids) > 0 {
+		for _, v := range blogids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:blogids*/?", strings.Repeat(",?", len(blogids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:blogids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Blog
+	for rows.Next() {
+		var i Blog
+		if err := rows.Scan(
+			&i.Idblogs,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Blog,
+			&i.Written,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getComment = `-- name: getComment :one
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
 FROM comments c
@@ -4173,7 +4226,8 @@ SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.use
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
-WHERE (b.language_idlanguage = ? OR ? = 0) and (b.users_idusers = ? OR ? = 0)
+WHERE (b.language_idlanguage = ? OR ? = 0)
+AND (b.users_idusers = ? OR ? = 0)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?
 `

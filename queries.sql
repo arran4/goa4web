@@ -796,12 +796,18 @@ JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 WHERE l.idlinker = ?;
 
+-- name: showLinks :many
+SELECT l.*, u.username, lc.title
+FROM linker l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+WHERE l.idlinker IN (sqlc.slice(linkerIds));
+
 -- name: writeLinkerRSS :many
 SELECT l.idlinker, l.title, l.description, l.url
 FROM linker l
 WHERE l.linkerCategory_idlinkerCategory = ?
 ORDER BY l.listed DESC;
-
 
 -- -- name: forumTopicSearch :many
 -- SELECT * FROM comments c

@@ -1,14 +1,14 @@
 {{ template "head" $ }}
     Search linker:<br>
-    {{- with .GeneralSearchResults }}
+    {{- with .Links }}
     	{{- if eq . "noResults" }}
     		<p>Nothing found.</p>
     	{{- else if eq . "emptyWords" }}
     		<p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
     	{{- else }}
     		<ul>
-    		{{- range $result := . }}
-    			<li>{{ index $result 2 }}: <a href="{{ printf "%s%s" $result 0 }}">{{ index $result 1 }}</a></li>
+    		{{- range $i, $result := . }}
+    			<li>{{ $i }}: <a href="/linker/show/{{$result.Idlinker}}">{{ $result.Title.String }}</a></li>
     		{{- end }}
     		</ul>
     	{{ end }}

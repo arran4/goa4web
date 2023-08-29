@@ -4064,6 +4064,73 @@ func (q *Queries) showLink(ctx context.Context, idlinker int32) (*showLinkRow, e
 	return &i, err
 }
 
+const showLinks = `-- name: showLinks :many
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
+FROM linker l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+WHERE l.idlinker IN (/*SLICE:linkerids*/?)
+`
+
+type showLinksRow struct {
+	Idlinker                       int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	ForumthreadIdforumthread       int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Listed                         sql.NullTime
+	Username                       sql.NullString
+	Title_2                        sql.NullString
+}
+
+func (q *Queries) showLinks(ctx context.Context, linkerids []int32) ([]*showLinksRow, error) {
+	query := showLinks
+	var queryParams []interface{}
+	if len(linkerids) > 0 {
+		for _, v := range linkerids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:linkerids*/?", strings.Repeat(",?", len(linkerids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:linkerids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*showLinksRow
+	for rows.Next() {
+		var i showLinksRow
+		if err := rows.Scan(
+			&i.Idlinker,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkercategoryIdlinkercategory,
+			&i.ForumthreadIdforumthread,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Listed,
+			&i.Username,
+			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const showTopicUserLevels = `-- name: showTopicUserLevels :one
 SELECT r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t

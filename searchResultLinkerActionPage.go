@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"database/sql"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -10,99 +10,97 @@ import (
 func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Comments           []*getCommentsWithThreadInfoRow
+		Links              []*showLinksRow
+		CommentsNoResults  bool
+		CommentsEmptyWords bool
+		NoResults          bool
+		EmptyWords         bool
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	/* TODO General search
-		int count = 0;
-	while (*keys != NULL)
-	{
-		char *s1 = cont.sql.mysqlEscapeString(*keys);
-		query.set("SELECT st.%s_id%s FROM searchwordlist swl, %s st WHERE swl.word=\"%s\" AND "
-				"swl.idsearchwordlist=st.searchwordlist_idsearchwordlist" , table, table, searchtable, s1);
-		if (count++)
-		{
-			query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-		}
-		free(s1);
-		result = cont.sql.query(query.raw(), false);
-		inlist.clear();
-		int i = 0;
-		while (result->hasRow())
-		{
-			i++;
-			inlist.pushf("%s", result->getColumn(0));
-			if (result->nextRow())
-				inlist.pushf(", ");
-		}
-		delete result;
-		if (i == 0)
-		{
-			printf("Nothing found.<br>\n");
-			return;
-		}
-		keys++;
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: "A LINKER TOPIC"})
+	if err != nil {
+		log.Printf("findForumTopicByName Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	*/
-	/*
+	if comments, emptyWords, noResults, err := ForumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbnId}, uid); err != nil {
+		return
+	} else {
+		data.Comments = comments
+		data.CommentsNoResults = emptyWords
+		data.CommentsEmptyWords = noResults
+	}
 
-		comment search
-			forumTopicSearch(cont, searchwords, "A LINKER TOPIC", "l.idlinker",
-					"LEFT JOIN linker l ON th.idforumthread=l.forumthread_idforumthread", "linker.cgi?section=comment&link=");
-		int topicid = findForumTopicByName(cont, topicName);
-		a4string query, inlist;
-		a4mysqlResult *result;
-		a4hashtable words;
-		a4hashtable nowords;
-		//nowords.set("this", (void*)1);
-		breakupTextToWords(cont, sw, words, nowords);
-		char **keys = words.keys();
-		int count = 0;
-		while (*keys != NULL)
-		{
-			char *s1 = cont.sql.mysqlEscapeString(*keys);
-			query.set("SELECT cs.comments_idcomments FROM searchwordlist swl, commentsSearch cs WHERE swl.word=\"%s\" AND "
-					"swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist" , s1);
-			if (count++)
-			{
-				query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-			}
-			free(s1);
-			result = cont.sql.query(query.raw(), false);
-			inlist.clear();
-			int i = 0;
-			while (result->hasRow())
-			{
-				i++;
-				inlist.pushf("%s", result->getColumn(0));
-				if (result->nextRow())
-					inlist.pushf(", ");
-			}
-			delete result;
-			if (i == 0)
-			{
-				printf("Nothing found.<br>\n");
-				return;
-			}
-			keys++;
-		}
-
-
-	*/
-	// Custom Index???
+	if Linkers, emptyWords, noResults, err := LinkerSearch(w, r, queries, uid); err != nil {
+		return
+	} else {
+		data.Links = Linkers
+		data.NoResults = emptyWords
+		data.EmptyWords = noResults
+	}
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "searchResultLinkerActionPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*showLinksRow, bool, bool, error) {
+	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	var LinkerIds []int32
+
+	if len(searchWords) == 0 {
+		return nil, true, false, nil
+	}
+
+	for i, word := range searchWords {
+		if i == 0 {
+			ids, err := queries.linkerSearchFirst(r.Context(), sql.NullString{
+				String: word,
+				Valid:  true,
+			})
+			if err != nil {
+				log.Printf("LinkersSearchFirst Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			LinkerIds = ids
+		} else {
+			ids, err := queries.linkerSearchNext(r.Context(), linkerSearchNextParams{
+				Word: sql.NullString{
+					String: word,
+					Valid:  true,
+				},
+				Ids: LinkerIds,
+			})
+			if err != nil {
+				log.Printf("LinkersSearchNext Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			LinkerIds = ids
+		}
+		if len(LinkerIds) == 0 {
+			return nil, false, true, nil
+		}
+	}
+
+	Linkers, err := queries.showLinks(r.Context(), LinkerIds)
+	if err != nil {
+		log.Printf("getLinkers Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return nil, false, false, err
+	}
+
+	return Linkers, false, false, nil
 }

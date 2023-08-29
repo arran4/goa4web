@@ -1,18 +1,16 @@
 {{ template "head" $ }}
     Search writings<br />
-    {{- with .GeneralSearchResults }}
-    	{{- if eq . "noResults" }}
-    		<p>Nothing found.</p>
-    	{{- else if eq . "emptyWords" }}
-    		<p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
-    	{{- else }}
-    		<ul>
-    		{{- range $result := . }}
-    			<li>{{ index $result 2 }}: <a href="{{ printf "%s%s" $result 0 }}">{{ index $result 1 }}</a></li>
-    		{{- end }}
-    		</ul>
-    	{{ end }}
-    {{- end }}
+    {{- if .NoResults }}
+        <p>Nothing found.</p>
+    {{- else if .EmptyWords }}
+        <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+    {{- else }}
+        <ul>
+        {{- range $i, $result := .Writings }}
+            <li>{{ $i }}: <a href="/writings/article/{{$result.Idwritings}}">{{ $result.Title.String }}</a></li>
+        {{- end }}
+        </ul>
+    {{ end }}
     <br>
     Comment search:<br>
     {{ template "commentSearchResults" $ }}

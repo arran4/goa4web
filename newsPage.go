@@ -25,9 +25,9 @@ func newsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	posts, err := queries.getNewsPosts(r.Context())
+	posts, err := queries.getLatestNewsPosts(r.Context())
 	if err != nil {
-		log.Printf("getNewsPosts Error: %s", err)
+		log.Printf("getLatestNewsPosts Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

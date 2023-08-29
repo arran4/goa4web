@@ -1,9 +1,9 @@
 {{ template "head" $ }}
     Search linker:<br>
     {{- with .Links }}
-    	{{- if eq . "noResults" }}
+    	{{- if .NoResults }}
     		<p>Nothing found.</p>
-    	{{- else if eq . "emptyWords" }}
+    	{{- else if .EmptyWords }}
     		<p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
     	{{- else }}
     		<ul>

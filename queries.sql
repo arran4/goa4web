@@ -715,6 +715,16 @@ SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comm
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+WHERE s.Idsitenews IN (sqlc.slice(newsIds))
+;
+
+-- name: getLatestNewsPosts :many
+SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comments
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+ORDER BY s.occured DESC
+LIMIT 15
 ;
 
 -- -- name: showNews :one
@@ -1155,6 +1165,15 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
 WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC;
+
+-- name: fetchWritingByIds :many
+SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
+u.idusers, w.writingCategory_idwritingCategory
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = sqlc.arg(userId)
+WHERE w.idwriting IN (sqlc.slice(writingIds)) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(userId))
 ORDER BY w.published DESC;
 
 -- name: fetchPublicWritingsByCategory :many

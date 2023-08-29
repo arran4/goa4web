@@ -2036,6 +2036,82 @@ func (q *Queries) fetchWritingByIdWithEdit(ctx context.Context, arg fetchWriting
 	return items, nil
 }
 
+const fetchWritingByIds = `-- name: fetchWritingByIds :many
+SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
+u.idusers, w.writingCategory_idwritingCategory
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+WHERE w.idwriting IN (/*SLICE:writingids*/?) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+ORDER BY w.published DESC
+`
+
+type fetchWritingByIdsParams struct {
+	Userid     int32
+	Writingids []int32
+}
+
+type fetchWritingByIdsRow struct {
+	Title                            sql.NullString
+	Abstract                         sql.NullString
+	Writting                         sql.NullString
+	Username                         sql.NullString
+	Published                        sql.NullTime
+	Idwriting                        int32
+	Private                          sql.NullBool
+	Editdoc                          sql.NullBool
+	ForumthreadIdforumthread         int32
+	Idusers                          int32
+	WritingcategoryIdwritingcategory int32
+}
+
+func (q *Queries) fetchWritingByIds(ctx context.Context, arg fetchWritingByIdsParams) ([]*fetchWritingByIdsRow, error) {
+	query := fetchWritingByIds
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Userid)
+	if len(arg.Writingids) > 0 {
+		for _, v := range arg.Writingids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:writingids*/?", strings.Repeat(",?", len(arg.Writingids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:writingids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.Userid)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchWritingByIdsRow
+	for rows.Next() {
+		var i fetchWritingByIdsRow
+		if err := rows.Scan(
+			&i.Title,
+			&i.Abstract,
+			&i.Writting,
+			&i.Username,
+			&i.Published,
+			&i.Idwriting,
+			&i.Private,
+			&i.Editdoc,
+			&i.ForumthreadIdforumthread,
+			&i.Idusers,
+			&i.WritingcategoryIdwritingcategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const fetchWritingOwner = `-- name: fetchWritingOwner :many
 SELECT users_idusers
 FROM writing
@@ -2514,6 +2590,60 @@ func (q *Queries) getLangs(ctx context.Context, usersIdusers int32) (int32, erro
 	return language_idlanguage, err
 }
 
+const getLatestNewsPosts = `-- name: getLatestNewsPosts :many
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
+FROM siteNews s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+ORDER BY s.occured DESC
+LIMIT 15
+`
+
+type getLatestNewsPostsRow struct {
+	Writername               sql.NullString
+	Writerid                 sql.NullInt32
+	Idsitenews               int32
+	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
+	UsersIdusers             int32
+	News                     sql.NullString
+	Occured                  sql.NullTime
+	Comments                 sql.NullInt32
+}
+
+func (q *Queries) getLatestNewsPosts(ctx context.Context) ([]*getLatestNewsPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getLatestNewsPosts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*getLatestNewsPostsRow
+	for rows.Next() {
+		var i getLatestNewsPostsRow
+		if err := rows.Scan(
+			&i.Writername,
+			&i.Writerid,
+			&i.Idsitenews,
+			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.News,
+			&i.Occured,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getNewsPost = `-- name: getNewsPost :one
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
 FROM siteNews s
@@ -2556,6 +2686,7 @@ SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthr
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
 `
 
 type getNewsPostsRow struct {
@@ -2570,8 +2701,18 @@ type getNewsPostsRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) getNewsPosts(ctx context.Context) ([]*getNewsPostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getNewsPosts)
+func (q *Queries) getNewsPosts(ctx context.Context, newsids []int32) ([]*getNewsPostsRow, error) {
+	query := getNewsPosts
+	var queryParams []interface{}
+	if len(newsids) > 0 {
+		for _, v := range newsids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:newsids*/?", strings.Repeat(",?", len(newsids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:newsids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}

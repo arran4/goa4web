@@ -1,18 +1,16 @@
 {{ template "head" $ }}
     Search blogs:<br>
-    {{- with .Blogs }}
-    	{{- if eq . "noResults" }}
-    		<p>Nothing found.</p>
-    	{{- else if eq . "emptyWords" }}
-    		<p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
-    	{{- else }}
-    		<ul>
-    		{{- range $i, $result := . }}
-    			<li>{{ $i }}: <a href="/blogs/blog/{{$result.Idblogs}}">{{ $result.Text.String }}</a></li>
-    		{{- end }}
-    		</ul>
-    	{{ end }}
-    {{- end }}
+    {{- if .NoResults }}
+        <p>Nothing found.</p>
+    {{- else if .EmptyWords }}
+        <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+    {{- else }}
+        <ul>
+        {{- range $i, $result := .Blogs }}
+            <li>{{ $i }}: <a href="/blogs/blog/{{$result.Idblogs}}">{{ $result.Text.String }}</a></li>
+        {{- end }}
+        </ul>
+    {{ end }}
     <br>
     Comment search:<br>
     {{ template "commentSearchResults" $ }}

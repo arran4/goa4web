@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -9,101 +10,97 @@ import (
 func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Comments           []*getCommentsWithThreadInfoRow
+		News               []*getNewsPostsRow
+		CommentsNoResults  bool
+		CommentsEmptyWords bool
+		NoResults          bool
+		EmptyWords         bool
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	/* TODO General search
-		int count = 0;
-	while (*keys != NULL)
-	{
-		char *s1 = cont.sql.mysqlEscapeString(*keys);
-		query.set("SELECT st.%s_id%s FROM searchwordlist swl, %s st WHERE swl.word=\"%s\" AND "
-				"swl.idsearchwordlist=st.searchwordlist_idsearchwordlist" , table, table, searchtable, s1);
-		if (count++)
-		{
-			query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-		}
-		free(s1);
-		result = cont.sql.query(query.raw(), false);
-		inlist.clear();
-		int i = 0;
-		while (result->hasRow())
-		{
-			i++;
-			inlist.pushf("%s", result->getColumn(0));
-			if (result->nextRow())
-				inlist.pushf(", ");
-		}
-		delete result;
-		if (i == 0)
-		{
-			printf("Nothing found.<br>\n");
-			return;
-		}
-		keys++;
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: "A NEWS TOPIC"})
+	if err != nil {
+		log.Printf("findForumTopicByName Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	*/
+	if comments, emptyWords, noResults, err := ForumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbnId}, uid); err != nil {
+		return
+	} else {
+		data.Comments = comments
+		data.CommentsNoResults = emptyWords
+		data.CommentsEmptyWords = noResults
+	}
 
-	/*
-
-		comment search
-			forumTopicSearch(cont, searchwords, "A NEWS TOPIC", "n.idsiteNews",
-					"LEFT JOIN siteNews n ON th.idforumthread=n.forumthread_idforumthread", "index.cgi?show=");
-		int topicid = findForumTopicByName(cont, topicName);
-		a4string query, inlist;
-		a4mysqlResult *result;
-		a4hashtable words;
-		a4hashtable nowords;
-		//nowords.set("this", (void*)1);
-		breakupTextToWords(cont, sw, words, nowords);
-		char **keys = words.keys();
-		int count = 0;
-		while (*keys != NULL)
-		{
-			char *s1 = cont.sql.mysqlEscapeString(*keys);
-			query.set("SELECT cs.comments_idcomments FROM searchwordlist swl, commentsSearch cs WHERE swl.word=\"%s\" AND "
-					"swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist" , s1);
-			if (count++)
-			{
-				query.pushf(" AND cs.comments_idcomments IN (%s)", inlist.raw());
-			}
-			free(s1);
-			result = cont.sql.query(query.raw(), false);
-			inlist.clear();
-			int i = 0;
-			while (result->hasRow())
-			{
-				i++;
-				inlist.pushf("%s", result->getColumn(0));
-				if (result->nextRow())
-					inlist.pushf(", ");
-			}
-			delete result;
-			if (i == 0)
-			{
-				printf("Nothing found.<br>\n");
-				return;
-			}
-			keys++;
-		}
-
-
-	*/
-
-	// Custom Index???
+	if news, emptyWords, noResults, err := NewsSearch(w, r, queries, uid); err != nil {
+		return
+	} else {
+		data.News = news
+		data.NoResults = emptyWords
+		data.EmptyWords = noResults
+	}
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "searchResultNewsActionPage.tmpl", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*getNewsPostsRow, bool, bool, error) {
+	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	var newsIds []int32
+
+	if len(searchWords) == 0 {
+		return nil, true, false, nil
+	}
+
+	for i, word := range searchWords {
+		if i == 0 {
+			ids, err := queries.siteNewsSearchFirst(r.Context(), sql.NullString{
+				String: word,
+				Valid:  true,
+			})
+			if err != nil {
+				log.Printf("newsSearchFirst Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			newsIds = ids
+		} else {
+			ids, err := queries.siteNewsSearchNext(r.Context(), siteNewsSearchNextParams{
+				Word: sql.NullString{
+					String: word,
+					Valid:  true,
+				},
+				Ids: newsIds,
+			})
+			if err != nil {
+				log.Printf("newsSearchNext Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return nil, false, false, err
+			}
+			newsIds = ids
+		}
+		if len(newsIds) == 0 {
+			return nil, false, true, nil
+		}
+	}
+
+	news, err := queries.getNewsPosts(r.Context(), newsIds)
+	if err != nil {
+		log.Printf("getNews Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return nil, false, false, err
+	}
+
+	return news, false, false, nil
 }

@@ -10,7 +10,7 @@ import (
 
 func newsPage(w http.ResponseWriter, r *http.Request) {
 	type Post struct {
-		*getNewsPostsRow
+		*getLatestNewsPostsRow
 		ShowReply bool
 		ShowEdit  bool
 		Editing   bool
@@ -36,10 +36,10 @@ func newsPage(w http.ResponseWriter, r *http.Request) {
 
 	for _, post := range posts {
 		data.News = append(data.News, &Post{
-			getNewsPostsRow: post,
-			ShowReply:       true, // TODO
-			ShowEdit:        true, // TODO
-			Editing:         editingId == int(post.Idsitenews),
+			getLatestNewsPostsRow: post,
+			ShowReply:             true, // TODO
+			ShowEdit:              true, // TODO
+			Editing:               editingId == int(post.Idsitenews),
 		})
 	}
 

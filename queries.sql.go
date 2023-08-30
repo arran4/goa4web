@@ -1498,6 +1498,39 @@ func (q *Queries) faq_categories(ctx context.Context) ([]*Faqcategory, error) {
 	return items, nil
 }
 
+const fetchAllCategories = `-- name: fetchAllCategories :many
+SELECT wc.idwritingcategory, wc.writingcategory_idwritingcategory, wc.title, wc.description
+FROM writingCategory wc
+`
+
+func (q *Queries) fetchAllCategories(ctx context.Context) ([]*Writingcategory, error) {
+	rows, err := q.db.QueryContext(ctx, fetchAllCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Writingcategory
+	for rows.Next() {
+		var i Writingcategory
+		if err := rows.Scan(
+			&i.Idwritingcategory,
+			&i.WritingcategoryIdwritingcategory,
+			&i.Title,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const fetchCategories = `-- name: fetchCategories :many
 SELECT idwritingCategory, title, description
 FROM writingCategory
@@ -1735,6 +1768,66 @@ func (q *Queries) fetchPublicWritingsByCategory(ctx context.Context, arg fetchPu
 			&i.Idwriting,
 			&i.Private,
 			&i.If,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchPublicWritingsInCategory = `-- name: fetchPublicWritingsInCategory :many
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.Username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
+FROM writing w
+LEFT JOIN users u ON w.UsersIdusers=u.idusers
+WHERE w.private = 0 AND w.writingCategory_idwritingCategory=?
+ORDER BY w.published DESC LIMIT 15
+`
+
+type fetchPublicWritingsInCategoryRow struct {
+	Idwriting                        int32
+	UsersIdusers                     int32
+	ForumthreadIdforumthread         int32
+	LanguageIdlanguage               int32
+	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Published                        sql.NullTime
+	Writting                         sql.NullString
+	Abstract                         sql.NullString
+	Private                          sql.NullBool
+	Username                         sql.NullString
+	Comments                         int64
+}
+
+func (q *Queries) fetchPublicWritingsInCategory(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*fetchPublicWritingsInCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchPublicWritingsInCategory, writingcategoryIdwritingcategory)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchPublicWritingsInCategoryRow
+	for rows.Next() {
+		var i fetchPublicWritingsInCategoryRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
+			&i.WritingcategoryIdwritingcategory,
+			&i.Title,
+			&i.Published,
+			&i.Writting,
+			&i.Abstract,
+			&i.Private,
+			&i.Username,
+			&i.Comments,
 		); err != nil {
 			return nil, err
 		}

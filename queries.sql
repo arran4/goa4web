@@ -1149,6 +1149,14 @@ FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC LIMIT 15;
 
+-- name: fetchPublicWritingsInCategory :many
+SELECT w.*, u.Username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
+FROM writing w
+LEFT JOIN users u ON w.UsersIdusers=u.idusers
+WHERE w.private = 0 AND w.writingCategory_idwritingCategory=?
+ORDER BY w.published DESC LIMIT 15;
+
 -- name: updateWriting :exec
 UPDATE writing
 SET writingCategory_idwritingCategory = ?, title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
@@ -1225,6 +1233,11 @@ WHERE idwritingCategory = ?;
 SELECT idwritingCategory, title, description
 FROM writingCategory
 WHERE writingCategory_idwritingCategory = ?;
+
+-- name: fetchAllCategories :many
+SELECT wc.*
+FROM writingCategory wc
+;
 
 -- name: deleteWritingApproval :exec
 DELETE FROM writtingApprovedUsers

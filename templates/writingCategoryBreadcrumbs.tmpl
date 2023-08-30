@@ -1,20 +1,14 @@
 {{ define "writingCategoryBreadcrumbs" }}
     [
-    <a href="?{{ if .Admin }}section=modifycategories{{ else }}section=list{{ end }}">Writings</a>:
-    {{ range .Result }}
-        {{ $id1 := .IDWritingCategory }}
+    <a href="{{ if .Admin }}/writings/admin/categories{{ else }}/writings{{ end }}">Writings</a>:
+    {{ range .CategoryBreadcrumbs }}
+        {{ $id1 := .Idwritingcategory }}
         {{ $title1 := .Title }}
-        {{ $id2 := .IDWritingCategory2 }}
-        {{ $title2 := .Title2 }}
         {{ if $id1 }}
             {{ $tmp1 := $title1 | html }}
-            <a href="?{{ if .Admin }}section=modifycategories{{ else }}section=list{{ end }}&category={{ $id1 }}">{{ $tmp1 }}</a>:
-        {{ end }}
-        {{ if $id2 }}
-            {{ $tmp2 := $title2 | html }}
-            <a href="?{{ if .Admin }}section=modifycategories{{ else }}section=list{{ end }}&category={{ $id2 }}">{{ $tmp2 }}</a>:
+            <a href="{{ if .Admin }}/writings/admin/categories{{ else }}/writings/category/{{ $id1 }}{{ end }}">{{ if eq $id1 .Idwritingcategory }}(This-category/Refresh){{else}}{{ .Idwriting.String }}{{end}}</a>
+            {{ if eq $.CategoryId .Idwritingcategory }}{{else}}:{{end}}
         {{ end }}
     {{ end }}
-    <a href="?{{ if .Admin }}section=modifycategories{{ else }}section=list{{ end }}&category={{ .Category }}">(This-category/Refresh)</a>
     ]<br>
 {{ end }}

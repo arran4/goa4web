@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,17 +10,27 @@ import (
 func writingsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Categories        []*fetchCategoriesRow
+		EditingCategoryId int32 // TODO
+		CategoryId        int32 // TODO
+		IsAdmin           int32 // TODO
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	categoryRows, err := queries.fetchCategories(r.Context(), data.CategoryId)
+	if err != nil {
+		log.Printf("fetchCategories Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.Categories = categoryRows
+
 	CustomWritingsIndex(data.CoreData, r)
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "writingsPage.tmpl", data); err != nil {

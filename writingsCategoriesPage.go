@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -9,17 +8,44 @@ import (
 func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Categories          []*Writingcategory
+		CategoryBreadcrumbs []*Writingcategory
+		EditingCategoryId   int32 // TODO
+		IsAdmin             bool  // TODO
+		IsWriter            bool  // TODO
+		Abstracts           []*fetchPublicWritingsInCategoryRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		IsWriter: true,
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	categoryRows, err := queries.fetchAllCategories(r.Context())
+	if err != nil {
+		log.Printf("fetchCategories Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	writingsRows, err := queries.fetchPublicWritingsInCategory(r.Context(), 0)
+	if err != nil {
+		log.Printf("fetchPublicWritingsInCategory Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	categoryMap := map[int32]*Writingcategory{}
+	for _, cat := range categoryRows {
+		categoryMap[cat.Idwritingcategory] = cat
+		if cat.WritingcategoryIdwritingcategory == 0 {
+			data.Categories = append(data.Categories, cat)
+		}
+	}
+
+	data.Abstracts = writingsRows
 
 	CustomWritingsIndex(data.CoreData, r)
 

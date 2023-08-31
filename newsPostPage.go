@@ -45,11 +45,13 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		IsReplying         bool
 		IsReplyable        bool
 		Thread             *user_get_threadRow
+		ReplyText          string
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(ContextValues("coreData")).(*CoreData),
-		IsReplying: r.URL.Query().Has("comment"),
+		CoreData:    r.Context().Value(ContextValues("coreData")).(*CoreData),
+		IsReplying:  r.URL.Query().Has("comment"),
+		IsReplyable: true,
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
@@ -100,8 +102,10 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	commentIdString := r.URL.Query().Get("comment")
 	commentId, _ := strconv.Atoi(commentIdString)
+
 	editCommentIdString := r.URL.Query().Get("editComment")
 	editCommentId, _ := strconv.Atoi(editCommentIdString)
+	replyType := r.URL.Query().Get("type")
 	for i, row := range commentRows {
 		editUrl := fmt.Sprintf("?edit=%d", row.Idcomments)
 		editSaveUrl := "?"
@@ -111,6 +115,15 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
 				data.IsReplyable = false
+			}
+		}
+
+		if int32(commentId) == row.Idcomments {
+			switch replyType {
+			case "full":
+				data.ReplyText = processCommentFullQuote(row.Posterusername.String, row.Text.String)
+			default:
+				data.ReplyText = processCommentQuote(row.Posterusername.String, row.Text.String)
 			}
 		}
 
@@ -303,7 +316,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
@@ -331,7 +344,7 @@ func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
@@ -343,8 +356,6 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	vars := mux.Vars(r)
-	postId, _ := strconv.Atoi(vars["post"])
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
@@ -361,5 +372,5 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
+	taskDoneAutoRefreshPage(w, r)
 }

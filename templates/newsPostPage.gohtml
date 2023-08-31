@@ -2,14 +2,14 @@
     {{ template "newsPost" $.Post }}
     <hr><font size=4>Replies:</font>
     {{ template "threadComments" $ }}
-    {{ if .IsReplying }}
-        <a name="reply">
+    <a id="reply">
+    {{ if or .IsReplyable }}
         <font size=4>Reply:</font>
-        <form method="post">
+        <form method="post" action="?#reply">
             <input type="hidden" name="replyto" value="{{ .Thread.Idforumthread }}">
-            <textarea name="replytext" cols=40 rows=20></textarea><br>
+            <textarea name="replytext" cols=40 rows=20>{{.ReplyText}}</textarea><br>
             {{ template "languageCombobox" $ }}
-            <input type="submit" name="dowhat" value="Reply">
+            <input type="submit" name="task" value="Reply">
         </form>
     {{ end }}
 {{ template "tail" $ }}

@@ -1,26 +1,32 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Categories []*showAllCategoriesRow
 	}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
+	categoryRows, err := queries.showAllCategories(r.Context())
+	if err != nil {
+		log.Printf("writingCategories Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data.Categories = categoryRows
 
 	CustomWritingsIndex(data.CoreData, r)
 
@@ -31,39 +37,57 @@ func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-}
-
 func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	wcid, err := strconv.Atoi(r.PostFormValue("wcid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	vars := mux.Vars(r)
+	categoryId, _ := strconv.Atoi(vars["category"])
 
-	/*
-
-			int pwcid = atoiornull(cont.post.getS("pwcid"));
-		int wcid = atoiornull(cont.post.getS("wcid"));
-		char *name = cont.post.getS("name");
-		char *description = cont.post.getS("desc");
-		changeWritingCategory(cont, wcid, name, description, pwcid);
-
-
-	*/
-}
-
-func writingsAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	if err := queries.updateWritingCategory(r.Context(), updateWritingCategoryParams{
+		Title: sql.NullString{
+			Valid:  true,
+			String: name,
+		},
+		Description: sql.NullString{
+			Valid:  true,
+			String: desc,
+		},
+		Idwritingcategory:                int32(categoryId),
+		WritingcategoryIdwritingcategory: int32(wcid),
+	}); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 }
 
 func writingsAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 
-	/*
-
-			int pwcid = atoiornull(cont.post.getS("pwcid"));
-		char *name = cont.post.getS("name");
-		char *description = cont.post.getS("desc");
-		makeWritingCategory(cont, pwcid, name, description);
-
-
-	*/
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	if err := queries.insertWritingCategory(r.Context(), insertWritingCategoryParams{
+		WritingcategoryIdwritingcategory: int32(pcid),
+		Title: sql.NullString{
+			Valid:  true,
+			String: name,
+		},
+		Description: sql.NullString{
+			Valid:  true,
+			String: desc,
+		},
+	}); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 }

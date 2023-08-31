@@ -68,7 +68,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
-	// replyId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
+	replyType := r.URL.Query().Get("type")
 
 	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
 		UsersIdusers:             uid,
@@ -105,7 +105,6 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	editCommentIdString := r.URL.Query().Get("editComment")
 	editCommentId, _ := strconv.Atoi(editCommentIdString)
-	replyType := r.URL.Query().Get("type")
 	for i, row := range commentRows {
 		editUrl := fmt.Sprintf("?edit=%d", row.Idcomments)
 		editSaveUrl := "?"

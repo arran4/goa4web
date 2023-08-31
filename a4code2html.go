@@ -68,13 +68,14 @@ func (c *A4code2html) getNext(endAtEqual bool) string {
 		c.input = c.input[1:]
 
 		switch ch {
-		case '\n', ']', '[', ' ', '\r', '=':
+		case '\n', ']', '[', ' ', '\r', '=' /*, '*', '/', '_'*/ :
 			loop = false
 		case '\\':
 			ch = c.input[0]
 			c.input = c.input[1:]
-			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' {
+			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' /* && ch != '*' && ch != '/' && ch != '_'*/ {
 				result.WriteByte('\\')
+				c.input = c.input[1:]
 			}
 		default:
 			result.WriteByte(ch)

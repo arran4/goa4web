@@ -12,14 +12,27 @@ import (
 )
 
 func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
+	type CommentPlus struct {
+		*user_get_all_comments_for_threadRow
+		ShowReply          bool
+		EditUrl            string
+		Editing            bool
+		Offset             int
+		Languages          []*Language
+		SelectedLanguageId int32
+		EditSaveUrl        string
+	}
 	type Data struct {
 		*CoreData
-		Writing   *fetchWritingByIdRow
-		CanEdit   bool
-		IsAuthor  bool
-		CanReply  bool
-		UserId    int32
-		Languages []*Language
+		Writing     *fetchWritingByIdRow
+		CanEdit     bool
+		IsAuthor    bool
+		CanReply    bool
+		UserId      int32
+		Languages   []*Language
+		Thread      *user_get_threadRow
+		Comments    []*CommentPlus
+		IsReplyable bool
 	}
 
 	data := Data{
@@ -56,6 +69,56 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Languages = languageRows
+
+	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+		UsersIdusers:             uid,
+		ForumthreadIdforumthread: writing.ForumthreadIdforumthread,
+	})
+	if err != nil {
+		log.Printf("show_blog_comments Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+		UsersIdusers:  uid,
+		Idforumthread: writing.ForumthreadIdforumthread,
+	})
+	if err != nil {
+		log.Printf("showTableThreads Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
+	commentIdString := r.URL.Query().Get("comment")
+	commentId, _ := strconv.Atoi(commentIdString)
+	for i, row := range commentRows {
+		editUrl := ""
+		editSaveUrl := ""
+		if uid == row.UsersIdusers {
+			// TODO
+			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
+			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			if commentId != 0 && int32(commentId) == row.Idcomments {
+				data.IsReplyable = false
+			}
+		}
+
+		data.Comments = append(data.Comments, &CommentPlus{
+			user_get_all_comments_for_threadRow: row,
+			ShowReply:                           true,
+			EditUrl:                             editUrl,
+			EditSaveUrl:                         editSaveUrl,
+			Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
+			Offset:                              i + offset,
+			Languages:                           nil,
+			SelectedLanguageId:                  0,
+		})
+	}
+
+	data.Thread = threadRow
 
 	CustomWritingsIndex(data.CoreData, r)
 
@@ -223,42 +286,4 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	taskDoneAutoRefreshPage(w, r)
-	/*
-		TODO
-			{
-			int ptid = atoiornull(cont.post.getS("replyTo"));
-			if (!article)
-				return;
-			if (!ptid)
-			{
-				ptid = findForumTopicByName(cont, WRITING_TOPIC_NAME);
-				if (ptid == 0)
-					ptid = makeTopic(cont, 0, WRITING_TOPIC_NAME,WRITING_TOPIC_DESCRIPTION);
-				if (!ptid)
-				{
-					printf("Failed to create invisible topic.<br>\n");
-					return;
-				}
-				ptid = makeThread(cont, ptid);
-				if (!ptid)
-				{
-					printf("Failed to create thread.<br>\n");
-					return;
-				}
-				assignWritingThisThreadId(cont, ptid, article);
-			}
-			int langid = atoiornull(cont.post.getS("language"));
-			int boardid = atoiornull((char*)cont.get.get("board"));
-			a4string querystr("section=read&article=%d&category=%d", article, category);
-			threadNotify(cont, ptid, querystr.raw());
-			somethingNotify(cont, "writing", "idwriting", article, querystr.raw(), "users_idusers");
-			int lastinsert = makePost(cont, ptid, cont.post.getS("replytext"), langid);
-			if (!lastinsert)
-			{
-				printf("Failed to create post.<br>\n");
-				return;
-			}
-
-
-	*/
 }

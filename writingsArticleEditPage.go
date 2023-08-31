@@ -1,14 +1,20 @@
 package main
 
 import (
+	"database/sql"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Languages []*Language
+		Writing   *fetchWritingByIdRow
+		UserId    int32
 	}
 
 	data := Data{
@@ -16,10 +22,32 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
+	articleId, _ := strconv.Atoi(vars["article"])
 
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+	data.UserId = uid
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	writing, err := queries.fetchWritingById(r.Context(), fetchWritingByIdParams{
+		Userid:    uid,
+		Idwriting: int32(articleId),
+	})
+	if err != nil {
+		log.Printf("fetchWritingById Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.Writing = writing
+
+	languageRows, err := queries.fetchLanguages(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Languages = languageRows
 
 	CustomWritingsIndex(data.CoreData, r)
 
@@ -31,39 +59,48 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
-		static void updateWriting(a4webcont &cont, int wid, int pwcid, char* title, char* abstract, char* body, int isitprivate, int language)
-		{
-			char *s1 = cont.sql.mysqlEscapeString(title);
-			char *s2 = cont.sql.mysqlEscapeString(abstract);
-			char *s3 = cont.sql.mysqlEscapeString(body);
-			a4string query("UPDATE writing SET writingCategory_idwritingCategory=\"%d\", title=\"%s\", abstract=\"%s\", writting=\"%s\", private=\"%d\", language_idlanguage=\"%d\" WHERE idwriting=%d ",
-							    				    pwcid,	     s1,	      s2,	   s3,      isitprivate,		     language,		    wid);
-			free(s1);
-			free(s2);
-			free(s3);
-			a4mysqlResult *result = cont.sql.query(query.raw());
-			delete result;
-			query.set("DELETE FROM writingSearch WHERE writing_idwriting=%d", wid);
-			result = cont.sql.query(query.raw());
-			delete result;
-			addToGeneralSearch(cont, abstract, wid, "writingSearch", "writing_idwriting");
-			addToGeneralSearch(cont, title, wid, "writingSearch", "writing_idwriting");
-			addToGeneralSearch(cont, body, wid, "writingSearch", "writing_idwriting");
+	vars := mux.Vars(r)
+	articleId, _ := strconv.Atoi(vars["article"])
+
+	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
+	title := r.PostFormValue("title")
+	abstract := r.PostFormValue("abstract")
+	body := r.PostFormValue("body")
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	if err := queries.updateWriting(r.Context(), updateWritingParams{
+		Title:              sql.NullString{Valid: true, String: title},
+		Abstract:           sql.NullString{Valid: true, String: abstract},
+		Writting:           sql.NullString{Valid: true, String: body},
+		Private:            sql.NullBool{Valid: true, Bool: private},
+		LanguageIdlanguage: int32(languageId),
+		Idwriting:          int32(articleId),
+	}); err != nil {
+		log.Printf("updateWriting Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := queries.writingSearchDelete(r.Context(), int32(articleId)); err != nil {
+		log.Printf("writingSearchDelete Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	for _, text := range []string{
+		abstract,
+		title,
+		body,
+	} {
+		wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+		if done {
+			return
 		}
 
-			int pwcid = atoiornull(cont.post.getS("pwcid"));
-		int wid = atoiornull(cont.post.getS("wid"));
-		int language = atoiornull(cont.post.getS("language"));
-		int isitprivate = cont.post.getS("isitprivate") != NULL;
-		char *title = cont.post.getS("title");
-		char *abstract = cont.post.getS("abstract");
-		char *body = cont.post.getS("body");
-		int isuserwriter = iswriter(cont, cont.user.UID, wid);
-		int isabletoedit = isuserabletoeditwriting(cont, cont.user.UID, wid);
-		if (level == auth_administrator || isuserwriter || isabletoedit)
-			updateWriting(cont, wid, pwcid, title, abstract, body, isitprivate, language);
-
-	*/
+		if InsertWordsToWritingSearch(w, r, wordIds, queries, int64(articleId)) {
+			return
+		}
+	}
 }

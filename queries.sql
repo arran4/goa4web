@@ -1161,10 +1161,10 @@ ORDER BY w.published DESC LIMIT 15;
 
 -- name: updateWriting :exec
 UPDATE writing
-SET writingCategory_idwritingCategory = ?, title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
+SET title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
 WHERE idwriting = ?;
 
--- name: insertWriting :exec
+-- name: insertWriting :execlastid
 INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 

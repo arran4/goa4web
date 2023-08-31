@@ -1,26 +1,32 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		Languages []*Language
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	languageRows, err := queries.fetchLanguages(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Languages = languageRows
 
 	CustomWritingsIndex(data.CoreData, r)
 
@@ -31,41 +37,46 @@ func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func writingsArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	vars := mux.Vars(r)
+	categoryId, _ := strconv.Atoi(vars["category"])
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 
-	/*
+	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
+	title := r.PostFormValue("title")
+	abstract := r.PostFormValue("abstract")
+	body := r.PostFormValue("body")
+	uid, _ := session.Values["UID"].(int32)
 
-		static int makeWriting(a4webcont &cont, int pwcid, char* title, char* abstract, char* body, int isitprivate, int language)
-		{
-			char *s1 = cont.sql.mysqlEscapeString(title);
-			char *s2 = cont.sql.mysqlEscapeString(abstract);
-			char *s3 = cont.sql.mysqlEscapeString(body);
-			a4string query("INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers) VALUES "
-					"(		    \"%d\", 				\"%s\", \"%s\", \"%s\", \"%d\", \"%d\", 	     NOW(),	\"%d\")",
-							    pwcid, 				s1,     s2,      s3, isitprivate, language,			cont.user.UID);
-			free(s1);
-			free(s2);
-			free(s3);
-			a4mysqlResult *result = cont.sql.query(query.raw());
-			int value = cont.sql.last_insert_id();
-			delete result;
-			addToGeneralSearch(cont, abstract, value, "writingSearch", "writing_idwriting");
-			addToGeneralSearch(cont, title, value, "writingSearch", "writing_idwriting");
-			addToGeneralSearch(cont, body, value, "writingSearch", "writing_idwriting");
-			return value;
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	articleId, err := queries.insertWriting(r.Context(), insertWritingParams{
+		WritingcategoryIdwritingcategory: int32(categoryId),
+		Title:                            sql.NullString{Valid: true, String: title},
+		Abstract:                         sql.NullString{Valid: true, String: abstract},
+		Writting:                         sql.NullString{Valid: true, String: body},
+		Private:                          sql.NullBool{Valid: true, Bool: private},
+		LanguageIdlanguage:               int32(languageId),
+		UsersIdusers:                     uid,
+	})
+	if err != nil {
+		log.Printf("insertWriting Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	for _, text := range []string{
+		abstract,
+		title,
+		body,
+	} {
+		wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+		if done {
+			return
 		}
 
-
-
-
-			int pwcid = atoiornull(cont.post.getS("pwcid"));
-		int language = atoiornull(cont.post.getS("language"));
-		int isitprivate = cont.post.getS("isitprivate") != NULL;
-		char *title = cont.post.getS("title");
-		char *abstract = cont.post.getS("abstract");
-		char *body = cont.post.getS("body");
-		makeWriting(cont, pwcid, title, abstract, body, isitprivate, language);
-
-
-	*/
+		if InsertWordsToWritingSearch(w, r, wordIds, queries, articleId) {
+			return
+		}
+	}
 }

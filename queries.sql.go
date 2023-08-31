@@ -3277,7 +3277,7 @@ func (q *Queries) insertPagePermission(ctx context.Context, arg insertPagePermis
 	return err
 }
 
-const insertWriting = `-- name: insertWriting :exec
+const insertWriting = `-- name: insertWriting :execlastid
 INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
 `
@@ -3292,8 +3292,8 @@ type insertWritingParams struct {
 	UsersIdusers                     int32
 }
 
-func (q *Queries) insertWriting(ctx context.Context, arg insertWritingParams) error {
-	_, err := q.db.ExecContext(ctx, insertWriting,
+func (q *Queries) insertWriting(ctx context.Context, arg insertWritingParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, insertWriting,
 		arg.WritingcategoryIdwritingcategory,
 		arg.Title,
 		arg.Abstract,
@@ -3302,7 +3302,10 @@ func (q *Queries) insertWriting(ctx context.Context, arg insertWritingParams) er
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const insertWritingApproval = `-- name: insertWritingApproval :exec
@@ -4979,23 +4982,21 @@ func (q *Queries) updateQueue(ctx context.Context, arg updateQueueParams) error 
 
 const updateWriting = `-- name: updateWriting :exec
 UPDATE writing
-SET writingCategory_idwritingCategory = ?, title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
+SET title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
 WHERE idwriting = ?
 `
 
 type updateWritingParams struct {
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Abstract                         sql.NullString
-	Writting                         sql.NullString
-	Private                          sql.NullBool
-	LanguageIdlanguage               int32
-	Idwriting                        int32
+	Title              sql.NullString
+	Abstract           sql.NullString
+	Writting           sql.NullString
+	Private            sql.NullBool
+	LanguageIdlanguage int32
+	Idwriting          int32
 }
 
 func (q *Queries) updateWriting(ctx context.Context, arg updateWritingParams) error {
 	_, err := q.db.ExecContext(ctx, updateWriting,
-		arg.WritingcategoryIdwritingcategory,
 		arg.Title,
 		arg.Abstract,
 		arg.Writting,

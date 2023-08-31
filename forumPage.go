@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -43,17 +45,25 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.forumCategories(r.Context())
 	if err != nil {
-		log.Printf("forumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("forumCategories Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 	var topicRows []*ForumtopicPlus
 	if categoryId == 0 {
 		rows, err := queries.get_all_user_topics(r.Context(), uid)
 		if err != nil {
-			log.Printf("showTableTopics Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+			default:
+				log.Printf("showTableTopics Error: %s", err)
+				http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+				return
+			}
 		}
 		for _, row := range rows {
 			topicRows = append(topicRows, &ForumtopicPlus{
@@ -73,9 +83,13 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 			ForumcategoryIdforumcategory: int32(categoryId),
 		})
 		if err != nil {
-			log.Printf("showTableTopics Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+			default:
+				log.Printf("showTableTopics Error: %s", err)
+				http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+				return
+			}
 		}
 		for _, row := range rows {
 			topicRows = append(topicRows, &ForumtopicPlus{

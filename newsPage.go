@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
@@ -27,9 +29,13 @@ func newsPage(w http.ResponseWriter, r *http.Request) {
 
 	posts, err := queries.getLatestNewsPosts(r.Context())
 	if err != nil {
-		log.Printf("getLatestNewsPosts Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getLatestNewsPosts Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 )
@@ -19,9 +21,13 @@ func linkerCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	categories, err := queries.showCategories(r.Context())
 	if err != nil {
-		log.Printf("showCategories Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("showCategories Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Categories = categories

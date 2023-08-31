@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
 	"log"
@@ -33,16 +35,25 @@ func writingsCategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.fetchAllCategories(r.Context())
 	if err != nil {
-		log.Printf("fetchCategories Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("fetchCategories Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	writingsRows, err := queries.fetchPublicWritingsInCategory(r.Context(), data.CategoryId)
 	if err != nil {
-		log.Printf("fetchPublicWritingsInCategory Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+
+			log.Printf("fetchPublicWritingsInCategory Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	categoryMap := map[int32]*Writingcategory{}

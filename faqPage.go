@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 )
@@ -32,9 +34,13 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 
 	faqRows, err := queries.show_questions(r.Context())
 	if err != nil {
-		log.Printf("show_questions Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("show_questions Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	for _, row := range faqRows {

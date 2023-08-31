@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -24,26 +25,38 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := queries.getAllUsersAllTopicLevels(r.Context())
 	if err != nil {
-		log.Printf("getAllUsersTopicLevels Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getAllUsersTopicLevels Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.UserTopicLevels = rows
 
 	userRows, err := queries.allUsers(r.Context())
 	if err != nil {
-		log.Printf("allUsers Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("allUsers Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	data.Users = userRows
 
 	topicRows, err := queries.getAllTopics(r.Context())
 	if err != nil {
-		log.Printf("allTopics Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("allTopics Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	data.Topics = topicRows
 

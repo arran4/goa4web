@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,8 +23,12 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := queries.getUsersPermissions(r.Context())
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	data.UserLevels = rows
 

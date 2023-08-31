@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,9 +22,13 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.adminCategories(r.Context())
 	if err != nil {
-		log.Printf("adminCategories Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("adminCategories Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Categories = categoryRows

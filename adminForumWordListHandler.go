@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	_ "embed"
+	"errors"
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 	"log"
 	"net/http"
@@ -22,8 +23,12 @@ func adminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := queries.completeWordList(r.Context())
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	data.Rows = rows
 

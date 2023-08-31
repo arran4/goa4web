@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 )
@@ -23,9 +25,13 @@ func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 
 	subBoardRows, err := queries.printSubBoards(r.Context(), 0)
 	if err != nil {
-		log.Printf("printSubBoards Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("printSubBoards Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Boards = subBoardRows

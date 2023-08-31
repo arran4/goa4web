@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -70,9 +71,13 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 				Valid:  true,
 			})
 			if err != nil {
-				log.Printf("LinkersSearchFirst Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("LinkersSearchFirst Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			LinkerIds = ids
 		} else {
@@ -84,9 +89,13 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 				Ids: LinkerIds,
 			})
 			if err != nil {
-				log.Printf("LinkersSearchNext Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("LinkersSearchNext Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			LinkerIds = ids
 		}
@@ -97,9 +106,13 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 
 	Linkers, err := queries.showLinks(r.Context(), LinkerIds)
 	if err != nil {
-		log.Printf("getLinkers Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil, false, false, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getLinkers Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return nil, false, false, err
+		}
 	}
 
 	return Linkers, false, false, nil

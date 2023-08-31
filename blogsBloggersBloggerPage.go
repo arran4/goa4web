@@ -19,6 +19,10 @@ func blogsBloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	//
 	//rows, err := queries.show_blogger_list(r.Context())
 	//if err != nil {
+	//switch {
+	//case errors.Is(err, sql.ErrNoRows):
+	//default:
+
 	//	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	//	return
 	//}

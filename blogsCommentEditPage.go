@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -38,9 +39,13 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		Idforumthread: comment.ForumthreadIdforumthread,
 	})
 	if err != nil {
-		log.Printf("Error: getComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("Error: user_get_thread: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	if err = queries.update_comment(r.Context(), update_commentParams{

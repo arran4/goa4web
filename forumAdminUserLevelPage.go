@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -25,9 +26,13 @@ func forumAdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := queries.getUsersAllTopicLevels(r.Context(), int32(uid))
 	if err != nil {
-		log.Printf("getAllUsersTopicLevels Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getAllUsersTopicLevels Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.UserTopicLevels = rows

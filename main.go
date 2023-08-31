@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -430,8 +432,12 @@ func BlogAuthor() mux.MatcherFunc {
 
 		row, err := queries.show_blog(request.Context(), int32(blogId))
 		if err != nil {
-			log.Printf("Error: %s", err)
-			return false
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+			default:
+				log.Printf("Error: %s", err)
+				return false
+			}
 		}
 
 		return row.UsersIdusers == uid

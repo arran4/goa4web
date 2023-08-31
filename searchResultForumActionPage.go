@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -52,9 +53,13 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 				Valid:  true,
 			})
 			if err != nil {
-				log.Printf("commentsSearchFirst Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("commentsSearchFirst Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			commentIds = ids
 		} else {
@@ -66,9 +71,13 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 				Ids: commentIds,
 			})
 			if err != nil {
-				log.Printf("commentsSearchNext Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("commentsSearchNext Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			commentIds = ids
 		}
@@ -82,9 +91,13 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 		Ids:          commentIds,
 	})
 	if err != nil {
-		log.Printf("getComments Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil, false, false, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getComments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return nil, false, false, err
+		}
 	}
 
 	return comments, false, false, nil
@@ -108,9 +121,13 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 				Ftids: forumTopicId,
 			})
 			if err != nil {
-				log.Printf("commentsSearchFirst Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("commentsSearchFirst Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			commentIds = ids
 		} else {
@@ -123,9 +140,14 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 				Ftids: forumTopicId,
 			})
 			if err != nil {
-				log.Printf("commentsSearchNext Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+
+					log.Printf("commentsSearchNext Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			commentIds = ids
 		}
@@ -139,9 +161,13 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 		Ids:          commentIds,
 	})
 	if err != nil {
-		log.Printf("getComments Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil, false, false, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getComments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return nil, false, false, err
+		}
 	}
 
 	return comments, false, false, nil

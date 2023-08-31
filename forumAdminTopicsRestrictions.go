@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,9 +23,13 @@ func forumAdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request
 
 	restrictions, err := queries.getAllTopicRestrictions(r.Context())
 	if err != nil {
-		log.Printf("printTopicRestrictions Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("printTopicRestrictions Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Restrictions = restrictions

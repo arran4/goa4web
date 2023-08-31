@@ -71,9 +71,13 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		ForumthreadIdforumthread: int32(post.ForumthreadIdforumthread),
 	})
 	if err != nil {
-		log.Printf("show_blog_comments Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("show_blog_comments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
@@ -81,9 +85,13 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		Idforumthread: int32(post.ForumthreadIdforumthread),
 	})
 	if err != nil {
-		log.Printf("showTableThreads Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("Error: user_get_thread: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -156,7 +164,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pthid int32 = post.ForumthreadIdforumthread
+	var pthid = post.ForumthreadIdforumthread
 	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
 		String: NewsTopicName,
 		Valid:  true,

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
@@ -43,9 +45,13 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.forumCategories(r.Context())
 	if err != nil {
-		log.Printf("forumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("forumCategories Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 	topicRow, err := queries.user_get_topic(r.Context(), user_get_topicParams{
 		UsersIdusers: uid,
@@ -87,9 +93,13 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		ForumtopicIdforumtopic: int32(topicId),
 	})
 	if err != nil {
-		log.Printf("forumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("Error: user_get_thread: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 	data.Threads = threadRows
 

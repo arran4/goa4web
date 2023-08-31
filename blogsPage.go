@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/sessions"
@@ -40,9 +41,13 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 		Offset:             int32(offset),
 	})
 	if err != nil {
-		log.Printf("Query Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("Query Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data := Data{
@@ -209,7 +214,11 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		Limit:        15,
 	})
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			return nil, err
+		}
 	}
 
 	for _, row := range rows {

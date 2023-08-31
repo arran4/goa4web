@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -76,9 +78,13 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 
 	bookmarks, err := queries.show_bookmarks(r.Context(), uid)
 	if err != nil {
-		log.Printf("error show_bookmarks: %s", err)
-		http.Error(w, "ERROR", 500)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("error show_bookmarks: %s", err)
+			http.Error(w, "ERROR", 500)
+			return
+		}
 	}
 
 	data := Data{

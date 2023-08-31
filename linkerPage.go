@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
@@ -31,9 +33,13 @@ func linkerPage(w http.ResponseWriter, r *http.Request) {
 
 	linkerPosts, err := queries.showLatest(r.Context(), int32(data.CatId))
 	if err != nil {
-		log.Printf("showLatest Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("showLatest Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Links = linkerPosts

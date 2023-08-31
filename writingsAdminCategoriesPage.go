@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -21,9 +22,13 @@ func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.showAllCategories(r.Context())
 	if err != nil {
-		log.Printf("writingCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("writingCategories Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	data.Categories = categoryRows

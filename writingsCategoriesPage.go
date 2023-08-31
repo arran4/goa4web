@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 )
@@ -25,16 +27,24 @@ func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.fetchAllCategories(r.Context())
 	if err != nil {
-		log.Printf("fetchCategories Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("fetchCategories Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	writingsRows, err := queries.fetchPublicWritingsInCategory(r.Context(), 0)
 	if err != nil {
-		log.Printf("fetchPublicWritingsInCategory Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("fetchPublicWritingsInCategory Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	categoryMap := map[int32]*Writingcategory{}

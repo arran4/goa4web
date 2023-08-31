@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -70,9 +71,13 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 				Valid:  true,
 			})
 			if err != nil {
-				log.Printf("newsSearchFirst Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("newsSearchFirst Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			newsIds = ids
 		} else {
@@ -84,9 +89,13 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 				Ids: newsIds,
 			})
 			if err != nil {
-				log.Printf("newsSearchNext Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("newsSearchNext Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			newsIds = ids
 		}
@@ -97,9 +106,13 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 
 	news, err := queries.getNewsPosts(r.Context(), newsIds)
 	if err != nil {
-		log.Printf("getNews Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil, false, false, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getNews Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return nil, false, false, err
+		}
 	}
 
 	return news, false, false, nil

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -63,9 +65,13 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		ForumthreadIdforumthread: int32(threadId),
 	})
 	if err != nil {
-		log.Printf("show_blog_comments Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("show_blog_comments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
@@ -73,9 +79,13 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		Idforumthread: int32(threadId),
 	})
 	if err != nil {
-		log.Printf("showTableThreads Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("Error: user_get_thread: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	topicRow, err := queries.user_get_topic(r.Context(), user_get_topicParams{
@@ -146,9 +156,13 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.forumCategories(r.Context())
 	if err != nil {
-		log.Printf("forumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("forumCategories Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})

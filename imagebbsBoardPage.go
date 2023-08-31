@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
@@ -31,18 +32,26 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	subBoardRows, err := queries.printSubBoards(r.Context(), int32(bid))
 	if err != nil {
-		log.Printf("printSubBoards Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("printSubBoards Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Boards = subBoardRows
 
 	posts, err := queries.printImagePosts(r.Context(), int32(bid))
 	if err != nil {
-		log.Printf("printSubBoards Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("printSubBoards Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Posts = posts

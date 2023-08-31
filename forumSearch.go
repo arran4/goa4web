@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 )
@@ -11,9 +13,13 @@ func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []
 			CommentsIdcomments:             int32(cid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		}); err != nil {
-			log.Printf("Error: addToForumCommentSearch: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return true
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+			default:
+				log.Printf("Error: addToForumCommentSearch: %s", err)
+				http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+				return true
+			}
 		}
 	}
 	return false

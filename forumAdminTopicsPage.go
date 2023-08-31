@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -22,18 +23,26 @@ func forumAdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.showAllCategories(r.Context())
 	if err != nil {
-		log.Printf("forumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("forumCategories Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	data.Categories = categoryRows
 
 	topicRows, err := queries.getAllTopics(r.Context())
 	if err != nil {
-		log.Printf("forumTopics Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("forumTopics Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	data.Topics = topicRows

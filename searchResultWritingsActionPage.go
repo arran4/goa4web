@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
@@ -70,9 +71,13 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 				Valid:  true,
 			})
 			if err != nil {
-				log.Printf("writingSearchFirst Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("writingSearchFirst Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			writingsIds = ids
 		} else {
@@ -84,9 +89,13 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 				Ids: writingsIds,
 			})
 			if err != nil {
-				log.Printf("writingSearchNext Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return nil, false, false, err
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					log.Printf("writingSearchNext Error: %s", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return nil, false, false, err
+				}
 			}
 			writingsIds = ids
 		}
@@ -100,9 +109,13 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 		Writingids: writingsIds,
 	})
 	if err != nil {
-		log.Printf("getWritings Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil, false, false, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getWritings Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return nil, false, false, err
+		}
 	}
 
 	return writings, false, false, nil

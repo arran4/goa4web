@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,9 +22,13 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	queue, err := queries.showAdminQueue(r.Context())
 	if err != nil {
-		log.Printf("showAdminQueue Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("showAdminQueue Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Queue = queue

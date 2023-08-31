@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,9 +22,13 @@ func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 
 	approvedUserRows, err := queries.fetchAllWritingApprovals(r.Context())
 	if err != nil {
-		log.Printf("fetchAllWritingApprovals Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("fetchAllWritingApprovals Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.ApprovedUsers = approvedUserRows

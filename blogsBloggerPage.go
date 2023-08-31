@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -32,7 +33,7 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	buid, err := queries.usernametouid(r.Context(), sql.NullString{
+	buid, _ := queries.usernametouid(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
@@ -44,9 +45,13 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 		Offset:             int32(offset),
 	})
 	if err != nil {
-		log.Printf("Query Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("Query Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data := Data{

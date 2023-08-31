@@ -25,9 +25,9 @@ func bookmarksEditPage(w http.ResponseWriter, r *http.Request) {
 
 	bookmarks, err := queries.show_bookmarks(r.Context(), uid)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-
-		} else {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
 			log.Printf("error show_bookmarks: %s", err)
 			http.Error(w, "ERROR", 500)
 			return

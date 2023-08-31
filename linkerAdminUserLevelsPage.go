@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,9 +21,13 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	rows, err := queries.getUsersPermissions(r.Context())
 	if err != nil {
-		log.Printf("getUsersPermissions Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("getUsersPermissions Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	data.UserLevels = rows
 

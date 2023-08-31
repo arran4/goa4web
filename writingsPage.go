@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -24,9 +26,13 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := queries.fetchCategories(r.Context(), data.CategoryId)
 	if err != nil {
-		log.Printf("fetchCategories Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("fetchCategories Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data.Categories = categoryRows

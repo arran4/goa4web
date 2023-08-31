@@ -1,38 +1,34 @@
 {{ template "head" $ }}
     {{ template "writingCategoryBreadcrumbs" $ }}
-    {{ with .Result }}
-        {{ if . }}
-            {{ range . }}
-                <font size="4">At {{ .Writing.Published.String }}, By {{ .Writing.Username.String }}; {{ .Writing.Title.String | a4code2html }}</font>:
-                {{ if .Writing.Private.Bool }} (Restricted access) {{ end }}
-                {{ if or .CanEdit .IsAuthor }}
-                    [<a href="/writings/article/{{ .Writing.Idwriting }}/edit">EDIT</a>]
-                    {{ if .IsAuthor }} [<a href="/writings/admin/users/access?category={{ .WritingCategoryID }}&article={{ .WritingID }}">APPROVED USERS</a>] {{ end }}
-                {{ end }}
-                <br>
-                <strong>Abstract:</strong><br>
-                {{ .Writing.Abstract.String | a4code2html }}
-                <hr>
-                {{ .Writing.Writting.String | a4code2html }}
-                {{ if .WritingForumThreadID }}
-                    <hr>Comments:<br>
-                    {{ template "threadComments" $ }}
-                    {{ if .CanReply }}
-                        <hr><font size="4">Reply:</font><br>
-                        <form method="post">
-                            <input type="hidden" name="replyTo" value="{{ .Writing.ForumthreadIdforumthread }}">
-                            <textarea name="replytext" cols="40" rows="20"></textarea><br>
-                            {{ template "languageCombobox" $ }}
-                            <input type="submit" name="task" value="Reply">
-                        </form>
-                    {{ else }}
-                        Please sign-in (or sign-up) to write a reply.<br>
-                    {{ end }}
-                {{ end }}
-            {{ end }}
-        {{ else }}
-            Article doesn't exist.<br>
+    {{ if .Writing }}
+        <font size="4">At {{ .Writing.Published.String }}, By {{ .Writing.Username.String }}; {{ .Writing.Title.String | a4code2html }}</font>:
+        {{ if .Writing.Private.Bool }} (Restricted access) {{ end }}
+        {{ if or .CanEdit .IsAuthor }}
+            [<a href="/writings/article/{{ .Writing.Idwriting }}/edit">EDIT</a>]
+            {{ if .IsAuthor }} [<a href="/writings/admin/users/access?category={{ .WritingCategoryID }}&article={{ .WritingID }}">APPROVED USERS</a>] {{ end }}
         {{ end }}
+        <br>
+        <strong>Abstract:</strong><br>
+        {{ .Writing.Abstract.String | a4code2html }}
+        <hr>
+        {{ .Writing.Writting.String | a4code2html }}
+        {{ if .Writing.ForumthreadIdforumthread }}
+            <hr>Comments:<br>
+            {{ template "threadComments" $ }}
+            {{ if .CanReply }}
+                <hr><font size="4">Reply:</font><br>
+                <form method="post">
+                    <input type="hidden" name="replyTo" value="{{ .Writing.ForumthreadIdforumthread }}">
+                    <textarea name="replytext" cols="40" rows="20"></textarea><br>
+                    {{ template "languageCombobox" $ }}
+                    <input type="submit" name="task" value="Reply">
+                </form>
+            {{ else }}
+                Please sign-in (or sign-up) to write a reply.<br>
+            {{ end }}
+        {{ end }}
+    {{ else }}
+        Article doesn't exist.<br>
     {{ end }}
 
 {{ template "tail" $ }}

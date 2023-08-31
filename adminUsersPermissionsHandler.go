@@ -11,7 +11,7 @@ import (
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows []*Permission
+		UserLevels []*Permission
 	}
 
 	data := Data{
@@ -25,7 +25,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	data.Rows = rows
+	data.UserLevels = rows
 
 	err = getCompiledTemplates().ExecuteTemplate(w, "adminUsersPermissionsPage.gohtml", data)
 	if err != nil {

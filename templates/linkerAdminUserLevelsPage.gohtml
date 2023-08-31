@@ -7,8 +7,8 @@
             <th>Level</th>
             <th>Delete?</th>
         </tr>
-        {{- if .Rows }}
-            {{- range $result := .Rows }}
+        {{- if .UserLevels }}
+            {{- range $result := .UserLevels }}
                 <tr>
                     <td>{{ $result.ID }}</td>
                     <td>{{ $result.Username.String }}</td>

@@ -2,25 +2,29 @@ package main
 
 import (
 	"database/sql"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func writingsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		UserLevels []*Permission
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	rows, err := queries.getUsersPermissions(r.Context())
+	if err != nil {
+		log.Printf("getUsersPermissions Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.UserLevels = rows
 
 	CustomWritingsIndex(data.CoreData, r)
 
@@ -34,7 +38,7 @@ func writingsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 func writingsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	username := r.PostFormValue("username")
-	where := r.PostFormValue("where")
+	where := "writing"
 	level := r.PostFormValue("level")
 	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
@@ -62,9 +66,18 @@ func writingsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Reque
 }
 
 func writingsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-
-	/*
-		userDisallow(cont, atoiornull(cont.post.getS("permid")));
-	*/
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	permid := r.PostFormValue("permid")
+	permidi, err := strconv.Atoi(permid)
+	if err != nil {
+		log.Printf("strconv.Atoi(permid Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if err := queries.userDisallow(r.Context(), int32(permidi)); err != nil {
+		log.Printf("userDisallow Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }

@@ -7,12 +7,12 @@
             <th>Level</th>
             <th>Delete?</th>
         </tr>
-        {{- range .Results }}
+        {{- range .UserLevels }}
         <tr>
             <td>{{ .Idpermissions }}</td>
-            <td>{{ .Username }}</td>
-            <td>{{ .Email }}</td>
-            <td>{{ .Level }}</td>
+            <td>{{ .Username.String }}</td>
+            <td>{{ .Email.String }}</td>
+            <td>{{ .Level.String }}</td>
             <td>
                 <form method="post">
                     <input type="hidden" name="permid" value="{{ .Idpermissions }}">
@@ -22,21 +22,21 @@
         </tr>
         {{- end }}
         <tr>
-            <td>
-                <form method="post">NEW</td>
-            <td><input name="username"></td>
-            <td>?</td>
-            <td>
-                <select name="level">
-                    <option value="reader">reader</option>
-                    <option value="writer">writer</option>
-                    <option value="moderator">moderator</option>
-                    <option value="administrator">administrator</option>
-                </select>
-            </td>
-            <td>
-                <input type="submit" name="task" value="User Allow">
-            </td>
+            <form method="post">
+                <td>NEW</td>
+                <td><input name="username"></td>
+                <td>?</td>
+                <td>
+                    <select name="level">
+                        <option value="reader">reader</option>
+                        <option value="writer">writer</option>
+                        <option value="moderator">moderator</option>
+                        <option value="administrator">administrator</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="submit" name="task" value="User Allow">
+                </td>
             </form>
         </tr>
     </table>

@@ -10,7 +10,7 @@ import (
 func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows []*Permission
+		UserLevels []*Permission
 	}
 
 	data := Data{
@@ -24,7 +24,7 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	data.Rows = rows
+	data.UserLevels = rows
 
 	CustomLinkerIndex(data.CoreData, r)
 	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerAdminUserLevelsPage.gohtml", data); err != nil {

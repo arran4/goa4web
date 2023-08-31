@@ -198,6 +198,14 @@ func (a *A4code2html) acomm() int {
 			a.output.WriteString("<table width=90% align=center bgcolor=lightgreen><tr><th>Quote: <tr><td>")
 			a.stack = append(a.stack, "</table>")
 		}
+	case "spoiler", "sp":
+		switch a.codeType {
+		case ct_tableOfContents:
+		case ct_tagstrip, ct_wordsonly:
+		default:
+			a.output.WriteString("<span onmouseover=\"this.style.color='#FFFFFF';\" onmouseout=\"this.style.color=this.style.backgroundColor='#000000'\" style=\"color: rgb(0, 0, 0); background: rgb(0, 0, 0);\">")
+			a.stack = append(a.stack, "</span>")
+		}
 	case "indent":
 		switch a.codeType {
 		case ct_tableOfContents:

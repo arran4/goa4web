@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-    {{ template "newsPost" $ }}
+    {{ template "newsPost" $.Post }}
     <hr><font size=4>Replies:</font>
     {{ template "threadComments" $ }}
     {{ if .IsReplying }}

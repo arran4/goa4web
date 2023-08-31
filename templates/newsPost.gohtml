@@ -1,18 +1,18 @@
 {{ define "newsPost" }}
     <table width="100%">
         <tr bgcolor="lightgrey">
-            <th>{{ .Occured.Date }}</th>
+            <th>{{ .Occured.Time }}</th>
         </tr>
         <tr>
-            <td>{{ .News.String }}<br>-<br>{{ .Writername.String }}
+            <td>{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
             -
-            [<a href="/news/{{ .Idsitenews }}/comments">{{ .Comments.Int32 }} COMMENTS</a>]
+            [<a href="/news/news/{{ .Idsitenews }}">{{ .Comments.Int32 }} COMMENTS</a>]
             {{ if .ShowReply }}
                 [<a href="?reply={{ .Idsitenews }}#reply">REPLY</a>]
             {{ end }}
 
             {{ if .ShowEdit }}
-                [<a href="/news/{{ .Idsitenews }}/edit">EDIT</a>]
+                [<a href="/news/news/{{ .Idsitenews }}/edit">EDIT</a>]
             {{ end }}
         </tr>
     </table><br>

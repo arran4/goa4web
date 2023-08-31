@@ -18,6 +18,16 @@ type NewsPost struct {
 }
 
 func newsPostPage(w http.ResponseWriter, r *http.Request) {
+	type CommentPlus struct {
+		*user_get_all_comments_for_threadRow
+		ShowReply          bool
+		EditUrl            string
+		Editing            bool
+		Offset             int
+		Languages          []*Language
+		SelectedLanguageId int32
+		EditSaveUrl        string
+	}
 	type Post struct {
 		*getNewsPostRow
 		ShowReply bool
@@ -26,18 +36,24 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Post      *Post
-		Languages []*Language
-		Thread    *Forumthread
-		Topic     *Forumtopic
-		Comments  []*Comment
+		Post        *Post
+		Languages   []*Language
+		Topic       *Forumtopic
+		Comments    []*CommentPlus
+		Offset      int
+		IsReplying  bool
+		IsReplyable bool
+		Thread      *user_get_threadRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:   r.Context().Value(ContextValues("coreData")).(*CoreData),
+		IsReplying: r.URL.Query().Has("reply"),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -50,6 +66,55 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
 
+	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+		UsersIdusers:             uid,
+		ForumthreadIdforumthread: int32(post.ForumthreadIdforumthread),
+	})
+	if err != nil {
+		log.Printf("show_blog_comments Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+		UsersIdusers:  uid,
+		Idforumthread: int32(post.ForumthreadIdforumthread),
+	})
+	if err != nil {
+		log.Printf("showTableThreads Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
+	commentIdString := r.URL.Query().Get("comment")
+	commentId, _ := strconv.Atoi(commentIdString)
+	for i, row := range commentRows {
+		editUrl := ""
+		editSaveUrl := ""
+		if uid == row.UsersIdusers {
+			// TODO
+			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
+			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			if commentId != 0 && int32(commentId) == row.Idcomments {
+				data.IsReplyable = false
+			}
+		}
+
+		data.Comments = append(data.Comments, &CommentPlus{
+			user_get_all_comments_for_threadRow: row,
+			ShowReply:                           true,
+			EditUrl:                             editUrl,
+			EditSaveUrl:                         editSaveUrl,
+			Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
+			Offset:                              i + offset,
+			Languages:                           nil,
+			SelectedLanguageId:                  0,
+		})
+	}
+
+	data.Thread = threadRow
 	data.Post = &Post{
 		getNewsPostRow: post,
 		ShowReply:      true, // TODO

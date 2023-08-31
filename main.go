@@ -448,17 +448,15 @@ func WritingAuthor() mux.MatcherFunc {
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.fetchWritingById(request.Context(), fetchWritingByIdParams{
-			// TODO wtf? Fix query
-			UsersIdusers:   uid,
-			Idwriting:      int32(writingId),
-			UsersIdusers_2: uid,
+			Userid:    uid,
+			Idwriting: int32(writingId),
 		})
 		if err != nil {
 			log.Printf("Error: %s", err)
 			return false
 		}
 
-		return row.Idusers == uid
+		return row.UsersIdusers == uid
 	}
 }
 

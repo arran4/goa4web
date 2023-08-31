@@ -1167,22 +1167,22 @@ INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writtin
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: fetchWritingById :one
-SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
-u.idusers, w.writingCategory_idwritingCategory
+SELECT w.*, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
-WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
-ORDER BY w.published DESC;
+LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = sqlc.arg(UserId)
+WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(UserId))
+ORDER BY w.published DESC
+;
 
 -- name: fetchWritingByIds :many
-SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
-u.idusers, w.writingCategory_idwritingCategory
+SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = sqlc.arg(userId)
 WHERE w.idwriting IN (sqlc.slice(writingIds)) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(userId))
-ORDER BY w.published DESC;
+ORDER BY w.published DESC
+;
 
 -- name: fetchPublicWritingsByCategory :many
 SELECT w.title, w.abstract, u.username, w.published, w.idwriting, w.private, IF(th.comments IS NULL, 0, th.comments + 1)

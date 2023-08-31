@@ -2007,8 +2007,7 @@ func (q *Queries) fetchWritingApprovals(ctx context.Context, writingIdwriting in
 }
 
 const fetchWritingById = `-- name: fetchWritingById :one
-SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
-u.idusers, w.writingCategory_idwritingCategory
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
@@ -2017,40 +2016,41 @@ ORDER BY w.published DESC
 `
 
 type fetchWritingByIdParams struct {
-	UsersIdusers   int32
-	Idwriting      int32
-	UsersIdusers_2 int32
+	Userid    int32
+	Idwriting int32
 }
 
 type fetchWritingByIdRow struct {
-	Title                            sql.NullString
-	Abstract                         sql.NullString
-	Writting                         sql.NullString
-	Username                         sql.NullString
-	Published                        sql.NullTime
 	Idwriting                        int32
-	Private                          sql.NullBool
-	Editdoc                          sql.NullBool
+	UsersIdusers                     int32
 	ForumthreadIdforumthread         int32
-	Idusers                          int32
+	LanguageIdlanguage               int32
 	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Published                        sql.NullTime
+	Writting                         sql.NullString
+	Abstract                         sql.NullString
+	Private                          sql.NullBool
+	Writerid                         int32
+	Writerusername                   sql.NullString
 }
 
 func (q *Queries) fetchWritingById(ctx context.Context, arg fetchWritingByIdParams) (*fetchWritingByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, fetchWritingById, arg.UsersIdusers, arg.Idwriting, arg.UsersIdusers_2)
+	row := q.db.QueryRowContext(ctx, fetchWritingById, arg.Userid, arg.Idwriting, arg.Userid)
 	var i fetchWritingByIdRow
 	err := row.Scan(
-		&i.Title,
-		&i.Abstract,
-		&i.Writting,
-		&i.Username,
-		&i.Published,
 		&i.Idwriting,
-		&i.Private,
-		&i.Editdoc,
+		&i.UsersIdusers,
 		&i.ForumthreadIdforumthread,
-		&i.Idusers,
+		&i.LanguageIdlanguage,
 		&i.WritingcategoryIdwritingcategory,
+		&i.Title,
+		&i.Published,
+		&i.Writting,
+		&i.Abstract,
+		&i.Private,
+		&i.Writerid,
+		&i.Writerusername,
 	)
 	return &i, err
 }
@@ -2130,8 +2130,7 @@ func (q *Queries) fetchWritingByIdWithEdit(ctx context.Context, arg fetchWriting
 }
 
 const fetchWritingByIds = `-- name: fetchWritingByIds :many
-SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
-u.idusers, w.writingCategory_idwritingCategory
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
@@ -2145,17 +2144,18 @@ type fetchWritingByIdsParams struct {
 }
 
 type fetchWritingByIdsRow struct {
-	Title                            sql.NullString
-	Abstract                         sql.NullString
-	Writting                         sql.NullString
-	Username                         sql.NullString
-	Published                        sql.NullTime
 	Idwriting                        int32
-	Private                          sql.NullBool
-	Editdoc                          sql.NullBool
+	UsersIdusers                     int32
 	ForumthreadIdforumthread         int32
-	Idusers                          int32
+	LanguageIdlanguage               int32
 	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Published                        sql.NullTime
+	Writting                         sql.NullString
+	Abstract                         sql.NullString
+	Private                          sql.NullBool
+	Writerid                         int32
+	Writerusername                   sql.NullString
 }
 
 func (q *Queries) fetchWritingByIds(ctx context.Context, arg fetchWritingByIdsParams) ([]*fetchWritingByIdsRow, error) {
@@ -2180,17 +2180,18 @@ func (q *Queries) fetchWritingByIds(ctx context.Context, arg fetchWritingByIdsPa
 	for rows.Next() {
 		var i fetchWritingByIdsRow
 		if err := rows.Scan(
-			&i.Title,
-			&i.Abstract,
-			&i.Writting,
-			&i.Username,
-			&i.Published,
 			&i.Idwriting,
-			&i.Private,
-			&i.Editdoc,
+			&i.UsersIdusers,
 			&i.ForumthreadIdforumthread,
-			&i.Idusers,
+			&i.LanguageIdlanguage,
 			&i.WritingcategoryIdwritingcategory,
+			&i.Title,
+			&i.Published,
+			&i.Writting,
+			&i.Abstract,
+			&i.Private,
+			&i.Writerid,
+			&i.Writerusername,
 		); err != nil {
 			return nil, err
 		}

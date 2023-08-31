@@ -3,26 +3,26 @@
     {{ with .Result }}
         {{ if . }}
             {{ range . }}
-                <font size="4">At {{ .WritingPublished }}, By {{ .WritingUsername }}; {{ .WritingTitleHTML }}</font>:
-                {{ if .WritingPrivate }} (Restricted access) {{ end }}
-                {{ if or .EditDoc .IsAuthor }}
-                    [<a href="?section=edit&category={{ .WritingCategoryID }}&article={{ .WritingID }}">EDIT</a>]
-                    {{ if .IsAuthor }} [<a href="?section=approvedusers&category={{ .WritingCategoryID }}&article={{ .WritingID }}">APPROVED USERS</a>] {{ end }}
+                <font size="4">At {{ .Writing.Published.String }}, By {{ .Writing.Username.String }}; {{ .Writing.Title.String | a4code2html }}</font>:
+                {{ if .Writing.Private.Bool }} (Restricted access) {{ end }}
+                {{ if or .CanEdit .IsAuthor }}
+                    [<a href="/writings/article/{{ .Writing.Idwriting }}/edit">EDIT</a>]
+                    {{ if .IsAuthor }} [<a href="/writings/admin/users/access?category={{ .WritingCategoryID }}&article={{ .WritingID }}">APPROVED USERS</a>] {{ end }}
                 {{ end }}
                 <br>
                 <strong>Abstract:</strong><br>
-                {{ .WritingAbstractHTML }}
+                {{ .Writing.Abstract.String | a4code2html }}
                 <hr>
-                {{ .WritingWrittingHTML }}
+                {{ .Writing.Writting.String | a4code2html }}
                 {{ if .WritingForumThreadID }}
                     <hr>Comments:<br>
                     {{ template "threadComments" $ }}
-                    {{ if .UserUID }}
+                    {{ if .CanReply }}
                         <hr><font size="4">Reply:</font><br>
                         <form method="post">
-                            <input type="hidden" name="replyTo" value="{{ .WritingForumThreadID }}">
+                            <input type="hidden" name="replyTo" value="{{ .Writing.ForumthreadIdforumthread }}">
                             <textarea name="replytext" cols="40" rows="20"></textarea><br>
-                            {{ lang_combobox . .Pref.DefaultLang }}
+                            {{ template "languageCombobox" $ }}
                             <input type="submit" name="task" value="Reply">
                         </form>
                     {{ else }}

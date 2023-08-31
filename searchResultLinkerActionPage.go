@@ -25,7 +25,7 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: "A LINKER TOPIC"})
+	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: LinkderTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByName Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

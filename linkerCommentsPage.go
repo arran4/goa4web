@@ -83,18 +83,18 @@ func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	var pthid int32 = link.ForumthreadIdforumthread
 	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
-		String: "A LINKER TOPIC",
+		String: LinkderTopicName,
 		Valid:  true,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
-				String: "A LINKER TOPIC",
+				String: LinkderTopicName,
 				Valid:  true,
 			},
 			Description: sql.NullString{
-				String: "THIS IS A HIDDEN FORUM FOR A LINKER TOPIC",
+				String: LinkderTopicDescription,
 				Valid:  true,
 			},
 		})

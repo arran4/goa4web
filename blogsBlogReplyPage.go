@@ -42,18 +42,18 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	var pthid int32 = blog.ForumthreadIdforumthread
 	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
-		String: "A BLOGGER TOPIC",
+		String: BloggerTopicName,
 		Valid:  true,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
-				String: "A BLOGGER TOPIC",
+				String: BloggerTopicName,
 				Valid:  true,
 			},
 			Description: sql.NullString{
-				String: "THIS IS A HIDDEN FORUM FOR A BLOGGER TOPIC",
+				String: BloggerTopicDescription,
 				Valid:  true,
 			},
 		})

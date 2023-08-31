@@ -4,27 +4,18 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
 )
 
 func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, sessionName)
-	if err != nil {
-		log.Printf("Error: store.Get: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 	threadId, _ := strconv.Atoi(vars["thread"])
-
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 

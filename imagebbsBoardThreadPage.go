@@ -125,12 +125,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, sessionName)
-	if err != nil {
-		log.Printf("Error: store.Get: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["board"])

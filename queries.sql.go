@@ -591,6 +591,20 @@ func (q *Queries) assignNewsThisThreadId(ctx context.Context, arg assignNewsThis
 	return err
 }
 
+const assignWritingThisThreadId = `-- name: assignWritingThisThreadId :exec
+UPDATE writing SET forumthread_idforumthread = ? WHERE idwriting = ?
+`
+
+type assignWritingThisThreadIdParams struct {
+	ForumthreadIdforumthread int32
+	Idwriting                int32
+}
+
+func (q *Queries) assignWritingThisThreadId(ctx context.Context, arg assignWritingThisThreadIdParams) error {
+	_, err := q.db.ExecContext(ctx, assignWritingThisThreadId, arg.ForumthreadIdforumthread, arg.Idwriting)
+	return err
+}
+
 const assign_blog_to_thread = `-- name: assign_blog_to_thread :exec
 UPDATE blogs
 SET forumthread_idforumthread = ?

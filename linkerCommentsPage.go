@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -52,12 +53,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, sessionName)
-	if err != nil {
-		log.Printf("Error: store.Get: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])

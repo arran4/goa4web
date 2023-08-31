@@ -921,6 +921,7 @@ INSERT IGNORE INTO writingSearch
 (writing_idwriting, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
+
 -- name: writingSearchDelete :exec
 DELETE FROM writingSearch
 WHERE writing_idwriting=?
@@ -1141,7 +1142,8 @@ FROM language l;
 -- name: fetchUserEmailForumUpdates :many
 SELECT emailforumupdates FROM preferences WHERE users_idusers = ?;
 
-
+-- name: assignWritingThisThreadId :exec
+UPDATE writing SET forumthread_idforumthread = ? WHERE idwriting = ?;
 
 -- name: fetchPublicWritings :many
 SELECT w.title, w.abstract, w.idwriting, w.private, w.writingCategory_idwritingCategory

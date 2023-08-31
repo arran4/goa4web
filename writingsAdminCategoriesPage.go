@@ -64,6 +64,8 @@ func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
+
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func writingsAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
@@ -90,4 +92,5 @@ func writingsAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
+	taskDoneAutoRefreshPage(w, r)
 }

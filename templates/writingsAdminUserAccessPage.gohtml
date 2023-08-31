@@ -2,7 +2,7 @@
     <font size="4">Writing approved users:</font><br>
     <table width="100%">
         <tr>
-            <th>Topic</th>
+            <th>Writing</th>
             <th>User</th>
             <th>Read</th>
             <th>Edit</th>
@@ -11,10 +11,10 @@
         {{- range .ApprovedUsers }}
         <tr>
             <form method="post">
-                <td><input type="hidden" name="wid" value="{{ .WritingId }}">
-                <td><input type="hidden" name="uid" value="{{ .UserId }}">{{ .Username }}
-                <td><input type="checkbox" name="readdoc"{{ if .ReadDoc }} checked{{ end }}>
-                <td><input type="checkbox" name="editdoc"{{ if .EditDoc }} checked{{ end }}>
+                <td><input type="hidden" name="wid" value="{{ .Idwriting }}">
+                <td><input type="hidden" name="uid" value="{{ .Userid }}">{{ .Username.String }}
+                <td><input type="checkbox" name="readdoc"{{ if .Readdoc.Bool }} checked{{ end }}>
+                <td><input type="checkbox" name="editdoc"{{ if .Editdoc.Bool }} checked{{ end }}>
                 <td>
                     <input type="submit" name="task" value="Update user approval">
                     <input type="submit" name="task" value="Delete user approval">
@@ -24,7 +24,7 @@
         {{- end }}
         <tr>
             <form method="post">
-                <td><input type="hidden" name="wid" value="{{ .WritingId }}">
+                <td><input type="number" name="wid" value="{{ .WritingIdwriting }}">
                 <td><input name="username" value="USERNAME">
                 <td><input type="checkbox" name="readdoc" checked>
                 <td><input type="checkbox" name="writedoc">

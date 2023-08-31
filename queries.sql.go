@@ -1545,6 +1545,49 @@ func (q *Queries) fetchAllCategories(ctx context.Context) ([]*Writingcategory, e
 	return items, nil
 }
 
+const fetchAllWritingApprovals = `-- name: fetchAllWritingApprovals :many
+SELECT idusers, u.username, wau.writing_idwriting, wau.readdoc, wau.editdoc
+FROM writtingApprovedUsers wau
+LEFT JOIN users u ON idusers = wau.users_idusers
+`
+
+type fetchAllWritingApprovalsRow struct {
+	Idusers          int32
+	Username         sql.NullString
+	WritingIdwriting int32
+	Readdoc          sql.NullBool
+	Editdoc          sql.NullBool
+}
+
+func (q *Queries) fetchAllWritingApprovals(ctx context.Context) ([]*fetchAllWritingApprovalsRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchAllWritingApprovals)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*fetchAllWritingApprovalsRow
+	for rows.Next() {
+		var i fetchAllWritingApprovalsRow
+		if err := rows.Scan(
+			&i.Idusers,
+			&i.Username,
+			&i.WritingIdwriting,
+			&i.Readdoc,
+			&i.Editdoc,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const fetchCategories = `-- name: fetchCategories :many
 SELECT idwritingCategory, title, description
 FROM writingCategory

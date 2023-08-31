@@ -2,25 +2,31 @@ package main
 
 import (
 	"database/sql"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		ApprovedUsers []*fetchAllWritingApprovalsRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	vars := mux.Vars(r)
-
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	approvedUserRows, err := queries.fetchAllWritingApprovals(r.Context())
+	if err != nil {
+		log.Printf("fetchAllWritingApprovals Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.ApprovedUsers = approvedUserRows
 
 	CustomWritingsIndex(data.CoreData, r)
 
@@ -61,11 +67,12 @@ func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Reque
 	taskDoneAutoRefreshPage(w, r)
 }
 
-func writingsAdminUserUpdateAllowActionPage(w http.ResponseWriter, r *http.Request) {
+func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 	username := r.PostFormValue("username")
-	where := r.PostFormValue("where")
-	level := r.PostFormValue("level")
+	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
+	editdoc, _ := strconv.ParseBool(r.PostFormValue("editdoc"))
 	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("usernametouid Error: %s", err)
@@ -73,18 +80,32 @@ func writingsAdminUserUpdateAllowActionPage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := queries.user_allow(r.Context(), user_allowParams{
-		UsersIdusers: uid,
-		Section: sql.NullString{
-			String: where,
-			Valid:  true,
-		},
-		Level: sql.NullString{
-			String: level,
-			Valid:  true,
-		},
+	if err := queries.insertWritingApproval(r.Context(), insertWritingApprovalParams{
+		WritingIdwriting: int32(wid),
+		UsersIdusers:     int32(uid),
+		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
+		Editdoc:          sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {
-		log.Printf("user_allow Error: %s", err)
+		log.Printf("insertWritingApproval Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
+}
+func writingsAdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	uid, _ := strconv.Atoi(r.PostFormValue("uid"))
+	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
+	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
+	editdoc, _ := strconv.ParseBool(r.PostFormValue("editdoc"))
+
+	if err := queries.updateWritingApproval(r.Context(), updateWritingApprovalParams{
+		WritingIdwriting: int32(wid),
+		UsersIdusers:     int32(uid),
+		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
+		Editdoc:          sql.NullBool{Valid: true, Bool: editdoc},
+	}); err != nil {
+		log.Printf("insertWritingApproval Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -92,16 +113,17 @@ func writingsAdminUserUpdateAllowActionPage(w http.ResponseWriter, r *http.Reque
 }
 
 func writingsAdminUserAccessRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	uid, _ := strconv.Atoi(r.PostFormValue("uid"))
+	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 
-	/*
-
-		{
-		int wid = atoiornull(cont.post.getS("wid"));
-		int uid = atoiornull(cont.post.getS("uid"));
-		int isuserwriter = iswriter(cont, cont.user.UID, wid);
-		if (level == auth_administrator || isuserwriter)
-			deleteApprovedUser(cont, wid, uid);
-
-	*/
+	if err := queries.deleteWritingApproval(r.Context(), deleteWritingApprovalParams{
+		WritingIdwriting: int32(wid),
+		UsersIdusers:     int32(uid),
+	}); err != nil {
+		log.Printf("user_allow Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	taskDoneAutoRefreshPage(w, r)
 }

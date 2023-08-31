@@ -1260,6 +1260,12 @@ FROM writtingApprovedUsers wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 WHERE writing_idwriting = ?;
 
+-- name: fetchAllWritingApprovals :many
+SELECT idusers, u.username, wau.writing_idwriting, wau.readdoc, wau.editdoc
+FROM writtingApprovedUsers wau
+LEFT JOIN users u ON idusers = wau.users_idusers
+;
+
 -- name: fetchPagePermissions :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p

@@ -12,8 +12,9 @@ import (
 func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Languages  []*Language
-		Categories []*Linkercategory
+		Languages          []*Language
+		SelectedLanguageId int
+		Categories         []*Linkercategory
 	}
 
 	data := Data{

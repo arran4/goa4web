@@ -25,7 +25,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		Editing            bool
 		Offset             int
 		Languages          []*Language
-		SelectedLanguageId int32
+		SelectedLanguageId int
 		EditSaveUrl        string
 	}
 	type Post struct {
@@ -36,19 +36,20 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Post        *Post
-		Languages   []*Language
-		Topic       *Forumtopic
-		Comments    []*CommentPlus
-		Offset      int
-		IsReplying  bool
-		IsReplyable bool
-		Thread      *user_get_threadRow
+		Post               *Post
+		Languages          []*Language
+		SelectedLanguageId int32
+		Topic              *Forumtopic
+		Comments           []*CommentPlus
+		Offset             int
+		IsReplying         bool
+		IsReplyable        bool
+		Thread             *user_get_threadRow
 	}
 
 	data := Data{
 		CoreData:   r.Context().Value(ContextValues("coreData")).(*CoreData),
-		IsReplying: r.URL.Query().Has("reply"),
+		IsReplying: r.URL.Query().Has("comment"),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
@@ -64,7 +65,8 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
+	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
+	// replyId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
 
 	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
 		UsersIdusers:             uid,
@@ -98,9 +100,11 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	commentIdString := r.URL.Query().Get("comment")
 	commentId, _ := strconv.Atoi(commentIdString)
+	editCommentIdString := r.URL.Query().Get("editComment")
+	editCommentId, _ := strconv.Atoi(editCommentIdString)
 	for i, row := range commentRows {
-		editUrl := ""
-		editSaveUrl := ""
+		editUrl := fmt.Sprintf("?edit=%d", row.Idcomments)
+		editSaveUrl := "?"
 		if uid == row.UsersIdusers {
 			// TODO
 			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
@@ -115,7 +119,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 			ShowReply:                           true,
 			EditUrl:                             editUrl,
 			EditSaveUrl:                         editSaveUrl,
-			Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
+			Editing:                             editCommentId != 0 && int32(editCommentId) == row.Idcomments,
 			Offset:                              i + offset,
 			Languages:                           nil,
 			SelectedLanguageId:                  0,
@@ -129,6 +133,13 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		ShowEdit:       true, // TODO
 		Editing:        editingId == int(post.Idsitenews),
 	}
+
+	languageRows, err := queries.fetchLanguages(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Languages = languageRows
 
 	CustomNewsIndex(data.CoreData, r)
 
@@ -214,7 +225,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	uid, _ := session.Values["UID"].(int32)
 
-	endUrl := fmt.Sprintf("/news/%d", pid)
+	endUrl := fmt.Sprintf("/news/news/%d", pid)
 
 	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
 		ForumthreadIdforumthread: pthid,
@@ -320,7 +331,7 @@ func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/news/%d", postId), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
 }
 
 func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
@@ -350,5 +361,5 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/news/%d", postId), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
 }

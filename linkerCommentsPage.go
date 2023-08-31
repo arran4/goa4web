@@ -14,9 +14,10 @@ import (
 func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Link      *showLinkRow
-		CanReply  bool
-		Languages []*Language
+		Link               *showLinkRow
+		CanReply           bool
+		Languages          []*Language
+		SelectedLanguageId int
 	}
 
 	data := Data{

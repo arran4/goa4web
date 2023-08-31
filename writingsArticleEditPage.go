@@ -12,9 +12,10 @@ import (
 func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Languages []*Language
-		Writing   *fetchWritingByIdRow
-		UserId    int32
+		Languages          []*Language
+		SelectedLanguageId int
+		Writing            *fetchWritingByIdRow
+		UserId             int32
 	}
 
 	data := Data{

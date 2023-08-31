@@ -12,8 +12,9 @@ import (
 func linkerSuggestPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories []*Linkercategory
-		Languages  []*Language
+		Categories         []*Linkercategory
+		Languages          []*Language
+		SelectedLanguageId int
 	}
 
 	data := Data{

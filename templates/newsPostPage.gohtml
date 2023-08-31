@@ -5,8 +5,8 @@
     {{ if .IsReplying }}
         <a name="reply">
         <font size=4>Reply:</font>
-        <form method="post" action="?show={{ .NewsID }}">
-            <input type="hidden" name="replyto" value="{{ .NewsID }}">
+        <form method="post">
+            <input type="hidden" name="replyto" value="{{ .Thread.Idforumthread }}">
             <textarea name="replytext" cols=40 rows=20></textarea><br>
             {{ template "languageCombobox" $ }}
             <input type="submit" name="dowhat" value="Reply">

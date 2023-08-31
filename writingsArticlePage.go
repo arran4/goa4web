@@ -24,15 +24,16 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Writing     *fetchWritingByIdRow
-		CanEdit     bool
-		IsAuthor    bool
-		CanReply    bool
-		UserId      int32
-		Languages   []*Language
-		Thread      *user_get_threadRow
-		Comments    []*CommentPlus
-		IsReplyable bool
+		Writing            *fetchWritingByIdRow
+		CanEdit            bool
+		IsAuthor           bool
+		CanReply           bool
+		UserId             int32
+		Languages          []*Language
+		SelectedLanguageId int
+		Thread             *user_get_threadRow
+		Comments           []*CommentPlus
+		IsReplyable        bool
 	}
 
 	data := Data{

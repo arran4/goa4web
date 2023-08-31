@@ -24,15 +24,16 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Replyable     bool
-		Languages     []*Language
-		ForumThreadId int
-		Comments      []*CommentPlus
-		BoardId       int
-		ImagePost     *printImagePostRow
-		Thread        *user_get_threadRow
-		Offset        int
-		IsReplyable   bool
+		Replyable          bool
+		Languages          []*Language
+		SelectedLanguageId int
+		ForumThreadId      int
+		Comments           []*CommentPlus
+		BoardId            int
+		ImagePost          *printImagePostRow
+		Thread             *user_get_threadRow
+		Offset             int
+		IsReplyable        bool
 	}
 
 	vars := mux.Vars(r)

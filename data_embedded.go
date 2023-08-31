@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	//go:embed "templates/*.tmpl"
+	//go:embed "templates/*.gohtml"
 	templateFS        embed.FS
-	compiledTemplates = template.Must(template.New("").Funcs(NewFuncs()).ParseFS(templateFS, "templates/*.tmpl"))
+	compiledTemplates = template.Must(template.New("").Funcs(NewFuncs()).ParseFS(templateFS, "templates/*.gohtml"))
 	//go:embed "main.css"
 	mainCSSData []byte
 )

@@ -32,7 +32,7 @@ func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomImageBBSIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates().ExecuteTemplate(w, "imagebbsPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "imagebbsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

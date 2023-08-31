@@ -30,7 +30,7 @@ func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates().ExecuteTemplate(w, "forumAdminCategoriesPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "forumAdminCategoriesPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

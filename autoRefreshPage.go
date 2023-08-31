@@ -16,7 +16,7 @@ func taskDoneAutoRefreshPage(w http.ResponseWriter, r *http.Request) {
 
 	data.AutoRefresh = true
 
-	if err := getCompiledTemplates().ExecuteTemplate(w, "taskDoneAutoRefreshPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "taskDoneAutoRefreshPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -24,7 +24,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	CustomWritingsIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates().ExecuteTemplate(w, "writingsArticlePage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "writingsArticlePage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

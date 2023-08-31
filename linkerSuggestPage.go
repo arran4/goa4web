@@ -38,7 +38,7 @@ func linkerSuggestPage(w http.ResponseWriter, r *http.Request) {
 	data.Languages = languageRows
 
 	CustomLinkerIndex(data.CoreData, r)
-	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerSuggestPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerSuggestPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

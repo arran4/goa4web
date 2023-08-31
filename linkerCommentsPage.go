@@ -45,7 +45,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	data.Link = link
 
 	CustomLinkerIndex(data.CoreData, r)
-	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerCommentsPage.tmpl", data); err != nil {
+	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerCommentsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

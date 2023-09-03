@@ -7,7 +7,7 @@
     {{- else }}
         <ul>
         {{- range $i, $result := .Comments }}
-            <li>{{ $i }}: <a href="/forum/category/{{$result.Idforumcategory}}">{{ $result.ForumcategoryTitle.String }}</a>: <a href="/forum/topic/{{$result.Idforumtopic}}">{{ $result.ForumtopicTitle.String }}</a>: {{$result.posterusername.String}} on {{$result.written.Time}}: <a href="/forum/topic/{{$result.Idforumtopic}}/thread/{{$result.Idforumthread}}">{{$result.Text.String}}</a></li>
+            <li>{{ $i }}: <a href="/forum/category/{{$result.Idforumcategory}}">{{ $result.ForumcategoryTitle.String }}</a>: <a href="/forum/topic/{{$result.Idforumtopic}}">{{ $result.ForumtopicTitle.String }}</a>: {{$result.Posterusername.String}} on {{$result.Written.Time}}: <a href="/forum/topic/{{$result.Idforumtopic}}/thread/{{$result.Idforumthread}}">{{$result.Text.String | a4code2html}}</a></li>
         {{- end }}
         </ul>
     {{ end }}

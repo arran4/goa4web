@@ -961,7 +961,7 @@ FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumthread_idforumthread
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
 AND ft.forumcategory_idforumcategory!=0
 `
@@ -1054,7 +1054,7 @@ FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumthread_idforumthread
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
 AND cs.comments_idcomments IN (/*SLICE:ids*/?)
 AND ft.forumcategory_idforumcategory!=0

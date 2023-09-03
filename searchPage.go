@@ -8,6 +8,7 @@ import (
 func searchPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		SearchWords string
 	}
 
 	data := Data{

@@ -1,18 +1,18 @@
 {{ define "listAbstracts" }}
     {{ if $.IsWriter }}
-        [<a href="/writings/category/{{ .Category }}/add">Write writing here.</a>]<br>
+        [<a href="/writings/category/{{ .CategoryId }}/add">Write writing here.</a>]<br>
     {{ end }}
     {{ if .Abstracts }}
         <font size="4">Writing abstracts:</font><br>
     {{ end }}
-    {{ range .Results }}
-        {{ $title := .Title | a4code2html }}
+    {{ range .Abstracts }}
+        {{ $title := .Title.String | a4code2html }}
         {{ $username := .Username.String }}
         {{ $published := .Published.Time }}
         {{ $abstract := .Abstract.String | a4code2html }}
         {{ $idwriting := .Idwriting }}
         {{ $private := .Private.Bool }}
-        {{ $comments := . }}
+        {{ $comments := .Comments }}
         <table width="100%">
             <tr><th bgcolor="lightgrey">{{ $title }} By {{ $username }} on {{ $published }}
                 {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}

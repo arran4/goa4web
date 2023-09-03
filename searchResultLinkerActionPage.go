@@ -11,12 +11,13 @@ import (
 func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*getCommentsWithThreadInfoRow
-		Links              []*showLinksRow
-		CommentsNoResults  bool
-		CommentsEmptyWords bool
-		NoResults          bool
-		EmptyWords         bool
+		Comments                         []*getCommentsWithThreadInfoRow
+		Links                            []*showLinksRow
+		CommentsNoResults                bool
+		CommentsEmptyWords               bool
+		NoResults                        bool
+		EmptyWords                       bool
+		WritingcategoryIdwritingcategory int32
 	}
 
 	data := Data{

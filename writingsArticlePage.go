@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"golang.org/x/exp/slices"
 	"log"
 	"net/http"
 	"strconv"
@@ -24,16 +25,21 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Writing            *fetchWritingByIdRow
-		CanEdit            bool
-		IsAuthor           bool
-		CanReply           bool
-		UserId             int32
-		Languages          []*Language
-		SelectedLanguageId int
-		Thread             *user_get_threadRow
-		Comments           []*CommentPlus
-		IsReplyable        bool
+		Writing             *fetchWritingByIdRow
+		CanEdit             bool
+		IsAuthor            bool
+		CanReply            bool
+		UserId              int32
+		Languages           []*Language
+		SelectedLanguageId  int
+		Thread              *user_get_threadRow
+		Comments            []*CommentPlus
+		IsReplyable         bool
+		IsAdmin             bool
+		Categories          []*Writingcategory
+		CategoryId          int32
+		Offset              int32
+		CategoryBreadcrumbs []*Writingcategory
 	}
 
 	data := Data{
@@ -62,6 +68,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	data.Writing = writing
 	data.IsAuthor = writing.UsersIdusers == uid
+	data.CategoryId = writing.WritingcategoryIdwritingcategory
 
 	languageRows, err := queries.fetchLanguages(r.Context())
 	if err != nil {
@@ -98,6 +105,35 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	categoryRows, err := queries.fetchAllCategories(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("fetchCategories Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	categoryMap := map[int32]*Writingcategory{}
+	for _, cat := range categoryRows {
+		categoryMap[cat.Idwritingcategory] = cat
+		if cat.WritingcategoryIdwritingcategory == data.CategoryId {
+			data.Categories = append(data.Categories, cat)
+		}
+	}
+	for cid := data.CategoryId; len(data.CategoryBreadcrumbs) < len(categoryRows); {
+		cat, ok := categoryMap[cid]
+		if ok {
+			data.CategoryBreadcrumbs = append(data.CategoryBreadcrumbs, cat)
+			cid = cat.WritingcategoryIdwritingcategory
+		} else {
+			break
+		}
+	}
+	slices.Reverse(data.CategoryBreadcrumbs)
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 

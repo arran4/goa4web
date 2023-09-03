@@ -1843,7 +1843,7 @@ const fetchPublicWritingsInCategory = `-- name: fetchPublicWritingsInCategory :m
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
 FROM writing w
-LEFT JOIN users u ON w.UsersIdusers=u.idusers
+LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writingCategory_idwritingCategory=?
 ORDER BY w.published DESC LIMIT 15
 `

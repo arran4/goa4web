@@ -10,12 +10,13 @@ import (
 func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories          []*Writingcategory
-		CategoryBreadcrumbs []*Writingcategory
-		EditingCategoryId   int32 // TODO
-		IsAdmin             bool  // TODO
-		IsWriter            bool  // TODO
-		Abstracts           []*fetchPublicWritingsInCategoryRow
+		Categories                       []*Writingcategory
+		CategoryBreadcrumbs              []*Writingcategory
+		EditingCategoryId                int32 // TODO
+		IsAdmin                          bool  // TODO
+		IsWriter                         bool  // TODO
+		Abstracts                        []*fetchPublicWritingsInCategoryRow
+		WritingcategoryIdwritingcategory int32
 	}
 
 	data := Data{

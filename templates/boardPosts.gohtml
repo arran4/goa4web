@@ -4,7 +4,7 @@
         {{ range .Posts }}
             <table>
                 <tr>
-                    <th><a href="{{ .FullImage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
+                    <th><a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
                     <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ .Posted.Time }} - [<a href="/imagebbs/board/{{ $.BoardNumber }}thread/{{ .ForumthreadIdforumthread }}">{{ .Comments.Int32 }} COMMENTS</a>]
             </table><br>
         {{ end }}

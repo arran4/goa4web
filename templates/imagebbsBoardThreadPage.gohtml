@@ -4,7 +4,7 @@
         {{ range .Post }}
             <table>
                 <tr>
-                    <th><a href="{{ .FullImage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
+                    <th><a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
                     <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ .Posted.Time }}
             </table><br>
         {{ end }}

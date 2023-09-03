@@ -1,20 +1,18 @@
 {{ template "head" $ }}
     {{ if .ImagePost }}
         <font size="4">Picture:</font><br>
-        {{ range .Post }}
-            <table>
-                <tr>
-                    <th><a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
-                    <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ .Posted.Time }}
-            </table><br>
-        {{ end }}
+        <table>
+            <tr>
+                <th><a href="{{ .ImagePost.Fullimage.String }}" target="_BLANK"><img src="{{ .ImagePost.Thumbnail.String }}"></a>
+                <td>{{ .ImagePost.Description.String }}<hr>{{ .ImagePost.Username.String }} - Posted: {{ .ImagePost.Posted.Time }}
+        </table><br>
     {{ end }}
     {{ if .Comments }}
 		{{ template "threadComments" $ }}
     {{ end }}
     {{ if .Replyable }}
         <font size="4">Reply:</font><br>
-        <form method="post" action="?board={{ .BoardNo }}">
+        <form method="post" action="?board={{ .BoardId }}">
             <input type="hidden" name="replyTo" value="{{ .ForumThreadId }}">
             <input type="hidden" name="ipid" value="{{ .ImagePost.Idimagepost }}">
             <textarea name="replytext" cols="40" rows="20"></textarea><br>

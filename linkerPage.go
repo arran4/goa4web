@@ -18,6 +18,7 @@ func linkerPage(w http.ResponseWriter, r *http.Request) {
 		CommentOnId int
 		ReplyToId   int
 		Links       []*showLatestRow
+		Categories  []*Linkercategory
 	}
 
 	data := Data{
@@ -43,6 +44,19 @@ func linkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Links = linkerPosts
+
+	categories, err := queries.showCategories(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("showCategories Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	data.Categories = categories
 
 	CustomLinkerIndex(data.CoreData, r)
 

@@ -12,21 +12,44 @@ import (
 )
 
 func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
+	type CommentPlus struct {
+		*user_get_all_comments_for_threadRow
+		ShowReply          bool
+		EditUrl            string
+		Editing            bool
+		Offset             int
+		Languages          []*Language
+		SelectedLanguageId int32
+		EditSaveUrl        string
+	}
 	type Data struct {
 		*CoreData
 		Link               *showLinkRow
 		CanReply           bool
 		Languages          []*Language
+		Comments           []*CommentPlus
 		SelectedLanguageId int
+		IsReplyable        bool
+		Offset             int
+		Text               string
+		CanEdit            bool
+		UserId             int32
+		Thread             *user_get_threadRow
 	}
 
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		CanReply: true, // TODO
+		CanReply: true,  // TODO
+		CanEdit:  false, // TODO
+		Offset:   offset,
 	}
 
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+	data.UserId = uid
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -46,6 +69,64 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Link = link
 
+	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+		UsersIdusers:             uid,
+		ForumthreadIdforumthread: link.ForumthreadIdforumthread,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("show_blog_comments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+		UsersIdusers:  uid,
+		Idforumthread: link.ForumthreadIdforumthread,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("Error: user_get_thread: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
+	}
+
+	offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+
+	commentIdString := r.URL.Query().Get("comment")
+	commentId, _ := strconv.Atoi(commentIdString)
+	for i, row := range commentRows {
+		editUrl := ""
+		editSaveUrl := ""
+		if uid == row.UsersIdusers {
+			// TODO
+			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
+			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			if commentId != 0 && int32(commentId) == row.Idcomments {
+				data.IsReplyable = false
+			}
+		}
+
+		data.Comments = append(data.Comments, &CommentPlus{
+			user_get_all_comments_for_threadRow: row,
+			ShowReply:                           true,
+			EditUrl:                             editUrl,
+			EditSaveUrl:                         editSaveUrl,
+			Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
+			Offset:                              i + offset,
+			Languages:                           nil,
+			SelectedLanguageId:                  0,
+		})
+	}
+
+	data.Thread = threadRow
+
 	CustomLinkerIndex(data.CoreData, r)
 	if err := getCompiledTemplates().ExecuteTemplate(w, "linkerCommentsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -53,6 +134,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 

@@ -14,16 +14,14 @@
         </table><br>
 
         {{ with .ForumthreadIdforumthread }}
-            {{ if . }}
-                {{ template "printThread" . }}
-            {{ end }}
+            {{ template "threadComments" $ }}
         {{ end }}
 
         {{ if $.CanReply }}
             <font size="4">Reply:</font><br>
             <form method="post">
                 <input type="hidden" name="replyTo" value="{{ .ForumthreadIdforumthread }}">
-                <input type="hidden" name="lpid" value="{{ .idlinker }}">
+                <input type="hidden" name="lpid" value="{{ .Idlinker }}">
                 <textarea name="replytext" cols="40" rows="20"></textarea><br>
                 {{ template "languageCombobox" $ }}
                 <input type="submit" name="task" value="Reply">

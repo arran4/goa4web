@@ -4260,12 +4260,12 @@ func (q *Queries) showCategories(ctx context.Context) ([]*Linkercategory, error)
 }
 
 const showLatest = `-- name: showLatest :many
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
-JOIN users u ON l.users_idusers = u.idusers
-JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+LEFT JOIN users u ON l.users_idusers = u.idusers
+LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
-WHERE l.linkerCategory_idlinkerCategory = ?
+WHERE lc.idlinkerCategory = ?
 ORDER BY l.listed DESC
 `
 
@@ -4280,11 +4280,12 @@ type showLatestRow struct {
 	Description                    sql.NullString
 	Listed                         sql.NullTime
 	Comments                       sql.NullInt32
-	Title_2                        sql.NullString
+	CategoryTitle                  sql.NullString
+	Posterusername                 sql.NullString
 }
 
-func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory int32) ([]*showLatestRow, error) {
-	rows, err := q.db.QueryContext(ctx, showLatest, linkercategoryIdlinkercategory)
+func (q *Queries) showLatest(ctx context.Context, idlinkercategory int32) ([]*showLatestRow, error) {
+	rows, err := q.db.QueryContext(ctx, showLatest, idlinkercategory)
 	if err != nil {
 		return nil, err
 	}
@@ -4303,7 +4304,8 @@ func (q *Queries) showLatest(ctx context.Context, linkercategoryIdlinkercategory
 			&i.Description,
 			&i.Listed,
 			&i.Comments,
-			&i.Title_2,
+			&i.CategoryTitle,
+			&i.Posterusername,
 		); err != nil {
 			return nil, err
 		}

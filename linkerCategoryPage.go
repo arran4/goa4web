@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,7 +24,8 @@ func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
-	data.CatId, _ = strconv.Atoi(r.URL.Query().Get("category"))
+	vars := mux.Vars(r)
+	data.CatId, _ = strconv.Atoi(vars["category"])
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
 	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 

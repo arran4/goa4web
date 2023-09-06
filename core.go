@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"os"
@@ -39,11 +40,13 @@ var indexItems = []IndexItem{
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		uid, _ := session.Values["UID"].(int32)
 
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
 			SecurityLevel: "administrator",
 			IndexItems:    indexItems,
-			UserID:        1,
+			UserID:        uid,
 			Title:         "Arran4's Website",
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
@@ -53,10 +56,9 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 type CoreData struct {
 	IndexItems       []IndexItem
 	CustomIndexItems []IndexItem
-	UserID           int
+	UserID           int32
 	SecurityLevel    string
 	Title            string
-	AdminChecked     bool
 	AutoRefresh      bool
 	RSSFeedUrl       string
 	AtomFeedUrl      string

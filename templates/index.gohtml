@@ -2,7 +2,7 @@
     {{- template "indexItems" $ }}
     {{ if $.UserID }}
         <hr>
-        <a href="/logout">Logout</a><br>
+        <a href="/user/logout">Logout</a><br>
         {{ if eq $.SecurityLevel "administrator"}}
             <a href="/admin">Admin page of mystery</a><br>
         {{ end }}
@@ -13,7 +13,7 @@
     {{ range $i := $.CustomIndexItems }}
         <a href="{{ $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}
-    {{ if and (eq $.SecurityLevel "administrator") $.AdminChecked}}
+    {{ if eq $.SecurityLevel "administrator"}}
         <hr>Admin tools:<br>
         <a href="/admin/users">Person Controls</a><br>
         <a href="/admin/users/permissions">Permission Controls</a><br>

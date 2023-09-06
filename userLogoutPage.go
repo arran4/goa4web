@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -10,13 +11,23 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 	}
 
-	// TODO cont.user.setUser(0);
-
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	// Custom Index???
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	delete(session.Values, "UID")
+	delete(session.Values, "LoginTime")
+	delete(session.Values, "ExpiryTime")
+
+	if err := session.Save(r, w); err != nil {
+		log.Printf("session.Save Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data.CoreData.UserID = 0
+	data.CoreData.SecurityLevel = ""
 
 	if err := getCompiledTemplates().ExecuteTemplate(w, "userLogoutPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)

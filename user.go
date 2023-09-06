@@ -28,14 +28,19 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 				log.Printf("Error: userByUid: %s", err)
 				http.Redirect(writer, request, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			}
-		} else {
-			session.Values["User"] = user
 		}
 
 		// TODO session.Values["ExpiryTime"]
 		//	if user.Logintime.Time.AddDate(1, 0, 0).After(time.Now()) {
-		//		return int(user.UsersIdusers), nil
+		//if err := session.Save(r, w); err != nil {
+		//delete(session.Values, "UID")
+		//delete(session.Values, "LoginTime")
+		//delete(session.Values, "ExpiryTime")
+		//	log.Printf("session.Save Error: %s", err)
+		//	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		//	return
 		//	}
+		//}
 
 		// TODO inject user security levels / scopes into session and context
 		/*

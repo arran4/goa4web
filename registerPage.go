@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/md5"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"github.com/gorilla/sessions"
 	"log"
@@ -20,8 +18,6 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	// Custom Index???
-
 	if err := getCompiledTemplates().ExecuteTemplate(w, "registerPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -34,33 +30,41 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password")
 	email := r.PostFormValue("email")
 
-	if user, err := queries.UserByUsername(r.Context(), sql.NullString{
+	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
-	}); user != nil || errors.Is(err, sql.ErrNoRows) {
+	}); errors.Is(err, sql.ErrNoRows) {
+	} else if err != nil {
 		log.Printf("UserByUsername Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	} else {
 		http.Error(w, "User already exists", http.StatusForbidden)
 		return
 	}
 
-	if user, err := queries.UserByEmail(r.Context(), sql.NullString{
+	if _, err := queries.UserByEmail(r.Context(), sql.NullString{
 		String: email,
 		Valid:  true,
-	}); user != nil || errors.Is(err, sql.ErrNoRows) {
-		log.Printf("UserByEmail Error: %s", err)
+	}); errors.Is(err, sql.ErrNoRows) {
+	} else if err != nil {
+		log.Printf("UserByUsername Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	} else {
 		http.Error(w, "User already exists", http.StatusForbidden)
 		return
 	}
-	sum := md5.Sum([]byte(password))
+	//sum := md5.Sum([]byte(password))
 
-	hashedPassword := hex.EncodeToString(sum[:])
+	//hashedPassword := hex.EncodeToString(sum[:])
 
 	result, err := queries.InsertUser(r.Context(), InsertUserParams{
 		Username: sql.NullString{
 			Valid:  true,
 			String: username,
 		},
-		MD5: hashedPassword,
+		MD5: password,
 		Email: sql.NullString{
 			Valid:  true,
 			String: email,
@@ -83,6 +87,12 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 	session.Values["UID"] = int32(lastInsertID)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
+
+	if err := session.Save(r, w); err != nil {
+		log.Printf("session.Save Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 

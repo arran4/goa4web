@@ -84,6 +84,7 @@ func main() {
 
 	// News
 	r.HandleFunc("/", newsPage).Methods("GET")
+	r.HandleFunc("/", taskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
 	//TODO nr.HandleFunc(".rss", newsRssPage).Methods("GET")
 	nr.HandleFunc("", newsPage).Methods("GET")
@@ -310,15 +311,9 @@ func main() {
 	ar.HandleFunc("/search/list", adminSearchWordListPage).Methods("GET")
 
 	// oauth shit
-	//r.HandleFunc("/", homePage)
 	//r.HandleFunc("/login", loginPage)
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
-
-	r.HandleFunc("/login", loginUserPassPage).Methods("GET")
-	r.HandleFunc("/login", loginActionPage).Methods("POST")
-	r.HandleFunc("/logout", logoutHandler).Methods("GET")
-	r.HandleFunc("/logout", logoutHandler).Methods("POST")
 
 	http.Handle("/", r)
 
@@ -405,8 +400,16 @@ func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		// TODO
-		return true
+		sessioni := request.Context().Value(ContextValues("session"))
+		if sessioni == nil {
+			return false
+		}
+		session, ok := sessioni.(*sessions.Session)
+		if !ok {
+			return false
+		}
+		uid, _ := session.Values["UID"].(int32)
+		return uid != 0
 	}
 }
 

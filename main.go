@@ -281,7 +281,7 @@ func main() {
 	rr.HandleFunc("", registerActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(TaskMatcher("Register"))
 
 	ulr := r.PathPrefix("/login").Subrouter()
-	ulr.HandleFunc("", loginPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
+	ulr.HandleFunc("", loginUserPassPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
 	ulr.HandleFunc("", loginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(TaskMatcher("Login"))
 
 	ar := r.PathPrefix("/admin").MatcherFunc(RequiredAccess("administrator")).Subrouter()
@@ -314,6 +314,11 @@ func main() {
 	//r.HandleFunc("/login", loginPage)
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
+
+	r.HandleFunc("/login", loginUserPassPage).Methods("GET")
+	r.HandleFunc("/login", loginActionPage).Methods("POST")
+	r.HandleFunc("/logout", logoutHandler).Methods("GET")
+	r.HandleFunc("/logout", logoutHandler).Methods("POST")
 
 	http.Handle("/", r)
 

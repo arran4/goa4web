@@ -1,11 +1,16 @@
 package main
 
 import (
+	"crypto/md5"
+	"database/sql"
+	"encoding/hex"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"time"
 )
 
-func loginPage(w http.ResponseWriter, r *http.Request) {
+func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
@@ -14,37 +19,45 @@ func loginPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	// Custom Index???
-
 	if err := getCompiledTemplates().ExecuteTemplate(w, "loginPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	delete(session.Values, "UID")
+	delete(session.Values, "LoginTime")
+	delete(session.Values, "ExpiryTime")
+
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
 func loginActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password")
 
-			switch(id = cont.user.login(username, password))
-		{
-			case -1:
-				begin_page(cont);
-				printf("Username of password incorrect.");
-				break;
-			case -2:
-				begin_page(cont);
-				printf("Malformed data.");
-				break;
-			case -3:
-				begin_page(cont);
-				printf("Database error.");
-				break;
-			default:
-				cont.user.setUser(id);
-				begin_page(cont);
-				printf("Success Logged in.\n", id);
-		}
+	sum := md5.Sum([]byte(password))
 
-	*/
+	hashedPassword := hex.EncodeToString(sum[:])
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	user, err := queries.Login(r.Context(), LoginParams{
+		Username: sql.NullString{String: username, Valid: true},
+		MD5:      hashedPassword,
+	})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session.Values["UID"] = int32(user.Idusers)
+	session.Values["LoginTime"] = time.Now().Unix()
+	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
+
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

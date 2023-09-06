@@ -73,7 +73,8 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Res
 }
 
 const login = `-- name: Login :one
-SELECT idusers FROM users
+SELECT idusers, email, passwd, username
+FROM users
 WHERE username = ? AND passwd = md5(?)
 `
 
@@ -82,11 +83,16 @@ type LoginParams struct {
 	MD5      string
 }
 
-func (q *Queries) Login(ctx context.Context, arg LoginParams) (int32, error) {
+func (q *Queries) Login(ctx context.Context, arg LoginParams) (*User, error) {
 	row := q.db.QueryRowContext(ctx, login, arg.Username, arg.MD5)
-	var idusers int32
-	err := row.Scan(&idusers)
-	return idusers, err
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
 }
 
 const selectLanguages = `-- name: SelectLanguages :many
@@ -156,6 +162,42 @@ func (q *Queries) SelectUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 		return nil, err
 	}
 	return items, nil
+}
+
+const userByEmail = `-- name: UserByEmail :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE email = ?
+`
+
+func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*User, error) {
+	row := q.db.QueryRowContext(ctx, userByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const userByUsername = `-- name: UserByUsername :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE username = ?
+`
+
+func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (*User, error) {
+	row := q.db.QueryRowContext(ctx, userByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
 }
 
 const addImage = `-- name: addImage :exec
@@ -5309,6 +5351,24 @@ type userAllowParams struct {
 func (q *Queries) userAllow(ctx context.Context, arg userAllowParams) error {
 	_, err := q.db.ExecContext(ctx, userAllow, arg.UsersIdusers, arg.Section, arg.Level)
 	return err
+}
+
+const userByUid = `-- name: userByUid :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE idusers = ?
+`
+
+func (q *Queries) userByUid(ctx context.Context, idusers int32) (*User, error) {
+	row := q.db.QueryRowContext(ctx, userByUid, idusers)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
 }
 
 const userDisallow = `-- name: userDisallow :exec

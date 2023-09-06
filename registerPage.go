@@ -1,8 +1,14 @@
 package main
 
 import (
+	"crypto/md5"
+	"database/sql"
+	"encoding/hex"
+	"errors"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"time"
 )
 
 func registerPage(w http.ResponseWriter, r *http.Request) {
@@ -23,25 +29,61 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func registerActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password")
+	email := r.PostFormValue("email")
 
-	/*
+	if user, err := queries.UserByUsername(r.Context(), sql.NullString{
+		String: username,
+		Valid:  true,
+	}); user != nil || errors.Is(err, sql.ErrNoRows) {
+		log.Printf("UserByUsername Error: %s", err)
+		http.Error(w, "User already exists", http.StatusForbidden)
+		return
+	}
 
-			switch(id = cont.user.registerUser(username, password, email))
-		{
-			case -1:
-				begin_page(cont);
-				printf("User already exists.");
-				break;
-			case -2:
-				begin_page(cont);
-				printf("Malformed data.");
-				break;
-			default:
-				cont.user.setUser(id);
-				begin_page(cont);
-				printf("Success, user registered. You are number %d\n", id);
-		}
+	if user, err := queries.UserByEmail(r.Context(), sql.NullString{
+		String: email,
+		Valid:  true,
+	}); user != nil || errors.Is(err, sql.ErrNoRows) {
+		log.Printf("UserByEmail Error: %s", err)
+		http.Error(w, "User already exists", http.StatusForbidden)
+		return
+	}
+	sum := md5.Sum([]byte(password))
 
-	*/
+	hashedPassword := hex.EncodeToString(sum[:])
+
+	result, err := queries.InsertUser(r.Context(), InsertUserParams{
+		Username: sql.NullString{
+			Valid:  true,
+			String: username,
+		},
+		MD5: hashedPassword,
+		Email: sql.NullString{
+			Valid:  true,
+			String: email,
+		},
+	})
+	if err != nil {
+		log.Printf("InsertUser Error: %s", err)
+		http.Error(w, "Can't create user", http.StatusForbidden)
+		return
+	}
+
+	lastInsertID, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("LastInsertId Error: %s", err)
+		http.Error(w, "Session error", http.StatusForbidden)
+		return
+	}
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session.Values["UID"] = int32(lastInsertID)
+	session.Values["LoginTime"] = time.Now().Unix()
+	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
+
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+
 }

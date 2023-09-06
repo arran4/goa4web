@@ -1286,8 +1286,24 @@ SET forumthread_idforumthread = ?
 WHERE idwriting = ?;
 
 -- name: Login :one
-SELECT idusers FROM users
+SELECT *
+FROM users
 WHERE username = ? AND passwd = md5(?);
+
+-- name: userByUid :one
+SELECT *
+FROM users
+WHERE idusers = ?;
+
+-- name: UserByUsername :one
+SELECT *
+FROM users
+WHERE username = ?;
+
+-- name: UserByEmail :one
+SELECT *
+FROM users
+WHERE email = ?;
 
 -- name: CheckExistingUser :one
 SELECT username FROM users WHERE username = ?;

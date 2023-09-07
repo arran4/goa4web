@@ -22,7 +22,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.fetchLanguages(r.Context())
+	rows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -51,11 +51,11 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.renameLanguage(r.Context(), renameLanguageParams{
+	} else if err := queries.RenameLanguage(r.Context(), RenameLanguageParams{
 		Nameof:     sql.NullString{Valid: true, String: cname},
 		Idlanguage: int32(cidi),
 	}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("renameLanguage: %w", err).Error())
+		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
@@ -77,8 +77,8 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.deleteLanguage(r.Context(), int32(cidi)); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("deleteLanguage: %w", err).Error())
+	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
@@ -98,11 +98,11 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/languages",
 	}
-	if err := queries.createLanguage(r.Context(), sql.NullString{
+	if err := queries.CreateLanguage(r.Context(), sql.NullString{
 		String: cname,
 		Valid:  true,
 	}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("createLanguage: %w", err).Error())
+		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {

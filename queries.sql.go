@@ -47,6 +47,61 @@ func (q *Queries) AllQuestions(ctx context.Context) ([]*Faq, error) {
 	return items, nil
 }
 
+const createLanguage = `-- name: CreateLanguage :exec
+INSERT INTO language (nameof)
+VALUES (?)
+`
+
+// This query inserts a new record into the "language" table.
+// Parameters:
+//
+//	? - Name of the new language (string)
+func (q *Queries) CreateLanguage(ctx context.Context, nameof sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, createLanguage, nameof)
+	return err
+}
+
+const deleteLanguage = `-- name: DeleteLanguage :exec
+DELETE FROM language
+WHERE idlanguage = ?
+`
+
+// This query deletes a record from the "language" table based on the provided "cid".
+// Parameters:
+//
+//	? - Language ID to be deleted (int)
+func (q *Queries) DeleteLanguage(ctx context.Context, idlanguage int32) error {
+	_, err := q.db.ExecContext(ctx, deleteLanguage, idlanguage)
+	return err
+}
+
+const fetchLanguages = `-- name: FetchLanguages :many
+SELECT idlanguage, nameof FROM language
+`
+
+func (q *Queries) FetchLanguages(ctx context.Context) ([]*Language, error) {
+	rows, err := q.db.QueryContext(ctx, fetchLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertUser = `-- name: InsertUser :execresult
 INSERT INTO users (username, passwd, email)
 VALUES (?, MD5(?), ?)
@@ -83,6 +138,27 @@ func (q *Queries) Login(ctx context.Context, arg LoginParams) (*User, error) {
 		&i.Username,
 	)
 	return &i, err
+}
+
+const renameLanguage = `-- name: RenameLanguage :exec
+UPDATE language
+SET nameof = ?
+WHERE idlanguage = ?
+`
+
+type RenameLanguageParams struct {
+	Nameof     sql.NullString
+	Idlanguage int32
+}
+
+// This query updates the "nameof" field in the "language" table based on the provided "cid".
+// Parameters:
+//
+//	? - New name for the language (string)
+//	? - Language ID to be updated (int)
+func (q *Queries) RenameLanguage(ctx context.Context, arg RenameLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, renameLanguage, arg.Nameof, arg.Idlanguage)
+	return err
 }
 
 const selectUnansweredQuestions = `-- name: SelectUnansweredQuestions :many
@@ -973,20 +1049,6 @@ func (q *Queries) createCategory(ctx context.Context, title sql.NullString) erro
 	return err
 }
 
-const createLanguage = `-- name: createLanguage :exec
-INSERT INTO language (nameof)
-VALUES (?)
-`
-
-// This query inserts a new record into the "language" table.
-// Parameters:
-//
-//	? - Name of the new language (string)
-func (q *Queries) createLanguage(ctx context.Context, nameof sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, createLanguage, nameof)
-	return err
-}
-
 const create_category = `-- name: create_category :exec
 INSERT INTO faqCategories (name)
 VALUES (?)
@@ -1023,20 +1085,6 @@ DELETE FROM commentsSearch
 // This query deletes all data from the "commentsSearch" table.
 func (q *Queries) deleteCommentsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteCommentsSearch)
-	return err
-}
-
-const deleteLanguage = `-- name: deleteLanguage :exec
-DELETE FROM language
-WHERE idlanguage = ?
-`
-
-// This query deletes a record from the "language" table based on the provided "cid".
-// Parameters:
-//
-//	? - Language ID to be deleted (int)
-func (q *Queries) deleteLanguage(ctx context.Context, idlanguage int32) error {
-	_, err := q.db.ExecContext(ctx, deleteLanguage, idlanguage)
 	return err
 }
 
@@ -1278,33 +1326,6 @@ func (q *Queries) fetchCategories(ctx context.Context, writingcategoryIdwritingc
 	for rows.Next() {
 		var i fetchCategoriesRow
 		if err := rows.Scan(&i.Idwritingcategory, &i.Title, &i.Description); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const fetchLanguages = `-- name: fetchLanguages :many
-SELECT idlanguage, nameof FROM language
-`
-
-func (q *Queries) fetchLanguages(ctx context.Context) ([]*Language, error) {
-	rows, err := q.db.QueryContext(ctx, fetchLanguages)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Language
-	for rows.Next() {
-		var i Language
-		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -3117,27 +3138,6 @@ type renameCategoryParams struct {
 
 func (q *Queries) renameCategory(ctx context.Context, arg renameCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, renameCategory, arg.Title, arg.Idlinkercategory)
-	return err
-}
-
-const renameLanguage = `-- name: renameLanguage :exec
-UPDATE language
-SET nameof = ?
-WHERE idlanguage = ?
-`
-
-type renameLanguageParams struct {
-	Nameof     sql.NullString
-	Idlanguage int32
-}
-
-// This query updates the "nameof" field in the "language" table based on the provided "cid".
-// Parameters:
-//
-//	? - New name for the language (string)
-//	? - Language ID to be updated (int)
-func (q *Queries) renameLanguage(ctx context.Context, arg renameLanguageParams) error {
-	_, err := q.db.ExecContext(ctx, renameLanguage, arg.Nameof, arg.Idlanguage)
 	return err
 }
 

@@ -53,7 +53,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	languageRows, err := queries.fetchLanguages(r.Context())
+	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

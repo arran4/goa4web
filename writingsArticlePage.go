@@ -70,9 +70,9 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.IsAuthor = writing.UsersIdusers == uid
 	data.CategoryId = writing.WritingcategoryIdwritingcategory
 
-	languageRows, err := queries.fetchLanguages(r.Context())
+	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
-		log.Printf("fetchLanguages Error: %s", err)
+		log.Printf("FetchLanguages Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

@@ -36,7 +36,7 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	languageRows, err := queries.fetchLanguages(r.Context())
+	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

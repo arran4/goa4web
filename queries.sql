@@ -1,4 +1,4 @@
--- name: renameLanguage :exec
+-- name: RenameLanguage :exec
 -- This query updates the "nameof" field in the "language" table based on the provided "cid".
 -- Parameters:
 --   ? - New name for the language (string)
@@ -7,19 +7,23 @@ UPDATE language
 SET nameof = ?
 WHERE idlanguage = ?;
 
--- name: deleteLanguage :exec
+-- name: DeleteLanguage :exec
 -- This query deletes a record from the "language" table based on the provided "cid".
 -- Parameters:
 --   ? - Language ID to be deleted (int)
 DELETE FROM language
 WHERE idlanguage = ?;
 
--- name: createLanguage :exec
+-- name: CreateLanguage :exec
 -- This query inserts a new record into the "language" table.
 -- Parameters:
 --   ? - Name of the new language (string)
 INSERT INTO language (nameof)
 VALUES (?);
+
+-- name: FetchLanguages :many
+SELECT idlanguage, nameof FROM language;
+
 
 -- name: getUserPermissions :one
 -- This query selects permissions information for admin users.
@@ -901,9 +905,6 @@ GROUP BY u.idusers;
 SELECT u.email FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
-
--- name: fetchLanguages :many
-SELECT idlanguage, nameof FROM language;
 
 -- name: assignWritingThisThreadId :exec
 UPDATE writing SET forumthread_idforumthread = ? WHERE idwriting = ?;

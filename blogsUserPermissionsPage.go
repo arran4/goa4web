@@ -95,7 +95,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else if err := queries.userDisallow(r.Context(), int32(permidi)); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("createLanguage: %w", err).Error())
+		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomBlogIndex(data.CoreData, r)
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)

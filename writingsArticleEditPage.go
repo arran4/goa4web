@@ -14,7 +14,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Languages          []*Language
 		SelectedLanguageId int
-		Writing            *FetchWritingByIdRow
+		Writing            *GetWritingByIdForUserDescendingByPublishedDateRow
 		UserId             int32
 	}
 
@@ -31,12 +31,12 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	writing, err := queries.FetchWritingById(r.Context(), FetchWritingByIdParams{
+	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(articleId),
 	})
 	if err != nil {
-		log.Printf("fetchWritingById Error: %s", err)
+		log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

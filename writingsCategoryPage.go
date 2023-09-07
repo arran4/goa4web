@@ -20,7 +20,7 @@ func writingsCategoryPage(w http.ResponseWriter, r *http.Request) {
 		WritingcategoryIdwritingcategory int32 // TODO
 		IsAdmin                          bool  // TODO
 		IsWriter                         bool  // TODO
-		Abstracts                        []*FetchPublicWritingsInCategoryRow
+		Abstracts                        []*GetPublicWriringsInCategoryRow
 	}
 
 	data := Data{
@@ -39,19 +39,19 @@ func writingsCategoryPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("fetchCategories Error: %s", err)
+			log.Printf("getAllWritingCategories Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 	}
 
-	writingsRows, err := queries.FetchPublicWritingsInCategory(r.Context(), data.CategoryId)
+	writingsRows, err := queries.GetPublicWriringsInCategory(r.Context(), data.CategoryId)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 
-			log.Printf("fetchPublicWritingsInCategory Error: %s", err)
+			log.Printf("getPublicWriringsInCategory Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

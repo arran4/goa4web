@@ -12,7 +12,7 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
-		Writings           []*FetchWritingByIdsRow
+		Writings           []*GetWritingsByIdsForUserDescendingByPublishedDateRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -56,7 +56,7 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*FetchWritingByIdsRow, bool, bool, error) {
+func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetWritingsByIdsForUserDescendingByPublishedDateRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 
@@ -104,7 +104,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 		}
 	}
 
-	writings, err := queries.FetchWritingByIds(r.Context(), FetchWritingByIdsParams{
+	writings, err := queries.GetWritingsByIdsForUserDescendingByPublishedDate(r.Context(), GetWritingsByIdsForUserDescendingByPublishedDateParams{
 		Userid:     uid,
 		Writingids: writingsIds,
 	})

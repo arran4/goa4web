@@ -1,10 +1,10 @@
--- name: FetchPublicWritings :many
+-- name: GetPublicWrirings :many
 SELECT w.title, w.abstract, w.idwriting, w.private, w.writingCategory_idwritingCategory
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC LIMIT 15;
 
--- name: FetchPublicWritingsInCategory :many
+-- name: GetPublicWriringsInCategory :many
 SELECT w.*, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
 FROM writing w
@@ -21,7 +21,7 @@ WHERE idwriting = ?;
 INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
--- name: FetchWritingById :one
+-- name: GetWritingByIdForUserDescendingByPublishedDate :one
 SELECT w.*, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
@@ -30,7 +30,7 @@ WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers =
 ORDER BY w.published DESC
 ;
 
--- name: FetchWritingByIds :many
+-- name: GetWritingsByIdsForUserDescendingByPublishedDate :many
 SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
@@ -38,11 +38,6 @@ LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND w
 WHERE w.idwriting IN (sqlc.slice(writingIds)) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(userId))
 ORDER BY w.published DESC
 ;
-
--- name: FetchWritingApproval :many
-SELECT editdoc
-FROM writtingApprovedUsers
-WHERE writing_idwriting = ? AND users_idusers = ?;
 
 -- name: InsertWritingCategory :exec
 INSERT INTO writingCategory (writingCategory_idwritingCategory, title, description)
@@ -53,7 +48,7 @@ UPDATE writingCategory
 SET title = ?, description = ?, writingCategory_idwritingCategory = ?
 WHERE idwritingCategory = ?;
 
--- name: FetchCategories :many
+-- name: GetAllWritingCategories :many
 SELECT idwritingCategory, title, description
 FROM writingCategory
 WHERE writingCategory_idwritingCategory = ?;
@@ -67,7 +62,7 @@ FROM writingCategory wc
 DELETE FROM writtingApprovedUsers
 WHERE writing_idwriting = ? AND users_idusers = ?;
 
--- name: InsertWritingApproval :exec
+-- name: CreateWritingApproval :exec
 INSERT INTO writtingApprovedUsers (writing_idwriting, users_idusers, readdoc, editdoc)
 VALUES (?, ?, ?, ?);
 
@@ -76,7 +71,7 @@ UPDATE writtingApprovedUsers
 SET readdoc = ?, editdoc = ?
 WHERE writing_idwriting = ? AND users_idusers = ?;
 
--- name: FetchAllWritingApprovals :many
+-- name: GetAllWritingApprovals :many
 SELECT idusers, u.username, wau.writing_idwriting, wau.readdoc, wau.editdoc
 FROM writtingApprovedUsers wau
 LEFT JOIN users u ON idusers = wau.users_idusers

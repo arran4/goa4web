@@ -25,7 +25,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Writing             *FetchWritingByIdRow
+		Writing             *GetWritingByIdForUserDescendingByPublishedDateRow
 		CanEdit             bool
 		IsAuthor            bool
 		CanReply            bool
@@ -56,12 +56,12 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.UserId = uid
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	writing, err := queries.FetchWritingById(r.Context(), FetchWritingByIdParams{
+	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(articleId),
 	})
 	if err != nil {
-		log.Printf("fetchWritingById Error: %s", err)
+		log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -111,7 +111,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("fetchCategories Error: %s", err)
+			log.Printf("getAllWritingCategories Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -193,7 +193,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.FetchWritingById(r.Context(), FetchWritingByIdParams{
+	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(aid),
 	})

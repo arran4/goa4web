@@ -11,7 +11,7 @@ import (
 func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		ApprovedUsers []*FetchAllWritingApprovalsRow
+		ApprovedUsers []*GetAllWritingApprovalsRow
 	}
 
 	data := Data{
@@ -20,12 +20,12 @@ func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	approvedUserRows, err := queries.FetchAllWritingApprovals(r.Context())
+	approvedUserRows, err := queries.GetAllWritingApprovals(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("fetchAllWritingApprovals Error: %s", err)
+			log.Printf("getAllWritingApprovals Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -85,13 +85,13 @@ func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := queries.InsertWritingApproval(r.Context(), InsertWritingApprovalParams{
+	if err := queries.CreateWritingApproval(r.Context(), CreateWritingApprovalParams{
 		WritingIdwriting: int32(wid),
 		UsersIdusers:     int32(uid),
 		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
 		Editdoc:          sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {
-		log.Printf("insertWritingApproval Error: %s", err)
+		log.Printf("createWritingApproval Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -110,7 +110,7 @@ func writingsAdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Requ
 		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
 		Editdoc:          sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {
-		log.Printf("insertWritingApproval Error: %s", err)
+		log.Printf("createWritingApproval Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

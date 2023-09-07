@@ -461,7 +461,7 @@ func WritingAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.FetchWritingById(request.Context(), FetchWritingByIdParams{
+		row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(request.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
 			Userid:    uid,
 			Idwriting: int32(writingId),
 		})

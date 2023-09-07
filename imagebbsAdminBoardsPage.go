@@ -10,7 +10,7 @@ import (
 func imagebbsAdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards []*ShowAllBoardsRow
+		Boards []*Imageboard
 	}
 
 	data := Data{
@@ -18,12 +18,12 @@ func imagebbsAdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	boardRows, err := queries.ShowAllBoards(r.Context())
+	boardRows, err := queries.GetAllImageBoards(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("showAllBoards Error: %s", err)
+			log.Printf("getAllImageBoards Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

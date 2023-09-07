@@ -17,14 +17,14 @@ func imagebbsAdminBoardModifyBoardActionPage(w http.ResponseWriter, r *http.Requ
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	err := queries.ChangeImageBoard(r.Context(), ChangeImageBoardParams{
+	err := queries.UpdateImageBoard(r.Context(), UpdateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},
 		Idimageboard:           int32(bid),
 	})
 	if err != nil {
-		log.Printf("Error: makeImageBoard: %s", err)
+		log.Printf("Error: createImageBoard: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

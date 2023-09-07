@@ -1,39 +1,35 @@
--- name: ImageboardRSS :exec
-SELECT title, description FROM imageboard WHERE idimageboard = ?;
-
--- name: MakeImageBoard :exec
+-- name: CreateImageBoard :exec
 INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, ?, ?);
 
--- name: ChangeImageBoard :exec
+-- name: UpdateImageBoard :exec
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?;
 
--- name: PrintSubBoards :many
+-- name: GetAllBoardsByParentBoardId :many
 SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?;
 
--- name: PrintImagePosts :many
+-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.imageboard_idimageboard = ?;
 
--- name: PrintImagePost :one
+-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.idimagepost = ?;
 
--- name: AddImage :exec
+-- name: CreateImagePost :exec
 INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
 VALUES (?, ?, ?, ?, ?, NOW());
 
--- name: AssignImagePostThisThreadId :exec
+-- name: UpdateImagePostByIdForumThreadId :exec
 UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?;
 
--- name: ShowAllBoards :many
-SELECT b.idimageboard, b.title, b.description, b.imageboard_idimageboard, pb.title
+-- name: GetAllImageBoards :many
+SELECT b.*
 FROM imageboard b
-LEFT JOIN imageboard pb ON b.imageboard_idimageboard = pb.idimageboard OR b.imageboard_idimageboard = 0
-GROUP BY b.idimageboard;
+;
 

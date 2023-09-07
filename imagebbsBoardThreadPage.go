@@ -30,7 +30,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		ForumThreadId      int
 		Comments           []*CommentPlus
 		BoardId            int
-		ImagePost          *PrintImagePostRow
+		ImagePost          *GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
 		Thread             *User_get_threadRow
 		Offset             int
 		IsReplyable        bool
@@ -108,9 +108,9 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	post, err := queries.PrintImagePost(r.Context(), int32(bid))
+	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil {
-		log.Printf("printSubBoards Error: %s", err)
+		log.Printf("getAllBoardsByParentBoardId Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -151,9 +151,9 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	post, err := queries.PrintImagePost(r.Context(), int32(bid))
+	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil {
-		log.Printf("printSubBoards Error: %s", err)
+		log.Printf("getAllBoardsByParentBoardId Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -194,7 +194,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignImagePostThisThreadId(r.Context(), AssignImagePostThisThreadIdParams{
+		if err := queries.UpdateImagePostByIdForumThreadId(r.Context(), UpdateImagePostByIdForumThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idimagepost:              int32(bid),
 		}); err != nil {

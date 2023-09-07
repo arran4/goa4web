@@ -10,12 +10,27 @@ import (
 	"database/sql"
 )
 
-const addImage = `-- name: AddImage :exec
+const createImageBoard = `-- name: CreateImageBoard :exec
+INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, ?, ?)
+`
+
+type CreateImageBoardParams struct {
+	ImageboardIdimageboard int32
+	Title                  sql.NullString
+	Description            sql.NullString
+}
+
+func (q *Queries) CreateImageBoard(ctx context.Context, arg CreateImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, createImageBoard, arg.ImageboardIdimageboard, arg.Title, arg.Description)
+	return err
+}
+
+const createImagePost = `-- name: CreateImagePost :exec
 INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
 VALUES (?, ?, ?, ?, ?, NOW())
 `
 
-type AddImageParams struct {
+type CreateImagePostParams struct {
 	ImageboardIdimageboard int32
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -23,8 +38,8 @@ type AddImageParams struct {
 	Description            sql.NullString
 }
 
-func (q *Queries) AddImage(ctx context.Context, arg AddImageParams) error {
-	_, err := q.db.ExecContext(ctx, addImage,
+func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams) error {
+	_, err := q.db.ExecContext(ctx, createImagePost,
 		arg.ImageboardIdimageboard,
 		arg.Thumbnail,
 		arg.Fullimage,
@@ -34,110 +49,73 @@ func (q *Queries) AddImage(ctx context.Context, arg AddImageParams) error {
 	return err
 }
 
-const assignImagePostThisThreadId = `-- name: AssignImagePostThisThreadId :exec
-UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?
+const getAllBoardsByParentBoardId = `-- name: GetAllBoardsByParentBoardId :many
+SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?
 `
 
-type AssignImagePostThisThreadIdParams struct {
-	ForumthreadIdforumthread int32
-	Idimagepost              int32
+type GetAllBoardsByParentBoardIdRow struct {
+	Idimageboard int32
+	Title        sql.NullString
+	Description  sql.NullString
 }
 
-func (q *Queries) AssignImagePostThisThreadId(ctx context.Context, arg AssignImagePostThisThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, assignImagePostThisThreadId, arg.ForumthreadIdforumthread, arg.Idimagepost)
-	return err
+func (q *Queries) GetAllBoardsByParentBoardId(ctx context.Context, imageboardIdimageboard int32) ([]*GetAllBoardsByParentBoardIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBoardsByParentBoardId, imageboardIdimageboard)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllBoardsByParentBoardIdRow
+	for rows.Next() {
+		var i GetAllBoardsByParentBoardIdRow
+		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-const changeImageBoard = `-- name: ChangeImageBoard :exec
-UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?
+const getAllImageBoards = `-- name: GetAllImageBoards :many
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description
+FROM imageboard b
 `
 
-type ChangeImageBoardParams struct {
-	Title                  sql.NullString
-	Description            sql.NullString
-	ImageboardIdimageboard int32
-	Idimageboard           int32
+func (q *Queries) GetAllImageBoards(ctx context.Context) ([]*Imageboard, error) {
+	rows, err := q.db.QueryContext(ctx, getAllImageBoards)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Imageboard
+	for rows.Next() {
+		var i Imageboard
+		if err := rows.Scan(
+			&i.Idimageboard,
+			&i.ImageboardIdimageboard,
+			&i.Title,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-func (q *Queries) ChangeImageBoard(ctx context.Context, arg ChangeImageBoardParams) error {
-	_, err := q.db.ExecContext(ctx, changeImageBoard,
-		arg.Title,
-		arg.Description,
-		arg.ImageboardIdimageboard,
-		arg.Idimageboard,
-	)
-	return err
-}
-
-const imageboardRSS = `-- name: ImageboardRSS :exec
-SELECT title, description FROM imageboard WHERE idimageboard = ?
-`
-
-type ImageboardRSSRow struct {
-	Title       sql.NullString
-	Description sql.NullString
-}
-
-func (q *Queries) ImageboardRSS(ctx context.Context, idimageboard int32) error {
-	_, err := q.db.ExecContext(ctx, imageboardRSS, idimageboard)
-	return err
-}
-
-const makeImageBoard = `-- name: MakeImageBoard :exec
-INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, ?, ?)
-`
-
-type MakeImageBoardParams struct {
-	ImageboardIdimageboard int32
-	Title                  sql.NullString
-	Description            sql.NullString
-}
-
-func (q *Queries) MakeImageBoard(ctx context.Context, arg MakeImageBoardParams) error {
-	_, err := q.db.ExecContext(ctx, makeImageBoard, arg.ImageboardIdimageboard, arg.Title, arg.Description)
-	return err
-}
-
-const printImagePost = `-- name: PrintImagePost :one
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
-WHERE i.idimagepost = ?
-`
-
-type PrintImagePostRow struct {
-	Idimagepost              int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	ImageboardIdimageboard   int32
-	Posted                   sql.NullTime
-	Description              sql.NullString
-	Thumbnail                sql.NullString
-	Fullimage                sql.NullString
-	Username                 sql.NullString
-	Comments                 sql.NullInt32
-}
-
-func (q *Queries) PrintImagePost(ctx context.Context, idimagepost int32) (*PrintImagePostRow, error) {
-	row := q.db.QueryRowContext(ctx, printImagePost, idimagepost)
-	var i PrintImagePostRow
-	err := row.Scan(
-		&i.Idimagepost,
-		&i.ForumthreadIdforumthread,
-		&i.UsersIdusers,
-		&i.ImageboardIdimageboard,
-		&i.Posted,
-		&i.Description,
-		&i.Thumbnail,
-		&i.Fullimage,
-		&i.Username,
-		&i.Comments,
-	)
-	return &i, err
-}
-
-const printImagePosts = `-- name: PrintImagePosts :many
+const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
 SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
@@ -145,7 +123,7 @@ LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.imageboard_idimageboard = ?
 `
 
-type PrintImagePostsRow struct {
+type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow struct {
 	Idimagepost              int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -158,15 +136,15 @@ type PrintImagePostsRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) PrintImagePosts(ctx context.Context, imageboardIdimageboard int32) ([]*PrintImagePostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printImagePosts, imageboardIdimageboard)
+func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(ctx context.Context, imageboardIdimageboard int32) ([]*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount, imageboardIdimageboard)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*PrintImagePostsRow
+	var items []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
 	for rows.Next() {
-		var i PrintImagePostsRow
+		var i GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
 		if err := rows.Scan(
 			&i.Idimagepost,
 			&i.ForumthreadIdforumthread,
@@ -192,79 +170,76 @@ func (q *Queries) PrintImagePosts(ctx context.Context, imageboardIdimageboard in
 	return items, nil
 }
 
-const printSubBoards = `-- name: PrintSubBoards :many
-SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?
+const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+WHERE i.idimagepost = ?
 `
 
-type PrintSubBoardsRow struct {
-	Idimageboard int32
-	Title        sql.NullString
-	Description  sql.NullString
+type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow struct {
+	Idimagepost              int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	ImageboardIdimageboard   int32
+	Posted                   sql.NullTime
+	Description              sql.NullString
+	Thumbnail                sql.NullString
+	Fullimage                sql.NullString
+	Username                 sql.NullString
+	Comments                 sql.NullInt32
 }
 
-func (q *Queries) PrintSubBoards(ctx context.Context, imageboardIdimageboard int32) ([]*PrintSubBoardsRow, error) {
-	rows, err := q.db.QueryContext(ctx, printSubBoards, imageboardIdimageboard)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*PrintSubBoardsRow
-	for rows.Next() {
-		var i PrintSubBoardsRow
-		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Description); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ctx context.Context, idimagepost int32) (*GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow, error) {
+	row := q.db.QueryRowContext(ctx, getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount, idimagepost)
+	var i GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
+	err := row.Scan(
+		&i.Idimagepost,
+		&i.ForumthreadIdforumthread,
+		&i.UsersIdusers,
+		&i.ImageboardIdimageboard,
+		&i.Posted,
+		&i.Description,
+		&i.Thumbnail,
+		&i.Fullimage,
+		&i.Username,
+		&i.Comments,
+	)
+	return &i, err
 }
 
-const showAllBoards = `-- name: ShowAllBoards :many
-SELECT b.idimageboard, b.title, b.description, b.imageboard_idimageboard, pb.title
-FROM imageboard b
-LEFT JOIN imageboard pb ON b.imageboard_idimageboard = pb.idimageboard OR b.imageboard_idimageboard = 0
-GROUP BY b.idimageboard
+const updateImageBoard = `-- name: UpdateImageBoard :exec
+UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?
 `
 
-type ShowAllBoardsRow struct {
-	Idimageboard           int32
+type UpdateImageBoardParams struct {
 	Title                  sql.NullString
 	Description            sql.NullString
 	ImageboardIdimageboard int32
-	Title_2                sql.NullString
+	Idimageboard           int32
 }
 
-func (q *Queries) ShowAllBoards(ctx context.Context) ([]*ShowAllBoardsRow, error) {
-	rows, err := q.db.QueryContext(ctx, showAllBoards)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ShowAllBoardsRow
-	for rows.Next() {
-		var i ShowAllBoardsRow
-		if err := rows.Scan(
-			&i.Idimageboard,
-			&i.Title,
-			&i.Description,
-			&i.ImageboardIdimageboard,
-			&i.Title_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) UpdateImageBoard(ctx context.Context, arg UpdateImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, updateImageBoard,
+		arg.Title,
+		arg.Description,
+		arg.ImageboardIdimageboard,
+		arg.Idimageboard,
+	)
+	return err
+}
+
+const updateImagePostByIdForumThreadId = `-- name: UpdateImagePostByIdForumThreadId :exec
+UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?
+`
+
+type UpdateImagePostByIdForumThreadIdParams struct {
+	ForumthreadIdforumthread int32
+	Idimagepost              int32
+}
+
+func (q *Queries) UpdateImagePostByIdForumThreadId(ctx context.Context, arg UpdateImagePostByIdForumThreadIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateImagePostByIdForumThreadId, arg.ForumthreadIdforumthread, arg.Idimagepost)
+	return err
 }

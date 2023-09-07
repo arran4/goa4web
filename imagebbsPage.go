@@ -10,7 +10,7 @@ import (
 func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards      []*PrintSubBoardsRow
+		Boards      []*GetAllBoardsByParentBoardIdRow
 		IsSubBoard  bool
 		BoardNumber int
 	}
@@ -23,12 +23,12 @@ func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	subBoardRows, err := queries.PrintSubBoards(r.Context(), 0)
+	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), 0)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("printSubBoards Error: %s", err)
+			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

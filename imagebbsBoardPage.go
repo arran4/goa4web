@@ -13,10 +13,10 @@ import (
 func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards      []*PrintSubBoardsRow
+		Boards      []*GetAllBoardsByParentBoardIdRow
 		IsSubBoard  bool
 		BoardNumber int
-		Posts       []*PrintImagePostsRow
+		Posts       []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
 	}
 
 	vars := mux.Vars(r)
@@ -30,12 +30,12 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	subBoardRows, err := queries.PrintSubBoards(r.Context(), int32(bid))
+	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), int32(bid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("printSubBoards Error: %s", err)
+			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -43,12 +43,12 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = subBoardRows
 
-	posts, err := queries.PrintImagePosts(r.Context(), int32(bid))
+	posts, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("printSubBoards Error: %s", err)
+			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -78,7 +78,7 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.AddImage(r.Context(), AddImageParams{
+	if err := queries.CreateImagePost(r.Context(), CreateImagePostParams{
 		ImageboardIdimageboard: int32(bid),
 		Thumbnail:              sql.NullString{Valid: true, String: thumbnailURL},
 		Fullimage:              sql.NullString{Valid: true, String: fullimageURL},

@@ -11,7 +11,7 @@ import (
 func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards []*ShowAllBoardsRow
+		Boards []*Imageboard
 	}
 
 	data := Data{
@@ -19,12 +19,12 @@ func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	boardRows, err := queries.ShowAllBoards(r.Context())
+	boardRows, err := queries.GetAllImageBoards(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("showAllBoards Error: %s", err)
+			log.Printf("getAllImageBoards Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -48,13 +48,13 @@ func imagebbsAdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	err := queries.MakeImageBoard(r.Context(), MakeImageBoardParams{
+	err := queries.CreateImageBoard(r.Context(), CreateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},
 	})
 	if err != nil {
-		log.Printf("Error: makeImageBoard: %s", err)
+		log.Printf("Error: createImageBoard: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

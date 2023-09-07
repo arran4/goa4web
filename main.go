@@ -49,12 +49,12 @@ func main() {
 	}).Methods("GET")
 
 	// News
-	r.Handle("/", AddNewsIndex(http.HandlerFunc(newsPage))).Methods("GET")
+	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("newsPage.gohtml")))).Methods("GET")
 	r.HandleFunc("/", taskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(AddNewsIndex)
 	//TODO nr.HandleFunc(".rss", newsRssPage).Methods("GET")
-	nr.HandleFunc("", newsPage).Methods("GET")
+	nr.HandleFunc("", runTemplate("newsPage.gohtml")).Methods("GET")
 	nr.HandleFunc("", taskDoneAutoRefreshPage).Methods("POST")
 	//TODO nr.HandleFunc("/news/{id:[0-9]+}", newsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", newsPostPage).Methods("GET")
@@ -286,6 +286,26 @@ func main() {
 
 	log.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		type Data struct {
+			*CoreData
+		}
+
+		data := Data{
+			CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		}
+
+		CustomNewsIndex(data.CoreData, r)
+
+		if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, template, data); err != nil {
+			log.Printf("Template Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	})
 }
 
 func AddNewsIndex(handler http.Handler) http.Handler {

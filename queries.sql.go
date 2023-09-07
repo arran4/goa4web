@@ -10,19 +10,19 @@ import (
 	"database/sql"
 )
 
-const somethingNotifyBlogs = `-- name: SomethingNotifyBlogs :many
+const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
 SELECT u.email FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
-type SomethingNotifyBlogsParams struct {
+type ListUsersSubscribedToBlogsParams struct {
 	Idblogs int32
 	Idusers int32
 }
 
-func (q *Queries) SomethingNotifyBlogs(ctx context.Context, arg SomethingNotifyBlogsParams) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, somethingNotifyBlogs, arg.Idblogs, arg.Idusers)
+func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToBlogs, arg.Idblogs, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}
@@ -44,19 +44,19 @@ func (q *Queries) SomethingNotifyBlogs(ctx context.Context, arg SomethingNotifyB
 	return items, nil
 }
 
-const somethingNotifyLinker = `-- name: SomethingNotifyLinker :many
+const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
 SELECT u.email FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
-type SomethingNotifyLinkerParams struct {
+type ListUsersSubscribedToLinkerParams struct {
 	Idlinker int32
 	Idusers  int32
 }
 
-func (q *Queries) SomethingNotifyLinker(ctx context.Context, arg SomethingNotifyLinkerParams) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, somethingNotifyLinker, arg.Idlinker, arg.Idusers)
+func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToLinker, arg.Idlinker, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}
@@ -78,53 +78,53 @@ func (q *Queries) SomethingNotifyLinker(ctx context.Context, arg SomethingNotify
 	return items, nil
 }
 
-const somethingNotifyWriting = `-- name: SomethingNotifyWriting :many
-SELECT u.email FROM writing t, users u, preferences p
-WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
-GROUP BY u.idusers
-`
-
-type SomethingNotifyWritingParams struct {
-	Idwriting int32
-	Idusers   int32
-}
-
-func (q *Queries) SomethingNotifyWriting(ctx context.Context, arg SomethingNotifyWritingParams) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, somethingNotifyWriting, arg.Idwriting, arg.Idusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []sql.NullString
-	for rows.Next() {
-		var email sql.NullString
-		if err := rows.Scan(&email); err != nil {
-			return nil, err
-		}
-		items = append(items, email)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const threadNotify = `-- name: ThreadNotify :many
+const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
 SELECT u.email FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
-type ThreadNotifyParams struct {
+type ListUsersSubscribedToThreadParams struct {
 	ForumthreadIdforumthread int32
 	Idusers                  int32
 }
 
-func (q *Queries) ThreadNotify(ctx context.Context, arg ThreadNotifyParams) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, threadNotify, arg.ForumthreadIdforumthread, arg.Idusers)
+func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsersSubscribedToThreadParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToThread, arg.ForumthreadIdforumthread, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
+SELECT u.email FROM writing t, users u, preferences p
+WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers
+`
+
+type ListUsersSubscribedToWritingParams struct {
+	Idwriting int32
+	Idusers   int32
+}
+
+func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToWriting, arg.Idwriting, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}

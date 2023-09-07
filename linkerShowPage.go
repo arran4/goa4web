@@ -131,11 +131,11 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/show/%d", linkId)
 
-	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
+	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
-		log.Printf("Error: threadNotify: %s", err)
+		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else {
 		for _, row := range rows {
 			if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
@@ -144,11 +144,11 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if rows, err := queries.SomethingNotifyLinker(r.Context(), SomethingNotifyLinkerParams{
+	if rows, err := queries.ListUsersSubscribedToLinker(r.Context(), ListUsersSubscribedToLinkerParams{
 		Idusers:  uid,
 		Idlinker: int32(linkId),
 	}); err != nil {
-		log.Printf("Error: threadNotify: %s", err)
+		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else {
 		for _, row := range rows {
 			if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {

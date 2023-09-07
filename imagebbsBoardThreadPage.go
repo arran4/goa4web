@@ -210,11 +210,11 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
 
-	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
+	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
-		log.Printf("Error: threadNotify: %s", err)
+		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else {
 		for _, row := range rows {
 			if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
@@ -227,7 +227,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 	//	Idusers: uid,
 	//	Idimagebbss: int32(bid),
 	//}); err != nil {
-	//	log.Printf("Error: threadNotify: %s", err)
+	//	log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	//} else {
 	//	for _, row := range rows {
 	//		if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {

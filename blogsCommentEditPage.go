@@ -27,14 +27,14 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	comment, err := queries.getComment(r.Context(), int32(commentId))
+	comment, err := queries.GetComment(r.Context(), int32(commentId))
 	if err != nil {
 		log.Printf("Error: getComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	thread, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+	thread, err := queries.User_get_thread(r.Context(), User_get_threadParams{
 		UsersIdusers:  uid,
 		Idforumthread: comment.ForumthreadIdforumthread,
 	})
@@ -48,7 +48,7 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err = queries.update_comment(r.Context(), update_commentParams{
+	if err = queries.Update_comment(r.Context(), Update_commentParams{
 		Idcomments:         int32(commentId),
 		LanguageIdlanguage: int32(languageId),
 		Text: sql.NullString{
@@ -72,13 +72,13 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.update_forumthread(r.Context(), thread.Idforumthread); err != nil {
+	if err := queries.Update_forumthread(r.Context(), thread.Idforumthread); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), thread.ForumtopicIdforumtopic); err != nil {
+	if err := queries.Update_forumtopic(r.Context(), thread.ForumtopicIdforumtopic); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

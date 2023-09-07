@@ -13,7 +13,7 @@ import (
 
 func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*user_get_all_comments_for_threadRow
+		*User_get_all_comments_for_threadRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
@@ -26,7 +26,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
-		Thread              *user_get_threadRow
+		Thread              *User_get_threadRow
 		Comments            []*CommentPlus
 		Offset              int
 		IsReplyable         bool
@@ -60,7 +60,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+	commentRows, err := queries.User_get_all_comments_for_thread(r.Context(), User_get_all_comments_for_threadParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(threadId),
 	})
@@ -74,7 +74,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+	threadRow, err := queries.User_get_thread(r.Context(), User_get_threadParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(threadId),
 	})
@@ -88,7 +88,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	topicRow, err := queries.user_get_topic(r.Context(), user_get_topicParams{
+	topicRow, err := queries.User_get_topic(r.Context(), User_get_topicParams{
 		UsersIdusers: uid,
 		Idforumtopic: int32(threadRow.ForumtopicIdforumtopic),
 	})
@@ -127,7 +127,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
-			user_get_all_comments_for_threadRow: row,
+			User_get_all_comments_for_threadRow: row,
 			ShowReply:                           true,
 			EditUrl:                             editUrl,
 			EditSaveUrl:                         editSaveUrl,
@@ -154,7 +154,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		Edit:                         false,
 	}
 
-	categoryRows, err := queries.forumCategories(r.Context())
+	categoryRows, err := queries.ForumCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -170,7 +170,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	replyType := r.URL.Query().Get("type")
 	if commentIdString != "" {
-		comment, err := queries.user_get_comment(r.Context(), user_get_commentParams{
+		comment, err := queries.User_get_comment(r.Context(), User_get_commentParams{
 			UsersIdusers: uid,
 			Idcomments:   int32(commentId),
 		})

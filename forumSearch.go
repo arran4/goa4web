@@ -9,7 +9,7 @@ import (
 
 func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *Queries, cid int64) bool {
 	for _, wid := range wordIds {
-		if err := queries.addToForumCommentSearch(r.Context(), addToForumCommentSearchParams{
+		if err := queries.AddToForumCommentSearch(r.Context(), AddToForumCommentSearchParams{
 			CommentsIdcomments:             int32(cid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		}); err != nil {

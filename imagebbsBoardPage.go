@@ -13,10 +13,10 @@ import (
 func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards      []*printSubBoardsRow
+		Boards      []*PrintSubBoardsRow
 		IsSubBoard  bool
 		BoardNumber int
-		Posts       []*printImagePostsRow
+		Posts       []*PrintImagePostsRow
 	}
 
 	vars := mux.Vars(r)
@@ -30,7 +30,7 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	subBoardRows, err := queries.printSubBoards(r.Context(), int32(bid))
+	subBoardRows, err := queries.PrintSubBoards(r.Context(), int32(bid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -43,7 +43,7 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = subBoardRows
 
-	posts, err := queries.printImagePosts(r.Context(), int32(bid))
+	posts, err := queries.PrintImagePosts(r.Context(), int32(bid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -78,7 +78,7 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.addImage(r.Context(), addImageParams{
+	if err := queries.AddImage(r.Context(), AddImageParams{
 		ImageboardIdimageboard: int32(bid),
 		Thumbnail:              sql.NullString{Valid: true, String: thumbnailURL},
 		Fullimage:              sql.NullString{Valid: true, String: fullimageURL},

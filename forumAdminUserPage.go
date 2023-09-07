@@ -20,7 +20,7 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.allUsers(r.Context())
+	rows, err := queries.AllUsers(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -12,7 +12,7 @@ import (
 func forumAdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories []*showAllCategoriesRow
+		Categories []*ShowAllCategoriesRow
 		Topics     []*Forumtopic
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -21,7 +21,7 @@ func forumAdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	categoryRows, err := queries.showAllCategories(r.Context())
+	categoryRows, err := queries.ShowAllCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -34,7 +34,7 @@ func forumAdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	topicRows, err := queries.getAllTopics(r.Context())
+	topicRows, err := queries.GetAllTopics(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -68,7 +68,7 @@ func forumAdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 
-	if err := queries.changeTopic(r.Context(), changeTopicParams{
+	if err := queries.ChangeTopic(r.Context(), ChangeTopicParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -98,7 +98,7 @@ func forumTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if _, err := queries.makeTopic(r.Context(), makeTopicParams{
+	if _, err := queries.MakeTopic(r.Context(), MakeTopicParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,

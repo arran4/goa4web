@@ -10,7 +10,7 @@ import (
 func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*getCommentsWithThreadInfoRow
+		Comments           []*GetCommentsWithThreadInfoRow
 		Blogs              []*Blog
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
@@ -25,7 +25,7 @@ func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: BloggerTopicName})
+	ftbnId, err := queries.FindForumTopicByName(r.Context(), sql.NullString{Valid: true, String: BloggerTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByName Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -65,7 +65,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.blogsSearchFirst(r.Context(), sql.NullString{
+			ids, err := queries.BlogsSearchFirst(r.Context(), sql.NullString{
 				String: word,
 				Valid:  true,
 			})
@@ -76,7 +76,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 			}
 			blogIds = ids
 		} else {
-			ids, err := queries.blogsSearchNext(r.Context(), blogsSearchNextParams{
+			ids, err := queries.BlogsSearchNext(r.Context(), BlogsSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -95,7 +95,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 		}
 	}
 
-	blogs, err := queries.getBlogs(r.Context(), blogIds)
+	blogs, err := queries.GetBlogs(r.Context(), blogIds)
 	if err != nil {
 		log.Printf("getBlogs Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

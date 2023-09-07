@@ -16,7 +16,7 @@ func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
 		CatId       int
 		CommentOnId int
 		ReplyToId   int
-		Links       []*showLatestRow
+		Links       []*ShowLatestRow
 	}
 
 	data := Data{
@@ -31,7 +31,7 @@ func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	linkerPosts, err := queries.showLatest(r.Context(), int32(data.CatId))
+	linkerPosts, err := queries.ShowLatest(r.Context(), int32(data.CatId))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

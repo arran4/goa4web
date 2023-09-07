@@ -12,6 +12,200 @@ import (
 	"time"
 )
 
+const addImage = `-- name: AddImage :exec
+INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
+VALUES (?, ?, ?, ?, ?, NOW())
+`
+
+type AddImageParams struct {
+	ImageboardIdimageboard int32
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	UsersIdusers           int32
+	Description            sql.NullString
+}
+
+func (q *Queries) AddImage(ctx context.Context, arg AddImageParams) error {
+	_, err := q.db.ExecContext(ctx, addImage,
+		arg.ImageboardIdimageboard,
+		arg.Thumbnail,
+		arg.Fullimage,
+		arg.UsersIdusers,
+		arg.Description,
+	)
+	return err
+}
+
+const addToForumCommentSearch = `-- name: AddToForumCommentSearch :exec
+INSERT IGNORE INTO commentsSearch
+(comments_idcomments, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
+
+type AddToForumCommentSearchParams struct {
+	CommentsIdcomments             int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+func (q *Queries) AddToForumCommentSearch(ctx context.Context, arg AddToForumCommentSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentsIdcomments, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
+const addToForumWritingSearch = `-- name: AddToForumWritingSearch :exec
+INSERT IGNORE INTO writingSearch
+(writing_idwriting, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
+
+type AddToForumWritingSearchParams struct {
+	WritingIdwriting               int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWritingSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingIdwriting, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
+const addToLinker = `-- name: AddToLinker :exec
+INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
+VALUES (?, ?, ?, ?, ?, NOW())
+`
+
+type AddToLinkerParams struct {
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+}
+
+func (q *Queries) AddToLinker(ctx context.Context, arg AddToLinkerParams) error {
+	_, err := q.db.ExecContext(ctx, addToLinker,
+		arg.UsersIdusers,
+		arg.LinkercategoryIdlinkercategory,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+	)
+	return err
+}
+
+const addToQueue = `-- name: AddToQueue :exec
+INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?)
+`
+
+type AddToQueueParams struct {
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+}
+
+func (q *Queries) AddToQueue(ctx context.Context, arg AddToQueueParams) error {
+	_, err := q.db.ExecContext(ctx, addToQueue,
+		arg.UsersIdusers,
+		arg.LinkercategoryIdlinkercategory,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+	)
+	return err
+}
+
+const addWord = `-- name: AddWord :execlastid
+INSERT IGNORE INTO searchwordlist (word)
+VALUES (lcase(?))
+`
+
+func (q *Queries) AddWord(ctx context.Context, word string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, addWord, word)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const add_blog = `-- name: Add_blog :execlastid
+INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
+VALUES (?, ?, ?, NOW())
+`
+
+type Add_blogParams struct {
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+}
+
+func (q *Queries) Add_blog(ctx context.Context, arg Add_blogParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, add_blog, arg.UsersIdusers, arg.LanguageIdlanguage, arg.Blog)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const add_bookmarks = `-- name: Add_bookmarks :exec
+INSERT INTO bookmarks (users_idusers, list)
+VALUES (?, ?)
+`
+
+type Add_bookmarksParams struct {
+	UsersIdusers int32
+	List         sql.NullString
+}
+
+// This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".
+func (q *Queries) Add_bookmarks(ctx context.Context, arg Add_bookmarksParams) error {
+	_, err := q.db.ExecContext(ctx, add_bookmarks, arg.UsersIdusers, arg.List)
+	return err
+}
+
+const add_question = `-- name: Add_question :exec
+INSERT INTO faq (question, users_idusers, language_idlanguage)
+VALUES (?, ?, ?)
+`
+
+type Add_questionParams struct {
+	Question           sql.NullString
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+}
+
+func (q *Queries) Add_question(ctx context.Context, arg Add_questionParams) error {
+	_, err := q.db.ExecContext(ctx, add_question, arg.Question, arg.UsersIdusers, arg.LanguageIdlanguage)
+	return err
+}
+
+const adminCategories = `-- name: AdminCategories :many
+SELECT idlinkerCategory, title FROM linkerCategory
+`
+
+func (q *Queries) AdminCategories(ctx context.Context) ([]*Linkercategory, error) {
+	rows, err := q.db.QueryContext(ctx, adminCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Linkercategory
+	for rows.Next() {
+		var i Linkercategory
+		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const allQuestions = `-- name: AllQuestions :many
 SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
 FROM faq
@@ -47,387 +241,7 @@ func (q *Queries) AllQuestions(ctx context.Context) ([]*Faq, error) {
 	return items, nil
 }
 
-const createLanguage = `-- name: CreateLanguage :exec
-INSERT INTO language (nameof)
-VALUES (?)
-`
-
-// This query inserts a new record into the "language" table.
-// Parameters:
-//
-//	? - Name of the new language (string)
-func (q *Queries) CreateLanguage(ctx context.Context, nameof sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, createLanguage, nameof)
-	return err
-}
-
-const deleteLanguage = `-- name: DeleteLanguage :exec
-DELETE FROM language
-WHERE idlanguage = ?
-`
-
-// This query deletes a record from the "language" table based on the provided "cid".
-// Parameters:
-//
-//	? - Language ID to be deleted (int)
-func (q *Queries) DeleteLanguage(ctx context.Context, idlanguage int32) error {
-	_, err := q.db.ExecContext(ctx, deleteLanguage, idlanguage)
-	return err
-}
-
-const fetchLanguages = `-- name: FetchLanguages :many
-SELECT idlanguage, nameof FROM language
-`
-
-func (q *Queries) FetchLanguages(ctx context.Context) ([]*Language, error) {
-	rows, err := q.db.QueryContext(ctx, fetchLanguages)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Language
-	for rows.Next() {
-		var i Language
-		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const insertUser = `-- name: InsertUser :execresult
-INSERT INTO users (username, passwd, email)
-VALUES (?, MD5(?), ?)
-`
-
-type InsertUserParams struct {
-	Username sql.NullString
-	MD5      string
-	Email    sql.NullString
-}
-
-func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertUser, arg.Username, arg.MD5, arg.Email)
-}
-
-const login = `-- name: Login :one
-SELECT idusers, email, passwd, username
-FROM users
-WHERE username = ? AND passwd = md5(?)
-`
-
-type LoginParams struct {
-	Username sql.NullString
-	MD5      string
-}
-
-func (q *Queries) Login(ctx context.Context, arg LoginParams) (*User, error) {
-	row := q.db.QueryRowContext(ctx, login, arg.Username, arg.MD5)
-	var i User
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Passwd,
-		&i.Username,
-	)
-	return &i, err
-}
-
-const renameLanguage = `-- name: RenameLanguage :exec
-UPDATE language
-SET nameof = ?
-WHERE idlanguage = ?
-`
-
-type RenameLanguageParams struct {
-	Nameof     sql.NullString
-	Idlanguage int32
-}
-
-// This query updates the "nameof" field in the "language" table based on the provided "cid".
-// Parameters:
-//
-//	? - New name for the language (string)
-//	? - Language ID to be updated (int)
-func (q *Queries) RenameLanguage(ctx context.Context, arg RenameLanguageParams) error {
-	_, err := q.db.ExecContext(ctx, renameLanguage, arg.Nameof, arg.Idlanguage)
-	return err
-}
-
-const selectUnansweredQuestions = `-- name: SelectUnansweredQuestions :many
-SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
-FROM faq
-WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL
-`
-
-func (q *Queries) SelectUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, selectUnansweredQuestions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Faq
-	for rows.Next() {
-		var i Faq
-		if err := rows.Scan(
-			&i.Idfaq,
-			&i.FaqcategoriesIdfaqcategories,
-			&i.LanguageIdlanguage,
-			&i.UsersIdusers,
-			&i.Answer,
-			&i.Question,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const userByEmail = `-- name: UserByEmail :one
-SELECT idusers, email, passwd, username
-FROM users
-WHERE email = ?
-`
-
-func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*User, error) {
-	row := q.db.QueryRowContext(ctx, userByEmail, email)
-	var i User
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Passwd,
-		&i.Username,
-	)
-	return &i, err
-}
-
-const userByUsername = `-- name: UserByUsername :one
-SELECT idusers, email, passwd, username
-FROM users
-WHERE username = ?
-`
-
-func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (*User, error) {
-	row := q.db.QueryRowContext(ctx, userByUsername, username)
-	var i User
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Passwd,
-		&i.Username,
-	)
-	return &i, err
-}
-
-const addImage = `-- name: addImage :exec
-INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
-VALUES (?, ?, ?, ?, ?, NOW())
-`
-
-type addImageParams struct {
-	ImageboardIdimageboard int32
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	UsersIdusers           int32
-	Description            sql.NullString
-}
-
-func (q *Queries) addImage(ctx context.Context, arg addImageParams) error {
-	_, err := q.db.ExecContext(ctx, addImage,
-		arg.ImageboardIdimageboard,
-		arg.Thumbnail,
-		arg.Fullimage,
-		arg.UsersIdusers,
-		arg.Description,
-	)
-	return err
-}
-
-const addToForumCommentSearch = `-- name: addToForumCommentSearch :exec
-INSERT IGNORE INTO commentsSearch
-(comments_idcomments, searchwordlist_idsearchwordlist)
-VALUES (?, ?)
-`
-
-type addToForumCommentSearchParams struct {
-	CommentsIdcomments             int32
-	SearchwordlistIdsearchwordlist int32
-}
-
-func (q *Queries) addToForumCommentSearch(ctx context.Context, arg addToForumCommentSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentsIdcomments, arg.SearchwordlistIdsearchwordlist)
-	return err
-}
-
-const addToForumWritingSearch = `-- name: addToForumWritingSearch :exec
-INSERT IGNORE INTO writingSearch
-(writing_idwriting, searchwordlist_idsearchwordlist)
-VALUES (?, ?)
-`
-
-type addToForumWritingSearchParams struct {
-	WritingIdwriting               int32
-	SearchwordlistIdsearchwordlist int32
-}
-
-func (q *Queries) addToForumWritingSearch(ctx context.Context, arg addToForumWritingSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingIdwriting, arg.SearchwordlistIdsearchwordlist)
-	return err
-}
-
-const addToLinker = `-- name: addToLinker :exec
-INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
-VALUES (?, ?, ?, ?, ?, NOW())
-`
-
-type addToLinkerParams struct {
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-}
-
-func (q *Queries) addToLinker(ctx context.Context, arg addToLinkerParams) error {
-	_, err := q.db.ExecContext(ctx, addToLinker,
-		arg.UsersIdusers,
-		arg.LinkercategoryIdlinkercategory,
-		arg.Title,
-		arg.Url,
-		arg.Description,
-	)
-	return err
-}
-
-const addToQueue = `-- name: addToQueue :exec
-INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?)
-`
-
-type addToQueueParams struct {
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-}
-
-func (q *Queries) addToQueue(ctx context.Context, arg addToQueueParams) error {
-	_, err := q.db.ExecContext(ctx, addToQueue,
-		arg.UsersIdusers,
-		arg.LinkercategoryIdlinkercategory,
-		arg.Title,
-		arg.Url,
-		arg.Description,
-	)
-	return err
-}
-
-const addWord = `-- name: addWord :execlastid
-INSERT IGNORE INTO searchwordlist (word)
-VALUES (lcase(?))
-`
-
-func (q *Queries) addWord(ctx context.Context, word string) (int64, error) {
-	result, err := q.db.ExecContext(ctx, addWord, word)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
-const add_blog = `-- name: add_blog :execlastid
-INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-VALUES (?, ?, ?, NOW())
-`
-
-type add_blogParams struct {
-	UsersIdusers       int32
-	LanguageIdlanguage int32
-	Blog               sql.NullString
-}
-
-func (q *Queries) add_blog(ctx context.Context, arg add_blogParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, add_blog, arg.UsersIdusers, arg.LanguageIdlanguage, arg.Blog)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
-const add_bookmarks = `-- name: add_bookmarks :exec
-INSERT INTO bookmarks (users_idusers, list)
-VALUES (?, ?)
-`
-
-type add_bookmarksParams struct {
-	UsersIdusers int32
-	List         sql.NullString
-}
-
-// This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".
-func (q *Queries) add_bookmarks(ctx context.Context, arg add_bookmarksParams) error {
-	_, err := q.db.ExecContext(ctx, add_bookmarks, arg.UsersIdusers, arg.List)
-	return err
-}
-
-const add_question = `-- name: add_question :exec
-INSERT INTO faq (question, users_idusers, language_idlanguage)
-VALUES (?, ?, ?)
-`
-
-type add_questionParams struct {
-	Question           sql.NullString
-	UsersIdusers       int32
-	LanguageIdlanguage int32
-}
-
-func (q *Queries) add_question(ctx context.Context, arg add_questionParams) error {
-	_, err := q.db.ExecContext(ctx, add_question, arg.Question, arg.UsersIdusers, arg.LanguageIdlanguage)
-	return err
-}
-
-const adminCategories = `-- name: adminCategories :many
-SELECT idlinkerCategory, title FROM linkerCategory
-`
-
-func (q *Queries) adminCategories(ctx context.Context) ([]*Linkercategory, error) {
-	rows, err := q.db.QueryContext(ctx, adminCategories)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Linkercategory
-	for rows.Next() {
-		var i Linkercategory
-		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const allUsers = `-- name: allUsers :many
+const allUsers = `-- name: AllUsers :many
 SELECT u.idusers, u.email, u.passwd, u.username
 FROM users u
 `
@@ -438,7 +252,7 @@ FROM users u
 //	idusers (int)
 //	username (string)
 //	email (string)
-func (q *Queries) allUsers(ctx context.Context) ([]*User, error) {
+func (q *Queries) AllUsers(ctx context.Context) ([]*User, error) {
 	rows, err := q.db.QueryContext(ctx, allUsers)
 	if err != nil {
 		return nil, err
@@ -466,79 +280,79 @@ func (q *Queries) allUsers(ctx context.Context) ([]*User, error) {
 	return items, nil
 }
 
-const assignImagePostThisThreadId = `-- name: assignImagePostThisThreadId :exec
+const assignImagePostThisThreadId = `-- name: AssignImagePostThisThreadId :exec
 UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?
 `
 
-type assignImagePostThisThreadIdParams struct {
+type AssignImagePostThisThreadIdParams struct {
 	ForumthreadIdforumthread int32
 	Idimagepost              int32
 }
 
-func (q *Queries) assignImagePostThisThreadId(ctx context.Context, arg assignImagePostThisThreadIdParams) error {
+func (q *Queries) AssignImagePostThisThreadId(ctx context.Context, arg AssignImagePostThisThreadIdParams) error {
 	_, err := q.db.ExecContext(ctx, assignImagePostThisThreadId, arg.ForumthreadIdforumthread, arg.Idimagepost)
 	return err
 }
 
-const assignLinkerThisThreadId = `-- name: assignLinkerThisThreadId :exec
+const assignLinkerThisThreadId = `-- name: AssignLinkerThisThreadId :exec
 UPDATE linker SET forumthread_idforumthread = ? WHERE idlinker = ?
 `
 
-type assignLinkerThisThreadIdParams struct {
+type AssignLinkerThisThreadIdParams struct {
 	ForumthreadIdforumthread int32
 	Idlinker                 int32
 }
 
-func (q *Queries) assignLinkerThisThreadId(ctx context.Context, arg assignLinkerThisThreadIdParams) error {
+func (q *Queries) AssignLinkerThisThreadId(ctx context.Context, arg AssignLinkerThisThreadIdParams) error {
 	_, err := q.db.ExecContext(ctx, assignLinkerThisThreadId, arg.ForumthreadIdforumthread, arg.Idlinker)
 	return err
 }
 
-const assignNewsThisThreadId = `-- name: assignNewsThisThreadId :exec
+const assignNewsThisThreadId = `-- name: AssignNewsThisThreadId :exec
 UPDATE siteNews SET forumthread_idforumthread = ? WHERE idsiteNews = ?
 `
 
-type assignNewsThisThreadIdParams struct {
+type AssignNewsThisThreadIdParams struct {
 	ForumthreadIdforumthread int32
 	Idsitenews               int32
 }
 
-func (q *Queries) assignNewsThisThreadId(ctx context.Context, arg assignNewsThisThreadIdParams) error {
+func (q *Queries) AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThisThreadIdParams) error {
 	_, err := q.db.ExecContext(ctx, assignNewsThisThreadId, arg.ForumthreadIdforumthread, arg.Idsitenews)
 	return err
 }
 
-const assignWritingThisThreadId = `-- name: assignWritingThisThreadId :exec
+const assignWritingThisThreadId = `-- name: AssignWritingThisThreadId :exec
 UPDATE writing SET forumthread_idforumthread = ? WHERE idwriting = ?
 `
 
-type assignWritingThisThreadIdParams struct {
+type AssignWritingThisThreadIdParams struct {
 	ForumthreadIdforumthread int32
 	Idwriting                int32
 }
 
-func (q *Queries) assignWritingThisThreadId(ctx context.Context, arg assignWritingThisThreadIdParams) error {
+func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWritingThisThreadIdParams) error {
 	_, err := q.db.ExecContext(ctx, assignWritingThisThreadId, arg.ForumthreadIdforumthread, arg.Idwriting)
 	return err
 }
 
-const assign_blog_to_thread = `-- name: assign_blog_to_thread :exec
+const assign_blog_to_thread = `-- name: Assign_blog_to_thread :exec
 UPDATE blogs
 SET forumthread_idforumthread = ?
 WHERE idblogs = ?
 `
 
-type assign_blog_to_threadParams struct {
+type Assign_blog_to_threadParams struct {
 	ForumthreadIdforumthread int32
 	Idblogs                  int32
 }
 
-func (q *Queries) assign_blog_to_thread(ctx context.Context, arg assign_blog_to_threadParams) error {
+func (q *Queries) Assign_blog_to_thread(ctx context.Context, arg Assign_blog_to_threadParams) error {
 	_, err := q.db.ExecContext(ctx, assign_blog_to_thread, arg.ForumthreadIdforumthread, arg.Idblogs)
 	return err
 }
 
-const blog_atom = `-- name: blog_atom :many
+const blog_atom = `-- name: Blog_atom :many
 SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
 FROM blogs b, users u
 WHERE u.idusers = b.users_idusers AND b.users_idusers = ?
@@ -546,27 +360,27 @@ ORDER BY b.written DESC
 LIMIT ?
 `
 
-type blog_atomParams struct {
+type Blog_atomParams struct {
 	UsersIdusers int32
 	Limit        int32
 }
 
-type blog_atomRow struct {
+type Blog_atomRow struct {
 	Idblogs  int32
 	Left     string
 	Blog     sql.NullString
 	Username sql.NullString
 }
 
-func (q *Queries) blog_atom(ctx context.Context, arg blog_atomParams) ([]*blog_atomRow, error) {
+func (q *Queries) Blog_atom(ctx context.Context, arg Blog_atomParams) ([]*Blog_atomRow, error) {
 	rows, err := q.db.QueryContext(ctx, blog_atom, arg.UsersIdusers, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*blog_atomRow
+	var items []*Blog_atomRow
 	for rows.Next() {
-		var i blog_atomRow
+		var i Blog_atomRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.Left,
@@ -586,7 +400,7 @@ func (q *Queries) blog_atom(ctx context.Context, arg blog_atomParams) ([]*blog_a
 	return items, nil
 }
 
-const blog_rss = `-- name: blog_rss :many
+const blog_rss = `-- name: Blog_rss :many
 SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
 FROM blogs b, users u
 WHERE u.idusers = b.users_idusers AND b.users_idusers= ?
@@ -594,27 +408,27 @@ ORDER BY b.written DESC
 LIMIT ?
 `
 
-type blog_rssParams struct {
+type Blog_rssParams struct {
 	UsersIdusers int32
 	Limit        int32
 }
 
-type blog_rssRow struct {
+type Blog_rssRow struct {
 	Idblogs  int32
 	Left     string
 	Blog     sql.NullString
 	Username sql.NullString
 }
 
-func (q *Queries) blog_rss(ctx context.Context, arg blog_rssParams) ([]*blog_rssRow, error) {
+func (q *Queries) Blog_rss(ctx context.Context, arg Blog_rssParams) ([]*Blog_rssRow, error) {
 	rows, err := q.db.QueryContext(ctx, blog_rss, arg.UsersIdusers, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*blog_rssRow
+	var items []*Blog_rssRow
 	for rows.Next() {
-		var i blog_rssRow
+		var i Blog_rssRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.Left,
@@ -634,14 +448,14 @@ func (q *Queries) blog_rss(ctx context.Context, arg blog_rssParams) ([]*blog_rss
 	return items, nil
 }
 
-const blogsSearchFirst = `-- name: blogsSearchFirst :many
+const blogsSearchFirst = `-- name: BlogsSearchFirst :many
 SELECT DISTINCT cs.blogs_idblogs
 FROM blogsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
 
-func (q *Queries) blogsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+func (q *Queries) BlogsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, blogsSearchFirst, word)
 	if err != nil {
 		return nil, err
@@ -664,7 +478,7 @@ func (q *Queries) blogsSearchFirst(ctx context.Context, word sql.NullString) ([]
 	return items, nil
 }
 
-const blogsSearchNext = `-- name: blogsSearchNext :many
+const blogsSearchNext = `-- name: BlogsSearchNext :many
 SELECT DISTINCT cs.blogs_idblogs
 FROM blogsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -672,12 +486,12 @@ WHERE swl.word=?
 AND cs.blogs_idblogs IN (/*SLICE:ids*/?)
 `
 
-type blogsSearchNextParams struct {
+type BlogsSearchNextParams struct {
 	Word sql.NullString
 	Ids  []int32
 }
 
-func (q *Queries) blogsSearchNext(ctx context.Context, arg blogsSearchNextParams) ([]int32, error) {
+func (q *Queries) BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams) ([]int32, error) {
 	query := blogsSearchNext
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)
@@ -711,14 +525,14 @@ func (q *Queries) blogsSearchNext(ctx context.Context, arg blogsSearchNextParams
 	return items, nil
 }
 
-const blogsUserPermissions = `-- name: blogsUserPermissions :many
+const blogsUserPermissions = `-- name: BlogsUserPermissions :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
 `
 
-type blogsUserPermissionsRow struct {
+type BlogsUserPermissionsRow struct {
 	Idpermissions int32
 	Level         sql.NullString
 	Username      sql.NullString
@@ -726,15 +540,15 @@ type blogsUserPermissionsRow struct {
 	Section       sql.NullString
 }
 
-func (q *Queries) blogsUserPermissions(ctx context.Context) ([]*blogsUserPermissionsRow, error) {
+func (q *Queries) BlogsUserPermissions(ctx context.Context) ([]*BlogsUserPermissionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, blogsUserPermissions)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*blogsUserPermissionsRow
+	var items []*BlogsUserPermissionsRow
 	for rows.Next() {
-		var i blogsUserPermissionsRow
+		var i BlogsUserPermissionsRow
 		if err := rows.Scan(
 			&i.Idpermissions,
 			&i.Level,
@@ -755,18 +569,18 @@ func (q *Queries) blogsUserPermissions(ctx context.Context) ([]*blogsUserPermiss
 	return items, nil
 }
 
-const changeCategory = `-- name: changeCategory :exec
+const changeCategory = `-- name: ChangeCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?
 `
 
-type changeCategoryParams struct {
+type ChangeCategoryParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
 	Idforumcategory              int32
 }
 
-func (q *Queries) changeCategory(ctx context.Context, arg changeCategoryParams) error {
+func (q *Queries) ChangeCategory(ctx context.Context, arg ChangeCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, changeCategory,
 		arg.Title,
 		arg.Description,
@@ -776,18 +590,18 @@ func (q *Queries) changeCategory(ctx context.Context, arg changeCategoryParams) 
 	return err
 }
 
-const changeImageBoard = `-- name: changeImageBoard :exec
+const changeImageBoard = `-- name: ChangeImageBoard :exec
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?
 `
 
-type changeImageBoardParams struct {
+type ChangeImageBoardParams struct {
 	Title                  sql.NullString
 	Description            sql.NullString
 	ImageboardIdimageboard int32
 	Idimageboard           int32
 }
 
-func (q *Queries) changeImageBoard(ctx context.Context, arg changeImageBoardParams) error {
+func (q *Queries) ChangeImageBoard(ctx context.Context, arg ChangeImageBoardParams) error {
 	_, err := q.db.ExecContext(ctx, changeImageBoard,
 		arg.Title,
 		arg.Description,
@@ -797,18 +611,18 @@ func (q *Queries) changeImageBoard(ctx context.Context, arg changeImageBoardPara
 	return err
 }
 
-const changeTopic = `-- name: changeTopic :exec
+const changeTopic = `-- name: ChangeTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?
 `
 
-type changeTopicParams struct {
+type ChangeTopicParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
 	Idforumtopic                 int32
 }
 
-func (q *Queries) changeTopic(ctx context.Context, arg changeTopicParams) error {
+func (q *Queries) ChangeTopic(ctx context.Context, arg ChangeTopicParams) error {
 	_, err := q.db.ExecContext(ctx, changeTopic,
 		arg.Title,
 		arg.Description,
@@ -818,7 +632,7 @@ func (q *Queries) changeTopic(ctx context.Context, arg changeTopicParams) error 
 	return err
 }
 
-const commentsSearchFirstInRestrictedTopic = `-- name: commentsSearchFirstInRestrictedTopic :many
+const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
 SELECT DISTINCT cs.comments_idcomments
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -828,12 +642,12 @@ WHERE swl.word=?
 AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
 `
 
-type commentsSearchFirstInRestrictedTopicParams struct {
+type CommentsSearchFirstInRestrictedTopicParams struct {
 	Word  sql.NullString
 	Ftids []int32
 }
 
-func (q *Queries) commentsSearchFirstInRestrictedTopic(ctx context.Context, arg commentsSearchFirstInRestrictedTopicParams) ([]int32, error) {
+func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchFirstInRestrictedTopic
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)
@@ -867,7 +681,7 @@ func (q *Queries) commentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 	return items, nil
 }
 
-const commentsSearchFirstNotInRestrictedTopic = `-- name: commentsSearchFirstNotInRestrictedTopic :many
+const commentsSearchFirstNotInRestrictedTopic = `-- name: CommentsSearchFirstNotInRestrictedTopic :many
 SELECT DISTINCT cs.comments_idcomments
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -878,7 +692,7 @@ WHERE swl.word=?
 AND ft.forumcategory_idforumcategory!=0
 `
 
-func (q *Queries) commentsSearchFirstNotInRestrictedTopic(ctx context.Context, word sql.NullString) ([]int32, error) {
+func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, word sql.NullString) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, commentsSearchFirstNotInRestrictedTopic, word)
 	if err != nil {
 		return nil, err
@@ -901,7 +715,7 @@ func (q *Queries) commentsSearchFirstNotInRestrictedTopic(ctx context.Context, w
 	return items, nil
 }
 
-const commentsSearchNextInRestrictedTopic = `-- name: commentsSearchNextInRestrictedTopic :many
+const commentsSearchNextInRestrictedTopic = `-- name: CommentsSearchNextInRestrictedTopic :many
 SELECT DISTINCT cs.comments_idcomments
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -912,13 +726,13 @@ AND cs.comments_idcomments IN (/*SLICE:ids*/?)
 AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
 `
 
-type commentsSearchNextInRestrictedTopicParams struct {
+type CommentsSearchNextInRestrictedTopicParams struct {
 	Word  sql.NullString
 	Ids   []int32
 	Ftids []int32
 }
 
-func (q *Queries) commentsSearchNextInRestrictedTopic(ctx context.Context, arg commentsSearchNextInRestrictedTopicParams) ([]int32, error) {
+func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg CommentsSearchNextInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchNextInRestrictedTopic
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)
@@ -960,7 +774,7 @@ func (q *Queries) commentsSearchNextInRestrictedTopic(ctx context.Context, arg c
 	return items, nil
 }
 
-const commentsSearchNextNotInRestrictedTopic = `-- name: commentsSearchNextNotInRestrictedTopic :many
+const commentsSearchNextNotInRestrictedTopic = `-- name: CommentsSearchNextNotInRestrictedTopic :many
 SELECT DISTINCT cs.comments_idcomments
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -972,12 +786,12 @@ AND cs.comments_idcomments IN (/*SLICE:ids*/?)
 AND ft.forumcategory_idforumcategory!=0
 `
 
-type commentsSearchNextNotInRestrictedTopicParams struct {
+type CommentsSearchNextNotInRestrictedTopicParams struct {
 	Word sql.NullString
 	Ids  []int32
 }
 
-func (q *Queries) commentsSearchNextNotInRestrictedTopic(ctx context.Context, arg commentsSearchNextNotInRestrictedTopicParams) ([]int32, error) {
+func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, arg CommentsSearchNextNotInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchNextNotInRestrictedTopic
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)
@@ -1011,13 +825,13 @@ func (q *Queries) commentsSearchNextNotInRestrictedTopic(ctx context.Context, ar
 	return items, nil
 }
 
-const completeWordList = `-- name: completeWordList :many
+const completeWordList = `-- name: CompleteWordList :many
 SELECT word
 FROM searchwordlist
 `
 
 // This query selects all words from the "searchwordlist" table and prints them.
-func (q *Queries) completeWordList(ctx context.Context) ([]sql.NullString, error) {
+func (q *Queries) CompleteWordList(ctx context.Context) ([]sql.NullString, error) {
 	rows, err := q.db.QueryContext(ctx, completeWordList)
 	if err != nil {
 		return nil, err
@@ -1040,172 +854,200 @@ func (q *Queries) completeWordList(ctx context.Context) ([]sql.NullString, error
 	return items, nil
 }
 
-const createCategory = `-- name: createCategory :exec
+const createCategory = `-- name: CreateCategory :exec
 INSERT INTO linkerCategory (title) VALUES (?)
 `
 
-func (q *Queries) createCategory(ctx context.Context, title sql.NullString) error {
+func (q *Queries) CreateCategory(ctx context.Context, title sql.NullString) error {
 	_, err := q.db.ExecContext(ctx, createCategory, title)
 	return err
 }
 
-const create_category = `-- name: create_category :exec
+const createLanguage = `-- name: CreateLanguage :exec
+INSERT INTO language (nameof)
+VALUES (?)
+`
+
+// This query inserts a new record into the "language" table.
+// Parameters:
+//
+//	? - Name of the new language (string)
+func (q *Queries) CreateLanguage(ctx context.Context, nameof sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, createLanguage, nameof)
+	return err
+}
+
+const create_category = `-- name: Create_category :exec
 INSERT INTO faqCategories (name)
 VALUES (?)
 `
 
-func (q *Queries) create_category(ctx context.Context, name sql.NullString) error {
+func (q *Queries) Create_category(ctx context.Context, name sql.NullString) error {
 	_, err := q.db.ExecContext(ctx, create_category, name)
 	return err
 }
 
-const deleteBlogsSearch = `-- name: deleteBlogsSearch :exec
+const deleteBlogsSearch = `-- name: DeleteBlogsSearch :exec
 DELETE FROM blogsSearch
 `
 
 // This query deletes all data from the "blogsSearch" table.
-func (q *Queries) deleteBlogsSearch(ctx context.Context) error {
+func (q *Queries) DeleteBlogsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteBlogsSearch)
 	return err
 }
 
-const deleteCategory = `-- name: deleteCategory :exec
+const deleteCategory = `-- name: DeleteCategory :exec
 DELETE FROM linkerCategory WHERE idlinkerCategory = ?
 `
 
-func (q *Queries) deleteCategory(ctx context.Context, idlinkercategory int32) error {
+func (q *Queries) DeleteCategory(ctx context.Context, idlinkercategory int32) error {
 	_, err := q.db.ExecContext(ctx, deleteCategory, idlinkercategory)
 	return err
 }
 
-const deleteCommentsSearch = `-- name: deleteCommentsSearch :exec
+const deleteCommentsSearch = `-- name: DeleteCommentsSearch :exec
 DELETE FROM commentsSearch
 `
 
 // This query deletes all data from the "commentsSearch" table.
-func (q *Queries) deleteCommentsSearch(ctx context.Context) error {
+func (q *Queries) DeleteCommentsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteCommentsSearch)
 	return err
 }
 
-const deleteLinkerSearch = `-- name: deleteLinkerSearch :exec
+const deleteLanguage = `-- name: DeleteLanguage :exec
+DELETE FROM language
+WHERE idlanguage = ?
+`
+
+// This query deletes a record from the "language" table based on the provided "cid".
+// Parameters:
+//
+//	? - Language ID to be deleted (int)
+func (q *Queries) DeleteLanguage(ctx context.Context, idlanguage int32) error {
+	_, err := q.db.ExecContext(ctx, deleteLanguage, idlanguage)
+	return err
+}
+
+const deleteLinkerSearch = `-- name: DeleteLinkerSearch :exec
 DELETE FROM linkerSearch
 `
 
 // This query deletes all data from the "linkerSearch" table.
-func (q *Queries) deleteLinkerSearch(ctx context.Context) error {
+func (q *Queries) DeleteLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteLinkerSearch)
 	return err
 }
 
-const deleteQueueItem = `-- name: deleteQueueItem :exec
+const deleteQueueItem = `-- name: DeleteQueueItem :exec
 DELETE FROM linkerQueue WHERE idlinkerQueue = ?
 `
 
-func (q *Queries) deleteQueueItem(ctx context.Context, idlinkerqueue int32) error {
+func (q *Queries) DeleteQueueItem(ctx context.Context, idlinkerqueue int32) error {
 	_, err := q.db.ExecContext(ctx, deleteQueueItem, idlinkerqueue)
 	return err
 }
 
-const deleteSiteNewsSearch = `-- name: deleteSiteNewsSearch :exec
+const deleteSiteNewsSearch = `-- name: DeleteSiteNewsSearch :exec
 DELETE FROM siteNewsSearch
 `
 
 // This query deletes all data from the "siteNewsSearch" table.
-func (q *Queries) deleteSiteNewsSearch(ctx context.Context) error {
+func (q *Queries) DeleteSiteNewsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteSiteNewsSearch)
 	return err
 }
 
-const deleteTopicRestrictions = `-- name: deleteTopicRestrictions :exec
+const deleteTopicRestrictions = `-- name: DeleteTopicRestrictions :exec
 DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?
 `
 
-func (q *Queries) deleteTopicRestrictions(ctx context.Context, forumtopicIdforumtopic int32) error {
+func (q *Queries) DeleteTopicRestrictions(ctx context.Context, forumtopicIdforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, deleteTopicRestrictions, forumtopicIdforumtopic)
 	return err
 }
 
-const deleteUsersTopicLevel = `-- name: deleteUsersTopicLevel :exec
+const deleteUsersTopicLevel = `-- name: DeleteUsersTopicLevel :exec
 DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
 `
 
-type deleteUsersTopicLevelParams struct {
+type DeleteUsersTopicLevelParams struct {
 	ForumtopicIdforumtopic int32
 	UsersIdusers           int32
 }
 
-func (q *Queries) deleteUsersTopicLevel(ctx context.Context, arg deleteUsersTopicLevelParams) error {
+func (q *Queries) DeleteUsersTopicLevel(ctx context.Context, arg DeleteUsersTopicLevelParams) error {
 	_, err := q.db.ExecContext(ctx, deleteUsersTopicLevel, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
 	return err
 }
 
-const deleteWritingApproval = `-- name: deleteWritingApproval :exec
+const deleteWritingApproval = `-- name: DeleteWritingApproval :exec
 DELETE FROM writtingApprovedUsers
 WHERE writing_idwriting = ? AND users_idusers = ?
 `
 
-type deleteWritingApprovalParams struct {
+type DeleteWritingApprovalParams struct {
 	WritingIdwriting int32
 	UsersIdusers     int32
 }
 
-func (q *Queries) deleteWritingApproval(ctx context.Context, arg deleteWritingApprovalParams) error {
+func (q *Queries) DeleteWritingApproval(ctx context.Context, arg DeleteWritingApprovalParams) error {
 	_, err := q.db.ExecContext(ctx, deleteWritingApproval, arg.WritingIdwriting, arg.UsersIdusers)
 	return err
 }
 
-const deleteWritingSearch = `-- name: deleteWritingSearch :exec
+const deleteWritingSearch = `-- name: DeleteWritingSearch :exec
 DELETE FROM writingSearch
 `
 
 // This query deletes all data from the "writingSearch" table.
-func (q *Queries) deleteWritingSearch(ctx context.Context) error {
+func (q *Queries) DeleteWritingSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteWritingSearch)
 	return err
 }
 
-const delete_category = `-- name: delete_category :exec
+const delete_category = `-- name: Delete_category :exec
 DELETE FROM faqCategories
 WHERE idfaqCategories = ?
 `
 
-func (q *Queries) delete_category(ctx context.Context, idfaqcategories int32) error {
+func (q *Queries) Delete_category(ctx context.Context, idfaqcategories int32) error {
 	_, err := q.db.ExecContext(ctx, delete_category, idfaqcategories)
 	return err
 }
 
-const delete_faq = `-- name: delete_faq :exec
+const delete_faq = `-- name: Delete_faq :exec
 DELETE FROM faq
 WHERE idfaq = ?
 `
 
-func (q *Queries) delete_faq(ctx context.Context, idfaq int32) error {
+func (q *Queries) Delete_faq(ctx context.Context, idfaq int32) error {
 	_, err := q.db.ExecContext(ctx, delete_faq, idfaq)
 	return err
 }
 
-const editNewsPost = `-- name: editNewsPost :exec
+const editNewsPost = `-- name: EditNewsPost :exec
 UPDATE siteNews SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?
 `
 
-type editNewsPostParams struct {
+type EditNewsPostParams struct {
 	News               sql.NullString
 	LanguageIdlanguage int32
 	Idsitenews         int32
 }
 
-func (q *Queries) editNewsPost(ctx context.Context, arg editNewsPostParams) error {
+func (q *Queries) EditNewsPost(ctx context.Context, arg EditNewsPostParams) error {
 	_, err := q.db.ExecContext(ctx, editNewsPost, arg.News, arg.LanguageIdlanguage, arg.Idsitenews)
 	return err
 }
 
-const faq_categories = `-- name: faq_categories :many
+const faq_categories = `-- name: Faq_categories :many
 SELECT idfaqCategories, name
 FROM faqCategories
 `
 
-func (q *Queries) faq_categories(ctx context.Context) ([]*Faqcategory, error) {
+func (q *Queries) Faq_categories(ctx context.Context) ([]*Faqcategory, error) {
 	rows, err := q.db.QueryContext(ctx, faq_categories)
 	if err != nil {
 		return nil, err
@@ -1228,12 +1070,12 @@ func (q *Queries) faq_categories(ctx context.Context) ([]*Faqcategory, error) {
 	return items, nil
 }
 
-const fetchAllCategories = `-- name: fetchAllCategories :many
+const fetchAllCategories = `-- name: FetchAllCategories :many
 SELECT wc.idwritingcategory, wc.writingcategory_idwritingcategory, wc.title, wc.description
 FROM writingCategory wc
 `
 
-func (q *Queries) fetchAllCategories(ctx context.Context) ([]*Writingcategory, error) {
+func (q *Queries) FetchAllCategories(ctx context.Context) ([]*Writingcategory, error) {
 	rows, err := q.db.QueryContext(ctx, fetchAllCategories)
 	if err != nil {
 		return nil, err
@@ -1261,13 +1103,13 @@ func (q *Queries) fetchAllCategories(ctx context.Context) ([]*Writingcategory, e
 	return items, nil
 }
 
-const fetchAllWritingApprovals = `-- name: fetchAllWritingApprovals :many
+const fetchAllWritingApprovals = `-- name: FetchAllWritingApprovals :many
 SELECT idusers, u.username, wau.writing_idwriting, wau.readdoc, wau.editdoc
 FROM writtingApprovedUsers wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 `
 
-type fetchAllWritingApprovalsRow struct {
+type FetchAllWritingApprovalsRow struct {
 	Idusers          int32
 	Username         sql.NullString
 	WritingIdwriting int32
@@ -1275,15 +1117,15 @@ type fetchAllWritingApprovalsRow struct {
 	Editdoc          sql.NullBool
 }
 
-func (q *Queries) fetchAllWritingApprovals(ctx context.Context) ([]*fetchAllWritingApprovalsRow, error) {
+func (q *Queries) FetchAllWritingApprovals(ctx context.Context) ([]*FetchAllWritingApprovalsRow, error) {
 	rows, err := q.db.QueryContext(ctx, fetchAllWritingApprovals)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*fetchAllWritingApprovalsRow
+	var items []*FetchAllWritingApprovalsRow
 	for rows.Next() {
-		var i fetchAllWritingApprovalsRow
+		var i FetchAllWritingApprovalsRow
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Username,
@@ -1304,27 +1146,27 @@ func (q *Queries) fetchAllWritingApprovals(ctx context.Context) ([]*fetchAllWrit
 	return items, nil
 }
 
-const fetchCategories = `-- name: fetchCategories :many
+const fetchCategories = `-- name: FetchCategories :many
 SELECT idwritingCategory, title, description
 FROM writingCategory
 WHERE writingCategory_idwritingCategory = ?
 `
 
-type fetchCategoriesRow struct {
+type FetchCategoriesRow struct {
 	Idwritingcategory int32
 	Title             sql.NullString
 	Description       sql.NullString
 }
 
-func (q *Queries) fetchCategories(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*fetchCategoriesRow, error) {
+func (q *Queries) FetchCategories(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*FetchCategoriesRow, error) {
 	rows, err := q.db.QueryContext(ctx, fetchCategories, writingcategoryIdwritingcategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*fetchCategoriesRow
+	var items []*FetchCategoriesRow
 	for rows.Next() {
-		var i fetchCategoriesRow
+		var i FetchCategoriesRow
 		if err := rows.Scan(&i.Idwritingcategory, &i.Title, &i.Description); err != nil {
 			return nil, err
 		}
@@ -1339,14 +1181,41 @@ func (q *Queries) fetchCategories(ctx context.Context, writingcategoryIdwritingc
 	return items, nil
 }
 
-const fetchPublicWritings = `-- name: fetchPublicWritings :many
+const fetchLanguages = `-- name: FetchLanguages :many
+SELECT idlanguage, nameof FROM language
+`
+
+func (q *Queries) FetchLanguages(ctx context.Context) ([]*Language, error) {
+	rows, err := q.db.QueryContext(ctx, fetchLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchPublicWritings = `-- name: FetchPublicWritings :many
 SELECT w.title, w.abstract, w.idwriting, w.private, w.writingCategory_idwritingCategory
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC LIMIT 15
 `
 
-type fetchPublicWritingsRow struct {
+type FetchPublicWritingsRow struct {
 	Title                            sql.NullString
 	Abstract                         sql.NullString
 	Idwriting                        int32
@@ -1354,15 +1223,15 @@ type fetchPublicWritingsRow struct {
 	WritingcategoryIdwritingcategory int32
 }
 
-func (q *Queries) fetchPublicWritings(ctx context.Context) ([]*fetchPublicWritingsRow, error) {
+func (q *Queries) FetchPublicWritings(ctx context.Context) ([]*FetchPublicWritingsRow, error) {
 	rows, err := q.db.QueryContext(ctx, fetchPublicWritings)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*fetchPublicWritingsRow
+	var items []*FetchPublicWritingsRow
 	for rows.Next() {
-		var i fetchPublicWritingsRow
+		var i FetchPublicWritingsRow
 		if err := rows.Scan(
 			&i.Title,
 			&i.Abstract,
@@ -1383,7 +1252,7 @@ func (q *Queries) fetchPublicWritings(ctx context.Context) ([]*fetchPublicWritin
 	return items, nil
 }
 
-const fetchPublicWritingsInCategory = `-- name: fetchPublicWritingsInCategory :many
+const fetchPublicWritingsInCategory = `-- name: FetchPublicWritingsInCategory :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
 FROM writing w
@@ -1392,7 +1261,7 @@ WHERE w.private = 0 AND w.writingCategory_idwritingCategory=?
 ORDER BY w.published DESC LIMIT 15
 `
 
-type fetchPublicWritingsInCategoryRow struct {
+type FetchPublicWritingsInCategoryRow struct {
 	Idwriting                        int32
 	UsersIdusers                     int32
 	ForumthreadIdforumthread         int32
@@ -1407,15 +1276,15 @@ type fetchPublicWritingsInCategoryRow struct {
 	Comments                         int64
 }
 
-func (q *Queries) fetchPublicWritingsInCategory(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*fetchPublicWritingsInCategoryRow, error) {
+func (q *Queries) FetchPublicWritingsInCategory(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*FetchPublicWritingsInCategoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, fetchPublicWritingsInCategory, writingcategoryIdwritingcategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*fetchPublicWritingsInCategoryRow
+	var items []*FetchPublicWritingsInCategoryRow
 	for rows.Next() {
-		var i fetchPublicWritingsInCategoryRow
+		var i FetchPublicWritingsInCategoryRow
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
@@ -1443,18 +1312,18 @@ func (q *Queries) fetchPublicWritingsInCategory(ctx context.Context, writingcate
 	return items, nil
 }
 
-const fetchWritingApproval = `-- name: fetchWritingApproval :many
+const fetchWritingApproval = `-- name: FetchWritingApproval :many
 SELECT editdoc
 FROM writtingApprovedUsers
 WHERE writing_idwriting = ? AND users_idusers = ?
 `
 
-type fetchWritingApprovalParams struct {
+type FetchWritingApprovalParams struct {
 	WritingIdwriting int32
 	UsersIdusers     int32
 }
 
-func (q *Queries) fetchWritingApproval(ctx context.Context, arg fetchWritingApprovalParams) ([]sql.NullBool, error) {
+func (q *Queries) FetchWritingApproval(ctx context.Context, arg FetchWritingApprovalParams) ([]sql.NullBool, error) {
 	rows, err := q.db.QueryContext(ctx, fetchWritingApproval, arg.WritingIdwriting, arg.UsersIdusers)
 	if err != nil {
 		return nil, err
@@ -1477,7 +1346,7 @@ func (q *Queries) fetchWritingApproval(ctx context.Context, arg fetchWritingAppr
 	return items, nil
 }
 
-const fetchWritingById = `-- name: fetchWritingById :one
+const fetchWritingById = `-- name: FetchWritingById :one
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
@@ -1486,12 +1355,12 @@ WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers =
 ORDER BY w.published DESC
 `
 
-type fetchWritingByIdParams struct {
+type FetchWritingByIdParams struct {
 	Userid    int32
 	Idwriting int32
 }
 
-type fetchWritingByIdRow struct {
+type FetchWritingByIdRow struct {
 	Idwriting                        int32
 	UsersIdusers                     int32
 	ForumthreadIdforumthread         int32
@@ -1506,9 +1375,9 @@ type fetchWritingByIdRow struct {
 	Writerusername                   sql.NullString
 }
 
-func (q *Queries) fetchWritingById(ctx context.Context, arg fetchWritingByIdParams) (*fetchWritingByIdRow, error) {
+func (q *Queries) FetchWritingById(ctx context.Context, arg FetchWritingByIdParams) (*FetchWritingByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, fetchWritingById, arg.Userid, arg.Idwriting, arg.Userid)
-	var i fetchWritingByIdRow
+	var i FetchWritingByIdRow
 	err := row.Scan(
 		&i.Idwriting,
 		&i.UsersIdusers,
@@ -1526,7 +1395,7 @@ func (q *Queries) fetchWritingById(ctx context.Context, arg fetchWritingByIdPara
 	return &i, err
 }
 
-const fetchWritingByIds = `-- name: fetchWritingByIds :many
+const fetchWritingByIds = `-- name: FetchWritingByIds :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
@@ -1535,12 +1404,12 @@ WHERE w.idwriting IN (/*SLICE:writingids*/?) AND (w.private = 0 OR wau.readdoc =
 ORDER BY w.published DESC
 `
 
-type fetchWritingByIdsParams struct {
+type FetchWritingByIdsParams struct {
 	Userid     int32
 	Writingids []int32
 }
 
-type fetchWritingByIdsRow struct {
+type FetchWritingByIdsRow struct {
 	Idwriting                        int32
 	UsersIdusers                     int32
 	ForumthreadIdforumthread         int32
@@ -1555,7 +1424,7 @@ type fetchWritingByIdsRow struct {
 	Writerusername                   sql.NullString
 }
 
-func (q *Queries) fetchWritingByIds(ctx context.Context, arg fetchWritingByIdsParams) ([]*fetchWritingByIdsRow, error) {
+func (q *Queries) FetchWritingByIds(ctx context.Context, arg FetchWritingByIdsParams) ([]*FetchWritingByIdsRow, error) {
 	query := fetchWritingByIds
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Userid)
@@ -1573,9 +1442,9 @@ func (q *Queries) fetchWritingByIds(ctx context.Context, arg fetchWritingByIdsPa
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*fetchWritingByIdsRow
+	var items []*FetchWritingByIdsRow
 	for rows.Next() {
-		var i fetchWritingByIdsRow
+		var i FetchWritingByIdsRow
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
@@ -1603,23 +1472,23 @@ func (q *Queries) fetchWritingByIds(ctx context.Context, arg fetchWritingByIdsPa
 	return items, nil
 }
 
-const findForumTopicByName = `-- name: findForumTopicByName :one
+const findForumTopicByName = `-- name: FindForumTopicByName :one
 SELECT idforumtopic FROM forumtopic WHERE title=?
 `
 
-func (q *Queries) findForumTopicByName(ctx context.Context, title sql.NullString) (int32, error) {
+func (q *Queries) FindForumTopicByName(ctx context.Context, title sql.NullString) (int32, error) {
 	row := q.db.QueryRowContext(ctx, findForumTopicByName, title)
 	var idforumtopic int32
 	err := row.Scan(&idforumtopic)
 	return idforumtopic, err
 }
 
-const forumCategories = `-- name: forumCategories :many
+const forumCategories = `-- name: ForumCategories :many
 SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.title, f.description
 FROM forumcategory f
 `
 
-func (q *Queries) forumCategories(ctx context.Context) ([]*Forumcategory, error) {
+func (q *Queries) ForumCategories(ctx context.Context) ([]*Forumcategory, error) {
 	rows, err := q.db.QueryContext(ctx, forumCategories)
 	if err != nil {
 		return nil, err
@@ -1647,13 +1516,13 @@ func (q *Queries) forumCategories(ctx context.Context) ([]*Forumcategory, error)
 	return items, nil
 }
 
-const getAllTopicRestrictions = `-- name: getAllTopicRestrictions :many
+const getAllTopicRestrictions = `-- name: GetAllTopicRestrictions :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 `
 
-type getAllTopicRestrictionsRow struct {
+type GetAllTopicRestrictionsRow struct {
 	Idforumtopic           int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
@@ -1667,15 +1536,15 @@ type getAllTopicRestrictionsRow struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) getAllTopicRestrictions(ctx context.Context) ([]*getAllTopicRestrictionsRow, error) {
+func (q *Queries) GetAllTopicRestrictions(ctx context.Context) ([]*GetAllTopicRestrictionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllTopicRestrictions)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getAllTopicRestrictionsRow
+	var items []*GetAllTopicRestrictionsRow
 	for rows.Next() {
-		var i getAllTopicRestrictionsRow
+		var i GetAllTopicRestrictionsRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Viewlevel,
@@ -1702,14 +1571,14 @@ func (q *Queries) getAllTopicRestrictions(ctx context.Context) ([]*getAllTopicRe
 	return items, nil
 }
 
-const getAllTopics = `-- name: getAllTopics :many
+const getAllTopics = `-- name: GetAllTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition
 FROM forumtopic t
 LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
 GROUP BY t.idforumtopic
 `
 
-func (q *Queries) getAllTopics(ctx context.Context) ([]*Forumtopic, error) {
+func (q *Queries) GetAllTopics(ctx context.Context) ([]*Forumtopic, error) {
 	rows, err := q.db.QueryContext(ctx, getAllTopics)
 	if err != nil {
 		return nil, err
@@ -1741,7 +1610,7 @@ func (q *Queries) getAllTopics(ctx context.Context) ([]*Forumtopic, error) {
 	return items, nil
 }
 
-const getAllUsersAllTopicLevels = `-- name: getAllUsersAllTopicLevels :many
+const getAllUsersAllTopicLevels = `-- name: GetAllUsersAllTopicLevels :many
 SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
@@ -1749,7 +1618,7 @@ JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
 `
 
-type getAllUsersAllTopicLevelsRow struct {
+type GetAllUsersAllTopicLevelsRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
 	Passwd                       sql.NullString
@@ -1777,15 +1646,15 @@ type getAllUsersAllTopicLevelsRow struct {
 	Adminlevel                   sql.NullInt32
 }
 
-func (q *Queries) getAllUsersAllTopicLevels(ctx context.Context) ([]*getAllUsersAllTopicLevelsRow, error) {
+func (q *Queries) GetAllUsersAllTopicLevels(ctx context.Context) ([]*GetAllUsersAllTopicLevelsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllUsersAllTopicLevels)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getAllUsersAllTopicLevelsRow
+	var items []*GetAllUsersAllTopicLevelsRow
 	for rows.Next() {
-		var i getAllUsersAllTopicLevelsRow
+		var i GetAllUsersAllTopicLevelsRow
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Email,
@@ -1826,7 +1695,7 @@ func (q *Queries) getAllUsersAllTopicLevels(ctx context.Context) ([]*getAllUsers
 	return items, nil
 }
 
-const getBlogs = `-- name: getBlogs :many
+const getBlogs = `-- name: GetBlogs :many
 SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -1839,7 +1708,7 @@ ORDER BY b.written DESC
 // AND (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
 // AND b.idblogs IN (sqlc.slice(blogIds))
 // LIMIT ? OFFSET ?
-func (q *Queries) getBlogs(ctx context.Context, blogids []int32) ([]*Blog, error) {
+func (q *Queries) GetBlogs(ctx context.Context, blogids []int32) ([]*Blog, error) {
 	query := getBlogs
 	var queryParams []interface{}
 	if len(blogids) > 0 {
@@ -1879,13 +1748,13 @@ func (q *Queries) getBlogs(ctx context.Context, blogids []int32) ([]*Blog, error
 	return items, nil
 }
 
-const getComment = `-- name: getComment :one
+const getComment = `-- name: GetComment :one
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
 FROM comments c
 WHERE c.Idcomments=?
 `
 
-func (q *Queries) getComment(ctx context.Context, idcomments int32) (*Comment, error) {
+func (q *Queries) GetComment(ctx context.Context, idcomments int32) (*Comment, error) {
 	row := q.db.QueryRowContext(ctx, getComment, idcomments)
 	var i Comment
 	err := row.Scan(
@@ -1899,13 +1768,13 @@ func (q *Queries) getComment(ctx context.Context, idcomments int32) (*Comment, e
 	return &i, err
 }
 
-const getComments = `-- name: getComments :many
+const getComments = `-- name: GetComments :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
 FROM comments c
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
 `
 
-func (q *Queries) getComments(ctx context.Context, ids []int32) ([]*Comment, error) {
+func (q *Queries) GetComments(ctx context.Context, ids []int32) ([]*Comment, error) {
 	query := getComments
 	var queryParams []interface{}
 	if len(ids) > 0 {
@@ -1945,7 +1814,7 @@ func (q *Queries) getComments(ctx context.Context, ids []int32) ([]*Comment, err
 	return items, nil
 }
 
-const getCommentsWithThreadInfo = `-- name: getCommentsWithThreadInfo :many
+const getCommentsWithThreadInfo = `-- name: GetCommentsWithThreadInfo :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
@@ -1958,12 +1827,12 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?)
 ORDER BY c.written DESC
 `
 
-type getCommentsWithThreadInfoParams struct {
+type GetCommentsWithThreadInfoParams struct {
 	UsersIdusers int32
 	Ids          []int32
 }
 
-type getCommentsWithThreadInfoRow struct {
+type GetCommentsWithThreadInfoRow struct {
 	Idcomments               int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -1978,7 +1847,7 @@ type getCommentsWithThreadInfoRow struct {
 	ForumcategoryTitle       sql.NullString
 }
 
-func (q *Queries) getCommentsWithThreadInfo(ctx context.Context, arg getCommentsWithThreadInfoParams) ([]*getCommentsWithThreadInfoRow, error) {
+func (q *Queries) GetCommentsWithThreadInfo(ctx context.Context, arg GetCommentsWithThreadInfoParams) ([]*GetCommentsWithThreadInfoRow, error) {
 	query := getCommentsWithThreadInfo
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.UsersIdusers)
@@ -1995,9 +1864,9 @@ func (q *Queries) getCommentsWithThreadInfo(ctx context.Context, arg getComments
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getCommentsWithThreadInfoRow
+	var items []*GetCommentsWithThreadInfoRow
 	for rows.Next() {
-		var i getCommentsWithThreadInfoRow
+		var i GetCommentsWithThreadInfoRow
 		if err := rows.Scan(
 			&i.Idcomments,
 			&i.ForumthreadIdforumthread,
@@ -2025,7 +1894,7 @@ func (q *Queries) getCommentsWithThreadInfo(ctx context.Context, arg getComments
 	return items, nil
 }
 
-const getLatestNewsPosts = `-- name: getLatestNewsPosts :many
+const getLatestNewsPosts = `-- name: GetLatestNewsPosts :many
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
@@ -2034,7 +1903,7 @@ ORDER BY s.occured DESC
 LIMIT 15
 `
 
-type getLatestNewsPostsRow struct {
+type GetLatestNewsPostsRow struct {
 	Writername               sql.NullString
 	Writerid                 sql.NullInt32
 	Idsitenews               int32
@@ -2046,15 +1915,15 @@ type getLatestNewsPostsRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) getLatestNewsPosts(ctx context.Context) ([]*getLatestNewsPostsRow, error) {
+func (q *Queries) GetLatestNewsPosts(ctx context.Context) ([]*GetLatestNewsPostsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getLatestNewsPosts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getLatestNewsPostsRow
+	var items []*GetLatestNewsPostsRow
 	for rows.Next() {
-		var i getLatestNewsPostsRow
+		var i GetLatestNewsPostsRow
 		if err := rows.Scan(
 			&i.Writername,
 			&i.Writerid,
@@ -2079,7 +1948,7 @@ func (q *Queries) getLatestNewsPosts(ctx context.Context) ([]*getLatestNewsPosts
 	return items, nil
 }
 
-const getNewsPost = `-- name: getNewsPost :one
+const getNewsPost = `-- name: GetNewsPost :one
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
@@ -2087,7 +1956,7 @@ LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
 WHERE s.idsiteNews = ?
 `
 
-type getNewsPostRow struct {
+type GetNewsPostRow struct {
 	Writername               sql.NullString
 	Writerid                 sql.NullInt32
 	Idsitenews               int32
@@ -2099,9 +1968,9 @@ type getNewsPostRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) getNewsPost(ctx context.Context, idsitenews int32) (*getNewsPostRow, error) {
+func (q *Queries) GetNewsPost(ctx context.Context, idsitenews int32) (*GetNewsPostRow, error) {
 	row := q.db.QueryRowContext(ctx, getNewsPost, idsitenews)
-	var i getNewsPostRow
+	var i GetNewsPostRow
 	err := row.Scan(
 		&i.Writername,
 		&i.Writerid,
@@ -2116,7 +1985,7 @@ func (q *Queries) getNewsPost(ctx context.Context, idsitenews int32) (*getNewsPo
 	return &i, err
 }
 
-const getNewsPosts = `-- name: getNewsPosts :many
+const getNewsPosts = `-- name: GetNewsPosts :many
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
@@ -2124,7 +1993,7 @@ LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
 WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
 `
 
-type getNewsPostsRow struct {
+type GetNewsPostsRow struct {
 	Writername               sql.NullString
 	Writerid                 sql.NullInt32
 	Idsitenews               int32
@@ -2136,7 +2005,7 @@ type getNewsPostsRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) getNewsPosts(ctx context.Context, newsids []int32) ([]*getNewsPostsRow, error) {
+func (q *Queries) GetNewsPosts(ctx context.Context, newsids []int32) ([]*GetNewsPostsRow, error) {
 	query := getNewsPosts
 	var queryParams []interface{}
 	if len(newsids) > 0 {
@@ -2152,9 +2021,9 @@ func (q *Queries) getNewsPosts(ctx context.Context, newsids []int32) ([]*getNews
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getNewsPostsRow
+	var items []*GetNewsPostsRow
 	for rows.Next() {
-		var i getNewsPostsRow
+		var i GetNewsPostsRow
 		if err := rows.Scan(
 			&i.Writername,
 			&i.Writerid,
@@ -2179,49 +2048,49 @@ func (q *Queries) getNewsPosts(ctx context.Context, newsids []int32) ([]*getNews
 	return items, nil
 }
 
-const getNewsThreadId = `-- name: getNewsThreadId :one
+const getNewsThreadId = `-- name: GetNewsThreadId :one
 SELECT s.forumthread_idforumthread, u.idusers
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 WHERE s.idsiteNews = ?
 `
 
-type getNewsThreadIdRow struct {
+type GetNewsThreadIdRow struct {
 	ForumthreadIdforumthread int32
 	Idusers                  sql.NullInt32
 }
 
-func (q *Queries) getNewsThreadId(ctx context.Context, idsitenews int32) (*getNewsThreadIdRow, error) {
+func (q *Queries) GetNewsThreadId(ctx context.Context, idsitenews int32) (*GetNewsThreadIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getNewsThreadId, idsitenews)
-	var i getNewsThreadIdRow
+	var i GetNewsThreadIdRow
 	err := row.Scan(&i.ForumthreadIdforumthread, &i.Idusers)
 	return &i, err
 }
 
-const getSecurityLevel = `-- name: getSecurityLevel :one
+const getSecurityLevel = `-- name: GetSecurityLevel :one
 SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all')
 `
 
-type getSecurityLevelParams struct {
+type GetSecurityLevelParams struct {
 	UsersIdusers int32
 	Section      sql.NullString
 }
 
-func (q *Queries) getSecurityLevel(ctx context.Context, arg getSecurityLevelParams) (sql.NullString, error) {
+func (q *Queries) GetSecurityLevel(ctx context.Context, arg GetSecurityLevelParams) (sql.NullString, error) {
 	row := q.db.QueryRowContext(ctx, getSecurityLevel, arg.UsersIdusers, arg.Section)
 	var level sql.NullString
 	err := row.Scan(&level)
 	return level, err
 }
 
-const getTopicRestrictions = `-- name: getTopicRestrictions :many
+const getTopicRestrictions = `-- name: GetTopicRestrictions :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?
 `
 
-type getTopicRestrictionsRow struct {
+type GetTopicRestrictionsRow struct {
 	Idforumtopic           int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
@@ -2235,15 +2104,15 @@ type getTopicRestrictionsRow struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) getTopicRestrictions(ctx context.Context, idforumtopic int32) ([]*getTopicRestrictionsRow, error) {
+func (q *Queries) GetTopicRestrictions(ctx context.Context, idforumtopic int32) ([]*GetTopicRestrictionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getTopicRestrictions, idforumtopic)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getTopicRestrictionsRow
+	var items []*GetTopicRestrictionsRow
 	for rows.Next() {
-		var i getTopicRestrictionsRow
+		var i GetTopicRestrictionsRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Viewlevel,
@@ -2270,7 +2139,7 @@ func (q *Queries) getTopicRestrictions(ctx context.Context, idforumtopic int32) 
 	return items, nil
 }
 
-const getUserPermissions = `-- name: getUserPermissions :one
+const getUserPermissions = `-- name: GetUserPermissions :one
 SELECT p.idpermissions, p.users_idusers, p.section, p.level
 FROM permissions p
 WHERE p.users_idusers = ?
@@ -2284,7 +2153,7 @@ WHERE p.users_idusers = ?
 //	username (string)
 //	email (string)
 //	section (string)
-func (q *Queries) getUserPermissions(ctx context.Context, usersIdusers int32) (*Permission, error) {
+func (q *Queries) GetUserPermissions(ctx context.Context, usersIdusers int32) (*Permission, error) {
 	row := q.db.QueryRowContext(ctx, getUserPermissions, usersIdusers)
 	var i Permission
 	err := row.Scan(
@@ -2296,7 +2165,7 @@ func (q *Queries) getUserPermissions(ctx context.Context, usersIdusers int32) (*
 	return &i, err
 }
 
-const getUsersAllTopicLevels = `-- name: getUsersAllTopicLevels :many
+const getUsersAllTopicLevels = `-- name: GetUsersAllTopicLevels :many
 SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
@@ -2305,7 +2174,7 @@ JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
 WHERE u.idusers = ?
 `
 
-type getUsersAllTopicLevelsRow struct {
+type GetUsersAllTopicLevelsRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
 	Passwd                       sql.NullString
@@ -2333,15 +2202,15 @@ type getUsersAllTopicLevelsRow struct {
 	Adminlevel                   sql.NullInt32
 }
 
-func (q *Queries) getUsersAllTopicLevels(ctx context.Context, idusers int32) ([]*getUsersAllTopicLevelsRow, error) {
+func (q *Queries) GetUsersAllTopicLevels(ctx context.Context, idusers int32) ([]*GetUsersAllTopicLevelsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUsersAllTopicLevels, idusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*getUsersAllTopicLevelsRow
+	var items []*GetUsersAllTopicLevelsRow
 	for rows.Next() {
-		var i getUsersAllTopicLevelsRow
+		var i GetUsersAllTopicLevelsRow
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Email,
@@ -2382,7 +2251,7 @@ func (q *Queries) getUsersAllTopicLevels(ctx context.Context, idusers int32) ([]
 	return items, nil
 }
 
-const getUsersPermissions = `-- name: getUsersPermissions :many
+const getUsersPermissions = `-- name: GetUsersPermissions :many
 SELECT p.idpermissions, p.users_idusers, p.section, p.level
 FROM permissions p
 `
@@ -2395,7 +2264,7 @@ FROM permissions p
 //	username (string)
 //	email (string)
 //	section (string)
-func (q *Queries) getUsersPermissions(ctx context.Context) ([]*Permission, error) {
+func (q *Queries) GetUsersPermissions(ctx context.Context) ([]*Permission, error) {
 	rows, err := q.db.QueryContext(ctx, getUsersPermissions)
 	if err != nil {
 		return nil, err
@@ -2423,13 +2292,13 @@ func (q *Queries) getUsersPermissions(ctx context.Context) ([]*Permission, error
 	return items, nil
 }
 
-const getUsersTopicLevel = `-- name: getUsersTopicLevel :one
+const getUsersTopicLevel = `-- name: GetUsersTopicLevel :one
 SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax
 FROM userstopiclevel utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 `
 
-type getUsersTopicLevelParams struct {
+type GetUsersTopicLevelParams struct {
 	UsersIdusers           int32
 	ForumtopicIdforumtopic int32
 }
@@ -2442,7 +2311,7 @@ type getUsersTopicLevelParams struct {
 //	username (string)
 //	email (string)
 //	section (string)
-func (q *Queries) getUsersTopicLevel(ctx context.Context, arg getUsersTopicLevelParams) (*Userstopiclevel, error) {
+func (q *Queries) GetUsersTopicLevel(ctx context.Context, arg GetUsersTopicLevelParams) (*Userstopiclevel, error) {
 	row := q.db.QueryRowContext(ctx, getUsersTopicLevel, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
 	var i Userstopiclevel
 	err := row.Scan(
@@ -2454,18 +2323,18 @@ func (q *Queries) getUsersTopicLevel(ctx context.Context, arg getUsersTopicLevel
 	return &i, err
 }
 
-const getWordID = `-- name: getWordID :one
+const getWordID = `-- name: GetWordID :one
 SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?)
 `
 
-func (q *Queries) getWordID(ctx context.Context, lcase string) (int32, error) {
+func (q *Queries) GetWordID(ctx context.Context, lcase string) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getWordID, lcase)
 	var idsearchwordlist int32
 	err := row.Scan(&idsearchwordlist)
 	return idsearchwordlist, err
 }
 
-const get_all_user_topics = `-- name: get_all_user_topics :many
+const get_all_user_topics = `-- name: Get_all_user_topics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
@@ -2475,7 +2344,7 @@ WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.le
 ORDER BY t.lastaddition DESC
 `
 
-type get_all_user_topicsRow struct {
+type Get_all_user_topicsRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
@@ -2489,15 +2358,15 @@ type get_all_user_topicsRow struct {
 	Level                        sql.NullInt32
 }
 
-func (q *Queries) get_all_user_topics(ctx context.Context, usersIdusers int32) ([]*get_all_user_topicsRow, error) {
+func (q *Queries) Get_all_user_topics(ctx context.Context, usersIdusers int32) ([]*Get_all_user_topicsRow, error) {
 	rows, err := q.db.QueryContext(ctx, get_all_user_topics, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*get_all_user_topicsRow
+	var items []*Get_all_user_topicsRow
 	for rows.Next() {
-		var i get_all_user_topicsRow
+		var i Get_all_user_topicsRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Lastposter,
@@ -2524,7 +2393,7 @@ func (q *Queries) get_all_user_topics(ctx context.Context, usersIdusers int32) (
 	return items, nil
 }
 
-const get_all_user_topics_for_category = `-- name: get_all_user_topics_for_category :many
+const get_all_user_topics_for_category = `-- name: Get_all_user_topics_for_category :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
@@ -2534,12 +2403,12 @@ WHERE t.forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seele
 ORDER BY t.lastaddition DESC
 `
 
-type get_all_user_topics_for_categoryParams struct {
+type Get_all_user_topics_for_categoryParams struct {
 	UsersIdusers                 int32
 	ForumcategoryIdforumcategory int32
 }
 
-type get_all_user_topics_for_categoryRow struct {
+type Get_all_user_topics_for_categoryRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
@@ -2553,15 +2422,15 @@ type get_all_user_topics_for_categoryRow struct {
 	Level                        sql.NullInt32
 }
 
-func (q *Queries) get_all_user_topics_for_category(ctx context.Context, arg get_all_user_topics_for_categoryParams) ([]*get_all_user_topics_for_categoryRow, error) {
+func (q *Queries) Get_all_user_topics_for_category(ctx context.Context, arg Get_all_user_topics_for_categoryParams) ([]*Get_all_user_topics_for_categoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, get_all_user_topics_for_category, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*get_all_user_topics_for_categoryRow
+	var items []*Get_all_user_topics_for_categoryRow
 	for rows.Next() {
-		var i get_all_user_topics_for_categoryRow
+		var i Get_all_user_topics_for_categoryRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Lastposter,
@@ -2588,26 +2457,41 @@ func (q *Queries) get_all_user_topics_for_category(ctx context.Context, arg get_
 	return items, nil
 }
 
-const imageboardRSS = `-- name: imageboardRSS :exec
+const imageboardRSS = `-- name: ImageboardRSS :exec
 SELECT title, description FROM imageboard WHERE idimageboard = ?
 `
 
-type imageboardRSSRow struct {
+type ImageboardRSSRow struct {
 	Title       sql.NullString
 	Description sql.NullString
 }
 
-func (q *Queries) imageboardRSS(ctx context.Context, idimageboard int32) error {
+func (q *Queries) ImageboardRSS(ctx context.Context, idimageboard int32) error {
 	_, err := q.db.ExecContext(ctx, imageboardRSS, idimageboard)
 	return err
 }
 
-const insertWriting = `-- name: insertWriting :execlastid
+const insertUser = `-- name: InsertUser :execresult
+INSERT INTO users (username, passwd, email)
+VALUES (?, MD5(?), ?)
+`
+
+type InsertUserParams struct {
+	Username sql.NullString
+	MD5      string
+	Email    sql.NullString
+}
+
+func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, insertUser, arg.Username, arg.MD5, arg.Email)
+}
+
+const insertWriting = `-- name: InsertWriting :execlastid
 INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
 `
 
-type insertWritingParams struct {
+type InsertWritingParams struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Abstract                         sql.NullString
@@ -2617,7 +2501,7 @@ type insertWritingParams struct {
 	UsersIdusers                     int32
 }
 
-func (q *Queries) insertWriting(ctx context.Context, arg insertWritingParams) (int64, error) {
+func (q *Queries) InsertWriting(ctx context.Context, arg InsertWritingParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, insertWriting,
 		arg.WritingcategoryIdwritingcategory,
 		arg.Title,
@@ -2633,19 +2517,19 @@ func (q *Queries) insertWriting(ctx context.Context, arg insertWritingParams) (i
 	return result.LastInsertId()
 }
 
-const insertWritingApproval = `-- name: insertWritingApproval :exec
+const insertWritingApproval = `-- name: InsertWritingApproval :exec
 INSERT INTO writtingApprovedUsers (writing_idwriting, users_idusers, readdoc, editdoc)
 VALUES (?, ?, ?, ?)
 `
 
-type insertWritingApprovalParams struct {
+type InsertWritingApprovalParams struct {
 	WritingIdwriting int32
 	UsersIdusers     int32
 	Readdoc          sql.NullBool
 	Editdoc          sql.NullBool
 }
 
-func (q *Queries) insertWritingApproval(ctx context.Context, arg insertWritingApprovalParams) error {
+func (q *Queries) InsertWritingApproval(ctx context.Context, arg InsertWritingApprovalParams) error {
 	_, err := q.db.ExecContext(ctx, insertWritingApproval,
 		arg.WritingIdwriting,
 		arg.UsersIdusers,
@@ -2655,30 +2539,30 @@ func (q *Queries) insertWritingApproval(ctx context.Context, arg insertWritingAp
 	return err
 }
 
-const insertWritingCategory = `-- name: insertWritingCategory :exec
+const insertWritingCategory = `-- name: InsertWritingCategory :exec
 INSERT INTO writingCategory (writingCategory_idwritingCategory, title, description)
 VALUES (?, ?, ?)
 `
 
-type insertWritingCategoryParams struct {
+type InsertWritingCategoryParams struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Description                      sql.NullString
 }
 
-func (q *Queries) insertWritingCategory(ctx context.Context, arg insertWritingCategoryParams) error {
+func (q *Queries) InsertWritingCategory(ctx context.Context, arg InsertWritingCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, insertWritingCategory, arg.WritingcategoryIdwritingcategory, arg.Title, arg.Description)
 	return err
 }
 
-const linkerSearchFirst = `-- name: linkerSearchFirst :many
+const linkerSearchFirst = `-- name: LinkerSearchFirst :many
 SELECT DISTINCT cs.linker_idlinker
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
 
-func (q *Queries) linkerSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, linkerSearchFirst, word)
 	if err != nil {
 		return nil, err
@@ -2701,7 +2585,7 @@ func (q *Queries) linkerSearchFirst(ctx context.Context, word sql.NullString) ([
 	return items, nil
 }
 
-const linkerSearchNext = `-- name: linkerSearchNext :many
+const linkerSearchNext = `-- name: LinkerSearchNext :many
 SELECT DISTINCT cs.linker_idlinker
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -2709,12 +2593,12 @@ WHERE swl.word=?
 AND cs.linker_idlinker IN (/*SLICE:ids*/?)
 `
 
-type linkerSearchNextParams struct {
+type LinkerSearchNextParams struct {
 	Word sql.NullString
 	Ids  []int32
 }
 
-func (q *Queries) linkerSearchNext(ctx context.Context, arg linkerSearchNextParams) ([]int32, error) {
+func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextParams) ([]int32, error) {
 	query := linkerSearchNext
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)
@@ -2748,49 +2632,72 @@ func (q *Queries) linkerSearchNext(ctx context.Context, arg linkerSearchNextPara
 	return items, nil
 }
 
-const makeCategory = `-- name: makeCategory :exec
+const login = `-- name: Login :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE username = ? AND passwd = md5(?)
+`
+
+type LoginParams struct {
+	Username sql.NullString
+	MD5      string
+}
+
+func (q *Queries) Login(ctx context.Context, arg LoginParams) (*User, error) {
+	row := q.db.QueryRowContext(ctx, login, arg.Username, arg.MD5)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const makeCategory = `-- name: MakeCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
 
-type makeCategoryParams struct {
+type MakeCategoryParams struct {
 	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
 
-func (q *Queries) makeCategory(ctx context.Context, arg makeCategoryParams) error {
+func (q *Queries) MakeCategory(ctx context.Context, arg MakeCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, makeCategory, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
 	return err
 }
 
-const makeImageBoard = `-- name: makeImageBoard :exec
+const makeImageBoard = `-- name: MakeImageBoard :exec
 INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, ?, ?)
 `
 
-type makeImageBoardParams struct {
+type MakeImageBoardParams struct {
 	ImageboardIdimageboard int32
 	Title                  sql.NullString
 	Description            sql.NullString
 }
 
-func (q *Queries) makeImageBoard(ctx context.Context, arg makeImageBoardParams) error {
+func (q *Queries) MakeImageBoard(ctx context.Context, arg MakeImageBoardParams) error {
 	_, err := q.db.ExecContext(ctx, makeImageBoard, arg.ImageboardIdimageboard, arg.Title, arg.Description)
 	return err
 }
 
-const makePost = `-- name: makePost :execlastid
+const makePost = `-- name: MakePost :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
 VALUES (?, ?, ?, ?, NOW())
 `
 
-type makePostParams struct {
+type MakePostParams struct {
 	LanguageIdlanguage       int32
 	UsersIdusers             int32
 	ForumthreadIdforumthread int32
 	Text                     sql.NullString
 }
 
-func (q *Queries) makePost(ctx context.Context, arg makePostParams) (int64, error) {
+func (q *Queries) MakePost(ctx context.Context, arg MakePostParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, makePost,
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
@@ -2803,13 +2710,13 @@ func (q *Queries) makePost(ctx context.Context, arg makePostParams) (int64, erro
 	return result.LastInsertId()
 }
 
-const makeThread = `-- name: makeThread :execlastid
+const makeThread = `-- name: MakeThread :execlastid
 ;
 
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `
 
-func (q *Queries) makeThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {
+func (q *Queries) MakeThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {
 	result, err := q.db.ExecContext(ctx, makeThread, forumtopicIdforumtopic)
 	if err != nil {
 		return 0, err
@@ -2817,17 +2724,17 @@ func (q *Queries) makeThread(ctx context.Context, forumtopicIdforumtopic int32) 
 	return result.LastInsertId()
 }
 
-const makeTopic = `-- name: makeTopic :execlastid
+const makeTopic = `-- name: MakeTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
 
-type makeTopicParams struct {
+type MakeTopicParams struct {
 	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
 
-func (q *Queries) makeTopic(ctx context.Context, arg makeTopicParams) (int64, error) {
+func (q *Queries) MakeTopic(ctx context.Context, arg MakeTopicParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, makeTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
 	if err != nil {
 		return 0, err
@@ -2835,20 +2742,20 @@ func (q *Queries) makeTopic(ctx context.Context, arg makeTopicParams) (int64, er
 	return result.LastInsertId()
 }
 
-const modify_faq = `-- name: modify_faq :exec
+const modify_faq = `-- name: Modify_faq :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
 WHERE idfaq = ?
 `
 
-type modify_faqParams struct {
+type Modify_faqParams struct {
 	Answer                       sql.NullString
 	Question                     sql.NullString
 	FaqcategoriesIdfaqcategories int32
 	Idfaq                        int32
 }
 
-func (q *Queries) modify_faq(ctx context.Context, arg modify_faqParams) error {
+func (q *Queries) Modify_faq(ctx context.Context, arg Modify_faqParams) error {
 	_, err := q.db.ExecContext(ctx, modify_faq,
 		arg.Answer,
 		arg.Question,
@@ -2858,19 +2765,19 @@ func (q *Queries) modify_faq(ctx context.Context, arg modify_faqParams) error {
 	return err
 }
 
-const moveToLinker = `-- name: moveToLinker :exec
+const moveToLinker = `-- name: MoveToLinker :exec
 INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, language_idlanguage, title, ` + "`" + `url` + "`" + `, description)
 SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
 FROM linkerQueue l
 WHERE l.idlinkerQueue = ?
 `
 
-func (q *Queries) moveToLinker(ctx context.Context, idlinkerqueue int32) error {
+func (q *Queries) MoveToLinker(ctx context.Context, idlinkerqueue int32) error {
 	_, err := q.db.ExecContext(ctx, moveToLinker, idlinkerqueue)
 	return err
 }
 
-const printImagePost = `-- name: printImagePost :one
+const printImagePost = `-- name: PrintImagePost :one
 SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
@@ -2878,7 +2785,7 @@ LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.idimagepost = ?
 `
 
-type printImagePostRow struct {
+type PrintImagePostRow struct {
 	Idimagepost              int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -2891,9 +2798,9 @@ type printImagePostRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) printImagePost(ctx context.Context, idimagepost int32) (*printImagePostRow, error) {
+func (q *Queries) PrintImagePost(ctx context.Context, idimagepost int32) (*PrintImagePostRow, error) {
 	row := q.db.QueryRowContext(ctx, printImagePost, idimagepost)
-	var i printImagePostRow
+	var i PrintImagePostRow
 	err := row.Scan(
 		&i.Idimagepost,
 		&i.ForumthreadIdforumthread,
@@ -2909,7 +2816,7 @@ func (q *Queries) printImagePost(ctx context.Context, idimagepost int32) (*print
 	return &i, err
 }
 
-const printImagePosts = `-- name: printImagePosts :many
+const printImagePosts = `-- name: PrintImagePosts :many
 SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
@@ -2917,7 +2824,7 @@ LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.imageboard_idimageboard = ?
 `
 
-type printImagePostsRow struct {
+type PrintImagePostsRow struct {
 	Idimagepost              int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -2930,15 +2837,15 @@ type printImagePostsRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) printImagePosts(ctx context.Context, imageboardIdimageboard int32) ([]*printImagePostsRow, error) {
+func (q *Queries) PrintImagePosts(ctx context.Context, imageboardIdimageboard int32) ([]*PrintImagePostsRow, error) {
 	rows, err := q.db.QueryContext(ctx, printImagePosts, imageboardIdimageboard)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*printImagePostsRow
+	var items []*PrintImagePostsRow
 	for rows.Next() {
-		var i printImagePostsRow
+		var i PrintImagePostsRow
 		if err := rows.Scan(
 			&i.Idimagepost,
 			&i.ForumthreadIdforumthread,
@@ -2964,25 +2871,25 @@ func (q *Queries) printImagePosts(ctx context.Context, imageboardIdimageboard in
 	return items, nil
 }
 
-const printSubBoards = `-- name: printSubBoards :many
+const printSubBoards = `-- name: PrintSubBoards :many
 SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?
 `
 
-type printSubBoardsRow struct {
+type PrintSubBoardsRow struct {
 	Idimageboard int32
 	Title        sql.NullString
 	Description  sql.NullString
 }
 
-func (q *Queries) printSubBoards(ctx context.Context, imageboardIdimageboard int32) ([]*printSubBoardsRow, error) {
+func (q *Queries) PrintSubBoards(ctx context.Context, imageboardIdimageboard int32) ([]*PrintSubBoardsRow, error) {
 	rows, err := q.db.QueryContext(ctx, printSubBoards, imageboardIdimageboard)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*printSubBoardsRow
+	var items []*PrintSubBoardsRow
 	for rows.Next() {
-		var i printSubBoardsRow
+		var i PrintSubBoardsRow
 		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Description); err != nil {
 			return nil, err
 		}
@@ -2997,7 +2904,7 @@ func (q *Queries) printSubBoards(ctx context.Context, imageboardIdimageboard int
 	return items, nil
 }
 
-const remakeBlogSearch = `-- name: remakeBlogSearch :exec
+const remakeBlogSearch = `-- name: RemakeBlogSearch :exec
 INSERT INTO blogsSearch (text, blogs_idblogs)
 SELECT blog, idblogs
 FROM blogs
@@ -3005,12 +2912,12 @@ FROM blogs
 
 // This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
-func (q *Queries) remakeBlogSearch(ctx context.Context) error {
+func (q *Queries) RemakeBlogSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeBlogSearch)
 	return err
 }
 
-const remakeBlogsSearchInsert = `-- name: remakeBlogsSearchInsert :exec
+const remakeBlogsSearchInsert = `-- name: RemakeBlogsSearchInsert :exec
 INSERT INTO blogsSearch (text, blogs_idblogs)
 SELECT blog, idblogs
 FROM blogs
@@ -3018,12 +2925,12 @@ FROM blogs
 
 // This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
-func (q *Queries) remakeBlogsSearchInsert(ctx context.Context) error {
+func (q *Queries) RemakeBlogsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeBlogsSearchInsert)
 	return err
 }
 
-const remakeCommentsSearch = `-- name: remakeCommentsSearch :exec
+const remakeCommentsSearch = `-- name: RemakeCommentsSearch :exec
 INSERT INTO commentsSearch (text, comments_idcomments)
 SELECT text, idcomments
 FROM comments
@@ -3031,12 +2938,12 @@ FROM comments
 
 // This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
-func (q *Queries) remakeCommentsSearch(ctx context.Context) error {
+func (q *Queries) RemakeCommentsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeCommentsSearch)
 	return err
 }
 
-const remakeCommentsSearchInsert = `-- name: remakeCommentsSearchInsert :exec
+const remakeCommentsSearchInsert = `-- name: RemakeCommentsSearchInsert :exec
 INSERT INTO commentsSearch (text, comments_idcomments)
 SELECT text, idcomments
 FROM comments
@@ -3044,12 +2951,12 @@ FROM comments
 
 // This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
-func (q *Queries) remakeCommentsSearchInsert(ctx context.Context) error {
+func (q *Queries) RemakeCommentsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeCommentsSearchInsert)
 	return err
 }
 
-const remakeLinkerSearch = `-- name: remakeLinkerSearch :exec
+const remakeLinkerSearch = `-- name: RemakeLinkerSearch :exec
 INSERT INTO linkerSearch (text, linker_idlinker)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
@@ -3057,12 +2964,12 @@ FROM linker
 
 // This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
-func (q *Queries) remakeLinkerSearch(ctx context.Context) error {
+func (q *Queries) RemakeLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearch)
 	return err
 }
 
-const remakeLinkerSearchInsert = `-- name: remakeLinkerSearchInsert :exec
+const remakeLinkerSearchInsert = `-- name: RemakeLinkerSearchInsert :exec
 INSERT INTO linkerSearch (text, linker_idlinker)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
@@ -3070,12 +2977,12 @@ FROM linker
 
 // This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
-func (q *Queries) remakeLinkerSearchInsert(ctx context.Context) error {
+func (q *Queries) RemakeLinkerSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearchInsert)
 	return err
 }
 
-const remakeNewsSearch = `-- name: remakeNewsSearch :exec
+const remakeNewsSearch = `-- name: RemakeNewsSearch :exec
 INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
 SELECT news, idsiteNews
 FROM siteNews
@@ -3083,12 +2990,12 @@ FROM siteNews
 
 // This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
-func (q *Queries) remakeNewsSearch(ctx context.Context) error {
+func (q *Queries) RemakeNewsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeNewsSearch)
 	return err
 }
 
-const remakeNewsSearchInsert = `-- name: remakeNewsSearchInsert :exec
+const remakeNewsSearchInsert = `-- name: RemakeNewsSearchInsert :exec
 INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
 SELECT news, idsiteNews
 FROM siteNews
@@ -3096,12 +3003,12 @@ FROM siteNews
 
 // This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
-func (q *Queries) remakeNewsSearchInsert(ctx context.Context) error {
+func (q *Queries) RemakeNewsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeNewsSearchInsert)
 	return err
 }
 
-const remakeWritingSearch = `-- name: remakeWritingSearch :exec
+const remakeWritingSearch = `-- name: RemakeWritingSearch :exec
 INSERT INTO writingSearch (text, writing_idwriting)
 SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
 FROM writing
@@ -3109,12 +3016,12 @@ FROM writing
 
 // This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
-func (q *Queries) remakeWritingSearch(ctx context.Context) error {
+func (q *Queries) RemakeWritingSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearch)
 	return err
 }
 
-const remakeWritingSearchInsert = `-- name: remakeWritingSearchInsert :exec
+const remakeWritingSearchInsert = `-- name: RemakeWritingSearchInsert :exec
 INSERT INTO writingSearch (text, writing_idwriting)
 SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
 FROM writing
@@ -3122,42 +3029,99 @@ FROM writing
 
 // This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
-func (q *Queries) remakeWritingSearchInsert(ctx context.Context) error {
+func (q *Queries) RemakeWritingSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearchInsert)
 	return err
 }
 
-const renameCategory = `-- name: renameCategory :exec
+const renameCategory = `-- name: RenameCategory :exec
 UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?
 `
 
-type renameCategoryParams struct {
+type RenameCategoryParams struct {
 	Title            sql.NullString
 	Idlinkercategory int32
 }
 
-func (q *Queries) renameCategory(ctx context.Context, arg renameCategoryParams) error {
+func (q *Queries) RenameCategory(ctx context.Context, arg RenameCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, renameCategory, arg.Title, arg.Idlinkercategory)
 	return err
 }
 
-const rename_category = `-- name: rename_category :exec
+const renameLanguage = `-- name: RenameLanguage :exec
+UPDATE language
+SET nameof = ?
+WHERE idlanguage = ?
+`
+
+type RenameLanguageParams struct {
+	Nameof     sql.NullString
+	Idlanguage int32
+}
+
+// This query updates the "nameof" field in the "language" table based on the provided "cid".
+// Parameters:
+//
+//	? - New name for the language (string)
+//	? - Language ID to be updated (int)
+func (q *Queries) RenameLanguage(ctx context.Context, arg RenameLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, renameLanguage, arg.Nameof, arg.Idlanguage)
+	return err
+}
+
+const rename_category = `-- name: Rename_category :exec
 UPDATE faqCategories
 SET name = ?
 WHERE idfaqCategories = ?
 `
 
-type rename_categoryParams struct {
+type Rename_categoryParams struct {
 	Name            sql.NullString
 	Idfaqcategories int32
 }
 
-func (q *Queries) rename_category(ctx context.Context, arg rename_categoryParams) error {
+func (q *Queries) Rename_category(ctx context.Context, arg Rename_categoryParams) error {
 	_, err := q.db.ExecContext(ctx, rename_category, arg.Name, arg.Idfaqcategories)
 	return err
 }
 
-const setTopicRestrictions = `-- name: setTopicRestrictions :exec
+const selectUnansweredQuestions = `-- name: SelectUnansweredQuestions :many
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL
+`
+
+func (q *Queries) SelectUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, selectUnansweredQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setTopicRestrictions = `-- name: SetTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
@@ -3171,7 +3135,7 @@ ON DUPLICATE KEY UPDATE
     adminlevel = VALUES(adminlevel)
 `
 
-type setTopicRestrictionsParams struct {
+type SetTopicRestrictionsParams struct {
 	ForumtopicIdforumtopic int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
@@ -3183,7 +3147,7 @@ type setTopicRestrictionsParams struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) setTopicRestrictions(ctx context.Context, arg setTopicRestrictionsParams) error {
+func (q *Queries) SetTopicRestrictions(ctx context.Context, arg SetTopicRestrictionsParams) error {
 	_, err := q.db.ExecContext(ctx, setTopicRestrictions,
 		arg.ForumtopicIdforumtopic,
 		arg.Viewlevel,
@@ -3198,20 +3162,20 @@ func (q *Queries) setTopicRestrictions(ctx context.Context, arg setTopicRestrict
 	return err
 }
 
-const setUsersTopicLevel = `-- name: setUsersTopicLevel :exec
+const setUsersTopicLevel = `-- name: SetUsersTopicLevel :exec
 INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
 VALUES (?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax)
 `
 
-type setUsersTopicLevelParams struct {
+type SetUsersTopicLevelParams struct {
 	ForumtopicIdforumtopic int32
 	UsersIdusers           int32
 	Level                  sql.NullInt32
 	Invitemax              sql.NullInt32
 }
 
-func (q *Queries) setUsersTopicLevel(ctx context.Context, arg setUsersTopicLevelParams) error {
+func (q *Queries) SetUsersTopicLevel(ctx context.Context, arg SetUsersTopicLevelParams) error {
 	_, err := q.db.ExecContext(ctx, setUsersTopicLevel,
 		arg.ForumtopicIdforumtopic,
 		arg.UsersIdusers,
@@ -3221,14 +3185,14 @@ func (q *Queries) setUsersTopicLevel(ctx context.Context, arg setUsersTopicLevel
 	return err
 }
 
-const showAdminQueue = `-- name: showAdminQueue :many
+const showAdminQueue = `-- name: ShowAdminQueue :many
 SELECT l.idlinkerqueue, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.title, l.url, l.description, u.username, c.title as category_title, c.idlinkerCategory
 FROM linkerQueue l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
 `
 
-type showAdminQueueRow struct {
+type ShowAdminQueueRow struct {
 	Idlinkerqueue                  int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -3241,15 +3205,15 @@ type showAdminQueueRow struct {
 	Idlinkercategory               int32
 }
 
-func (q *Queries) showAdminQueue(ctx context.Context) ([]*showAdminQueueRow, error) {
+func (q *Queries) ShowAdminQueue(ctx context.Context) ([]*ShowAdminQueueRow, error) {
 	rows, err := q.db.QueryContext(ctx, showAdminQueue)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*showAdminQueueRow
+	var items []*ShowAdminQueueRow
 	for rows.Next() {
-		var i showAdminQueueRow
+		var i ShowAdminQueueRow
 		if err := rows.Scan(
 			&i.Idlinkerqueue,
 			&i.LanguageIdlanguage,
@@ -3275,14 +3239,14 @@ func (q *Queries) showAdminQueue(ctx context.Context) ([]*showAdminQueueRow, err
 	return items, nil
 }
 
-const showAllBoards = `-- name: showAllBoards :many
+const showAllBoards = `-- name: ShowAllBoards :many
 SELECT b.idimageboard, b.title, b.description, b.imageboard_idimageboard, pb.title
 FROM imageboard b
 LEFT JOIN imageboard pb ON b.imageboard_idimageboard = pb.idimageboard OR b.imageboard_idimageboard = 0
 GROUP BY b.idimageboard
 `
 
-type showAllBoardsRow struct {
+type ShowAllBoardsRow struct {
 	Idimageboard           int32
 	Title                  sql.NullString
 	Description            sql.NullString
@@ -3290,15 +3254,15 @@ type showAllBoardsRow struct {
 	Title_2                sql.NullString
 }
 
-func (q *Queries) showAllBoards(ctx context.Context) ([]*showAllBoardsRow, error) {
+func (q *Queries) ShowAllBoards(ctx context.Context) ([]*ShowAllBoardsRow, error) {
 	rows, err := q.db.QueryContext(ctx, showAllBoards)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*showAllBoardsRow
+	var items []*ShowAllBoardsRow
 	for rows.Next() {
-		var i showAllBoardsRow
+		var i ShowAllBoardsRow
 		if err := rows.Scan(
 			&i.Idimageboard,
 			&i.Title,
@@ -3319,14 +3283,14 @@ func (q *Queries) showAllBoards(ctx context.Context) ([]*showAllBoardsRow, error
 	return items, nil
 }
 
-const showAllCategories = `-- name: showAllCategories :many
+const showAllCategories = `-- name: ShowAllCategories :many
 SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, c.description, COUNT(c2.idforumcategory) as SubcategoryCount
 FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory
 GROUP BY c.idforumcategory
 `
 
-type showAllCategoriesRow struct {
+type ShowAllCategoriesRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
@@ -3334,15 +3298,15 @@ type showAllCategoriesRow struct {
 	Subcategorycount             int64
 }
 
-func (q *Queries) showAllCategories(ctx context.Context) ([]*showAllCategoriesRow, error) {
+func (q *Queries) ShowAllCategories(ctx context.Context) ([]*ShowAllCategoriesRow, error) {
 	rows, err := q.db.QueryContext(ctx, showAllCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*showAllCategoriesRow
+	var items []*ShowAllCategoriesRow
 	for rows.Next() {
-		var i showAllCategoriesRow
+		var i ShowAllCategoriesRow
 		if err := rows.Scan(
 			&i.Idforumcategory,
 			&i.ForumcategoryIdforumcategory,
@@ -3363,11 +3327,11 @@ func (q *Queries) showAllCategories(ctx context.Context) ([]*showAllCategoriesRo
 	return items, nil
 }
 
-const showCategories = `-- name: showCategories :many
+const showCategories = `-- name: ShowCategories :many
 SELECT idlinkerCategory, title FROM linkerCategory
 `
 
-func (q *Queries) showCategories(ctx context.Context) ([]*Linkercategory, error) {
+func (q *Queries) ShowCategories(ctx context.Context) ([]*Linkercategory, error) {
 	rows, err := q.db.QueryContext(ctx, showCategories)
 	if err != nil {
 		return nil, err
@@ -3390,7 +3354,7 @@ func (q *Queries) showCategories(ctx context.Context) ([]*Linkercategory, error)
 	return items, nil
 }
 
-const showLatest = `-- name: showLatest :many
+const showLatest = `-- name: ShowLatest :many
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
@@ -3400,7 +3364,7 @@ WHERE lc.idlinkerCategory = ?
 ORDER BY l.listed DESC
 `
 
-type showLatestRow struct {
+type ShowLatestRow struct {
 	Idlinker                       int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -3415,15 +3379,15 @@ type showLatestRow struct {
 	Posterusername                 sql.NullString
 }
 
-func (q *Queries) showLatest(ctx context.Context, idlinkercategory int32) ([]*showLatestRow, error) {
+func (q *Queries) ShowLatest(ctx context.Context, idlinkercategory int32) ([]*ShowLatestRow, error) {
 	rows, err := q.db.QueryContext(ctx, showLatest, idlinkercategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*showLatestRow
+	var items []*ShowLatestRow
 	for rows.Next() {
-		var i showLatestRow
+		var i ShowLatestRow
 		if err := rows.Scan(
 			&i.Idlinker,
 			&i.LanguageIdlanguage,
@@ -3451,7 +3415,7 @@ func (q *Queries) showLatest(ctx context.Context, idlinkercategory int32) ([]*sh
 	return items, nil
 }
 
-const showLink = `-- name: showLink :one
+const showLink = `-- name: ShowLink :one
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
@@ -3459,7 +3423,7 @@ JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategor
 WHERE l.idlinker = ?
 `
 
-type showLinkRow struct {
+type ShowLinkRow struct {
 	Idlinker                       int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -3473,9 +3437,9 @@ type showLinkRow struct {
 	Title_2                        sql.NullString
 }
 
-func (q *Queries) showLink(ctx context.Context, idlinker int32) (*showLinkRow, error) {
+func (q *Queries) ShowLink(ctx context.Context, idlinker int32) (*ShowLinkRow, error) {
 	row := q.db.QueryRowContext(ctx, showLink, idlinker)
-	var i showLinkRow
+	var i ShowLinkRow
 	err := row.Scan(
 		&i.Idlinker,
 		&i.LanguageIdlanguage,
@@ -3492,7 +3456,7 @@ func (q *Queries) showLink(ctx context.Context, idlinker int32) (*showLinkRow, e
 	return &i, err
 }
 
-const showLinks = `-- name: showLinks :many
+const showLinks = `-- name: ShowLinks :many
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
@@ -3500,7 +3464,7 @@ JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategor
 WHERE l.idlinker IN (/*SLICE:linkerids*/?)
 `
 
-type showLinksRow struct {
+type ShowLinksRow struct {
 	Idlinker                       int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -3514,7 +3478,7 @@ type showLinksRow struct {
 	Title_2                        sql.NullString
 }
 
-func (q *Queries) showLinks(ctx context.Context, linkerids []int32) ([]*showLinksRow, error) {
+func (q *Queries) ShowLinks(ctx context.Context, linkerids []int32) ([]*ShowLinksRow, error) {
 	query := showLinks
 	var queryParams []interface{}
 	if len(linkerids) > 0 {
@@ -3530,9 +3494,9 @@ func (q *Queries) showLinks(ctx context.Context, linkerids []int32) ([]*showLink
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*showLinksRow
+	var items []*ShowLinksRow
 	for rows.Next() {
-		var i showLinksRow
+		var i ShowLinksRow
 		if err := rows.Scan(
 			&i.Idlinker,
 			&i.LanguageIdlanguage,
@@ -3559,7 +3523,7 @@ func (q *Queries) showLinks(ctx context.Context, linkerids []int32) ([]*showLink
 	return items, nil
 }
 
-const show_blog = `-- name: show_blog :one
+const show_blog = `-- name: Show_blog :one
 SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers, b.forumthread_idforumthread
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -3568,7 +3532,7 @@ WHERE b.idblogs = ?
 LIMIT 1
 `
 
-type show_blogRow struct {
+type Show_blogRow struct {
 	Blog                     sql.NullString
 	Written                  time.Time
 	Username                 sql.NullString
@@ -3578,9 +3542,9 @@ type show_blogRow struct {
 	ForumthreadIdforumthread int32
 }
 
-func (q *Queries) show_blog(ctx context.Context, idblogs int32) (*show_blogRow, error) {
+func (q *Queries) Show_blog(ctx context.Context, idblogs int32) (*Show_blogRow, error) {
 	row := q.db.QueryRowContext(ctx, show_blog, idblogs)
-	var i show_blogRow
+	var i Show_blogRow
 	err := row.Scan(
 		&i.Blog,
 		&i.Written,
@@ -3593,46 +3557,46 @@ func (q *Queries) show_blog(ctx context.Context, idblogs int32) (*show_blogRow, 
 	return &i, err
 }
 
-const show_blog_edit = `-- name: show_blog_edit :one
+const show_blog_edit = `-- name: Show_blog_edit :one
 SELECT b.blog, b.language_idlanguage
 FROM blogs b, users u
 WHERE b.users_idusers = u.idusers AND b.idblogs = ?
 LIMIT 1
 `
 
-type show_blog_editRow struct {
+type Show_blog_editRow struct {
 	Blog               sql.NullString
 	LanguageIdlanguage int32
 }
 
-func (q *Queries) show_blog_edit(ctx context.Context, idblogs int32) (*show_blog_editRow, error) {
+func (q *Queries) Show_blog_edit(ctx context.Context, idblogs int32) (*Show_blog_editRow, error) {
 	row := q.db.QueryRowContext(ctx, show_blog_edit, idblogs)
-	var i show_blog_editRow
+	var i Show_blog_editRow
 	err := row.Scan(&i.Blog, &i.LanguageIdlanguage)
 	return &i, err
 }
 
-const show_blogger_list = `-- name: show_blogger_list :many
+const show_blogger_list = `-- name: Show_blogger_list :many
 SELECT u.username, COUNT(b.idblogs)
 FROM blogs b, users u
 WHERE b.users_idusers = u.idusers
 GROUP BY u.idusers
 `
 
-type show_blogger_listRow struct {
+type Show_blogger_listRow struct {
 	Username sql.NullString
 	Count    int64
 }
 
-func (q *Queries) show_blogger_list(ctx context.Context) ([]*show_blogger_listRow, error) {
+func (q *Queries) Show_blogger_list(ctx context.Context) ([]*Show_blogger_listRow, error) {
 	rows, err := q.db.QueryContext(ctx, show_blogger_list)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*show_blogger_listRow
+	var items []*Show_blogger_listRow
 	for rows.Next() {
-		var i show_blogger_listRow
+		var i Show_blogger_listRow
 		if err := rows.Scan(&i.Username, &i.Count); err != nil {
 			return nil, err
 		}
@@ -3647,26 +3611,26 @@ func (q *Queries) show_blogger_list(ctx context.Context) ([]*show_blogger_listRo
 	return items, nil
 }
 
-const show_bookmarks = `-- name: show_bookmarks :one
+const show_bookmarks = `-- name: Show_bookmarks :one
 SELECT Idbookmarks, list
 FROM bookmarks
 WHERE users_idusers = ?
 `
 
-type show_bookmarksRow struct {
+type Show_bookmarksRow struct {
 	Idbookmarks int32
 	List        sql.NullString
 }
 
 // This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
-func (q *Queries) show_bookmarks(ctx context.Context, usersIdusers int32) (*show_bookmarksRow, error) {
+func (q *Queries) Show_bookmarks(ctx context.Context, usersIdusers int32) (*Show_bookmarksRow, error) {
 	row := q.db.QueryRowContext(ctx, show_bookmarks, usersIdusers)
-	var i show_bookmarksRow
+	var i Show_bookmarksRow
 	err := row.Scan(&i.Idbookmarks, &i.List)
 	return &i, err
 }
 
-const show_latest_blogs = `-- name: show_latest_blogs :many
+const show_latest_blogs = `-- name: Show_latest_blogs :many
 SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -3677,14 +3641,14 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?
 `
 
-type show_latest_blogsParams struct {
+type Show_latest_blogsParams struct {
 	LanguageIdlanguage int32
 	UsersIdusers       int32
 	Limit              int32
 	Offset             int32
 }
 
-type show_latest_blogsRow struct {
+type Show_latest_blogsRow struct {
 	Blog         sql.NullString
 	Written      time.Time
 	Username     sql.NullString
@@ -3693,7 +3657,7 @@ type show_latest_blogsRow struct {
 	UsersIdusers int32
 }
 
-func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsParams) ([]*show_latest_blogsRow, error) {
+func (q *Queries) Show_latest_blogs(ctx context.Context, arg Show_latest_blogsParams) ([]*Show_latest_blogsRow, error) {
 	rows, err := q.db.QueryContext(ctx, show_latest_blogs,
 		arg.LanguageIdlanguage,
 		arg.LanguageIdlanguage,
@@ -3706,9 +3670,9 @@ func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsPa
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*show_latest_blogsRow
+	var items []*Show_latest_blogsRow
 	for rows.Next() {
-		var i show_latest_blogsRow
+		var i Show_latest_blogsRow
 		if err := rows.Scan(
 			&i.Blog,
 			&i.Written,
@@ -3730,7 +3694,7 @@ func (q *Queries) show_latest_blogs(ctx context.Context, arg show_latest_blogsPa
 	return items, nil
 }
 
-const show_questions = `-- name: show_questions :many
+const show_questions = `-- name: Show_questions :many
 SELECT c.idfaqcategories, c.name, f.idfaq, f.faqcategories_idfaqcategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
 LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
@@ -3738,7 +3702,7 @@ WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories
 `
 
-type show_questionsRow struct {
+type Show_questionsRow struct {
 	Idfaqcategories              sql.NullInt32
 	Name                         sql.NullString
 	Idfaq                        int32
@@ -3749,15 +3713,15 @@ type show_questionsRow struct {
 	Question                     sql.NullString
 }
 
-func (q *Queries) show_questions(ctx context.Context) ([]*show_questionsRow, error) {
+func (q *Queries) Show_questions(ctx context.Context) ([]*Show_questionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, show_questions)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*show_questionsRow
+	var items []*Show_questionsRow
 	for rows.Next() {
-		var i show_questionsRow
+		var i Show_questionsRow
 		if err := rows.Scan(
 			&i.Idfaqcategories,
 			&i.Name,
@@ -3781,14 +3745,14 @@ func (q *Queries) show_questions(ctx context.Context) ([]*show_questionsRow, err
 	return items, nil
 }
 
-const siteNewsSearchFirst = `-- name: siteNewsSearchFirst :many
+const siteNewsSearchFirst = `-- name: SiteNewsSearchFirst :many
 SELECT DISTINCT cs.siteNews_idsiteNews
 FROM siteNewsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
 
-func (q *Queries) siteNewsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+func (q *Queries) SiteNewsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, siteNewsSearchFirst, word)
 	if err != nil {
 		return nil, err
@@ -3811,7 +3775,7 @@ func (q *Queries) siteNewsSearchFirst(ctx context.Context, word sql.NullString) 
 	return items, nil
 }
 
-const siteNewsSearchNext = `-- name: siteNewsSearchNext :many
+const siteNewsSearchNext = `-- name: SiteNewsSearchNext :many
 SELECT DISTINCT cs.siteNews_idsiteNews
 FROM siteNewsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -3819,12 +3783,12 @@ WHERE swl.word=?
 AND cs.siteNews_idsiteNews IN (/*SLICE:ids*/?)
 `
 
-type siteNewsSearchNextParams struct {
+type SiteNewsSearchNextParams struct {
 	Word sql.NullString
 	Ids  []int32
 }
 
-func (q *Queries) siteNewsSearchNext(ctx context.Context, arg siteNewsSearchNextParams) ([]int32, error) {
+func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNextParams) ([]int32, error) {
 	query := siteNewsSearchNext
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)
@@ -3858,18 +3822,18 @@ func (q *Queries) siteNewsSearchNext(ctx context.Context, arg siteNewsSearchNext
 	return items, nil
 }
 
-const somethingNotifyBlogs = `-- name: somethingNotifyBlogs :many
+const somethingNotifyBlogs = `-- name: SomethingNotifyBlogs :many
 SELECT u.email FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
-type somethingNotifyBlogsParams struct {
+type SomethingNotifyBlogsParams struct {
 	Idblogs int32
 	Idusers int32
 }
 
-func (q *Queries) somethingNotifyBlogs(ctx context.Context, arg somethingNotifyBlogsParams) ([]sql.NullString, error) {
+func (q *Queries) SomethingNotifyBlogs(ctx context.Context, arg SomethingNotifyBlogsParams) ([]sql.NullString, error) {
 	rows, err := q.db.QueryContext(ctx, somethingNotifyBlogs, arg.Idblogs, arg.Idusers)
 	if err != nil {
 		return nil, err
@@ -3892,18 +3856,18 @@ func (q *Queries) somethingNotifyBlogs(ctx context.Context, arg somethingNotifyB
 	return items, nil
 }
 
-const somethingNotifyLinker = `-- name: somethingNotifyLinker :many
+const somethingNotifyLinker = `-- name: SomethingNotifyLinker :many
 SELECT u.email FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
-type somethingNotifyLinkerParams struct {
+type SomethingNotifyLinkerParams struct {
 	Idlinker int32
 	Idusers  int32
 }
 
-func (q *Queries) somethingNotifyLinker(ctx context.Context, arg somethingNotifyLinkerParams) ([]sql.NullString, error) {
+func (q *Queries) SomethingNotifyLinker(ctx context.Context, arg SomethingNotifyLinkerParams) ([]sql.NullString, error) {
 	rows, err := q.db.QueryContext(ctx, somethingNotifyLinker, arg.Idlinker, arg.Idusers)
 	if err != nil {
 		return nil, err
@@ -3926,18 +3890,18 @@ func (q *Queries) somethingNotifyLinker(ctx context.Context, arg somethingNotify
 	return items, nil
 }
 
-const somethingNotifyWriting = `-- name: somethingNotifyWriting :many
+const somethingNotifyWriting = `-- name: SomethingNotifyWriting :many
 SELECT u.email FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
-type somethingNotifyWritingParams struct {
+type SomethingNotifyWritingParams struct {
 	Idwriting int32
 	Idusers   int32
 }
 
-func (q *Queries) somethingNotifyWriting(ctx context.Context, arg somethingNotifyWritingParams) ([]sql.NullString, error) {
+func (q *Queries) SomethingNotifyWriting(ctx context.Context, arg SomethingNotifyWritingParams) ([]sql.NullString, error) {
 	rows, err := q.db.QueryContext(ctx, somethingNotifyWriting, arg.Idwriting, arg.Idusers)
 	if err != nil {
 		return nil, err
@@ -3960,18 +3924,18 @@ func (q *Queries) somethingNotifyWriting(ctx context.Context, arg somethingNotif
 	return items, nil
 }
 
-const threadNotify = `-- name: threadNotify :many
+const threadNotify = `-- name: ThreadNotify :many
 SELECT u.email FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
-type threadNotifyParams struct {
+type ThreadNotifyParams struct {
 	ForumthreadIdforumthread int32
 	Idusers                  int32
 }
 
-func (q *Queries) threadNotify(ctx context.Context, arg threadNotifyParams) ([]sql.NullString, error) {
+func (q *Queries) ThreadNotify(ctx context.Context, arg ThreadNotifyParams) ([]sql.NullString, error) {
 	rows, err := q.db.QueryContext(ctx, threadNotify, arg.ForumthreadIdforumthread, arg.Idusers)
 	if err != nil {
 		return nil, err
@@ -3994,11 +3958,11 @@ func (q *Queries) threadNotify(ctx context.Context, arg threadNotifyParams) ([]s
 	return items, nil
 }
 
-const updateQueue = `-- name: updateQueue :exec
+const updateQueue = `-- name: UpdateQueue :exec
 UPDATE linkerQueue SET linkerCategory_idlinkerCategory = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?
 `
 
-type updateQueueParams struct {
+type UpdateQueueParams struct {
 	LinkercategoryIdlinkercategory int32
 	Title                          sql.NullString
 	Url                            sql.NullString
@@ -4006,7 +3970,7 @@ type updateQueueParams struct {
 	Idlinkerqueue                  int32
 }
 
-func (q *Queries) updateQueue(ctx context.Context, arg updateQueueParams) error {
+func (q *Queries) UpdateQueue(ctx context.Context, arg UpdateQueueParams) error {
 	_, err := q.db.ExecContext(ctx, updateQueue,
 		arg.LinkercategoryIdlinkercategory,
 		arg.Title,
@@ -4017,13 +3981,13 @@ func (q *Queries) updateQueue(ctx context.Context, arg updateQueueParams) error 
 	return err
 }
 
-const updateWriting = `-- name: updateWriting :exec
+const updateWriting = `-- name: UpdateWriting :exec
 UPDATE writing
 SET title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
 WHERE idwriting = ?
 `
 
-type updateWritingParams struct {
+type UpdateWritingParams struct {
 	Title              sql.NullString
 	Abstract           sql.NullString
 	Writting           sql.NullString
@@ -4032,7 +3996,7 @@ type updateWritingParams struct {
 	Idwriting          int32
 }
 
-func (q *Queries) updateWriting(ctx context.Context, arg updateWritingParams) error {
+func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) error {
 	_, err := q.db.ExecContext(ctx, updateWriting,
 		arg.Title,
 		arg.Abstract,
@@ -4044,20 +4008,20 @@ func (q *Queries) updateWriting(ctx context.Context, arg updateWritingParams) er
 	return err
 }
 
-const updateWritingApproval = `-- name: updateWritingApproval :exec
+const updateWritingApproval = `-- name: UpdateWritingApproval :exec
 UPDATE writtingApprovedUsers
 SET readdoc = ?, editdoc = ?
 WHERE writing_idwriting = ? AND users_idusers = ?
 `
 
-type updateWritingApprovalParams struct {
+type UpdateWritingApprovalParams struct {
 	Readdoc          sql.NullBool
 	Editdoc          sql.NullBool
 	WritingIdwriting int32
 	UsersIdusers     int32
 }
 
-func (q *Queries) updateWritingApproval(ctx context.Context, arg updateWritingApprovalParams) error {
+func (q *Queries) UpdateWritingApproval(ctx context.Context, arg UpdateWritingApprovalParams) error {
 	_, err := q.db.ExecContext(ctx, updateWritingApproval,
 		arg.Readdoc,
 		arg.Editdoc,
@@ -4067,20 +4031,20 @@ func (q *Queries) updateWritingApproval(ctx context.Context, arg updateWritingAp
 	return err
 }
 
-const updateWritingCategory = `-- name: updateWritingCategory :exec
+const updateWritingCategory = `-- name: UpdateWritingCategory :exec
 UPDATE writingCategory
 SET title = ?, description = ?, writingCategory_idwritingCategory = ?
 WHERE idwritingCategory = ?
 `
 
-type updateWritingCategoryParams struct {
+type UpdateWritingCategoryParams struct {
 	Title                            sql.NullString
 	Description                      sql.NullString
 	WritingcategoryIdwritingcategory int32
 	Idwritingcategory                int32
 }
 
-func (q *Queries) updateWritingCategory(ctx context.Context, arg updateWritingCategoryParams) error {
+func (q *Queries) UpdateWritingCategory(ctx context.Context, arg UpdateWritingCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, updateWritingCategory,
 		arg.Title,
 		arg.Description,
@@ -4090,58 +4054,58 @@ func (q *Queries) updateWritingCategory(ctx context.Context, arg updateWritingCa
 	return err
 }
 
-const update_blog = `-- name: update_blog :exec
+const update_blog = `-- name: Update_blog :exec
 UPDATE blogs
 SET language_idlanguage = ?, blog = ?
 WHERE idblogs = ?
 `
 
-type update_blogParams struct {
+type Update_blogParams struct {
 	LanguageIdlanguage int32
 	Blog               sql.NullString
 	Idblogs            int32
 }
 
-func (q *Queries) update_blog(ctx context.Context, arg update_blogParams) error {
+func (q *Queries) Update_blog(ctx context.Context, arg Update_blogParams) error {
 	_, err := q.db.ExecContext(ctx, update_blog, arg.LanguageIdlanguage, arg.Blog, arg.Idblogs)
 	return err
 }
 
-const update_bookmarks = `-- name: update_bookmarks :exec
+const update_bookmarks = `-- name: Update_bookmarks :exec
 UPDATE bookmarks
 SET list = ?
 WHERE users_idusers = ?
 `
 
-type update_bookmarksParams struct {
+type Update_bookmarksParams struct {
 	List         sql.NullString
 	UsersIdusers int32
 }
 
 // This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
-func (q *Queries) update_bookmarks(ctx context.Context, arg update_bookmarksParams) error {
+func (q *Queries) Update_bookmarks(ctx context.Context, arg Update_bookmarksParams) error {
 	_, err := q.db.ExecContext(ctx, update_bookmarks, arg.List, arg.UsersIdusers)
 	return err
 }
 
-const update_comment = `-- name: update_comment :exec
+const update_comment = `-- name: Update_comment :exec
 UPDATE comments
 SET language_idlanguage = ?, text = ?
 WHERE idcomments = ?
 `
 
-type update_commentParams struct {
+type Update_commentParams struct {
 	LanguageIdlanguage int32
 	Text               sql.NullString
 	Idcomments         int32
 }
 
-func (q *Queries) update_comment(ctx context.Context, arg update_commentParams) error {
+func (q *Queries) Update_comment(ctx context.Context, arg Update_commentParams) error {
 	_, err := q.db.ExecContext(ctx, update_comment, arg.LanguageIdlanguage, arg.Text, arg.Idcomments)
 	return err
 }
 
-const update_forumthread = `-- name: update_forumthread :exec
+const update_forumthread = `-- name: Update_forumthread :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -4168,12 +4132,12 @@ SET lastaddition = (
 WHERE idforumthread = ?
 `
 
-func (q *Queries) update_forumthread(ctx context.Context, idforumthread int32) error {
+func (q *Queries) Update_forumthread(ctx context.Context, idforumthread int32) error {
 	_, err := q.db.ExecContext(ctx, update_forumthread, idforumthread)
 	return err
 }
 
-const update_forumthreads = `-- name: update_forumthreads :exec
+const update_forumthreads = `-- name: Update_forumthreads :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -4199,12 +4163,12 @@ SET lastaddition = (
 )
 `
 
-func (q *Queries) update_forumthreads(ctx context.Context) error {
+func (q *Queries) Update_forumthreads(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, update_forumthreads)
 	return err
 }
 
-const update_forumtopic = `-- name: update_forumtopic :exec
+const update_forumtopic = `-- name: Update_forumtopic :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)
@@ -4230,12 +4194,12 @@ SET threads = (
 WHERE idforumtopic = ?
 `
 
-func (q *Queries) update_forumtopic(ctx context.Context, idforumtopic int32) error {
+func (q *Queries) Update_forumtopic(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, update_forumtopic, idforumtopic)
 	return err
 }
 
-const update_forumtopics = `-- name: update_forumtopics :exec
+const update_forumtopics = `-- name: Update_forumtopics :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)
@@ -4260,17 +4224,17 @@ SET threads = (
 )
 `
 
-func (q *Queries) update_forumtopics(ctx context.Context) error {
+func (q *Queries) Update_forumtopics(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, update_forumtopics)
 	return err
 }
 
-const userAllow = `-- name: userAllow :exec
+const userAllow = `-- name: UserAllow :exec
 INSERT INTO permissions (users_idusers, section, level)
 VALUES (?, ?, ?)
 `
 
-type userAllowParams struct {
+type UserAllowParams struct {
 	UsersIdusers int32
 	Section      sql.NullString
 	Level        sql.NullString
@@ -4282,18 +4246,36 @@ type userAllowParams struct {
 //	? - User ID to be associated with the permission (int)
 //	? - Section for which the permission is granted (string)
 //	? - Level of the permission (string)
-func (q *Queries) userAllow(ctx context.Context, arg userAllowParams) error {
+func (q *Queries) UserAllow(ctx context.Context, arg UserAllowParams) error {
 	_, err := q.db.ExecContext(ctx, userAllow, arg.UsersIdusers, arg.Section, arg.Level)
 	return err
 }
 
-const userByUid = `-- name: userByUid :one
+const userByEmail = `-- name: UserByEmail :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE email = ?
+`
+
+func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*User, error) {
+	row := q.db.QueryRowContext(ctx, userByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const userByUid = `-- name: UserByUid :one
 SELECT idusers, email, passwd, username
 FROM users
 WHERE idusers = ?
 `
 
-func (q *Queries) userByUid(ctx context.Context, idusers int32) (*User, error) {
+func (q *Queries) UserByUid(ctx context.Context, idusers int32) (*User, error) {
 	row := q.db.QueryRowContext(ctx, userByUid, idusers)
 	var i User
 	err := row.Scan(
@@ -4305,7 +4287,25 @@ func (q *Queries) userByUid(ctx context.Context, idusers int32) (*User, error) {
 	return &i, err
 }
 
-const userDisallow = `-- name: userDisallow :exec
+const userByUsername = `-- name: UserByUsername :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE username = ?
+`
+
+func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (*User, error) {
+	row := q.db.QueryRowContext(ctx, userByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const userDisallow = `-- name: UserDisallow :exec
 DELETE FROM permissions
 WHERE idpermissions = ?
 `
@@ -4314,28 +4314,28 @@ WHERE idpermissions = ?
 // Parameters:
 //
 //	? - Permission ID to be deleted (int)
-func (q *Queries) userDisallow(ctx context.Context, idpermissions int32) error {
+func (q *Queries) UserDisallow(ctx context.Context, idpermissions int32) error {
 	_, err := q.db.ExecContext(ctx, userDisallow, idpermissions)
 	return err
 }
 
-const user_allow = `-- name: user_allow :exec
+const user_allow = `-- name: User_allow :exec
 INSERT INTO permissions (users_idusers, section, level)
 VALUES (?, ?, ?)
 `
 
-type user_allowParams struct {
+type User_allowParams struct {
 	UsersIdusers int32
 	Section      sql.NullString
 	Level        sql.NullString
 }
 
-func (q *Queries) user_allow(ctx context.Context, arg user_allowParams) error {
+func (q *Queries) User_allow(ctx context.Context, arg User_allowParams) error {
 	_, err := q.db.ExecContext(ctx, user_allow, arg.UsersIdusers, arg.Section, arg.Level)
 	return err
 }
 
-const user_get_all_comments_for_thread = `-- name: user_get_all_comments_for_thread :many
+const user_get_all_comments_for_thread = `-- name: User_get_all_comments_for_thread :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
@@ -4347,12 +4347,12 @@ WHERE c.forumthread_idforumthread=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 
 ORDER BY c.written
 `
 
-type user_get_all_comments_for_threadParams struct {
+type User_get_all_comments_for_threadParams struct {
 	UsersIdusers             int32
 	ForumthreadIdforumthread int32
 }
 
-type user_get_all_comments_for_threadRow struct {
+type User_get_all_comments_for_threadRow struct {
 	Idcomments               int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -4362,15 +4362,15 @@ type user_get_all_comments_for_threadRow struct {
 	Posterusername           sql.NullString
 }
 
-func (q *Queries) user_get_all_comments_for_thread(ctx context.Context, arg user_get_all_comments_for_threadParams) ([]*user_get_all_comments_for_threadRow, error) {
+func (q *Queries) User_get_all_comments_for_thread(ctx context.Context, arg User_get_all_comments_for_threadParams) ([]*User_get_all_comments_for_threadRow, error) {
 	rows, err := q.db.QueryContext(ctx, user_get_all_comments_for_thread, arg.UsersIdusers, arg.ForumthreadIdforumthread)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*user_get_all_comments_for_threadRow
+	var items []*User_get_all_comments_for_threadRow
 	for rows.Next() {
-		var i user_get_all_comments_for_threadRow
+		var i User_get_all_comments_for_threadRow
 		if err := rows.Scan(
 			&i.Idcomments,
 			&i.ForumthreadIdforumthread,
@@ -4393,7 +4393,7 @@ func (q *Queries) user_get_all_comments_for_thread(ctx context.Context, arg user
 	return items, nil
 }
 
-const user_get_comment = `-- name: user_get_comment :one
+const user_get_comment = `-- name: User_get_comment :one
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.Username
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
@@ -4405,12 +4405,12 @@ WHERE c.idcomments = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.le
 LIMIT 1
 `
 
-type user_get_commentParams struct {
+type User_get_commentParams struct {
 	UsersIdusers int32
 	Idcomments   int32
 }
 
-type user_get_commentRow struct {
+type User_get_commentRow struct {
 	Idcomments               int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -4420,9 +4420,9 @@ type user_get_commentRow struct {
 	Username                 sql.NullString
 }
 
-func (q *Queries) user_get_comment(ctx context.Context, arg user_get_commentParams) (*user_get_commentRow, error) {
+func (q *Queries) User_get_comment(ctx context.Context, arg User_get_commentParams) (*User_get_commentRow, error) {
 	row := q.db.QueryRowContext(ctx, user_get_comment, arg.UsersIdusers, arg.Idcomments)
-	var i user_get_commentRow
+	var i User_get_commentRow
 	err := row.Scan(
 		&i.Idcomments,
 		&i.ForumthreadIdforumthread,
@@ -4435,7 +4435,7 @@ func (q *Queries) user_get_comment(ctx context.Context, arg user_get_commentPara
 	return &i, err
 }
 
-const user_get_thread = `-- name: user_get_thread :one
+const user_get_thread = `-- name: User_get_thread :one
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -4446,12 +4446,12 @@ WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.le
 ORDER BY t.lastaddition DESC
 `
 
-type user_get_threadParams struct {
+type User_get_threadParams struct {
 	UsersIdusers  int32
 	Idforumthread int32
 }
 
-type user_get_threadRow struct {
+type User_get_threadRow struct {
 	Idforumthread          int32
 	Firstpost              int32
 	Lastposter             int32
@@ -4464,9 +4464,9 @@ type user_get_threadRow struct {
 	Level                  sql.NullInt32
 }
 
-func (q *Queries) user_get_thread(ctx context.Context, arg user_get_threadParams) (*user_get_threadRow, error) {
+func (q *Queries) User_get_thread(ctx context.Context, arg User_get_threadParams) (*User_get_threadRow, error) {
 	row := q.db.QueryRowContext(ctx, user_get_thread, arg.UsersIdusers, arg.Idforumthread)
-	var i user_get_threadRow
+	var i User_get_threadRow
 	err := row.Scan(
 		&i.Idforumthread,
 		&i.Firstpost,
@@ -4482,7 +4482,7 @@ func (q *Queries) user_get_thread(ctx context.Context, arg user_get_threadParams
 	return &i, err
 }
 
-const user_get_threads_for_topic = `-- name: user_get_threads_for_topic :many
+const user_get_threads_for_topic = `-- name: User_get_threads_for_topic :many
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -4495,12 +4495,12 @@ WHERE th.forumtopic_idforumtopic=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0
 ORDER BY th.lastaddition DESC
 `
 
-type user_get_threads_for_topicParams struct {
+type User_get_threads_for_topicParams struct {
 	UsersIdusers           int32
 	ForumtopicIdforumtopic int32
 }
 
-type user_get_threads_for_topicRow struct {
+type User_get_threads_for_topicRow struct {
 	Idforumthread          int32
 	Firstpost              int32
 	Lastposter             int32
@@ -4515,15 +4515,15 @@ type user_get_threads_for_topicRow struct {
 	Firstposttext          sql.NullString
 }
 
-func (q *Queries) user_get_threads_for_topic(ctx context.Context, arg user_get_threads_for_topicParams) ([]*user_get_threads_for_topicRow, error) {
+func (q *Queries) User_get_threads_for_topic(ctx context.Context, arg User_get_threads_for_topicParams) ([]*User_get_threads_for_topicRow, error) {
 	rows, err := q.db.QueryContext(ctx, user_get_threads_for_topic, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*user_get_threads_for_topicRow
+	var items []*User_get_threads_for_topicRow
 	for rows.Next() {
-		var i user_get_threads_for_topicRow
+		var i User_get_threads_for_topicRow
 		if err := rows.Scan(
 			&i.Idforumthread,
 			&i.Firstpost,
@@ -4551,7 +4551,7 @@ func (q *Queries) user_get_threads_for_topic(ctx context.Context, arg user_get_t
 	return items, nil
 }
 
-const user_get_topic = `-- name: user_get_topic :one
+const user_get_topic = `-- name: User_get_topic :one
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
@@ -4561,12 +4561,12 @@ WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.le
 ORDER BY t.lastaddition DESC
 `
 
-type user_get_topicParams struct {
+type User_get_topicParams struct {
 	UsersIdusers int32
 	Idforumtopic int32
 }
 
-type user_get_topicRow struct {
+type User_get_topicRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
@@ -4580,9 +4580,9 @@ type user_get_topicRow struct {
 	Level                        sql.NullInt32
 }
 
-func (q *Queries) user_get_topic(ctx context.Context, arg user_get_topicParams) (*user_get_topicRow, error) {
+func (q *Queries) User_get_topic(ctx context.Context, arg User_get_topicParams) (*User_get_topicRow, error) {
 	row := q.db.QueryRowContext(ctx, user_get_topic, arg.UsersIdusers, arg.Idforumtopic)
-	var i user_get_topicRow
+	var i User_get_topicRow
 	err := row.Scan(
 		&i.Idforumtopic,
 		&i.Lastposter,
@@ -4599,54 +4599,54 @@ func (q *Queries) user_get_topic(ctx context.Context, arg user_get_topicParams) 
 	return &i, err
 }
 
-const usernametouid = `-- name: usernametouid :one
+const usernametouid = `-- name: Usernametouid :one
 SELECT idusers FROM users WHERE username = ?
 `
 
-func (q *Queries) usernametouid(ctx context.Context, username sql.NullString) (int32, error) {
+func (q *Queries) Usernametouid(ctx context.Context, username sql.NullString) (int32, error) {
 	row := q.db.QueryRowContext(ctx, usernametouid, username)
 	var idusers int32
 	err := row.Scan(&idusers)
 	return idusers, err
 }
 
-const writeNewsPost = `-- name: writeNewsPost :exec
+const writeNewsPost = `-- name: WriteNewsPost :exec
 INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
 VALUES (?, ?, NOW(), ?)
 `
 
-type writeNewsPostParams struct {
+type WriteNewsPostParams struct {
 	News               sql.NullString
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 }
 
-func (q *Queries) writeNewsPost(ctx context.Context, arg writeNewsPostParams) error {
+func (q *Queries) WriteNewsPost(ctx context.Context, arg WriteNewsPostParams) error {
 	_, err := q.db.ExecContext(ctx, writeNewsPost, arg.News, arg.UsersIdusers, arg.LanguageIdlanguage)
 	return err
 }
 
-const writeSiteNewsRSS = `-- name: writeSiteNewsRSS :many
+const writeSiteNewsRSS = `-- name: WriteSiteNewsRSS :many
 SELECT s.idsiteNews, s.occured, s.news
 FROM siteNews s
 ORDER BY s.occured DESC LIMIT 15
 `
 
-type writeSiteNewsRSSRow struct {
+type WriteSiteNewsRSSRow struct {
 	Idsitenews int32
 	Occured    sql.NullTime
 	News       sql.NullString
 }
 
-func (q *Queries) writeSiteNewsRSS(ctx context.Context) ([]*writeSiteNewsRSSRow, error) {
+func (q *Queries) WriteSiteNewsRSS(ctx context.Context) ([]*WriteSiteNewsRSSRow, error) {
 	rows, err := q.db.QueryContext(ctx, writeSiteNewsRSS)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*writeSiteNewsRSSRow
+	var items []*WriteSiteNewsRSSRow
 	for rows.Next() {
-		var i writeSiteNewsRSSRow
+		var i WriteSiteNewsRSSRow
 		if err := rows.Scan(&i.Idsitenews, &i.Occured, &i.News); err != nil {
 			return nil, err
 		}
@@ -4661,24 +4661,24 @@ func (q *Queries) writeSiteNewsRSS(ctx context.Context) ([]*writeSiteNewsRSSRow,
 	return items, nil
 }
 
-const writingSearchDelete = `-- name: writingSearchDelete :exec
+const writingSearchDelete = `-- name: WritingSearchDelete :exec
 DELETE FROM writingSearch
 WHERE writing_idwriting=?
 `
 
-func (q *Queries) writingSearchDelete(ctx context.Context, writingIdwriting int32) error {
+func (q *Queries) WritingSearchDelete(ctx context.Context, writingIdwriting int32) error {
 	_, err := q.db.ExecContext(ctx, writingSearchDelete, writingIdwriting)
 	return err
 }
 
-const writingSearchFirst = `-- name: writingSearchFirst :many
+const writingSearchFirst = `-- name: WritingSearchFirst :many
 SELECT DISTINCT cs.writing_idwriting
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
 
-func (q *Queries) writingSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, writingSearchFirst, word)
 	if err != nil {
 		return nil, err
@@ -4701,7 +4701,7 @@ func (q *Queries) writingSearchFirst(ctx context.Context, word sql.NullString) (
 	return items, nil
 }
 
-const writingSearchNext = `-- name: writingSearchNext :many
+const writingSearchNext = `-- name: WritingSearchNext :many
 SELECT DISTINCT cs.writing_idwriting
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -4709,12 +4709,12 @@ WHERE swl.word=?
 AND cs.writing_idwriting IN (/*SLICE:ids*/?)
 `
 
-type writingSearchNextParams struct {
+type WritingSearchNextParams struct {
 	Word sql.NullString
 	Ids  []int32
 }
 
-func (q *Queries) writingSearchNext(ctx context.Context, arg writingSearchNextParams) ([]int32, error) {
+func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextParams) ([]int32, error) {
 	query := writingSearchNext
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)

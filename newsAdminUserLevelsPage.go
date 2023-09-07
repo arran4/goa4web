@@ -30,14 +30,14 @@ func newsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) 
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
-	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("usernametouid Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := queries.user_allow(r.Context(), user_allowParams{
+	if err := queries.User_allow(r.Context(), User_allowParams{
 		UsersIdusers: uid,
 		Section: sql.NullString{
 			String: where,

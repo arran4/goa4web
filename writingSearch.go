@@ -7,7 +7,7 @@ import (
 
 func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *Queries, wacid int64) bool {
 	for _, wid := range wordIds {
-		if err := queries.addToForumWritingSearch(r.Context(), addToForumWritingSearchParams{
+		if err := queries.AddToForumWritingSearch(r.Context(), AddToForumWritingSearchParams{
 			WritingIdwriting:               int32(wacid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		}); err != nil {

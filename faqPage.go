@@ -15,7 +15,7 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type CategoryFAQs struct {
-		Category *show_questionsRow
+		Category *Show_questionsRow
 		FAQs     []*FAQ
 	}
 
@@ -32,7 +32,7 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 
 	var currentCategoryFAQs CategoryFAQs
 
-	faqRows, err := queries.show_questions(r.Context())
+	faqRows, err := queries.Show_questions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

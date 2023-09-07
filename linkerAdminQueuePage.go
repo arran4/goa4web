@@ -11,7 +11,7 @@ import (
 func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Queue []*showAdminQueueRow
+		Queue []*ShowAdminQueueRow
 	}
 
 	data := Data{
@@ -20,7 +20,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	queue, err := queries.showAdminQueue(r.Context())
+	queue, err := queries.ShowAdminQueue(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -45,7 +45,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 func linkerAdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
-	if err := queries.deleteQueueItem(r.Context(), int32(qid)); err != nil {
+	if err := queries.DeleteQueueItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateQueue Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -60,7 +60,7 @@ func linkerAdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	URL := r.URL.Query().Get("URL")
 	desc := r.URL.Query().Get("desc")
 	category, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	if err := queries.updateQueue(r.Context(), updateQueueParams{
+	if err := queries.UpdateQueue(r.Context(), UpdateQueueParams{
 		LinkercategoryIdlinkercategory: int32(category),
 		Title:                          sql.NullString{Valid: true, String: title},
 		Url:                            sql.NullString{Valid: true, String: URL},
@@ -77,7 +77,7 @@ func linkerAdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 func linkerAdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
-	if err := queries.moveToLinker(r.Context(), int32(qid)); err != nil {
+	if err := queries.MoveToLinker(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateQueue Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

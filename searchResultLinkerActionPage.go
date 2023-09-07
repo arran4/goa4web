@@ -11,8 +11,8 @@ import (
 func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments                         []*getCommentsWithThreadInfoRow
-		Links                            []*showLinksRow
+		Comments                         []*GetCommentsWithThreadInfoRow
+		Links                            []*ShowLinksRow
 		CommentsNoResults                bool
 		CommentsEmptyWords               bool
 		NoResults                        bool
@@ -27,7 +27,7 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: LinkderTopicName})
+	ftbnId, err := queries.FindForumTopicByName(r.Context(), sql.NullString{Valid: true, String: LinkderTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByName Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -57,7 +57,7 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*showLinksRow, bool, bool, error) {
+func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*ShowLinksRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var LinkerIds []int32
 
@@ -67,7 +67,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.linkerSearchFirst(r.Context(), sql.NullString{
+			ids, err := queries.LinkerSearchFirst(r.Context(), sql.NullString{
 				String: word,
 				Valid:  true,
 			})
@@ -82,7 +82,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 			}
 			LinkerIds = ids
 		} else {
-			ids, err := queries.linkerSearchNext(r.Context(), linkerSearchNextParams{
+			ids, err := queries.LinkerSearchNext(r.Context(), LinkerSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -105,7 +105,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 		}
 	}
 
-	Linkers, err := queries.showLinks(r.Context(), LinkerIds)
+	Linkers, err := queries.ShowLinks(r.Context(), LinkerIds)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -12,7 +12,7 @@ import (
 func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories []*showAllCategoriesRow
+		Categories []*ShowAllCategoriesRow
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -20,7 +20,7 @@ func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	categoryRows, err := queries.showAllCategories(r.Context())
+	categoryRows, err := queries.ShowAllCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -54,7 +54,7 @@ func forumAdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
-	if err := queries.changeCategory(r.Context(), changeCategoryParams{
+	if err := queries.ChangeCategory(r.Context(), ChangeCategoryParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -83,7 +83,7 @@ func forumAdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	if err := queries.makeCategory(r.Context(), makeCategoryParams{
+	if err := queries.MakeCategory(r.Context(), MakeCategoryParams{
 		ForumcategoryIdforumcategory: int32(pcid),
 		Title: sql.NullString{
 			Valid:  true,

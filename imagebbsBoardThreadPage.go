@@ -13,7 +13,7 @@ import (
 
 func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*user_get_all_comments_for_threadRow
+		*User_get_all_comments_for_threadRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
@@ -30,8 +30,8 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		ForumThreadId      int
 		Comments           []*CommentPlus
 		BoardId            int
-		ImagePost          *printImagePostRow
-		Thread             *user_get_threadRow
+		ImagePost          *PrintImagePostRow
+		Thread             *User_get_threadRow
 		Offset             int
 		IsReplyable        bool
 	}
@@ -51,7 +51,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+	commentRows, err := queries.User_get_all_comments_for_thread(r.Context(), User_get_all_comments_for_threadParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(thid),
 	})
@@ -65,7 +65,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+	threadRow, err := queries.User_get_thread(r.Context(), User_get_threadParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(thid),
 	})
@@ -96,7 +96,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
-			user_get_all_comments_for_threadRow: row,
+			User_get_all_comments_for_threadRow: row,
 			ShowReply:                           true,
 			EditUrl:                             editUrl,
 			EditSaveUrl:                         editSaveUrl,
@@ -108,7 +108,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	post, err := queries.printImagePost(r.Context(), int32(bid))
+	post, err := queries.PrintImagePost(r.Context(), int32(bid))
 	if err != nil {
 		log.Printf("printSubBoards Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -151,7 +151,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	post, err := queries.printImagePost(r.Context(), int32(bid))
+	post, err := queries.PrintImagePost(r.Context(), int32(bid))
 	if err != nil {
 		log.Printf("printSubBoards Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -159,12 +159,12 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var pthid int32 = post.ForumthreadIdforumthread
-	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
+	ptid, err := queries.FindForumTopicByName(r.Context(), sql.NullString{
 		String: ImagebbsTopicName,
 		Valid:  true,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
+		ptidi, err := queries.MakeTopic(r.Context(), MakeTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: ImagebbsTopicName,
@@ -187,14 +187,14 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if pthid == 0 {
-		pthidi, err := queries.makeThread(r.Context(), ptid)
+		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.assignImagePostThisThreadId(r.Context(), assignImagePostThisThreadIdParams{
+		if err := queries.AssignImagePostThisThreadId(r.Context(), AssignImagePostThisThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idimagepost:              int32(bid),
 		}); err != nil {
@@ -210,7 +210,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
 
-	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
+	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
@@ -223,7 +223,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	//if rows, err := queries.somethingNotifyImagebbss(r.Context(), somethingNotifyImagebbssParams{
+	//if rows, err := queries.SomethingNotifyImagebbss(r.Context(), SomethingNotifyImagebbssParams{
 	//	Idusers: uid,
 	//	Idimagebbss: int32(bid),
 	//}); err != nil {
@@ -237,7 +237,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 	//	}
 	//}
 
-	cid, err := queries.makePost(r.Context(), makePostParams{
+	cid, err := queries.MakePost(r.Context(), MakePostParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -264,13 +264,13 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.update_forumthread(r.Context(), pthid); err != nil {
+	if err := queries.Update_forumthread(r.Context(), pthid); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), ptid); err != nil {
+	if err := queries.Update_forumtopic(r.Context(), ptid); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

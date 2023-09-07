@@ -339,7 +339,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 
 		queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-		targetUser, err := queries.getUsersTopicLevel(r.Context(), getUsersTopicLevelParams{
+		targetUser, err := queries.GetUsersTopicLevel(r.Context(), GetUsersTopicLevelParams{
 			ForumtopicIdforumtopic: int32(tid),
 			UsersIdusers:           int32(targetUid),
 		})
@@ -347,7 +347,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 			return false
 		}
 
-		adminUser, err := queries.getUsersTopicLevel(r.Context(), getUsersTopicLevelParams{
+		adminUser, err := queries.GetUsersTopicLevel(r.Context(), GetUsersTopicLevelParams{
 			ForumtopicIdforumtopic: int32(tid),
 			UsersIdusers:           int32(adminUid),
 		})
@@ -379,7 +379,7 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 		}
 		queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-		adminUser, err := queries.getUsersTopicLevel(r.Context(), getUsersTopicLevelParams{
+		adminUser, err := queries.GetUsersTopicLevel(r.Context(), GetUsersTopicLevelParams{
 			ForumtopicIdforumtopic: int32(tid),
 			UsersIdusers:           int32(adminUid),
 		})
@@ -421,7 +421,7 @@ func NewsPostAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.getNewsThreadId(request.Context(), int32(newsPostId))
+		row, err := queries.GetNewsThreadId(request.Context(), int32(newsPostId))
 		if err != nil {
 			log.Printf("Error: %s", err)
 			return false
@@ -439,7 +439,7 @@ func BlogAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.show_blog(request.Context(), int32(blogId))
+		row, err := queries.Show_blog(request.Context(), int32(blogId))
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -461,7 +461,7 @@ func WritingAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.fetchWritingById(request.Context(), fetchWritingByIdParams{
+		row, err := queries.FetchWritingById(request.Context(), FetchWritingByIdParams{
 			Userid:    uid,
 			Idwriting: int32(writingId),
 		})
@@ -482,7 +482,7 @@ func CommentAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.user_get_comment(request.Context(), user_get_commentParams{
+		row, err := queries.User_get_comment(request.Context(), User_get_commentParams{
 			UsersIdusers: uid,
 			Idcomments:   int32(commentId),
 		})

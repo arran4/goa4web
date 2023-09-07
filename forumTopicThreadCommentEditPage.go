@@ -23,7 +23,7 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 	threadId, _ := strconv.Atoi(vars["thread"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
-	err = queries.update_comment(r.Context(), update_commentParams{
+	err = queries.Update_comment(r.Context(), Update_commentParams{
 		Idcomments:         int32(commentId),
 		LanguageIdlanguage: int32(languageId),
 		Text: sql.NullString{
@@ -48,13 +48,13 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.update_forumthread(r.Context(), int32(threadId)); err != nil {
+	if err := queries.Update_forumthread(r.Context(), int32(threadId)); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), int32(topicId)); err != nil {
+	if err := queries.Update_forumtopic(r.Context(), int32(topicId)); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

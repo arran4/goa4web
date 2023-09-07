@@ -10,7 +10,7 @@ import (
 func blogsBloggersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows []*show_blogger_listRow
+		Rows []*Show_blogger_listRow
 	}
 
 	data := Data{
@@ -19,7 +19,7 @@ func blogsBloggersPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.show_blogger_list(r.Context())
+	rows, err := queries.Show_blogger_list(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

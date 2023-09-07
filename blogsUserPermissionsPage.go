@@ -13,7 +13,7 @@ func blogsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	// TODO add guard
 	type Data struct {
 		*CoreData
-		Rows []*blogsUserPermissionsRow
+		Rows []*BlogsUserPermissionsRow
 	}
 
 	data := Data{
@@ -22,7 +22,7 @@ func blogsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.blogsUserPermissions(r.Context())
+	rows, err := queries.BlogsUserPermissions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -55,9 +55,9 @@ func blogsUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) 
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/blogs/bloggers",
 	}
-	if uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
+	if uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("usernametouid: %w", err).Error())
-	} else if err := queries.user_allow(r.Context(), user_allowParams{
+	} else if err := queries.User_allow(r.Context(), User_allowParams{
 		UsersIdusers: uid,
 		Section: sql.NullString{
 			String: where,
@@ -94,7 +94,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.userDisallow(r.Context(), int32(permidi)); err != nil {
+	} else if err := queries.UserDisallow(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomBlogIndex(data.CoreData, r)

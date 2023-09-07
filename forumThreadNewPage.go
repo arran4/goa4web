@@ -49,7 +49,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 
 	// TODO check if the user has the right right to topic
 
-	threadId, err := queries.makeThread(r.Context(), int32(topicId))
+	threadId, err := queries.MakeThread(r.Context(), int32(topicId))
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -61,7 +61,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
 
-	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
+	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
 		ForumthreadIdforumthread: int32(threadId),
 		Idusers:                  uid,
 	}); err != nil {
@@ -74,7 +74,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
+	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
 		Idusers:                  uid,
 		ForumthreadIdforumthread: int32(threadId),
 	}); err != nil {
@@ -88,7 +88,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cid, err := queries.makePost(r.Context(), makePostParams{
+	cid, err := queries.MakePost(r.Context(), MakePostParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(threadId),
@@ -115,13 +115,13 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.update_forumthread(r.Context(), int32(threadId)); err != nil {
+	if err := queries.Update_forumthread(r.Context(), int32(threadId)); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), int32(topicId)); err != nil {
+	if err := queries.Update_forumtopic(r.Context(), int32(topicId)); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

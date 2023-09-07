@@ -14,7 +14,7 @@ import (
 
 func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*user_get_all_comments_for_threadRow
+		*User_get_all_comments_for_threadRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
@@ -25,14 +25,14 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Writing             *fetchWritingByIdRow
+		Writing             *FetchWritingByIdRow
 		CanEdit             bool
 		IsAuthor            bool
 		CanReply            bool
 		UserId              int32
 		Languages           []*Language
 		SelectedLanguageId  int
-		Thread              *user_get_threadRow
+		Thread              *User_get_threadRow
 		Comments            []*CommentPlus
 		IsReplyable         bool
 		IsAdmin             bool
@@ -56,7 +56,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.UserId = uid
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	writing, err := queries.fetchWritingById(r.Context(), fetchWritingByIdParams{
+	writing, err := queries.FetchWritingById(r.Context(), FetchWritingByIdParams{
 		Userid:    uid,
 		Idwriting: int32(articleId),
 	})
@@ -78,7 +78,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+	commentRows, err := queries.User_get_all_comments_for_thread(r.Context(), User_get_all_comments_for_threadParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: writing.ForumthreadIdforumthread,
 	})
@@ -92,7 +92,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+	threadRow, err := queries.User_get_thread(r.Context(), User_get_threadParams{
 		UsersIdusers:  uid,
 		Idforumthread: writing.ForumthreadIdforumthread,
 	})
@@ -106,7 +106,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryRows, err := queries.fetchAllCategories(r.Context())
+	categoryRows, err := queries.FetchAllCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -152,7 +152,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
-			user_get_all_comments_for_threadRow: row,
+			User_get_all_comments_for_threadRow: row,
 			ShowReply:                           true,
 			EditUrl:                             editUrl,
 			EditSaveUrl:                         editSaveUrl,
@@ -193,7 +193,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.fetchWritingById(r.Context(), fetchWritingByIdParams{
+	post, err := queries.FetchWritingById(r.Context(), FetchWritingByIdParams{
 		Userid:    uid,
 		Idwriting: int32(aid),
 	})
@@ -204,12 +204,12 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var pthid int32 = post.ForumthreadIdforumthread
-	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
+	ptid, err := queries.FindForumTopicByName(r.Context(), sql.NullString{
 		String: WritingTopicName,
 		Valid:  true,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
+		ptidi, err := queries.MakeTopic(r.Context(), MakeTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: WritingTopicName,
@@ -232,14 +232,14 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if pthid == 0 {
-		pthidi, err := queries.makeThread(r.Context(), ptid)
+		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.assignWritingThisThreadId(r.Context(), assignWritingThisThreadIdParams{
+		if err := queries.AssignWritingThisThreadId(r.Context(), AssignWritingThisThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idwriting:                int32(aid),
 		}); err != nil {
@@ -254,7 +254,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/article/%d", aid)
 
-	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
+	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
@@ -268,7 +268,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO
-	//if rows, err := queries.somethingNotifyArticle(r.Context(), somethingNotifyArticlesParams{
+	//if rows, err := queries.SomethingNotifyArticle(r.Context(), SomethingNotifyArticlesParams{
 	//	Idusers: uid,
 	//	Idarticles: int32(bid),
 	//}); err != nil {
@@ -282,7 +282,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	//	}
 	//}
 
-	cid, err := queries.makePost(r.Context(), makePostParams{
+	cid, err := queries.MakePost(r.Context(), MakePostParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -309,13 +309,13 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.update_forumthread(r.Context(), pthid); err != nil {
+	if err := queries.Update_forumthread(r.Context(), pthid); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), ptid); err != nil {
+	if err := queries.Update_forumtopic(r.Context(), ptid); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

@@ -12,7 +12,7 @@ import (
 func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories []*showAllCategoriesRow
+		Categories []*ShowAllCategoriesRow
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -20,7 +20,7 @@ func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	categoryRows, err := queries.showAllCategories(r.Context())
+	categoryRows, err := queries.ShowAllCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -54,7 +54,7 @@ func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
-	if err := queries.updateWritingCategory(r.Context(), updateWritingCategoryParams{
+	if err := queries.UpdateWritingCategory(r.Context(), UpdateWritingCategoryParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -83,7 +83,7 @@ func writingsAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	if err := queries.insertWritingCategory(r.Context(), insertWritingCategoryParams{
+	if err := queries.InsertWritingCategory(r.Context(), InsertWritingCategoryParams{
 		WritingcategoryIdwritingcategory: int32(pcid),
 		Title: sql.NullString{
 			Valid:  true,

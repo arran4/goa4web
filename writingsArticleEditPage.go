@@ -14,7 +14,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Languages          []*Language
 		SelectedLanguageId int
-		Writing            *fetchWritingByIdRow
+		Writing            *FetchWritingByIdRow
 		UserId             int32
 	}
 
@@ -31,7 +31,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	writing, err := queries.fetchWritingById(r.Context(), fetchWritingByIdParams{
+	writing, err := queries.FetchWritingById(r.Context(), FetchWritingByIdParams{
 		Userid:    uid,
 		Idwriting: int32(articleId),
 	})
@@ -71,7 +71,7 @@ func writingsArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.updateWriting(r.Context(), updateWritingParams{
+	if err := queries.UpdateWriting(r.Context(), UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},
 		Abstract:           sql.NullString{Valid: true, String: abstract},
 		Writting:           sql.NullString{Valid: true, String: body},
@@ -84,7 +84,7 @@ func writingsArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := queries.writingSearchDelete(r.Context(), int32(articleId)); err != nil {
+	if err := queries.WritingSearchDelete(r.Context(), int32(articleId)); err != nil {
 		log.Printf("writingSearchDelete Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

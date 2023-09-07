@@ -13,11 +13,11 @@ import (
 
 func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*show_blogRow
+		*Show_blogRow
 		EditUrl string
 	}
 	type BlogComment struct {
-		*user_get_all_comments_for_threadRow
+		*User_get_all_comments_for_threadRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
@@ -63,7 +63,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	blog, err := queries.show_blog(r.Context(), int32(blogId))
+	blog, err := queries.Show_blog(r.Context(), int32(blogId))
 	if err != nil {
 		log.Printf("show_blog_comments Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -76,7 +76,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Blog = &BlogRow{
-		show_blogRow: blog,
+		Show_blogRow: blog,
 		EditUrl:      editUrl,
 	}
 
@@ -86,7 +86,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	if blog.ForumthreadIdforumthread > 0 { // TODO make nullable.
 
 		if commentIdString != "" {
-			comment, err := queries.user_get_comment(r.Context(), user_get_commentParams{
+			comment, err := queries.User_get_comment(r.Context(), User_get_commentParams{
 				UsersIdusers: uid,
 				Idcomments:   int32(commentId),
 			})
@@ -103,7 +103,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		rows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+		rows, err := queries.User_get_all_comments_for_thread(r.Context(), User_get_all_comments_for_threadParams{
 			UsersIdusers:             uid,
 			ForumthreadIdforumthread: blog.ForumthreadIdforumthread,
 		})
@@ -128,7 +128,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			data.Comments = append(data.Comments, &BlogComment{
-				user_get_all_comments_for_threadRow: row,
+				User_get_all_comments_for_threadRow: row,
 				ShowReply:                           true,
 				EditUrl:                             editUrl,
 				EditSaveUrl:                         editSaveUrl,

@@ -23,7 +23,7 @@ func linkerSuggestPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	categoryRows, err := queries.showCategories(r.Context())
+	categoryRows, err := queries.ShowCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -63,7 +63,7 @@ func linkerSuggestActionPage(w http.ResponseWriter, r *http.Request) {
 	description := r.PostFormValue("description")
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
-	if err := queries.addToQueue(r.Context(), addToQueueParams{
+	if err := queries.AddToQueue(r.Context(), AddToQueueParams{
 		UsersIdusers:                   uid,
 		LinkercategoryIdlinkercategory: int32(category),
 		Title:                          sql.NullString{Valid: true, String: title},

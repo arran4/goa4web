@@ -11,12 +11,12 @@ import (
 
 func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*show_blogRow
+		*Show_blogRow
 		EditUrl     string
 		IsReplyable bool
 	}
 	type BlogComment struct {
-		*user_get_all_comments_for_threadRow
+		*User_get_all_comments_for_threadRow
 		ShowReply bool
 		EditUrl   string
 		Editing   bool
@@ -59,7 +59,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	blog, err := queries.show_blog(r.Context(), int32(blogId))
+	blog, err := queries.Show_blog(r.Context(), int32(blogId))
 	if err != nil {
 		log.Printf("show_blog_comments Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -72,7 +72,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Blog = &BlogRow{
-		show_blogRow: blog,
+		Show_blogRow: blog,
 		EditUrl:      editUrl,
 		IsReplyable:  true, // TODO
 	}

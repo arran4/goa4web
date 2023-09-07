@@ -17,7 +17,7 @@ func imagebbsAdminBoardModifyBoardActionPage(w http.ResponseWriter, r *http.Requ
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	err := queries.changeImageBoard(r.Context(), changeImageBoardParams{
+	err := queries.ChangeImageBoard(r.Context(), ChangeImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},

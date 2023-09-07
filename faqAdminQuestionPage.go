@@ -21,7 +21,7 @@ func faqAdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	catrows, err := queries.faq_categories(r.Context())
+	catrows, err := queries.Faq_categories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -61,7 +61,7 @@ func faqQuestionsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.delete_faq(r.Context(), int32(faq)); err != nil {
+	if err := queries.Delete_faq(r.Context(), int32(faq)); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -87,7 +87,7 @@ func faqQuestionsEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.modify_faq(r.Context(), modify_faqParams{
+	if err := queries.Modify_faq(r.Context(), Modify_faqParams{
 		Answer:                       sql.NullString{Valid: true, String: answer},
 		Question:                     sql.NullString{Valid: true, String: question},
 		FaqcategoriesIdfaqcategories: int32(category),

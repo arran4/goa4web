@@ -10,7 +10,7 @@ import (
 func imagebbsAdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards []*showAllBoardsRow
+		Boards []*ShowAllBoardsRow
 	}
 
 	data := Data{
@@ -18,7 +18,7 @@ func imagebbsAdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	boardRows, err := queries.showAllBoards(r.Context())
+	boardRows, err := queries.ShowAllBoards(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -11,7 +11,7 @@ import (
 func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		ApprovedUsers []*fetchAllWritingApprovalsRow
+		ApprovedUsers []*FetchAllWritingApprovalsRow
 	}
 
 	data := Data{
@@ -20,7 +20,7 @@ func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	approvedUserRows, err := queries.fetchAllWritingApprovals(r.Context())
+	approvedUserRows, err := queries.FetchAllWritingApprovals(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -47,14 +47,14 @@ func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Reque
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
-	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("usernametouid Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := queries.user_allow(r.Context(), user_allowParams{
+	if err := queries.User_allow(r.Context(), User_allowParams{
 		UsersIdusers: uid,
 		Section: sql.NullString{
 			String: where,
@@ -78,14 +78,14 @@ func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request
 	username := r.PostFormValue("username")
 	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
 	editdoc, _ := strconv.ParseBool(r.PostFormValue("editdoc"))
-	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("usernametouid Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := queries.insertWritingApproval(r.Context(), insertWritingApprovalParams{
+	if err := queries.InsertWritingApproval(r.Context(), InsertWritingApprovalParams{
 		WritingIdwriting: int32(wid),
 		UsersIdusers:     int32(uid),
 		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
@@ -104,7 +104,7 @@ func writingsAdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Requ
 	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
 	editdoc, _ := strconv.ParseBool(r.PostFormValue("editdoc"))
 
-	if err := queries.updateWritingApproval(r.Context(), updateWritingApprovalParams{
+	if err := queries.UpdateWritingApproval(r.Context(), UpdateWritingApprovalParams{
 		WritingIdwriting: int32(wid),
 		UsersIdusers:     int32(uid),
 		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
@@ -122,7 +122,7 @@ func writingsAdminUserAccessRemoveActionPage(w http.ResponseWriter, r *http.Requ
 	uid, _ := strconv.Atoi(r.PostFormValue("uid"))
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 
-	if err := queries.deleteWritingApproval(r.Context(), deleteWritingApprovalParams{
+	if err := queries.DeleteWritingApproval(r.Context(), DeleteWritingApprovalParams{
 		WritingIdwriting: int32(wid),
 		UsersIdusers:     int32(uid),
 	}); err != nil {

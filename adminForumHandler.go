@@ -47,7 +47,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	WHERE c.idcomments=?;
 	*/
 
-	if err := queries.update_forumthreads(r.Context()); err != nil {
+	if err := queries.Update_forumthreads(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update_forumthread_firstpost: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
@@ -68,7 +68,7 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/forum",
 	}
-	if err := queries.update_forumtopics(r.Context()); err != nil {
+	if err := queries.Update_forumtopics(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update_forumtopic_lastaddition_lastposter: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)

@@ -10,7 +10,7 @@ import (
 func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards      []*printSubBoardsRow
+		Boards      []*PrintSubBoardsRow
 		IsSubBoard  bool
 		BoardNumber int
 	}
@@ -23,7 +23,7 @@ func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	subBoardRows, err := queries.printSubBoards(r.Context(), 0)
+	subBoardRows, err := queries.PrintSubBoards(r.Context(), 0)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

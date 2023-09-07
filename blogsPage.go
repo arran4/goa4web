@@ -15,7 +15,7 @@ import (
 
 func blogsPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*show_latest_blogsRow
+		*Show_latest_blogsRow
 		EditUrl string
 	}
 	type Data struct {
@@ -34,7 +34,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	userLanguagePref := 0
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	rows, err := queries.show_latest_blogs(r.Context(), show_latest_blogsParams{
+	rows, err := queries.Show_latest_blogs(r.Context(), Show_latest_blogsParams{
 		UsersIdusers:       int32(userId),
 		LanguageIdlanguage: int32(userLanguagePref),
 		Limit:              15,
@@ -62,7 +62,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
-			show_latest_blogsRow: row,
+			Show_latest_blogsRow: row,
 			EditUrl:              editUrl,
 		})
 	}
@@ -152,7 +152,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	uid, err := queries.usernametouid(r.Context(), sql.NullString{
+	uid, err := queries.Usernametouid(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
@@ -175,7 +175,7 @@ func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 func blogsAtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	uid, err := queries.usernametouid(r.Context(), sql.NullString{
+	uid, err := queries.Usernametouid(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
@@ -209,7 +209,7 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		Created:     time.Date(2005, 6, 25, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows, err := queries.blog_rss(r.Context(), blog_rssParams{
+	rows, err := queries.Blog_rss(r.Context(), Blog_rssParams{
 		UsersIdusers: int32(uid),
 		Limit:        15,
 	})

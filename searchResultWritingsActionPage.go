@@ -11,8 +11,8 @@ import (
 func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*getCommentsWithThreadInfoRow
-		Writings           []*fetchWritingByIdsRow
+		Comments           []*GetCommentsWithThreadInfoRow
+		Writings           []*FetchWritingByIdsRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -26,7 +26,7 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: WritingTopicName})
+	ftbnId, err := queries.FindForumTopicByName(r.Context(), sql.NullString{Valid: true, String: WritingTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByName Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*fetchWritingByIdsRow, bool, bool, error) {
+func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*FetchWritingByIdsRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 
@@ -66,7 +66,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.writingSearchFirst(r.Context(), sql.NullString{
+			ids, err := queries.WritingSearchFirst(r.Context(), sql.NullString{
 				String: word,
 				Valid:  true,
 			})
@@ -81,7 +81,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 			}
 			writingsIds = ids
 		} else {
-			ids, err := queries.writingSearchNext(r.Context(), writingSearchNextParams{
+			ids, err := queries.WritingSearchNext(r.Context(), WritingSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -104,7 +104,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 		}
 	}
 
-	writings, err := queries.fetchWritingByIds(r.Context(), fetchWritingByIdsParams{
+	writings, err := queries.FetchWritingByIds(r.Context(), FetchWritingByIdsParams{
 		Userid:     uid,
 		Writingids: writingsIds,
 	})

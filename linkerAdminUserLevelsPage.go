@@ -19,7 +19,7 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	rows, err := queries.getUsersPermissions(r.Context())
+	rows, err := queries.GetUsersPermissions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -44,14 +44,14 @@ func linkerAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
-	uid, err := queries.usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("usernametouid Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := queries.user_allow(r.Context(), user_allowParams{
+	if err := queries.User_allow(r.Context(), User_allowParams{
 		UsersIdusers: uid,
 		Section: sql.NullString{
 			String: where,
@@ -72,7 +72,7 @@ func linkerAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request
 func linkerAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	permid, _ := strconv.Atoi(r.PostFormValue("permid"))
-	if err := queries.userDisallow(r.Context(), int32(permid)); err != nil {
+	if err := queries.UserDisallow(r.Context(), int32(permid)); err != nil {
 		log.Printf("userDisallow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

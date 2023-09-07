@@ -43,7 +43,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.CopyDataToSubCategories = copyDataToSubCategories
 
-	categoryRows, err := queries.forumCategories(r.Context())
+	categoryRows, err := queries.ForumCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -55,7 +55,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	}
 	var topicRows []*ForumtopicPlus
 	if categoryId == 0 {
-		rows, err := queries.get_all_user_topics(r.Context(), uid)
+		rows, err := queries.Get_all_user_topics(r.Context(), uid)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -78,7 +78,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	} else {
-		rows, err := queries.get_all_user_topics_for_category(r.Context(), get_all_user_topics_for_categoryParams{
+		rows, err := queries.Get_all_user_topics_for_category(r.Context(), Get_all_user_topics_for_categoryParams{
 			UsersIdusers:                 uid,
 			ForumcategoryIdforumcategory: int32(categoryId),
 		})

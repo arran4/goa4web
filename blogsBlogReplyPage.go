@@ -29,7 +29,7 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	blog, err := queries.show_blog(r.Context(), int32(bid))
+	blog, err := queries.Show_blog(r.Context(), int32(bid))
 	if err != nil {
 		log.Printf("show_blog_comments Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -37,12 +37,12 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var pthid int32 = blog.ForumthreadIdforumthread
-	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
+	ptid, err := queries.FindForumTopicByName(r.Context(), sql.NullString{
 		String: BloggerTopicName,
 		Valid:  true,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
+		ptidi, err := queries.MakeTopic(r.Context(), MakeTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: BloggerTopicName,
@@ -65,14 +65,14 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if pthid == 0 {
-		pthidi, err := queries.makeThread(r.Context(), ptid)
+		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.assign_blog_to_thread(r.Context(), assign_blog_to_threadParams{
+		if err := queries.Assign_blog_to_thread(r.Context(), Assign_blog_to_threadParams{
 			ForumthreadIdforumthread: pthid,
 			Idblogs:                  int32(bid),
 		}); err != nil {
@@ -88,7 +88,7 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/blogs/blog/%d/comments", bid)
 
-	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
+	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
@@ -101,7 +101,7 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if rows, err := queries.somethingNotifyBlogs(r.Context(), somethingNotifyBlogsParams{
+	if rows, err := queries.SomethingNotifyBlogs(r.Context(), SomethingNotifyBlogsParams{
 		Idusers: uid,
 		Idblogs: int32(bid),
 	}); err != nil {
@@ -115,7 +115,7 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cid, err := queries.makePost(r.Context(), makePostParams{
+	cid, err := queries.MakePost(r.Context(), MakePostParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -142,13 +142,13 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.update_forumthread(r.Context(), pthid); err != nil {
+	if err := queries.Update_forumthread(r.Context(), pthid); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), ptid); err != nil {
+	if err := queries.Update_forumtopic(r.Context(), ptid); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

@@ -19,7 +19,7 @@ type NewsPost struct {
 
 func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*user_get_all_comments_for_threadRow
+		*User_get_all_comments_for_threadRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
@@ -29,7 +29,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Post struct {
-		*getNewsPostRow
+		*GetNewsPostRow
 		ShowReply bool
 		ShowEdit  bool
 		Editing   bool
@@ -44,7 +44,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		Offset             int
 		IsReplying         bool
 		IsReplyable        bool
-		Thread             *user_get_threadRow
+		Thread             *User_get_threadRow
 		ReplyText          string
 	}
 
@@ -60,7 +60,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	post, err := queries.getNewsPost(r.Context(), int32(pid))
+	post, err := queries.GetNewsPost(r.Context(), int32(pid))
 	if err != nil {
 		log.Printf("getNewsPost Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")
 
-	commentRows, err := queries.user_get_all_comments_for_thread(r.Context(), user_get_all_comments_for_threadParams{
+	commentRows, err := queries.User_get_all_comments_for_thread(r.Context(), User_get_all_comments_for_threadParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(post.ForumthreadIdforumthread),
 	})
@@ -84,7 +84,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.user_get_thread(r.Context(), user_get_threadParams{
+	threadRow, err := queries.User_get_thread(r.Context(), User_get_threadParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(post.ForumthreadIdforumthread),
 	})
@@ -127,7 +127,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
-			user_get_all_comments_for_threadRow: row,
+			User_get_all_comments_for_threadRow: row,
 			ShowReply:                           true,
 			EditUrl:                             editUrl,
 			EditSaveUrl:                         editSaveUrl,
@@ -140,7 +140,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Thread = threadRow
 	data.Post = &Post{
-		getNewsPostRow: post,
+		GetNewsPostRow: post,
 		ShowReply:      true, // TODO
 		ShowEdit:       true, // TODO
 		Editing:        editingId == int(post.Idsitenews),
@@ -180,7 +180,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	post, err := queries.getNewsPost(r.Context(), int32(pid))
+	post, err := queries.GetNewsPost(r.Context(), int32(pid))
 	if err != nil {
 		log.Printf("getNewsPost Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -188,12 +188,12 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var pthid = post.ForumthreadIdforumthread
-	ptid, err := queries.findForumTopicByName(r.Context(), sql.NullString{
+	ptid, err := queries.FindForumTopicByName(r.Context(), sql.NullString{
 		String: NewsTopicName,
 		Valid:  true,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.makeTopic(r.Context(), makeTopicParams{
+		ptidi, err := queries.MakeTopic(r.Context(), MakeTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: NewsTopicName,
@@ -216,14 +216,14 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if pthid == 0 {
-		pthidi, err := queries.makeThread(r.Context(), ptid)
+		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.assignNewsThisThreadId(r.Context(), assignNewsThisThreadIdParams{
+		if err := queries.AssignNewsThisThreadId(r.Context(), AssignNewsThisThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idsitenews:               int32(pid),
 		}); err != nil {
@@ -239,7 +239,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/news/news/%d", pid)
 
-	if rows, err := queries.threadNotify(r.Context(), threadNotifyParams{
+	if rows, err := queries.ThreadNotify(r.Context(), ThreadNotifyParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
@@ -253,7 +253,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO
-	//if rows, err := queries.somethingNotifyNews(r.Context(), somethingNotifyNewssParams{
+	//if rows, err := queries.SomethingNotifyNews(r.Context(), somethingNotifyNewssParams{
 	//	Idusers: uid,
 	//	Idnewss: int32(bid),
 	//}); err != nil {
@@ -267,7 +267,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	//	}
 	//}
 
-	cid, err := queries.makePost(r.Context(), makePostParams{
+	cid, err := queries.MakePost(r.Context(), MakePostParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -294,13 +294,13 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.update_forumthread(r.Context(), pthid); err != nil {
+	if err := queries.Update_forumthread(r.Context(), pthid); err != nil {
 		log.Printf("Error: update_forumthread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.update_forumtopic(r.Context(), ptid); err != nil {
+	if err := queries.Update_forumtopic(r.Context(), ptid); err != nil {
 		log.Printf("Error: update_forumtopic: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -330,7 +330,7 @@ func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
-	err = queries.editNewsPost(r.Context(), editNewsPostParams{
+	err = queries.EditNewsPost(r.Context(), EditNewsPostParams{
 		Idsitenews:         int32(postId),
 		LanguageIdlanguage: int32(languageId),
 		News: sql.NullString{
@@ -358,7 +358,7 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	err = queries.writeNewsPost(r.Context(), writeNewsPostParams{
+	err = queries.WriteNewsPost(r.Context(), WriteNewsPostParams{
 		LanguageIdlanguage: int32(languageId),
 		News: sql.NullString{
 			String: text,

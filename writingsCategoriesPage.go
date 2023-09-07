@@ -15,7 +15,7 @@ func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		EditingCategoryId                int32 // TODO
 		IsAdmin                          bool  // TODO
 		IsWriter                         bool  // TODO
-		Abstracts                        []*fetchPublicWritingsInCategoryRow
+		Abstracts                        []*FetchPublicWritingsInCategoryRow
 		WritingcategoryIdwritingcategory int32
 	}
 
@@ -26,7 +26,7 @@ func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	categoryRows, err := queries.fetchAllCategories(r.Context())
+	categoryRows, err := queries.FetchAllCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -37,7 +37,7 @@ func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writingsRows, err := queries.fetchPublicWritingsInCategory(r.Context(), 0)
+	writingsRows, err := queries.FetchPublicWritingsInCategory(r.Context(), 0)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

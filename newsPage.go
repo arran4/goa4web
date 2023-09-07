@@ -12,7 +12,7 @@ import (
 
 func newsPage(w http.ResponseWriter, r *http.Request) {
 	type Post struct {
-		*getLatestNewsPostsRow
+		*GetLatestNewsPostsRow
 		ShowReply bool
 		ShowEdit  bool
 		Editing   bool
@@ -27,7 +27,7 @@ func newsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	posts, err := queries.getLatestNewsPosts(r.Context())
+	posts, err := queries.GetLatestNewsPosts(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -42,7 +42,7 @@ func newsPage(w http.ResponseWriter, r *http.Request) {
 
 	for _, post := range posts {
 		data.News = append(data.News, &Post{
-			getLatestNewsPostsRow: post,
+			GetLatestNewsPostsRow: post,
 			ShowReply:             true, // TODO
 			ShowEdit:              true, // TODO
 			Editing:               editingId == int(post.Idsitenews),

@@ -12,7 +12,7 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		MaxUserLevel    int32
-		UserTopicLevels []*getAllUsersAllTopicLevelsRow
+		UserTopicLevels []*GetAllUsersAllTopicLevelsRow
 		Users           []*User
 		Topics          []*Forumtopic
 	}
@@ -23,7 +23,7 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.getAllUsersAllTopicLevels(r.Context())
+	rows, err := queries.GetAllUsersAllTopicLevels(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -36,7 +36,7 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.UserTopicLevels = rows
 
-	userRows, err := queries.allUsers(r.Context())
+	userRows, err := queries.AllUsers(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -48,7 +48,7 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Users = userRows
 
-	topicRows, err := queries.getAllTopics(r.Context())
+	topicRows, err := queries.GetAllTopics(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -92,7 +92,7 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.setUsersTopicLevel(r.Context(), setUsersTopicLevelParams{
+	if err := queries.SetUsersTopicLevel(r.Context(), SetUsersTopicLevelParams{
 		Level: sql.NullInt32{
 			Valid: true,
 			Int32: int32(level),
@@ -127,7 +127,7 @@ func forumAdminUsersRestrictionsDeletePage(w http.ResponseWriter, r *http.Reques
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.deleteUsersTopicLevel(r.Context(), deleteUsersTopicLevelParams{
+	if err := queries.DeleteUsersTopicLevel(r.Context(), DeleteUsersTopicLevelParams{
 		ForumtopicIdforumtopic: int32(tid),
 		UsersIdusers:           int32(uid),
 	}); err != nil {

@@ -20,7 +20,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.completeWordList(r.Context())
+	rows, err := queries.CompleteWordList(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

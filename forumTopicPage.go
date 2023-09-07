@@ -17,7 +17,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Admin                   bool
 		Back                    bool
 		Topic                   *ForumtopicPlus
-		Threads                 []*user_get_threads_for_topicRow
+		Threads                 []*User_get_threads_for_topicRow
 		Categories              []*ForumcategoryPlus
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
@@ -43,7 +43,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.CopyDataToSubCategories = copyDataToSubCategories
 
-	categoryRows, err := queries.forumCategories(r.Context())
+	categoryRows, err := queries.ForumCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -53,7 +53,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	topicRow, err := queries.user_get_topic(r.Context(), user_get_topicParams{
+	topicRow, err := queries.User_get_topic(r.Context(), User_get_topicParams{
 		UsersIdusers: uid,
 		Idforumtopic: int32(topicId),
 	})
@@ -88,7 +88,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRows, err := queries.user_get_threads_for_topic(r.Context(), user_get_threads_for_topicParams{
+	threadRows, err := queries.User_get_threads_for_topic(r.Context(), User_get_threads_for_topicParams{
 		UsersIdusers:           uid,
 		ForumtopicIdforumtopic: int32(topicId),
 	})

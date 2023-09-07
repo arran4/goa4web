@@ -11,7 +11,7 @@ import (
 func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards []*showAllBoardsRow
+		Boards []*ShowAllBoardsRow
 	}
 
 	data := Data{
@@ -19,7 +19,7 @@ func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	boardRows, err := queries.showAllBoards(r.Context())
+	boardRows, err := queries.ShowAllBoards(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -48,7 +48,7 @@ func imagebbsAdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	err := queries.makeImageBoard(r.Context(), makeImageBoardParams{
+	err := queries.MakeImageBoard(r.Context(), MakeImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},

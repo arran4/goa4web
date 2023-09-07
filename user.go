@@ -21,7 +21,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 		var user *User
 		if uidi, ok := session.Values["UID"]; !ok {
 		} else if uid, ok := uidi.(int32); !ok {
-		} else if user, err = queries.userByUid(request.Context(), uid); err != nil {
+		} else if user, err = queries.UserByUid(request.Context(), uid); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 			default:

@@ -12,7 +12,7 @@ import (
 func writingsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories                       []*fetchCategoriesRow
+		Categories                       []*FetchCategoriesRow
 		EditingCategoryId                int32 // TODO
 		CategoryId                       int32 // TODO
 		WritingcategoryIdwritingcategory int32 // TODO
@@ -25,7 +25,7 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	categoryRows, err := queries.fetchCategories(r.Context(), data.CategoryId)
+	categoryRows, err := queries.FetchCategories(r.Context(), data.CategoryId)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

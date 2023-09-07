@@ -50,7 +50,7 @@ func writingsArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	articleId, err := queries.insertWriting(r.Context(), insertWritingParams{
+	articleId, err := queries.InsertWriting(r.Context(), InsertWritingParams{
 		WritingcategoryIdwritingcategory: int32(categoryId),
 		Title:                            sql.NullString{Valid: true, String: title},
 		Abstract:                         sql.NullString{Valid: true, String: abstract},

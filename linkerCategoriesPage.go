@@ -19,7 +19,7 @@ func linkerCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	categories, err := queries.showCategories(r.Context())
+	categories, err := queries.ShowCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

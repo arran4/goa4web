@@ -11,8 +11,8 @@ import (
 func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*getCommentsWithThreadInfoRow
-		News               []*getNewsPostsRow
+		Comments           []*GetCommentsWithThreadInfoRow
+		News               []*GetNewsPostsRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -26,7 +26,7 @@ func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbnId, err := queries.findForumTopicByName(r.Context(), sql.NullString{Valid: true, String: NewsTopicName})
+	ftbnId, err := queries.FindForumTopicByName(r.Context(), sql.NullString{Valid: true, String: NewsTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByName Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*getNewsPostsRow, bool, bool, error) {
+func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetNewsPostsRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
@@ -66,7 +66,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.siteNewsSearchFirst(r.Context(), sql.NullString{
+			ids, err := queries.SiteNewsSearchFirst(r.Context(), sql.NullString{
 				String: word,
 				Valid:  true,
 			})
@@ -81,7 +81,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 			}
 			newsIds = ids
 		} else {
-			ids, err := queries.siteNewsSearchNext(r.Context(), siteNewsSearchNextParams{
+			ids, err := queries.SiteNewsSearchNext(r.Context(), SiteNewsSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -104,7 +104,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 		}
 	}
 
-	news, err := queries.getNewsPosts(r.Context(), newsIds)
+	news, err := queries.GetNewsPosts(r.Context(), newsIds)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

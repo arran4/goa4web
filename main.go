@@ -400,13 +400,20 @@ func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
+		var session *sessions.Session
 		sessioni := request.Context().Value(ContextValues("session"))
 		if sessioni == nil {
-			return false
-		}
-		session, ok := sessioni.(*sessions.Session)
-		if !ok {
-			return false
+			var err error
+			session, err = store.Get(request, sessionName)
+			if err != nil {
+				return false
+			}
+		} else {
+			var ok bool
+			session, ok = sessioni.(*sessions.Session)
+			if !ok {
+				return false
+			}
 		}
 		uid, _ := session.Values["UID"].(int32)
 		return uid != 0

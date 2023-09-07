@@ -14,7 +14,7 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Languages          []*Language
-		Blog               *Show_blog_editRow
+		Blog               *GetBlogEntryForUserByIdRow
 		SelectedLanguageId int
 		Mode               string
 	}
@@ -37,7 +37,7 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	row, err := queries.Show_blog_edit(r.Context(), int32(blogId))
+	row, err := queries.GetBlogEntryForUserById(r.Context(), int32(blogId))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -64,7 +64,7 @@ func blogsBlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	err = queries.Update_blog(r.Context(), Update_blogParams{
+	err = queries.UpdateBlogEntry(r.Context(), UpdateBlogEntryParams{
 		Idblogs:            int32(blogId),
 		LanguageIdlanguage: int32(languageId),
 		Blog: sql.NullString{

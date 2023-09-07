@@ -53,7 +53,7 @@ func blogsBlogAddActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	id, err := queries.Add_blog(r.Context(), Add_blogParams{
+	id, err := queries.CreateBlogEntry(r.Context(), CreateBlogEntryParams{
 		UsersIdusers:       uid,
 		LanguageIdlanguage: int32(languageId),
 		Blog: sql.NullString{

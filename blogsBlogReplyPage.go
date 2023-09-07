@@ -29,9 +29,9 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	blog, err := queries.Show_blog(r.Context(), int32(bid))
+	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(bid))
 	if err != nil {
-		log.Printf("show_blog_comments Error: %s", err)
+		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -72,11 +72,11 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.Assign_blog_to_thread(r.Context(), Assign_blog_to_threadParams{
+		if err := queries.AssignThreadIdToBlogEntry(r.Context(), AssignThreadIdToBlogEntryParams{
 			ForumthreadIdforumthread: pthid,
 			Idblogs:                  int32(bid),
 		}); err != nil {
-			log.Printf("Error: assign_blog_to_thread: %s", err)
+			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

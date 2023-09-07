@@ -13,7 +13,7 @@ import (
 
 func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*Show_blogRow
+		*GetBlogEntryForUserByIdRow
 		EditUrl string
 	}
 	type BlogComment struct {
@@ -63,9 +63,9 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	blog, err := queries.Show_blog(r.Context(), int32(blogId))
+	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(blogId))
 	if err != nil {
-		log.Printf("show_blog_comments Error: %s", err)
+		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -76,8 +76,8 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Blog = &BlogRow{
-		Show_blogRow: blog,
-		EditUrl:      editUrl,
+		GetBlogEntryForUserByIdRow: blog,
+		EditUrl:                    editUrl,
 	}
 
 	replyType := r.URL.Query().Get("type")

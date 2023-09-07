@@ -11,7 +11,7 @@ import (
 
 func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*Show_blogRow
+		*GetBlogEntryForUserByIdRow
 		EditUrl     string
 		IsReplyable bool
 	}
@@ -59,9 +59,9 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	blog, err := queries.Show_blog(r.Context(), int32(blogId))
+	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(blogId))
 	if err != nil {
-		log.Printf("show_blog_comments Error: %s", err)
+		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -72,9 +72,9 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Blog = &BlogRow{
-		Show_blogRow: blog,
-		EditUrl:      editUrl,
-		IsReplyable:  true, // TODO
+		GetBlogEntryForUserByIdRow: blog,
+		EditUrl:                    editUrl,
+		IsReplyable:                true, // TODO
 	}
 
 	CustomBlogIndex(data.CoreData, r)

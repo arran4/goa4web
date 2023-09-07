@@ -13,7 +13,7 @@ import (
 
 func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*Show_latest_blogsRow
+		*GetBlogEntriesForUserDescendingRow
 		EditUrl string
 	}
 	type Data struct {
@@ -38,7 +38,7 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 		Valid:  true,
 	})
 
-	rows, err := queries.Show_latest_blogs(r.Context(), Show_latest_blogsParams{
+	rows, err := queries.GetBlogEntriesForUserDescending(r.Context(), GetBlogEntriesForUserDescendingParams{
 		UsersIdusers:       buid,
 		LanguageIdlanguage: int32(userLanguagePref),
 		Limit:              15,
@@ -66,8 +66,8 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
-			Show_latest_blogsRow: row,
-			EditUrl:              editUrl,
+			GetBlogEntriesForUserDescendingRow: row,
+			EditUrl:                            editUrl,
 		})
 	}
 	CustomBlogIndex(data.CoreData, r)

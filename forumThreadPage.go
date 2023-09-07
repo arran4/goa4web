@@ -68,7 +68,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("show_blog_comments Error: %s", err)
+			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

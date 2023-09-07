@@ -439,7 +439,7 @@ func BlogAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.Show_blog(request.Context(), int32(blogId))
+		row, err := queries.GetBlogEntryForUserById(request.Context(), int32(blogId))
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):

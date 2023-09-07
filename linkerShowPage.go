@@ -119,7 +119,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 			ForumthreadIdforumthread: pthid,
 			Idlinker:                 int32(linkId),
 		}); err != nil {
-			log.Printf("Error: assign_blog_to_thread: %s", err)
+			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

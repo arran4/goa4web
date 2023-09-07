@@ -15,7 +15,7 @@ import (
 
 func blogsPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*Show_latest_blogsRow
+		*GetBlogEntriesForUserDescendingRow
 		EditUrl string
 	}
 	type Data struct {
@@ -34,7 +34,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	userLanguagePref := 0
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	rows, err := queries.Show_latest_blogs(r.Context(), Show_latest_blogsParams{
+	rows, err := queries.GetBlogEntriesForUserDescending(r.Context(), GetBlogEntriesForUserDescendingParams{
 		UsersIdusers:       int32(userId),
 		LanguageIdlanguage: int32(userLanguagePref),
 		Limit:              15,
@@ -62,8 +62,8 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
-			Show_latest_blogsRow: row,
-			EditUrl:              editUrl,
+			GetBlogEntriesForUserDescendingRow: row,
+			EditUrl:                            editUrl,
 		})
 	}
 
@@ -209,7 +209,7 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		Created:     time.Date(2005, 6, 25, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows, err := queries.Blog_rss(r.Context(), Blog_rssParams{
+	rows, err := queries.GetBlogEntriesForUserDescending(r.Context(), GetBlogEntriesForUserDescendingParams{
 		UsersIdusers: int32(uid),
 		Limit:        15,
 	})
@@ -228,8 +228,12 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		text.codeType = ct_tagstrip
 		text.input = row.Blog.String
 		text.Process()
+		i := len(row.Blog.String)
+		if i > 255 {
+			i = 255
+		}
 		feed.Items = append(feed.Items, &feeds.Item{
-			Title: row.Left,
+			Title: row.Blog.String[:i],
 			Link: &feeds.Link{
 				Href: u.String(),
 			},

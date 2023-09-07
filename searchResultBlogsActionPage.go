@@ -95,9 +95,9 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 		}
 	}
 
-	blogs, err := queries.GetBlogs(r.Context(), blogIds)
+	blogs, err := queries.GetBlogEntriesByIdsDescending(r.Context(), blogIds)
 	if err != nil {
-		log.Printf("getBlogs Error: %s", err)
+		log.Printf("getBlogEntriesByIdsDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return nil, false, false, err
 	}

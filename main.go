@@ -63,7 +63,7 @@ func NewFuncs(r *http.Request) template.FuncMap {
 			}
 			return s[:l]
 		},
-		"News": func() (any, error) {
+		"LatestNews": func() (any, error) {
 			type Post struct {
 				*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 				ShowReply bool

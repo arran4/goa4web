@@ -13,7 +13,7 @@ func forumAdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		MaxUserLevel    int32
-		UserTopicLevels []*GetUsersAllTopicLevelsRow
+		UserTopicLevels []*GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
 	}
 
 	data := Data{
@@ -24,7 +24,7 @@ func forumAdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
-	rows, err := queries.GetUsersAllTopicLevels(r.Context(), int32(uid))
+	rows, err := queries.GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(r.Context(), int32(uid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -66,7 +66,7 @@ func forumAdminUserLevelUpdatePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
-	if err := queries.SetUsersTopicLevel(r.Context(), SetUsersTopicLevelParams{
+	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), UpsertUsersForumTopicLevelPermissionParams{
 		Level: sql.NullInt32{
 			Valid: true,
 			Int32: int32(level),
@@ -98,7 +98,7 @@ func forumAdminUserLevelDeletePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
-	if err := queries.DeleteUsersTopicLevel(r.Context(), DeleteUsersTopicLevelParams{
+	if err := queries.DeleteUsersForumTopicLevelPermission(r.Context(), DeleteUsersForumTopicLevelPermissionParams{
 		ForumtopicIdforumtopic: int32(tid),
 		UsersIdusers:           int32(uid),
 	}); err != nil {

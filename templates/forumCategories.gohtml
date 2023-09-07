@@ -1,4 +1,4 @@
-{{ define "forumCategories" }}
+{{ define "getAllForumCategories" }}
     {{ if and .Category .CategoryBreadcrumbs }}
         {{ template "categoryBreadcrumbs" . }}
     {{ end }}
@@ -21,7 +21,7 @@
             </tr>
             <tr>
                 <td>
-                    {{ template "forumCategories" (call $.CopyDataToSubCategories .) }}
+                    {{ template "getAllForumCategories" (call $.CopyDataToSubCategories .) }}
                     {{ template "tableTopics" (call $.CopyDataToSubCategories .) }}
                     {{ if $.Admin }}
                         <a href="/forum/admin/categories/create?category={{ .Idforumcategory }}">Create Category</a><br>

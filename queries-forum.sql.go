@@ -10,19 +10,19 @@ import (
 	"database/sql"
 )
 
-const changeCategory = `-- name: ChangeCategory :exec
+const updateForumCategory = `-- name: UpdateForumCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?
 `
 
-type ChangeCategoryParams struct {
+type UpdateForumCategoryParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
 	Idforumcategory              int32
 }
 
-func (q *Queries) ChangeCategory(ctx context.Context, arg ChangeCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, changeCategory,
+func (q *Queries) UpdateForumCategory(ctx context.Context, arg UpdateForumCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, updateForumCategory,
 		arg.Title,
 		arg.Description,
 		arg.ForumcategoryIdforumcategory,
@@ -31,19 +31,19 @@ func (q *Queries) ChangeCategory(ctx context.Context, arg ChangeCategoryParams) 
 	return err
 }
 
-const changeTopic = `-- name: ChangeTopic :exec
+const updateForumTopic = `-- name: UpdateForumTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?
 `
 
-type ChangeTopicParams struct {
+type UpdateForumTopicParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
 	Idforumtopic                 int32
 }
 
-func (q *Queries) ChangeTopic(ctx context.Context, arg ChangeTopicParams) error {
-	_, err := q.db.ExecContext(ctx, changeTopic,
+func (q *Queries) UpdateForumTopic(ctx context.Context, arg UpdateForumTopicParams) error {
+	_, err := q.db.ExecContext(ctx, updateForumTopic,
 		arg.Title,
 		arg.Description,
 		arg.ForumcategoryIdforumcategory,
@@ -52,38 +52,38 @@ func (q *Queries) ChangeTopic(ctx context.Context, arg ChangeTopicParams) error 
 	return err
 }
 
-const deleteUsersTopicLevel = `-- name: DeleteUsersTopicLevel :exec
+const deleteUsersForumTopicLevelPermission = `-- name: DeleteUsersForumTopicLevelPermission :exec
 DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
 `
 
-type DeleteUsersTopicLevelParams struct {
+type DeleteUsersForumTopicLevelPermissionParams struct {
 	ForumtopicIdforumtopic int32
 	UsersIdusers           int32
 }
 
-func (q *Queries) DeleteUsersTopicLevel(ctx context.Context, arg DeleteUsersTopicLevelParams) error {
-	_, err := q.db.ExecContext(ctx, deleteUsersTopicLevel, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
+func (q *Queries) DeleteUsersForumTopicLevelPermission(ctx context.Context, arg DeleteUsersForumTopicLevelPermissionParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUsersForumTopicLevelPermission, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
 	return err
 }
 
-const findForumTopicByName = `-- name: FindForumTopicByName :one
+const findForumTopicByTitle = `-- name: FindForumTopicByTitle :one
 SELECT idforumtopic FROM forumtopic WHERE title=?
 `
 
-func (q *Queries) FindForumTopicByName(ctx context.Context, title sql.NullString) (int32, error) {
-	row := q.db.QueryRowContext(ctx, findForumTopicByName, title)
+func (q *Queries) FindForumTopicByTitle(ctx context.Context, title sql.NullString) (int32, error) {
+	row := q.db.QueryRowContext(ctx, findForumTopicByTitle, title)
 	var idforumtopic int32
 	err := row.Scan(&idforumtopic)
 	return idforumtopic, err
 }
 
-const forumCategories = `-- name: ForumCategories :many
+const getAllForumCategories = `-- name: GetAllForumCategories :many
 SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.title, f.description
 FROM forumcategory f
 `
 
-func (q *Queries) ForumCategories(ctx context.Context) ([]*Forumcategory, error) {
-	rows, err := q.db.QueryContext(ctx, forumCategories)
+func (q *Queries) GetAllForumCategories(ctx context.Context) ([]*Forumcategory, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumCategories)
 	if err != nil {
 		return nil, err
 	}
@@ -110,15 +110,15 @@ func (q *Queries) ForumCategories(ctx context.Context) ([]*Forumcategory, error)
 	return items, nil
 }
 
-const getAllTopics = `-- name: GetAllTopics :many
+const getAllForumTopics = `-- name: GetAllForumTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition
 FROM forumtopic t
 LEFT JOIN forumcategory c ON t.forumcategory_idforumcategory = c.idforumcategory
 GROUP BY t.idforumtopic
 `
 
-func (q *Queries) GetAllTopics(ctx context.Context) ([]*Forumtopic, error) {
-	rows, err := q.db.QueryContext(ctx, getAllTopics)
+func (q *Queries) GetAllForumTopics(ctx context.Context) ([]*Forumtopic, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumTopics)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (q *Queries) GetAllTopics(ctx context.Context) ([]*Forumtopic, error) {
 	return items, nil
 }
 
-const getAllUsersAllTopicLevels = `-- name: GetAllUsersAllTopicLevels :many
+const getAllForumTopicsWithPermissionsAndTopic = `-- name: GetAllForumTopicsWithPermissionsAndTopic :many
 SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
@@ -157,7 +157,7 @@ JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
 `
 
-type GetAllUsersAllTopicLevelsRow struct {
+type GetAllForumTopicsWithPermissionsAndTopicRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
 	Passwd                       sql.NullString
@@ -185,15 +185,15 @@ type GetAllUsersAllTopicLevelsRow struct {
 	Adminlevel                   sql.NullInt32
 }
 
-func (q *Queries) GetAllUsersAllTopicLevels(ctx context.Context) ([]*GetAllUsersAllTopicLevelsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllUsersAllTopicLevels)
+func (q *Queries) GetAllForumTopicsWithPermissionsAndTopic(ctx context.Context) ([]*GetAllForumTopicsWithPermissionsAndTopicRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumTopicsWithPermissionsAndTopic)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllUsersAllTopicLevelsRow
+	var items []*GetAllForumTopicsWithPermissionsAndTopicRow
 	for rows.Next() {
-		var i GetAllUsersAllTopicLevelsRow
+		var i GetAllForumTopicsWithPermissionsAndTopicRow
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Email,
@@ -234,7 +234,7 @@ func (q *Queries) GetAllUsersAllTopicLevels(ctx context.Context) ([]*GetAllUsers
 	return items, nil
 }
 
-const getUsersAllTopicLevels = `-- name: GetUsersAllTopicLevels :many
+const getAllForumTopicsForUserWithPermissionsRestrictionsAndTopic = `-- name: GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic :many
 SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
@@ -243,7 +243,7 @@ JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
 WHERE u.idusers = ?
 `
 
-type GetUsersAllTopicLevelsRow struct {
+type GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
 	Passwd                       sql.NullString
@@ -271,15 +271,15 @@ type GetUsersAllTopicLevelsRow struct {
 	Adminlevel                   sql.NullInt32
 }
 
-func (q *Queries) GetUsersAllTopicLevels(ctx context.Context, idusers int32) ([]*GetUsersAllTopicLevelsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUsersAllTopicLevels, idusers)
+func (q *Queries) GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(ctx context.Context, idusers int32) ([]*GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumTopicsForUserWithPermissionsRestrictionsAndTopic, idusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetUsersAllTopicLevelsRow
+	var items []*GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
 	for rows.Next() {
-		var i GetUsersAllTopicLevelsRow
+		var i GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Email,
@@ -320,7 +320,7 @@ func (q *Queries) GetUsersAllTopicLevels(ctx context.Context, idusers int32) ([]
 	return items, nil
 }
 
-const get_all_user_topics = `-- name: Get_all_user_topics :many
+const getAllForumTopicsForUser = `-- name: GetAllForumTopicsForUser :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
@@ -330,7 +330,7 @@ WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.le
 ORDER BY t.lastaddition DESC
 `
 
-type Get_all_user_topicsRow struct {
+type GetAllForumTopicsForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
@@ -344,15 +344,15 @@ type Get_all_user_topicsRow struct {
 	Level                        sql.NullInt32
 }
 
-func (q *Queries) Get_all_user_topics(ctx context.Context, usersIdusers int32) ([]*Get_all_user_topicsRow, error) {
-	rows, err := q.db.QueryContext(ctx, get_all_user_topics, usersIdusers)
+func (q *Queries) GetAllForumTopicsForUser(ctx context.Context, usersIdusers int32) ([]*GetAllForumTopicsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumTopicsForUser, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Get_all_user_topicsRow
+	var items []*GetAllForumTopicsForUserRow
 	for rows.Next() {
-		var i Get_all_user_topicsRow
+		var i GetAllForumTopicsForUserRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Lastposter,
@@ -379,7 +379,7 @@ func (q *Queries) Get_all_user_topics(ctx context.Context, usersIdusers int32) (
 	return items, nil
 }
 
-const get_all_user_topics_for_category = `-- name: Get_all_user_topics_for_category :many
+const getAllForumTopicsByCategoryIdForUserWithLastPosterName = `-- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
@@ -389,12 +389,12 @@ WHERE t.forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seele
 ORDER BY t.lastaddition DESC
 `
 
-type Get_all_user_topics_for_categoryParams struct {
+type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams struct {
 	UsersIdusers                 int32
 	ForumcategoryIdforumcategory int32
 }
 
-type Get_all_user_topics_for_categoryRow struct {
+type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
@@ -408,15 +408,15 @@ type Get_all_user_topics_for_categoryRow struct {
 	Level                        sql.NullInt32
 }
 
-func (q *Queries) Get_all_user_topics_for_category(ctx context.Context, arg Get_all_user_topics_for_categoryParams) ([]*Get_all_user_topics_for_categoryRow, error) {
-	rows, err := q.db.QueryContext(ctx, get_all_user_topics_for_category, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
+func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumTopicsByCategoryIdForUserWithLastPosterName, arg.UsersIdusers, arg.ForumcategoryIdforumcategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Get_all_user_topics_for_categoryRow
+	var items []*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow
 	for rows.Next() {
-		var i Get_all_user_topics_for_categoryRow
+		var i GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Lastposter,
@@ -443,54 +443,54 @@ func (q *Queries) Get_all_user_topics_for_category(ctx context.Context, arg Get_
 	return items, nil
 }
 
-const makeCategory = `-- name: MakeCategory :exec
+const createForumCategory = `-- name: CreateForumCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
 
-type MakeCategoryParams struct {
+type CreateForumCategoryParams struct {
 	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
 
-func (q *Queries) MakeCategory(ctx context.Context, arg MakeCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, makeCategory, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
+func (q *Queries) CreateForumCategory(ctx context.Context, arg CreateForumCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, createForumCategory, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
 	return err
 }
 
-const makeTopic = `-- name: MakeTopic :execlastid
+const createForumTopic = `-- name: CreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
 
-type MakeTopicParams struct {
+type CreateForumTopicParams struct {
 	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
 
-func (q *Queries) MakeTopic(ctx context.Context, arg MakeTopicParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, makeTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
+func (q *Queries) CreateForumTopic(ctx context.Context, arg CreateForumTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createForumTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
 	if err != nil {
 		return 0, err
 	}
 	return result.LastInsertId()
 }
 
-const setUsersTopicLevel = `-- name: SetUsersTopicLevel :exec
+const upsertUsersForumTopicLevelPermission = `-- name: UpsertUsersForumTopicLevelPermission :exec
 INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
 VALUES (?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax)
 `
 
-type SetUsersTopicLevelParams struct {
+type UpsertUsersForumTopicLevelPermissionParams struct {
 	ForumtopicIdforumtopic int32
 	UsersIdusers           int32
 	Level                  sql.NullInt32
 	Invitemax              sql.NullInt32
 }
 
-func (q *Queries) SetUsersTopicLevel(ctx context.Context, arg SetUsersTopicLevelParams) error {
-	_, err := q.db.ExecContext(ctx, setUsersTopicLevel,
+func (q *Queries) UpsertUsersForumTopicLevelPermission(ctx context.Context, arg UpsertUsersForumTopicLevelPermissionParams) error {
+	_, err := q.db.ExecContext(ctx, upsertUsersForumTopicLevelPermission,
 		arg.ForumtopicIdforumtopic,
 		arg.UsersIdusers,
 		arg.Level,
@@ -499,14 +499,14 @@ func (q *Queries) SetUsersTopicLevel(ctx context.Context, arg SetUsersTopicLevel
 	return err
 }
 
-const showAllCategories = `-- name: ShowAllCategories :many
+const getAllGetAllForumCategoriesWithSubcategoryCount = `-- name: GetAllGetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, c.description, COUNT(c2.idforumcategory) as SubcategoryCount
 FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory
 GROUP BY c.idforumcategory
 `
 
-type ShowAllCategoriesRow struct {
+type GetAllGetAllForumCategoriesWithSubcategoryCountRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
@@ -514,15 +514,15 @@ type ShowAllCategoriesRow struct {
 	Subcategorycount             int64
 }
 
-func (q *Queries) ShowAllCategories(ctx context.Context) ([]*ShowAllCategoriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, showAllCategories)
+func (q *Queries) GetAllGetAllForumCategoriesWithSubcategoryCount(ctx context.Context) ([]*GetAllGetAllForumCategoriesWithSubcategoryCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllGetAllForumCategoriesWithSubcategoryCount)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ShowAllCategoriesRow
+	var items []*GetAllGetAllForumCategoriesWithSubcategoryCountRow
 	for rows.Next() {
-		var i ShowAllCategoriesRow
+		var i GetAllGetAllForumCategoriesWithSubcategoryCountRow
 		if err := rows.Scan(
 			&i.Idforumcategory,
 			&i.ForumcategoryIdforumcategory,
@@ -543,7 +543,7 @@ func (q *Queries) ShowAllCategories(ctx context.Context) ([]*ShowAllCategoriesRo
 	return items, nil
 }
 
-const update_forumtopic = `-- name: Update_forumtopic :exec
+const rebuildForumTopicByIdMetaColumns = `-- name: RebuildForumTopicByIdMetaColumns :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)
@@ -569,12 +569,12 @@ SET threads = (
 WHERE idforumtopic = ?
 `
 
-func (q *Queries) Update_forumtopic(ctx context.Context, idforumtopic int32) error {
-	_, err := q.db.ExecContext(ctx, update_forumtopic, idforumtopic)
+func (q *Queries) RebuildForumTopicByIdMetaColumns(ctx context.Context, idforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, rebuildForumTopicByIdMetaColumns, idforumtopic)
 	return err
 }
 
-const update_forumtopics = `-- name: Update_forumtopics :exec
+const rebuildAllForumTopicMetaColumns = `-- name: RebuildAllForumTopicMetaColumns :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)
@@ -599,12 +599,12 @@ SET threads = (
 )
 `
 
-func (q *Queries) Update_forumtopics(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, update_forumtopics)
+func (q *Queries) RebuildAllForumTopicMetaColumns(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, rebuildAllForumTopicMetaColumns)
 	return err
 }
 
-const user_get_threads_for_topic = `-- name: User_get_threads_for_topic :many
+const getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText = `-- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -617,12 +617,12 @@ WHERE th.forumtopic_idforumtopic=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0
 ORDER BY th.lastaddition DESC
 `
 
-type User_get_threads_for_topicParams struct {
+type GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams struct {
 	UsersIdusers           int32
 	ForumtopicIdforumtopic int32
 }
 
-type User_get_threads_for_topicRow struct {
+type GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow struct {
 	Idforumthread          int32
 	Firstpost              int32
 	Lastposter             int32
@@ -637,15 +637,15 @@ type User_get_threads_for_topicRow struct {
 	Firstposttext          sql.NullString
 }
 
-func (q *Queries) User_get_threads_for_topic(ctx context.Context, arg User_get_threads_for_topicParams) ([]*User_get_threads_for_topicRow, error) {
-	rows, err := q.db.QueryContext(ctx, user_get_threads_for_topic, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
+func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(ctx context.Context, arg GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+	rows, err := q.db.QueryContext(ctx, getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*User_get_threads_for_topicRow
+	var items []*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
 	for rows.Next() {
-		var i User_get_threads_for_topicRow
+		var i GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
 		if err := rows.Scan(
 			&i.Idforumthread,
 			&i.Firstpost,
@@ -673,7 +673,7 @@ func (q *Queries) User_get_threads_for_topic(ctx context.Context, arg User_get_t
 	return items, nil
 }
 
-const user_get_topic = `-- name: User_get_topic :one
+const getForumTopicByIdForUser = `-- name: GetForumTopicByIdForUser :one
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
@@ -683,12 +683,12 @@ WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.le
 ORDER BY t.lastaddition DESC
 `
 
-type User_get_topicParams struct {
+type GetForumTopicByIdForUserParams struct {
 	UsersIdusers int32
 	Idforumtopic int32
 }
 
-type User_get_topicRow struct {
+type GetForumTopicByIdForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
@@ -702,9 +702,9 @@ type User_get_topicRow struct {
 	Level                        sql.NullInt32
 }
 
-func (q *Queries) User_get_topic(ctx context.Context, arg User_get_topicParams) (*User_get_topicRow, error) {
-	row := q.db.QueryRowContext(ctx, user_get_topic, arg.UsersIdusers, arg.Idforumtopic)
-	var i User_get_topicRow
+func (q *Queries) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getForumTopicByIdForUser, arg.UsersIdusers, arg.Idforumtopic)
+	var i GetForumTopicByIdForUserRow
 	err := row.Scan(
 		&i.Idforumtopic,
 		&i.Lastposter,

@@ -68,8 +68,8 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/forum",
 	}
-	if err := queries.Update_forumtopics(r.Context()); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update_forumtopic_lastaddition_lastposter: %w", err).Error())
+	if err := queries.RebuildAllForumTopicMetaColumns(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("rebuildForumTopicByIdMetaColumns_lastaddition_lastposter: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {

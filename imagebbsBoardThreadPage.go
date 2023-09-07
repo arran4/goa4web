@@ -159,12 +159,12 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var pthid int32 = post.ForumthreadIdforumthread
-	ptid, err := queries.FindForumTopicByName(r.Context(), sql.NullString{
+	ptid, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
 		String: ImagebbsTopicName,
 		Valid:  true,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.MakeTopic(r.Context(), MakeTopicParams{
+		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: ImagebbsTopicName,
@@ -176,13 +176,13 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 			},
 		})
 		if err != nil {
-			log.Printf("Error: makeTopic: %s", err)
+			log.Printf("Error: createForumTopic: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
-		log.Printf("Error: findForumTopicByName: %s", err)
+		log.Printf("Error: findForumTopicByTitle: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -270,8 +270,8 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := queries.Update_forumtopic(r.Context(), ptid); err != nil {
-		log.Printf("Error: update_forumtopic: %s", err)
+	if err := queries.RebuildForumTopicByIdMetaColumns(r.Context(), ptid); err != nil {
+		log.Printf("Error: rebuildForumTopicByIdMetaColumns: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

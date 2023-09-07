@@ -12,7 +12,7 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		MaxUserLevel    int32
-		UserTopicLevels []*GetAllUsersAllTopicLevelsRow
+		UserTopicLevels []*GetAllForumTopicsWithPermissionsAndTopicRow
 		Users           []*User
 		Topics          []*Forumtopic
 	}
@@ -23,7 +23,7 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.GetAllUsersAllTopicLevels(r.Context())
+	rows, err := queries.GetAllForumTopicsWithPermissionsAndTopic(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -48,7 +48,7 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Users = userRows
 
-	topicRows, err := queries.GetAllTopics(r.Context())
+	topicRows, err := queries.GetAllForumTopics(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -92,7 +92,7 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.SetUsersTopicLevel(r.Context(), SetUsersTopicLevelParams{
+	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), UpsertUsersForumTopicLevelPermissionParams{
 		Level: sql.NullInt32{
 			Valid: true,
 			Int32: int32(level),
@@ -127,7 +127,7 @@ func forumAdminUsersRestrictionsDeletePage(w http.ResponseWriter, r *http.Reques
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.DeleteUsersTopicLevel(r.Context(), DeleteUsersTopicLevelParams{
+	if err := queries.DeleteUsersForumTopicLevelPermission(r.Context(), DeleteUsersForumTopicLevelPermissionParams{
 		ForumtopicIdforumtopic: int32(tid),
 		UsersIdusers:           int32(uid),
 	}); err != nil {

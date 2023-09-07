@@ -28,7 +28,7 @@ func linkerSuggestPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("forumCategories Error: %s", err)
+			log.Printf("getAllForumCategories Error: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

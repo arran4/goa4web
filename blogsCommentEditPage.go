@@ -78,8 +78,8 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := queries.Update_forumtopic(r.Context(), thread.ForumtopicIdforumtopic); err != nil {
-		log.Printf("Error: update_forumtopic: %s", err)
+	if err := queries.RebuildForumTopicByIdMetaColumns(r.Context(), thread.ForumtopicIdforumtopic); err != nil {
+		log.Printf("Error: rebuildForumTopicByIdMetaColumns: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

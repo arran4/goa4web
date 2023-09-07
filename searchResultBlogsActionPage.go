@@ -25,9 +25,9 @@ func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbnId, err := queries.FindForumTopicByName(r.Context(), sql.NullString{Valid: true, String: BloggerTopicName})
+	ftbnId, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: BloggerTopicName})
 	if err != nil {
-		log.Printf("findForumTopicByName Error: %s", err)
+		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

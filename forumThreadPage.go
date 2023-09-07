@@ -88,12 +88,12 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	topicRow, err := queries.User_get_topic(r.Context(), User_get_topicParams{
+	topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
 		UsersIdusers: uid,
 		Idforumtopic: int32(threadRow.ForumtopicIdforumtopic),
 	})
 	if err != nil {
-		log.Printf("user_get_topic Error: %s", err)
+		log.Printf("getForumTopicByIdForUser Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -154,12 +154,12 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		Edit:                         false,
 	}
 
-	categoryRows, err := queries.ForumCategories(r.Context())
+	categoryRows, err := queries.GetAllForumCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("forumCategories Error: %s", err)
+			log.Printf("getAllForumCategories Error: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

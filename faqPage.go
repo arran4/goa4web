@@ -15,7 +15,7 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type CategoryFAQs struct {
-		Category *Show_questionsRow
+		Category *GetAllAnsweredFAQWithFAQCategoriesRow
 		FAQs     []*FAQ
 	}
 
@@ -32,12 +32,12 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 
 	var currentCategoryFAQs CategoryFAQs
 
-	faqRows, err := queries.Show_questions(r.Context())
+	faqRows, err := queries.GetAllAnsweredFAQWithFAQCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("show_questions Error: %s", err)
+			log.Printf("getAllAnsweredFAQWithFAQCategories Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

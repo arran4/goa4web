@@ -1,43 +1,43 @@
--- name: SelectUnansweredQuestions :many
+-- name: GetFAQUnansweredQuestions :many
 SELECT *
 FROM faq
 WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL;
 
--- name: AllQuestions :many
+-- name: GetAllFAQQuestions :many
 SELECT *
 FROM faq;
 
--- name: Rename_category :exec
+-- name: RenameFAQCategory :exec
 UPDATE faqCategories
 SET name = ?
 WHERE idfaqCategories = ?;
 
--- name: Delete_category :exec
+-- name: DeleteFAQCategory :exec
 DELETE FROM faqCategories
 WHERE idfaqCategories = ?;
 
--- name: Create_category :exec
+-- name: CreateFAQCategory :exec
 INSERT INTO faqCategories (name)
 VALUES (?);
 
--- name: Add_question :exec
+-- name: CreateFAQQuestion :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
 VALUES (?, ?, ?);
 
--- name: Modify_faq :exec
+-- name: UpdateFAQQuestionAnswer :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
 WHERE idfaq = ?;
 
--- name: Delete_faq :exec
+-- name: DeleteFAQ :exec
 DELETE FROM faq
 WHERE idfaq = ?;
 
--- name: Faq_categories :many
+-- name: GetAllFAQCategories :many
 SELECT idfaqCategories, name
 FROM faqCategories;
 
--- name: Show_questions :many
+-- name: GetAllAnsweredFAQWithFAQCategories :many
 SELECT c.*, f.*
 FROM faq f
 LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories

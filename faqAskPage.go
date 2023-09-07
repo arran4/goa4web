@@ -49,7 +49,7 @@ func faqAskActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.Add_question(r.Context(), Add_questionParams{
+	if err := queries.CreateFAQQuestion(r.Context(), CreateFAQQuestionParams{
 		Question: sql.NullString{
 			String: text,
 			Valid:  true,

@@ -12,7 +12,7 @@ func forumAdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request
 
 	type Data struct {
 		*CoreData
-		Restrictions []*GetAllTopicRestrictionsRow
+		Restrictions []*GetAllForumTopicRestrictionsWithForumTopicTitleRow
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -21,7 +21,7 @@ func forumAdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	restrictions, err := queries.GetAllTopicRestrictions(r.Context())
+	restrictions, err := queries.GetAllForumTopicRestrictionsWithForumTopicTitle(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -91,7 +91,7 @@ func forumAdminTopicsRestrictionLevelChangePage(w http.ResponseWriter, r *http.R
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.SetTopicRestrictions(r.Context(), SetTopicRestrictionsParams{
+	if err := queries.UpsertForumTopicRestrictions(r.Context(), UpsertForumTopicRestrictionsParams{
 		ForumtopicIdforumtopic: int32(ftid),
 		Viewlevel:              sql.NullInt32{Valid: true, Int32: int32(view)},
 		Replylevel:             sql.NullInt32{Valid: true, Int32: int32(reply)},
@@ -119,7 +119,7 @@ func forumAdminTopicsRestrictionLevelDeletePage(w http.ResponseWriter, r *http.R
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.DeleteTopicRestrictions(r.Context(), int32(ftid)); err != nil {
+	if err := queries.DeleteTopicRestrictionsByForumTopicId(r.Context(), int32(ftid)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

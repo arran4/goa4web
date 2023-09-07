@@ -52,7 +52,7 @@ func writingsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := queries.User_allow(r.Context(), User_allowParams{
+	if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
 		UsersIdusers: uid,
 		Section: sql.NullString{
 			String: where,
@@ -63,7 +63,7 @@ func writingsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Reque
 			Valid:  true,
 		},
 	}); err != nil {
-		log.Printf("user_allow Error: %s", err)
+		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -79,8 +79,8 @@ func writingsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := queries.UserDisallow(r.Context(), int32(permidi)); err != nil {
-		log.Printf("userDisallow Error: %s", err)
+	if err := queries.PermissionUserDisallow(r.Context(), int32(permidi)); err != nil {
+		log.Printf("permissionUserDisallow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

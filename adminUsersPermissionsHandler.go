@@ -40,7 +40,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) {
+func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
@@ -55,7 +55,7 @@ func adminUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) 
 	}
 	if uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("usernametouid: %w", err).Error())
-	} else if err := queries.User_allow(r.Context(), User_allowParams{
+	} else if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
 		UsersIdusers: uid,
 		Section: sql.NullString{
 			String: where,
@@ -66,7 +66,7 @@ func adminUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) 
 			Valid:  true,
 		},
 	}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("user_allow: %w", err).Error())
+		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
@@ -89,7 +89,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.UserDisallow(r.Context(), int32(permidi)); err != nil {
+	} else if err := queries.PermissionUserDisallow(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)

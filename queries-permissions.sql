@@ -23,7 +23,7 @@ SELECT p.*
 FROM permissions p
 ;
 
--- name: UserAllow :exec
+-- name: PermissionUserAllow :exec
 -- This query inserts a new permission into the "permissions" table.
 -- Parameters:
 --   ? - User ID to be associated with the permission (int)
@@ -32,37 +32,33 @@ FROM permissions p
 INSERT INTO permissions (users_idusers, section, level)
 VALUES (?, ?, ?);
 
--- name: UserDisallow :exec
+-- name: PermissionUserDisallow :exec
 -- This query deletes a permission from the "permissions" table based on the provided "permid".
 -- Parameters:
 --   ? - Permission ID to be deleted (int)
 DELETE FROM permissions
 WHERE idpermissions = ?;
 
--- name: User_allow :exec
-INSERT INTO permissions (users_idusers, section, level)
-VALUES (?, ?, ?);
-
--- name: GetSecurityLevel :one
+-- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
 SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all');
 
--- name: BlogsUserPermissions :many
+-- name: GetPermissionsByUserIdAndSectionBlogs :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
 ;
 
--- name: GetUsersTopicLevel :one
+-- name: GetUsersTopicLevelByUserIdAndThreadId :one
 SELECT utl.*
 FROM userstopiclevel utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 ;
 
--- name: DeleteTopicRestrictions :exec
+-- name: DeleteTopicRestrictionsByForumTopicId :exec
 DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
 
--- name: SetTopicRestrictions :exec
+-- name: UpsertForumTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
@@ -75,13 +71,13 @@ ON DUPLICATE KEY UPDATE
     modlevel = VALUES(modlevel),
     adminlevel = VALUES(adminlevel);
 
--- name: GetTopicRestrictions :many
+-- name: GetForumTopicRestrictionsByForumTopicId :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?;
 
--- name: GetAllTopicRestrictions :many
+-- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;

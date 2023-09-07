@@ -36,7 +36,7 @@ var (
 
 func NewFuncs() template.FuncMap {
 	return map[string]any{
-		//"getSecurityLevel":
+		//"getPermissionsByUserIdAndSectionAndSectionAll":
 		"now": func() time.Time { return time.Now() },
 		"a4code2html": func(s string) template.HTML {
 			c := NewA4Code2HTML()
@@ -119,8 +119,8 @@ func main() {
 	br.HandleFunc("/rss", blogsRssPage).Methods("GET")
 	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
 	br.HandleFunc("", blogsPage).Methods("GET")
-	br.HandleFunc("/user/permissions", blogsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	br.HandleFunc("/user/permissions", getPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
 	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 	br.HandleFunc("/add", blogsBlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
 	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher("Add"))
@@ -296,7 +296,7 @@ func main() {
 	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
 	ar.HandleFunc("/users", adminUsersDoNothingPage).Methods("POST").MatcherFunc(TaskMatcher("User do nothing"))
 	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher("User Allow"))
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher("User Allow"))
 	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher("User Disallow"))
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
 	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(TaskMatcher("Rename Language"))
@@ -339,7 +339,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 
 		queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-		targetUser, err := queries.GetUsersTopicLevel(r.Context(), GetUsersTopicLevelParams{
+		targetUser, err := queries.GetUsersTopicLevelByUserIdAndThreadId(r.Context(), GetUsersTopicLevelByUserIdAndThreadIdParams{
 			ForumtopicIdforumtopic: int32(tid),
 			UsersIdusers:           int32(targetUid),
 		})
@@ -347,7 +347,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 			return false
 		}
 
-		adminUser, err := queries.GetUsersTopicLevel(r.Context(), GetUsersTopicLevelParams{
+		adminUser, err := queries.GetUsersTopicLevelByUserIdAndThreadId(r.Context(), GetUsersTopicLevelByUserIdAndThreadIdParams{
 			ForumtopicIdforumtopic: int32(tid),
 			UsersIdusers:           int32(adminUid),
 		})
@@ -379,7 +379,7 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 		}
 		queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-		adminUser, err := queries.GetUsersTopicLevel(r.Context(), GetUsersTopicLevelParams{
+		adminUser, err := queries.GetUsersTopicLevelByUserIdAndThreadId(r.Context(), GetUsersTopicLevelByUserIdAndThreadIdParams{
 			ForumtopicIdforumtopic: int32(tid),
 			UsersIdusers:           int32(adminUid),
 		})

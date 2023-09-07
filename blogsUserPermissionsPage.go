@@ -9,11 +9,11 @@ import (
 	"strconv"
 )
 
-func blogsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
+func getPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {
 	// TODO add guard
 	type Data struct {
 		*CoreData
-		Rows []*BlogsUserPermissionsRow
+		Rows []*GetPermissionsByUserIdAndSectionBlogsRow
 	}
 
 	data := Data{
@@ -22,7 +22,7 @@ func blogsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.BlogsUserPermissions(r.Context())
+	rows, err := queries.GetPermissionsByUserIdAndSectionBlogs(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -42,7 +42,7 @@ func blogsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func blogsUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) {
+func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	username := r.PostFormValue("username")
 	where := "blogs"
@@ -57,7 +57,7 @@ func blogsUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) 
 	}
 	if uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("usernametouid: %w", err).Error())
-	} else if err := queries.User_allow(r.Context(), User_allowParams{
+	} else if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
 		UsersIdusers: uid,
 		Section: sql.NullString{
 			String: where,
@@ -68,7 +68,7 @@ func blogsUsersPermissionsUserAllowPage(w http.ResponseWriter, r *http.Request) 
 			Valid:  true,
 		},
 	}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("user_allow: %w", err).Error())
+		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
 
 	CustomBlogIndex(data.CoreData, r)
@@ -94,7 +94,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.UserDisallow(r.Context(), int32(permidi)); err != nil {
+	} else if err := queries.PermissionUserDisallow(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomBlogIndex(data.CoreData, r)

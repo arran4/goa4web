@@ -10,14 +10,14 @@ import (
 	"database/sql"
 )
 
-const blogsUserPermissions = `-- name: BlogsUserPermissions :many
+const getPermissionsByUserIdAndSectionBlogs = `-- name: GetPermissionsByUserIdAndSectionBlogs :many
 SELECT p.idpermissions, p.level, u.username, u.email, p.section
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
 `
 
-type BlogsUserPermissionsRow struct {
+type GetPermissionsByUserIdAndSectionBlogsRow struct {
 	Idpermissions int32
 	Level         sql.NullString
 	Username      sql.NullString
@@ -25,15 +25,15 @@ type BlogsUserPermissionsRow struct {
 	Section       sql.NullString
 }
 
-func (q *Queries) BlogsUserPermissions(ctx context.Context) ([]*BlogsUserPermissionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, blogsUserPermissions)
+func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionBlogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPermissionsByUserIdAndSectionBlogs)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*BlogsUserPermissionsRow
+	var items []*GetPermissionsByUserIdAndSectionBlogsRow
 	for rows.Next() {
-		var i BlogsUserPermissionsRow
+		var i GetPermissionsByUserIdAndSectionBlogsRow
 		if err := rows.Scan(
 			&i.Idpermissions,
 			&i.Level,
@@ -54,22 +54,22 @@ func (q *Queries) BlogsUserPermissions(ctx context.Context) ([]*BlogsUserPermiss
 	return items, nil
 }
 
-const deleteTopicRestrictions = `-- name: DeleteTopicRestrictions :exec
+const deleteTopicRestrictionsByForumTopicId = `-- name: DeleteTopicRestrictionsByForumTopicId :exec
 DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?
 `
 
-func (q *Queries) DeleteTopicRestrictions(ctx context.Context, forumtopicIdforumtopic int32) error {
-	_, err := q.db.ExecContext(ctx, deleteTopicRestrictions, forumtopicIdforumtopic)
+func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, forumtopicIdforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, deleteTopicRestrictionsByForumTopicId, forumtopicIdforumtopic)
 	return err
 }
 
-const getAllTopicRestrictions = `-- name: GetAllTopicRestrictions :many
+const getAllForumTopicRestrictionsWithForumTopicTitle = `-- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 `
 
-type GetAllTopicRestrictionsRow struct {
+type GetAllForumTopicRestrictionsWithForumTopicTitleRow struct {
 	Idforumtopic           int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
@@ -83,15 +83,15 @@ type GetAllTopicRestrictionsRow struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) GetAllTopicRestrictions(ctx context.Context) ([]*GetAllTopicRestrictionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllTopicRestrictions)
+func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Context) ([]*GetAllForumTopicRestrictionsWithForumTopicTitleRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumTopicRestrictionsWithForumTopicTitle)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllTopicRestrictionsRow
+	var items []*GetAllForumTopicRestrictionsWithForumTopicTitleRow
 	for rows.Next() {
-		var i GetAllTopicRestrictionsRow
+		var i GetAllForumTopicRestrictionsWithForumTopicTitleRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Viewlevel,
@@ -118,30 +118,30 @@ func (q *Queries) GetAllTopicRestrictions(ctx context.Context) ([]*GetAllTopicRe
 	return items, nil
 }
 
-const getSecurityLevel = `-- name: GetSecurityLevel :one
+const getPermissionsByUserIdAndSectionAndSectionAll = `-- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
 SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all')
 `
 
-type GetSecurityLevelParams struct {
+type GetPermissionsByUserIdAndSectionAndSectionAllParams struct {
 	UsersIdusers int32
 	Section      sql.NullString
 }
 
-func (q *Queries) GetSecurityLevel(ctx context.Context, arg GetSecurityLevelParams) (sql.NullString, error) {
-	row := q.db.QueryRowContext(ctx, getSecurityLevel, arg.UsersIdusers, arg.Section)
+func (q *Queries) GetPermissionsByUserIdAndSectionAndSectionAll(ctx context.Context, arg GetPermissionsByUserIdAndSectionAndSectionAllParams) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getPermissionsByUserIdAndSectionAndSectionAll, arg.UsersIdusers, arg.Section)
 	var level sql.NullString
 	err := row.Scan(&level)
 	return level, err
 }
 
-const getTopicRestrictions = `-- name: GetTopicRestrictions :many
+const getForumTopicRestrictionsByForumTopicId = `-- name: GetForumTopicRestrictionsByForumTopicId :many
 SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?
 `
 
-type GetTopicRestrictionsRow struct {
+type GetForumTopicRestrictionsByForumTopicIdRow struct {
 	Idforumtopic           int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
@@ -155,15 +155,15 @@ type GetTopicRestrictionsRow struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) GetTopicRestrictions(ctx context.Context, idforumtopic int32) ([]*GetTopicRestrictionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getTopicRestrictions, idforumtopic)
+func (q *Queries) GetForumTopicRestrictionsByForumTopicId(ctx context.Context, idforumtopic int32) ([]*GetForumTopicRestrictionsByForumTopicIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getForumTopicRestrictionsByForumTopicId, idforumtopic)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetTopicRestrictionsRow
+	var items []*GetForumTopicRestrictionsByForumTopicIdRow
 	for rows.Next() {
-		var i GetTopicRestrictionsRow
+		var i GetForumTopicRestrictionsByForumTopicIdRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Viewlevel,
@@ -257,19 +257,19 @@ func (q *Queries) GetUsersPermissions(ctx context.Context) ([]*Permission, error
 	return items, nil
 }
 
-const getUsersTopicLevel = `-- name: GetUsersTopicLevel :one
+const getUsersTopicLevelByUserIdAndThreadId = `-- name: GetUsersTopicLevelByUserIdAndThreadId :one
 SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax
 FROM userstopiclevel utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 `
 
-type GetUsersTopicLevelParams struct {
+type GetUsersTopicLevelByUserIdAndThreadIdParams struct {
 	UsersIdusers           int32
 	ForumtopicIdforumtopic int32
 }
 
-func (q *Queries) GetUsersTopicLevel(ctx context.Context, arg GetUsersTopicLevelParams) (*Userstopiclevel, error) {
-	row := q.db.QueryRowContext(ctx, getUsersTopicLevel, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
+func (q *Queries) GetUsersTopicLevelByUserIdAndThreadId(ctx context.Context, arg GetUsersTopicLevelByUserIdAndThreadIdParams) (*Userstopiclevel, error) {
+	row := q.db.QueryRowContext(ctx, getUsersTopicLevelByUserIdAndThreadId, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
 	var i Userstopiclevel
 	err := row.Scan(
 		&i.UsersIdusers,
@@ -280,7 +280,7 @@ func (q *Queries) GetUsersTopicLevel(ctx context.Context, arg GetUsersTopicLevel
 	return &i, err
 }
 
-const setTopicRestrictions = `-- name: SetTopicRestrictions :exec
+const upsertForumTopicRestrictions = `-- name: UpsertForumTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
@@ -294,7 +294,7 @@ ON DUPLICATE KEY UPDATE
     adminlevel = VALUES(adminlevel)
 `
 
-type SetTopicRestrictionsParams struct {
+type UpsertForumTopicRestrictionsParams struct {
 	ForumtopicIdforumtopic int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
@@ -306,8 +306,8 @@ type SetTopicRestrictionsParams struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) SetTopicRestrictions(ctx context.Context, arg SetTopicRestrictionsParams) error {
-	_, err := q.db.ExecContext(ctx, setTopicRestrictions,
+func (q *Queries) UpsertForumTopicRestrictions(ctx context.Context, arg UpsertForumTopicRestrictionsParams) error {
+	_, err := q.db.ExecContext(ctx, upsertForumTopicRestrictions,
 		arg.ForumtopicIdforumtopic,
 		arg.Viewlevel,
 		arg.Replylevel,
@@ -321,12 +321,12 @@ func (q *Queries) SetTopicRestrictions(ctx context.Context, arg SetTopicRestrict
 	return err
 }
 
-const userAllow = `-- name: UserAllow :exec
+const permissionUserAllow = `-- name: PermissionUserAllow :exec
 INSERT INTO permissions (users_idusers, section, level)
 VALUES (?, ?, ?)
 `
 
-type UserAllowParams struct {
+type PermissionUserAllowParams struct {
 	UsersIdusers int32
 	Section      sql.NullString
 	Level        sql.NullString
@@ -338,12 +338,12 @@ type UserAllowParams struct {
 //	? - User ID to be associated with the permission (int)
 //	? - Section for which the permission is granted (string)
 //	? - Level of the permission (string)
-func (q *Queries) UserAllow(ctx context.Context, arg UserAllowParams) error {
-	_, err := q.db.ExecContext(ctx, userAllow, arg.UsersIdusers, arg.Section, arg.Level)
+func (q *Queries) PermissionUserAllow(ctx context.Context, arg PermissionUserAllowParams) error {
+	_, err := q.db.ExecContext(ctx, permissionUserAllow, arg.UsersIdusers, arg.Section, arg.Level)
 	return err
 }
 
-const userDisallow = `-- name: UserDisallow :exec
+const permissionUserDisallow = `-- name: PermissionUserDisallow :exec
 DELETE FROM permissions
 WHERE idpermissions = ?
 `
@@ -352,23 +352,23 @@ WHERE idpermissions = ?
 // Parameters:
 //
 //	? - Permission ID to be deleted (int)
-func (q *Queries) UserDisallow(ctx context.Context, idpermissions int32) error {
-	_, err := q.db.ExecContext(ctx, userDisallow, idpermissions)
+func (q *Queries) PermissionUserDisallow(ctx context.Context, idpermissions int32) error {
+	_, err := q.db.ExecContext(ctx, permissionUserDisallow, idpermissions)
 	return err
 }
 
-const user_allow = `-- name: User_allow :exec
+const permissionUserAllow = `-- name: PermissionUserAllow :exec
 INSERT INTO permissions (users_idusers, section, level)
 VALUES (?, ?, ?)
 `
 
-type User_allowParams struct {
+type PermissionUserAllowParams struct {
 	UsersIdusers int32
 	Section      sql.NullString
 	Level        sql.NullString
 }
 
-func (q *Queries) User_allow(ctx context.Context, arg User_allowParams) error {
-	_, err := q.db.ExecContext(ctx, user_allow, arg.UsersIdusers, arg.Section, arg.Level)
+func (q *Queries) PermissionUserAllow(ctx context.Context, arg PermissionUserAllowParams) error {
+	_, err := q.db.ExecContext(ctx, permissionUserAllow, arg.UsersIdusers, arg.Section, arg.Level)
 	return err
 }

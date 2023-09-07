@@ -64,7 +64,7 @@ type CoreData struct {
 	AtomFeedUrl      string
 }
 
-func (cd *CoreData) GetSecurityLevel() string {
+func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {
 	return cd.SecurityLevel
 }
 

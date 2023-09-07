@@ -2,7 +2,22 @@ version: 2
 sql:
     - engine: "mysql"
       schema: "schema.sql"
-      queries: ["queries.sql", "queries-languages.sql", "queries-permissions.sql"]
+      queries:
+        - "queries.sql"
+        - "queries-languages.sql"
+        - "queries-permissions.sql"
+        - "queries-users.sql"
+        - "queries-faq.sql"
+        - "queries-search.sql"
+        - "queries-blog.sql"
+        - "queries-writings.sql"
+        - "queries-threads.sql"
+        - "queries-bookmarks.sql"
+        - "queries-forum.sql"
+        - "queries-comments.sql"
+        - "queries-linker.sql"
+        - "queries-imagebbs.sql"
+        - "queries-news.sql"
       gen:
           go:
               package: "main"

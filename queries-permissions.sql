@@ -53,3 +53,36 @@ WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
 ;
 
+-- name: GetUsersTopicLevel :one
+SELECT utl.*
+FROM userstopiclevel utl
+WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
+;
+
+-- name: DeleteTopicRestrictions :exec
+DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
+
+-- name: SetTopicRestrictions :exec
+INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+    viewlevel = VALUES(viewlevel),
+    replylevel = VALUES(replylevel),
+    newthreadlevel = VALUES(newthreadlevel),
+    seelevel = VALUES(seelevel),
+    invitelevel = VALUES(invitelevel),
+    readlevel = VALUES(readlevel),
+    modlevel = VALUES(modlevel),
+    adminlevel = VALUES(adminlevel);
+
+-- name: GetTopicRestrictions :many
+SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+WHERE idforumtopic = ?;
+
+-- name: GetAllTopicRestrictions :many
+SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+FROM forumtopic t
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
+

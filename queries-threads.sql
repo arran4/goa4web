@@ -1,0 +1,64 @@
+-- name: Update_forumthreads :exec
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+), lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    LIMIT 1
+);
+
+-- name: Update_forumthread :exec
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+), lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_idforumthread = idforumthread
+    LIMIT 1
+)
+WHERE idforumthread = ?;
+
+-- name: User_get_thread :one
+SELECT th.*, lu.username AS LastPosterUsername, r.seelevel, u.level
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND th.idforumthread=?
+ORDER BY t.lastaddition DESC;
+
+-- name: MakeThread :execlastid
+INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
+

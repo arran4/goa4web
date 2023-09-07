@@ -26,7 +26,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
-		Thread              *User_get_threadRow
+		Thread              *GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
 		Comments            []*CommentPlus
 		Offset              int
 		IsReplyable         bool
@@ -74,7 +74,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.User_get_thread(r.Context(), User_get_threadParams{
+	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(threadId),
 	})
@@ -82,7 +82,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: user_get_thread: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

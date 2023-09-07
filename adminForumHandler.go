@@ -47,8 +47,8 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	WHERE c.idcomments=?;
 	*/
 
-	if err := queries.Update_forumthreads(r.Context()); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update_forumthread_firstpost: %w", err).Error())
+	if err := queries.RecalculateAllForumThreadMetaData(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("recalculateForumThreadByIdMetaData_firstpost: %w", err).Error())
 	}
 	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {

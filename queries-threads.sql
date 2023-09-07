@@ -1,4 +1,4 @@
--- name: Update_forumthreads :exec
+-- name: RecalculateAllForumThreadMetaData :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -23,7 +23,7 @@ SET lastaddition = (
     LIMIT 1
 );
 
--- name: Update_forumthread :exec
+-- name: RecalculateForumThreadByIdMetaData :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -49,7 +49,7 @@ SET lastaddition = (
 )
 WHERE idforumthread = ?;
 
--- name: User_get_thread :one
+-- name: GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions :one
 SELECT th.*, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic

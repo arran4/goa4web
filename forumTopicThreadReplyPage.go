@@ -79,8 +79,8 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.Update_forumthread(r.Context(), int32(threadId)); err != nil {
-		log.Printf("Error: update_forumthread: %s", err)
+	if err := queries.RecalculateForumThreadByIdMetaData(r.Context(), int32(threadId)); err != nil {
+		log.Printf("Error: recalculateForumThreadByIdMetaData: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

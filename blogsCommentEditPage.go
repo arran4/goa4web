@@ -34,7 +34,7 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thread, err := queries.User_get_thread(r.Context(), User_get_threadParams{
+	thread, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: comment.ForumthreadIdforumthread,
 	})
@@ -42,7 +42,7 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: user_get_thread: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
@@ -72,8 +72,8 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.Update_forumthread(r.Context(), thread.Idforumthread); err != nil {
-		log.Printf("Error: update_forumthread: %s", err)
+	if err := queries.RecalculateForumThreadByIdMetaData(r.Context(), thread.Idforumthread); err != nil {
+		log.Printf("Error: recalculateForumThreadByIdMetaData: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

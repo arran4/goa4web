@@ -35,12 +35,13 @@ LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.Idcomments IN (sqlc.slice('ids'))
-ORDER BY c.written DESC;
+ORDER BY c.written DESC
 ;
 
 -- name: CreateComment :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
-VALUES (?, ?, ?, ?, NOW());
+VALUES (?, ?, ?, ?, NOW() )
+;
 
 -- name: GetCommentsByThreadIdForUser :many
 SELECT c.*, pu.username AS posterusername

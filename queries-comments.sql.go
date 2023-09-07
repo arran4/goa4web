@@ -12,10 +12,8 @@ import (
 )
 
 const createComment = `-- name: CreateComment :execlastid
-;
-
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
-VALUES (?, ?, ?, ?, NOW())
+VALUES (?, ?, ?, ?, NOW() )
 `
 
 type CreateCommentParams struct {

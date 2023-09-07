@@ -62,7 +62,7 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		log.Printf("Error: makeThread: %s", err)
+		log.Printf("Error: CreateComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

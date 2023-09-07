@@ -15,7 +15,7 @@ func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		EditingCategoryId                int32 // TODO
 		IsAdmin                          bool  // TODO
 		IsWriter                         bool  // TODO
-		Abstracts                        []*GetPublicWriringsInCategoryRow
+		Abstracts                        []*GetPublicWritingsInCategoryRow
 		WritingcategoryIdwritingcategory int32
 	}
 
@@ -37,12 +37,16 @@ func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writingsRows, err := queries.GetPublicWriringsInCategory(r.Context(), 0)
+	writingsRows, err := queries.GetPublicWritingsInCategory(r.Context(), GetPublicWritingsInCategoryParams{
+		WritingcategoryIdwritingcategory: 0,
+		Limit:                            15,
+		Offset:                           0,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getPublicWriringsInCategory Error: %s", err)
+			log.Printf("getPublicWritingsInCategory Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

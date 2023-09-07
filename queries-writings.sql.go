@@ -174,15 +174,21 @@ func (q *Queries) GetAllWritingCategories(ctx context.Context, writingcategoryId
 	return items, nil
 }
 
-const getPublicWrirings = `-- name: GetPublicWrirings :many
+const getPublicWritings = `-- name: GetPublicWritings :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private
 FROM writing w
 WHERE w.private = 0
-ORDER BY w.published DESC LIMIT 15
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?
 `
 
-func (q *Queries) GetPublicWrirings(ctx context.Context) ([]*Writing, error) {
-	rows, err := q.db.QueryContext(ctx, getPublicWrirings)
+type GetPublicWritingsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error) {
+	rows, err := q.db.QueryContext(ctx, getPublicWritings, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -215,16 +221,23 @@ func (q *Queries) GetPublicWrirings(ctx context.Context) ([]*Writing, error) {
 	return items, nil
 }
 
-const getPublicWriringsInCategory = `-- name: GetPublicWriringsInCategory :many
+const getPublicWritingsInCategory = `-- name: GetPublicWritingsInCategory :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writingCategory_idwritingCategory=?
-ORDER BY w.published DESC LIMIT 15
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?
 `
 
-type GetPublicWriringsInCategoryRow struct {
+type GetPublicWritingsInCategoryParams struct {
+	WritingcategoryIdwritingcategory int32
+	Limit                            int32
+	Offset                           int32
+}
+
+type GetPublicWritingsInCategoryRow struct {
 	Idwriting                        int32
 	UsersIdusers                     int32
 	ForumthreadIdforumthread         int32
@@ -239,15 +252,15 @@ type GetPublicWriringsInCategoryRow struct {
 	Comments                         int64
 }
 
-func (q *Queries) GetPublicWriringsInCategory(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*GetPublicWriringsInCategoryRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPublicWriringsInCategory, writingcategoryIdwritingcategory)
+func (q *Queries) GetPublicWritingsInCategory(ctx context.Context, arg GetPublicWritingsInCategoryParams) ([]*GetPublicWritingsInCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPublicWritingsInCategory, arg.WritingcategoryIdwritingcategory, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetPublicWriringsInCategoryRow
+	var items []*GetPublicWritingsInCategoryRow
 	for rows.Next() {
-		var i GetPublicWriringsInCategoryRow
+		var i GetPublicWritingsInCategoryRow
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,

@@ -1,16 +1,20 @@
--- name: GetPublicWrirings :many
+-- name: GetPublicWritings :many
 SELECT w.*
 FROM writing w
 WHERE w.private = 0
-ORDER BY w.published DESC LIMIT 15;
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?
+;
 
--- name: GetPublicWriringsInCategory :many
+-- name: GetPublicWritingsInCategory :many
 SELECT w.*, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writingCategory_idwritingCategory=?
-ORDER BY w.published DESC LIMIT 15;
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?
+;
 
 -- name: UpdateWriting :exec
 UPDATE writing

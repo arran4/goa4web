@@ -12,7 +12,7 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Comments                         []*GetCommentsByIdsForUserWithThreadInfoRow
-		Links                            []*ShowLinksRow
+		Links                            []*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 		CommentsNoResults                bool
 		CommentsEmptyWords               bool
 		NoResults                        bool
@@ -57,7 +57,7 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*ShowLinksRow, bool, bool, error) {
+func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var LinkerIds []int32
 
@@ -105,7 +105,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 		}
 	}
 
-	Linkers, err := queries.ShowLinks(r.Context(), LinkerIds)
+	Linkers, err := queries.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending(r.Context(), LinkerIds)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

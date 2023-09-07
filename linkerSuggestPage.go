@@ -23,7 +23,7 @@ func linkerSuggestPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	categoryRows, err := queries.ShowCategories(r.Context())
+	categoryRows, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -63,14 +63,14 @@ func linkerSuggestActionPage(w http.ResponseWriter, r *http.Request) {
 	description := r.PostFormValue("description")
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
-	if err := queries.AddToQueue(r.Context(), AddToQueueParams{
+	if err := queries.CreateLinkerQueuedItem(r.Context(), CreateLinkerQueuedItemParams{
 		UsersIdusers:                   uid,
 		LinkercategoryIdlinkercategory: int32(category),
 		Title:                          sql.NullString{Valid: true, String: title},
 		Url:                            sql.NullString{Valid: true, String: url},
 		Description:                    sql.NullString{Valid: true, String: description},
 	}); err != nil {
-		log.Printf("addToQueue Error: %s", err)
+		log.Printf("createLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

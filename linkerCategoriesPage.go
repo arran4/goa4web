@@ -19,12 +19,12 @@ func linkerCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	categories, err := queries.ShowCategories(r.Context())
+	categories, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("showCategories Error: %s", err)
+			log.Printf("getAllLinkerCategories Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

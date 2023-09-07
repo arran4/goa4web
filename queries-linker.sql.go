@@ -11,80 +11,6 @@ import (
 	"strings"
 )
 
-const addToLinker = `-- name: AddToLinker :exec
-INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
-VALUES (?, ?, ?, ?, ?, NOW())
-`
-
-type AddToLinkerParams struct {
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-}
-
-func (q *Queries) AddToLinker(ctx context.Context, arg AddToLinkerParams) error {
-	_, err := q.db.ExecContext(ctx, addToLinker,
-		arg.UsersIdusers,
-		arg.LinkercategoryIdlinkercategory,
-		arg.Title,
-		arg.Url,
-		arg.Description,
-	)
-	return err
-}
-
-const addToQueue = `-- name: AddToQueue :exec
-INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?)
-`
-
-type AddToQueueParams struct {
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-}
-
-func (q *Queries) AddToQueue(ctx context.Context, arg AddToQueueParams) error {
-	_, err := q.db.ExecContext(ctx, addToQueue,
-		arg.UsersIdusers,
-		arg.LinkercategoryIdlinkercategory,
-		arg.Title,
-		arg.Url,
-		arg.Description,
-	)
-	return err
-}
-
-const adminCategories = `-- name: AdminCategories :many
-SELECT idlinkerCategory, title FROM linkerCategory
-`
-
-func (q *Queries) AdminCategories(ctx context.Context) ([]*Linkercategory, error) {
-	rows, err := q.db.QueryContext(ctx, adminCategories)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Linkercategory
-	for rows.Next() {
-		var i Linkercategory
-		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const assignLinkerThisThreadId = `-- name: AssignLinkerThisThreadId :exec
 UPDATE linker SET forumthread_idforumthread = ? WHERE idlinker = ?
 `
@@ -99,119 +25,86 @@ func (q *Queries) AssignLinkerThisThreadId(ctx context.Context, arg AssignLinker
 	return err
 }
 
-const createCategory = `-- name: CreateCategory :exec
+const createLinkerCategory = `-- name: CreateLinkerCategory :exec
 INSERT INTO linkerCategory (title) VALUES (?)
 `
 
-func (q *Queries) CreateCategory(ctx context.Context, title sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, createCategory, title)
+func (q *Queries) CreateLinkerCategory(ctx context.Context, title sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, createLinkerCategory, title)
 	return err
 }
 
-const deleteCategory = `-- name: DeleteCategory :exec
-DELETE FROM linkerCategory WHERE idlinkerCategory = ?
+const createLinkerItem = `-- name: CreateLinkerItem :exec
+INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
+VALUES (?, ?, ?, ?, ?, NOW())
 `
 
-func (q *Queries) DeleteCategory(ctx context.Context, idlinkercategory int32) error {
-	_, err := q.db.ExecContext(ctx, deleteCategory, idlinkercategory)
-	return err
-}
-
-const deleteQueueItem = `-- name: DeleteQueueItem :exec
-DELETE FROM linkerQueue WHERE idlinkerQueue = ?
-`
-
-func (q *Queries) DeleteQueueItem(ctx context.Context, idlinkerqueue int32) error {
-	_, err := q.db.ExecContext(ctx, deleteQueueItem, idlinkerqueue)
-	return err
-}
-
-const moveToLinker = `-- name: MoveToLinker :exec
-INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, language_idlanguage, title, ` + "`" + `url` + "`" + `, description)
-SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
-FROM linkerQueue l
-WHERE l.idlinkerQueue = ?
-`
-
-func (q *Queries) MoveToLinker(ctx context.Context, idlinkerqueue int32) error {
-	_, err := q.db.ExecContext(ctx, moveToLinker, idlinkerqueue)
-	return err
-}
-
-const renameCategory = `-- name: RenameCategory :exec
-UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?
-`
-
-type RenameCategoryParams struct {
-	Title            sql.NullString
-	Idlinkercategory int32
-}
-
-func (q *Queries) RenameCategory(ctx context.Context, arg RenameCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, renameCategory, arg.Title, arg.Idlinkercategory)
-	return err
-}
-
-const showAdminQueue = `-- name: ShowAdminQueue :many
-SELECT l.idlinkerqueue, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.title, l.url, l.description, u.username, c.title as category_title, c.idlinkerCategory
-FROM linkerQueue l
-JOIN users u ON l.users_idusers = u.idusers
-JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
-`
-
-type ShowAdminQueueRow struct {
-	Idlinkerqueue                  int32
-	LanguageIdlanguage             int32
+type CreateLinkerItemParams struct {
 	UsersIdusers                   int32
 	LinkercategoryIdlinkercategory int32
 	Title                          sql.NullString
 	Url                            sql.NullString
 	Description                    sql.NullString
-	Username                       sql.NullString
-	CategoryTitle                  sql.NullString
-	Idlinkercategory               int32
 }
 
-func (q *Queries) ShowAdminQueue(ctx context.Context) ([]*ShowAdminQueueRow, error) {
-	rows, err := q.db.QueryContext(ctx, showAdminQueue)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ShowAdminQueueRow
-	for rows.Next() {
-		var i ShowAdminQueueRow
-		if err := rows.Scan(
-			&i.Idlinkerqueue,
-			&i.LanguageIdlanguage,
-			&i.UsersIdusers,
-			&i.LinkercategoryIdlinkercategory,
-			&i.Title,
-			&i.Url,
-			&i.Description,
-			&i.Username,
-			&i.CategoryTitle,
-			&i.Idlinkercategory,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) CreateLinkerItem(ctx context.Context, arg CreateLinkerItemParams) error {
+	_, err := q.db.ExecContext(ctx, createLinkerItem,
+		arg.UsersIdusers,
+		arg.LinkercategoryIdlinkercategory,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+	)
+	return err
 }
 
-const showCategories = `-- name: ShowCategories :many
+const createLinkerQueuedItem = `-- name: CreateLinkerQueuedItem :exec
+INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?)
+`
+
+type CreateLinkerQueuedItemParams struct {
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+}
+
+func (q *Queries) CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQueuedItemParams) error {
+	_, err := q.db.ExecContext(ctx, createLinkerQueuedItem,
+		arg.UsersIdusers,
+		arg.LinkercategoryIdlinkercategory,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+	)
+	return err
+}
+
+const deleteLinkerCategory = `-- name: DeleteLinkerCategory :exec
+DELETE FROM linkerCategory WHERE idlinkerCategory = ?
+`
+
+func (q *Queries) DeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error {
+	_, err := q.db.ExecContext(ctx, deleteLinkerCategory, idlinkercategory)
+	return err
+}
+
+const deleteLinkerQueuedItem = `-- name: DeleteLinkerQueuedItem :exec
+DELETE FROM linkerQueue WHERE idlinkerQueue = ?
+`
+
+func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int32) error {
+	_, err := q.db.ExecContext(ctx, deleteLinkerQueuedItem, idlinkerqueue)
+	return err
+}
+
+const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
 SELECT idlinkerCategory, title FROM linkerCategory
 `
 
-func (q *Queries) ShowCategories(ctx context.Context) ([]*Linkercategory, error) {
-	rows, err := q.db.QueryContext(ctx, showCategories)
+func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerCategories)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +126,7 @@ func (q *Queries) ShowCategories(ctx context.Context) ([]*Linkercategory, error)
 	return items, nil
 }
 
-const showLatest = `-- name: ShowLatest :many
+const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
@@ -243,7 +136,7 @@ WHERE lc.idlinkerCategory = ?
 ORDER BY l.listed DESC
 `
 
-type ShowLatestRow struct {
+type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker                       int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -258,15 +151,15 @@ type ShowLatestRow struct {
 	Posterusername                 sql.NullString
 }
 
-func (q *Queries) ShowLatest(ctx context.Context, idlinkercategory int32) ([]*ShowLatestRow, error) {
-	rows, err := q.db.QueryContext(ctx, showLatest, idlinkercategory)
+func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(ctx context.Context, idlinkercategory int32) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending, idlinkercategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ShowLatestRow
+	var items []*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
 	for rows.Next() {
-		var i ShowLatestRow
+		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
 		if err := rows.Scan(
 			&i.Idlinker,
 			&i.LanguageIdlanguage,
@@ -294,7 +187,61 @@ func (q *Queries) ShowLatest(ctx context.Context, idlinkercategory int32) ([]*Sh
 	return items, nil
 }
 
-const showLink = `-- name: ShowLink :one
+const getAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails = `-- name: GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails :many
+SELECT l.idlinkerqueue, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.title, l.url, l.description, u.username, c.title as category_title, c.idlinkerCategory
+FROM linkerQueue l
+JOIN users u ON l.users_idusers = u.idusers
+JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
+`
+
+type GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow struct {
+	Idlinkerqueue                  int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Username                       sql.NullString
+	CategoryTitle                  sql.NullString
+	Idlinkercategory               int32
+}
+
+func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx context.Context) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
+	for rows.Next() {
+		var i GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
+		if err := rows.Scan(
+			&i.Idlinkerqueue,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkercategoryIdlinkercategory,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Username,
+			&i.CategoryTitle,
+			&i.Idlinkercategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending = `-- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
@@ -302,7 +249,7 @@ JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategor
 WHERE l.idlinker = ?
 `
 
-type ShowLinkRow struct {
+type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker                       int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -316,9 +263,9 @@ type ShowLinkRow struct {
 	Title_2                        sql.NullString
 }
 
-func (q *Queries) ShowLink(ctx context.Context, idlinker int32) (*ShowLinkRow, error) {
-	row := q.db.QueryRowContext(ctx, showLink, idlinker)
-	var i ShowLinkRow
+func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, idlinker int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	row := q.db.QueryRowContext(ctx, getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending, idlinker)
+	var i GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
 	err := row.Scan(
 		&i.Idlinker,
 		&i.LanguageIdlanguage,
@@ -335,7 +282,7 @@ func (q *Queries) ShowLink(ctx context.Context, idlinker int32) (*ShowLinkRow, e
 	return &i, err
 }
 
-const showLinks = `-- name: ShowLinks :many
+const getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending = `-- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending :many
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
@@ -343,7 +290,7 @@ JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategor
 WHERE l.idlinker IN (/*SLICE:linkerids*/?)
 `
 
-type ShowLinksRow struct {
+type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker                       int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -357,8 +304,8 @@ type ShowLinksRow struct {
 	Title_2                        sql.NullString
 }
 
-func (q *Queries) ShowLinks(ctx context.Context, linkerids []int32) ([]*ShowLinksRow, error) {
-	query := showLinks
+func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, linkerids []int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	query := getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending
 	var queryParams []interface{}
 	if len(linkerids) > 0 {
 		for _, v := range linkerids {
@@ -373,9 +320,9 @@ func (q *Queries) ShowLinks(ctx context.Context, linkerids []int32) ([]*ShowLink
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ShowLinksRow
+	var items []*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 	for rows.Next() {
-		var i ShowLinksRow
+		var i GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 		if err := rows.Scan(
 			&i.Idlinker,
 			&i.LanguageIdlanguage,
@@ -402,11 +349,37 @@ func (q *Queries) ShowLinks(ctx context.Context, linkerids []int32) ([]*ShowLink
 	return items, nil
 }
 
-const updateQueue = `-- name: UpdateQueue :exec
+const renameLinkerCategory = `-- name: RenameLinkerCategory :exec
+UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?
+`
+
+type RenameLinkerCategoryParams struct {
+	Title            sql.NullString
+	Idlinkercategory int32
+}
+
+func (q *Queries) RenameLinkerCategory(ctx context.Context, arg RenameLinkerCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, renameLinkerCategory, arg.Title, arg.Idlinkercategory)
+	return err
+}
+
+const selectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId = `-- name: SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId :exec
+INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, language_idlanguage, title, ` + "`" + `url` + "`" + `, description)
+SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
+FROM linkerQueue l
+WHERE l.idlinkerQueue = ?
+`
+
+func (q *Queries) SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx context.Context, idlinkerqueue int32) error {
+	_, err := q.db.ExecContext(ctx, selectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId, idlinkerqueue)
+	return err
+}
+
+const updateLinkerQueuedItem = `-- name: UpdateLinkerQueuedItem :exec
 UPDATE linkerQueue SET linkerCategory_idlinkerCategory = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?
 `
 
-type UpdateQueueParams struct {
+type UpdateLinkerQueuedItemParams struct {
 	LinkercategoryIdlinkercategory int32
 	Title                          sql.NullString
 	Url                            sql.NullString
@@ -414,8 +387,8 @@ type UpdateQueueParams struct {
 	Idlinkerqueue                  int32
 }
 
-func (q *Queries) UpdateQueue(ctx context.Context, arg UpdateQueueParams) error {
-	_, err := q.db.ExecContext(ctx, updateQueue,
+func (q *Queries) UpdateLinkerQueuedItem(ctx context.Context, arg UpdateLinkerQueuedItemParams) error {
+	_, err := q.db.ExecContext(ctx, updateLinkerQueuedItem,
 		arg.LinkercategoryIdlinkercategory,
 		arg.Title,
 		arg.Url,

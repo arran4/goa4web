@@ -14,7 +14,7 @@ import (
 func linkerShowPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Link               *ShowLinkRow
+		Link               *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
 		CanReply           bool
 		Languages          []*Language
 		SelectedLanguageId int
@@ -37,9 +37,9 @@ func linkerShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	link, err := queries.ShowLink(r.Context(), int32(linkId))
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
 	if err != nil {
-		log.Printf("showLink Error: %s", err)
+		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -72,9 +72,9 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	link, err := queries.ShowLink(r.Context(), int32(linkId))
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
 	if err != nil {
-		log.Printf("showLink Error: %s", err)
+		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

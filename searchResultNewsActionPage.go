@@ -12,7 +12,7 @@ func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
-		News               []*GetNewsPostsRow
+		News               []*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -56,7 +56,7 @@ func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetNewsPostsRow, bool, bool, error) {
+func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
@@ -104,7 +104,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 		}
 	}
 
-	news, err := queries.GetNewsPosts(r.Context(), newsIds)
+	news, err := queries.GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(r.Context(), newsIds)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

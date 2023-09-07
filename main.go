@@ -421,7 +421,7 @@ func NewsPostAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.GetNewsThreadId(request.Context(), int32(newsPostId))
+		row, err := queries.GetForumThreadIdByNewsPostId(request.Context(), int32(newsPostId))
 		if err != nil {
 			log.Printf("Error: %s", err)
 			return false

@@ -12,7 +12,7 @@ import (
 
 func newsPage(w http.ResponseWriter, r *http.Request) {
 	type Post struct {
-		*GetLatestNewsPostsRow
+		*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 		ShowReply bool
 		ShowEdit  bool
 		Editing   bool
@@ -27,12 +27,15 @@ func newsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	posts, err := queries.GetLatestNewsPosts(r.Context())
+	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
+		Limit:  15,
+		Offset: 0,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getLatestNewsPosts Error: %s", err)
+			log.Printf("getNewsPostsWithWriterUsernameAndThreadCommentCountDescending Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -42,10 +45,10 @@ func newsPage(w http.ResponseWriter, r *http.Request) {
 
 	for _, post := range posts {
 		data.News = append(data.News, &Post{
-			GetLatestNewsPostsRow: post,
-			ShowReply:             true, // TODO
-			ShowEdit:              true, // TODO
-			Editing:               editingId == int(post.Idsitenews),
+			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
+			ShowReply: true, // TODO
+			ShowEdit:  true, // TODO
+			Editing:   editingId == int(post.Idsitenews),
 		})
 	}
 

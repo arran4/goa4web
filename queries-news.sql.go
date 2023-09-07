@@ -25,76 +25,42 @@ func (q *Queries) AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThis
 	return err
 }
 
-const editNewsPost = `-- name: EditNewsPost :exec
-UPDATE siteNews SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?
+const createNewsPost = `-- name: CreateNewsPost :exec
+INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
+VALUES (?, ?, NOW(), ?)
 `
 
-type EditNewsPostParams struct {
+type CreateNewsPostParams struct {
 	News               sql.NullString
+	UsersIdusers       int32
 	LanguageIdlanguage int32
-	Idsitenews         int32
 }
 
-func (q *Queries) EditNewsPost(ctx context.Context, arg EditNewsPostParams) error {
-	_, err := q.db.ExecContext(ctx, editNewsPost, arg.News, arg.LanguageIdlanguage, arg.Idsitenews)
+func (q *Queries) CreateNewsPost(ctx context.Context, arg CreateNewsPostParams) error {
+	_, err := q.db.ExecContext(ctx, createNewsPost, arg.News, arg.UsersIdusers, arg.LanguageIdlanguage)
 	return err
 }
 
-const getLatestNewsPosts = `-- name: GetLatestNewsPosts :many
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
+const getForumThreadIdByNewsPostId = `-- name: GetForumThreadIdByNewsPostId :one
+SELECT s.forumthread_idforumthread, u.idusers
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
-ORDER BY s.occured DESC
-LIMIT 15
+WHERE s.idsiteNews = ?
 `
 
-type GetLatestNewsPostsRow struct {
-	Writername               sql.NullString
-	Writerid                 sql.NullInt32
-	Idsitenews               int32
+type GetForumThreadIdByNewsPostIdRow struct {
 	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	UsersIdusers             int32
-	News                     sql.NullString
-	Occured                  sql.NullTime
-	Comments                 sql.NullInt32
+	Idusers                  sql.NullInt32
 }
 
-func (q *Queries) GetLatestNewsPosts(ctx context.Context) ([]*GetLatestNewsPostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getLatestNewsPosts)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetLatestNewsPostsRow
-	for rows.Next() {
-		var i GetLatestNewsPostsRow
-		if err := rows.Scan(
-			&i.Writername,
-			&i.Writerid,
-			&i.Idsitenews,
-			&i.ForumthreadIdforumthread,
-			&i.LanguageIdlanguage,
-			&i.UsersIdusers,
-			&i.News,
-			&i.Occured,
-			&i.Comments,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews int32) (*GetForumThreadIdByNewsPostIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getForumThreadIdByNewsPostId, idsitenews)
+	var i GetForumThreadIdByNewsPostIdRow
+	err := row.Scan(&i.ForumthreadIdforumthread, &i.Idusers)
+	return &i, err
 }
 
-const getNewsPost = `-- name: GetNewsPost :one
+const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
@@ -102,7 +68,7 @@ LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
 WHERE s.idsiteNews = ?
 `
 
-type GetNewsPostRow struct {
+type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	Writername               sql.NullString
 	Writerid                 sql.NullInt32
 	Idsitenews               int32
@@ -114,9 +80,9 @@ type GetNewsPostRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) GetNewsPost(ctx context.Context, idsitenews int32) (*GetNewsPostRow, error) {
-	row := q.db.QueryRowContext(ctx, getNewsPost, idsitenews)
-	var i GetNewsPostRow
+func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, idsitenews int32) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error) {
+	row := q.db.QueryRowContext(ctx, getNewsPostByIdWithWriterIdAndThreadCommentCount, idsitenews)
+	var i GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 	err := row.Scan(
 		&i.Writername,
 		&i.Writerid,
@@ -131,7 +97,7 @@ func (q *Queries) GetNewsPost(ctx context.Context, idsitenews int32) (*GetNewsPo
 	return &i, err
 }
 
-const getNewsPosts = `-- name: GetNewsPosts :many
+const getNewsPostsByIdsWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostsByIdsWithWriterIdAndThreadCommentCount :many
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
@@ -139,7 +105,7 @@ LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
 WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
 `
 
-type GetNewsPostsRow struct {
+type GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow struct {
 	Writername               sql.NullString
 	Writerid                 sql.NullInt32
 	Idsitenews               int32
@@ -151,8 +117,8 @@ type GetNewsPostsRow struct {
 	Comments                 sql.NullInt32
 }
 
-func (q *Queries) GetNewsPosts(ctx context.Context, newsids []int32) ([]*GetNewsPostsRow, error) {
-	query := getNewsPosts
+func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context.Context, newsids []int32) ([]*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, error) {
+	query := getNewsPostsByIdsWithWriterIdAndThreadCommentCount
 	var queryParams []interface{}
 	if len(newsids) > 0 {
 		for _, v := range newsids {
@@ -167,9 +133,9 @@ func (q *Queries) GetNewsPosts(ctx context.Context, newsids []int32) ([]*GetNews
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetNewsPostsRow
+	var items []*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow
 	for rows.Next() {
-		var i GetNewsPostsRow
+		var i GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow
 		if err := rows.Scan(
 			&i.Writername,
 			&i.Writerid,
@@ -194,63 +160,52 @@ func (q *Queries) GetNewsPosts(ctx context.Context, newsids []int32) ([]*GetNews
 	return items, nil
 }
 
-const getNewsThreadId = `-- name: GetNewsThreadId :one
-SELECT s.forumthread_idforumthread, u.idusers
+const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = ?
+LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+ORDER BY s.occured DESC
+LIMIT ? OFFSET ?
 `
 
-type GetNewsThreadIdRow struct {
+type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
+	Writername               sql.NullString
+	Writerid                 sql.NullInt32
+	Idsitenews               int32
 	ForumthreadIdforumthread int32
-	Idusers                  sql.NullInt32
+	LanguageIdlanguage       int32
+	UsersIdusers             int32
+	News                     sql.NullString
+	Occured                  sql.NullTime
+	Comments                 sql.NullInt32
 }
 
-func (q *Queries) GetNewsThreadId(ctx context.Context, idsitenews int32) (*GetNewsThreadIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getNewsThreadId, idsitenews)
-	var i GetNewsThreadIdRow
-	err := row.Scan(&i.ForumthreadIdforumthread, &i.Idusers)
-	return &i, err
-}
-
-const writeNewsPost = `-- name: WriteNewsPost :exec
-INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
-VALUES (?, ?, NOW(), ?)
-`
-
-type WriteNewsPostParams struct {
-	News               sql.NullString
-	UsersIdusers       int32
-	LanguageIdlanguage int32
-}
-
-func (q *Queries) WriteNewsPost(ctx context.Context, arg WriteNewsPostParams) error {
-	_, err := q.db.ExecContext(ctx, writeNewsPost, arg.News, arg.UsersIdusers, arg.LanguageIdlanguage)
-	return err
-}
-
-const writeSiteNewsRSS = `-- name: WriteSiteNewsRSS :many
-SELECT s.idsiteNews, s.occured, s.news
-FROM siteNews s
-ORDER BY s.occured DESC LIMIT 15
-`
-
-type WriteSiteNewsRSSRow struct {
-	Idsitenews int32
-	Occured    sql.NullTime
-	News       sql.NullString
-}
-
-func (q *Queries) WriteSiteNewsRSS(ctx context.Context) ([]*WriteSiteNewsRSSRow, error) {
-	rows, err := q.db.QueryContext(ctx, writeSiteNewsRSS)
+func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, getNewsPostsWithWriterUsernameAndThreadCommentCountDescending, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*WriteSiteNewsRSSRow
+	var items []*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 	for rows.Next() {
-		var i WriteSiteNewsRSSRow
-		if err := rows.Scan(&i.Idsitenews, &i.Occured, &i.News); err != nil {
+		var i GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+		if err := rows.Scan(
+			&i.Writername,
+			&i.Writerid,
+			&i.Idsitenews,
+			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.News,
+			&i.Occured,
+			&i.Comments,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -262,4 +217,19 @@ func (q *Queries) WriteSiteNewsRSS(ctx context.Context) ([]*WriteSiteNewsRSSRow,
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateNewsPost = `-- name: UpdateNewsPost :exec
+UPDATE siteNews SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?
+`
+
+type UpdateNewsPostParams struct {
+	News               sql.NullString
+	LanguageIdlanguage int32
+	Idsitenews         int32
+}
+
+func (q *Queries) UpdateNewsPost(ctx context.Context, arg UpdateNewsPostParams) error {
+	_, err := q.db.ExecContext(ctx, updateNewsPost, arg.News, arg.LanguageIdlanguage, arg.Idsitenews)
+	return err
 }

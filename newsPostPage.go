@@ -29,7 +29,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Post struct {
-		*GetNewsPostRow
+		*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		ShowReply bool
 		ShowEdit  bool
 		Editing   bool
@@ -60,9 +60,9 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	post, err := queries.GetNewsPost(r.Context(), int32(pid))
+	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
 	if err != nil {
-		log.Printf("getNewsPost Error: %s", err)
+		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -140,10 +140,10 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Thread = threadRow
 	data.Post = &Post{
-		GetNewsPostRow: post,
-		ShowReply:      true, // TODO
-		ShowEdit:       true, // TODO
-		Editing:        editingId == int(post.Idsitenews),
+		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
+		ShowReply: true, // TODO
+		ShowEdit:  true, // TODO
+		Editing:   editingId == int(post.Idsitenews),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())
@@ -180,9 +180,9 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	post, err := queries.GetNewsPost(r.Context(), int32(pid))
+	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
 	if err != nil {
-		log.Printf("getNewsPost Error: %s", err)
+		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -330,7 +330,7 @@ func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
-	err = queries.EditNewsPost(r.Context(), EditNewsPostParams{
+	err = queries.UpdateNewsPost(r.Context(), UpdateNewsPostParams{
 		Idsitenews:         int32(postId),
 		LanguageIdlanguage: int32(languageId),
 		News: sql.NullString{
@@ -358,7 +358,7 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	err = queries.WriteNewsPost(r.Context(), WriteNewsPostParams{
+	err = queries.CreateNewsPost(r.Context(), CreateNewsPostParams{
 		LanguageIdlanguage: int32(languageId),
 		News: sql.NullString{
 			String: text,

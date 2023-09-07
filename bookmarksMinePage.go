@@ -76,12 +76,12 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	bookmarks, err := queries.Show_bookmarks(r.Context(), uid)
+	bookmarks, err := queries.GetBookmarksForUser(r.Context(), uid)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("error show_bookmarks: %s", err)
+			log.Printf("error getBookmarksForUser: %s", err)
 			http.Error(w, "ERROR", 500)
 			return
 		}

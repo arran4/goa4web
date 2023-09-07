@@ -23,12 +23,12 @@ func bookmarksEditPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	bookmarks, err := queries.Show_bookmarks(r.Context(), uid)
+	bookmarks, err := queries.GetBookmarksForUser(r.Context(), uid)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("error show_bookmarks: %s", err)
+			log.Printf("error getBookmarksForUser: %s", err)
 			http.Error(w, "ERROR", 500)
 			return
 		}
@@ -51,7 +51,7 @@ func bookmarksEditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.Update_bookmarks(r.Context(), Update_bookmarksParams{
+	if err := queries.UpdateBookmarks(r.Context(), UpdateBookmarksParams{
 		List: sql.NullString{
 			String: text,
 			Valid:  true,
@@ -72,7 +72,7 @@ func bookmarksEditCreateActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.Add_bookmarks(r.Context(), Add_bookmarksParams{
+	if err := queries.CreateBookmarks(r.Context(), CreateBookmarksParams{
 		List: sql.NullString{
 			String: text,
 			Valid:  true,

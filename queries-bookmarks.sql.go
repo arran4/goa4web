@@ -10,54 +10,54 @@ import (
 	"database/sql"
 )
 
-const add_bookmarks = `-- name: Add_bookmarks :exec
+const createBookmarks = `-- name: CreateBookmarks :exec
 INSERT INTO bookmarks (users_idusers, list)
 VALUES (?, ?)
 `
 
-type Add_bookmarksParams struct {
+type CreateBookmarksParams struct {
 	UsersIdusers int32
 	List         sql.NullString
 }
 
 // This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".
-func (q *Queries) Add_bookmarks(ctx context.Context, arg Add_bookmarksParams) error {
-	_, err := q.db.ExecContext(ctx, add_bookmarks, arg.UsersIdusers, arg.List)
+func (q *Queries) CreateBookmarks(ctx context.Context, arg CreateBookmarksParams) error {
+	_, err := q.db.ExecContext(ctx, createBookmarks, arg.UsersIdusers, arg.List)
 	return err
 }
 
-const show_bookmarks = `-- name: Show_bookmarks :one
+const getBookmarksForUser = `-- name: GetBookmarksForUser :one
 SELECT Idbookmarks, list
 FROM bookmarks
 WHERE users_idusers = ?
 `
 
-type Show_bookmarksRow struct {
+type GetBookmarksForUserRow struct {
 	Idbookmarks int32
 	List        sql.NullString
 }
 
 // This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
-func (q *Queries) Show_bookmarks(ctx context.Context, usersIdusers int32) (*Show_bookmarksRow, error) {
-	row := q.db.QueryRowContext(ctx, show_bookmarks, usersIdusers)
-	var i Show_bookmarksRow
+func (q *Queries) GetBookmarksForUser(ctx context.Context, usersIdusers int32) (*GetBookmarksForUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getBookmarksForUser, usersIdusers)
+	var i GetBookmarksForUserRow
 	err := row.Scan(&i.Idbookmarks, &i.List)
 	return &i, err
 }
 
-const update_bookmarks = `-- name: Update_bookmarks :exec
+const updateBookmarks = `-- name: UpdateBookmarks :exec
 UPDATE bookmarks
 SET list = ?
 WHERE users_idusers = ?
 `
 
-type Update_bookmarksParams struct {
+type UpdateBookmarksParams struct {
 	List         sql.NullString
 	UsersIdusers int32
 }
 
 // This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
-func (q *Queries) Update_bookmarks(ctx context.Context, arg Update_bookmarksParams) error {
-	_, err := q.db.ExecContext(ctx, update_bookmarks, arg.List, arg.UsersIdusers)
+func (q *Queries) UpdateBookmarks(ctx context.Context, arg UpdateBookmarksParams) error {
+	_, err := q.db.ExecContext(ctx, updateBookmarks, arg.List, arg.UsersIdusers)
 	return err
 }

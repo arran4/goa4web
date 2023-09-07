@@ -93,10 +93,10 @@ FROM linker;
 -- This query deletes all data from the "linkerSearch" table.
 DELETE FROM linkerSearch;
 
--- name: GetWordID :one
-SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?);
+-- name: GetSearchWordByWordLowercased :one
+SELECT * FROM searchwordlist WHERE word = lcase(?);
 
--- name: AddWord :execlastid
+-- name: CreateSearchWord :execlastid
 INSERT IGNORE INTO searchwordlist (word)
 VALUES (lcase(sqlc.arg(word)));
 

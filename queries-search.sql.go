@@ -43,13 +43,13 @@ func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWri
 	return err
 }
 
-const addWord = `-- name: AddWord :execlastid
+const createSearchWord = `-- name: CreateSearchWord :execlastid
 INSERT IGNORE INTO searchwordlist (word)
 VALUES (lcase(?))
 `
 
-func (q *Queries) AddWord(ctx context.Context, word string) (int64, error) {
-	result, err := q.db.ExecContext(ctx, addWord, word)
+func (q *Queries) CreateSearchWord(ctx context.Context, word string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createSearchWord, word)
 	if err != nil {
 		return 0, err
 	}
@@ -328,12 +328,12 @@ func (q *Queries) DeleteWritingSearch(ctx context.Context) error {
 	return err
 }
 
-const getWordID = `-- name: GetWordID :one
+const getSearchWordByWordLowercased = `-- name: GetSearchWordByWordLowercased :one
 SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?)
 `
 
-func (q *Queries) GetWordID(ctx context.Context, lcase string) (int32, error) {
-	row := q.db.QueryRowContext(ctx, getWordID, lcase)
+func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getSearchWordByWordLowercased, lcase)
 	var idsearchwordlist int32
 	err := row.Scan(&idsearchwordlist)
 	return idsearchwordlist, err

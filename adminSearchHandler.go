@@ -34,10 +34,10 @@ void addToGeneralSearch(a4webcont &cont, char *text, int fid, char *dbtable, cha
 	int count = 0;
 	while (*keys != NULL)
 	{
-		int wordid = getWordID(cont, *keys);
+		int wordid = getSearchWordByWordLowercased(cont, *keys);
 		if (wordid == 0)
 		{
-			wordid = addWord(cont, *keys);
+			wordid = createSearchWord(cont, *keys);
 		}
 		if (wordid)
 			query.pushf("%s(%d, %d)", count++ ? "," : "", fid, wordid);

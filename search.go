@@ -40,9 +40,9 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 	}
 	wordIds := make([]int64, 0, len(words))
 	for word := range words {
-		id, err := queries.AddWord(r.Context(), strings.ToLower(word))
+		id, err := queries.CreateSearchWord(r.Context(), strings.ToLower(word))
 		if err != nil {
-			log.Printf("Error: addWord: %s", err)
+			log.Printf("Error: createSearchWord: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return nil, true
 		}

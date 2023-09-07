@@ -64,6 +64,142 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Res
 	return q.db.ExecContext(ctx, insertUser, arg.Username, arg.MD5, arg.Email)
 }
 
+const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
+SELECT u.email FROM blogs t, users u, preferences p
+WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers
+`
+
+type ListUsersSubscribedToBlogsParams struct {
+	Idblogs int32
+	Idusers int32
+}
+
+func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToBlogs, arg.Idblogs, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
+SELECT u.email FROM linker t, users u, preferences p
+WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers
+`
+
+type ListUsersSubscribedToLinkerParams struct {
+	Idlinker int32
+	Idusers  int32
+}
+
+func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToLinker, arg.Idlinker, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
+SELECT u.email FROM comments c, users u, preferences p
+WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
+GROUP BY u.idusers
+`
+
+type ListUsersSubscribedToThreadParams struct {
+	ForumthreadIdforumthread int32
+	Idusers                  int32
+}
+
+func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsersSubscribedToThreadParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToThread, arg.ForumthreadIdforumthread, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
+SELECT u.email FROM writing t, users u, preferences p
+WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers
+`
+
+type ListUsersSubscribedToWritingParams struct {
+	Idwriting int32
+	Idusers   int32
+}
+
+func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToWriting, arg.Idwriting, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const login = `-- name: Login :one
 SELECT idusers, email, passwd, username
 FROM users

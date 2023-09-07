@@ -14,27 +14,12 @@ WHERE idlanguage = ?;
 DELETE FROM language
 WHERE idlanguage = ?;
 
--- name: countCategories :one
--- This query returns the count of all records in the "language" table.
--- Result:
---   count(*) - The count of rows in the "language" table (int)
-SELECT COUNT(*) AS count
-FROM language;
-
 -- name: createLanguage :exec
 -- This query inserts a new record into the "language" table.
 -- Parameters:
 --   ? - Name of the new language (string)
 INSERT INTO language (nameof)
 VALUES (?);
-
--- name: SelectLanguages :many
--- This query selects all languages from the "language" table.
--- Result:
---   idlanguage (int)
---   nameof (string)
-SELECT idlanguage, nameof
-FROM language;
 
 -- name: getUserPermissions :one
 -- This query selects permissions information for admin users.
@@ -294,19 +279,6 @@ SET threads = (
 )
 WHERE idforumtopic = ?;
 
--- name: blogid_to_userid :one
-SELECT idusers
-FROM users u, blogs b
-WHERE u.idusers = b.users_idusers AND b.idblogs = ?;
-
--- name: delete_blog :exec
-DELETE FROM blogs
-WHERE idblogs = ?;
-
--- name: delete_blog_search :exec
-DELETE FROM blogsSearch
-WHERE blogs_idblogs = ?;
-
 -- name: update_blog :exec
 UPDATE blogs
 SET language_idlanguage = ?, blog = ?
@@ -316,10 +288,6 @@ WHERE idblogs = ?;
 UPDATE comments
 SET language_idlanguage = ?, text = ?
 WHERE idcomments = ?;
-
--- name: delete_blog_comments :exec
-DELETE FROM comments
-WHERE forumthread_idforumthread = ?;
 
 -- name: add_blog :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
@@ -378,33 +346,23 @@ FROM blogs b, users u
 WHERE b.users_idusers = u.idusers
 GROUP BY u.idusers;
 
--- name: write_blog_atom :many
+-- name: blog_atom :many
 SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
 FROM blogs b, users u
 WHERE u.idusers = b.users_idusers AND b.users_idusers = ?
 ORDER BY b.written DESC
 LIMIT ?;
 
--- name: write_blog_rss :many
+-- name: blog_rss :many
 SELECT b.idblogs, LEFT(b.written, 255), b.blog, u.username
 FROM blogs b, users u
 WHERE u.idusers = b.users_idusers AND b.users_idusers= ?
 ORDER BY b.written DESC
 LIMIT ?;
 
--- name: admin_user_permissions :many
-SELECT p.idpermissions, p.level, u.username, u.email, p.section
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = ?
-ORDER BY p.level;
-
 -- name: user_allow :exec
 INSERT INTO permissions (users_idusers, section, level)
 VALUES (?, ?, ?);
-
--- name: user_disallow :exec
-DELETE FROM permissions
-WHERE idpermissions = ? AND section = ?;
 
 -- name: show_blog_edit :one
 SELECT b.blog, b.language_idlanguage
@@ -424,20 +382,9 @@ UPDATE bookmarks
 SET list = ?
 WHERE users_idusers = ?;
 
--- name: delete_bookmarks :exec
--- This query deletes all entries from the "bookmarks" table for a specific user based on their "users_idusers".
-DELETE FROM bookmarks
-WHERE users_idusers = ?;
-
 -- name: show_bookmarks :one
 -- This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
 SELECT Idbookmarks, list
-FROM bookmarks
-WHERE users_idusers = ?;
-
--- name: users_bookmarks :one
--- This query retrieves the "list" from the "bookmarks" table for a specific user based on their "users_idusers".
-SELECT list
 FROM bookmarks
 WHERE users_idusers = ?;
 
@@ -450,9 +397,6 @@ WHERE idfaqCategories = ?;
 DELETE FROM faqCategories
 WHERE idfaqCategories = ?;
 
--- name: count_categories :one
-SELECT COUNT(*) FROM faqCategories;
-
 -- name: create_category :exec
 INSERT INTO faqCategories (name)
 VALUES (?);
@@ -460,11 +404,6 @@ VALUES (?);
 -- name: add_question :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
 VALUES (?, ?, ?);
-
--- name: reassign_category :exec
-UPDATE faq
-SET faqCategories_idfaqCategories = ?
-WHERE idfaq = ?;
 
 -- name: modify_faq :exec
 UPDATE faq
@@ -479,25 +418,12 @@ WHERE idfaq = ?;
 SELECT idfaqCategories, name
 FROM faqCategories;
 
--- name: category_faqs :many
-SELECT question, idfaq, answer, faqCategories_idfaqCategories
-FROM faq
-WHERE faqCategories_idfaqCategories = ? OR answer IS NULL;
-
 -- name: show_questions :many
-SELECT c.idfaqCategories, c.name, f.question, f.answer
+SELECT c.*, f.*
 FROM faq f
 LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
 WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories;
-
--- name: admin_categories :many
-SELECT idfaqCategories, name
-FROM faqCategories;
-
--- name: show_categories :exec
-SELECT f.idforumcategory, f.title, f.description
-FROM forumcategory f WHERE f.forumcategory_idforumcategory = ?;
 
 -- name: changeCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?;
@@ -557,13 +483,6 @@ ORDER BY t.lastaddition DESC;
 -- name: deleteTopicRestrictions :exec
 DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
 
--- name: existsTopicRestrictions :one
-SELECT (forumtopic_idforumtopic) FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
-
--- name: addTopicRestrictions :exec
-INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-
 -- name: setTopicRestrictions :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -591,17 +510,10 @@ LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 -- name: deleteUsersTopicLevel :exec
 DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
--- name: addUsersTopicLevel :exec
-INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
-VALUES (?, ?, ?, ?);
-
 -- name: setUsersTopicLevel :exec
 INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
 VALUES (?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax);
-
--- name: getAllUsersTopicLevelInviteMax :one
-SELECT invitemax FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
 -- name: getUsersAllTopicLevels :many
 SELECT u.*, t.*, utl.*, tr.*
@@ -618,17 +530,11 @@ JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
 JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic;
 
--- name: showTopicUserLevels :one
-SELECT r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
-FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-WHERE idforumtopic = ?;
-
 -- name: forumCategories :many
 SELECT f.*
 FROM forumcategory f;
 
--- name: writeRSS :exec
+-- name: imageboardRSS :exec
 SELECT title, description FROM imageboard WHERE idimageboard = ?;
 
 -- name: makeImageBoard :exec
@@ -654,14 +560,6 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.idimagepost = ?;
 
--- name: printBoardPosts :many
-SELECT i.description, i.thumbnail, i.fullimage, u.username, i.posted, i.idimagepost, IF(th.comments IS NULL, 0, th.comments + 1)
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
-WHERE i.imageboard_idimageboard = ?
-ORDER BY i.posted DESC;
-
 -- name: addImage :exec
 INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
 VALUES (?, ?, ?, ?, ?, NOW());
@@ -686,12 +584,6 @@ VALUES (?, ?, NOW(), ?);
 
 -- name: editNewsPost :exec
 UPDATE siteNews SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?;
-
--- name: doCalled :many
-SELECT s.news, s.idsiteNews, u.idusers, s.language_idlanguage
-FROM siteNews s
-LEFT JOIN users u ON s.users_idusers = u.idusers
-WHERE s.idsiteNews = ?;
 
 -- name: getNewsThreadId :one
 SELECT s.forumthread_idforumthread, u.idusers
@@ -727,22 +619,6 @@ ORDER BY s.occured DESC
 LIMIT 15
 ;
 
--- -- name: showNews :one
--- SELECT count(idsiteNews) FROM siteNews
--- WHERE ? AND ?;
-
--- -- name: showNewsPosts :many
--- SELECT u.username, s.news, s.occured, s.idsiteNews, u.idusers, IF(th.comments IS NULL, 0, th.comments + 1)
--- FROM siteNews s
--- LEFT JOIN users u ON s.users_idusers = u.idusers
--- LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
--- WHERE ? AND ?
--- ORDER BY s.occured DESC
--- LIMIT 10;
-
--- name: countLinkerCategories :one
-SELECT COUNT(*) FROM linkerCategory;
-
 -- name: deleteCategory :exec
 DELETE FROM linkerCategory WHERE idlinkerCategory = ?;
 
@@ -753,9 +629,6 @@ UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?;
 INSERT INTO linkerCategory (title) VALUES (?);
 
 -- name: showCategories :many
-SELECT idlinkerCategory, title FROM linkerCategory;
-
--- name: category_combobox :many
 SELECT idlinkerCategory, title FROM linkerCategory;
 
 -- name: adminCategories :many
@@ -813,47 +686,11 @@ JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 WHERE l.idlinker IN (sqlc.slice(linkerIds));
 
--- name: writeLinkerRSS :many
-SELECT l.idlinker, l.title, l.description, l.url
-FROM linker l
-WHERE l.linkerCategory_idlinkerCategory = ?
-ORDER BY l.listed DESC;
-
--- -- name: forumTopicSearch :many
--- SELECT * FROM comments c
--- LEFT JOIN forumthread th ON th.idforumthread = c.forumthread_idforumthread
--- LEFT JOIN forumtopic t ON t.idforumtopic = th.forumtopic_idforumtopic
--- LEFT JOIN userstopiclevel utl ON t.idforumtopic = utl.forumtopic_idforumtopic AND utl.users_idusers = ?
--- LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
---  WHERE c.idcomments IN (?) AND th.idforumthread != 0 AND t.idforumtopic = ?
--- AND ((r.readlevel <= utl.level AND r.viewlevel <= utl.level AND r.seelevel <= utl.level));
---
--- -- name: forumSearch :many
--- SELECT c.forumthread_idforumthread FROM comments c
--- LEFT JOIN forumthread th ON th.idforumthread = c.forumthread_idforumthread
--- LEFT JOIN forumtopic t ON t.idforumtopic = th.forumtopic_idforumtopic
--- LEFT JOIN forumcategory fc ON fc.idforumcategory = t.forumcategory_idforumcategory
--- LEFT JOIN userstopiclevel utl ON t.idforumtopic = utl.forumtopic_idforumtopic AND utl.users_idusers = ?
--- LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
--- WHERE c.idcomments IN (?) AND th.idforumthread != 0 AND t.idforumtopic != 0
--- AND ((r.readlevel <= utl.level AND r.viewlevel <= utl.level AND r.seelevel <= utl.level) OR ?)
--- AND fc.idforumcategory != 0
--- GROUP BY c.forumthread_idforumthread;
-
 -- name: usernametouid :one
 SELECT idusers FROM users WHERE username = ?;
 
--- name: lang_combobox :many
-SELECT l.idlanguage, l.nameof FROM language l;
-
 -- name: getSecurityLevel :one
 SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all');
-
--- name: getLangs :one
-SELECT language_idlanguage FROM userlang WHERE users_idusers = ?;
-
--- name: preferencesRefreshPref :many
-SELECT language_idlanguage FROM preferences WHERE users_idusers = ?;
 
 -- name: getWordID :one
 SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?);
@@ -866,11 +703,6 @@ VALUES (lcase(sqlc.arg(word)));
 INSERT IGNORE INTO commentsSearch
 (comments_idcomments, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
-
--- name: commentsSearchDelete :exec
-DELETE FROM commentsSearch
-WHERE comments_idcomments=?
-;
 
 -- name: commentsSearchFirstNotInRestrictedTopic :many
 SELECT DISTINCT cs.comments_idcomments
@@ -942,16 +774,6 @@ WHERE swl.word=?
 AND cs.writing_idwriting IN (sqlc.slice('ids'))
 ;
 
--- name: addToForumSiteNewsearch :exec
-INSERT IGNORE INTO siteNewsSearch
-(siteNews_idsiteNews, searchwordlist_idsearchwordlist)
-VALUES (?, ?);
-
--- name: siteNewsSearchDelete :exec
-DELETE FROM siteNewsSearch
-WHERE siteNews_idsiteNews=?
-;
-
 -- name: siteNewsSearchFirst :many
 SELECT DISTINCT cs.siteNews_idsiteNews
 FROM siteNewsSearch cs
@@ -965,11 +787,6 @@ FROM siteNewsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 AND cs.siteNews_idsiteNews IN (sqlc.slice('ids'))
-;
-
--- name: linkerSearchDelete :exec
-DELETE FROM linkerSearch
-WHERE linker_idlinker=?
 ;
 
 -- name: linkerSearchFirst :many
@@ -987,16 +804,6 @@ WHERE swl.word=?
 AND cs.linker_idlinker IN (sqlc.slice('ids'))
 ;
 
--- name: addToForumBlogSearch :exec
-INSERT IGNORE INTO blogsSearch
-(blogs_idblogs, searchwordlist_idsearchwordlist)
-VALUES (?, ?);
-
--- name: blogsSearchDelete :exec
-DELETE FROM blogsSearch
-WHERE blogs_idblogs=?
-;
-
 -- name: blogsSearchFirst :many
 SELECT DISTINCT cs.blogs_idblogs
 FROM blogsSearch cs
@@ -1011,19 +818,6 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchw
 WHERE swl.word=?
 AND cs.blogs_idblogs IN (sqlc.slice('ids'))
 ;
-
--- name: topicAllowThis :one
-SELECT r.*, u.level
-FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic=r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic=t.idforumtopic AND u.users_idusers=?
-WHERE t.idforumtopic=? LIMIT 1;
-
--- name: threadAllowThis :one
-SELECT r.*, u.level FROM forumthread t
-LEFT JOIN topicrestrictions r ON t.forumtopic_idforumtopic=r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic=t.forumtopic_idforumtopic AND u.users_idusers=?
-WHERE t.idforumthread=? LIMIT 1;
 
 -- name: makePost :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
@@ -1108,39 +902,8 @@ SELECT u.email FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
--- name: deleteUserLanguage :exec
-DELETE FROM userlang WHERE users_idusers = ?;
-
 -- name: fetchLanguages :many
 SELECT idlanguage, nameof FROM language;
-
--- -- name: updateOrInsertUserLanguage :exec
--- WITH pref_count AS (
---   SELECT COUNT(users_idusers) AS prefcount FROM preferences WHERE users_idusers = ?
--- )
--- INSERT INTO preferences (language_idlanguage, users_idusers)
--- VALUES (?, ?)
--- ON DUPLICATE KEY UPDATE
---   language_idlanguage = VALUES(language_idlanguage);
-
--- name: fetchUserLanguagePreferences :many
-SELECT idlanguage, nameof, (
-  SELECT COUNT(sul.iduserlang) FROM userlang sul
-  WHERE sul.language_idlanguage = l.idlanguage AND sul.users_idusers = ?
-) AS user_lang_pref
-FROM language l;
-
--- -- name: updateOrInsertEmailForumUpdates :exec
--- WITH email_updates AS (
---   SELECT emailforumupdates FROM preferences WHERE users_idusers = ?
--- )
--- INSERT INTO preferences (emailforumupdates, users_idusers)
--- VALUES (?, ?)
--- ON DUPLICATE KEY UPDATE
---   emailforumupdates = VALUES(emailforumupdates);
-
--- name: fetchUserEmailForumUpdates :many
-SELECT emailforumupdates FROM preferences WHERE users_idusers = ?;
 
 -- name: assignWritingThisThreadId :exec
 UPDATE writing SET forumthread_idforumthread = ? WHERE idwriting = ?;
@@ -1186,41 +949,10 @@ WHERE w.idwriting IN (sqlc.slice(writingIds)) AND (w.private = 0 OR wau.readdoc 
 ORDER BY w.published DESC
 ;
 
--- name: fetchPublicWritingsByCategory :many
-SELECT w.title, w.abstract, u.username, w.published, w.idwriting, w.private, IF(th.comments IS NULL, 0, th.comments + 1)
-FROM writing w
-JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN forumthread th ON w.forumthread_idforumthread = th.idforumthread
-LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
-WHERE w.writingCategory_idwritingCategory = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
-ORDER BY w.published DESC;
-
 -- name: fetchWritingApproval :many
 SELECT editdoc
 FROM writtingApprovedUsers
 WHERE writing_idwriting = ? AND users_idusers = ?;
-
--- name: fetchWritingOwner :many
-SELECT users_idusers
-FROM writing
-WHERE idwriting = ?;
-
--- name: fetchWritingByIdWithEdit :many
-SELECT w.title, w.abstract, w.writting, u.username, w.published, w.idwriting, w.private, wau.editdoc, w.forumthread_idforumthread,
-u.idusers, w.writingCategory_idwritingCategory
-FROM writing w
-JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
-WHERE w.idwriting = ? AND w.users_idusers = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
-AND (wau.editdoc = 1 OR w.users_idusers = ?)
-ORDER BY w.published DESC;
-
--- name: fetchChildCategories :many
-SELECT c3.idwritingCategory, c3.title, c2.idwritingCategory, c2.title
-FROM writingCategory c1
-LEFT JOIN writingCategory c2 ON c2.idwritingCategory = c1.writingCategory_idwritingCategory
-LEFT JOIN writingCategory c3 ON c3.idwritingCategory = c2.writingCategory_idwritingCategory
-WHERE c1.idwritingCategory = ?;
 
 -- name: insertWritingCategory :exec
 INSERT INTO writingCategory (writingCategory_idwritingCategory, title, description)
@@ -1254,36 +986,11 @@ UPDATE writtingApprovedUsers
 SET readdoc = ?, editdoc = ?
 WHERE writing_idwriting = ? AND users_idusers = ?;
 
--- name: fetchWritingApprovals :many
-SELECT idusers, u.username, wau.readdoc, wau.editdoc
-FROM writtingApprovedUsers wau
-LEFT JOIN users u ON idusers = wau.users_idusers
-WHERE writing_idwriting = ?;
-
 -- name: fetchAllWritingApprovals :many
 SELECT idusers, u.username, wau.writing_idwriting, wau.readdoc, wau.editdoc
 FROM writtingApprovedUsers wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 ;
-
--- name: fetchPagePermissions :many
-SELECT p.idpermissions, p.level, u.username, u.email, p.section
-FROM permissions p
-JOIN users u ON u.idusers = p.users_idusers
-WHERE p.section = ?
-ORDER BY p.level;
-
--- name: insertPagePermission :exec
-INSERT INTO permissions (users_idusers, section, level)
-VALUES (?, ?, ?);
-
--- name: deletePagePermission :exec
-DELETE FROM permissions WHERE idpermissions = ? AND section = ?;
-
--- name: updateWritingForumThreadId :exec
-UPDATE writing
-SET forumthread_idforumthread = ?
-WHERE idwriting = ?;
 
 -- name: Login :one
 SELECT *
@@ -1304,10 +1011,6 @@ WHERE username = ?;
 SELECT *
 FROM users
 WHERE email = ?;
-
--- name: CheckExistingUser :one
-SELECT username FROM users WHERE username = ?;
-
 
 -- name: InsertUser :execresult
 INSERT INTO users (username, passwd, email)

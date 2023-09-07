@@ -165,7 +165,7 @@ func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := feed.WriteRss(w); err != nil {
+	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -209,7 +209,7 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		Created:     time.Date(2005, 6, 25, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows, err := queries.write_blog_rss(r.Context(), write_blog_rssParams{
+	rows, err := queries.blog_rss(r.Context(), blog_rssParams{
 		UsersIdusers: int32(uid),
 		Limit:        15,
 	})

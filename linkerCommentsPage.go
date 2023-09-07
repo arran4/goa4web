@@ -225,9 +225,9 @@ func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if rows, err := queries.somethingNotifyBlogs(r.Context(), somethingNotifyBlogsParams{
-		Idusers: uid,
-		Idblogs: int32(linkId),
+	if rows, err := queries.somethingNotifyLinker(r.Context(), somethingNotifyLinkerParams{
+		Idusers:  uid,
+		Idlinker: int32(linkId),
 	}); err != nil {
 		log.Printf("Error: threadNotify: %s", err)
 	} else {

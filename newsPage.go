@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
@@ -11,45 +9,12 @@ import (
 )
 
 func newsPage(w http.ResponseWriter, r *http.Request) {
-	type Post struct {
-		*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-		ShowReply bool
-		ShowEdit  bool
-		Editing   bool
-	}
 	type Data struct {
 		*CoreData
-		News []*Post
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-
-	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-		Limit:  15,
-		Offset: 0,
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getNewsPostsWithWriterUsernameAndThreadCommentCountDescending Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
-
-	for _, post := range posts {
-		data.News = append(data.News, &Post{
-			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
-			ShowReply: true, // TODO
-			ShowEdit:  true, // TODO
-			Editing:   editingId == int(post.Idsitenews),
-		})
 	}
 
 	CustomNewsIndex(data.CoreData, r)

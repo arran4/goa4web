@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -61,6 +62,41 @@ func NewFuncs(r *http.Request) template.FuncMap {
 				l = i
 			}
 			return s[:l]
+		},
+		"News": func() (any, error) {
+			type Post struct {
+				*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+				ShowReply bool
+				ShowEdit  bool
+				Editing   bool
+			}
+			var result []*Post
+			queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+			posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
+				Limit:  15,
+				Offset: 0,
+			})
+			if err != nil {
+				switch {
+				case errors.Is(err, sql.ErrNoRows):
+				default:
+					return nil, fmt.Errorf("getNewsPostsWithWriterUsernameAndThreadCommentCountDescending: %w", err)
+				}
+			}
+
+			editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
+
+			for _, post := range posts {
+				result = append(result, &Post{
+					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
+					ShowReply: true, // TODO
+					ShowEdit:  true, // TODO
+					Editing:   editingId == int(post.Idsitenews),
+				})
+			}
+
+			return result, nil
 		},
 	}
 }

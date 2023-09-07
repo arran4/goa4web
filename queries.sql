@@ -1,56 +1,8 @@
--- name: GetUserPermissions :one
--- This query selects permissions information for admin users.
--- Result:
---   idpermissions (int)
---   level (int)
---   username (string)
---   email (string)
---   section (string)
-SELECT p.*
-FROM permissions p
-WHERE p.users_idusers = ?
-;
-
--- name: GetUsersPermissions :many
--- This query selects permissions information for admin users.
--- Result:
---   idpermissions (int)
---   level (int)
---   username (string)
---   email (string)
---   section (string)
-SELECT p.*
-FROM permissions p
-;
-
 -- name: GetUsersTopicLevel :one
--- This query selects permissions information for admin users.
--- Result:
---   idpermissions (int)
---   level (int)
---   username (string)
---   email (string)
---   section (string)
 SELECT utl.*
 FROM userstopiclevel utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 ;
-
--- name: UserAllow :exec
--- This query inserts a new permission into the "permissions" table.
--- Parameters:
---   ? - User ID to be associated with the permission (int)
---   ? - Section for which the permission is granted (string)
---   ? - Level of the permission (string)
-INSERT INTO permissions (users_idusers, section, level)
-VALUES (?, ?, ?);
-
--- name: UserDisallow :exec
--- This query deletes a permission from the "permissions" table based on the provided "permid".
--- Parameters:
---   ? - Permission ID to be deleted (int)
-DELETE FROM permissions
-WHERE idpermissions = ?;
 
 -- name: AllUsers :many
 -- This query selects all admin users from the "users" table.
@@ -336,10 +288,6 @@ FROM blogs b, users u
 WHERE u.idusers = b.users_idusers AND b.users_idusers= ?
 ORDER BY b.written DESC
 LIMIT ?;
-
--- name: User_allow :exec
-INSERT INTO permissions (users_idusers, section, level)
-VALUES (?, ?, ?);
 
 -- name: Show_blog_edit :one
 SELECT b.blog, b.language_idlanguage
@@ -666,9 +614,6 @@ WHERE l.idlinker IN (sqlc.slice(linkerIds));
 -- name: Usernametouid :one
 SELECT idusers FROM users WHERE username = ?;
 
--- name: GetSecurityLevel :one
-SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all');
-
 -- name: GetWordID :one
 SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?);
 
@@ -989,13 +934,6 @@ WHERE email = ?;
 -- name: InsertUser :execresult
 INSERT INTO users (username, passwd, email)
 VALUES (?, MD5(?), ?)
-;
-
--- name: BlogsUserPermissions :many
-SELECT p.idpermissions, p.level, u.username, u.email, p.section
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = "blogs"
-ORDER BY p.level
 ;
 
 -- name: SelectUnansweredQuestions :many

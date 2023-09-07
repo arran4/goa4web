@@ -5,7 +5,9 @@ INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, 
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?;
 
 -- name: GetAllBoardsByParentBoardId :many
-SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?;
+SELECT *
+FROM imageboard
+WHERE imageboard_idimageboard = ?;
 
 -- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
 SELECT i.*, u.username, th.comments

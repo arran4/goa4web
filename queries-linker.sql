@@ -8,7 +8,8 @@ UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?;
 INSERT INTO linkerCategory (title) VALUES (?);
 
 -- name: GetAllLinkerCategories :many
-SELECT idlinkerCategory, title FROM linkerCategory;
+SELECT *
+FROM linkerCategory;
 
 -- name: DeleteLinkerQueuedItem :exec
 DELETE FROM linkerQueue WHERE idlinkerQueue = ?;

@@ -20,21 +20,20 @@ func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, for
 }
 
 const getAllForumTopicRestrictionsWithForumTopicTitle = `-- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
-SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 `
 
 type GetAllForumTopicRestrictionsWithForumTopicTitleRow struct {
 	Idforumtopic           int32
+	ForumtopicIdforumtopic sql.NullInt32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
 	Newthreadlevel         sql.NullInt32
 	Seelevel               sql.NullInt32
 	Invitelevel            sql.NullInt32
 	Readlevel              sql.NullInt32
-	Title                  sql.NullString
-	ForumtopicIdforumtopic sql.NullInt32
 	Modlevel               sql.NullInt32
 	Adminlevel             sql.NullInt32
 }
@@ -50,14 +49,13 @@ func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Co
 		var i GetAllForumTopicRestrictionsWithForumTopicTitleRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
+			&i.ForumtopicIdforumtopic,
 			&i.Viewlevel,
 			&i.Replylevel,
 			&i.Newthreadlevel,
 			&i.Seelevel,
 			&i.Invitelevel,
 			&i.Readlevel,
-			&i.Title,
-			&i.ForumtopicIdforumtopic,
 			&i.Modlevel,
 			&i.Adminlevel,
 		); err != nil {
@@ -75,7 +73,7 @@ func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Co
 }
 
 const getForumTopicRestrictionsByForumTopicId = `-- name: GetForumTopicRestrictionsByForumTopicId :many
-SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?
@@ -83,14 +81,13 @@ WHERE idforumtopic = ?
 
 type GetForumTopicRestrictionsByForumTopicIdRow struct {
 	Idforumtopic           int32
+	ForumtopicIdforumtopic sql.NullInt32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
 	Newthreadlevel         sql.NullInt32
 	Seelevel               sql.NullInt32
 	Invitelevel            sql.NullInt32
 	Readlevel              sql.NullInt32
-	Title                  sql.NullString
-	ForumtopicIdforumtopic sql.NullInt32
 	Modlevel               sql.NullInt32
 	Adminlevel             sql.NullInt32
 }
@@ -106,14 +103,13 @@ func (q *Queries) GetForumTopicRestrictionsByForumTopicId(ctx context.Context, i
 		var i GetForumTopicRestrictionsByForumTopicIdRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
+			&i.ForumtopicIdforumtopic,
 			&i.Viewlevel,
 			&i.Replylevel,
 			&i.Newthreadlevel,
 			&i.Seelevel,
 			&i.Invitelevel,
 			&i.Readlevel,
-			&i.Title,
-			&i.ForumtopicIdforumtopic,
 			&i.Modlevel,
 			&i.Adminlevel,
 		); err != nil {
@@ -131,7 +127,10 @@ func (q *Queries) GetForumTopicRestrictionsByForumTopicId(ctx context.Context, i
 }
 
 const getPermissionsByUserIdAndSectionAndSectionAll = `-- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
-SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all')
+SELECT idpermissions, users_idusers, section, level
+FROM permissions
+WHERE
+    users_idusers = ? AND (section = ? OR section = 'all')
 `
 
 type GetPermissionsByUserIdAndSectionAndSectionAllParams struct {
@@ -139,15 +138,20 @@ type GetPermissionsByUserIdAndSectionAndSectionAllParams struct {
 	Section      sql.NullString
 }
 
-func (q *Queries) GetPermissionsByUserIdAndSectionAndSectionAll(ctx context.Context, arg GetPermissionsByUserIdAndSectionAndSectionAllParams) (sql.NullString, error) {
+func (q *Queries) GetPermissionsByUserIdAndSectionAndSectionAll(ctx context.Context, arg GetPermissionsByUserIdAndSectionAndSectionAllParams) (*Permission, error) {
 	row := q.db.QueryRowContext(ctx, getPermissionsByUserIdAndSectionAndSectionAll, arg.UsersIdusers, arg.Section)
-	var level sql.NullString
-	err := row.Scan(&level)
-	return level, err
+	var i Permission
+	err := row.Scan(
+		&i.Idpermissions,
+		&i.UsersIdusers,
+		&i.Section,
+		&i.Level,
+	)
+	return &i, err
 }
 
 const getPermissionsByUserIdAndSectionBlogs = `-- name: GetPermissionsByUserIdAndSectionBlogs :many
-SELECT p.idpermissions, p.level, u.username, u.email, p.section
+SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.username
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
@@ -155,10 +159,13 @@ ORDER BY p.level
 
 type GetPermissionsByUserIdAndSectionBlogsRow struct {
 	Idpermissions int32
-	Level         sql.NullString
-	Username      sql.NullString
-	Email         sql.NullString
+	UsersIdusers  int32
 	Section       sql.NullString
+	Level         sql.NullString
+	Idusers       int32
+	Email         sql.NullString
+	Passwd        sql.NullString
+	Username      sql.NullString
 }
 
 func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionBlogsRow, error) {
@@ -172,10 +179,13 @@ func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]
 		var i GetPermissionsByUserIdAndSectionBlogsRow
 		if err := rows.Scan(
 			&i.Idpermissions,
-			&i.Level,
-			&i.Username,
-			&i.Email,
+			&i.UsersIdusers,
 			&i.Section,
+			&i.Level,
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
 		); err != nil {
 			return nil, err
 		}

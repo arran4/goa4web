@@ -329,7 +329,9 @@ func (q *Queries) DeleteWritingSearch(ctx context.Context) error {
 }
 
 const getSearchWordByWordLowercased = `-- name: GetSearchWordByWordLowercased :one
-SELECT idsearchwordlist, word FROM searchwordlist WHERE word = lcase(?)
+SELECT idsearchwordlist, word
+FROM searchwordlist
+WHERE word = lcase(?)
 `
 
 func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error) {

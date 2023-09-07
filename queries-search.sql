@@ -94,7 +94,9 @@ FROM linker;
 DELETE FROM linkerSearch;
 
 -- name: GetSearchWordByWordLowercased :one
-SELECT * FROM searchwordlist WHERE word = lcase(?);
+SELECT *
+FROM searchwordlist
+WHERE word = lcase(?);
 
 -- name: CreateSearchWord :execlastid
 INSERT IGNORE INTO searchwordlist (word)

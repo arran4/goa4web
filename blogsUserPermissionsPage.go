@@ -55,10 +55,10 @@ func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/blogs/bloggers",
 	}
-	if uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("usernametouid: %w", err).Error())
+	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
 	} else if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
-		UsersIdusers: uid,
+		UsersIdusers: u.Idusers,
 		Section: sql.NullString{
 			String: where,
 			Valid:  true,

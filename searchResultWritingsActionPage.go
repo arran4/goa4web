@@ -26,14 +26,14 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbnId, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: WritingTopicName})
+	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: WritingTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	if comments, emptyWords, noResults, err := ForumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbnId}, uid); err != nil {
+	if comments, emptyWords, noResults, err := ForumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbn.Idforumtopic}, uid); err != nil {
 		return
 	} else {
 		data.Comments = comments

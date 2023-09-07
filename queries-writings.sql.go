@@ -96,7 +96,7 @@ func (q *Queries) FetchAllCategories(ctx context.Context) ([]*Writingcategory, e
 }
 
 const getAllWritingApprovals = `-- name: GetAllWritingApprovals :many
-SELECT idusers, u.username, wau.writing_idwriting, wau.readdoc, wau.editdoc
+SELECT idusers, u.username, wau.writing_idwriting, wau.users_idusers, wau.readdoc, wau.editdoc
 FROM writtingApprovedUsers wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 `
@@ -105,6 +105,7 @@ type GetAllWritingApprovalsRow struct {
 	Idusers          int32
 	Username         sql.NullString
 	WritingIdwriting int32
+	UsersIdusers     int32
 	Readdoc          sql.NullBool
 	Editdoc          sql.NullBool
 }
@@ -122,6 +123,7 @@ func (q *Queries) GetAllWritingApprovals(ctx context.Context) ([]*GetAllWritingA
 			&i.Idusers,
 			&i.Username,
 			&i.WritingIdwriting,
+			&i.UsersIdusers,
 			&i.Readdoc,
 			&i.Editdoc,
 		); err != nil {
@@ -139,27 +141,26 @@ func (q *Queries) GetAllWritingApprovals(ctx context.Context) ([]*GetAllWritingA
 }
 
 const getAllWritingCategories = `-- name: GetAllWritingCategories :many
-SELECT idwritingCategory, title, description
+SELECT idwritingcategory, writingcategory_idwritingcategory, title, description
 FROM writingCategory
 WHERE writingCategory_idwritingCategory = ?
 `
 
-type GetAllWritingCategoriesRow struct {
-	Idwritingcategory int32
-	Title             sql.NullString
-	Description       sql.NullString
-}
-
-func (q *Queries) GetAllWritingCategories(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*GetAllWritingCategoriesRow, error) {
+func (q *Queries) GetAllWritingCategories(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*Writingcategory, error) {
 	rows, err := q.db.QueryContext(ctx, getAllWritingCategories, writingcategoryIdwritingcategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllWritingCategoriesRow
+	var items []*Writingcategory
 	for rows.Next() {
-		var i GetAllWritingCategoriesRow
-		if err := rows.Scan(&i.Idwritingcategory, &i.Title, &i.Description); err != nil {
+		var i Writingcategory
+		if err := rows.Scan(
+			&i.Idwritingcategory,
+			&i.WritingcategoryIdwritingcategory,
+			&i.Title,
+			&i.Description,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -174,35 +175,32 @@ func (q *Queries) GetAllWritingCategories(ctx context.Context, writingcategoryId
 }
 
 const getPublicWrirings = `-- name: GetPublicWrirings :many
-SELECT w.title, w.abstract, w.idwriting, w.private, w.writingCategory_idwritingCategory
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC LIMIT 15
 `
 
-type GetPublicWriringsRow struct {
-	Title                            sql.NullString
-	Abstract                         sql.NullString
-	Idwriting                        int32
-	Private                          sql.NullBool
-	WritingcategoryIdwritingcategory int32
-}
-
-func (q *Queries) GetPublicWrirings(ctx context.Context) ([]*GetPublicWriringsRow, error) {
+func (q *Queries) GetPublicWrirings(ctx context.Context) ([]*Writing, error) {
 	rows, err := q.db.QueryContext(ctx, getPublicWrirings)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetPublicWriringsRow
+	var items []*Writing
 	for rows.Next() {
-		var i GetPublicWriringsRow
+		var i Writing
 		if err := rows.Scan(
-			&i.Title,
-			&i.Abstract,
 			&i.Idwriting,
-			&i.Private,
+			&i.UsersIdusers,
+			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
 			&i.WritingcategoryIdwritingcategory,
+			&i.Title,
+			&i.Published,
+			&i.Writting,
+			&i.Abstract,
+			&i.Private,
 		); err != nil {
 			return nil, err
 		}

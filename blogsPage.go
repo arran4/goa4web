@@ -152,13 +152,14 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	uid, err := queries.Usernametouid(r.Context(), sql.NullString{
+	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
 	if err != nil {
 		log.Printf("Username to uid error: %s", err)
 	}
+	uid := u.Idusers
 	feed, err := FeedGen(r, queries, int(uid), username)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
@@ -175,14 +176,14 @@ func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 func blogsAtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	uid, err := queries.Usernametouid(r.Context(), sql.NullString{
+	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
 	if err != nil {
 		log.Printf("Username to uid error: %s", err)
 	}
-	feed, err := FeedGen(r, queries, int(uid), username)
+	feed, err := FeedGen(r, queries, int(u.Idusers), username)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

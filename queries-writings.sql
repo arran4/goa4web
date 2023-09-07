@@ -1,5 +1,5 @@
 -- name: GetPublicWrirings :many
-SELECT w.title, w.abstract, w.idwriting, w.private, w.writingCategory_idwritingCategory
+SELECT w.*
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC LIMIT 15;
@@ -49,7 +49,7 @@ SET title = ?, description = ?, writingCategory_idwritingCategory = ?
 WHERE idwritingCategory = ?;
 
 -- name: GetAllWritingCategories :many
-SELECT idwritingCategory, title, description
+SELECT *
 FROM writingCategory
 WHERE writingCategory_idwritingCategory = ?;
 
@@ -72,7 +72,7 @@ SET readdoc = ?, editdoc = ?
 WHERE writing_idwriting = ? AND users_idusers = ?;
 
 -- name: GetAllWritingApprovals :many
-SELECT idusers, u.username, wau.writing_idwriting, wau.readdoc, wau.editdoc
+SELECT idusers, u.username, wau.*
 FROM writtingApprovedUsers wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 ;

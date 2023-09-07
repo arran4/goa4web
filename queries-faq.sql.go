@@ -108,7 +108,7 @@ func (q *Queries) GetAllAnsweredFAQWithFAQCategories(ctx context.Context) ([]*Ge
 }
 
 const getAllFAQCategories = `-- name: GetAllFAQCategories :many
-SELECT idfaqCategories, name
+SELECT idfaqcategories, name
 FROM faqCategories
 `
 

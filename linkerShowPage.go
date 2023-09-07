@@ -80,10 +80,11 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var pthid int32 = link.ForumthreadIdforumthread
-	ptid, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
+	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
 		String: LinkderTopicName,
 		Valid:  true,
 	})
+	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
@@ -106,6 +107,8 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: findForumTopicByTitle: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
+	} else {
+		ptid = pt.Idforumtopic
 	}
 	if pthid == 0 {
 		pthidi, err := queries.MakeThread(r.Context(), ptid)
@@ -138,7 +141,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -151,7 +154,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

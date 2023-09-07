@@ -58,14 +58,25 @@ func (q *Queries) DeleteUsersForumTopicLevelPermission(ctx context.Context, arg 
 }
 
 const findForumTopicByTitle = `-- name: FindForumTopicByTitle :one
-SELECT idforumtopic FROM forumtopic WHERE title=?
+SELECT idforumtopic, lastposter, forumcategory_idforumcategory, title, description, threads, comments, lastaddition
+FROM forumtopic
+WHERE title=?
 `
 
-func (q *Queries) FindForumTopicByTitle(ctx context.Context, title sql.NullString) (int32, error) {
+func (q *Queries) FindForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {
 	row := q.db.QueryRowContext(ctx, findForumTopicByTitle, title)
-	var idforumtopic int32
-	err := row.Scan(&idforumtopic)
-	return idforumtopic, err
+	var i Forumtopic
+	err := row.Scan(
+		&i.Idforumtopic,
+		&i.Lastposter,
+		&i.ForumcategoryIdforumcategory,
+		&i.Title,
+		&i.Description,
+		&i.Threads,
+		&i.Comments,
+		&i.Lastaddition,
+	)
+	return &i, err
 }
 
 const getAllForumCategories = `-- name: GetAllForumCategories :many

@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const allUsers = `-- name: AllUsers :many
@@ -49,6 +50,42 @@ func (q *Queries) AllUsers(ctx context.Context) ([]*User, error) {
 	return items, nil
 }
 
+const getUserById = `-- name: GetUserById :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE idusers = ?
+`
+
+func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*User, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, idusers)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT idusers, email, passwd, username
+FROM users
+WHERE username = ?
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString) (*User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.Username,
+	)
+	return &i, err
+}
+
 const insertUser = `-- name: InsertUser :execresult
 INSERT INTO users (username, passwd, email)
 VALUES (?, MD5(?), ?)
@@ -65,7 +102,8 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Res
 }
 
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
-SELECT u.email FROM blogs t, users u, preferences p
+SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
@@ -75,19 +113,51 @@ type ListUsersSubscribedToBlogsParams struct {
 	Idusers int32
 }
 
-func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]sql.NullString, error) {
+type ListUsersSubscribedToBlogsRow struct {
+	Idblogs                  int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Blog                     sql.NullString
+	Written                  time.Time
+	Idusers                  int32
+	Email                    sql.NullString
+	Passwd                   sql.NullString
+	Username                 sql.NullString
+	Idpreferences            int32
+	LanguageIdlanguage_2     int32
+	UsersIdusers_2           int32
+	Emailforumupdates        sql.NullBool
+}
+
+func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]*ListUsersSubscribedToBlogsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToBlogs, arg.Idblogs, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []sql.NullString
+	var items []*ListUsersSubscribedToBlogsRow
 	for rows.Next() {
-		var email sql.NullString
-		if err := rows.Scan(&email); err != nil {
+		var i ListUsersSubscribedToBlogsRow
+		if err := rows.Scan(
+			&i.Idblogs,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Blog,
+			&i.Written,
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+			&i.Idpreferences,
+			&i.LanguageIdlanguage_2,
+			&i.UsersIdusers_2,
+			&i.Emailforumupdates,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, email)
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -99,7 +169,8 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 }
 
 const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
-SELECT u.email FROM linker t, users u, preferences p
+SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
@@ -109,19 +180,57 @@ type ListUsersSubscribedToLinkerParams struct {
 	Idusers  int32
 }
 
-func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]sql.NullString, error) {
+type ListUsersSubscribedToLinkerRow struct {
+	Idlinker                       int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	ForumthreadIdforumthread       int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Listed                         sql.NullTime
+	Idusers                        int32
+	Email                          sql.NullString
+	Passwd                         sql.NullString
+	Username                       sql.NullString
+	Idpreferences                  int32
+	LanguageIdlanguage_2           int32
+	UsersIdusers_2                 int32
+	Emailforumupdates              sql.NullBool
+}
+
+func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]*ListUsersSubscribedToLinkerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToLinker, arg.Idlinker, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []sql.NullString
+	var items []*ListUsersSubscribedToLinkerRow
 	for rows.Next() {
-		var email sql.NullString
-		if err := rows.Scan(&email); err != nil {
+		var i ListUsersSubscribedToLinkerRow
+		if err := rows.Scan(
+			&i.Idlinker,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkercategoryIdlinkercategory,
+			&i.ForumthreadIdforumthread,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Listed,
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+			&i.Idpreferences,
+			&i.LanguageIdlanguage_2,
+			&i.UsersIdusers_2,
+			&i.Emailforumupdates,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, email)
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -133,7 +242,8 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
-SELECT u.email FROM comments c, users u, preferences p
+SELECT idcomments, forumthread_idforumthread, c.users_idusers, c.language_idlanguage, written, text, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
@@ -143,19 +253,51 @@ type ListUsersSubscribedToThreadParams struct {
 	Idusers                  int32
 }
 
-func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsersSubscribedToThreadParams) ([]sql.NullString, error) {
+type ListUsersSubscribedToThreadRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	Idusers                  int32
+	Email                    sql.NullString
+	Passwd                   sql.NullString
+	Username                 sql.NullString
+	Idpreferences            int32
+	LanguageIdlanguage_2     int32
+	UsersIdusers_2           int32
+	Emailforumupdates        sql.NullBool
+}
+
+func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsersSubscribedToThreadParams) ([]*ListUsersSubscribedToThreadRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToThread, arg.ForumthreadIdforumthread, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []sql.NullString
+	var items []*ListUsersSubscribedToThreadRow
 	for rows.Next() {
-		var email sql.NullString
-		if err := rows.Scan(&email); err != nil {
+		var i ListUsersSubscribedToThreadRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+			&i.Idpreferences,
+			&i.LanguageIdlanguage_2,
+			&i.UsersIdusers_2,
+			&i.Emailforumupdates,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, email)
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -167,7 +309,8 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT u.email FROM writing t, users u, preferences p
+SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
@@ -177,19 +320,59 @@ type ListUsersSubscribedToWritingParams struct {
 	Idusers   int32
 }
 
-func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]sql.NullString, error) {
+type ListUsersSubscribedToWritingRow struct {
+	Idwriting                        int32
+	UsersIdusers                     int32
+	ForumthreadIdforumthread         int32
+	LanguageIdlanguage               int32
+	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Published                        sql.NullTime
+	Writting                         sql.NullString
+	Abstract                         sql.NullString
+	Private                          sql.NullBool
+	Idusers                          int32
+	Email                            sql.NullString
+	Passwd                           sql.NullString
+	Username                         sql.NullString
+	Idpreferences                    int32
+	LanguageIdlanguage_2             int32
+	UsersIdusers_2                   int32
+	Emailforumupdates                sql.NullBool
+}
+
+func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]*ListUsersSubscribedToWritingRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToWriting, arg.Idwriting, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []sql.NullString
+	var items []*ListUsersSubscribedToWritingRow
 	for rows.Next() {
-		var email sql.NullString
-		if err := rows.Scan(&email); err != nil {
+		var i ListUsersSubscribedToWritingRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
+			&i.WritingcategoryIdwritingcategory,
+			&i.Title,
+			&i.Published,
+			&i.Writting,
+			&i.Abstract,
+			&i.Private,
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+			&i.Idpreferences,
+			&i.LanguageIdlanguage_2,
+			&i.UsersIdusers_2,
+			&i.Emailforumupdates,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, email)
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -241,24 +424,6 @@ func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*User,
 	return &i, err
 }
 
-const userByUid = `-- name: UserByUid :one
-SELECT idusers, email, passwd, username
-FROM users
-WHERE idusers = ?
-`
-
-func (q *Queries) UserByUid(ctx context.Context, idusers int32) (*User, error) {
-	row := q.db.QueryRowContext(ctx, userByUid, idusers)
-	var i User
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Passwd,
-		&i.Username,
-	)
-	return &i, err
-}
-
 const userByUsername = `-- name: UserByUsername :one
 SELECT idusers, email, passwd, username
 FROM users
@@ -275,15 +440,4 @@ func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (
 		&i.Username,
 	)
 	return &i, err
-}
-
-const usernametouid = `-- name: Usernametouid :one
-SELECT idusers FROM users WHERE username = ?
-`
-
-func (q *Queries) Usernametouid(ctx context.Context, username sql.NullString) (int32, error) {
-	row := q.db.QueryRowContext(ctx, usernametouid, username)
-	var idusers int32
-	err := row.Scan(&idusers)
-	return idusers, err
 }

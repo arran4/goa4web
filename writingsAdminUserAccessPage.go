@@ -47,15 +47,15 @@ func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Reque
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
-	uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
-		log.Printf("usernametouid Error: %s", err)
+		log.Printf("GetUserByUsername Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
-		UsersIdusers: uid,
+		UsersIdusers: u.Idusers,
 		Section: sql.NullString{
 			String: where,
 			Valid:  true,
@@ -78,16 +78,16 @@ func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request
 	username := r.PostFormValue("username")
 	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
 	editdoc, _ := strconv.ParseBool(r.PostFormValue("editdoc"))
-	uid, err := queries.Usernametouid(r.Context(), sql.NullString{Valid: true, String: username})
+	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
-		log.Printf("usernametouid Error: %s", err)
+		log.Printf("GetUserByUsername Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	if err := queries.CreateWritingApproval(r.Context(), CreateWritingApprovalParams{
 		WritingIdwriting: int32(wid),
-		UsersIdusers:     int32(uid),
+		UsersIdusers:     int32(u.Idusers),
 		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
 		Editdoc:          sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {

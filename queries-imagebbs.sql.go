@@ -50,25 +50,26 @@ func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams
 }
 
 const getAllBoardsByParentBoardId = `-- name: GetAllBoardsByParentBoardId :many
-SELECT idimageboard, title, description FROM imageboard WHERE imageboard_idimageboard = ?
+SELECT idimageboard, imageboard_idimageboard, title, description
+FROM imageboard
+WHERE imageboard_idimageboard = ?
 `
 
-type GetAllBoardsByParentBoardIdRow struct {
-	Idimageboard int32
-	Title        sql.NullString
-	Description  sql.NullString
-}
-
-func (q *Queries) GetAllBoardsByParentBoardId(ctx context.Context, imageboardIdimageboard int32) ([]*GetAllBoardsByParentBoardIdRow, error) {
+func (q *Queries) GetAllBoardsByParentBoardId(ctx context.Context, imageboardIdimageboard int32) ([]*Imageboard, error) {
 	rows, err := q.db.QueryContext(ctx, getAllBoardsByParentBoardId, imageboardIdimageboard)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllBoardsByParentBoardIdRow
+	var items []*Imageboard
 	for rows.Next() {
-		var i GetAllBoardsByParentBoardIdRow
-		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Description); err != nil {
+		var i Imageboard
+		if err := rows.Scan(
+			&i.Idimageboard,
+			&i.ImageboardIdimageboard,
+			&i.Title,
+			&i.Description,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

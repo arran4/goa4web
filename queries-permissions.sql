@@ -40,10 +40,13 @@ DELETE FROM permissions
 WHERE idpermissions = ?;
 
 -- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
-SELECT level FROM permissions WHERE users_idusers = ? AND (section = ? OR section = 'all');
+SELECT *
+FROM permissions
+WHERE
+    users_idusers = ? AND (section = ? OR section = 'all');
 
 -- name: GetPermissionsByUserIdAndSectionBlogs :many
-SELECT p.idpermissions, p.level, u.username, u.email, p.section
+SELECT p.*, u.*
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
@@ -72,13 +75,13 @@ ON DUPLICATE KEY UPDATE
     adminlevel = VALUES(adminlevel);
 
 -- name: GetForumTopicRestrictionsByForumTopicId :many
-SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+SELECT t.idforumtopic, r.*
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
-SELECT idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, t.title, r.forumtopic_idforumtopic, r.modlevel, r.adminlevel
+SELECT t.idforumtopic, r.*
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 

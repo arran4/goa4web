@@ -7,15 +7,17 @@
 SELECT u.*
 FROM users u;
 
--- name: Usernametouid :one
-SELECT idusers FROM users WHERE username = ?;
+-- name: GetUserByUsername :one
+SELECT *
+FROM users
+WHERE username = ?;
 
 -- name: Login :one
 SELECT *
 FROM users
 WHERE username = ? AND passwd = md5(?);
 
--- name: UserByUid :one
+-- name: GetUserById :one
 SELECT *
 FROM users
 WHERE idusers = ?;
@@ -36,22 +38,26 @@ VALUES (?, MD5(?), ?)
 ;
 
 -- name: ListUsersSubscribedToBlogs :many
-SELECT u.email FROM blogs t, users u, preferences p
+SELECT *
+FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToLinker :many
-SELECT u.email FROM linker t, users u, preferences p
+SELECT *
+FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToWriting :many
-SELECT u.email FROM writing t, users u, preferences p
+SELECT *
+FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToThread :many
-SELECT u.email FROM comments c, users u, preferences p
+SELECT *
+FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 

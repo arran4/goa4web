@@ -34,7 +34,7 @@ DELETE FROM faq
 WHERE idfaq = ?;
 
 -- name: GetAllFAQCategories :many
-SELECT idfaqCategories, name
+SELECT *
 FROM faqCategories;
 
 -- name: GetAllAnsweredFAQWithFAQCategories :many

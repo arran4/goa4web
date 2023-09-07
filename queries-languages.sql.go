@@ -39,7 +39,8 @@ func (q *Queries) DeleteLanguage(ctx context.Context, idlanguage int32) error {
 }
 
 const fetchLanguages = `-- name: FetchLanguages :many
-SELECT idlanguage, nameof FROM language
+SELECT idlanguage, nameof
+FROM language
 `
 
 func (q *Queries) FetchLanguages(ctx context.Context) ([]*Language, error) {

@@ -68,7 +68,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -81,7 +81,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

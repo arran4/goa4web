@@ -22,5 +22,6 @@ INSERT INTO language (nameof)
 VALUES (?);
 
 -- name: FetchLanguages :many
-SELECT idlanguage, nameof FROM language;
+SELECT *
+FROM language;
 

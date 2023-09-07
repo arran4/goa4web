@@ -100,7 +100,8 @@ func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int3
 }
 
 const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
-SELECT idlinkerCategory, title FROM linkerCategory
+SELECT idlinkercategory, title
+FROM linkerCategory
 `
 
 func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory, error) {

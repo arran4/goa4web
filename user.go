@@ -21,11 +21,11 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 		var user *User
 		if uidi, ok := session.Values["UID"]; !ok {
 		} else if uid, ok := uidi.(int32); !ok {
-		} else if user, err = queries.UserByUid(request.Context(), uid); err != nil {
+		} else if user, err = queries.GetUserById(request.Context(), uid); err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
 			default:
-				log.Printf("Error: userByUid: %s", err)
+				log.Printf("Error: GetUserById: %s", err)
 				http.Redirect(writer, request, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			}
 		}

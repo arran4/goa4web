@@ -76,7 +76,9 @@ INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VA
 INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
 
 -- name: FindForumTopicByTitle :one
-SELECT idforumtopic FROM forumtopic WHERE title=?;
+SELECT *
+FROM forumtopic
+WHERE title=?;
 
 -- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
 SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext

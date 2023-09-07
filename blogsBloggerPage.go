@@ -33,10 +33,12 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	buid, _ := queries.Usernametouid(r.Context(), sql.NullString{
+	bu, _ := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
+
+	buid := bu.Idusers
 
 	rows, err := queries.GetBlogEntriesForUserDescending(r.Context(), GetBlogEntriesForUserDescendingParams{
 		UsersIdusers:       buid,

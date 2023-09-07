@@ -13,7 +13,7 @@ SET forumthread_idforumthread = ?
 WHERE idblogs = ?;
 
 -- name: GetBlogEntriesForUserDescending :many
-SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers
+SELECT b.*, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
@@ -32,7 +32,7 @@ ORDER BY b.written DESC
 ;
 
 -- name: GetBlogEntryForUserById :one
-SELECT b.blog, b.written, u.username, b.idblogs, coalesce(th.comments, 0), b.users_idusers, b.forumthread_idforumthread
+SELECT b.*, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread

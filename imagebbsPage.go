@@ -10,7 +10,7 @@ import (
 func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Boards      []*GetAllBoardsByParentBoardIdRow
+		Boards      []*Imageboard
 		IsSubBoard  bool
 		BoardNumber int
 	}

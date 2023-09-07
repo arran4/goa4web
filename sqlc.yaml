@@ -2,7 +2,7 @@ version: 2
 sql:
     - engine: "mysql"
       schema: "schema.sql"
-      queries: "queries.sql"
+      queries: ["queries.sql", "queries-languages.sql"]
       gen:
           go:
               package: "main"

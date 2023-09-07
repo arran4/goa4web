@@ -43,19 +43,6 @@ func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWri
 	return err
 }
 
-const createSearchWord = `-- name: CreateSearchWord :execlastid
-INSERT IGNORE INTO searchwordlist (word)
-VALUES (lcase(?))
-`
-
-func (q *Queries) CreateSearchWord(ctx context.Context, word string) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createSearchWord, word)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
 const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
 SELECT DISTINCT cs.comments_idcomments
 FROM commentsSearch cs
@@ -278,6 +265,19 @@ func (q *Queries) CompleteWordList(ctx context.Context) ([]sql.NullString, error
 	return items, nil
 }
 
+const createSearchWord = `-- name: CreateSearchWord :execlastid
+INSERT IGNORE INTO searchwordlist (word)
+VALUES (lcase(?))
+`
+
+func (q *Queries) CreateSearchWord(ctx context.Context, word string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createSearchWord, word)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const deleteBlogsSearch = `-- name: DeleteBlogsSearch :exec
 DELETE FROM blogsSearch
 `
@@ -329,14 +329,14 @@ func (q *Queries) DeleteWritingSearch(ctx context.Context) error {
 }
 
 const getSearchWordByWordLowercased = `-- name: GetSearchWordByWordLowercased :one
-SELECT idsearchwordlist FROM searchwordlist WHERE word = lcase(?)
+SELECT idsearchwordlist, word FROM searchwordlist WHERE word = lcase(?)
 `
 
-func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase string) (int32, error) {
+func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error) {
 	row := q.db.QueryRowContext(ctx, getSearchWordByWordLowercased, lcase)
-	var idsearchwordlist int32
-	err := row.Scan(&idsearchwordlist)
-	return idsearchwordlist, err
+	var i Searchwordlist
+	err := row.Scan(&i.Idsearchwordlist, &i.Word)
+	return &i, err
 }
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many

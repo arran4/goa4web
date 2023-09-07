@@ -12,6 +12,7 @@ import (
 )
 
 func NewFuncs(r *http.Request) template.FuncMap {
+	var LatestNews any
 	return map[string]any{
 		//"getPermissionsByUserIdAndSectionAndSectionAll":
 		"now": func() time.Time { return time.Now() },
@@ -40,6 +41,9 @@ func NewFuncs(r *http.Request) template.FuncMap {
 			return s[:l]
 		},
 		"LatestNews": func() (any, error) {
+			if LatestNews != nil {
+				return LatestNews, nil
+			}
 			type Post struct {
 				*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 				ShowReply bool
@@ -49,9 +53,11 @@ func NewFuncs(r *http.Request) template.FuncMap {
 			var result []*Post
 			queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
+			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
 			posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
 				Limit:  15,
-				Offset: 0,
+				Offset: int32(offset),
 			})
 			if err != nil {
 				switch {
@@ -71,7 +77,7 @@ func NewFuncs(r *http.Request) template.FuncMap {
 					Editing:   editingId == int(post.Idsitenews),
 				})
 			}
-
+			LatestNews = result
 			return result, nil
 		},
 	}

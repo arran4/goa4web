@@ -51,22 +51,23 @@ func CustomNewsIndex(data *CoreData, r *http.Request) {
 			Name: "Return to list",
 			Link: fmt.Sprintf("/?offset=%d", 0),
 		})
-		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		if offset != 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "The start",
-				Link: fmt.Sprintf("/?offset=%d", 0),
-			})
-		}
+	}
+
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if offset != 0 {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Next 10",
-			Link: fmt.Sprintf("/?offset=%d", offset+10),
+			Name: "The start",
+			Link: fmt.Sprintf("?offset=%d", 0),
 		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "Previous 10",
-				Link: fmt.Sprintf("/?offset=%d", offset-10),
-			})
-		}
+	}
+	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		Name: "Next 10",
+		Link: fmt.Sprintf("?offset=%d", offset+10),
+	})
+	if offset > 0 {
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: "Previous 10",
+			Link: fmt.Sprintf("?offset=%d", offset-10),
+		})
 	}
 }

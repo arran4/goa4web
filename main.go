@@ -49,9 +49,10 @@ func main() {
 	}).Methods("GET")
 
 	// News
-	r.HandleFunc("/", newsPage).Methods("GET")
+	r.Handle("/", AddNewsIndex(http.HandlerFunc(newsPage))).Methods("GET")
 	r.HandleFunc("/", taskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
+	nr.Use(AddNewsIndex)
 	//TODO nr.HandleFunc(".rss", newsRssPage).Methods("GET")
 	nr.HandleFunc("", newsPage).Methods("GET")
 	nr.HandleFunc("", taskDoneAutoRefreshPage).Methods("POST")
@@ -285,6 +286,14 @@ func main() {
 
 	log.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func AddNewsIndex(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+		CustomNewsIndex(cd, r)
+		handler.ServeHTTP(w, r)
+	})
 }
 
 // TODO we could do better

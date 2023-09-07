@@ -34,7 +34,7 @@ var (
 	//	}
 )
 
-func NewFuncs() template.FuncMap {
+func NewFuncs(r *http.Request) template.FuncMap {
 	return map[string]any{
 		//"getPermissionsByUserIdAndSectionAndSectionAll":
 		"now": func() time.Time { return time.Now() },

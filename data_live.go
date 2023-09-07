@@ -8,8 +8,8 @@ import (
 	"os"
 )
 
-func getCompiledTemplates() *template.Template {
-	return template.Must(template.New("").Funcs(NewFuncs()).ParseFS(os.DirFS("./templates"), "*.gohtml"))
+func getCompiledTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("./templates"), "*.gohtml"))
 }
 
 func getMainCSSData() []byte {

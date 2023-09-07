@@ -29,7 +29,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = getCompiledTemplates().ExecuteTemplate(w, "adminLanguagesPage.gohtml", data)
+	err = getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminLanguagesPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -57,7 +57,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
 	}
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -80,7 +80,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 	}
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -104,7 +104,7 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

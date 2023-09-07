@@ -10,14 +10,13 @@ import (
 
 var (
 	//go:embed "templates/*.gohtml"
-	templateFS        embed.FS
-	compiledTemplates = template.Must(template.New("").Funcs(NewFuncs()).ParseFS(templateFS, "templates/*.gohtml"))
+	templateFS embed.FS
 	//go:embed "main.css"
 	mainCSSData []byte
 )
 
-func getCompiledTemplates() *template.Template {
-	return compiledTemplates
+func getCompiledTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(templateFS, "templates/*.gohtml"))
 }
 
 func getMainCSSData() []byte {

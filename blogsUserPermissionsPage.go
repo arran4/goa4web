@@ -34,7 +34,7 @@ func getPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	data.Rows = rows
 
 	CustomBlogIndex(data.CoreData, r)
-	err = getCompiledTemplates().ExecuteTemplate(w, "adminUsersPermissionsPage.gohtml", data)
+	err = getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminUsersPermissionsPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -73,7 +73,7 @@ func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 
 	CustomBlogIndex(data.CoreData, r)
 
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -98,7 +98,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomBlogIndex(data.CoreData, r)
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

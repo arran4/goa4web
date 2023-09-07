@@ -16,7 +16,7 @@ func adminForumPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminForumPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminForumPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -50,7 +50,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.RecalculateAllForumThreadMetaData(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("recalculateForumThreadByIdMetaData_firstpost: %w", err).Error())
 	}
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -71,7 +71,7 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.RebuildAllForumTopicMetaColumns(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("rebuildForumTopicByIdMetaColumns_lastaddition_lastposter: %w", err).Error())
 	}
-	err := getCompiledTemplates().ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
+	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -143,7 +143,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates().ExecuteTemplate(w, "blogsCommentPage.gohtml", data); err != nil {
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "blogsCommentPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

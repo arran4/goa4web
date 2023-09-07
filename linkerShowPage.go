@@ -158,7 +158,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cid, err := queries.MakePost(r.Context(), MakePostParams{
+	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -168,7 +168,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		log.Printf("Error: makePost: %s", err)
+		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

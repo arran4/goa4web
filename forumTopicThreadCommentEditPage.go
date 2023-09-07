@@ -23,7 +23,7 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 	threadId, _ := strconv.Atoi(vars["thread"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
-	err = queries.Update_comment(r.Context(), Update_commentParams{
+	err = queries.UpdateComment(r.Context(), UpdateCommentParams{
 		Idcomments:         int32(commentId),
 		LanguageIdlanguage: int32(languageId),
 		Text: sql.NullString{

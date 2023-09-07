@@ -52,7 +52,7 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cid, err := queries.MakePost(r.Context(), MakePostParams{
+	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(threadId),

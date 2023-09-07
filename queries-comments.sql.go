@@ -11,14 +11,41 @@ import (
 	"strings"
 )
 
-const getComment = `-- name: GetComment :one
+const createComment = `-- name: CreateComment :execlastid
+;
+
+INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
+VALUES (?, ?, ?, ?, NOW())
+`
+
+type CreateCommentParams struct {
+	LanguageIdlanguage       int32
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+	Text                     sql.NullString
+}
+
+func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createComment,
+		arg.LanguageIdlanguage,
+		arg.UsersIdusers,
+		arg.ForumthreadIdforumthread,
+		arg.Text,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const getCommentById = `-- name: GetCommentById :one
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
 FROM comments c
 WHERE c.Idcomments=?
 `
 
-func (q *Queries) GetComment(ctx context.Context, idcomments int32) (*Comment, error) {
-	row := q.db.QueryRowContext(ctx, getComment, idcomments)
+func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Comment, error) {
+	row := q.db.QueryRowContext(ctx, getCommentById, idcomments)
 	var i Comment
 	err := row.Scan(
 		&i.Idcomments,
@@ -31,14 +58,56 @@ func (q *Queries) GetComment(ctx context.Context, idcomments int32) (*Comment, e
 	return &i, err
 }
 
-const getComments = `-- name: GetComments :many
+const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.Username
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.idcomments = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+LIMIT 1
+`
+
+type GetCommentByIdForUserParams struct {
+	UsersIdusers int32
+	Idcomments   int32
+}
+
+type GetCommentByIdForUserRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	Username                 sql.NullString
+}
+
+func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getCommentByIdForUser, arg.UsersIdusers, arg.Idcomments)
+	var i GetCommentByIdForUserRow
+	err := row.Scan(
+		&i.Idcomments,
+		&i.ForumthreadIdforumthread,
+		&i.UsersIdusers,
+		&i.LanguageIdlanguage,
+		&i.Written,
+		&i.Text,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const getCommentsByIds = `-- name: GetCommentsByIds :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
 FROM comments c
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
 `
 
-func (q *Queries) GetComments(ctx context.Context, ids []int32) ([]*Comment, error) {
-	query := getComments
+func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment, error) {
+	query := getCommentsByIds
 	var queryParams []interface{}
 	if len(ids) > 0 {
 		for _, v := range ids {
@@ -77,7 +146,7 @@ func (q *Queries) GetComments(ctx context.Context, ids []int32) ([]*Comment, err
 	return items, nil
 }
 
-const getCommentsWithThreadInfo = `-- name: GetCommentsWithThreadInfo :many
+const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
@@ -90,12 +159,12 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?)
 ORDER BY c.written DESC
 `
 
-type GetCommentsWithThreadInfoParams struct {
+type GetCommentsByIdsForUserWithThreadInfoParams struct {
 	UsersIdusers int32
 	Ids          []int32
 }
 
-type GetCommentsWithThreadInfoRow struct {
+type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	Idcomments               int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -110,8 +179,8 @@ type GetCommentsWithThreadInfoRow struct {
 	ForumcategoryTitle       sql.NullString
 }
 
-func (q *Queries) GetCommentsWithThreadInfo(ctx context.Context, arg GetCommentsWithThreadInfoParams) ([]*GetCommentsWithThreadInfoRow, error) {
-	query := getCommentsWithThreadInfo
+func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error) {
+	query := getCommentsByIdsForUserWithThreadInfo
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.UsersIdusers)
 	if len(arg.Ids) > 0 {
@@ -127,9 +196,9 @@ func (q *Queries) GetCommentsWithThreadInfo(ctx context.Context, arg GetComments
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetCommentsWithThreadInfoRow
+	var items []*GetCommentsByIdsForUserWithThreadInfoRow
 	for rows.Next() {
-		var i GetCommentsWithThreadInfoRow
+		var i GetCommentsByIdsForUserWithThreadInfoRow
 		if err := rows.Scan(
 			&i.Idcomments,
 			&i.ForumthreadIdforumthread,
@@ -157,51 +226,7 @@ func (q *Queries) GetCommentsWithThreadInfo(ctx context.Context, arg GetComments
 	return items, nil
 }
 
-const makePost = `-- name: MakePost :execlastid
-;
-
-INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
-VALUES (?, ?, ?, ?, NOW())
-`
-
-type MakePostParams struct {
-	LanguageIdlanguage       int32
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-	Text                     sql.NullString
-}
-
-func (q *Queries) MakePost(ctx context.Context, arg MakePostParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, makePost,
-		arg.LanguageIdlanguage,
-		arg.UsersIdusers,
-		arg.ForumthreadIdforumthread,
-		arg.Text,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
-const update_comment = `-- name: Update_comment :exec
-UPDATE comments
-SET language_idlanguage = ?, text = ?
-WHERE idcomments = ?
-`
-
-type Update_commentParams struct {
-	LanguageIdlanguage int32
-	Text               sql.NullString
-	Idcomments         int32
-}
-
-func (q *Queries) Update_comment(ctx context.Context, arg Update_commentParams) error {
-	_, err := q.db.ExecContext(ctx, update_comment, arg.LanguageIdlanguage, arg.Text, arg.Idcomments)
-	return err
-}
-
-const user_get_all_comments_for_thread = `-- name: User_get_all_comments_for_thread :many
+const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
@@ -213,12 +238,12 @@ WHERE c.forumthread_idforumthread=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 
 ORDER BY c.written
 `
 
-type User_get_all_comments_for_threadParams struct {
+type GetCommentsByThreadIdForUserParams struct {
 	UsersIdusers             int32
 	ForumthreadIdforumthread int32
 }
 
-type User_get_all_comments_for_threadRow struct {
+type GetCommentsByThreadIdForUserRow struct {
 	Idcomments               int32
 	ForumthreadIdforumthread int32
 	UsersIdusers             int32
@@ -228,15 +253,15 @@ type User_get_all_comments_for_threadRow struct {
 	Posterusername           sql.NullString
 }
 
-func (q *Queries) User_get_all_comments_for_thread(ctx context.Context, arg User_get_all_comments_for_threadParams) ([]*User_get_all_comments_for_threadRow, error) {
-	rows, err := q.db.QueryContext(ctx, user_get_all_comments_for_thread, arg.UsersIdusers, arg.ForumthreadIdforumthread)
+func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser, arg.UsersIdusers, arg.ForumthreadIdforumthread)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*User_get_all_comments_for_threadRow
+	var items []*GetCommentsByThreadIdForUserRow
 	for rows.Next() {
-		var i User_get_all_comments_for_threadRow
+		var i GetCommentsByThreadIdForUserRow
 		if err := rows.Scan(
 			&i.Idcomments,
 			&i.ForumthreadIdforumthread,
@@ -259,44 +284,19 @@ func (q *Queries) User_get_all_comments_for_thread(ctx context.Context, arg User
 	return items, nil
 }
 
-const user_get_comment = `-- name: User_get_comment :one
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.Username
-FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
-LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.idcomments = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
-LIMIT 1
+const updateComment = `-- name: UpdateComment :exec
+UPDATE comments
+SET language_idlanguage = ?, text = ?
+WHERE idcomments = ?
 `
 
-type User_get_commentParams struct {
-	UsersIdusers int32
-	Idcomments   int32
+type UpdateCommentParams struct {
+	LanguageIdlanguage int32
+	Text               sql.NullString
+	Idcomments         int32
 }
 
-type User_get_commentRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	Username                 sql.NullString
-}
-
-func (q *Queries) User_get_comment(ctx context.Context, arg User_get_commentParams) (*User_get_commentRow, error) {
-	row := q.db.QueryRowContext(ctx, user_get_comment, arg.UsersIdusers, arg.Idcomments)
-	var i User_get_commentRow
-	err := row.Scan(
-		&i.Idcomments,
-		&i.ForumthreadIdforumthread,
-		&i.UsersIdusers,
-		&i.LanguageIdlanguage,
-		&i.Written,
-		&i.Text,
-		&i.Username,
-	)
-	return &i, err
+func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) error {
+	_, err := q.db.ExecContext(ctx, updateComment, arg.LanguageIdlanguage, arg.Text, arg.Idcomments)
+	return err
 }

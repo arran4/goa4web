@@ -11,7 +11,7 @@ import (
 func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*GetCommentsWithThreadInfoRow
+		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
 		News               []*GetNewsPostsRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool

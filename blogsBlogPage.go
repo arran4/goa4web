@@ -16,7 +16,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable bool
 	}
 	type BlogComment struct {
-		*User_get_all_comments_for_threadRow
+		*GetCommentsByThreadIdForUserRow
 		ShowReply bool
 		EditUrl   string
 		Editing   bool

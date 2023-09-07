@@ -19,7 +19,7 @@ type NewsPost struct {
 
 func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*User_get_all_comments_for_threadRow
+		*GetCommentsByThreadIdForUserRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
@@ -70,7 +70,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")
 
-	commentRows, err := queries.User_get_all_comments_for_thread(r.Context(), User_get_all_comments_for_threadParams{
+	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(post.ForumthreadIdforumthread),
 	})
@@ -127,14 +127,14 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
-			User_get_all_comments_for_threadRow: row,
-			ShowReply:                           true,
-			EditUrl:                             editUrl,
-			EditSaveUrl:                         editSaveUrl,
-			Editing:                             editCommentId != 0 && int32(editCommentId) == row.Idcomments,
-			Offset:                              i + offset,
-			Languages:                           nil,
-			SelectedLanguageId:                  0,
+			GetCommentsByThreadIdForUserRow: row,
+			ShowReply:                       true,
+			EditUrl:                         editUrl,
+			EditSaveUrl:                     editSaveUrl,
+			Editing:                         editCommentId != 0 && int32(editCommentId) == row.Idcomments,
+			Offset:                          i + offset,
+			Languages:                       nil,
+			SelectedLanguageId:              0,
 		})
 	}
 
@@ -267,7 +267,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	//	}
 	//}
 
-	cid, err := queries.MakePost(r.Context(), MakePostParams{
+	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -277,7 +277,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		log.Printf("Error: makePost: %s", err)
+		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

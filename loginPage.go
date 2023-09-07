@@ -46,7 +46,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "No such user", http.StatusNotFound)
 			return
 		default:
-			log.Printf("user_get_all_comments_for_thread Error: %s", err)
+			log.Printf("getCommentsByThreadIdForUser Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

@@ -13,7 +13,7 @@ import (
 
 func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*User_get_all_comments_for_threadRow
+		*GetCommentsByThreadIdForUserRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
@@ -60,7 +60,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	commentRows, err := queries.User_get_all_comments_for_thread(r.Context(), User_get_all_comments_for_threadParams{
+	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(threadId),
 	})
@@ -127,14 +127,14 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
-			User_get_all_comments_for_threadRow: row,
-			ShowReply:                           true,
-			EditUrl:                             editUrl,
-			EditSaveUrl:                         editSaveUrl,
-			Editing:                             commentId != 0 && int32(commentId) == row.Idcomments,
-			Offset:                              i + offset,
-			Languages:                           nil,
-			SelectedLanguageId:                  0,
+			GetCommentsByThreadIdForUserRow: row,
+			ShowReply:                       true,
+			EditUrl:                         editUrl,
+			EditSaveUrl:                     editSaveUrl,
+			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
+			Offset:                          i + offset,
+			Languages:                       nil,
+			SelectedLanguageId:              0,
 		})
 	}
 
@@ -170,12 +170,12 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	replyType := r.URL.Query().Get("type")
 	if commentIdString != "" {
-		comment, err := queries.User_get_comment(r.Context(), User_get_commentParams{
+		comment, err := queries.GetCommentByIdForUser(r.Context(), GetCommentByIdForUserParams{
 			UsersIdusers: uid,
 			Idcomments:   int32(commentId),
 		})
 		if err != nil {
-			log.Printf("user_get_comment Error: %s", err)
+			log.Printf("getCommentByIdForUser Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

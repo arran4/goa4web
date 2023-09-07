@@ -482,7 +482,7 @@ func CommentAuthor() mux.MatcherFunc {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.User_get_comment(request.Context(), User_get_commentParams{
+		row, err := queries.GetCommentByIdForUser(request.Context(), GetCommentByIdForUserParams{
 			UsersIdusers: uid,
 			Idcomments:   int32(commentId),
 		})

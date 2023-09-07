@@ -11,7 +11,7 @@ import (
 func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments                         []*GetCommentsWithThreadInfoRow
+		Comments                         []*GetCommentsByIdsForUserWithThreadInfoRow
 		Links                            []*ShowLinksRow
 		CommentsNoResults                bool
 		CommentsEmptyWords               bool

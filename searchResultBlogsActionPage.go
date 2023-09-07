@@ -10,7 +10,7 @@ import (
 func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*GetCommentsWithThreadInfoRow
+		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
 		Blogs              []*Blog
 		CommentsNoResults  bool
 		CommentsEmptyWords bool

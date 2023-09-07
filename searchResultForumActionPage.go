@@ -11,7 +11,7 @@ import (
 func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*GetCommentsWithThreadInfoRow
+		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 	}
@@ -38,7 +38,7 @@ func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetCommentsWithThreadInfoRow, bool, bool, error) {
+func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
@@ -86,7 +86,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	comments, err := queries.GetCommentsWithThreadInfo(r.Context(), GetCommentsWithThreadInfoParams{
+	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), GetCommentsByIdsForUserWithThreadInfoParams{
 		UsersIdusers: uid,
 		Ids:          commentIds,
 	})
@@ -94,7 +94,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getComments Error: %s", err)
+			log.Printf("getCommentsByIds Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return nil, false, false, err
 		}
@@ -103,7 +103,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 	return comments, false, false, nil
 }
 
-func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, forumTopicId []int32, uid int32) ([]*GetCommentsWithThreadInfoRow, bool, bool, error) {
+func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, forumTopicId []int32, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
 	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
@@ -156,7 +156,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	comments, err := queries.GetCommentsWithThreadInfo(r.Context(), GetCommentsWithThreadInfoParams{
+	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), GetCommentsByIdsForUserWithThreadInfoParams{
 		UsersIdusers: uid,
 		Ids:          commentIds,
 	})
@@ -164,7 +164,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getComments Error: %s", err)
+			log.Printf("getCommentsByIds Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return nil, false, false, err
 		}

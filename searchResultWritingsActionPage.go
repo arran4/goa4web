@@ -11,7 +11,7 @@ import (
 func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Comments           []*GetCommentsWithThreadInfoRow
+		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
 		Writings           []*FetchWritingByIdsRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool

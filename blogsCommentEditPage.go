@@ -27,7 +27,7 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
 	uid, _ := session.Values["UID"].(int32)
 
-	comment, err := queries.GetComment(r.Context(), int32(commentId))
+	comment, err := queries.GetCommentById(r.Context(), int32(commentId))
 	if err != nil {
 		log.Printf("Error: getComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -48,7 +48,7 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err = queries.Update_comment(r.Context(), Update_commentParams{
+	if err = queries.UpdateComment(r.Context(), UpdateCommentParams{
 		Idcomments:         int32(commentId),
 		LanguageIdlanguage: int32(languageId),
 		Text: sql.NullString{

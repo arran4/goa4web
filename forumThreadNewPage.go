@@ -61,14 +61,16 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
 
+	provider := getEmailProvider()
+
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: int32(threadId),
 		Idusers:                  uid,
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else {
+	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -79,9 +81,9 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		ForumthreadIdforumthread: int32(threadId),
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else {
+	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

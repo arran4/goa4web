@@ -3,7 +3,9 @@ package main
 import (
 	"embed"
 	"html/template"
+	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 

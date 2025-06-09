@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -8,7 +9,10 @@ import (
 	"testing"
 )
 
+//go:embed templates/*.gohtml
+var testTemplates embed.FS
+
 func TestCompileGoHTML(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	template.Must(template.New("").Funcs(NewFuncs(req)).ParseFS(os.DirFS("./templates"), "*.gohtml"))
+	r := httptest.NewRequest("GET", "/", nil)
+  template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(os.DirFS("./templates"), "*.gohtml"))
 }

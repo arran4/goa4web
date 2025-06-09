@@ -1,13 +1,16 @@
 package main
 
 import (
+	"embed"
 	"html/template"
-	"os"
+	"net/http/httptest"
 	"testing"
 )
 
+//go:embed templates/*.gohtml
+var testTemplates embed.FS
+
 func TestCompileGoHTML(t *testing.T) {
-    // The templates rely on a func map created by NewFuncs. For this
-    // compile-time check we do not need an actual request, so pass nil.
-    template.Must(template.New("").Funcs(NewFuncs(nil)).ParseFS(os.DirFS("./templates"), "*.gohtml"))
+	r := httptest.NewRequest("GET", "/", nil)
+  template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(os.DirFS("./templates"), "*.gohtml"))
 }

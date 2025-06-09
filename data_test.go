@@ -2,10 +2,13 @@ package main
 
 import (
 	"html/template"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 )
 
 func TestCompileGoHTML(t *testing.T) {
-	template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(os.DirFS("./templates"), "*.gohtml"))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	template.Must(template.New("").Funcs(NewFuncs(req)).ParseFS(os.DirFS("./templates"), "*.gohtml"))
 }

@@ -215,14 +215,16 @@ func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)
 
+	provider := getEmailProvider()
+
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else {
+	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -233,9 +235,9 @@ func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		Idlinker: int32(linkId),
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else {
+	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), getEmailProvider(), row.Username.String, endUrl); err != nil {
+			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

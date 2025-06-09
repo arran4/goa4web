@@ -12,5 +12,5 @@ var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(testTemplates, "templates/*.gohtml"))
+  template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(os.DirFS("./templates"), "*.gohtml"))
 }

@@ -19,10 +19,11 @@ func processCommentFullQuote(username, text string) string {
 		case '[':
 			bc++
 		case '\\':
-			switch text[it+1] {
-			case '[', ']':
-				out.WriteByte(text[it+1])
-				it++
+			if it+1 < len(text) {
+				if text[it+1] == '[' || text[it+1] == ']' {
+					out.WriteByte(text[it+1])
+					it++
+				}
 			}
 		case '\n':
 			if bc == 0 && nlc == 1 {

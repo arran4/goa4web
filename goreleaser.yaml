@@ -1,0 +1,58 @@
+version: 2
+project_name: goa4web
+builds:
+  -
+    id: goa4web
+    main: .
+    binary: goa4web
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags: -s -w
+archives:
+  -
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+nfpms:
+  -
+    vendor: Ubels Software Development
+    homepage: https://github.com/arran4/goa4web
+    maintainer: Arran Ubels <arran@ubels.com.au>
+    description: Goa4web web application
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
+      - termux.deb
+      - archlinux
+    release: 1
+    section: default
+    priority: extra
+dockers:
+  -
+    image_templates:
+      - "ghcr.io/arran4/goa4web:{{ .Tag }}"
+      - "ghcr.io/arran4/goa4web:latest"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: amd64
+  -
+    image_templates:
+      - "ghcr.io/arran4/goa4web:{{ .Tag }}-arm64"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: arm64

@@ -34,3 +34,11 @@ func TestExternalLink(t *testing.T) {
 		t.Errorf("externalLink=%q", got)
 	}
 }
+
+func TestExternalLinkBadURL(t *testing.T) {
+	got := externalLink("javascript:alert(1)", "X")
+	want := "javascript:alert(1)"
+	if got != want {
+		t.Errorf("externalLink bad=%q", got)
+	}
+}

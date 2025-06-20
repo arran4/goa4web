@@ -180,8 +180,8 @@ func main() {
 	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set topic restriction"))
 
 	lr := r.PathPrefix("/linker").Subrouter()
-	//lr.HandleFunc(".rss", linkerRssPage).Methods("GET")
-	//lr.HandleFunc(".atom", linkerAtomPage).Methods("GET")
+	lr.HandleFunc("/rss", linkerRssPage).Methods("GET")
+	lr.HandleFunc("/atom", linkerAtomPage).Methods("GET")
 	lr.HandleFunc("", linkerPage).Methods("GET")
 	lr.HandleFunc("/categories", linkerCategoriesPage).Methods("GET")
 	lr.HandleFunc("/category/{category}", linkerCategoryPage).Methods("GET")

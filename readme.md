@@ -87,3 +87,14 @@ Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to se
 - `log`: Writes emails to the application log.
 
 If configuration or credentials are missing, email is disabled and a log message is printed.
+
+Configuration values can also be provided in a file and via command line flags.
+The resolution order is:
+
+1. Command line flags (`--smtp-host` etc.)
+2. Values from a config file specified with `--email-config`
+3. Environment variables such as `SMTP_HOST`
+4. Built-in defaults
+
+The config file uses a simple `key=value` format matching the environment
+variable names.

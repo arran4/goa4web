@@ -10,6 +10,40 @@ import (
 	"database/sql"
 )
 
+const countPermissionSections = `-- name: CountPermissionSections :many
+SELECT section, COUNT(*) AS SectionCount
+FROM permissions
+GROUP BY section
+`
+
+type CountPermissionSectionsRow struct {
+	Section      sql.NullString
+	Sectioncount int64
+}
+
+func (q *Queries) CountPermissionSections(ctx context.Context) ([]*CountPermissionSectionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, countPermissionSections)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*CountPermissionSectionsRow
+	for rows.Next() {
+		var i CountPermissionSectionsRow
+		if err := rows.Scan(&i.Section, &i.Sectioncount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteTopicRestrictionsByForumTopicId = `-- name: DeleteTopicRestrictionsByForumTopicId :exec
 DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?
 `
@@ -373,6 +407,22 @@ WHERE idpermissions = ?
 //	? - Permission ID to be deleted (int)
 func (q *Queries) PermissionUserDisallow(ctx context.Context, idpermissions int32) error {
 	_, err := q.db.ExecContext(ctx, permissionUserDisallow, idpermissions)
+	return err
+}
+
+const renamePermissionSection = `-- name: RenamePermissionSection :exec
+UPDATE permissions
+SET section = ?
+WHERE section = ?
+`
+
+type RenamePermissionSectionParams struct {
+	Section   sql.NullString
+	Section_2 sql.NullString
+}
+
+func (q *Queries) RenamePermissionSection(ctx context.Context, arg RenamePermissionSectionParams) error {
+	_, err := q.db.ExecContext(ctx, renamePermissionSection, arg.Section, arg.Section_2)
 	return err
 }
 

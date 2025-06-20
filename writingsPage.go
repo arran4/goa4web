@@ -15,15 +15,21 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Categories                       []*Writingcategory
-		EditingCategoryId                int32 // TODO
-		CategoryId                       int32 // TODO
-		WritingcategoryIdwritingcategory int32 // TODO
-		IsAdmin                          int32 // TODO
+		EditingCategoryId                int32
+		CategoryId                       int32
+		WritingcategoryIdwritingcategory int32
+		IsAdmin                          bool
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
+
+	data.IsAdmin = data.CoreData.HasRole("administrator")
+	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
+	data.EditingCategoryId = int32(editID)
+	data.CategoryId = 0
+	data.WritingcategoryIdwritingcategory = data.CategoryId
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 

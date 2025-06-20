@@ -15,22 +15,27 @@ func writingsCategoryPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Categories                       []*Writingcategory
 		CategoryBreadcrumbs              []*Writingcategory
-		EditingCategoryId                int32 // TODO
-		CategoryId                       int32 // TODO
-		WritingcategoryIdwritingcategory int32 // TODO
-		IsAdmin                          bool  // TODO
-		IsWriter                         bool  // TODO
+		EditingCategoryId                int32
+		CategoryId                       int32
+		WritingcategoryIdwritingcategory int32
+		IsAdmin                          bool
+		IsWriter                         bool
 		Abstracts                        []*GetPublicWritingsInCategoryRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		IsWriter: true,
 	}
+
+	data.IsAdmin = data.CoreData.HasRole("administrator")
+	data.IsWriter = data.CoreData.HasRole("writer") || data.IsAdmin
+	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
+	data.EditingCategoryId = int32(editID)
 
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 	data.CategoryId = int32(categoryId)
+	data.WritingcategoryIdwritingcategory = data.CategoryId
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 

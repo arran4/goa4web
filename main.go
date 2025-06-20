@@ -40,6 +40,13 @@ var (
 	jmapIdentityFlag  = flag.String("jmap-identity", "", "JMAP identity")
 	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
+
+	dbCfgPath  = flag.String("db-config", "", "path to database configuration file")
+	dbUserFlag = flag.String("db-user", "", "database user")
+	dbPassFlag = flag.String("db-pass", "", "database password")
+	dbHostFlag = flag.String("db-host", "", "database host")
+	dbPortFlag = flag.String("db-port", "", "database port")
+	dbNameFlag = flag.String("db-name", "", "database name")
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -74,6 +81,16 @@ func main() {
 
 	performStartupChecks()
 
+  cliDBConfig = DBConfig{
+		User: *dbUserFlag,
+		Pass: *dbPassFlag,
+		Host: *dbHostFlag,
+		Port: *dbPortFlag,
+		Name: *dbNameFlag,
+	}
+	dbConfigFile = *dbCfgPath
+
+  
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,
@@ -89,11 +106,22 @@ func main() {
 	}
 	emailConfigFile = *emailCfgPath
 
+	performStartupChecks()
+
+	if dbPool != nil {
+		defer func() {
+			if err := dbPool.Close(); err != nil {
+				log.Printf("DB close error: %v", err)
+			}
+		}()
+	}
+
 	r := mux.NewRouter()
 
 	r.Use(DBAdderMiddleware)
 	r.Use(UserAdderMiddleware)
 	r.Use(CoreAdderMiddleware)
+	r.Use(SecurityHeadersMiddleware)
 
 	// TODO consider adsense / adwords / etc
 
@@ -329,6 +357,8 @@ func main() {
 	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(TaskMatcher("Rename Language"))
 	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(TaskMatcher("Delete Language"))
 	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(TaskMatcher("Create Language"))
+	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(TaskMatcher("Rename section"))
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake comments search"))
 	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake news search"))

@@ -152,8 +152,9 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web?parseTime=true")
 		if err != nil {
-			log.Printf("error sql init: %s", err)
-			http.Error(writer, "ERROR", 500)
+			ue := UserError{Err: err, ErrorMessage: "unable to open database"}
+			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
 		}
 		defer func(db *sql.DB) {
@@ -162,6 +163,12 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 				log.Printf("Error closing db: %s", err)
 			}
 		}(db)
+		if err := db.Ping(); err != nil {
+			ue := UserError{Err: err, ErrorMessage: "database unavailable"}
+			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
+			return
+		}
 		ctx := request.Context()
 		ctx = context.WithValue(ctx, ContextValues("sql.DB"), db)
 		ctx = context.WithValue(ctx, ContextValues("queries"), New(db))

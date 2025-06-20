@@ -1,5 +1,6 @@
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
+github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7OputlJIzU=
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
 github.com/arran4/gorillamuxlogic v1.0.0 h1:eIPfUi3npZjlQoPMZXK8NEhjayHSR51fpr/3FjXu4yY=
 github.com/arran4/gorillamuxlogic v1.0.0/go.mod h1:gld8XFVNKY7Dz4pukVKImnJ8cVyEo6ITw9J0Bt3YLGM=

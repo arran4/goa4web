@@ -419,8 +419,16 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		// TODO
-		return true
+		cd, ok := request.Context().Value(ContextValues("coreData")).(*CoreData)
+		if !ok || cd == nil {
+			return false
+		}
+		for _, lvl := range accessLevels {
+			if cd.HasRole(lvl) {
+				return true
+			}
+		}
+		return false
 	}
 }
 

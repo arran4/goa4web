@@ -128,7 +128,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 		data.Comments = append(data.Comments, &CommentPlus{
 			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       true,
+			ShowReply:                       data.CoreData.UserID != 0,
 			EditUrl:                         editUrl,
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         editCommentId != 0 && int32(editCommentId) == row.Idcomments,
@@ -141,8 +141,8 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	data.Thread = threadRow
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
-		ShowReply: true, // TODO
-		ShowEdit:  true, // TODO
+		ShowReply: data.CoreData.UserID != 0,
+		ShowEdit:  data.CoreData.HasRole("writer"),
 		Editing:   editingId == int(post.Idsitenews),
 	}
 

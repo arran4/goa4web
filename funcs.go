@@ -69,11 +69,12 @@ func NewFuncs(r *http.Request) template.FuncMap {
 
 			editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
 
+			cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 			for _, post := range posts {
 				result = append(result, &Post{
 					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
-					ShowReply: true, // TODO
-					ShowEdit:  true, // TODO
+					ShowReply: cd.UserID != 0,
+					ShowEdit:  cd.HasRole("writer"),
 					Editing:   editingId == int(post.Idsitenews),
 				})
 			}

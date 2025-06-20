@@ -67,7 +67,7 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func CustomFAQIndex(data *CoreData) {
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 		Name: "Ask",
 		Link: "/faq/ask",

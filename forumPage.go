@@ -130,6 +130,14 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 	threadId := vars["thread"]
 	topicId := vars["topic"]
 	categoryId := vars["category"]
+	if topicId != "" && threadId == "" {
+		data.RSSFeedUrl = fmt.Sprintf("/forum/topic/%s.rss", topicId)
+		data.AtomFeedUrl = fmt.Sprintf("/forum/topic/%s.atom", topicId)
+		data.CustomIndexItems = append(data.CustomIndexItems,
+			IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
+			IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
+		)
+	}
 	userHasAdmin := true // TODO
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems,

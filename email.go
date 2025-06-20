@@ -51,6 +51,7 @@ type EmailConfig struct {
 	JMAPIdentity string
 	JMAPUser     string
 	JMAPPass     string
+	SendGridKey  string
 }
 
 // MailProvider defines a simple interface that all mail backends must
@@ -322,6 +323,9 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 			identity:  id,
 		}
 
+	case "sendgrid":
+		return sendGridProviderFromConfig(cfg)
+
 	case "log":
 		return logMailProvider{}
 
@@ -375,6 +379,9 @@ func resolveEmailConfig(cli, file, env EmailConfig) EmailConfig {
 		if src.JMAPPass != "" {
 			cfg.JMAPPass = src.JMAPPass
 		}
+		if src.SendGridKey != "" {
+			cfg.SendGridKey = src.SendGridKey
+		}
 	}
 
 	merge(env)
@@ -421,6 +428,8 @@ func loadEmailConfigFile(path string) (EmailConfig, error) {
 				cfg.JMAPUser = val
 			case "JMAP_PASS":
 				cfg.JMAPPass = val
+			case "SENDGRID_KEY":
+				cfg.SendGridKey = val
 			}
 		}
 	}
@@ -440,6 +449,7 @@ func loadEmailConfig() EmailConfig {
 		JMAPIdentity: os.Getenv("JMAP_IDENTITY"),
 		JMAPUser:     os.Getenv("JMAP_USER"),
 		JMAPPass:     os.Getenv("JMAP_PASS"),
+		SendGridKey:  os.Getenv("SENDGRID_KEY"),
 	}
 
 	fileCfg, err := loadEmailConfigFile(emailConfigFile)

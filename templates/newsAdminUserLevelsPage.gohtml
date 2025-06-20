@@ -1,41 +1,48 @@
 {{ template "head" $ }}
-    {{ with .PermissionResult }}
-        <table border=1>
+    <table border="1">
         <tr>
-            <th>ID
-            <th>User
-            <th>Email
-            <th>Level
-            <th>Delete?
-        {{ range .Rows }}
-            <tr>
-            <td>{{ .GetColumn "idpermissions" }}
-            <td>{{ .GetColumn "username" }}
-            <td>{{ .GetColumn "email" }}
-            <td>{{ .GetColumn "level" }}
-            <td>
-                <form method="post">
-                <input type="hidden" name="id" value="{{ .GetColumn "idpermissions" }}">
-                <input type="submit" name="exec" value="remove">
-                </form>
-            </tr>
-        {{ end }}
-        <tr>
-            <td><form method="post">NEW</td>
-            <td><input name="username"></td>
-            <td>?</td>
-            <td>
-                <select name="level">
-                    <option value="{{ .auth_reader }}">reader
-                    <option value="{{ .auth_writer }}">writer
-                    <option value="{{ .auth_moderator }}">moderator
-                    <option value="{{ .auth_administrator }}">administrator
-                </select>
-            </td>
-            <td><input type="submit" name="exec" value="allow"></form></td>
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Level</th>
+            <th>Delete?</th>
         </tr>
-        </table>
-    {{ else }}
-        Oddly, no permissions granted. {{ .Errors }}<br>
-    {{ end }}
+        {{- if .UserLevels }}
+            {{- range .UserLevels }}
+                <tr>
+                    <td>{{ .Idpermissions }}</td>
+                    <td>{{ .Username.String }}</td>
+                    <td>{{ .Email.String }}</td>
+                    <td>{{ .Level.String }}</td>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" name="permid" value="{{ .Idpermissions }}">
+                            <input type="submit" name="task" value="remove">
+                        </form>
+                    </td>
+                </tr>
+            {{- end }}
+        {{- else }}
+            <tr><td colspan="5">No results</td></tr>
+        {{- end }}
+        <tr>
+            <form method="post">
+                <td>NEW</td>
+                <td><input name="username"></td>
+                <td>?</td>
+                <td>
+                    <select name="level">
+                        <option value="reader">reader</option>
+                        <option value="writer">writer</option>
+                        <option value="moderator">moderator</option>
+                        <option value="administrator">administrator</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="submit" name="task" value="allow">
+                </td>
+            </form>
+        </tr>
+    </table>
+    <p>Permissions should be valid only.</p>
 {{ template "tail" $ }}

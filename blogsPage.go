@@ -78,31 +78,33 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 
 func CustomBlogIndex(data *CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
-	if user == "" {
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: "Everyones Atom Feed",
-				Link: "/blogs/atom",
-			},
-			IndexItem{
-				Name: "Everyones RSS Feed",
-				Link: "/blogs/rss",
-			},
-		)
-	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: fmt.Sprintf("%s Atom Feed", user),
-				Link: fmt.Sprintf("/blogs/atom?user=%s", url.QueryEscape(user)),
-			},
-			IndexItem{
-				Name: fmt.Sprintf("%s RSS Feed", user),
-				Link: fmt.Sprintf("/blogs/rss?user=%s", url.QueryEscape(user)),
-			},
-		)
+	if data.FeedsEnabled {
+		if user == "" {
+			data.CustomIndexItems = append(data.CustomIndexItems,
+				IndexItem{
+					Name: "Everyones Atom Feed",
+					Link: "/blogs/atom",
+				},
+				IndexItem{
+					Name: "Everyones RSS Feed",
+					Link: "/blogs/rss",
+				},
+			)
+		} else {
+			data.CustomIndexItems = append(data.CustomIndexItems,
+				IndexItem{
+					Name: fmt.Sprintf("%s Atom Feed", user),
+					Link: fmt.Sprintf("/blogs/atom?user=%s", url.QueryEscape(user)),
+				},
+				IndexItem{
+					Name: fmt.Sprintf("%s RSS Feed", user),
+					Link: fmt.Sprintf("/blogs/rss?user=%s", url.QueryEscape(user)),
+				},
+			)
+		}
+		data.RSSFeedUrl = "/blogs/rss"
+		data.AtomFeedUrl = "/blogs/atom"
 	}
-	data.RSSFeedUrl = "/blogs/rss"
-	data.AtomFeedUrl = "/blogs/atom"
 
 	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {

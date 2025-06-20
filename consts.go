@@ -11,4 +11,5 @@ const (
 	NewsTopicDescription     = "THIS IS A HIDDEN FORUM FOR A NEWS TOPIC"
 	LinkderTopicName         = "A LINKER TOPIC"
 	LinkderTopicDescription  = "THIS IS A HIDDEN FORUM FOR A LINKER TOPIC"
+	FeedsEnabled             = true
 )

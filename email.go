@@ -29,6 +29,30 @@ const (
 	SourceEmail = "a4web@arran.net.au"
 )
 
+// cliEmailConfig holds command line overrides for email configuration. It is
+// populated in main() after parsing flags.
+var cliEmailConfig EmailConfig
+
+// emailConfigFile is the optional path to a configuration file read at startup.
+var emailConfigFile string
+
+// EmailConfig stores configuration for selecting and configuring the mail
+// provider. Tests can supply a custom configuration instead of relying on
+// environment variables.
+type EmailConfig struct {
+	Provider     string
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUser     string
+	SMTPPass     string
+	AWSRegion    string
+	JMAPEndpoint string
+	JMAPAccount  string
+	JMAPIdentity string
+	JMAPUser     string
+	JMAPPass     string
+}
+
 // MailProvider defines a simple interface that all mail backends must
 // implement. Only the fields necessary for sending basic notification emails
 // are included.
@@ -227,15 +251,15 @@ func notifyChange(ctx context.Context, provider MailProvider, email string, page
 	return nil
 }
 
-func getEmailProvider() MailProvider {
-	mode := strings.ToLower(os.Getenv("EMAIL_PROVIDER"))
+func providerFromConfig(cfg EmailConfig) MailProvider {
+	mode := strings.ToLower(cfg.Provider)
 
 	switch mode {
 	case "smtp":
-		host := os.Getenv("SMTP_HOST")
-		port := os.Getenv("SMTP_PORT")
-		user := os.Getenv("SMTP_USER")
-		pass := os.Getenv("SMTP_PASS")
+		host := cfg.SMTPHost
+		port := cfg.SMTPPort
+		user := cfg.SMTPUser
+		pass := cfg.SMTPPass
 		if host == "" {
 			log.Printf("Email disabled: SMTP_HOST not set")
 			return nil
@@ -253,12 +277,12 @@ func getEmailProvider() MailProvider {
 	case "ses", "":
 		// Attempt to create an AWS session using default credentials. If this
 		// fails, emails are effectively disabled.
-		cfg := aws.NewConfig()
-		if region := os.Getenv("AWS_REGION"); region != "" {
-			cfg = cfg.WithRegion(region)
+		awsCfg := aws.NewConfig()
+		if region := cfg.AWSRegion; region != "" {
+			awsCfg = awsCfg.WithRegion(region)
 		}
 
-		sess, err := session.NewSession(cfg)
+		sess, err := session.NewSession(awsCfg)
 		if err != nil {
 			log.Printf("Email disabled: cannot initialise AWS session: %v", err)
 			if mode == "ses" {
@@ -279,21 +303,21 @@ func getEmailProvider() MailProvider {
 		return localMailProvider{}
 
 	case "jmap":
-		ep := os.Getenv("JMAP_ENDPOINT")
+		ep := cfg.JMAPEndpoint
 		if ep == "" {
 			log.Printf("Email disabled: JMAP_ENDPOINT not set")
 			return nil
 		}
-		acc := os.Getenv("JMAP_ACCOUNT")
-		id := os.Getenv("JMAP_IDENTITY")
+		acc := cfg.JMAPAccount
+		id := cfg.JMAPIdentity
 		if acc == "" || id == "" {
 			log.Printf("Email disabled: JMAP_ACCOUNT or JMAP_IDENTITY not set")
 			return nil
 		}
 		return jmapMailProvider{
 			endpoint:  ep,
-			username:  os.Getenv("JMAP_USER"),
-			password:  os.Getenv("JMAP_PASS"),
+			username:  cfg.JMAPUser,
+			password:  cfg.JMAPPass,
 			accountID: acc,
 			identity:  id,
 		}
@@ -305,4 +329,123 @@ func getEmailProvider() MailProvider {
 		log.Printf("Email disabled: unknown provider %q", mode)
 		return nil
 	}
+}
+
+// getEmailProvider returns the mail provider configured by environment variables.
+// Production code uses this, while tests can call providerFromConfig directly.
+func getEmailProvider() MailProvider {
+	return providerFromConfig(loadEmailConfig())
+}
+
+// resolveEmailConfig merges configuration values with the order of precedence
+// cli > file > env > defaults.
+func resolveEmailConfig(cli, file, env EmailConfig) EmailConfig {
+	var cfg EmailConfig
+	merge := func(src EmailConfig) {
+		if src.Provider != "" {
+			cfg.Provider = src.Provider
+		}
+		if src.SMTPHost != "" {
+			cfg.SMTPHost = src.SMTPHost
+		}
+		if src.SMTPPort != "" {
+			cfg.SMTPPort = src.SMTPPort
+		}
+		if src.SMTPUser != "" {
+			cfg.SMTPUser = src.SMTPUser
+		}
+		if src.SMTPPass != "" {
+			cfg.SMTPPass = src.SMTPPass
+		}
+		if src.AWSRegion != "" {
+			cfg.AWSRegion = src.AWSRegion
+		}
+		if src.JMAPEndpoint != "" {
+			cfg.JMAPEndpoint = src.JMAPEndpoint
+		}
+		if src.JMAPAccount != "" {
+			cfg.JMAPAccount = src.JMAPAccount
+		}
+		if src.JMAPIdentity != "" {
+			cfg.JMAPIdentity = src.JMAPIdentity
+		}
+		if src.JMAPUser != "" {
+			cfg.JMAPUser = src.JMAPUser
+		}
+		if src.JMAPPass != "" {
+			cfg.JMAPPass = src.JMAPPass
+		}
+	}
+
+	merge(env)
+	merge(file)
+	merge(cli)
+	return cfg
+}
+
+// loadEmailConfigFile reads EMAIL_* style configuration values from a simple
+// key=value file. Missing files return an empty configuration.
+func loadEmailConfigFile(path string) (EmailConfig, error) {
+	var cfg EmailConfig
+	if path == "" {
+		return cfg, nil
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return cfg, err
+	}
+	for _, line := range strings.Split(string(b), "\n") {
+		if i := strings.IndexByte(line, '='); i > 0 {
+			key := strings.TrimSpace(line[:i])
+			val := strings.TrimSpace(line[i+1:])
+			switch key {
+			case "EMAIL_PROVIDER":
+				cfg.Provider = val
+			case "SMTP_HOST":
+				cfg.SMTPHost = val
+			case "SMTP_PORT":
+				cfg.SMTPPort = val
+			case "SMTP_USER":
+				cfg.SMTPUser = val
+			case "SMTP_PASS":
+				cfg.SMTPPass = val
+			case "AWS_REGION":
+				cfg.AWSRegion = val
+			case "JMAP_ENDPOINT":
+				cfg.JMAPEndpoint = val
+			case "JMAP_ACCOUNT":
+				cfg.JMAPAccount = val
+			case "JMAP_IDENTITY":
+				cfg.JMAPIdentity = val
+			case "JMAP_USER":
+				cfg.JMAPUser = val
+			case "JMAP_PASS":
+				cfg.JMAPPass = val
+			}
+		}
+	}
+	return cfg, nil
+}
+
+func loadEmailConfig() EmailConfig {
+	env := EmailConfig{
+		Provider:     os.Getenv("EMAIL_PROVIDER"),
+		SMTPHost:     os.Getenv("SMTP_HOST"),
+		SMTPPort:     os.Getenv("SMTP_PORT"),
+		SMTPUser:     os.Getenv("SMTP_USER"),
+		SMTPPass:     os.Getenv("SMTP_PASS"),
+		AWSRegion:    os.Getenv("AWS_REGION"),
+		JMAPEndpoint: os.Getenv("JMAP_ENDPOINT"),
+		JMAPAccount:  os.Getenv("JMAP_ACCOUNT"),
+		JMAPIdentity: os.Getenv("JMAP_IDENTITY"),
+		JMAPUser:     os.Getenv("JMAP_USER"),
+		JMAPPass:     os.Getenv("JMAP_PASS"),
+	}
+
+	fileCfg, err := loadEmailConfigFile(emailConfigFile)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("Email config file error: %v", err)
+	}
+
+	return resolveEmailConfig(cliEmailConfig, fileCfg, env)
 }

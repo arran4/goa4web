@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"flag"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -21,6 +22,19 @@ var (
 	sessionName = "my-session"
 	//sessionKey  = "authenticated"
 	store = sessions.NewCookieStore([]byte("random-key"))
+
+	emailCfgPath      = flag.String("email-config", "", "path to email configuration file")
+	emailProviderFlag = flag.String("email-provider", "", "email provider")
+	smtpHostFlag      = flag.String("smtp-host", "", "SMTP host")
+	smtpPortFlag      = flag.String("smtp-port", "", "SMTP port")
+	smtpUserFlag      = flag.String("smtp-user", "", "SMTP user")
+	smtpPassFlag      = flag.String("smtp-pass", "", "SMTP pass")
+	awsRegionFlag     = flag.String("aws-region", "", "AWS region")
+	jmapEndpointFlag  = flag.String("jmap-endpoint", "", "JMAP endpoint")
+	jmapAccountFlag   = flag.String("jmap-account", "", "JMAP account")
+	jmapIdentityFlag  = flag.String("jmap-identity", "", "JMAP identity")
+	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
+	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -36,6 +50,23 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
+
+	cliEmailConfig = EmailConfig{
+		Provider:     *emailProviderFlag,
+		SMTPHost:     *smtpHostFlag,
+		SMTPPort:     *smtpPortFlag,
+		SMTPUser:     *smtpUserFlag,
+		SMTPPass:     *smtpPassFlag,
+		AWSRegion:    *awsRegionFlag,
+		JMAPEndpoint: *jmapEndpointFlag,
+		JMAPAccount:  *jmapAccountFlag,
+		JMAPIdentity: *jmapIdentityFlag,
+		JMAPUser:     *jmapUserFlag,
+		JMAPPass:     *jmapPassFlag,
+	}
+	emailConfigFile = *emailCfgPath
+
 	r := mux.NewRouter()
 
 	r.Use(DBAdderMiddleware)

@@ -166,7 +166,8 @@ func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := feed.WriteAtom(w); err != nil {
+	w.Header().Set("Content-Type", "application/rss+xml")
+	if err := feed.WriteRss(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

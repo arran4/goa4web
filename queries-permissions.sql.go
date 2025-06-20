@@ -200,6 +200,56 @@ func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]
 	return items, nil
 }
 
+const getPermissionsByUserIdAndSectionWritings = `-- name: GetPermissionsByUserIdAndSectionWritings :many
+SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.username
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND p.section = "writings"
+ORDER BY p.level
+`
+
+type GetPermissionsByUserIdAndSectionWritingsRow struct {
+	Idpermissions int32
+	UsersIdusers  int32
+	Section       sql.NullString
+	Level         sql.NullString
+	Idusers       int32
+	Email         sql.NullString
+	Passwd        sql.NullString
+	Username      sql.NullString
+}
+
+func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionWritingsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPermissionsByUserIdAndSectionWritings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPermissionsByUserIdAndSectionWritingsRow
+	for rows.Next() {
+		var i GetPermissionsByUserIdAndSectionWritingsRow
+		if err := rows.Scan(
+			&i.Idpermissions,
+			&i.UsersIdusers,
+			&i.Section,
+			&i.Level,
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserPermissions = `-- name: GetUserPermissions :one
 SELECT p.idpermissions, p.users_idusers, p.section, p.level
 FROM permissions p

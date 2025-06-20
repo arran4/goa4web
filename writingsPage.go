@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+var writingsPermissionsPageEnabled = true
+
 func writingsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
@@ -48,10 +50,15 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func CustomWritingsIndex(data *CoreData, r *http.Request) {
-	// TODO
-	// TODO RSS
+	data.CustomIndexItems = append(data.CustomIndexItems,
+		IndexItem{Name: "Atom Feed", Link: "/writings/atom"},
+		IndexItem{Name: "RSS Feed", Link: "/writings/rss"},
+	)
+	data.RSSFeedUrl = "/writings/rss"
+	data.AtomFeedUrl = "/writings/atom"
+
 	userHasAdmin := data.HasRole("administrator")
-	if userHasAdmin {
+	if userHasAdmin && writingsPermissionsPageEnabled {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
 			Link: "/writings/user/permissions",

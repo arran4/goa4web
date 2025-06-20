@@ -334,3 +334,11 @@ CREATE TABLE `writtingApprovedUsers` (
   KEY `writing_has_users_FKIndex2` (`users_idusers`)
 );
 
+
+CREATE TABLE `emailQueue` (
+  `idemailQueue` int(10) NOT NULL AUTO_INCREMENT,
+  `email` tinytext NOT NULL,
+  `page` tinytext NOT NULL,
+  `created` datetime DEFAULT NOW(),
+  PRIMARY KEY (`idemailQueue`)
+);

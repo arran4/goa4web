@@ -67,6 +67,9 @@ func main() {
 	}
 	emailConfigFile = *emailCfgPath
 
+	provider := getEmailProvider()
+	startEmailQueueWorker(provider)
+
 	r := mux.NewRouter()
 
 	r.Use(DBAdderMiddleware)

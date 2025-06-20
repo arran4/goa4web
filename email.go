@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -201,54 +203,54 @@ func (logMailProvider) Send(ctx context.Context, to, subject, body string) error
 	return nil
 }
 
-func notifyChange(ctx context.Context, provider MailProvider, email string, page string) error {
-	// TODO Make this periodically check db to see if there is anything queued, and normally queue up messages
-	if email == "" {
-		return fmt.Errorf("no email specified")
-	}
-
+func sendChangeEmail(ctx context.Context, provider MailProvider, email, page string) error {
 	if provider == nil {
 		return fmt.Errorf("no email provider specified")
 	}
 	from := SourceEmail
-
 	type EmailContent struct {
 		To      string
 		From    string
 		Subject string
 		URL     string
 	}
-
-	// Define email content
 	content := EmailContent{
 		To:      email,
 		From:    from,
 		Subject: "Website Update Notification",
 		URL:     page,
 	}
-
-	// Create a new buffer to store the rendered email content
 	var notification bytes.Buffer
-
-	// Parse and execute the email template
 	tmpl, err := template.New("email").Parse(updateEmailText)
 	if err != nil {
 		return fmt.Errorf("parse email template: %w", err)
 	}
-
-	// Execute the template and store the result in the notification buffer
-	err = tmpl.Execute(&notification, content)
-	if err != nil {
+	if err := tmpl.Execute(&notification, content); err != nil {
 		return fmt.Errorf("execute email template: %w", err)
 	}
-
-	// Send the message using the provider
 	if err := provider.Send(ctx, email, content.Subject, notification.String()); err != nil {
 		return fmt.Errorf("send email: %w", err)
 	}
-
-	log.Println("Email sent successfully to", email)
 	return nil
+}
+
+func notifyChange(ctx context.Context, provider MailProvider, email string, page string) error {
+	if email == "" {
+		return fmt.Errorf("no email specified")
+	}
+	if provider == nil {
+		return fmt.Errorf("no email provider specified")
+	}
+
+	type enqueuer interface {
+		EnqueueEmail(ctx context.Context, email, page string) error
+	}
+	q, ok := ctx.Value(ContextValues("queries")).(enqueuer)
+	if !ok || q == nil {
+		return fmt.Errorf("no database in context")
+	}
+
+	return q.EnqueueEmail(ctx, email, page)
 }
 
 func providerFromConfig(cfg EmailConfig) MailProvider {
@@ -335,6 +337,49 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 // Production code uses this, while tests can call providerFromConfig directly.
 func getEmailProvider() MailProvider {
 	return providerFromConfig(loadEmailConfig())
+}
+
+type emailQueueStore interface {
+	ListQueuedEmails(ctx context.Context, limit int32) ([]EmailQueueItem, error)
+	DeleteQueuedEmail(ctx context.Context, id int64) error
+}
+
+func processEmailQueue(ctx context.Context, store emailQueueStore, provider MailProvider) {
+	items, err := store.ListQueuedEmails(ctx, 10)
+	if err != nil {
+		log.Printf("list queued emails: %v", err)
+		return
+	}
+	for _, it := range items {
+		if err := sendChangeEmail(ctx, provider, it.Email, it.Page); err != nil {
+			log.Printf("send queued email: %v", err)
+			continue
+		}
+		if err := store.DeleteQueuedEmail(ctx, it.IDEmailQueue); err != nil {
+			log.Printf("delete queued email: %v", err)
+		}
+	}
+}
+
+func startEmailQueueWorker(provider MailProvider) {
+	if provider == nil {
+		return
+	}
+	go func() {
+		db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web?parseTime=true")
+		if err != nil {
+			log.Printf("email worker db open: %v", err)
+			return
+		}
+		defer db.Close()
+		q := New(db)
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
+		for {
+			<-ticker.C
+			processEmailQueue(context.Background(), q, provider)
+		}
+	}()
 }
 
 // resolveEmailConfig merges configuration values with the order of precedence

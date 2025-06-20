@@ -5,30 +5,33 @@ import (
 	"testing"
 )
 
-type recordMail struct{ to, sub, body string }
+type stubEnqueuer struct{ email, page string }
 
-func (r *recordMail) Send(ctx context.Context, to, subject, body string) error {
-	r.to, r.sub, r.body = to, subject, body
+func (s *stubEnqueuer) EnqueueEmail(ctx context.Context, email, page string) error {
+	s.email = email
+	s.page = page
 	return nil
 }
 
 func TestNotifyChange(t *testing.T) {
-	rec := &recordMail{}
-	err := notifyChange(context.Background(), rec, "a@b.com", "http://host")
+	st := &stubEnqueuer{}
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), st)
+	err := notifyChange(ctx, logMailProvider{}, "a@b.com", "http://host")
 	if err != nil {
 		t.Fatalf("notify error: %v", err)
 	}
-	if rec.to != "a@b.com" || rec.sub == "" || rec.body == "" {
-		t.Fatalf("record %+v", rec)
+	if st.email != "a@b.com" || st.page != "http://host" {
+		t.Fatalf("record %+v", st)
 	}
 }
 
 func TestNotifyChangeErrors(t *testing.T) {
-	rec := &recordMail{}
-	if err := notifyChange(context.Background(), rec, "", "p"); err == nil {
+	st := &stubEnqueuer{}
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), st)
+	if err := notifyChange(ctx, logMailProvider{}, "", "p"); err == nil {
 		t.Fatal("expected error for empty email")
 	}
-	if err := notifyChange(context.Background(), nil, "a@b", "p"); err == nil {
+	if err := notifyChange(ctx, nil, "a@b", "p"); err == nil {
 		t.Fatal("expected error for nil provider")
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -180,8 +181,8 @@ func main() {
 	fr.HandleFunc("/admin/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Set topic restriction"))
 
 	lr := r.PathPrefix("/linker").Subrouter()
-	//lr.HandleFunc(".rss", linkerRssPage).Methods("GET")
-	//lr.HandleFunc(".atom", linkerAtomPage).Methods("GET")
+	lr.HandleFunc("/rss", linkerRssPage).Methods("GET")
+	lr.HandleFunc("/atom", linkerAtomPage).Methods("GET")
 	lr.HandleFunc("", linkerPage).Methods("GET")
 	lr.HandleFunc("/categories", linkerCategoriesPage).Methods("GET")
 	lr.HandleFunc("/category/{category}", linkerCategoryPage).Methods("GET")
@@ -215,10 +216,10 @@ func main() {
 	bmr.HandleFunc("/edit", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiresAnAccount())
 
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
-	//ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
-	//ibr.HandleFunc("/board/{boardno:[0-9+}.rss", imagebbsBoardRssPage).Methods("GET")
-	//ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")
-	//ibr.HandleFunc("/board/{boardno:[0-9+}.atom", imagebbsBoardAtomPage).Methods("GET")
+	ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", imagebbsBoardRssPage).Methods("GET")
+	ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", imagebbsBoardAtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPostImageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Add offsite image"))
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadPage).Methods("GET")
@@ -241,9 +242,12 @@ func main() {
 	sr.HandleFunc("", searchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher("Search writings"))
 
 	wr := r.PathPrefix("/writings").Subrouter()
-	//wr.HandleFunc(".rss", writingsRssPage).Methods("GET")
-	//wr.HandleFunc(".atom", writingsAtomPage).Methods("GET")
-        wr.HandleFunc("", writingsPage).Methods("GET")
+	wr.HandleFunc("/rss", writingsRssPage).Methods("GET")
+	wr.HandleFunc("/atom", writingsAtomPage).Methods("GET")
+	wr.HandleFunc("", writingsPage).Methods("GET")
+	wr.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	wr.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 	wr.HandleFunc("/", writingsAdminCategoriesModifyPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("Modify Category"))
 	wr.HandleFunc("/", writingsAdminCategoriesCreatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("New Category"))
 	wr.HandleFunc("/article/{article}", writingsArticlePage).Methods("GET")
@@ -426,9 +430,29 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		cd, ok := request.Context().Value(ContextValues("coreData")).(*CoreData)
-		if !ok || cd == nil {
+		if ok && cd != nil {
+			for _, lvl := range accessLevels {
+				if cd.HasRole(lvl) {
+					return true
+				}
+			}
 			return false
 		}
+
+		user, uok := request.Context().Value(ContextValues("user")).(*User)
+		queries, qok := request.Context().Value(ContextValues("queries")).(*Queries)
+		if !uok || !qok {
+			return false
+		}
+		section := strings.Split(strings.TrimPrefix(request.URL.Path, "/"), "/")[0]
+		perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
+			UsersIdusers: user.Idusers,
+			Section:      sql.NullString{String: section, Valid: true},
+		})
+		if err != nil || !perm.Level.Valid {
+			return false
+		}
+		cd = &CoreData{SecurityLevel: perm.Level.String}
 		for _, lvl := range accessLevels {
 			if cd.HasRole(lvl) {
 				return true

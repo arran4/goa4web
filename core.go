@@ -60,6 +60,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			IndexItems:    indexItems,
 			UserID:        uid,
 			Title:         "Arran4's Website",
+			FeedsEnabled:  FeedsEnabled,
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
@@ -72,6 +73,7 @@ type CoreData struct {
 	SecurityLevel    string
 	Title            string
 	AutoRefresh      bool
+	FeedsEnabled     bool
 	RSSFeedUrl       string
 	AtomFeedUrl      string
 }

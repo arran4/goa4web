@@ -203,7 +203,7 @@ func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]
 const getPermissionsByUserIdAndSectionWritings = `-- name: GetPermissionsByUserIdAndSectionWritings :many
 SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.username
 FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = "writing"
+WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
 ORDER BY p.level
 `
 

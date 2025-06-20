@@ -55,7 +55,7 @@ ORDER BY p.level
 -- name: GetPermissionsByUserIdAndSectionWritings :many
 SELECT p.*, u.*
 FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = "writing"
+WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
 ORDER BY p.level
 ;
 

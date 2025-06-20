@@ -59,3 +59,42 @@ func (q *Queries) GetUserLanguages(ctx context.Context, userID int32) ([]*Userla
 	}
 	return items, nil
 }
+
+// DeleteUserLanguagesByUser removes all language selections for a user.
+func (q *Queries) DeleteUserLanguagesByUser(ctx context.Context, userID int32) error {
+	_, err := q.db.ExecContext(ctx, "DELETE FROM userlang WHERE users_idusers = ?", userID)
+	return err
+}
+
+type InsertUserLangParams struct {
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+}
+
+// InsertUserLang adds a user language record.
+func (q *Queries) InsertUserLang(ctx context.Context, arg InsertUserLangParams) error {
+	_, err := q.db.ExecContext(ctx, "INSERT INTO userlang (users_idusers, language_idlanguage) VALUES (?, ?)", arg.UsersIdusers, arg.LanguageIdlanguage)
+	return err
+}
+
+type InsertPreferenceParams struct {
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+}
+
+// InsertPreference creates a new preference row for the user.
+func (q *Queries) InsertPreference(ctx context.Context, arg InsertPreferenceParams) error {
+	_, err := q.db.ExecContext(ctx, "INSERT INTO preferences (language_idlanguage, users_idusers) VALUES (?, ?)", arg.LanguageIdlanguage, arg.UsersIdusers)
+	return err
+}
+
+type UpdatePreferenceParams struct {
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+}
+
+// UpdatePreference updates the user's default language preference.
+func (q *Queries) UpdatePreference(ctx context.Context, arg UpdatePreferenceParams) error {
+	_, err := q.db.ExecContext(ctx, "UPDATE preferences SET language_idlanguage = ? WHERE users_idusers = ?", arg.LanguageIdlanguage, arg.UsersIdusers)
+	return err
+}

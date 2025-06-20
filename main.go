@@ -81,7 +81,7 @@ func main() {
 
 	performStartupChecks()
 
-  cliDBConfig = DBConfig{
+	cliDBConfig = DBConfig{
 		User: *dbUserFlag,
 		Pass: *dbPassFlag,
 		Host: *dbHostFlag,
@@ -90,7 +90,6 @@ func main() {
 	}
 	dbConfigFile = *dbCfgPath
 
-  
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,
@@ -374,10 +373,15 @@ func main() {
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
 
-	http.Handle("/", csrfMiddleware(r))
+	srv := &Server{
+		DBConfig:    loadDBConfig(),
+		EmailConfig: loadEmailConfig(),
+		Router:      csrfMiddleware(r),
+		Store:       store,
+		DB:          dbPool,
+	}
 
-	log.Println("Server started on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(srv.Start(":8080"))
 }
 
 func runTemplate(template string) func(http.ResponseWriter, *http.Request) {

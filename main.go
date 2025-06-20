@@ -36,6 +36,13 @@ var (
 	jmapIdentityFlag  = flag.String("jmap-identity", "", "JMAP identity")
 	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
+
+	dbCfgPath  = flag.String("db-config", "", "path to database configuration file")
+	dbUserFlag = flag.String("db-user", "", "database user")
+	dbPassFlag = flag.String("db-pass", "", "database password")
+	dbHostFlag = flag.String("db-host", "", "database host")
+	dbPortFlag = flag.String("db-port", "", "database port")
+	dbNameFlag = flag.String("db-name", "", "database name")
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -53,7 +60,14 @@ func init() {
 func main() {
 	flag.Parse()
 
-	performStartupChecks()
+	cliDBConfig = DBConfig{
+		User: *dbUserFlag,
+		Pass: *dbPassFlag,
+		Host: *dbHostFlag,
+		Port: *dbPortFlag,
+		Name: *dbNameFlag,
+	}
+	dbConfigFile = *dbCfgPath
 
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
@@ -69,6 +83,16 @@ func main() {
 		JMAPPass:     *jmapPassFlag,
 	}
 	emailConfigFile = *emailCfgPath
+
+	performStartupChecks()
+
+	if dbPool != nil {
+		defer func() {
+			if err := dbPool.Close(); err != nil {
+				log.Printf("DB close error: %v", err)
+			}
+		}()
+	}
 
 	r := mux.NewRouter()
 

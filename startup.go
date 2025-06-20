@@ -2,20 +2,44 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 )
 
-// checkDatabase attempts to connect and ping the configured database.
-func checkDatabase() *UserError {
-	db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web?parseTime=true")
+var dbPool *sql.DB
+
+func InitDB() *UserError {
+	cfg := loadDBConfig()
+	if cfg.User == "" {
+		cfg.User = "a4web"
+	}
+	if cfg.Pass == "" {
+		cfg.Pass = "a4web"
+	}
+	if cfg.Host == "" {
+		cfg.Host = "localhost"
+	}
+	if cfg.Port == "" {
+		cfg.Port = "3306"
+	}
+	if cfg.Name == "" {
+		cfg.Name = "a4web"
+	}
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.User, cfg.Pass, cfg.Host, cfg.Port, cfg.Name)
+	var err error
+	dbPool, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return &UserError{Err: err, ErrorMessage: "failed to open database connection"}
 	}
-	defer db.Close()
-	if err := db.Ping(); err != nil {
+	if err := dbPool.Ping(); err != nil {
 		return &UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
 	return nil
+}
+
+// checkDatabase attempts to connect and ping the configured database.
+func checkDatabase() *UserError {
+	return InitDB()
 }
 
 func performStartupChecks() {

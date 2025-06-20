@@ -95,6 +95,7 @@ Database connection details can be supplied in several ways. Values are resolved
 4. Built-in defaults
 
 The config file uses the same `key=value` format as the email configuration file.
+See `examples/db.conf` for a complete list of supported keys.
 
 ## Email Provider Configuration
 
@@ -119,7 +120,7 @@ The resolution order is:
 4. Built-in defaults
 
 The config file uses a simple `key=value` format matching the environment
-variable names.
+variable names. See `examples/email.conf` for an example file containing all keys.
 
 ### Implementing Custom Providers
 

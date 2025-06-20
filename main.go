@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -419,8 +420,33 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		// TODO
-		return true
+		user, ok := request.Context().Value(ContextValues("user")).(*User)
+		if !ok || user == nil {
+			return false
+		}
+
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+
+		// determine section from the path prefix
+		section := strings.TrimPrefix(request.URL.Path, "/")
+		if idx := strings.Index(section, "/"); idx != -1 {
+			section = section[:idx]
+		}
+
+		perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
+			UsersIdusers: user.Idusers,
+			Section:      sql.NullString{String: section, Valid: section != ""},
+		})
+		if err != nil {
+			return false
+		}
+
+		for _, lvl := range accessLevels {
+			if perm.Level.String == lvl {
+				return true
+			}
+		}
+		return false
 	}
 }
 

@@ -98,3 +98,9 @@ The resolution order is:
 
 The config file uses a simple `key=value` format matching the environment
 variable names.
+
+## Admin tools
+
+### Permission section checker
+
+The `/admin/permissions/sections` page lists all distinct values found in the `permissions.section` column. It provides buttons to convert existing rows between `writing` and `writings`. These once-off tools help normalise data if older migrations used inconsistent names.

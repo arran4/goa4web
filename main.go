@@ -52,6 +52,8 @@ func init() {
 func main() {
 	flag.Parse()
 
+	performStartupChecks()
+
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,

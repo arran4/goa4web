@@ -75,6 +75,7 @@ func main() {
 	r.Use(DBAdderMiddleware)
 	r.Use(UserAdderMiddleware)
 	r.Use(CoreAdderMiddleware)
+	r.Use(SecurityHeadersMiddleware)
 
 	// TODO consider adsense / adwords / etc
 

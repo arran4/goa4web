@@ -5,7 +5,7 @@
             {{ $title := .Title.String }}
             {{ $description := .Description.String }}
             {{ $id := .Idwritingcategory }}
-            {{ if eq $.EditingCategoryId $id }}
+            {{ if and $.IsAdmin (eq $.EditingCategoryId $id) }}
                 <tr>
                     <th><a href="/writings/admin/categories?category={{ $id }}">{{ $title }}</a></th>
                     <td>{{ $description }}</td>
@@ -27,7 +27,7 @@
                 </tr>
             {{ else }}
                 <tr>
-                    <th><a href="/writings/category/{{ $id }}">{{ $title }}</a></th>
+                    <th><a href="/writings/category/{{ $id }}">{{ $title }}</a>{{ if $.IsAdmin }} [<a href="?edit={{ $id }}">Edit</a>]{{ end }}</th>
                     <td>{{ $description }}</td>
                 </tr>
             {{ end }}

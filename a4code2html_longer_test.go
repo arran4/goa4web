@@ -21,3 +21,13 @@ func TestA4code2htmlUnclosed(t *testing.T) {
 		t.Errorf("got %q want %q", got, want)
 	}
 }
+
+func TestA4code2htmlBadURL(t *testing.T) {
+	c := NewA4Code2HTML()
+	c.input = "[link javascript:alert(1) example]"
+	c.Process()
+	want := "javascript:alert(1)example"
+	if got := c.Output(); got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}

@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -215,10 +216,10 @@ func main() {
 	bmr.HandleFunc("/edit", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiresAnAccount())
 
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
-	//ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
-	//ibr.HandleFunc("/board/{boardno:[0-9+}.rss", imagebbsBoardRssPage).Methods("GET")
-	//ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")
-	//ibr.HandleFunc("/board/{boardno:[0-9+}.atom", imagebbsBoardAtomPage).Methods("GET")
+	ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", imagebbsBoardRssPage).Methods("GET")
+	ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", imagebbsBoardAtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPostImageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher("Add offsite image"))
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadPage).Methods("GET")
@@ -423,9 +424,29 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		cd, ok := request.Context().Value(ContextValues("coreData")).(*CoreData)
-		if !ok || cd == nil {
+		if ok && cd != nil {
+			for _, lvl := range accessLevels {
+				if cd.HasRole(lvl) {
+					return true
+				}
+			}
 			return false
 		}
+
+		user, uok := request.Context().Value(ContextValues("user")).(*User)
+		queries, qok := request.Context().Value(ContextValues("queries")).(*Queries)
+		if !uok || !qok {
+			return false
+		}
+		section := strings.Split(strings.TrimPrefix(request.URL.Path, "/"), "/")[0]
+		perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
+			UsersIdusers: user.Idusers,
+			Section:      sql.NullString{String: section, Valid: true},
+		})
+		if err != nil || !perm.Level.Valid {
+			return false
+		}
+		cd = &CoreData{SecurityLevel: perm.Level.String}
 		for _, lvl := range accessLevels {
 			if cd.HasRole(lvl) {
 				return true

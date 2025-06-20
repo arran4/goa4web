@@ -82,7 +82,7 @@ func forumAdminUserLevelUpdatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO notify admin
+	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
 	taskDoneAutoRefreshPage(w, r)
 
@@ -106,7 +106,7 @@ func forumAdminUserLevelDeletePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO notify admin
+	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
 	taskDoneAutoRefreshPage(w, r)
 

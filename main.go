@@ -36,6 +36,13 @@ var (
 	jmapIdentityFlag  = flag.String("jmap-identity", "", "JMAP identity")
 	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
+
+	dbCfgPath  = flag.String("db-config", "", "path to database configuration file")
+	dbUserFlag = flag.String("db-user", "", "database user")
+	dbPassFlag = flag.String("db-pass", "", "database password")
+	dbHostFlag = flag.String("db-host", "", "database host")
+	dbPortFlag = flag.String("db-port", "", "database port")
+	dbNameFlag = flag.String("db-name", "", "database name")
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -53,7 +60,14 @@ func init() {
 func main() {
 	flag.Parse()
 
-	performStartupChecks()
+	cliDBConfig = DBConfig{
+		User: *dbUserFlag,
+		Pass: *dbPassFlag,
+		Host: *dbHostFlag,
+		Port: *dbPortFlag,
+		Name: *dbNameFlag,
+	}
+	dbConfigFile = *dbCfgPath
 
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
@@ -69,6 +83,16 @@ func main() {
 		JMAPPass:     *jmapPassFlag,
 	}
 	emailConfigFile = *emailCfgPath
+
+	performStartupChecks()
+
+	if dbPool != nil {
+		defer func() {
+			if err := dbPool.Close(); err != nil {
+				log.Printf("DB close error: %v", err)
+			}
+		}()
+	}
 
 	r := mux.NewRouter()
 
@@ -258,11 +282,11 @@ func main() {
 	wr.HandleFunc("/categories", writingsCategoriesPage).Methods("GET")
 	wr.HandleFunc("/category/{category}", writingsCategoryPage).Methods("GET")
 	wr.HandleFunc("/category/{category}/add", writingsArticleAddPage).Methods("GET").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator")))
-        wr.HandleFunc("/category/{category}/add", writingsArticleAddActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher("Submit writing"))
-        wr.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-        wr.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
-        wr.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
-        wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/category/{category}/add", writingsArticleAddActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher("Submit writing"))
+	wr.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	wr.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
+	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
 	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 	wr.HandleFunc("/admin/users/access", writingsAdminUserAccessPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))

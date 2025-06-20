@@ -30,7 +30,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    ```bash
    mysql -u a4web -p a4web < schema.sql
    ```
-3. Adjust the connection string in `core.go` if your database credentials differ from the default `a4web:a4web@tcp(localhost:3306)/a4web`.
+3. Provide your database credentials via command line flags, a configuration file, or environment variables. Defaults assume `a4web:a4web@tcp(localhost:3306)/a4web`.
 4. Download dependencies and build the application:
    ```bash
    go mod download
@@ -74,6 +74,17 @@ go test ./...
 ---
 
 This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
+
+## Database Configuration
+
+Database connection details can be supplied in several ways. Values are resolved in the following order:
+
+1. Command line flags (`--db-user` etc.)
+2. Values from a config file specified with `--db-config`
+3. Environment variables such as `DB_USER`
+4. Built-in defaults
+
+The config file uses the same `key=value` format as the email configuration file.
 
 ## Email Provider Configuration
 

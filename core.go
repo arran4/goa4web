@@ -152,28 +152,15 @@ type ContextValues string
 
 func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web?parseTime=true")
-		if err != nil {
-			ue := UserError{Err: err, ErrorMessage: "unable to open database"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
-			return
-		}
-		defer func(db *sql.DB) {
-			err := db.Close()
-			if err != nil {
-				log.Printf("Error closing db: %s", err)
-			}
-		}(db)
-		if err := db.Ping(); err != nil {
-			ue := UserError{Err: err, ErrorMessage: "database unavailable"}
+		if dbPool == nil {
+			ue := UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
 		}
 		ctx := request.Context()
-		ctx = context.WithValue(ctx, ContextValues("sql.DB"), db)
-		ctx = context.WithValue(ctx, ContextValues("queries"), New(db))
+		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)
+		ctx = context.WithValue(ctx, ContextValues("queries"), New(dbPool))
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }

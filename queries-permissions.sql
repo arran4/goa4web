@@ -92,3 +92,12 @@ SELECT t.idforumtopic, r.*
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 
+-- name: CountPermissionSections :many
+SELECT section, COUNT(*) AS SectionCount
+FROM permissions
+GROUP BY section;
+
+-- name: RenamePermissionSection :exec
+UPDATE permissions
+SET section = ?
+WHERE section = ?;

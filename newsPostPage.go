@@ -299,14 +299,8 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
 	WHERE c.idcomments=?;
 	*/
-	if err := queries.RecalculateForumThreadByIdMetaData(r.Context(), pthid); err != nil {
-		log.Printf("Error: recalculateForumThreadByIdMetaData: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	if err := queries.RebuildForumTopicByIdMetaColumns(r.Context(), ptid); err != nil {
-		log.Printf("Error: rebuildForumTopicByIdMetaColumns: %s", err)
+	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

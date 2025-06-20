@@ -156,6 +156,11 @@ INSERT IGNORE INTO writingSearch
 (writing_idwriting, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
+-- name: AddToLinkerSearch :exec
+INSERT IGNORE INTO linkerSearch
+(linker_idlinker, searchwordlist_idsearchwordlist)
+VALUES (?, ?);
+
 
 -- name: WritingSearchDelete :exec
 DELETE FROM writingSearch

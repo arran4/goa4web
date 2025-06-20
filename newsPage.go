@@ -8,8 +8,11 @@ import (
 )
 
 func CustomNewsIndex(data *CoreData, r *http.Request) {
-	// TODO
-	// TODO RSS
+	data.RSSFeedUrl = "/news.rss"
+	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		Name: "RSS Feed",
+		Link: "/news.rss",
+	})
 	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{

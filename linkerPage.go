@@ -71,7 +71,7 @@ func CustomLinkerIndex(data *CoreData, r *http.Request) {
 	data.RSSFeedUrl = "/linker/rss"
 	data.AtomFeedUrl = "/linker/atom"
 
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",

@@ -42,9 +42,21 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
 		uid, _ := session.Values["UID"].(int32)
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+
+		level := "reader"
+		if uid != 0 {
+			perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
+				UsersIdusers: uid,
+				Section:      sql.NullString{String: "all", Valid: true},
+			})
+			if err == nil && perm.Level.Valid {
+				level = perm.Level.String
+			}
+		}
 
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
-			SecurityLevel: "administrator",
+			SecurityLevel: level,
 			IndexItems:    indexItems,
 			UserID:        uid,
 			Title:         "Arran4's Website",
@@ -66,6 +78,17 @@ type CoreData struct {
 
 func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {
 	return cd.SecurityLevel
+}
+
+var rolePriority = map[string]int{
+	"reader":        1,
+	"writer":        2,
+	"moderator":     3,
+	"administrator": 4,
+}
+
+func (cd *CoreData) HasRole(role string) bool {
+	return rolePriority[cd.SecurityLevel] >= rolePriority[role]
 }
 
 type Configuration struct {

@@ -104,14 +104,14 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 	data.RSSFeedUrl = "/blogs/rss"
 	data.AtomFeedUrl = "/blogs/atom"
 
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
 			Link: "/blogs/user/permissions",
 		})
 	}
-	userHasWriter := true // TODO
+	userHasWriter := data.HasRole("writer")
 	if userHasWriter {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Write blog",

@@ -33,8 +33,7 @@ func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	data.Rows = rows
 
 	CustomWritingsIndex(data.CoreData, r)
-	err = getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "writingsUserPermissionsPage.gohtml", data)
-	if err != nil {
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminUsersPermissionsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -44,7 +43,7 @@ func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	username := r.PostFormValue("username")
-	where := "writings"
+	where := "writing"
 	level := r.PostFormValue("level")
 	data := struct {
 		*CoreData
@@ -72,8 +71,7 @@ func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *h
 
 	CustomWritingsIndex(data.CoreData, r)
 
-	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
-	if err != nil {
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -97,8 +95,7 @@ func writingsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomWritingsIndex(data.CoreData, r)
-	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
-	if err != nil {
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

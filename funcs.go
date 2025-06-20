@@ -9,13 +9,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/csrf"
 )
 
 func NewFuncs(r *http.Request) template.FuncMap {
 	var LatestNews any
 	return map[string]any{
 		//"getPermissionsByUserIdAndSectionAndSectionAll":
-		"now": func() time.Time { return time.Now() },
+		"now":       func() time.Time { return time.Now() },
+		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
 		"a4code2html": func(s string) template.HTML {
 			c := NewA4Code2HTML()
 			c.codeType = ct_html

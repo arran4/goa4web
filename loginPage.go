@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -12,10 +14,12 @@ import (
 func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		CSRFField template.HTML
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:  r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CSRFField: csrf.TemplateField(r),
 	}
 
 	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "loginPage.gohtml", data); err != nil {

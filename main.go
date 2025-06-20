@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"flag"
 	. "github.com/arran4/gorillamuxlogic"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
@@ -20,9 +22,11 @@ var (
 	//	redirectURL  = "http://localhost:8080/callback"
 	//
 	//	// Change this to your desired session key
-	sessionName = "my-session"
+	sessionName           = "my-session"
+	sessionSecretFlag     = flag.String("session-secret", "", "session secret key")
+	sessionSecretFileFlag = flag.String("session-secret-file", "", "path to session secret file")
 	//sessionKey  = "authenticated"
-	store = sessions.NewCookieStore([]byte("random-key"))
+	store *sessions.CookieStore
 
 	emailCfgPath      = flag.String("email-config", "", "path to email configuration file")
 	emailProviderFlag = flag.String("email-provider", "", "email provider")
@@ -52,6 +56,21 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	sessionSecret, err := loadSessionSecret(*sessionSecretFlag, *sessionSecretFileFlag)
+	if err != nil {
+		log.Fatalf("session secret: %v", err)
+	}
+	store = sessions.NewCookieStore([]byte(sessionSecret))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	csrfKey := sha256.Sum256([]byte(sessionSecret))
+	csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(true))
 
 	performStartupChecks()
 
@@ -258,11 +277,11 @@ func main() {
 	wr.HandleFunc("/categories", writingsCategoriesPage).Methods("GET")
 	wr.HandleFunc("/category/{category}", writingsCategoryPage).Methods("GET")
 	wr.HandleFunc("/category/{category}/add", writingsArticleAddPage).Methods("GET").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator")))
-        wr.HandleFunc("/category/{category}/add", writingsArticleAddActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher("Submit writing"))
-        wr.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-        wr.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
-        wr.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
-        wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/category/{category}/add", writingsArticleAddActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher("Submit writing"))
+	wr.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	wr.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
+	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
 	wr.HandleFunc("/admin/users/levels", writingsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 	wr.HandleFunc("/admin/users/access", writingsAdminUserAccessPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
@@ -323,7 +342,7 @@ func main() {
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
 
-	http.Handle("/", r)
+	http.Handle("/", csrfMiddleware(r))
 
 	log.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

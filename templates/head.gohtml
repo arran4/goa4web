@@ -1,13 +1,10 @@
 {{define "head"}}
+<!DOCTYPE html>
 <html>
-	<head>
-		<title>{{$.Title}}</title>
-		{{template "headdata"}}
-		<style type="text/css">
-        <!--
-        @import url("/main.css");
-        -->
-        </style>
+        <head>
+                <title>{{$.Title}}</title>
+                {{template "headdata"}}
+                <link rel="stylesheet" href="/main.css">
         {{ if $.AutoRefresh }}
             <meta http-equiv="refresh" content="1">
         {{ end }}

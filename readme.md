@@ -50,6 +50,16 @@ Run the compiled binary and open <http://localhost:8080> in your browser:
 ./goa4web
 ```
 The server relies on the MySQL instance and (optionally) AWS credentials for sending email notifications. Most features require users to be logged in; sessions are stored in signed cookies via `gorilla/sessions`.
+The secret used to sign these cookies is resolved in the following order:
+1. `--session-secret` flag
+2. `SESSION_SECRET` environment variable
+3. The file specified by `--session-secret-file` or `SESSION_SECRET_FILE` (defaults to `.session_secret`)
+
+If the file does not exist a new random secret is generated and written to it.
+
+Form submissions are protected using the `gorilla/csrf` middleware. Tokens are
+embedded in templates (for example the login form) and verified on POST
+requests.
 
 ## Repository Layout
 

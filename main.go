@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"flag"
 	. "github.com/arran4/gorillamuxlogic"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
@@ -20,9 +22,11 @@ var (
 	//	redirectURL  = "http://localhost:8080/callback"
 	//
 	//	// Change this to your desired session key
-	sessionName = "my-session"
+	sessionName           = "my-session"
+	sessionSecretFlag     = flag.String("session-secret", "", "session secret key")
+	sessionSecretFileFlag = flag.String("session-secret-file", "", "path to session secret file")
 	//sessionKey  = "authenticated"
-	store = sessions.NewCookieStore([]byte("random-key"))
+	store *sessions.CookieStore
 
 	emailCfgPath      = flag.String("email-config", "", "path to email configuration file")
 	emailProviderFlag = flag.String("email-provider", "", "email provider")
@@ -60,7 +64,24 @@ func init() {
 func main() {
 	flag.Parse()
 
-	cliDBConfig = DBConfig{
+	sessionSecret, err := loadSessionSecret(*sessionSecretFlag, *sessionSecretFileFlag)
+	if err != nil {
+		log.Fatalf("session secret: %v", err)
+	}
+	store = sessions.NewCookieStore([]byte(sessionSecret))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	csrfKey := sha256.Sum256([]byte(sessionSecret))
+	csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(true))
+
+	performStartupChecks()
+
+  cliDBConfig = DBConfig{
 		User: *dbUserFlag,
 		Pass: *dbPassFlag,
 		Host: *dbHostFlag,
@@ -69,6 +90,7 @@ func main() {
 	}
 	dbConfigFile = *dbCfgPath
 
+  
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,
@@ -350,7 +372,7 @@ func main() {
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
 
-	http.Handle("/", r)
+	http.Handle("/", csrfMiddleware(r))
 
 	log.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

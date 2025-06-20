@@ -1,6 +1,7 @@
 {{ template "head" $ }}
     Login:<br>
     <form method="post">
+        {{ .CSRFField }}
         Username: <input name="username"><br>
         Password: <input name="password" type="password"><br>
         <input type="submit" name="task" value="Login">

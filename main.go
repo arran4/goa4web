@@ -40,6 +40,7 @@ var (
 	jmapIdentityFlag  = flag.String("jmap-identity", "", "JMAP identity")
 	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
+	sendGridKeyFlag   = flag.String("sendgrid-key", "", "SendGrid API key")
 
 	dbCfgPath  = flag.String("db-config", "", "path to database configuration file")
 	dbUserFlag = flag.String("db-user", "", "database user")
@@ -81,7 +82,7 @@ func main() {
 
 	performStartupChecks()
 
-  cliDBConfig = DBConfig{
+	cliDBConfig = DBConfig{
 		User: *dbUserFlag,
 		Pass: *dbPassFlag,
 		Host: *dbHostFlag,
@@ -90,7 +91,6 @@ func main() {
 	}
 	dbConfigFile = *dbCfgPath
 
-  
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,
@@ -103,6 +103,7 @@ func main() {
 		JMAPIdentity: *jmapIdentityFlag,
 		JMAPUser:     *jmapUserFlag,
 		JMAPPass:     *jmapPassFlag,
+		SendGridKey:  *sendGridKeyFlag,
 	}
 	emailConfigFile = *emailCfgPath
 

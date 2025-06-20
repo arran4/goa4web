@@ -130,7 +130,7 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 	threadId := vars["thread"]
 	topicId := vars["topic"]
 	categoryId := vars["category"]
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			IndexItem{

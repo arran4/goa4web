@@ -10,14 +10,14 @@ import (
 func CustomNewsIndex(data *CoreData, r *http.Request) {
 	// TODO
 	// TODO RSS
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
 			Link: "/news/user/permissions",
 		})
 	}
-	userHasWriter := true // TODO
+	userHasWriter := data.HasRole("writer")
 	if userHasWriter || userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Add News",

@@ -50,14 +50,14 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 func CustomWritingsIndex(data *CoreData, r *http.Request) {
 	// TODO
 	// TODO RSS
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
 			Link: "/writings/user/permissions",
 		})
 	}
-	userHasWriter := true // TODO
+	userHasWriter := data.HasRole("writer")
 	if userHasWriter || userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Write writings",

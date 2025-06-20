@@ -242,6 +242,12 @@ type Writtingapproveduser struct {
 	Editdoc          sql.NullBool
 }
 
+type Subscription struct {
+	Idsubscriptions          int32
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+}
+
 type _1OldForumthread struct {
 	Idforumthread          int32
 	ForumtopicIdforumtopic int32

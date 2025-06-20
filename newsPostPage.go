@@ -242,20 +242,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/news/news/%d", pid)
 
-	provider := getEmailProvider()
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: pthid,
-		Idusers:                  uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
+	queueThreadNotifications(r.Context(), queries, pthid, uid, endUrl)
 
 	// TODO
 	//if rows, err := queries.SomethingNotifyNews(r.Context(), somethingNotifyNewssParams{

@@ -334,3 +334,13 @@ CREATE TABLE `writtingApprovedUsers` (
   KEY `writing_has_users_FKIndex2` (`users_idusers`)
 );
 
+CREATE TABLE `subscriptions` (
+  `idsubscriptions` int(10) NOT NULL AUTO_INCREMENT,
+  `users_idusers` int(10) NOT NULL DEFAULT 0,
+  `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`idsubscriptions`),
+  UNIQUE KEY `sub_unique` (`users_idusers`,`forumthread_idforumthread`),
+  KEY `subscriptions_FK1` (`forumthread_idforumthread`),
+  KEY `subscriptions_FK2` (`users_idusers`)
+);
+

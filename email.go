@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -199,6 +200,40 @@ type logMailProvider struct{}
 func (logMailProvider) Send(ctx context.Context, to, subject, body string) error {
 	log.Printf("sending mail to %s subject %q\n%s", to, subject, body)
 	return nil
+}
+
+// EmailJob represents a pending notification email.
+type EmailJob struct {
+	To  string
+	URL string
+}
+
+var (
+	emailQueue   []EmailJob
+	emailQueueMu sync.Mutex
+)
+
+// enqueueEmail adds a notification to the queue.
+func enqueueEmail(to, url string) {
+	emailQueueMu.Lock()
+	emailQueue = append(emailQueue, EmailJob{To: to, URL: url})
+	emailQueueMu.Unlock()
+}
+
+// getQueuedEmails returns a copy of all queued notifications.
+func getQueuedEmails() []EmailJob {
+	emailQueueMu.Lock()
+	defer emailQueueMu.Unlock()
+	out := make([]EmailJob, len(emailQueue))
+	copy(out, emailQueue)
+	return out
+}
+
+// clearEmailQueue removes all queued notifications.
+func clearEmailQueue() {
+	emailQueueMu.Lock()
+	emailQueue = nil
+	emailQueueMu.Unlock()
 }
 
 func notifyChange(ctx context.Context, provider MailProvider, email string, page string) error {

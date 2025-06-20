@@ -134,32 +134,16 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/show/%d", linkId)
 
-	provider := getEmailProvider()
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: pthid,
-		Idusers:                  uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
+	queueThreadNotifications(r.Context(), queries, pthid, uid, endUrl)
 
 	if rows, err := queries.ListUsersSubscribedToLinker(r.Context(), ListUsersSubscribedToLinkerParams{
 		Idusers:  uid,
 		Idlinker: int32(linkId),
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
+	} else {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
+			enqueueEmail(row.Username.String, endUrl)
 		}
 	}
 

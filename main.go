@@ -137,7 +137,8 @@ func main() {
 
 	// TODO a matcher check to ensure topics and threads align.
 	fr := r.PathPrefix("/forum").Subrouter()
-	// TODO RSS & ATOM
+	fr.HandleFunc("/topic/{topic}.rss", forumTopicRssPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}.atom", forumTopicAtomPage).Methods("GET")
 	fr.HandleFunc("", forumPage).Methods("GET")
 	fr.HandleFunc("/category/{category}", forumPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", forumTopicsPage).Methods("GET")

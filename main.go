@@ -78,6 +78,8 @@ var (
 	//		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 	//		Endpoint:     endpoints.Google,
 	//	}
+
+	version = "dev"
 )
 
 func init() {
@@ -128,7 +130,7 @@ func run() error {
 	}
 
 	csrfKey := sha256.Sum256([]byte(sessionSecret))
-	csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(true))
+	csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(version != "dev"))
 
 	cliDBConfig = DBConfig{
 		User:         *dbUserFlag,

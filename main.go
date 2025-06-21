@@ -17,6 +17,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -459,7 +460,10 @@ func mainCSSHandler(w http.ResponseWriter, r *http.Request) {
 // TODO we could do better
 func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {
-		session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(r)
+		if err != nil {
+			return false
+		}
 		adminUid, _ := session.Values["UID"].(int32)
 
 		targetUid, err := strconv.Atoi(r.PostFormValue("uid"))
@@ -497,7 +501,10 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 // TODO we could do better
 func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {
-		session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(r)
+		if err != nil {
+			return false
+		}
 		adminUid, _ := session.Values["UID"].(int32)
 
 		inviteMax, err := strconv.Atoi(r.PostFormValue("inviteMax"))
@@ -563,20 +570,9 @@ func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		var session *sessions.Session
-		sessioni := request.Context().Value(ContextValues("session"))
-		if sessioni == nil {
-			var err error
-			session, err = store.Get(request, sessionName)
-			if err != nil {
-				return false
-			}
-		} else {
-			var ok bool
-			session, ok = sessioni.(*sessions.Session)
-			if !ok {
-				return false
-			}
+		session, err := GetSession(request)
+		if err != nil {
+			return false
 		}
 		uid, _ := session.Values["UID"].(int32)
 		return uid != 0
@@ -588,7 +584,10 @@ func NewsPostAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		newsPostId, _ := strconv.Atoi(vars["post"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			return false
+		}
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetForumThreadIdByNewsPostId(request.Context(), int32(newsPostId))
@@ -606,7 +605,10 @@ func BlogAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		blogId, _ := strconv.Atoi(vars["blog"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			return false
+		}
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetBlogEntryForUserById(request.Context(), int32(blogId))
@@ -628,7 +630,10 @@ func WritingAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		writingId, _ := strconv.Atoi(vars["writing"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			return false
+		}
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(request.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
@@ -649,7 +654,10 @@ func CommentAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		commentId, _ := strconv.Atoi(vars["comment"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			return false
+		}
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetCommentByIdForUser(request.Context(), GetCommentByIdForUserParams{

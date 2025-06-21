@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/sessions"
 )
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +35,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
 		http.Error(w, "forbidden", http.StatusForbidden)

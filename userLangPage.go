@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/sessions"
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +28,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 }
 func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := saveUserLanguages(r, queries, uid); err != nil {
@@ -43,7 +41,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 
 func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
@@ -56,7 +54,7 @@ func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
 
 func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := saveUserLanguages(r, queries, uid); err != nil {

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gorilla/csrf"
-	"github.com/gorilla/sessions"
 	"html/template"
 	"log"
 	"net/http"
@@ -56,7 +55,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	session.Values["UID"] = int32(user.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()

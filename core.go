@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"os"
@@ -40,7 +39,11 @@ var indexItems = []IndexItem{
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		uid, _ := session.Values["UID"].(int32)
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -15,7 +14,11 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, err := GetSession(r)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")

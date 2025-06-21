@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -52,7 +51,7 @@ func forumTopicFeed(r *http.Request, title string, topicID int, rows []*GetForum
 }
 
 func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
@@ -89,7 +88,7 @@ func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func forumTopicAtomPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])

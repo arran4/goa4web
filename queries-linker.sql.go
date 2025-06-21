@@ -163,21 +163,22 @@ FROM linkerCategory
 ORDER BY sortorder
 `
 
-func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*Linkercategory, error) {
+type GetAllLinkerCategoriesWithSortOrderRow struct {
+	Idlinkercategory int32
+	Title            sql.NullString
+	Sortorder        int32
+}
+
+func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*GetAllLinkerCategoriesWithSortOrderRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerCategoriesWithSortOrder)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Linkercategory
+	var items []*GetAllLinkerCategoriesWithSortOrderRow
 	for rows.Next() {
-		var i Linkercategory
-		if err := rows.Scan(
-			&i.Idlinkercategory,
-			&i.Position,
-			&i.Title,
-			&i.Sortorder,
-		); err != nil {
+		var i GetAllLinkerCategoriesWithSortOrderRow
+		if err := rows.Scan(&i.Idlinkercategory, &i.Title, &i.Sortorder); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

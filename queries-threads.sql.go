@@ -10,6 +10,17 @@ import (
 	"database/sql"
 )
 
+const getForumTopicIdByThreadId = `-- name: GetForumTopicIdByThreadId :one
+SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?
+`
+
+func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getForumTopicIdByThreadId, idforumthread)
+	var forumtopic_idforumtopic int32
+	err := row.Scan(&forumtopic_idforumtopic)
+	return forumtopic_idforumtopic, err
+}
+
 const deleteForumThread = `-- name: DeleteForumThread :exec
 DELETE FROM forumthread WHERE idforumthread = ?
 `

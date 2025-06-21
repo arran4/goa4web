@@ -293,12 +293,12 @@ func run() error {
 	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateThread))
 	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewCancelPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}", forumThreadPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}/thread/{thread}", taskDoneAutoRefreshPage).Methods("POST")
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyCancelPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskEditReply)).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor()))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionCancelPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}", forumThreadPage).Methods("GET").MatcherFunc(GetThreadAndTopic())
+	fr.HandleFunc("/topic/{topic}/thread/{thread}", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(GetThreadAndTopic())
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskReply))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskCancel))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskEditReply)).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor()))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskCancel))
 	fr.HandleFunc("/admin", forumAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/categories", forumAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/categories", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
@@ -840,6 +840,55 @@ func CommentAuthor() mux.MatcherFunc {
 		}
 
 		return row.UsersIdusers == uid
+	}
+}
+
+func GetThreadAndTopic() mux.MatcherFunc {
+	return func(r *http.Request, match *mux.RouteMatch) bool {
+		vars := mux.Vars(r)
+		topicID, err := strconv.Atoi(vars["topic"])
+		if err != nil {
+			return false
+		}
+		threadID, err := strconv.Atoi(vars["thread"])
+		if err != nil {
+			return false
+		}
+
+		queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+		session, _ := GetSession(r)
+		var uid int32
+		if session != nil {
+			uid, _ = session.Values["UID"].(int32)
+		}
+
+		threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+			UsersIdusers:  uid,
+			Idforumthread: int32(threadID),
+		})
+		if err != nil {
+			log.Printf("GetThreadAndTopic thread: %v", err)
+			return false
+		}
+
+		topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
+			UsersIdusers: uid,
+			Idforumtopic: threadRow.ForumtopicIdforumtopic,
+		})
+		if err != nil {
+			log.Printf("GetThreadAndTopic topic: %v", err)
+			return false
+		}
+
+		if int(topicRow.Idforumtopic) != topicID {
+			return false
+		}
+
+		ctx := context.WithValue(r.Context(), ContextValues("thread"), threadRow)
+		ctx = context.WithValue(ctx, ContextValues("topic"), topicRow)
+		*r = *r.WithContext(ctx)
+		return true
 	}
 }
 

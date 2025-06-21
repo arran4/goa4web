@@ -18,6 +18,7 @@ sql:
         - "queries-linker.sql"
         - "queries-imagebbs.sql"
         - "queries-news.sql"
+        - "queries-preferences.sql"
       gen:
           go:
               package: "main"

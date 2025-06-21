@@ -13,8 +13,7 @@ import (
 )
 
 func handleDie(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<b><font color=red>You encountered an error: "+message+"....</font></b>")
+	http.Error(w, message, http.StatusInternalServerError)
 }
 
 // IndexItem struct.

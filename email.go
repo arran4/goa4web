@@ -34,6 +34,7 @@ const (
 var cliEmailConfig EmailConfig
 
 // emailConfigFile is the optional path to a configuration file read at startup.
+// If empty, the EMAIL_CONFIG_FILE environment variable is consulted.
 var emailConfigFile string
 
 // EmailConfig stores configuration for selecting and configuring the mail
@@ -51,6 +52,7 @@ type EmailConfig struct {
 	JMAPIdentity string
 	JMAPUser     string
 	JMAPPass     string
+	SendGridKey  string
 }
 
 // MailProvider defines a simple interface that all mail backends must
@@ -322,6 +324,9 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 			identity:  id,
 		}
 
+	case "sendgrid":
+		return sendGridProviderFromConfig(cfg)
+
 	case "log":
 		return logMailProvider{}
 
@@ -375,6 +380,9 @@ func resolveEmailConfig(cli, file, env EmailConfig) EmailConfig {
 		if src.JMAPPass != "" {
 			cfg.JMAPPass = src.JMAPPass
 		}
+		if src.SendGridKey != "" {
+			cfg.SendGridKey = src.SendGridKey
+		}
 	}
 
 	merge(env)
@@ -421,6 +429,8 @@ func loadEmailConfigFile(path string) (EmailConfig, error) {
 				cfg.JMAPUser = val
 			case "JMAP_PASS":
 				cfg.JMAPPass = val
+			case "SENDGRID_KEY":
+				cfg.SendGridKey = val
 			}
 		}
 	}
@@ -440,9 +450,14 @@ func loadEmailConfig() EmailConfig {
 		JMAPIdentity: os.Getenv("JMAP_IDENTITY"),
 		JMAPUser:     os.Getenv("JMAP_USER"),
 		JMAPPass:     os.Getenv("JMAP_PASS"),
+		SendGridKey:  os.Getenv("SENDGRID_KEY"),
 	}
 
-	fileCfg, err := loadEmailConfigFile(emailConfigFile)
+	cfgPath := emailConfigFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("EMAIL_CONFIG_FILE")
+	}
+	fileCfg, err := loadEmailConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("Email config file error: %v", err)
 	}

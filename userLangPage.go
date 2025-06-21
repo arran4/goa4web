@@ -1,8 +1,14 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/sessions"
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -23,52 +29,92 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 
-			if(!strcasecmp((char*)cont.post.getS("dothis"), "Save languages") || !strcasecmp((char*)cont.post.getS("dothis"), "Save all"))
-		{
-			a4string querystr("DELETE FROM userlang WHERE users_idusers=\"%d\"", cont.user.UID);
-			a4mysqlResult *result = cont.sql.query(querystr.raw());
-			delete result;
-			querystr.set("SELECT idlanguage FROM language");
-			result = cont.sql.query(querystr.raw());
-			querystr.set("INSERT INTO userlang (users_idusers, language_idlanguage) VALUES ");
-			int addcount = 0;
-			while (result->hasRow())
-			{
-				a4string tmp("language%s", result->getColumn(0));
-				if (cont.post.getS(tmp.raw()) != NULL)
-					querystr.pushf("%s(\"%d\", \"%s\")", addcount++ ? "," : "", cont.user.UID, result->getColumn(0));
-				result->nextRow();
-			}
-			delete result;
-			if (addcount)
-			{
-				result = cont.sql.query(querystr.raw());
-				delete result;
+	if err := saveUserLanguages(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+}
+
+func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+}
+
+func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	if err := saveUserLanguages(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+}
+
+func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
+	langs, err := queries.FetchLanguages(r.Context())
+	if err != nil {
+		return err
+	}
+
+	if err := queries.DeleteUserLanguagesByUser(r.Context(), uid); err != nil {
+		return err
+	}
+
+	for _, l := range langs {
+		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
+			if err := queries.InsertUserLang(r.Context(), InsertUserLangParams{
+				UsersIdusers:       uid,
+				LanguageIdlanguage: l.Idlanguage,
+			}); err != nil {
+				return err
 			}
 		}
-		if (!strcasecmp((char*)cont.post.getS("dothis"), "Save language") || !strcasecmp((char*)cont.post.getS("dothis"), "Save all"))
-		{
-			a4string querystr("SELECT COUNT(users_idusers) FROM preferences WHERE users_idusers=\"%d\"", cont.user.UID);
-			a4mysqlResult *result = cont.sql.query(querystr.raw());
-			int prefcount = atoiornull(result->getColumn(0));
-			delete result;
-			if (prefcount)
-			{
-				a4string querystr("UPDATE preferences SET language_idlanguage=\"%d\" WHERE users_idusers=\"%d\"",
-						atoiornull((char*)cont.post.getS("language")), cont.user.UID);
-				a4mysqlResult *result = cont.sql.query(querystr.raw());
-				delete result;
-			} else {
-				a4string querystr("INSERT INTO preferences (language_idlanguage, users_idusers) VALUES (\"%d\", \"%d\")",
-						atoiornull((char*)cont.post.getS("language")), cont.user.UID);
-				a4mysqlResult *result = cont.sql.query(querystr.raw());
-				delete result;
-			}
+	}
+
+	return nil
+}
+
+func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) error {
+	langID, err := strconv.Atoi(r.PostFormValue("defaultLanguage"))
+	if err != nil {
+		return err
+	}
+
+	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return queries.InsertPreference(r.Context(), InsertPreferenceParams{
+				LanguageIdlanguage: int32(langID),
+				UsersIdusers:       uid,
+			})
 		}
+		return err
+	}
 
-
-	*/
+	pref.LanguageIdlanguage = int32(langID)
+	return queries.UpdatePreference(r.Context(), UpdatePreferenceParams{
+		LanguageIdlanguage: pref.LanguageIdlanguage,
+		UsersIdusers:       uid,
+	})
 }

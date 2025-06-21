@@ -19,9 +19,10 @@ func linkerShowPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		CanReply: true, // TODO
+		CoreData: cd,
+		CanReply: cd.UserID != 0,
 	}
 
 	vars := mux.Vars(r)

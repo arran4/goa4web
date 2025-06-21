@@ -26,6 +26,8 @@
                 {{ template "languageCombobox" $ }}
                 <input type="submit" name="task" value="Reply">
             </form>
+        {{ else }}
+            Please sign-in (or sign-up) to write a reply.<br>
         {{ end }}
 
     {{ else }}

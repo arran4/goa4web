@@ -61,11 +61,13 @@ var (
 	dbNameFlag         = flag.String("db-name", "", "database name")
 	dbLogVerbosityFlag = flag.Int("db-log-verbosity", 0, "database logging verbosity")
 
-	listenFlag      = flag.String("listen", ":8080", "server listen address")
-	hostnameFlag    = flag.String("hostname", "", "server base URL")
-	httpCfgPath     = flag.String("http-config", "", "path to HTTP configuration file")
-	listenFlagSet   bool
-	hostnameFlagSet bool
+	listenFlag       = flag.String("listen", ":8080", "server listen address")
+	hostnameFlag     = flag.String("hostname", "", "server base URL")
+	httpCfgPath      = flag.String("http-config", "", "path to HTTP configuration file")
+	feedsEnabledFlag = flag.String("feeds-enabled", "", "enable or disable feeds")
+	listenFlagSet    bool
+	hostnameFlagSet  bool
+	feedsFlagSet     bool
 
 	srv *Server
 	//
@@ -102,10 +104,13 @@ func run() error {
 	}
 
 	flag.CommandLine.Visit(func(f *flag.Flag) {
-		if f.Name == "listen" {
+		switch f.Name {
+		case "listen":
 			listenFlagSet = true
-		} else if f.Name == "hostname" {
+		case "hostname":
 			hostnameFlagSet = true
+		case "feeds-enabled":
+			feedsFlagSet = true
 		}
 	})
 
@@ -180,11 +185,21 @@ func run() error {
 
 	var handler http.Handler
 
-	dbCfg := loadDBConfig()
+	var cliFeeds string
+	if feedsFlagSet {
+		cliFeeds = *feedsEnabledFlag
+	}
+	loadFeedsEnabled(cliFeeds, appCfg)
+
+	if err := performStartupChecks(); err != nil {
+		return err
+	}
+
+  dbCfg := loadDBConfig()
 	emailCfg := loadEmailConfig()
 
 	if err := performStartupChecks(dbCfg); err != nil {
-		return err
+		return fmt.Errorf("startup checks: %w", err)
 	}
 
 	if dbPool != nil {
@@ -348,7 +363,7 @@ func run() error {
 	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
 
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
-	bmr.HandleFunc("", bookmarksPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("", bookmarksPage).Methods("GET")
 	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	bmr.HandleFunc("/edit", bookmarksEditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSave))
@@ -420,7 +435,7 @@ func run() error {
 	ir.HandleFunc("", informationPage).Methods("GET")
 
 	ur := r.PathPrefix("/usr").Subrouter()
-	ur.HandleFunc("", userPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("", userPage).Methods("GET")
 	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
 	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguages))
@@ -447,7 +462,7 @@ func run() error {
 	ulr.HandleFunc("", loginUserPassPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
 	ulr.HandleFunc("", loginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(TaskMatcher(TaskLogin))
 
-	ar := r.PathPrefix("/admin").MatcherFunc(RequiredAccess("administrator")).Subrouter()
+	ar := r.PathPrefix("/admin").Subrouter()
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminPage).Methods("GET")
 	ar.HandleFunc("/", adminPage).Methods("GET")
@@ -473,12 +488,15 @@ func run() error {
 	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameLanguage))
 	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteLanguage))
 	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateLanguage))
+	ar.HandleFunc("/categories", adminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameSection))
 	ar.HandleFunc("/email/queue", adminEmailQueuePage).Methods("GET")
 	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskResend))
 	ar.HandleFunc("/email/queue", adminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
 	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
+	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
+	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeCommentsSearch))
 	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeNewsSearch))

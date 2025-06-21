@@ -176,6 +176,7 @@ The following environment variables can be used to configure the application:
 | `CONFIG_FILE` | Specifies the path to the main application configuration file. |
 | `EMAIL_ENABLED` | Toggles sending queued emails. |
 | `NOTIFICATIONS_ENABLED` | Toggles the internal notification system. |
+| `CSRF_ENABLED` | Enables or disables CSRF protection. |
 | `PAGE_SIZE_MIN` | Defines the minimum allowed page size. |
 | `PAGE_SIZE_MAX` | Defines the maximum allowed page size. |
 

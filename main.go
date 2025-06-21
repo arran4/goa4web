@@ -132,9 +132,6 @@ func run() error {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	//csrfKey := sha256.Sum256([]byte(sessionSecret))
-	//csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(version != "dev"))
-
 	cliDBConfig = DBConfig{
 		User:         *dbUserFlag,
 		Pass:         *dbPassFlag,
@@ -184,6 +181,10 @@ func run() error {
 		}
 	}
 
+	httpCfg := loadHTTPConfig()
+
+	var handler http.Handler
+
 	var cliFeeds string
 	if feedsFlagSet {
 		cliFeeds = *feedsEnabledFlag
@@ -193,7 +194,8 @@ func run() error {
 	if err := performStartupChecks(); err != nil {
 		return err
 	}
-	dbCfg := loadDBConfig()
+
+  dbCfg := loadDBConfig()
 	emailCfg := loadEmailConfig()
 
 	if err := performStartupChecks(dbCfg); err != nil {
@@ -510,13 +512,17 @@ func run() error {
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
 
+	handler = r
+	if csrfEnabled() {
+		handler = newCSRFMiddleware(sessionSecret, httpCfg, version).Wrap(handler)
+	}
+
 	srv = &Server{
 		DBConfig:    dbCfg,
 		EmailConfig: emailCfg,
 		// Load pagination bounds at startup.
 		// The values are stored in appPaginationConfig.
-		//Router: csrfMiddleware(r),
-		Router: r,
+		Router: handler,
 		Store:  store,
 		DB:     dbPool,
 	}
@@ -535,7 +541,6 @@ func run() error {
 	safeGo(func() { notificationPurgeWorker(ctx, New(dbPool), time.Hour) })
 
 	log.Printf("Loading http config")
-	httpCfg := loadHTTPConfig()
 
 	log.Printf("Starting web server")
 	go func() {

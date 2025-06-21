@@ -20,8 +20,11 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*CoreData
-		Rows   []*UserTopic
-		Search string
+		Rows       []*UserTopic
+		Categories map[int32]*Forumcategory
+		Search     string
+		NextLink   string
+		PrevLink   string
 	}
 
 	data := Data{
@@ -41,6 +44,16 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+	}
+
+	catRows, err := queries.GetAllForumCategories(r.Context())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Categories = make(map[int32]*Forumcategory)
+	for _, c := range catRows {
+		data.Categories[c.Idforumcategory] = c
 	}
 
 	if data.Search != "" {
@@ -77,28 +90,26 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 		data.Rows = append(data.Rows, &UserTopic{User: u, Topics: topics})
 	}
 
+	hasMore := end < len(users)
+	base := "/forum/admin/users"
 	if data.Search != "" {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Next 15",
-			Link: fmt.Sprintf("/forum/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset+pageSize),
-		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/forum/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset-pageSize),
-			})
+		base += "?search=" + url.QueryEscape(data.Search)
+	}
+	if hasMore {
+		if strings.Contains(base, "?") {
+			data.NextLink = fmt.Sprintf("%s&offset=%d", base, offset+pageSize)
+		} else {
+			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
-	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Next 15",
-			Link: fmt.Sprintf("/forum/admin/users?offset=%d", offset+pageSize),
-		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/forum/admin/users?offset=%d", offset-pageSize),
-			})
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{Name: "Next 15", Link: data.NextLink})
+	}
+	if offset > 0 {
+		if strings.Contains(base, "?") {
+			data.PrevLink = fmt.Sprintf("%s&offset=%d", base, offset-pageSize)
+		} else {
+			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{Name: "Previous 15", Link: data.PrevLink})
 	}
 
 	CustomForumIndex(data.CoreData, r)

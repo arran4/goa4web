@@ -79,7 +79,6 @@ func loadHTTPConfig() HTTPConfig {
 		Listen:   os.Getenv("LISTEN"),
 		Hostname: os.Getenv("HOSTNAME"),
 	}
-	fileCfg, err := loadHTTPConfigFile(httpConfigFile)
 	cfgPath := httpConfigFile
 	if cfgPath == "" {
 		cfgPath = os.Getenv("HTTP_CONFIG_FILE")

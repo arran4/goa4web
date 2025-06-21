@@ -219,6 +219,12 @@ const (
 	// TaskUserDisallow removes a user's permission or level.
 	TaskUserDisallow = "User Disallow"
 
+	// TaskUsersAllow grants multiple users a permission or level.
+	TaskUsersAllow = "Users Allow"
+
+	// TaskUsersDisallow removes multiple user permissions or levels.
+	TaskUsersDisallow = "Users Disallow"
+
 	// TaskUserDoNothing is used when no action should be taken on a user.
 	TaskUserDoNothing = "User do nothing"
 

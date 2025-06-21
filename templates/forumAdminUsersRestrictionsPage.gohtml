@@ -2,15 +2,21 @@
     <font size="4">User Levels:</font><br>
     <table width="100%">
         <tr>
-            <th>Topic<th>User<th>Level<th>Invite Level Max<th>Options
+            <th>User
+            <th>Topic
+            <th>Level
+            <th>Invite Level Max
+            <th>Expires
+            <th>Options
         </tr>
         {{ range .UserTopicLevels }}
             <tr>
-                <form method="post">
-                    <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}
-                    <td><input type="hidden" name="uid" value="{{ .Idusers }}">{{ .Username.String }}
+                <form method="post" action="/forum/admin/user/{{ .Idusers }}/levels">
+                    <td>{{ .Username.String }}<input type="hidden" name="uid" value="{{ .Idusers }}">
+                    <td>{{ .Title.String }}<input type="hidden" name="tid" value="{{ .Idforumtopic }}">
                     <td><input name="level" value="{{ .Level.Int32 }}" size="8">
                     <td><input name="inviteMax" value="{{ .Invitemax.Int32 }}" size="8">
+                    <td>{{ .Expiration }}
                     <td>
                         <input type="submit" name="task" value="Update user level">
                         <input type="submit" name="task" value="Delete user level">
@@ -32,14 +38,13 @@
         {{ end }}
         <tr>
             <form method="post">
-                <td><select name="tid"><option value="">Select Topic</option>{{ range $.Topics }}<option value="{{.Idforumtopic}}">{{.Title.String}}</option>  {{ end }}</select>
                 <td><select name="uid"><option value="">Select User</option>{{ range $.Users }}<option value="{{.Idusers}}">{{.Username.String}}</option>  {{ end }}</select>
+                <td><select name="tid"><option value="">Select Topic</option>{{ range $.Topics }}<option value="{{.Idforumtopic}}">{{.Title.String}}</option>  {{ end }}</select>
                 <td><input name="level" value="0" size="8">
                 <td><input name="inviteMax" value="0" size="8">
+                <td><input name="expires" size="10" placeholder="YYYY-MM-DD">
                 <td>
                     <input type="submit" name="task" value="Set user level">
-                </td>
-                <td>
                 </td>
             </form>
         </tr>

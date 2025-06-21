@@ -33,6 +33,6 @@
             </tr>
         {{end}}
     </table>
-    {{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous 15</a>{{end}}
-    {{if $.NextLink}}<a href="{{$.NextLink}}">Next 15</a>{{end}}
+    {{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous {{$.PageSize}}</a>{{end}}
+    {{if $.NextLink}}<a href="{{$.NextLink}}">Next {{$.PageSize}}</a>{{end}}
 {{ template "tail" $ }}

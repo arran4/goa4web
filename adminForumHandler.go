@@ -40,6 +40,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	if c, err := countForumThreads(r.Context(), queries); err == nil {
 		data.Messages = append(data.Messages, fmt.Sprintf("Processing %d threads...", c))
 	}
+	data.Messages = append(data.Messages, "Recalculating forum thread metadata...")
 
 	if err := queries.RecalculateAllForumThreadMetaData(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("recalculateForumThreadByIdMetaData_firstpost: %w", err).Error())

@@ -1,19 +1,48 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 )
 
 func adminSearchPage(w http.ResponseWriter, r *http.Request) {
+	type Stats struct {
+		Words    int64
+		WordList int64
+		Comments int64
+		News     int64
+		Blogs    int64
+		Linker   int64
+		Writing  int64
+		Writings int64
+	}
+
 	type Data struct {
 		*CoreData
+		Stats Stats
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	ctx := r.Context()
+	count := func(query string, dest *int64) {
+		if err := queries.db.QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
+			log.Printf("adminSearchPage count query error: %v", err)
+		}
+	}
+
+	count("SELECT COUNT(*) FROM searchwordlist", &data.Stats.Words)
+	count("SELECT COUNT(*) FROM commentsSearch", &data.Stats.Comments)
+	count("SELECT COUNT(*) FROM siteNewsSearch", &data.Stats.News)
+	count("SELECT COUNT(*) FROM blogsSearch", &data.Stats.Blogs)
+	count("SELECT COUNT(*) FROM linkerSearch", &data.Stats.Linker)
+	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writing)
+	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writings)
 
 	if err := renderTemplate(w, r, "adminSearchPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)

@@ -35,7 +35,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	CustomLinkerIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "linkerAdminQueuePage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "linkerAdminQueuePage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

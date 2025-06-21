@@ -33,7 +33,7 @@ func linkerCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	data.Categories = categories
 
 	CustomLinkerIndex(data.CoreData, r)
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "linkerCategoriesPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "linkerCategoriesPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

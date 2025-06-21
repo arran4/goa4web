@@ -6,7 +6,13 @@
                 <li>{{- .}}</li>
         {{- end }}
         </ul>
-{{- else }}
+{{- end }}
+{{- if $.Messages }}
+        {{- range $.Messages }}
+                <p>{{ . }}</p>
+        {{- end }}
+{{- end }}
+{{- if not $.Errors }}
         Task completed successfully.
 {{- end }}
 <a href="{{$.Back}}">Back</a>

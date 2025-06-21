@@ -66,8 +66,9 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	level := r.PostFormValue("level")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/users/permissions",
@@ -100,8 +101,9 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/users/permissions",
@@ -127,8 +129,9 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/users/permissions",

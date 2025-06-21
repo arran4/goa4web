@@ -14,3 +14,6 @@ Environment variable names are centralised in `config/env.go`.
 
 Tests must not interact with the real file system. Use in-memory file systems
 provided by the `io/fs` package or mocks when file access is required.
+
+SQL query files are compiled using `sqlc`. Do not manually edit the generated
+`*.sql.go` files; instead update the corresponding `.sql` file and run `sqlc generate`.

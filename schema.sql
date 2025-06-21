@@ -170,6 +170,7 @@ CREATE TABLE `linker` (
 CREATE TABLE `linkerCategory` (
   `idlinkerCategory` int(10) NOT NULL AUTO_INCREMENT,
   `title` tinytext DEFAULT NULL,
+  `sortorder` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idlinkerCategory`)
 );
 

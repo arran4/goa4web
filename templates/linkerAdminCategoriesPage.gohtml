@@ -3,6 +3,8 @@
         <tr>
             <th>ID</th>
             <th>Title</th>
+            <th>Links</th>
+            <th>Order</th>
             <th>Options</th>
         </tr>
         {{- range .Categories }}
@@ -13,9 +15,12 @@
                         <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
                         <input name="cname" value="{{ .Title.String }}">
                 </td>
+                <td>{{ .Linkcount }}</td>
+                <td><input name="order" type="number" value="{{ .Sortorder }}" style="width:4em"></td>
                 <td>
+                    <input type="submit" name="task" value="Update">
                     <input type="submit" name="task" value="Rename Category">
-                    <input type="submit" name="task" value="Delete Category">
+                    <input type="submit" name="task" value="Delete Category" {{ if gt .Linkcount 0 }}disabled{{ end }}>
                     </form>
                 </td>
             </tr>
@@ -26,6 +31,8 @@
                 <form method="post">
                     <input name="cname" value="">
             </td>
+            <td>0</td>
+            <td><input name="order" type="number" value="0" style="width:4em"></td>
             <td>
                 <input type="submit" name="task" value="Create Category">
                 </form>

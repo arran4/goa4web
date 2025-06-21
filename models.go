@@ -122,17 +122,9 @@ type Linker struct {
 
 type Linkercategory struct {
 	Idlinkercategory int32
-	Title            sql.NullString
 	Position         int32
-       Sortorder        int32
-}
-
-// LinkercategoryCount holds a category with the number of links assigned.
-type LinkercategoryCount struct {
-       Idlinkercategory int32
-       Title            sql.NullString
-       Sortorder        int32
-       Linkcount        int64
+	Title            sql.NullString
+	Sortorder        int32
 }
 
 type Linkerqueue struct {
@@ -150,6 +142,24 @@ type Linkersearch struct {
 	LinkerIdlinker                 int32
 }
 
+type Notification struct {
+	ID           int32
+	UsersIdusers int32
+	Link         sql.NullString
+	Message      sql.NullString
+	CreatedAt    time.Time
+	ReadAt       sql.NullTime
+}
+
+type PendingEmail struct {
+	ID        int32
+	ToEmail   string
+	Subject   string
+	Body      string
+	CreatedAt time.Time
+	SentAt    sql.NullTime
+}
+
 type Permission struct {
 	Idpermissions int32
 	UsersIdusers  int32
@@ -163,6 +173,10 @@ type Preference struct {
 	UsersIdusers       int32
 	Emailforumupdates  sql.NullBool
 	PageSize           int32
+}
+
+type SchemaVersion struct {
+	Version int32
 }
 
 type Searchwordlist struct {
@@ -187,6 +201,14 @@ type Sitenews struct {
 type Sitenewssearch struct {
 	SitenewsIdsitenews             int32
 	SearchwordlistIdsearchwordlist int32
+}
+
+type Subscription struct {
+	ID           int32
+	UsersIdusers int32
+	ItemType     string
+	TargetID     int32
+	CreatedAt    time.Time
 }
 
 type Topicrestriction struct {

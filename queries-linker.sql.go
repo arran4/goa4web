@@ -116,7 +116,7 @@ func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int3
 }
 
 const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
-SELECT idlinkerCategory, title, position
+SELECT idlinkerCategory, position, title, sortorder
 FROM linkerCategory
 ORDER BY position
 `
@@ -135,8 +135,13 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*GetAllLinkerCa
 	defer rows.Close()
 	var items []*GetAllLinkerCategoriesRow
 	for rows.Next() {
-		var i GetAllLinkerCategoriesRow
-		if err := rows.Scan(&i.Idlinkercategory, &i.Title, &i.Position); err != nil {
+		var i Linkercategory
+		if err := rows.Scan(
+			&i.Idlinkercategory,
+			&i.Position,
+			&i.Title,
+			&i.Sortorder,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -151,7 +156,7 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*GetAllLinkerCa
 }
 
 const getAllLinkerCategoriesWithSortOrder = `-- name: GetAllLinkerCategoriesWithSortOrder :many
-SELECT idlinkerCategory, title, sortorder
+SELECT idlinkerCategory, position, title, sortorder
 FROM linkerCategory
 ORDER BY sortorder
 `
@@ -170,8 +175,13 @@ func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*G
 	defer rows.Close()
 	var items []*GetAllLinkerCategoriesWithSortOrderRow
 	for rows.Next() {
-		var i GetAllLinkerCategoriesWithSortOrderRow
-		if err := rows.Scan(&i.Idlinkercategory, &i.Title, &i.Sortorder); err != nil {
+		var i Linkercategory
+		if err := rows.Scan(
+			&i.Idlinkercategory,
+			&i.Position,
+			&i.Title,
+			&i.Sortorder,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

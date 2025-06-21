@@ -43,6 +43,25 @@ func (q *Queries) CreateForumTopic(ctx context.Context, arg CreateForumTopicPara
 	return result.LastInsertId()
 }
 
+const deleteForumCategory = `-- name: DeleteForumCategory :exec
+DELETE FROM forumcategory WHERE idforumcategory = ?
+`
+
+func (q *Queries) DeleteForumCategory(ctx context.Context, idforumcategory int32) error {
+	_, err := q.db.ExecContext(ctx, deleteForumCategory, idforumcategory)
+	return err
+}
+
+const deleteForumTopic = `-- name: DeleteForumTopic :exec
+DELETE FROM forumtopic WHERE idforumtopic = ?
+`
+
+// Removes a forum topic by ID.
+func (q *Queries) DeleteForumTopic(ctx context.Context, idforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, deleteForumTopic, idforumtopic)
+	return err
+}
+
 const deleteUsersForumTopicLevelPermission = `-- name: DeleteUsersForumTopicLevelPermission :exec
 DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
 `
@@ -98,6 +117,54 @@ func (q *Queries) GetAllForumCategories(ctx context.Context) ([]*Forumcategory, 
 			&i.ForumcategoryIdforumcategory,
 			&i.Title,
 			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllForumCategoriesWithSubcategoryCount = `-- name: GetAllForumCategoriesWithSubcategoryCount :many
+SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, c.description, COUNT(c2.idforumcategory) as SubcategoryCount,
+       COUNT(t.idforumtopic)   as TopicCount
+FROM forumcategory c
+LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
+LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
+GROUP BY c.idforumcategory
+`
+
+type GetAllForumCategoriesWithSubcategoryCountRow struct {
+	Idforumcategory              int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Subcategorycount             int64
+	Topiccount                   int64
+}
+
+func (q *Queries) GetAllForumCategoriesWithSubcategoryCount(ctx context.Context) ([]*GetAllForumCategoriesWithSubcategoryCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumCategoriesWithSubcategoryCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllForumCategoriesWithSubcategoryCountRow
+	for rows.Next() {
+		var i GetAllForumCategoriesWithSubcategoryCountRow
+		if err := rows.Scan(
+			&i.Idforumcategory,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+			&i.Subcategorycount,
+			&i.Topiccount,
 		); err != nil {
 			return nil, err
 		}
@@ -448,53 +515,6 @@ func (q *Queries) GetAllForumTopicsWithPermissionsAndTopic(ctx context.Context) 
 	return items, nil
 }
 
-const getAllGetAllForumCategoriesWithSubcategoryCount = `-- name: GetAllGetAllForumCategoriesWithSubcategoryCount :many
-SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, c.description, COUNT(c2.idforumcategory) as SubcategoryCount, COUNT(t.idforumtopic) as TopicCount
-FROM forumcategory c
-LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
-LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
-GROUP BY c.idforumcategory
-`
-
-type GetAllGetAllForumCategoriesWithSubcategoryCountRow struct {
-	Idforumcategory              int32
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	Subcategorycount             int64
-	Topiccount                   int64
-}
-
-func (q *Queries) GetAllGetAllForumCategoriesWithSubcategoryCount(ctx context.Context) ([]*GetAllGetAllForumCategoriesWithSubcategoryCountRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllGetAllForumCategoriesWithSubcategoryCount)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllGetAllForumCategoriesWithSubcategoryCountRow
-	for rows.Next() {
-		var i GetAllGetAllForumCategoriesWithSubcategoryCountRow
-		if err := rows.Scan(
-			&i.Idforumcategory,
-			&i.ForumcategoryIdforumcategory,
-			&i.Title,
-			&i.Description,
-			&i.Subcategorycount,
-			&i.Topiccount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText = `-- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
@@ -694,14 +714,6 @@ func (q *Queries) UpdateForumCategory(ctx context.Context, arg UpdateForumCatego
 	return err
 }
 
-const deleteForumCategory = `-- name: DeleteForumCategory :exec
-DELETE FROM forumcategory WHERE idforumcategory = ?`
-
-func (q *Queries) DeleteForumCategory(ctx context.Context, idforumcategory int32) error {
-	_, err := q.db.ExecContext(ctx, deleteForumCategory, idforumcategory)
-	return err
-}
-
 const updateForumTopic = `-- name: UpdateForumTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?
 `
@@ -746,13 +758,4 @@ func (q *Queries) UpsertUsersForumTopicLevelPermission(ctx context.Context, arg 
                arg.ExpiresAt,
         )
         return err
-}
-
-// deleteForumTopic removes a forum topic by ID.
-const deleteForumTopic = `-- name: DeleteForumTopic :exec
-DELETE FROM forumtopic WHERE idforumtopic = ?`
-
-func (q *Queries) DeleteForumTopic(ctx context.Context, idforumtopic int32) error {
-	_, err := q.db.ExecContext(ctx, deleteForumTopic, idforumtopic)
-	return err
 }

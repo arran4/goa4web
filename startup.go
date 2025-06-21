@@ -15,8 +15,9 @@ var (
 	dbLogVerbosity int
 )
 
-func InitDB() *UserError {
-	cfg := loadDBConfig()
+// InitDB opens the database connection using the provided configuration
+// and ensures the schema exists.
+func InitDB(cfg DBConfig) *UserError {
 	dbLogVerbosity = cfg.LogVerbosity
 	if cfg.User == "" {
 		cfg.User = "a4web"
@@ -60,12 +61,12 @@ func InitDB() *UserError {
 }
 
 // checkDatabase attempts to connect and ping the configured database.
-func checkDatabase() *UserError {
-	return InitDB()
+func checkDatabase(cfg DBConfig) *UserError {
+	return InitDB(cfg)
 }
 
-func performStartupChecks() error {
-	if ue := checkDatabase(); ue != nil {
+func performStartupChecks(cfg DBConfig) error {
+	if ue := checkDatabase(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	return nil

@@ -179,7 +179,10 @@ func run() error {
 		}
 	}
 
-	if err := performStartupChecks(); err != nil {
+	dbCfg := loadDBConfig()
+	emailCfg := loadEmailConfig()
+
+	if err := performStartupChecks(dbCfg); err != nil {
 		return err
 	}
 
@@ -488,8 +491,8 @@ func run() error {
 	//r.HandleFunc("/logout", logoutHandler)
 
 	srv = &Server{
-		DBConfig:    loadDBConfig(),
-		EmailConfig: loadEmailConfig(),
+		DBConfig:    dbCfg,
+		EmailConfig: emailCfg,
 		// Load pagination bounds at startup.
 		// The values are stored in appPaginationConfig.
 		Router: csrfMiddleware(r),
@@ -498,9 +501,11 @@ func run() error {
 	}
 	loadPaginationConfig()
 
+	provider := providerFromConfig(emailCfg)
+
 	// Start background email queue processing.
-	go emailQueueWorker(context.Background(), New(dbPool), getEmailProvider(), time.Minute)
-	go notificationPurgeWorker(context.Background(), New(dbPool), time.Hour)
+	safeGo(func() { emailQueueWorker(context.Background(), New(dbPool), provider, time.Minute) })
+	safeGo(func() { notificationPurgeWorker(context.Background(), New(dbPool), time.Hour) })
 
 	httpCfg := loadHTTPConfig()
 
@@ -559,6 +564,19 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 		CustomNewsIndex(cd, r)
 		handler.ServeHTTP(w, r)
 	})
+}
+
+// safeGo runs fn in a goroutine and terminates the program if a panic occurs.
+func safeGo(fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("goroutine panic: %v", r)
+				os.Exit(1)
+			}
+		}()
+		fn()
+	}()
 }
 
 // mainCSSHandler serves the site's stylesheet.

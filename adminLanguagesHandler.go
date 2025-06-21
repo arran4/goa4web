@@ -10,6 +10,10 @@ import (
 	"strconv"
 )
 
+func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/admin/languages", http.StatusMovedPermanently)
+}
+
 func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData

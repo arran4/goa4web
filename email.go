@@ -482,8 +482,21 @@ func getAdminEmails(ctx context.Context, q *Queries) []string {
 
 // notifyAdmins sends a change notification email to all administrator
 // addresses returned by getAdminEmails.
+func adminNotificationsEnabled() bool {
+	v := strings.ToLower(os.Getenv("ADMIN_NOTIFY"))
+	if v == "" {
+		return true
+	}
+	switch v {
+	case "0", "false", "off", "no":
+		return false
+	default:
+		return true
+	}
+}
+
 func notifyAdmins(ctx context.Context, provider MailProvider, q *Queries, page string) {
-	if provider == nil {
+	if provider == nil || !adminNotificationsEnabled() {
 		return
 	}
 	for _, email := range getAdminEmails(ctx, q) {

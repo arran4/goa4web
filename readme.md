@@ -98,3 +98,6 @@ The resolution order is:
 
 The config file uses a simple `key=value` format matching the environment
 variable names.
+
+Administrator change notifications are enabled by default when a valid mail
+provider is configured. Set `ADMIN_NOTIFY=false` to disable these messages.

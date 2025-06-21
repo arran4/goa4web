@@ -22,3 +22,15 @@ func TestNotifyAdminsEnv(t *testing.T) {
 		t.Fatalf("expected 2 mails, got %d", len(rec.to))
 	}
 }
+
+func TestNotifyAdminsDisabled(t *testing.T) {
+	os.Setenv("ADMIN_EMAILS", "a@test.com")
+	os.Setenv("ADMIN_NOTIFY", "false")
+	defer os.Unsetenv("ADMIN_EMAILS")
+	defer os.Unsetenv("ADMIN_NOTIFY")
+	rec := &recordAdminMail{}
+	notifyAdmins(context.Background(), rec, nil, "page")
+	if len(rec.to) != 0 {
+		t.Fatalf("expected 0 mails, got %d", len(rec.to))
+	}
+}

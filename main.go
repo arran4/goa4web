@@ -286,6 +286,7 @@ func run() error {
 	fr.HandleFunc("/admin/topics", forumAdminTopicsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/topics", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/topic/{topic}/edit", forumAdminTopicEditPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicChange))
+	fr.HandleFunc("/admin/topic/{topic}/delete", forumAdminTopicDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicDelete))
 	fr.HandleFunc("/admin/topic", forumTopicCreatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicCreate))
 	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUpdateTopicRestriction))

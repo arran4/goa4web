@@ -116,3 +116,14 @@ func forumTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
 
 }
+
+func forumAdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	vars := mux.Vars(r)
+	topicId, _ := strconv.Atoi(vars["topic"])
+	if err := queries.DeleteForumTopic(r.Context(), int32(topicId)); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
+}

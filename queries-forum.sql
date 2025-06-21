@@ -141,3 +141,7 @@ SET threads = (
 )
 WHERE idforumtopic = ?;
 
+-- name: DeleteForumTopic :exec
+-- Removes a forum topic by ID.
+DELETE FROM forumtopic WHERE idforumtopic = ?;
+

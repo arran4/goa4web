@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
+	github.com/segmentio/ksuid v1.0.4
 	github.com/shirou/gopsutil/v3 v3.23.7
 	golang.org/x/exp v0.0.0-20230807204917-050eac23e9de
 )

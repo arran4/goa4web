@@ -3,16 +3,18 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
 // DBConfig holds parameters for connecting to the database.
 type DBConfig struct {
-	User string
-	Pass string
-	Host string
-	Port string
-	Name string
+	User         string
+	Pass         string
+	Host         string
+	Port         string
+	Name         string
+	LogVerbosity int
 }
 
 // cliDBConfig is populated from command line flags in main().
@@ -41,6 +43,9 @@ func resolveDBConfig(cli, file, env DBConfig) DBConfig {
 		}
 		if src.Name != "" {
 			cfg.Name = src.Name
+		}
+		if src.LogVerbosity != 0 {
+			cfg.LogVerbosity = src.LogVerbosity
 		}
 	}
 
@@ -76,6 +81,10 @@ func loadDBConfigFile(path string) (DBConfig, error) {
 				cfg.Port = val
 			case "DB_NAME":
 				cfg.Name = val
+			case "DB_LOG_VERBOSITY":
+				if v, err := strconv.Atoi(val); err == nil {
+					cfg.LogVerbosity = v
+				}
 			}
 		}
 	}
@@ -91,6 +100,11 @@ func loadDBConfig() DBConfig {
 		Host: os.Getenv("DB_HOST"),
 		Port: os.Getenv("DB_PORT"),
 		Name: os.Getenv("DB_NAME"),
+	}
+	if lv := os.Getenv("DB_LOG_VERBOSITY"); lv != "" {
+		if v, err := strconv.Atoi(lv); err == nil {
+			env.LogVerbosity = v
+		}
 	}
 
 	cfgPath := dbConfigFile

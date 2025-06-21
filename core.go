@@ -12,8 +12,7 @@ import (
 )
 
 func handleDie(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<b><font color=red>You encountered an error: "+message+"....</font></b>")
+	http.Error(w, message, http.StatusInternalServerError)
 }
 
 // IndexItem struct.
@@ -160,6 +159,9 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
+		}
+		if dbLogVerbosity > 0 {
+			log.Printf("db pool stats: %+v", dbPool.Stats())
 		}
 		ctx := request.Context()
 		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)

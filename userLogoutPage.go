@@ -6,6 +6,7 @@ import (
 )
 
 func userLogoutPage(w http.ResponseWriter, r *http.Request) {
+	log.Printf("logout request")
 	type Data struct {
 		*CoreData
 	}
@@ -28,6 +29,8 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("logout success")
 
 	data.CoreData.UserID = 0
 	data.CoreData.SecurityLevel = ""

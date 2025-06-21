@@ -29,6 +29,7 @@ func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginActionPage(w http.ResponseWriter, r *http.Request) {
+	log.Printf("login attempt for %s", r.PostFormValue("username"))
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
@@ -65,6 +66,8 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("login success uid=%d", user.Idusers)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"errors"
@@ -11,8 +12,12 @@ import (
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
 )
 
 var (
@@ -52,6 +57,8 @@ var (
 	listenFlag    = flag.String("listen", ":8080", "server listen address")
 	httpCfgPath   = flag.String("http-config", "", "path to HTTP configuration file")
 	listenFlagSet bool
+
+	srv *Server
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -385,13 +392,14 @@ func main() {
 	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake linker search"))
 	ar.HandleFunc("/search", adminSearchRemakeWritingSearchPage).Methods("POST").MatcherFunc(TaskMatcher("Remake writing search"))
 	ar.HandleFunc("/search/list", adminSearchWordListPage).Methods("GET")
+	ar.HandleFunc("/shutdown", adminShutdownPage).Methods("POST")
 
 	// oauth shit
 	//r.HandleFunc("/login", loginPage)
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
 
-	srv := &Server{
+	srv = &Server{
 		DBConfig:    loadDBConfig(),
 		EmailConfig: loadEmailConfig(),
 		Router:      csrfMiddleware(r),
@@ -400,8 +408,22 @@ func main() {
 	}
 
 	httpCfg := loadHTTPConfig()
-	log.Printf("Server started on %s", httpCfg.Listen)
-	log.Fatal(http.ListenAndServe(httpCfg.Listen, nil))
+	go func() {
+		if err := srv.Start(httpCfg.Listen); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+
+	log.Printf("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("shutdown error: %v", err)
+	}
 }
 
 func runTemplate(template string) func(http.ResponseWriter, *http.Request) {

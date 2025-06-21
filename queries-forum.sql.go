@@ -726,3 +726,12 @@ func (q *Queries) UpsertUsersForumTopicLevelPermission(ctx context.Context, arg 
 	)
 	return err
 }
+
+// deleteForumTopic removes a forum topic by ID.
+const deleteForumTopic = `-- name: DeleteForumTopic :exec
+DELETE FROM forumtopic WHERE idforumtopic = ?`
+
+func (q *Queries) DeleteForumTopic(ctx context.Context, idforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, deleteForumTopic, idforumtopic)
+	return err
+}

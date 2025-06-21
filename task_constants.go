@@ -79,6 +79,9 @@ const (
 	// TaskForumTopicCreate creates a new forum topic.
 	TaskForumTopicCreate = "Forum topic create"
 
+	// TaskForumTopicDelete removes a forum topic.
+	TaskForumTopicDelete = "Forum topic delete"
+
 	// TaskLogin performs a user login.
 	TaskLogin = "Login"
 

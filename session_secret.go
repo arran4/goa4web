@@ -31,7 +31,7 @@ func loadSessionSecret(cliSecret, path string) (string, error) {
 		}
 	}
 
-	b, err := os.ReadFile(path)
+	b, err := readFile(path)
 	if err == nil {
 		secret := strings.TrimSpace(string(b))
 		if secret != "" {
@@ -47,7 +47,7 @@ func loadSessionSecret(cliSecret, path string) (string, error) {
 		return "", err
 	}
 	secret := hex.EncodeToString(buf)
-	if err := os.WriteFile(path, []byte(secret), 0600); err != nil {
+	if err := writeFile(path, []byte(secret), 0600); err != nil {
 		return "", err
 	}
 	return secret, nil

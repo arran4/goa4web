@@ -3,8 +3,6 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -31,10 +29,10 @@ func TestConfigurationSetGet(t *testing.T) {
 }
 
 func TestConfigurationRead(t *testing.T) {
-	dir := t.TempDir()
-	fname := filepath.Join(dir, "conf.txt")
+	useMemFS(t)
+	fname := "conf.txt"
 	content := "k1=v1\nk2=v=2\ninvalid\n spaced = value with spaces\n"
-	if err := os.WriteFile(fname, []byte(content), 0644); err != nil {
+	if err := writeFile(fname, []byte(content), 0644); err != nil {
 		t.Fatalf("write temp file: %v", err)
 	}
 	c := NewConfiguration()

@@ -1,10 +1,6 @@
 package main
 
-import (
-	"os"
-	"path/filepath"
-	"testing"
-)
+import "testing"
 
 func TestLoadSessionSecretCLI(t *testing.T) {
 	secret, err := loadSessionSecret("cli", "")
@@ -28,9 +24,9 @@ func TestLoadSessionSecretEnv(t *testing.T) {
 }
 
 func TestLoadSessionSecretFile(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "sec")
-	if err := os.WriteFile(file, []byte("fromfile"), 0600); err != nil {
+	useMemFS(t)
+	file := "sec"
+	if err := writeFile(file, []byte("fromfile"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 	secret, err := loadSessionSecret("", file)
@@ -43,8 +39,8 @@ func TestLoadSessionSecretFile(t *testing.T) {
 }
 
 func TestLoadSessionSecretGenerate(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "new")
+	fs := useMemFS(t)
+	file := "new"
 	secret, err := loadSessionSecret("", file)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -52,7 +48,7 @@ func TestLoadSessionSecretGenerate(t *testing.T) {
 	if secret == "" {
 		t.Fatal("secret should not be empty")
 	}
-	b, err := os.ReadFile(file)
+	b, err := fs.ReadFile(file)
 	if err != nil {
 		t.Fatalf("read file: %v", err)
 	}

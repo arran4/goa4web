@@ -362,7 +362,7 @@ func loadEmailConfigFile(path string) (EmailConfig, error) {
 	if path == "" {
 		return cfg, nil
 	}
-	b, err := os.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		return cfg, err
 	}

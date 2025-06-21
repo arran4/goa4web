@@ -1,16 +1,14 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestLoadEmailConfigFile(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "email.conf")
+	useMemFS(t)
+	file := "email.conf"
 	content := "EMAIL_PROVIDER=smtp\nSMTP_HOST=host\nSMTP_PORT=2525\n"
-	if err := os.WriteFile(file, []byte(content), 0644); err != nil {
+	if err := writeFile(file, []byte(content), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	cfg, err := loadEmailConfigFile(file)
@@ -35,9 +33,9 @@ func TestResolveEmailConfigPrecedence(t *testing.T) {
 }
 
 func TestLoadEmailConfigEnvPath(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "email.conf")
-	if err := os.WriteFile(file, []byte("EMAIL_PROVIDER=log\n"), 0644); err != nil {
+	useMemFS(t)
+	file := "email.conf"
+	if err := writeFile(file, []byte("EMAIL_PROVIDER=log\n"), 0644); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 	t.Setenv("EMAIL_CONFIG_FILE", file)

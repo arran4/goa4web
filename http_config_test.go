@@ -1,16 +1,14 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestLoadHTTPConfigFile(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "http.conf")
+	useMemFS(t)
+	file := "http.conf"
 	content := "LISTEN=1.2.3.4:80\nHOSTNAME=http://example.com\n"
-	if err := os.WriteFile(file, []byte(content), 0644); err != nil {
+	if err := writeFile(file, []byte(content), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	cfg, err := loadHTTPConfigFile(file)
@@ -35,9 +33,9 @@ func TestResolveHTTPConfigPrecedence(t *testing.T) {
 }
 
 func TestLoadHTTPConfigEnvPath(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "http.conf")
-	if err := os.WriteFile(file, []byte("LISTEN=:9\n"), 0644); err != nil {
+	useMemFS(t)
+	file := "http.conf"
+	if err := writeFile(file, []byte("LISTEN=:9\n"), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	t.Setenv("HTTP_CONFIG_FILE", file)

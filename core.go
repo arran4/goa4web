@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -114,18 +114,11 @@ func (c *Configuration) get(key string) string {
 }
 
 func (c *Configuration) readConfiguration(filename string) {
-	file, err := os.Open(filename)
+	b, err := readFile(filename)
 	if err != nil {
 		return
 	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Printf("File close error: %s", err)
-		}
-	}(file)
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(bytes.NewReader(b))
 	for scanner.Scan() {
 		line := scanner.Text()
 		sep := strings.Index(line, "=")

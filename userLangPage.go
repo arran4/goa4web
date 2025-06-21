@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/sessions"
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +143,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
 }
 
-func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
+func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

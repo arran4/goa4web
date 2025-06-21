@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
-	"strings"
 	"database/sql"
+	"fmt"
+	"sort"
+	"strings"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -409,4 +411,324 @@ func (q *Queries) CountThreadsByBoard(ctx context.Context, boardID int32) (int32
 		"SELECT COUNT(DISTINCT forumthread_idforumthread) FROM imagepost WHERE imageboard_idimageboard = ?",
 		boardID).Scan(&c)
 	return c, err
+}
+
+// BoardPostCountRow represents a board or topic name with a thread count.
+type BoardPostCountRow struct {
+	Name  sql.NullString
+	Count int64
+}
+
+// CategoryCountRow represents a category name with a content count.
+// It mirrors BoardPostCountRow for reuse in different contexts.
+type CategoryCountRow = BoardPostCountRow
+
+// ForumTopicThreadCounts returns the number of threads per forum topic ordered by title.
+func (q *Queries) ForumTopicThreadCounts(ctx context.Context) ([]*BoardPostCountRow, error) {
+	rows, err := q.db.QueryContext(ctx,
+		"SELECT t.title, COUNT(th.idforumthread) FROM forumtopic t LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic GROUP BY t.idforumtopic ORDER BY t.title")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*BoardPostCountRow
+	for rows.Next() {
+		var i BoardPostCountRow
+		if err := rows.Scan(&i.Name, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	return items, rows.Err()
+}
+
+// ForumCategoryThreadCounts returns the number of threads per forum category ordered by title.
+func (q *Queries) ForumCategoryThreadCounts(ctx context.Context) ([]*CategoryCountRow, error) {
+	rows, err := q.db.QueryContext(ctx,
+		"SELECT c.title, COUNT(th.idforumthread) FROM forumcategory c "+
+			"LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory "+
+			"LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic "+
+			"GROUP BY c.idforumcategory ORDER BY c.title")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*CategoryCountRow
+	for rows.Next() {
+		var i CategoryCountRow
+		if err := rows.Scan(&i.Name, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	return items, rows.Err()
+}
+
+// ImageboardPostCounts returns the number of posts per image board ordered by title.
+func (q *Queries) ImageboardPostCounts(ctx context.Context) ([]*BoardPostCountRow, error) {
+	rows, err := q.db.QueryContext(ctx,
+		"SELECT ib.title, COUNT(ip.idimagepost) FROM imageboard ib LEFT JOIN imagepost ip ON ip.imageboard_idimageboard = ib.idimageboard GROUP BY ib.idimageboard ORDER BY ib.title")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*BoardPostCountRow
+	for rows.Next() {
+		var i BoardPostCountRow
+		if err := rows.Scan(&i.Name, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	return items, rows.Err()
+}
+
+// WritingCategoryCounts returns the number of writings per writing category ordered by title.
+func (q *Queries) WritingCategoryCounts(ctx context.Context) ([]*CategoryCountRow, error) {
+	rows, err := q.db.QueryContext(ctx,
+		"SELECT wc.title, COUNT(w.idwriting) FROM writingCategory wc "+
+			"LEFT JOIN writing w ON w.writingCategory_idwritingCategory = wc.idwritingCategory "+
+			"GROUP BY wc.idwritingCategory ORDER BY wc.title")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*CategoryCountRow
+	for rows.Next() {
+		var i CategoryCountRow
+		if err := rows.Scan(&i.Name, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	return items, rows.Err()
+}
+
+// UserPostCountRow aggregates content counts for a user.
+type UserPostCountRow struct {
+	Username sql.NullString
+	Blogs    int64
+	News     int64
+	Comments int64
+	Images   int64
+	Links    int64
+	Writings int64
+}
+
+// UserPostCounts returns aggregated post counts for each user.
+func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, `SELECT u.username,
+        COUNT(DISTINCT b.idblogs) AS blogs,
+        COUNT(DISTINCT n.idsiteNews) AS news,
+        COUNT(DISTINCT c.idcomments) AS comments,
+        COUNT(DISTINCT i.idimagepost) AS images,
+        COUNT(DISTINCT l.idlinker) AS links,
+        COUNT(DISTINCT w.idwriting) AS writings
+        FROM users u
+        LEFT JOIN blogs b ON b.users_idusers = u.idusers
+        LEFT JOIN siteNews n ON n.users_idusers = u.idusers
+        LEFT JOIN comments c ON c.users_idusers = u.idusers
+        LEFT JOIN imagepost i ON i.users_idusers = u.idusers
+        LEFT JOIN linker l ON l.users_idusers = u.idusers
+        LEFT JOIN writing w ON w.users_idusers = u.idusers
+        GROUP BY u.idusers
+        ORDER BY u.username`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserPostCountRow
+	for rows.Next() {
+		var i UserPostCountRow
+		if err := rows.Scan(&i.Username, &i.Blogs, &i.News, &i.Comments, &i.Images); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	return items, rows.Err()
+}
+
+// MonthlyUsageRow aggregates monthly post counts across the site.
+type MonthlyUsageRow struct {
+	Year     int32
+	Month    int32
+	Blogs    int64
+	News     int64
+	Comments int64
+	Images   int64
+	Links    int64
+}
+
+// UserMonthlyUsageRow aggregates monthly post counts for a single user.
+type UserMonthlyUsageRow struct {
+	Username sql.NullString
+	Year     int32
+	Month    int32
+	Blogs    int64
+	News     int64
+	Comments int64
+	Images   int64
+	Links    int64
+	Writings int64
+}
+
+// monthlyCounts is a helper that returns post counts grouped by year and month.
+func (q *Queries) monthlyCounts(ctx context.Context, table, column string, startYear int32) (map[[2]int32]int64, error) {
+	query := fmt.Sprintf("SELECT YEAR(%s), MONTH(%s), COUNT(*) FROM %s WHERE YEAR(%s) >= ? GROUP BY YEAR(%s), MONTH(%s)", column, column, table, column, column, column)
+	rows, err := q.db.QueryContext(ctx, query, startYear)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[[2]int32]int64)
+	for rows.Next() {
+		var year, month int32
+		var count int64
+		if err := rows.Scan(&year, &month, &count); err != nil {
+			return nil, err
+		}
+		m[[2]int32{year, month}] = count
+	}
+	return m, rows.Err()
+}
+
+// userMonthlyCounts returns post counts grouped by user, year and month.
+func (q *Queries) userMonthlyCounts(ctx context.Context, table, column string, startYear int32) (map[string]map[[2]int32]int64, error) {
+	query := fmt.Sprintf("SELECT u.username, YEAR(%s), MONTH(%s), COUNT(*) FROM %s t JOIN users u ON t.users_idusers = u.idusers WHERE YEAR(%s) >= ? GROUP BY u.idusers, YEAR(%s), MONTH(%s)", column, column, table, column, column, column)
+	rows, err := q.db.QueryContext(ctx, query, startYear)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	data := make(map[string]map[[2]int32]int64)
+	for rows.Next() {
+		var user string
+		var year, month int32
+		var count int64
+		if err := rows.Scan(&user, &year, &month, &count); err != nil {
+			return nil, err
+		}
+		m, ok := data[user]
+		if !ok {
+			m = make(map[[2]int32]int64)
+			data[user] = m
+		}
+		m[[2]int32{year, month}] = count
+	}
+	return data, rows.Err()
+}
+
+// MonthlyUsageCounts merges monthly counts from several content tables.
+func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*MonthlyUsageRow, error) {
+	types := []struct {
+		table  string
+		column string
+		set    func(*MonthlyUsageRow, int64)
+	}{
+		{"blogs", "written", func(r *MonthlyUsageRow, n int64) { r.Blogs = n }},
+		{"siteNews", "occured", func(r *MonthlyUsageRow, n int64) { r.News = n }},
+		{"comments", "written", func(r *MonthlyUsageRow, n int64) { r.Comments = n }},
+		{"imagepost", "posted", func(r *MonthlyUsageRow, n int64) { r.Images = n }},
+		{"linker", "listed", func(r *MonthlyUsageRow, n int64) { r.Links = n }},
+	}
+
+	data := make(map[[2]int32]*MonthlyUsageRow)
+	for _, t := range types {
+		counts, err := q.monthlyCounts(ctx, t.table, t.column, startYear)
+		if err != nil {
+			return nil, err
+		}
+		for ym, c := range counts {
+			row, ok := data[ym]
+			if !ok {
+				row = &MonthlyUsageRow{Year: ym[0], Month: ym[1]}
+				data[ym] = row
+			}
+			t.set(row, c)
+		}
+	}
+
+	keys := make([][2]int32, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i][0] == keys[j][0] {
+			return keys[i][1] < keys[j][1]
+		}
+		return keys[i][0] < keys[j][0]
+	})
+
+	var rows []*MonthlyUsageRow
+	for _, k := range keys {
+		rows = append(rows, data[k])
+	}
+	return rows, nil
+}
+
+// UserMonthlyUsageCounts merges monthly usage counts for each user across several tables.
+func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) ([]*UserMonthlyUsageRow, error) {
+	types := []struct {
+		table  string
+		column string
+		set    func(*UserMonthlyUsageRow, int64)
+	}{
+		{"blogs", "written", func(r *UserMonthlyUsageRow, n int64) { r.Blogs = n }},
+		{"siteNews", "occured", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
+		{"comments", "written", func(r *UserMonthlyUsageRow, n int64) { r.Comments = n }},
+		{"imagepost", "posted", func(r *UserMonthlyUsageRow, n int64) { r.Images = n }},
+		{"linker", "listed", func(r *UserMonthlyUsageRow, n int64) { r.Links = n }},
+		{"writing", "published", func(r *UserMonthlyUsageRow, n int64) { r.Writings = n }},
+	}
+
+	data := make(map[string]map[[2]int32]*UserMonthlyUsageRow)
+	for _, t := range types {
+		counts, err := q.userMonthlyCounts(ctx, t.table, t.column, startYear)
+		if err != nil {
+			return nil, err
+		}
+		for user, months := range counts {
+			m, ok := data[user]
+			if !ok {
+				m = make(map[[2]int32]*UserMonthlyUsageRow)
+				data[user] = m
+			}
+			for ym, c := range months {
+				row, ok := m[ym]
+				if !ok {
+					row = &UserMonthlyUsageRow{Username: sql.NullString{String: user, Valid: true}, Year: ym[0], Month: ym[1]}
+					m[ym] = row
+				}
+				t.set(row, c)
+			}
+		}
+	}
+
+	var keys []struct {
+		user string
+		ym   [2]int32
+	}
+	for user, months := range data {
+		for ym := range months {
+			keys = append(keys, struct {
+				user string
+				ym   [2]int32
+			}{user, ym})
+		}
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].user == keys[j].user {
+			if keys[i].ym[0] == keys[j].ym[0] {
+				return keys[i].ym[1] < keys[j].ym[1]
+			}
+			return keys[i].ym[0] < keys[j].ym[0]
+		}
+		return keys[i].user < keys[j].user
+	})
+
+	var rows []*UserMonthlyUsageRow
+	for _, k := range keys {
+		rows = append(rows, data[k.user][k.ym])
+	}
+	return rows, nil
 }

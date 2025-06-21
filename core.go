@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"os"
@@ -13,8 +12,7 @@ import (
 )
 
 func handleDie(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<b><font color=red>You encountered an error: "+message+"....</font></b>")
+	http.Error(w, message, http.StatusInternalServerError)
 }
 
 // IndexItem struct.
@@ -40,7 +38,11 @@ var indexItems = []IndexItem{
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		uid, _ := session.Values["UID"].(int32)
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -157,6 +159,9 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
+		}
+		if dbLogVerbosity > 0 {
+			log.Printf("db pool stats: %+v", dbPool.Stats())
 		}
 		ctx := request.Context()
 		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)

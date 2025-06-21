@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -10,12 +11,14 @@ import (
 func TestHandleDie(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handleDie(rr, "oops")
-	if ct := rr.Header().Get("Content-Type"); ct != "text/html" {
-		t.Errorf("expected Content-Type text/html, got %q", ct)
+	if rr.Code != http.StatusInternalServerError {
+		t.Errorf("expected status 500, got %d", rr.Code)
 	}
-	expected := "<b><font color=red>You encountered an error: oops....</font></b>"
-	if rr.Body.String() != expected {
-		t.Errorf("unexpected body: %q", rr.Body.String())
+	if ct := rr.Header().Get("Content-Type"); ct != "text/plain; charset=utf-8" {
+		t.Errorf("expected Content-Type text/plain; charset=utf-8, got %q", ct)
+	}
+	if body := rr.Body.String(); body != "oops\n" {
+		t.Errorf("unexpected body: %q", body)
 	}
 }
 

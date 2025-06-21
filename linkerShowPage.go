@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -55,7 +54,7 @@ func linkerShowPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])
@@ -81,7 +80,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	var pthid int32 = link.ForumthreadIdforumthread
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
-		String: LinkderTopicName,
+		String: LinkerTopicName,
 		Valid:  true,
 	})
 	var ptid int32
@@ -89,11 +88,11 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
-				String: LinkderTopicName,
+				String: LinkerTopicName,
 				Valid:  true,
 			},
 			Description: sql.NullString{
-				String: LinkderTopicName,
+				String: LinkerTopicName,
 				Valid:  true,
 			},
 		})

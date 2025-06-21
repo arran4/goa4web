@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"goa4web/config"
@@ -10,17 +11,19 @@ import (
 
 // DBConfig holds parameters for connecting to the database.
 type DBConfig struct {
-	User string
-	Pass string
-	Host string
-	Port string
-	Name string
+	User         string
+	Pass         string
+	Host         string
+	Port         string
+	Name         string
+	LogVerbosity int
 }
 
 // cliDBConfig is populated from command line flags in main().
 var cliDBConfig DBConfig
 
 // dbConfigFile is the optional path to a configuration file read at startup.
+// If empty, the DB_CONFIG_FILE environment variable is consulted.
 var dbConfigFile string
 
 // resolveDBConfig merges configuration values with the order of precedence
@@ -59,6 +62,10 @@ func loadDBConfigFile(path string) (DBConfig, error) {
 				cfg.Port = val
 			case "DB_NAME":
 				cfg.Name = val
+			case "DB_LOG_VERBOSITY":
+				if v, err := strconv.Atoi(val); err == nil {
+					cfg.LogVerbosity = v
+				}
 			}
 		}
 	}
@@ -75,8 +82,17 @@ func loadDBConfig() DBConfig {
 		Port: os.Getenv("DB_PORT"),
 		Name: os.Getenv("DB_NAME"),
 	}
+	if lv := os.Getenv("DB_LOG_VERBOSITY"); lv != "" {
+		if v, err := strconv.Atoi(lv); err == nil {
+			env.LogVerbosity = v
+		}
+	}
 
-	fileCfg, err := loadDBConfigFile(dbConfigFile)
+	cfgPath := dbConfigFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("DB_CONFIG_FILE")
+	}
+	fileCfg, err := loadDBConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("DB config file error: %v", err)
 	}

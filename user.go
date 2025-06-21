@@ -12,7 +12,7 @@ import (
 func UserAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// Get the session.
-		session, err := store.Get(request, sessionName)
+		session, err := GetSession(request)
 		if err != nil {
 			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 			return

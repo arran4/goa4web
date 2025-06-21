@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/sessions"
 )
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +35,13 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
+	session, _ := GetSession(r)
+	uid, _ := session.Values["UID"].(int32)
+	if uid == 0 {
+		http.Error(w, "forbidden", http.StatusForbidden)
+  }
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

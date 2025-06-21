@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -55,7 +54,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -163,7 +162,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	pid, err := strconv.Atoi(vars["post"])
@@ -342,7 +341,7 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	err = queries.CreateNewsPost(r.Context(), CreateNewsPostParams{

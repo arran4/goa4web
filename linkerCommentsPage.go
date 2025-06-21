@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -47,7 +46,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
@@ -136,7 +135,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -57,7 +56,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	//topicId, _ := strconv.Atoi(vars["topic"])
 	threadId, _ := strconv.Atoi(vars["thread"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{

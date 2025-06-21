@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -54,7 +53,7 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 func linkerAdminAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	uid, _ := session.Values["UID"].(int32)
 

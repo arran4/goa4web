@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -56,7 +55,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(blogId))

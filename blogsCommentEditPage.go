@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -24,7 +23,7 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	commentId, _ := strconv.Atoi(vars["comment"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	comment, err := queries.GetCommentById(r.Context(), int32(commentId))

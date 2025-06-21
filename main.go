@@ -444,6 +444,8 @@ func run() error {
 	ar.HandleFunc("/forum", adminForumPage).Methods("GET")
 	ar.HandleFunc("/forum", adminForumRemakeForumThreadPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumthread))
 	ar.HandleFunc("/forum", adminForumRemakeForumTopicPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumtopic))
+	ar.HandleFunc("/forum/flagged", adminForumFlaggedPostsPage).Methods("GET")
+	ar.HandleFunc("/forum/logs", adminForumModeratorLogsPage).Methods("GET")
 	ar.HandleFunc("/forum/list", adminForumWordListPage).Methods("GET")
 	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
 	ar.HandleFunc("/users/disable", adminUserDisablePage).Methods("POST")

@@ -116,24 +116,22 @@ func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int3
 }
 
 const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
-SELECT idlinkerCategory, position, title, sortorder
-FROM linkerCategory
-ORDER BY position
+SELECT
+    lc.idlinkerCategory,
+    lc.position,
+    lc.title,
+    lc.sortorder
+FROM linkerCategory lc
+ORDER BY lc.position
 `
 
-type GetAllLinkerCategoriesRow struct {
-	Idlinkercategory int32
-	Title            sql.NullString
-	Position         int32
-}
-
-func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*GetAllLinkerCategoriesRow, error) {
+func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllLinkerCategoriesRow
+	var items []*Linkercategory
 	for rows.Next() {
 		var i Linkercategory
 		if err := rows.Scan(
@@ -156,24 +154,22 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*GetAllLinkerCa
 }
 
 const getAllLinkerCategoriesWithSortOrder = `-- name: GetAllLinkerCategoriesWithSortOrder :many
-SELECT idlinkerCategory, position, title, sortorder
+SELECT
+    idlinkerCategory,
+    position,
+    title,
+    sortorder
 FROM linkerCategory
 ORDER BY sortorder
 `
 
-type GetAllLinkerCategoriesWithSortOrderRow struct {
-	Idlinkercategory int32
-	Title            sql.NullString
-	Sortorder        int32
-}
-
-func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*GetAllLinkerCategoriesWithSortOrderRow, error) {
+func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*Linkercategory, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerCategoriesWithSortOrder)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllLinkerCategoriesWithSortOrderRow
+	var items []*Linkercategory
 	for rows.Next() {
 		var i Linkercategory
 		if err := rows.Scan(

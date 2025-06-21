@@ -419,7 +419,7 @@ func run() error {
 	ir.HandleFunc("", informationPage).Methods("GET")
 
 	ur := r.PathPrefix("/usr").Subrouter()
-	ur.HandleFunc("", userPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("", userPage).Methods("GET")
 	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
 	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguages))

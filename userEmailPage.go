@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-
-	"github.com/gorilla/sessions"
 )
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
@@ -43,15 +41,14 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
 		http.Error(w, "forbidden", http.StatusForbidden)
-  }
+		return
+	}
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	updates := r.PostFormValue("emailupdates") != ""
@@ -65,10 +62,10 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 	var execErr error
 	if errors.Is(err, sql.ErrNoRows) {
-    /// TODO use queries
+		/// TODO use queries
 		_, execErr = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (emailforumupdates, users_idusers) VALUES (?, ?)", updates, uid)
 	} else {
-    /// TODO use queries
+		/// TODO use queries
 		_, execErr = queries.db.ExecContext(r.Context(), "UPDATE preferences SET emailforumupdates=? WHERE users_idusers=?", updates, uid)
 	}
 	if execErr != nil {
@@ -94,7 +91,6 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	if user != nil && user.Email.Valid {
 		provider := getEmailProvider()
 		if provider != nil {
-			url := fmt.Sprintf("http://%s%s", r.Host, r.URL.Path)
 			if err := notifyChange(r.Context(), provider, user.Email.String, url); err != nil {
 				log.Printf("notifyChange Error: %s", err)
 			}

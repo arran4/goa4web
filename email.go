@@ -20,8 +20,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"text/template"
-
-	"goa4web/config"
 )
 
 var (

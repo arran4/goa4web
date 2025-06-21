@@ -495,6 +495,8 @@ func run() error {
 	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskResend))
 	ar.HandleFunc("/email/queue", adminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
 	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
+	ar.HandleFunc("/sessions", adminSessionsPage).Methods("GET")
+	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
 	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")

@@ -32,6 +32,9 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    ```bash
    mysql -u a4web -p a4web < schema.sql
    ```
+   Apply any SQL scripts from the `migrations/` directory to bring the database
+   up to date. All table changes should be shipped with a migration script under
+   this directory.
 3. Provide your database credentials via command line flags, a configuration file, or environment variables. Defaults assume `a4web:a4web@tcp(localhost:3306)/a4web`.
 4. Download dependencies and build the application:
    ```bash

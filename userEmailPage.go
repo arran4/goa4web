@@ -77,7 +77,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/user/email", http.StatusSeeOther)
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
@@ -99,5 +99,5 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	http.Redirect(w, r, "/user/email", http.StatusSeeOther)
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

@@ -400,16 +400,20 @@ func run() error {
 	ir := r.PathPrefix("/information").Subrouter()
 	ir.HandleFunc("", informationPage).Methods("GET")
 
-	ur := r.PathPrefix("/user").Subrouter()
+	ur := r.PathPrefix("/usr").Subrouter()
 	ur.HandleFunc("", userPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
 	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguages))
-	ur.HandleFunc("/lang", userLangSaveLanguageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguage))
+	ur.HandleFunc("/lang", userLangSaveLanguagePreferenceActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguage))
 	ur.HandleFunc("/lang", userLangSaveAllActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/email", userEmailPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/email", userEmailSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskTestMail))
+
+	// Redirect legacy paths to the updated usr endpoints.
+	r.HandleFunc("/user/lang", redirectPermanent("/usr/lang"))
+	r.HandleFunc("/user/email", redirectPermanent("/usr/email"))
 
 	rr := r.PathPrefix("/register").Subrouter()
 	rr.HandleFunc("", registerPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
@@ -523,6 +527,14 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 // mainCSSHandler serves the site's stylesheet.
 func mainCSSHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(getMainCSSData()))
+}
+
+// redirectPermanent returns a handler that redirects to the provided path using
+// StatusPermanentRedirect to preserve the request method.
+func redirectPermanent(to string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, to, http.StatusPermanentRedirect)
+	}
 }
 
 // TODO we could do better

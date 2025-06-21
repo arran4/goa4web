@@ -29,7 +29,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	form.Set("language1", "on")
 	form.Set("defaultLanguage", "2")
 
-	req := httptest.NewRequest("POST", "/user/lang", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	sess, _ := store.Get(req, sessionName)
@@ -76,7 +76,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	form.Set("dothis", "Save languages")
 	form.Set("language1", "on")
 
-	req := httptest.NewRequest("POST", "/user/lang", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	sess, _ := store.Get(req, sessionName)
@@ -122,7 +122,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	form.Set("dothis", "Save language")
 	form.Set("defaultLanguage", "2")
 
-	req := httptest.NewRequest("POST", "/user/lang", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	sess, _ := store.Get(req, sessionName)

@@ -38,4 +38,9 @@ const (
 	// EnvConfigFile is the environment variable specifying the path to the
 	// main application configuration file.
 	EnvConfigFile = "CONFIG_FILE"
+
+	// EnvEmailEnabled toggles sending queued emails.
+	EnvEmailEnabled = "EMAIL_ENABLED"
+	// EnvNotificationsEnabled toggles the internal notification system.
+	EnvNotificationsEnabled = "NOTIFICATIONS_ENABLED"
 )

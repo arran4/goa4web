@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
@@ -49,6 +50,9 @@ func InitDB() *UserError {
 	if err := dbPool.Ping(); err != nil {
 		return &UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
+	if err := ensureSchema(context.Background(), dbPool); err != nil {
+		return &UserError{Err: err, ErrorMessage: "failed to verify schema"}
+	}
 	if dbLogVerbosity > 0 {
 		log.Printf("db pool stats after init: %+v", dbPool.Stats())
 	}
@@ -63,6 +67,23 @@ func checkDatabase() *UserError {
 func performStartupChecks() error {
 	if ue := checkDatabase(); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+	}
+	return nil
+}
+
+// ensureSchema creates core tables if they do not exist and inserts a version row.
+func ensureSchema(ctx context.Context, db *sql.DB) error {
+	if _, err := db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)"); err != nil {
+		return err
+	}
+	var count int
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM schema_version").Scan(&count); err != nil {
+		return err
+	}
+	if count == 0 {
+		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (1)"); err != nil {
+			return err
+		}
 	}
 	return nil
 }

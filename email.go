@@ -207,13 +207,11 @@ func (logMailProvider) Send(ctx context.Context, to, subject, body string) error
 }
 
 func notifyChange(ctx context.Context, provider MailProvider, email string, page string) error {
-	// TODO Make this periodically check db to see if there is anything queued, and normally queue up messages
 	if email == "" {
 		return fmt.Errorf("no email specified")
 	}
-
-	if provider == nil {
-		return fmt.Errorf("no email provider specified")
+	if !emailSendingEnabled() {
+		return nil
 	}
 	from := SourceEmail
 
@@ -247,12 +245,15 @@ func notifyChange(ctx context.Context, provider MailProvider, email string, page
 		return fmt.Errorf("execute email template: %w", err)
 	}
 
-	// Send the message using the provider
-	if err := provider.Send(ctx, email, content.Subject, notification.String()); err != nil {
-		return fmt.Errorf("send email: %w", err)
+	if q, ok := ctx.Value(ContextValues("queries")).(*Queries); ok {
+		if err := q.InsertPendingEmail(ctx, InsertPendingEmailParams{ToEmail: email, Subject: content.Subject, Body: notification.String()}); err != nil {
+			return err
+		}
+	} else if provider != nil {
+		if err := provider.Send(ctx, email, content.Subject, notification.String()); err != nil {
+			return fmt.Errorf("send email: %w", err)
+		}
 	}
-
-	log.Println("Email sent successfully to", email)
 	return nil
 }
 
@@ -463,6 +464,19 @@ func getAdminEmails(ctx context.Context, q *Queries) []string {
 // addresses returned by getAdminEmails.
 func adminNotificationsEnabled() bool {
 	v := strings.ToLower(os.Getenv("ADMIN_NOTIFY"))
+	if v == "" {
+		return true
+	}
+	switch v {
+	case "0", "false", "off", "no":
+		return false
+	default:
+		return true
+	}
+}
+
+func emailSendingEnabled() bool {
+	v := strings.ToLower(os.Getenv(config.EnvEmailEnabled))
 	if v == "" {
 		return true
 	}

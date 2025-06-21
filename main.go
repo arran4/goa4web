@@ -405,11 +405,14 @@ func run() error {
 	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
 	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguages))
-	ur.HandleFunc("/lang", userLangSaveLanguageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguage))
+	ur.HandleFunc("/lang", userLangSaveLanguagePreferenceActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguage))
 	ur.HandleFunc("/lang", userLangSaveAllActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/email", userEmailPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/email", userEmailSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskTestMail))
+	ur.HandleFunc("/notifications", userNotificationsPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskDismiss))
+	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 
 	rr := r.PathPrefix("/register").Subrouter()
 	rr.HandleFunc("", registerPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
@@ -459,6 +462,10 @@ func run() error {
 		Store:       store,
 		DB:          dbPool,
 	}
+
+	// Start background email queue processing.
+	go emailQueueWorker(context.Background(), New(dbPool), getEmailProvider(), time.Minute)
+	go notificationPurgeWorker(context.Background(), New(dbPool), time.Hour)
 
 	httpCfg := loadHTTPConfig()
 

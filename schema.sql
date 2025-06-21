@@ -334,3 +334,40 @@ CREATE TABLE `writtingApprovedUsers` (
   KEY `writing_has_users_FKIndex2` (`users_idusers`)
 );
 
+-- Track schema upgrades.
+CREATE TABLE IF NOT EXISTS `schema_version` (
+  `version` int NOT NULL
+);
+
+-- Store subscribed users for notifications.
+CREATE TABLE IF NOT EXISTS `subscriptions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `item_type` varchar(32) NOT NULL,
+  `target_id` int NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
+-- Queue outbound emails.
+CREATE TABLE IF NOT EXISTS `pending_emails` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `to_email` text NOT NULL,
+  `subject` text NOT NULL,
+  `body` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `sent_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+-- Internal notification list.
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `link` text,
+  `message` text,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `read_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+

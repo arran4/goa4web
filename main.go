@@ -61,11 +61,13 @@ var (
 	dbNameFlag         = flag.String("db-name", "", "database name")
 	dbLogVerbosityFlag = flag.Int("db-log-verbosity", 0, "database logging verbosity")
 
-	listenFlag      = flag.String("listen", ":8080", "server listen address")
-	hostnameFlag    = flag.String("hostname", "", "server base URL")
-	httpCfgPath     = flag.String("http-config", "", "path to HTTP configuration file")
-	listenFlagSet   bool
-	hostnameFlagSet bool
+	listenFlag       = flag.String("listen", ":8080", "server listen address")
+	hostnameFlag     = flag.String("hostname", "", "server base URL")
+	httpCfgPath      = flag.String("http-config", "", "path to HTTP configuration file")
+	feedsEnabledFlag = flag.String("feeds-enabled", "", "enable or disable feeds")
+	listenFlagSet    bool
+	hostnameFlagSet  bool
+	feedsFlagSet     bool
 
 	srv *Server
 	//
@@ -102,10 +104,13 @@ func run() error {
 	}
 
 	flag.CommandLine.Visit(func(f *flag.Flag) {
-		if f.Name == "listen" {
+		switch f.Name {
+		case "listen":
 			listenFlagSet = true
-		} else if f.Name == "hostname" {
+		case "hostname":
 			hostnameFlagSet = true
+		case "feeds-enabled":
+			feedsFlagSet = true
 		}
 	})
 
@@ -179,6 +184,15 @@ func run() error {
 		}
 	}
 
+	var cliFeeds string
+	if feedsFlagSet {
+		cliFeeds = *feedsEnabledFlag
+	}
+	loadFeedsEnabled(cliFeeds, appCfg)
+
+	if err := performStartupChecks(); err != nil {
+		return err
+	}
 	dbCfg := loadDBConfig()
 	emailCfg := loadEmailConfig()
 
@@ -478,6 +492,7 @@ func run() error {
 	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskResend))
 	ar.HandleFunc("/email/queue", adminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
 	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
+	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeCommentsSearch))

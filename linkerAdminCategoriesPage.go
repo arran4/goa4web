@@ -52,7 +52,7 @@ func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 		Position:         int32(pos),
 		Idlinkercategory: int32(cid),
 	}); err != nil {
-		log.Printf("updateLinkerCategorySortOrder Error: %s", err)
+		log.Printf("renameLinkerCategory Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

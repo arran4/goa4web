@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/sessions"
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -189,12 +187,6 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 	}
 
 	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
-}
-
-// userLangSaveLanguageActionPage is kept for backwards compatibility.
-// It simply delegates to userLangSaveDefaultLanguageActionPage.
-func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
-	userLangSaveDefaultLanguageActionPage(w, r)
 }
 
 func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {

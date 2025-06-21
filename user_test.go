@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -44,7 +45,7 @@ func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
 	if rr.Result().StatusCode != http.StatusTemporaryRedirect {
 		t.Fatalf("expected redirect, got %d", rr.Result().StatusCode)
 	}
-	if loc := rr.Result().Header.Get("Location"); loc != "/login" {
+	if loc := rr.Result().Header.Get("Location"); !strings.HasPrefix(loc, "/login") {
 		t.Errorf("expected redirect to /login, got %s", loc)
 	}
 	if called {

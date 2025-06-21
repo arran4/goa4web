@@ -17,8 +17,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	session, err := GetSession(r)
 	if err != nil {
-		log.Printf("logout get session: %v", err)
-		clearSession(w, r)
+		sessionError(w, r, err)
 	}
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")

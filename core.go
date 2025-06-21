@@ -40,8 +40,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		session, err := GetSession(request)
 		if err != nil {
-			log.Printf("core middleware session: %v", err)
-			clearSession(writer, request)
+			sessionErrorRedirect(writer, request, err)
 		}
 		var uid int32
 		if err == nil {

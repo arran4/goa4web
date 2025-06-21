@@ -39,10 +39,18 @@ func clearSession(w http.ResponseWriter, r *http.Request) {
 func GetSessionOrFail(w http.ResponseWriter, r *http.Request) (*sessions.Session, bool) {
 	sess, err := GetSession(r)
 	if err != nil {
-		log.Printf("session error: %v", err)
-		clearSession(w, r)
-		http.Redirect(w, r, "/login", http.StatusFound)
+		sessionErrorRedirect(w, r, err)
 		return nil, false
 	}
 	return sess, true
+}
+
+func sessionErrorRedirect(w http.ResponseWriter, r *http.Request, err error) {
+	sessionError(w, r, err)
+	http.Redirect(w, r, "/login", http.StatusFound)
+}
+
+func sessionError(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("session error: %v", err)
+	clearSession(w, r)
 }

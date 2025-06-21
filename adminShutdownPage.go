@@ -25,7 +25,7 @@ func adminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

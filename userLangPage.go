@@ -56,21 +56,23 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		LanguageOptions: opts,
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userLangPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "userLangPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
-	langs, err := queries.FetchLanguages(r.Context())
-	if err != nil {
-		return err
-	}
 	// Clear existing language selections for the user.
 	if _, err := queries.db.ExecContext(r.Context(), "DELETE FROM userlang WHERE users_idusers = ?", uid); err != nil {
 		return err
 	}
+
+	langs, err := queries.FetchLanguages(r.Context())
+	if err != nil {
+		return err
+	}
+
 	for _, l := range langs {
 		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
 			// TODO use queries
@@ -140,7 +142,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
@@ -186,7 +188,7 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
@@ -215,5 +217,5 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+	taskDoneAutoRefreshPage(w, r)
 }

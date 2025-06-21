@@ -195,6 +195,12 @@ const (
 	// TaskUpdateUserLevel updates a user's access level.
 	TaskUpdateUserLevel = "Update user level"
 
+	// TaskBulkApprove approves multiple queued items at once.
+	TaskBulkApprove = "Bulk Approve"
+
+	// TaskBulkDelete removes multiple queued items at once.
+	TaskBulkDelete = "Bulk Delete"
+
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting = "Update writing"
 

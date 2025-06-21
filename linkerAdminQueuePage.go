@@ -3,19 +3,35 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 )
 
 func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
+	type QueueRow struct {
+		*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
+		Preview string
+	}
 	type Data struct {
 		*CoreData
-		Queue []*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
+		Queue    []*QueueRow
+		Search   string
+		User     string
+		Category string
+		Offset   int
 	}
 
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Search:   r.URL.Query().Get("search"),
+		User:     r.URL.Query().Get("user"),
+		Category: r.URL.Query().Get("category"),
+		Offset:   offset,
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -31,7 +47,65 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.Queue = queue
+	var filtered []*QueueRow
+	for _, q := range queue {
+		if data.User != "" && !strings.EqualFold(q.Username.String, data.User) {
+			continue
+		}
+		if data.Category != "" && strconv.Itoa(int(q.LinkercategoryIdlinkercategory)) != data.Category {
+			continue
+		}
+		if data.Search != "" {
+			s := strings.ToLower(data.Search)
+			if !strings.Contains(strings.ToLower(q.Title.String), s) &&
+				!strings.Contains(strings.ToLower(q.Description.String), s) &&
+				!strings.Contains(strings.ToLower(q.Url.String), s) {
+				continue
+			}
+		}
+		filtered = append(filtered, &QueueRow{q, fetchPageTitle(r.Context(), q.Url.String)})
+	}
+
+	const pageSize = 15
+	if data.Offset < 0 {
+		data.Offset = 0
+	}
+	if data.Offset > len(filtered) {
+		data.Offset = len(filtered)
+	}
+	end := data.Offset + pageSize
+	if end > len(filtered) {
+		end = len(filtered)
+	}
+	data.Queue = filtered[data.Offset:end]
+
+	baseURL := "/linker/admin/queue"
+	qv := make(url.Values)
+	if data.Search != "" {
+		qv.Set("search", data.Search)
+	}
+	if data.User != "" {
+		qv.Set("user", data.User)
+	}
+	if data.Category != "" {
+		qv.Set("category", data.Category)
+	}
+	next := qv.Encode()
+	if next != "" {
+		next = "?" + next + "&offset=%d"
+	} else {
+		next = "?offset=%d"
+	}
+	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		Name: "Next 15",
+		Link: baseURL + fmt.Sprintf(next, data.Offset+pageSize),
+	})
+	if data.Offset > 0 {
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: "Previous 15",
+			Link: baseURL + fmt.Sprintf(next, data.Offset-pageSize),
+		})
+	}
 
 	CustomLinkerIndex(data.CoreData, r)
 
@@ -98,6 +172,50 @@ func linkerAdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 		if InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 			return
+		}
+	}
+	taskDoneAutoRefreshPage(w, r)
+}
+
+func linkerAdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm Error: %s", err)
+	}
+	for _, q := range r.Form["qid"] {
+		id, _ := strconv.Atoi(q)
+		if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(id)); err != nil {
+			log.Printf("deleteLinkerQueuedItem Error: %s", err)
+		}
+	}
+	taskDoneAutoRefreshPage(w, r)
+}
+
+func linkerAdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm Error: %s", err)
+	}
+	for _, q := range r.Form["qid"] {
+		id, _ := strconv.Atoi(q)
+		lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(id))
+		if err != nil {
+			log.Printf("selectInsert Error: %s", err)
+			continue
+		}
+		link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(lid))
+		if err != nil {
+			log.Printf("getLinkerItemById Error: %s", err)
+			continue
+		}
+		for _, text := range []string{link.Title.String, link.Description.String} {
+			wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+			if done {
+				return
+			}
+			if InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+				return
+			}
 		}
 	}
 	taskDoneAutoRefreshPage(w, r)

@@ -11,7 +11,10 @@ import (
 )
 
 func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["blog"])

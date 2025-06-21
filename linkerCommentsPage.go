@@ -46,7 +46,10 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
@@ -135,7 +138,10 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])

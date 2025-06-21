@@ -72,7 +72,10 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	bookmarks, err := queries.GetBookmarksForUser(r.Context(), uid)

@@ -50,7 +50,10 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -174,7 +177,10 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 
 	vars := mux.Vars(r)
 	aid, err := strconv.Atoi(vars["post"])

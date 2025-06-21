@@ -22,7 +22,10 @@ func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: NewsTopicName})

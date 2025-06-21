@@ -43,11 +43,11 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
 	ctx = context.WithValue(ctx, ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
 	req = req.WithContext(ctx)
-
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
-	mock.ExpectQuery(regexp.QuoteMeta(fetchLanguages)).WillReturnRows(rows)
 	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta(fetchLanguages)).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -57,7 +57,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Result().StatusCode != http.StatusTemporaryRedirect {
+	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
 }
@@ -90,11 +90,12 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
 	ctx = context.WithValue(ctx, ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
-	mock.ExpectQuery(regexp.QuoteMeta(fetchLanguages)).WillReturnRows(rows)
 	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta(fetchLanguages)).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveLanguagesActionPage(rr, req)
@@ -102,7 +103,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Result().StatusCode != http.StatusTemporaryRedirect {
+	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
 }
@@ -135,6 +136,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
 	ctx = context.WithValue(ctx, ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates"}).
@@ -147,7 +149,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Result().StatusCode != http.StatusTemporaryRedirect {
+	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
 }

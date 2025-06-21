@@ -252,24 +252,6 @@ type GetPermissionsByUserIdAndSectionNewsRow struct {
 	Username      sql.NullString
 }
 
-const getPermissionsByUserIdAndSectionWritings = `-- name: GetPermissionsByUserIdAndSectionWritings :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.username
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
-ORDER BY p.level
-`
-
-type GetPermissionsByUserIdAndSectionWritingsRow struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	Section       sql.NullString
-	Level         sql.NullString
-	Idusers       int32
-	Email         sql.NullString
-	Passwd        sql.NullString
-	Username      sql.NullString
-}
-
 func (q *Queries) GetPermissionsByUserIdAndSectionNews(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionNewsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getPermissionsByUserIdAndSectionNews)
 	if err != nil {
@@ -300,6 +282,24 @@ func (q *Queries) GetPermissionsByUserIdAndSectionNews(ctx context.Context) ([]*
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPermissionsByUserIdAndSectionWritings = `-- name: GetPermissionsByUserIdAndSectionWritings :many
+SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.username
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
+ORDER BY p.level
+`
+
+type GetPermissionsByUserIdAndSectionWritingsRow struct {
+	Idpermissions int32
+	UsersIdusers  int32
+	Section       sql.NullString
+	Level         sql.NullString
+	Idusers       int32
+	Email         sql.NullString
+	Passwd        sql.NullString
+	Username      sql.NullString
 }
 
 func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionWritingsRow, error) {

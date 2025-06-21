@@ -87,6 +87,14 @@ go test ./...
 
 This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
 
+## Application Configuration File
+
+The path to a general configuration file can be specified with the `--config-file`
+flag or the `CONFIG_FILE` environment variable. Command line parsing happens in
+two phases: first only this flag is processed so the file location is known. The
+file can set values such as `DB_CONFIG_FILE` which are applied before the rest
+of the flags are parsed.
+
 ## Database Configuration
 
 Database connection details can be supplied in several ways. Values are resolved in the following order:

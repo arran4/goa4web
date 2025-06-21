@@ -42,11 +42,22 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	updates := r.PostFormValue("emailupdates") != ""
 
 	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("GetPreferenceByUserID Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = queries.InsertEmailPreference(r.Context(), InsertEmailPreferenceParams{
@@ -80,8 +91,13 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		base = strings.TrimRight(appHTTPConfig.Hostname, "/")
 	}
 	url := base + r.URL.Path
-	if err := notifyChange(r.Context(), getEmailProvider(), user.Email.String, url); err != nil {
-		log.Printf("send test mail: %v", err)
+	if user != nil && user.Email.Valid {
+		provider := getEmailProvider()
+		if provider != nil {
+			if err := notifyChange(r.Context(), provider, user.Email.String, url); err != nil {
+				log.Printf("notifyChange Error: %s", err)
+			}
+		}
 	}
 	http.Redirect(w, r, "/user/email", http.StatusSeeOther)
 }

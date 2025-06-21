@@ -127,6 +127,7 @@ func main() {
 	// TODO consider adsense / adwords / etc
 
 	r.HandleFunc("/main.css", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = writer.Write(getMainCSSData())
 	}).Methods("GET")
 

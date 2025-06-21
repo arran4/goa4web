@@ -11,7 +11,7 @@ import (
 func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories []*GetLinkerCategoriesWithCountRow
+		Categories []*GetLinkerCategoryLinkCountsRow
 	}
 
 	data := Data{
@@ -20,7 +20,7 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	categoryRows, err := queries.GetLinkerCategoriesWithCount(r.Context())
+	categoryRows, err := queries.GetLinkerCategoryLinkCounts(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -45,6 +45,16 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
+	title := r.PostFormValue("title")
+	pos, _ := strconv.Atoi(r.PostFormValue("position"))
+	if err := queries.RenameLinkerCategory(r.Context(), RenameLinkerCategoryParams{
+		Title:            sql.NullString{Valid: true, String: title},
+		Position:         int32(pos),
+  }; err != nil {
+		log.Printf("updateLinkerCategorySortOrder Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	order, _ := strconv.Atoi(r.PostFormValue("order"))
 	if err := queries.UpdateLinkerCategorySortOrder(r.Context(), UpdateLinkerCategorySortOrderParams{
 		Sortorder:        int32(order),
@@ -61,8 +71,10 @@ func linkerAdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
+	pos, _ := strconv.Atoi(r.PostFormValue("position"))
 	if err := queries.RenameLinkerCategory(r.Context(), RenameLinkerCategoryParams{
 		Title:            sql.NullString{Valid: true, String: title},
+		Position:         int32(pos),
 		Idlinkercategory: int32(cid),
 	}); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)
@@ -75,6 +87,13 @@ func linkerAdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
+	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
+	for _, c := range rows {
+		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
+			http.Error(w, "Category in use", http.StatusBadRequest)
+			return
+		}
+  }
 	count, err := queries.CountLinksByCategory(r.Context(), int32(cid))
 	if err != nil {
 		log.Printf("countLinks Error: %s", err)
@@ -96,7 +115,9 @@ func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 func linkerAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	title := r.PostFormValue("title")
-	if err := queries.CreateLinkerCategory(r.Context(), sql.NullString{Valid: true, String: title}); err != nil {
+	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
+	pos := len(rows) + 1
+	if err := queries.CreateLinkerCategory(r.Context(), sql.NullString{Valid: true, String: title}, int32(pos)); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

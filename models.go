@@ -121,8 +121,9 @@ type Linker struct {
 }
 
 type Linkercategory struct {
-        Idlinkercategory int32
-        Title            sql.NullString
+	Idlinkercategory int32
+	Title            sql.NullString
+	Position         int32
        Sortorder        int32
 }
 

@@ -2,15 +2,30 @@
 DELETE FROM linkerCategory WHERE idlinkerCategory = ?;
 
 -- name: RenameLinkerCategory :exec
-UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?;
+UPDATE linkerCategory SET title = ?, position = ? WHERE idlinkerCategory = ?;
 
 -- name: CreateLinkerCategory :exec
-INSERT INTO linkerCategory (title) VALUES (?);
+INSERT INTO linkerCategory (title, position) VALUES (?, ?);
 
 -- name: GetAllLinkerCategories :many
+SELECT idlinkerCategory, title, position
+FROM linkerCategory
+ORDER BY position
+;
+
+-- name: GetLinkerCategoryLinkCounts :many
+SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
+FROM linkerCategory c
+LEFT JOIN linker l ON c.idlinkerCategory = l.linkerCategory_idlinkerCategory
+GROUP BY c.idlinkerCategory
+ORDER BY c.position
+;
+
+-- name: GetAllLinkerCategoriesWithSortOrder :many
 SELECT idlinkerCategory, title, sortorder
 FROM linkerCategory
 ORDER BY sortorder;
+
 
 -- name: DeleteLinkerQueuedItem :exec
 DELETE FROM linkerQueue WHERE idlinkerQueue = ?;

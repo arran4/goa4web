@@ -10,10 +10,18 @@ import (
 
 type codetype int
 
+// codetype defines the output mode for A4code2html.
 const (
+	// ct_html produces standard HTML output.
 	ct_html codetype = iota
+
+	// ct_tableOfContents outputs only the table of contents.
 	ct_tableOfContents
+
+	// ct_tagstrip removes all formatting tags.
 	ct_tagstrip
+
+	// ct_wordsonly returns only the raw words.
 	ct_wordsonly
 )
 

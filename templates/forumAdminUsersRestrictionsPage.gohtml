@@ -2,8 +2,8 @@
     <font size="4">User Levels:</font><br>
     <table width="100%">
         <tr>
-            <th>User
             <th>Topic
+            <th>User
             <th>Level
             <th>Invite Level Max
             <th>Expires
@@ -12,11 +12,11 @@
         {{ range .UserTopicLevels }}
             <tr>
                 <form method="post" action="/forum/admin/user/{{ .Idusers }}/levels">
-                    <td>{{ .Username.String }}<input type="hidden" name="uid" value="{{ .Idusers }}">
                     <td>{{ .Title.String }}<input type="hidden" name="tid" value="{{ .Idforumtopic }}">
+                    <td>{{ .Username.String }}<input type="hidden" name="uid" value="{{ .Idusers }}">
                     <td><input name="level" value="{{ .Level.Int32 }}" size="8">
                     <td><input name="inviteMax" value="{{ .Invitemax.Int32 }}" size="8">
-                    <td>{{ .Expiration }}
+                    <td><input type="date" name="expiresAt" value="{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time.Format \"2006-01-02\" }}{{ end }}">
                     <td>
                         <input type="submit" name="task" value="Update user level">
                         <input type="submit" name="task" value="Delete user level">
@@ -42,7 +42,7 @@
                 <td><select name="tid"><option value="">Select Topic</option>{{ range $.Topics }}<option value="{{.Idforumtopic}}">{{.Title.String}}</option>  {{ end }}</select>
                 <td><input name="level" value="0" size="8">
                 <td><input name="inviteMax" value="0" size="8">
-                <td><input name="expires" size="10" placeholder="YYYY-MM-DD">
+                <td><input type="date" name="expiresAt">
                 <td>
                     <input type="submit" name="task" value="Set user level">
                 </td>

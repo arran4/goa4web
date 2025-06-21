@@ -237,10 +237,11 @@ type Userlang struct {
 }
 
 type Userstopiclevel struct {
-	UsersIdusers           int32
-	ForumtopicIdforumtopic int32
-	Level                  sql.NullInt32
-	Invitemax              sql.NullInt32
+        UsersIdusers           int32
+        ForumtopicIdforumtopic int32
+        Level                  sql.NullInt32
+        Invitemax              sql.NullInt32
+       ExpiresAt              sql.NullTime
 }
 
 type Writing struct {

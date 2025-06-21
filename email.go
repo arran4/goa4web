@@ -498,3 +498,23 @@ func notifyAdmins(ctx context.Context, provider MailProvider, q *Queries, page s
 		}
 	}
 }
+
+// notifyThreadSubscribers emails users subscribed to the forum thread.
+func notifyThreadSubscribers(ctx context.Context, provider MailProvider, q *Queries, threadID, excludeUser int32, page string) {
+	if provider == nil {
+		return
+	}
+	rows, err := q.ListUsersSubscribedToThread(ctx, ListUsersSubscribedToThreadParams{
+		ForumthreadIdforumthread: threadID,
+		Idusers:                  excludeUser,
+	})
+	if err != nil {
+		log.Printf("Error: listUsersSubscribedToThread: %s", err)
+		return
+	}
+	for _, row := range rows {
+		if err := notifyChange(ctx, provider, row.Username.String, page); err != nil {
+			log.Printf("Error: notifyChange: %s", err)
+		}
+	}
+}

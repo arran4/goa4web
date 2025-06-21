@@ -151,6 +151,34 @@ See `examples/http.conf` for the file format.
 
 `HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
 
+## Environment Variables
+
+The following environment variables can be used to configure the application:
+
+| Variable | Description |
+| --- | --- |
+| `DB_USER` | Environment variable for the database username. |
+| `DB_PASS` | Environment variable for the database password. |
+| `DB_HOST` | Environment variable for the database host. |
+| `DB_PORT` | Environment variable for the database port. |
+| `DB_NAME` | Environment variable for the database name. |
+| `EMAIL_PROVIDER` | Selects the mail sending backend. |
+| `SMTP_HOST` | SMTP server hostname. |
+| `SMTP_PORT` | SMTP server port. |
+| `SMTP_USER` | SMTP username. |
+| `SMTP_PASS` | SMTP password. |
+| `AWS_REGION` | AWS region for the SES provider. |
+| `JMAP_ENDPOINT` | JMAP API endpoint. |
+| `JMAP_ACCOUNT` | JMAP account identifier. |
+| `JMAP_IDENTITY` | JMAP identity identifier. |
+| `JMAP_USER` | Username for the JMAP provider. |
+| `JMAP_PASS` | Password for the JMAP provider. |
+| `CONFIG_FILE` | Specifies the path to the main application configuration file. |
+| `EMAIL_ENABLED` | Toggles sending queued emails. |
+| `NOTIFICATIONS_ENABLED` | Toggles the internal notification system. |
+| `PAGE_SIZE_MIN` | Defines the minimum allowed page size. |
+| `PAGE_SIZE_MAX` | Defines the maximum allowed page size. |
+
 ### Implementing Custom Providers
 
 New email backends can be added by satisfying the `MailProvider` interface
@@ -166,6 +194,19 @@ Create a new file implementing this interface and add a case in
 `providerFromConfig` that returns your provider. Providers that rely on optional
 dependencies should live behind a build tag. See `email_sendgrid.go` for an
 example provider built with the `sendgrid` tag.
+
+## Database Upgrades
+
+When upgrading from v0.0.1 use the SQL script under `migrations/0002.sql` to
+bring the database schema up to date. Apply it using the `mysql` command line
+tool:
+
+```bash
+mysql -u a4web -p a4web < migrations/0002.sql
+```
+
+The script adds new tables for notifications and email queues, updates existing
+columns and records the schema version.
 
 ## Admin tools
 

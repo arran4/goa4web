@@ -121,13 +121,19 @@ FROM linkerCategory
 ORDER BY position
 `
 
-func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory, error) {
+type GetAllLinkerCategoriesRow struct {
+	Idlinkercategory int32
+	Title            sql.NullString
+	Position         int32
+}
+
+func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*GetAllLinkerCategoriesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Linkercategory
+	var items []*GetAllLinkerCategoriesRow
 	for rows.Next() {
 		var i Linkercategory
 		if err := rows.Scan(
@@ -155,13 +161,19 @@ FROM linkerCategory
 ORDER BY sortorder
 `
 
-func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*Linkercategory, error) {
+type GetAllLinkerCategoriesWithSortOrderRow struct {
+	Idlinkercategory int32
+	Title            sql.NullString
+	Sortorder        int32
+}
+
+func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*GetAllLinkerCategoriesWithSortOrderRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerCategoriesWithSortOrder)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Linkercategory
+	var items []*GetAllLinkerCategoriesWithSortOrderRow
 	for rows.Next() {
 		var i Linkercategory
 		if err := rows.Scan(

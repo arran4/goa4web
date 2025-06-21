@@ -33,7 +33,6 @@ var indexItems = []IndexItem{
 	{Name: "Search", Link: "/search"},
 	{Name: "Writings", Link: "/writings"},
 	{Name: "Information", Link: "/information"},
-	{Name: "Preferences", Link: "/user"},
 }
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
@@ -59,12 +58,15 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		idx := make([]IndexItem, len(indexItems))
 		copy(idx, indexItems)
+		if uid != 0 {
+			idx = append(idx, IndexItem{Name: "Preferences", Link: "/usr"})
+		}
 		var count int32
 		if uid != 0 && notificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(request.Context(), uid)
 			if err == nil {
 				count = c
-				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/user/notifications"})
+				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{

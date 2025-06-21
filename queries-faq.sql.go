@@ -135,6 +135,42 @@ func (q *Queries) GetAllFAQCategories(ctx context.Context) ([]*Faqcategory, erro
 	return items, nil
 }
 
+const getFAQCategoriesWithQuestionCount = `-- name: GetFAQCategoriesWithQuestionCount :many
+SELECT c.idfaqCategories, c.name, COUNT(f.idfaq) as QuestionCount
+FROM faqCategories c
+LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
+GROUP BY c.idfaqCategories
+`
+
+type GetFAQCategoriesWithQuestionCountRow struct {
+	Idfaqcategories int32
+	Name            sql.NullString
+	Questioncount   int64
+}
+
+func (q *Queries) GetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*GetFAQCategoriesWithQuestionCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQCategoriesWithQuestionCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetFAQCategoriesWithQuestionCountRow
+	for rows.Next() {
+		var i GetFAQCategoriesWithQuestionCountRow
+		if err := rows.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllFAQQuestions = `-- name: GetAllFAQQuestions :many
 SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
 FROM faq

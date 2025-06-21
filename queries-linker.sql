@@ -8,7 +8,7 @@ UPDATE linkerCategory SET title = ?, position = ? WHERE idlinkerCategory = ?;
 INSERT INTO linkerCategory (title, position) VALUES (?, ?);
 
 -- name: GetAllLinkerCategories :many
-SELECT idlinkerCategory, title, position
+SELECT idlinkerCategory, position, title, sortorder
 FROM linkerCategory
 ORDER BY position
 ;
@@ -22,7 +22,7 @@ ORDER BY c.position
 ;
 
 -- name: GetAllLinkerCategoriesWithSortOrder :many
-SELECT idlinkerCategory, title, sortorder
+SELECT idlinkerCategory, position, title, sortorder
 FROM linkerCategory
 ORDER BY sortorder;
 

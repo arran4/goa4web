@@ -451,9 +451,9 @@ func getAdminEmails(ctx context.Context, q *Queries) []string {
 			log.Printf("list admin emails: %v", err)
 			return emails
 		}
-		for _, row := range rows {
-			if row.Email.Valid {
-				emails = append(emails, row.Email.String)
+		for _, email := range rows {
+			if email.Valid {
+				emails = append(emails, email.String)
 			}
 		}
 	}

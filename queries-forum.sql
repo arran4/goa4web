@@ -1,6 +1,7 @@
 -- name: UpdateForumCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?;
 
+-- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
        COUNT(t.idforumtopic)   as TopicCount
 FROM forumcategory c

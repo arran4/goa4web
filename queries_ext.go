@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -295,4 +296,13 @@ func (q *Queries) RecentNotifications(ctx context.Context, limit int32) ([]*Noti
 		items = append(items, &n)
 	}
 	return items, rows.Err()
+}
+
+// CountThreadsByBoard returns the number of unique threads for a board.
+func (q *Queries) CountThreadsByBoard(ctx context.Context, boardID int32) (int32, error) {
+	var c int32
+	err := q.db.QueryRowContext(ctx,
+		"SELECT COUNT(DISTINCT forumthread_idforumthread) FROM imagepost WHERE imageboard_idimageboard = ?",
+		boardID).Scan(&c)
+	return c, err
 }

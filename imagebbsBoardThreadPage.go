@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -39,7 +38,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 	thid, _ := strconv.Atoi(vars["thread"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	data := Data{
@@ -134,7 +133,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["board"])
@@ -257,18 +256,6 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	/* TODO
-	-- name: postUpdate :exec
-	UPDATE comments c, forumthread th, forumtopic t
-	SET
-	th.lastposter=c.users_idusers, t.lastposter=c.users_idusers,
-	th.lastaddition=c.written, t.lastaddition=c.written,
-	t.comments=IF(th.comments IS NULL, 0, t.comments+1),
-	t.threads=IF(th.comments IS NULL, IF(t.threads IS NULL, 1, t.threads+1), t.threads),
-	th.comments=IF(th.comments IS NULL, 0, th.comments+1),
-	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
-	WHERE c.idcomments=?;
-	*/
 	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

@@ -3,7 +3,8 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/sessions"
+	"github.com/gorilla/csrf"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -12,10 +13,12 @@ import (
 func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		CSRFField template.HTML
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:  r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CSRFField: csrf.TemplateField(r),
 	}
 
 	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "loginPage.gohtml", data); err != nil {
@@ -26,6 +29,7 @@ func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginActionPage(w http.ResponseWriter, r *http.Request) {
+	log.Printf("login attempt for %s", r.PostFormValue("username"))
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
@@ -52,7 +56,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	session.Values["UID"] = int32(user.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
@@ -62,6 +66,8 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("login success uid=%d", user.Idusers)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

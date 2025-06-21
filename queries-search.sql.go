@@ -43,6 +43,22 @@ func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWri
 	return err
 }
 
+const addToLinkerSearch = `-- name: AddToLinkerSearch :exec
+INSERT IGNORE INTO linkerSearch
+(linker_idlinker, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
+
+type AddToLinkerSearchParams struct {
+	LinkerIdlinker                 int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+func (q *Queries) AddToLinkerSearch(ctx context.Context, arg AddToLinkerSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerIdlinker, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
 const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
 SELECT DISTINCT cs.comments_idcomments
 FROM commentsSearch cs

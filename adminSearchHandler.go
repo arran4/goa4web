@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -105,22 +106,117 @@ static void remakeLinkerSearch(a4webcont &cont)
 */
 
 func adminSearchRemakeCommentsSearchPage(w http.ResponseWriter, r *http.Request) {
-	//TODO
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := struct {
+		*CoreData
+		Errors []string
+		Back   string
+	}{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Back:     "/admin/search",
+	}
+	if err := queries.DeleteCommentsSearch(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("DeleteCommentsSearch: %w", err).Error())
+	}
+	if err := queries.RemakeCommentsSearchInsert(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("RemakeCommentsSearchInsert: %w", err).Error())
+	}
+
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 func adminSearchRemakeNewsSearchPage(w http.ResponseWriter, r *http.Request) {
-	//TODO
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := struct {
+		*CoreData
+		Errors []string
+		Back   string
+	}{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Back:     "/admin/search",
+	}
+	if err := queries.DeleteSiteNewsSearch(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("DeleteSiteNewsSearch: %w", err).Error())
+	}
+	if err := queries.RemakeNewsSearchInsert(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("RemakeNewsSearchInsert: %w", err).Error())
+	}
+
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 func adminSearchRemakeBlogSearchPage(w http.ResponseWriter, r *http.Request) {
-	//TODO
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := struct {
+		*CoreData
+		Errors []string
+		Back   string
+	}{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Back:     "/admin/search",
+	}
+	if err := queries.DeleteBlogsSearch(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("DeleteBlogsSearch: %w", err).Error())
+	}
+	if err := queries.RemakeBlogsSearchInsert(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("RemakeBlogsSearchInsert: %w", err).Error())
+	}
+
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 func adminSearchRemakeLinkerSearchPage(w http.ResponseWriter, r *http.Request) {
-	//TODO
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := struct {
+		*CoreData
+		Errors []string
+		Back   string
+	}{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Back:     "/admin/search",
+	}
+	if err := queries.DeleteLinkerSearch(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("DeleteLinkerSearch: %w", err).Error())
+	}
+	if err := queries.RemakeLinkerSearchInsert(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("RemakeLinkerSearchInsert: %w", err).Error())
+	}
+
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) {
-	//TODO
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := struct {
+		*CoreData
+		Errors []string
+		Back   string
+	}{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Back:     "/admin/search",
+	}
+	if err := queries.DeleteWritingSearch(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("DeleteWritingSearch: %w", err).Error())
+	}
+	if err := queries.RemakeWritingSearchInsert(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("RemakeWritingSearchInsert: %w", err).Error())
+	}
+
+	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }

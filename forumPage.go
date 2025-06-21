@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -24,7 +23,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
@@ -130,7 +129,7 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 	threadId := vars["thread"]
 	topicId := vars["topic"]
 	categoryId := vars["category"]
-	if topicId != "" && threadId == "" {
+	if data.FeedsEnabled && topicId != "" && threadId == "" {
 		data.RSSFeedUrl = fmt.Sprintf("/forum/topic/%s.rss", topicId)
 		data.AtomFeedUrl = fmt.Sprintf("/forum/topic/%s.atom", topicId)
 		data.CustomIndexItems = append(data.CustomIndexItems,

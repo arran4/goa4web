@@ -3,14 +3,17 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
 )
 
 func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
-	// TODO add guard
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	type Data struct {
 		*CoreData
 		Languages          []*Language
@@ -19,7 +22,7 @@ func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           cd,
 		SelectedLanguageId: 1,
 		Mode:               "Add",
 	}
@@ -50,7 +53,7 @@ func blogsBlogAddActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	id, err := queries.CreateBlogEntry(r.Context(), CreateBlogEntryParams{

@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"os"
@@ -13,8 +12,7 @@ import (
 )
 
 func handleDie(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<b><font color=red>You encountered an error: "+message+"....</font></b>")
+	http.Error(w, message, http.StatusInternalServerError)
 }
 
 // IndexItem struct.
@@ -40,7 +38,11 @@ var indexItems = []IndexItem{
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		uid, _ := session.Values["UID"].(int32)
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -60,6 +62,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			IndexItems:    indexItems,
 			UserID:        uid,
 			Title:         "Arran4's Website",
+			FeedsEnabled:  FeedsEnabled,
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
@@ -72,6 +75,7 @@ type CoreData struct {
 	SecurityLevel    string
 	Title            string
 	AutoRefresh      bool
+	FeedsEnabled     bool
 	RSSFeedUrl       string
 	AtomFeedUrl      string
 }
@@ -150,28 +154,18 @@ type ContextValues string
 
 func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web?parseTime=true")
-		if err != nil {
-			ue := UserError{Err: err, ErrorMessage: "unable to open database"}
+		if dbPool == nil {
+			ue := UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
 		}
-		defer func(db *sql.DB) {
-			err := db.Close()
-			if err != nil {
-				log.Printf("Error closing db: %s", err)
-			}
-		}(db)
-		if err := db.Ping(); err != nil {
-			ue := UserError{Err: err, ErrorMessage: "database unavailable"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
-			return
+		if dbLogVerbosity > 0 {
+			log.Printf("db pool stats: %+v", dbPool.Stats())
 		}
 		ctx := request.Context()
-		ctx = context.WithValue(ctx, ContextValues("sql.DB"), db)
-		ctx = context.WithValue(ctx, ContextValues("queries"), New(db))
+		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)
+		ctx = context.WithValue(ctx, ContextValues("queries"), New(dbPool))
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }

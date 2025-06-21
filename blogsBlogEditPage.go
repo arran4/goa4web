@@ -10,7 +10,11 @@ import (
 )
 
 func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
-	// TODO add guard
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	type Data struct {
 		*CoreData
 		Languages          []*Language
@@ -20,7 +24,7 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           cd,
 		SelectedLanguageId: 1,
 		Mode:               "Edit",
 	}

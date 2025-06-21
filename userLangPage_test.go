@@ -50,7 +50,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(fetchLanguages)).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
-	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(15)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveAllActionPage(rr, req)
 
@@ -139,10 +139,10 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
 	req = req.WithContext(ctx)
 
-	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates"}).
-		AddRow(1, 1, 1, nil)
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).
+		AddRow(1, 1, 1, nil, 15)
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
-	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(15), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveLanguagePreferenceActionPage(rr, req)
 

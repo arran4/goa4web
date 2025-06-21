@@ -421,6 +421,8 @@ func run() error {
 	ur.HandleFunc("/email", userEmailPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/email", userEmailSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskTestMail))
+	ur.HandleFunc("/paging", userPagingPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("/paging", userPagingSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskDismiss))
 	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods("GET").MatcherFunc(RequiresAnAccount())
@@ -478,10 +480,13 @@ func run() error {
 	srv = &Server{
 		DBConfig:    loadDBConfig(),
 		EmailConfig: loadEmailConfig(),
-		Router:      csrfMiddleware(r),
-		Store:       store,
-		DB:          dbPool,
+		// Load pagination bounds at startup.
+		// The values are stored in appPaginationConfig.
+		Router: csrfMiddleware(r),
+		Store:  store,
+		DB:     dbPool,
 	}
+	loadPaginationConfig()
 
 	// Start background email queue processing.
 	go emailQueueWorker(context.Background(), New(dbPool), getEmailProvider(), time.Minute)

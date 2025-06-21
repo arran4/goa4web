@@ -55,7 +55,7 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 		users = filtered
 	}
 
-	const pageSize = 15
+	pageSize := getPageSize(r)
 	if offset < 0 {
 		offset = 0
 	}
@@ -79,23 +79,23 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	if data.Search != "" {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Next 15",
+			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: fmt.Sprintf("/forum/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset+pageSize),
 		})
 		if offset > 0 {
 			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "Previous 15",
+				Name: fmt.Sprintf("Previous %d", pageSize),
 				Link: fmt.Sprintf("/forum/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset-pageSize),
 			})
 		}
 	} else {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Next 15",
+			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: fmt.Sprintf("/forum/admin/users?offset=%d", offset+pageSize),
 		})
 		if offset > 0 {
 			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "Previous 15",
+				Name: fmt.Sprintf("Previous %d", pageSize),
 				Link: fmt.Sprintf("/forum/admin/users?offset=%d", offset-pageSize),
 			})
 		}

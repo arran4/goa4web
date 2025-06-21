@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"github.com/gorilla/sessions"
 	"log"
@@ -16,7 +17,8 @@ type Server struct {
 	Store       *sessions.CookieStore
 	DB          *sql.DB
 
-	addr string
+	addr       string
+	httpServer *http.Server
 }
 
 // Addr returns the address the server is listening on after Start is called.
@@ -30,6 +32,15 @@ func (s *Server) Start(addr string) error {
 		return err
 	}
 	s.addr = ln.Addr().String()
+	s.httpServer = &http.Server{Handler: s.Router}
 	log.Printf("Server started on http://%s", s.addr)
-	return http.Serve(ln, s.Router)
+	return s.httpServer.Serve(ln)
+}
+
+// Shutdown gracefully stops the HTTP server.
+func (s *Server) Shutdown(ctx context.Context) error {
+	if s.httpServer == nil {
+		return nil
+	}
+	return s.httpServer.Shutdown(ctx)
 }

@@ -8,11 +8,15 @@ import (
 
 // HTTPConfig holds parameters for the HTTP server.
 type HTTPConfig struct {
-	Listen string
+	Listen   string
+	Hostname string
 }
 
 // cliHTTPConfig is populated from command line flags in main().
 var cliHTTPConfig HTTPConfig
+
+// appHTTPConfig holds the resolved configuration after loadHTTPConfig is called.
+var appHTTPConfig HTTPConfig
 
 // httpConfigFile is the optional path to a configuration file read at startup.
 // If empty, the HTTP_CONFIG_FILE environment variable is consulted.
@@ -26,12 +30,18 @@ func resolveHTTPConfig(cli, file, env HTTPConfig) HTTPConfig {
 		if src.Listen != "" {
 			cfg.Listen = src.Listen
 		}
+		if src.Hostname != "" {
+			cfg.Hostname = src.Hostname
+		}
 	}
 	merge(env)
 	merge(file)
 	merge(cli)
 	if cfg.Listen == "" {
 		cfg.Listen = ":8080"
+	}
+	if cfg.Hostname == "" {
+		cfg.Hostname = "http://localhost:8080"
 	}
 	return cfg
 }
@@ -51,8 +61,11 @@ func loadHTTPConfigFile(path string) (HTTPConfig, error) {
 		if i := strings.IndexByte(line, '='); i > 0 {
 			key := strings.TrimSpace(line[:i])
 			val := strings.TrimSpace(line[i+1:])
-			if key == "LISTEN" {
+			switch key {
+			case "LISTEN":
 				cfg.Listen = val
+			case "HOSTNAME":
+				cfg.Hostname = val
 			}
 		}
 	}
@@ -62,7 +75,11 @@ func loadHTTPConfigFile(path string) (HTTPConfig, error) {
 // loadHTTPConfig loads the HTTP configuration from environment, optional file
 // and command line flags applying the precedence defined in AGENTS.md.
 func loadHTTPConfig() HTTPConfig {
-	env := HTTPConfig{Listen: os.Getenv("LISTEN")}
+	env := HTTPConfig{
+		Listen:   os.Getenv("LISTEN"),
+		Hostname: os.Getenv("HOSTNAME"),
+	}
+	fileCfg, err := loadHTTPConfigFile(httpConfigFile)
 	cfgPath := httpConfigFile
 	if cfgPath == "" {
 		cfgPath = os.Getenv("HTTP_CONFIG_FILE")
@@ -71,5 +88,6 @@ func loadHTTPConfig() HTTPConfig {
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("HTTP config file error: %v", err)
 	}
-	return resolveHTTPConfig(cliHTTPConfig, fileCfg, env)
+	appHTTPConfig = resolveHTTPConfig(cliHTTPConfig, fileCfg, env)
+	return appHTTPConfig
 }

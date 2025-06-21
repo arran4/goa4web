@@ -122,6 +122,20 @@ The resolution order is:
 The config file uses a simple `key=value` format matching the environment
 variable names. See `examples/email.conf` for an example file containing all keys.
 
+## HTTP Server Configuration
+
+The address the HTTP server listens on and the base URL used for absolute URLs
+can be configured the same way as other settings:
+
+1. Command line flags (`--listen` and `--hostname`)
+2. Values from a config file specified with `--http-config`
+3. Environment variables `LISTEN` and `HOSTNAME`
+4. Built-in defaults (`:8080` and `http://localhost:8080`)
+
+See `examples/http.conf` for the file format.
+
+`HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
+
 ### Implementing Custom Providers
 
 New email backends can be added by satisfying the `MailProvider` interface

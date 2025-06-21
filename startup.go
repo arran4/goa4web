@@ -60,8 +60,9 @@ func checkDatabase() *UserError {
 	return InitDB()
 }
 
-func performStartupChecks() {
+func performStartupChecks() error {
 	if ue := checkDatabase(); ue != nil {
-		log.Fatalf("%s: %v", ue.ErrorMessage, ue.Err)
+		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
+	return nil
 }

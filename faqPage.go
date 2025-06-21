@@ -59,7 +59,7 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomFAQIndex(data.CoreData)
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "faqPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "faqPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

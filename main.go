@@ -420,8 +420,8 @@ func run() error {
 	}
 
 	httpCfg := loadHTTPConfig()
-  
-  go func() {
+
+	go func() {
 		if err := srv.Start(httpCfg.Listen); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %v", err)
 		}
@@ -435,9 +435,9 @@ func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-    return fmt.Errorf("shutdown error: %w", err)
-  }
-  
+		return fmt.Errorf("shutdown error: %w", err)
+	}
+
 	return nil
 }
 
@@ -462,7 +462,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 
 		log.Printf("rendering template %s", template)
 
-		if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, template, data); err != nil {
+		if err := renderTemplate(w, r, template, data); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

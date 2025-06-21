@@ -26,7 +26,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Bool
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userEmailPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "userEmailPage.gohtml", data); err != nil {
 		log.Printf("user email page: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

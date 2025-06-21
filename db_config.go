@@ -52,15 +52,15 @@ func loadDBConfigFile(path string) (DBConfig, error) {
 			key := strings.TrimSpace(line[:i])
 			val := strings.TrimSpace(line[i+1:])
 			switch key {
-			case "DB_USER":
+			case config.EnvDBUser:
 				cfg.User = val
-			case "DB_PASS":
+			case config.EnvDBPass:
 				cfg.Pass = val
-			case "DB_HOST":
+			case config.EnvDBHost:
 				cfg.Host = val
-			case "DB_PORT":
+			case config.EnvDBPort:
 				cfg.Port = val
-			case "DB_NAME":
+			case config.EnvDBName:
 				cfg.Name = val
 			case "DB_LOG_VERBOSITY":
 				if v, err := strconv.Atoi(val); err == nil {
@@ -76,11 +76,11 @@ func loadDBConfigFile(path string) (DBConfig, error) {
 // and command line flags applying the precedence defined in AGENTS.md.
 func loadDBConfig() DBConfig {
 	env := DBConfig{
-		User: os.Getenv("DB_USER"),
-		Pass: os.Getenv("DB_PASS"),
-		Host: os.Getenv("DB_HOST"),
-		Port: os.Getenv("DB_PORT"),
-		Name: os.Getenv("DB_NAME"),
+		User: os.Getenv(config.EnvDBUser),
+		Pass: os.Getenv(config.EnvDBPass),
+		Host: os.Getenv(config.EnvDBHost),
+		Port: os.Getenv(config.EnvDBPort),
+		Name: os.Getenv(config.EnvDBName),
 	}
 	if lv := os.Getenv("DB_LOG_VERBOSITY"); lv != "" {
 		if v, err := strconv.Atoi(lv); err == nil {

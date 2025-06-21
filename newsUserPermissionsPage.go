@@ -10,13 +10,18 @@ import (
 )
 
 func newsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	type Data struct {
 		*CoreData
 		Rows []*GetPermissionsByUserIdAndSectionNewsRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: cd,
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -33,7 +38,7 @@ func newsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	data.Rows = rows
 
 	CustomNewsIndex(data.CoreData, r)
-	if err := renderTemplate(w, r, "adminUsersPermissionsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "newsUserPermissionsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

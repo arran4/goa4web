@@ -21,8 +21,8 @@ func TestCoreAdderMiddlewareBadSession(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Fatalf("expected 200 got %d", rr.Code)
+	if rr.Code != http.StatusFound {
+		t.Fatalf("expected redirect got %d", rr.Code)
 	}
 	sc := rr.Header().Get("Set-Cookie")
 	if !strings.Contains(sc, "Max-Age=0") {

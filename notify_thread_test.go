@@ -8,9 +8,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-type notifyRecordProvider struct{ to string }
+type dummyProvider struct{ to string }
 
-func (r *notifyRecordProvider) Send(ctx context.Context, to, subj, body string) error {
+func (r *dummyProvider) Send(ctx context.Context, to, subj, body string) error {
 	r.to = to
 	return nil
 }
@@ -31,7 +31,7 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(listUsersSubscribedToThread)).
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)
-	rec := &notifyRecordProvider{}
+       rec := &dummyProvider{}
 	notifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
 	if rec.to != "bob" {
 		t.Fatalf("expected mail to bob got %s", rec.to)

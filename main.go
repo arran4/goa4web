@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"database/sql"
 	"errors"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -126,9 +128,7 @@ func main() {
 
 	// TODO consider adsense / adwords / etc
 
-	r.HandleFunc("/main.css", func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = writer.Write(getMainCSSData())
-	}).Methods("GET")
+	r.HandleFunc("/main.css", mainCSSHandler).Methods("GET")
 
 	// News
 	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("newsPage.gohtml")))).Methods("GET")
@@ -412,6 +412,11 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 		CustomNewsIndex(cd, r)
 		handler.ServeHTTP(w, r)
 	})
+}
+
+// mainCSSHandler serves the site's stylesheet.
+func mainCSSHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(getMainCSSData()))
 }
 
 // TODO we could do better

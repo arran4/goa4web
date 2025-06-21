@@ -47,8 +47,9 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	cname := r.PostFormValue("cname")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/languages",
@@ -73,8 +74,9 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	cid := r.PostFormValue("cid")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/languages",
@@ -96,8 +98,9 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	cname := r.PostFormValue("cname")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/languages",

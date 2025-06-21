@@ -95,8 +95,9 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	uid := r.PostFormValue("uid")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/users",
@@ -143,8 +144,9 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/users",
@@ -167,6 +169,7 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*CoreData
 		Errors   []string
+		Messages []string
 		Back     string
 		Password string
 	}{

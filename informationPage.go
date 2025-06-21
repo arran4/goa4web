@@ -57,9 +57,5 @@ func informationPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.System.Processors = cpuInfo
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "informationPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "informationPage.gohtml", data)
 }

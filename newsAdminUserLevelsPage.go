@@ -33,11 +33,7 @@ func newsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomNewsIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "newsAdminUserLevelsPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "newsAdminUserLevelsPage.gohtml", data)
 }
 
 func newsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {

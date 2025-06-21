@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -32,12 +31,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = rows
 
-	err = getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminUsersPermissionsPage.gohtml", data)
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminUsersPermissionsPage.gohtml", data)
 }
 
 func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
@@ -68,12 +62,7 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
-	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 }
 
 func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
@@ -92,10 +81,5 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.PermissionUserDisallow(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 }

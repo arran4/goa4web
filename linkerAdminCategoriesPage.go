@@ -35,11 +35,7 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomLinkerIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "linkerAdminCategoriesPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "linkerAdminCategoriesPage.gohtml", data)
 }
 
 func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {

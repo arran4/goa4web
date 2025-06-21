@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -22,11 +21,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 
 	// Custom Index???
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userLangPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "userLangPage.gohtml", data)
 }
 func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)

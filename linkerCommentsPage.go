@@ -128,11 +128,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	data.Thread = threadRow
 
 	CustomLinkerIndex(data.CoreData, r)
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "linkerCommentsPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "linkerCommentsPage.gohtml", data)
 }
 
 func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {

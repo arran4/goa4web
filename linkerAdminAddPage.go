@@ -45,11 +45,7 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomLinkerIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "linkerAdminAddPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "linkerAdminAddPage.gohtml", data)
 }
 func linkerAdminAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)

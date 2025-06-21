@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
-	"log"
 	"net/http"
 )
 
@@ -16,12 +15,7 @@ func adminForumPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminForumPage.gohtml", data)
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminForumPage.gohtml", data)
 }
 
 func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
@@ -38,12 +32,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.RecalculateAllForumThreadMetaData(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("recalculateForumThreadByIdMetaData_firstpost: %w", err).Error())
 	}
-	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 }
 
 func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
@@ -59,10 +48,5 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.RebuildAllForumTopicMetaColumns(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("rebuildForumTopicByIdMetaColumns_lastaddition_lastposter: %w", err).Error())
 	}
-	err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data)
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 }

@@ -179,6 +179,56 @@ func (q *Queries) GetAllForumCategoriesWithSubcategoryCount(ctx context.Context)
 	return items, nil
 }
 
+const getAllForumThreadsWithTopic = `-- name: GetAllForumThreadsWithTopic :many
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, t.title AS topic_title
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+ORDER BY t.idforumtopic, th.lastaddition DESC
+`
+
+type GetAllForumThreadsWithTopicRow struct {
+	Idforumthread          int32
+	Firstpost              int32
+	Lastposter             int32
+	ForumtopicIdforumtopic int32
+	Comments               sql.NullInt32
+	Lastaddition           sql.NullTime
+	Locked                 sql.NullBool
+	TopicTitle             sql.NullString
+}
+
+func (q *Queries) GetAllForumThreadsWithTopic(ctx context.Context) ([]*GetAllForumThreadsWithTopicRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumThreadsWithTopic)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllForumThreadsWithTopicRow
+	for rows.Next() {
+		var i GetAllForumThreadsWithTopicRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+			&i.TopicTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllForumTopics = `-- name: GetAllForumTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition
 FROM forumtopic t
@@ -241,8 +291,8 @@ type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
 	Threads                      sql.NullInt32
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
-        Lastposterusername           sql.NullString
-       ExpiresAt                    sql.NullTime
+	Lastposterusername           sql.NullString
+	ExpiresAt                    sql.NullTime
 }
 
 func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error) {
@@ -262,10 +312,10 @@ func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx con
 			&i.Description,
 			&i.Threads,
 			&i.Comments,
-                        &i.Lastaddition,
-                        &i.Lastposterusername,
-                        &i.ExpiresAt,
-                ); err != nil {
+			&i.Lastaddition,
+			&i.Lastposterusername,
+			&i.ExpiresAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -299,9 +349,9 @@ type GetAllForumTopicsForUserRow struct {
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
 	Lastposterusername           sql.NullString
-        Seelevel                     sql.NullInt32
-        Level                        sql.NullInt32
-       ExpiresAt                    sql.NullTime
+	Seelevel                     sql.NullInt32
+	Level                        sql.NullInt32
+	ExpiresAt                    sql.NullTime
 }
 
 func (q *Queries) GetAllForumTopicsForUser(ctx context.Context, usersIdusers int32) ([]*GetAllForumTopicsForUserRow, error) {
@@ -322,11 +372,11 @@ func (q *Queries) GetAllForumTopicsForUser(ctx context.Context, usersIdusers int
 			&i.Threads,
 			&i.Comments,
 			&i.Lastaddition,
-                        &i.Lastposterusername,
-                        &i.Seelevel,
-                        &i.Level,
-                        &i.ExpiresAt,
-                ); err != nil {
+			&i.Lastposterusername,
+			&i.Seelevel,
+			&i.Level,
+			&i.ExpiresAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -365,9 +415,9 @@ type GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow struct {
 	UsersIdusers                 int32
 	ForumtopicIdforumtopic       int32
 	Level                        sql.NullInt32
-       Invitemax                    sql.NullInt32
-       ExpiresAt                    sql.NullTime
-       ForumtopicIdforumtopic_2     int32
+	Invitemax                    sql.NullInt32
+	ExpiresAt                    sql.NullTime
+	ForumtopicIdforumtopic_2     int32
 	Viewlevel                    sql.NullInt32
 	Replylevel                   sql.NullInt32
 	Newthreadlevel               sql.NullInt32
@@ -402,10 +452,10 @@ func (q *Queries) GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(ct
 			&i.Lastaddition,
 			&i.UsersIdusers,
 			&i.ForumtopicIdforumtopic,
-                        &i.Level,
-                        &i.Invitemax,
-                        &i.ExpiresAt,
-                        &i.ForumtopicIdforumtopic_2,
+			&i.Level,
+			&i.Invitemax,
+			&i.ExpiresAt,
+			&i.ForumtopicIdforumtopic_2,
 			&i.Viewlevel,
 			&i.Replylevel,
 			&i.Newthreadlevel,
@@ -452,9 +502,9 @@ type GetAllForumTopicsWithPermissionsAndTopicRow struct {
 	UsersIdusers                 int32
 	ForumtopicIdforumtopic       int32
 	Level                        sql.NullInt32
-        Invitemax                    sql.NullInt32
-       ExpiresAt                    sql.NullTime
-        ForumtopicIdforumtopic_2     sql.NullInt32
+	Invitemax                    sql.NullInt32
+	ExpiresAt                    sql.NullTime
+	ForumtopicIdforumtopic_2     sql.NullInt32
 	Viewlevel                    sql.NullInt32
 	Replylevel                   sql.NullInt32
 	Newthreadlevel               sql.NullInt32
@@ -489,10 +539,10 @@ func (q *Queries) GetAllForumTopicsWithPermissionsAndTopic(ctx context.Context) 
 			&i.Lastaddition,
 			&i.UsersIdusers,
 			&i.ForumtopicIdforumtopic,
-                        &i.Level,
-                        &i.Invitemax,
-                        &i.ExpiresAt,
-                        &i.ForumtopicIdforumtopic_2,
+			&i.Level,
+			&i.Invitemax,
+			&i.ExpiresAt,
+			&i.ForumtopicIdforumtopic_2,
 			&i.Viewlevel,
 			&i.Replylevel,
 			&i.Newthreadlevel,
@@ -742,20 +792,20 @@ ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax), ex
 `
 
 type UpsertUsersForumTopicLevelPermissionParams struct {
-        ForumtopicIdforumtopic int32
-        UsersIdusers           int32
-        Level                  sql.NullInt32
-        Invitemax              sql.NullInt32
-       ExpiresAt              sql.NullTime
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+	Level                  sql.NullInt32
+	Invitemax              sql.NullInt32
+	ExpiresAt              sql.NullTime
 }
 
 func (q *Queries) UpsertUsersForumTopicLevelPermission(ctx context.Context, arg UpsertUsersForumTopicLevelPermissionParams) error {
-        _, err := q.db.ExecContext(ctx, upsertUsersForumTopicLevelPermission,
-                arg.ForumtopicIdforumtopic,
-                arg.UsersIdusers,
-                arg.Level,
-                arg.Invitemax,
-               arg.ExpiresAt,
-        )
-        return err
+	_, err := q.db.ExecContext(ctx, upsertUsersForumTopicLevelPermission,
+		arg.ForumtopicIdforumtopic,
+		arg.UsersIdusers,
+		arg.Level,
+		arg.Invitemax,
+		arg.ExpiresAt,
+	)
+	return err
 }

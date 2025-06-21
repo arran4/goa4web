@@ -291,6 +291,9 @@ func run() error {
 	fr.HandleFunc("/admin/category/delete", forumAdminCategoryDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDeleteCategory))
 	fr.HandleFunc("/admin/topics", forumAdminTopicsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/topics", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
+
+	fr.HandleFunc("/admin/conversations", forumAdminThreadsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/thread/{thread}/delete", forumAdminThreadDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumThreadDelete))
 	fr.HandleFunc("/admin/topic/{topic}/edit", forumAdminTopicEditPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicChange))
 	fr.HandleFunc("/admin/topic/{topic}/delete", forumAdminTopicDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicDelete))
 	fr.HandleFunc("/admin/topic", forumTopicCreatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicCreate))

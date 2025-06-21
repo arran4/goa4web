@@ -151,3 +151,9 @@ DELETE FROM forumcategory WHERE idforumcategory = ?;
 DELETE FROM forumtopic WHERE idforumtopic = ?;
 
 
+-- name: GetAllForumThreadsWithTopic :many
+SELECT th.*, t.title AS topic_title
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+ORDER BY t.idforumtopic, th.lastaddition DESC;
+

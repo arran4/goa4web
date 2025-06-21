@@ -10,6 +10,15 @@ import (
 	"database/sql"
 )
 
+const deleteForumThread = `-- name: DeleteForumThread :exec
+DELETE FROM forumthread WHERE idforumthread = ?
+`
+
+func (q *Queries) DeleteForumThread(ctx context.Context, idforumthread int32) error {
+	_, err := q.db.ExecContext(ctx, deleteForumThread, idforumthread)
+	return err
+}
+
 const getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions = `-- name: GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions :one
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumthread th

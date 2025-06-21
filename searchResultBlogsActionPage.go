@@ -50,7 +50,7 @@ func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "searchResultBlogsActionPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "searchResultBlogsActionPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

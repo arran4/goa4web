@@ -1,0 +1,11 @@
+{{ template "head" $ }}
+<form action="{{.BackURL}}" method="{{.Method}}">
+    {{ range $key, $vals := .Values }}
+        {{ range $vals }}
+            <input type="hidden" name="{{$key}}" value="{{.}}">
+        {{ end }}
+    {{ end }}
+    <input type="submit" value="Go Back">
+</form>
+{{ template "tail" $ }}
+

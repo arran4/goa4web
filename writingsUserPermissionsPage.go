@@ -33,7 +33,7 @@ func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	data.Rows = rows
 
 	CustomWritingsIndex(data.CoreData, r)
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminUsersPermissionsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "adminUsersPermissionsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -71,7 +71,7 @@ func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *h
 
 	CustomWritingsIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -95,7 +95,7 @@ func writingsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomWritingsIndex(data.CoreData, r)
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

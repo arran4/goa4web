@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 		CSRFField: csrf.TemplateField(r),
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "loginPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "loginPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -64,6 +65,13 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 
+	backURL, _ := session.Values["BackURL"].(string)
+	backMethod, _ := session.Values["BackMethod"].(string)
+	backData, _ := session.Values["BackData"].(string)
+	delete(session.Values, "BackURL")
+	delete(session.Values, "BackMethod")
+	delete(session.Values, "BackData")
+
 	if err := session.Save(r, w); err != nil {
 		log.Printf("session.Save Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -71,6 +79,31 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("login success uid=%d", user.Idusers)
+
+	if backURL != "" {
+		if backMethod == "" || backMethod == http.MethodGet {
+			http.Redirect(w, r, backURL, http.StatusTemporaryRedirect)
+			return
+		}
+		vals, _ := url.ParseQuery(backData)
+		type Data struct {
+			*CoreData
+			BackURL string
+			Method  string
+			Values  url.Values
+		}
+		data := Data{
+			CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+			BackURL:  backURL,
+			Method:   backMethod,
+			Values:   vals,
+		}
+		if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
+			log.Printf("Template Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

@@ -56,20 +56,23 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		LanguageOptions: opts,
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userLangPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "userLangPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
+	// Clear existing language selections for the user.
 	if _, err := queries.db.ExecContext(r.Context(), "DELETE FROM userlang WHERE users_idusers = ?", uid); err != nil {
 		return err
 	}
+
 	langs, err := queries.FetchLanguages(r.Context())
 	if err != nil {
 		return err
 	}
+
 	for _, l := range langs {
 		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
 			if _, err := queries.db.ExecContext(r.Context(), "INSERT INTO userlang (users_idusers, language_idlanguage) VALUES (?, ?)", uid, l.Idlanguage); err != nil {

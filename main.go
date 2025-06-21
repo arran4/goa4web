@@ -503,7 +503,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 
 		log.Printf("rendering template %s", template)
 
-		if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, template, data); err != nil {
+		if err := renderTemplate(w, r, template, data); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

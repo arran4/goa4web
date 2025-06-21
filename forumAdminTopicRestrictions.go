@@ -107,7 +107,7 @@ func forumAdminTopicRestrictionLevelChangePage(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// TODO notify admin
+	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
 	taskDoneAutoRefreshPage(w, r)
 }
@@ -123,7 +123,7 @@ func forumAdminTopicRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// TODO notify admin
+	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
 	taskDoneAutoRefreshPage(w, r)
 }

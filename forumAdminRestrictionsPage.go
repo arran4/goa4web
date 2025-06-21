@@ -108,7 +108,7 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// TODO notify admin
+	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
 	taskDoneAutoRefreshPage(w, r)
 
@@ -135,7 +135,7 @@ func forumAdminUsersRestrictionsDeletePage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// TODO notify admin
+	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
 	taskDoneAutoRefreshPage(w, r)
 

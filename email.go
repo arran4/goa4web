@@ -428,3 +428,59 @@ func loadEmailConfig() EmailConfig {
 
 	return resolveEmailConfig(cliEmailConfig, fileCfg, env)
 }
+
+// getAdminEmails returns a slice of administrator email addresses. If the
+// ADMIN_EMAILS environment variable is set, it takes precedence and is
+// interpreted as a comma-separated list. If not set and a Queries value is
+// provided, the database is queried for administrator accounts.
+func getAdminEmails(ctx context.Context, q *Queries) []string {
+	env := os.Getenv("ADMIN_EMAILS")
+	var emails []string
+	if env != "" {
+		for _, e := range strings.Split(env, ",") {
+			if addr := strings.TrimSpace(e); addr != "" {
+				emails = append(emails, addr)
+			}
+		}
+		return emails
+	}
+	if q != nil {
+		rows, err := q.ListAdministratorEmails(ctx)
+		if err != nil {
+			log.Printf("list admin emails: %v", err)
+			return emails
+		}
+		for _, row := range rows {
+			if row.Email.Valid {
+				emails = append(emails, row.Email.String)
+			}
+		}
+	}
+	return emails
+}
+
+// notifyAdmins sends a change notification email to all administrator
+// addresses returned by getAdminEmails.
+func adminNotificationsEnabled() bool {
+	v := strings.ToLower(os.Getenv("ADMIN_NOTIFY"))
+	if v == "" {
+		return true
+	}
+	switch v {
+	case "0", "false", "off", "no":
+		return false
+	default:
+		return true
+	}
+}
+
+func notifyAdmins(ctx context.Context, provider MailProvider, q *Queries, page string) {
+	if provider == nil || !adminNotificationsEnabled() {
+		return
+	}
+	for _, email := range getAdminEmails(ctx, q) {
+		if err := notifyChange(ctx, provider, email, page); err != nil {
+			log.Printf("Error: notifyChange: %s", err)
+		}
+	}
+}

@@ -122,7 +122,12 @@ The resolution order is:
 4. Built-in defaults
 
 The config file uses a simple `key=value` format matching the environment
-variable names. See `examples/email.conf` for an example file containing all keys.
+variable names.
+
+Administrator change notifications are enabled by default when a valid mail
+provider is configured. Set `ADMIN_NOTIFY=false` to disable these messages.
+
+See `examples/email.conf` for an example file containing all keys.
 
 ## HTTP Server Configuration
 

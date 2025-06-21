@@ -61,3 +61,9 @@ FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
+
+-- name: ListAdministratorEmails :many
+SELECT u.email
+FROM users u
+JOIN permissions p ON p.users_idusers = u.idusers
+WHERE p.section = 'administrator';

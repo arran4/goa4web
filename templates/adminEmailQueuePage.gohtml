@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+<table border="1">
+    <tr><th>ID</th><th>To</th><th>Subject</th><th>Created</th></tr>
+    {{- range .Emails }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .ToEmail }}</td>
+        <td>{{ .Subject }}</td>
+        <td>{{ if .CreatedAt.Valid }}{{ .CreatedAt.Time }}{{ end }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

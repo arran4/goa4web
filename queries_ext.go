@@ -30,9 +30,9 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, userID int32) ([]*
 
 // GetPreferenceByUserID returns the preference row for the user.
 func (q *Queries) GetPreferenceByUserID(ctx context.Context, userID int32) (*Preference, error) {
-	row := q.db.QueryRowContext(ctx, "SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates FROM preferences WHERE users_idusers = ?", userID)
+	row := q.db.QueryRowContext(ctx, "SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size FROM preferences WHERE users_idusers = ?", userID)
 	var p Preference
-	err := row.Scan(&p.Idpreferences, &p.LanguageIdlanguage, &p.UsersIdusers, &p.Emailforumupdates)
+	err := row.Scan(&p.Idpreferences, &p.LanguageIdlanguage, &p.UsersIdusers, &p.Emailforumupdates, &p.PageSize)
 	return &p, err
 }
 
@@ -80,22 +80,24 @@ func (q *Queries) InsertUserLang(ctx context.Context, arg InsertUserLangParams) 
 type InsertPreferenceParams struct {
 	LanguageIdlanguage int32
 	UsersIdusers       int32
+	PageSize           int32
 }
 
 // InsertPreference creates a new preference row for the user.
 func (q *Queries) InsertPreference(ctx context.Context, arg InsertPreferenceParams) error {
-	_, err := q.db.ExecContext(ctx, "INSERT INTO preferences (language_idlanguage, users_idusers) VALUES (?, ?)", arg.LanguageIdlanguage, arg.UsersIdusers)
+	_, err := q.db.ExecContext(ctx, "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", arg.LanguageIdlanguage, arg.UsersIdusers, arg.PageSize)
 	return err
 }
 
 type UpdatePreferenceParams struct {
 	LanguageIdlanguage int32
 	UsersIdusers       int32
+	PageSize           int32
 }
 
 // UpdatePreference updates the user's default language preference.
 func (q *Queries) UpdatePreference(ctx context.Context, arg UpdatePreferenceParams) error {
-	_, err := q.db.ExecContext(ctx, "UPDATE preferences SET language_idlanguage = ? WHERE users_idusers = ?", arg.LanguageIdlanguage, arg.UsersIdusers)
+	_, err := q.db.ExecContext(ctx, "UPDATE preferences SET language_idlanguage = ?, page_size=? WHERE users_idusers = ?", arg.LanguageIdlanguage, arg.PageSize, arg.UsersIdusers)
 	return err
 }
 
@@ -133,6 +135,24 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Pendi
 func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, "UPDATE pending_emails SET sent_at = NOW() WHERE id = ?", id)
 	return err
+}
+
+// ListUnsentPendingEmails returns all queued emails that have not been sent yet.
+func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*PendingEmail
+	for rows.Next() {
+		var p PendingEmail
+		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &p)
+	}
+	return items, rows.Err()
 }
 
 // ListUsers returns a limited set of users ordered by ID.
@@ -183,6 +203,64 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*Us
 	return items, rows.Err()
 }
 
+// BloggerCountRow includes a username with their blog post count.
+type BloggerCountRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+// ListBloggers returns bloggers with the number of posts, ordered by username.
+type ListBloggersParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListBloggers(ctx context.Context, arg ListBloggersParams) ([]*BloggerCountRow, error) {
+	rows, err := q.db.QueryContext(ctx,
+		"SELECT u.username, COUNT(b.idblogs) FROM blogs b JOIN users u ON b.users_idusers = u.idusers GROUP BY u.idusers ORDER BY u.username LIMIT ? OFFSET ?",
+		arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*BloggerCountRow
+	for rows.Next() {
+		var i BloggerCountRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	return items, rows.Err()
+}
+
+// SearchBloggers finds bloggers by username or email with pagination.
+type SearchBloggersParams struct {
+	Query  string
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) SearchBloggers(ctx context.Context, arg SearchBloggersParams) ([]*BloggerCountRow, error) {
+	like := "%" + arg.Query + "%"
+	rows, err := q.db.QueryContext(ctx,
+		"SELECT u.username, COUNT(b.idblogs) FROM blogs b JOIN users u ON b.users_idusers = u.idusers WHERE LOWER(u.username) LIKE LOWER(?) OR LOWER(u.email) LIKE LOWER(?) GROUP BY u.idusers ORDER BY u.username LIMIT ? OFFSET ?",
+		like, like, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*BloggerCountRow
+	for rows.Next() {
+		var i BloggerCountRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	return items, rows.Err()
+}
+
 // GetPermissionsBySectionWithUsers lists permissions for a section with user info.
 func (q *Queries) GetPermissionsBySectionWithUsers(ctx context.Context, section string) ([]*PermissionWithUser, error) {
 	rows, err := q.db.QueryContext(ctx, "SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, u.email FROM permissions p JOIN users u ON u.idusers = p.users_idusers WHERE p.section = ? ORDER BY p.level", section)
@@ -197,6 +275,24 @@ func (q *Queries) GetPermissionsBySectionWithUsers(ctx context.Context, section 
 			return nil, err
 		}
 		items = append(items, &p)
+	}
+	return items, rows.Err()
+}
+
+// RecentNotifications returns the newest notifications across all users limited by the provided count.
+func (q *Queries) RecentNotifications(ctx context.Context, limit int32) ([]*Notification, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT id, users_idusers, link, message, created_at, read_at FROM notifications ORDER BY id DESC LIMIT ?", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Notification
+	for rows.Next() {
+		var n Notification
+		if err := rows.Scan(&n.ID, &n.UsersIdusers, &n.Link, &n.Message, &n.CreatedAt, &n.ReadAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &n)
 	}
 	return items, rows.Err()
 }

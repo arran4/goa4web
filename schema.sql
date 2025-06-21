@@ -169,6 +169,7 @@ CREATE TABLE `linker` (
 
 CREATE TABLE `linkerCategory` (
   `idlinkerCategory` int(10) NOT NULL AUTO_INCREMENT,
+  `position` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   PRIMARY KEY (`idlinkerCategory`)
 );

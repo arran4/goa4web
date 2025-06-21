@@ -123,6 +123,7 @@ type Linker struct {
 type Linkercategory struct {
 	Idlinkercategory int32
 	Title            sql.NullString
+	Position         int32
 }
 
 type Linkerqueue struct {

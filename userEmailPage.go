@@ -14,21 +14,22 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		UserData        *User
-		UserPreferences struct{ EmailUpdates bool }
+		UserPreferences struct {
+			EmailUpdates bool
+		}
 	}
 
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 	user, _ := r.Context().Value(ContextValues("user")).(*User)
 	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: cd,
 		UserData: user,
 	}
-	if pref != nil && pref.Emailforumupdates.Valid {
-		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Bool
+	if pref != nil {
+		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Valid && pref.Emailforumupdates.Bool
 	}
-
-	// Custom Index???
 
 	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userEmailPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -37,37 +38,40 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
-	uid, _ := session.Values["UID"].(int32)
-	if uid == 0 {
-		http.Error(w, "forbidden", http.StatusForbidden)
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
 	updates := r.PostFormValue("emailupdates") != ""
 
 	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = queries.InsertEmailPreference(r.Context(), InsertEmailPreferenceParams{
-				Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
-				UsersIdusers:      uid,
-			})
-		}
-	} else {
-		err = queries.UpdateEmailForumUpdatesByUserID(r.Context(), UpdateEmailForumUpdatesByUserIDParams{
-			Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
-			UsersIdusers:      uid,
-		})
-	}
-	if err != nil {
-		log.Printf("save email pref: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("GetPreferenceByUserID Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	http.Redirect(w, r, "/user/email", http.StatusSeeOther)
+	var execErr error
+	if errors.Is(err, sql.ErrNoRows) {
+    /// TODO use queries
+		_, execErr = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (emailforumupdates, users_idusers) VALUES (?, ?)", updates, uid)
+	} else {
+    /// TODO use queries
+		_, execErr = queries.db.ExecContext(r.Context(), "UPDATE preferences SET emailforumupdates=? WHERE users_idusers=?", updates, uid)
+	}
+	if execErr != nil {
+		log.Printf("Preference save Error: %s", execErr)
+		http.Redirect(w, r, "?error="+execErr.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
@@ -76,9 +80,15 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
-	url := fmt.Sprintf("http://%s%s", r.Host, r.URL.Path)
-	if err := notifyChange(r.Context(), getEmailProvider(), user.Email.String, url); err != nil {
-		log.Printf("send test mail: %v", err)
+	if user != nil && user.Email.Valid {
+		provider := getEmailProvider()
+		if provider != nil {
+			url := fmt.Sprintf("http://%s%s", r.Host, r.URL.Path)
+			if err := notifyChange(r.Context(), provider, user.Email.String, url); err != nil {
+				log.Printf("notifyChange Error: %s", err)
+			}
+		}
 	}
-	http.Redirect(w, r, "/user/email", http.StatusSeeOther)
+
+	taskDoneAutoRefreshPage(w, r)
 }

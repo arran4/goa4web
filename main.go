@@ -295,6 +295,7 @@ func run() error {
 	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUpdateTopicRestriction))
 	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskSetTopicRestriction))
 	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDeleteTopicRestriction))
+	fr.HandleFunc("/admin/topic/{topic}/levels", forumAdminTopicRestrictionLevelCopyPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskCopyTopicRestriction))
 	fr.HandleFunc("/admin/users", forumAdminUserPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskSetUserLevel))
 	fr.HandleFunc("/admin/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(RequiredAccess("administrator"), AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskUpdateUserLevel))

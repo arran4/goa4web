@@ -127,3 +127,51 @@ func forumAdminTopicRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Re
 
 	taskDoneAutoRefreshPage(w, r)
 }
+
+func forumAdminTopicRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request) {
+	fromID, err := strconv.Atoi(r.PostFormValue("fromTopic"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	toID, err := strconv.Atoi(r.PostFormValue("toTopic"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	src, err := queries.GetForumTopicRestrictionsByForumTopicId(r.Context(), int32(fromID))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	if len(src) == 0 || !src[0].ForumtopicIdforumtopic.Valid {
+		if err := queries.DeleteTopicRestrictionsByForumTopicId(r.Context(), int32(toID)); err != nil {
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
+	} else {
+		row := src[0]
+		if err := queries.UpsertForumTopicRestrictions(r.Context(), UpsertForumTopicRestrictionsParams{
+			ForumtopicIdforumtopic: int32(toID),
+			Viewlevel:              row.Viewlevel,
+			Replylevel:             row.Replylevel,
+			Newthreadlevel:         row.Newthreadlevel,
+			Seelevel:               row.Seelevel,
+			Invitelevel:            row.Invitelevel,
+			Readlevel:              row.Readlevel,
+			Modlevel:               row.Modlevel,
+			Adminlevel:             row.Adminlevel,
+		}); err != nil {
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
+	}
+
+	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
+
+	taskDoneAutoRefreshPage(w, r)
+}

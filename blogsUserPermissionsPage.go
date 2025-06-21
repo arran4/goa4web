@@ -68,8 +68,9 @@ func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	level := r.PostFormValue("level")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/blogs/bloggers",
@@ -105,8 +106,9 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/blogs/bloggers",
@@ -131,8 +133,9 @@ func blogsUsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) 
 	level := r.PostFormValue("level")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/blogs/bloggers",
@@ -169,8 +172,9 @@ func blogsUsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Reques
 	permids := r.PostForm["permid"]
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/blogs/bloggers",

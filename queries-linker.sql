@@ -8,8 +8,9 @@ UPDATE linkerCategory SET title = ? WHERE idlinkerCategory = ?;
 INSERT INTO linkerCategory (title) VALUES (?);
 
 -- name: GetAllLinkerCategories :many
-SELECT *
-FROM linkerCategory;
+SELECT idlinkerCategory, title, sortorder
+FROM linkerCategory
+ORDER BY sortorder;
 
 -- name: DeleteLinkerQueuedItem :exec
 DELETE FROM linkerQueue WHERE idlinkerQueue = ?;
@@ -62,4 +63,17 @@ FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 WHERE l.idlinker IN (sqlc.slice(linkerIds));
+
+-- name: GetLinkerCategoriesWithCount :many
+SELECT c.idlinkerCategory, c.title, c.sortorder, COUNT(l.idlinker) AS linkcount
+FROM linkerCategory c
+LEFT JOIN linker l ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
+GROUP BY c.idlinkerCategory
+ORDER BY c.sortorder;
+
+-- name: UpdateLinkerCategorySortOrder :exec
+UPDATE linkerCategory SET sortorder = ? WHERE idlinkerCategory = ?;
+
+-- name: CountLinksByCategory :one
+SELECT COUNT(*) FROM linker WHERE linkerCategory_idlinkerCategory = ?;
 

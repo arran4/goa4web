@@ -14,8 +14,10 @@ import (
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows   []*User
-		Search string
+		Rows     []*User
+		Search   string
+		NextLink string
+		PrevLink string
 	}
 
 	data := Data{
@@ -24,62 +26,59 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.AllUsers(r.Context())
+	const pageSize = 15
+	var rows []*User
+	var err error
+	if data.Search != "" {
+		rows, err = queries.SearchUsers(r.Context(), SearchUsersParams{
+			Query:  data.Search,
+			Limit:  pageSize + 1,
+			Offset: int32(offset),
+		})
+	} else {
+		rows, err = queries.ListUsers(r.Context(), ListUsersParams{
+			Limit:  pageSize + 1,
+			Offset: int32(offset),
+		})
+	}
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
+	hasMore := len(rows) > pageSize
+	if hasMore {
+		rows = rows[:pageSize]
+	}
+	data.Rows = rows
+
+	base := "/admin/users"
 	if data.Search != "" {
-		q := strings.ToLower(data.Search)
-		var filtered []*User
-		for _, row := range rows {
-			if strings.Contains(strings.ToLower(row.Username.String), q) ||
-				strings.Contains(strings.ToLower(row.Email.String), q) {
-				filtered = append(filtered, row)
-			}
+		base += "?search=" + url.QueryEscape(data.Search)
+	}
+	if hasMore {
+		if strings.Contains(base, "?") {
+			data.NextLink = fmt.Sprintf("%s&offset=%d", base, offset+pageSize)
+		} else {
+			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
-		rows = filtered
-	}
-
-	const pageSize = 15
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > len(rows) {
-		offset = len(rows)
-	}
-	end := offset + pageSize
-	if end > len(rows) {
-		end = len(rows)
-	}
-	data.Rows = rows[offset:end]
-
-	if data.Search != "" {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Next 15",
-			Link: fmt.Sprintf("/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset+pageSize),
+			Link: data.NextLink,
 		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset-pageSize),
-			})
+	}
+	if offset > 0 {
+		if strings.Contains(base, "?") {
+			data.PrevLink = fmt.Sprintf("%s&offset=%d", base, offset-pageSize)
+		} else {
+			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
-	} else {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Next 15",
-			Link: fmt.Sprintf("/admin/users?offset=%d", offset+pageSize),
+			Name: "Previous 15",
+			Link: data.PrevLink,
 		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/admin/users?offset=%d", offset-pageSize),
-			})
-		}
 	}
 
 	err = renderTemplate(w, r, "adminUsersPage.gohtml", data)

@@ -94,7 +94,7 @@ func CustomLinkerIndex(data *CoreData, r *http.Request) {
 		})
 	}
 	vars := mux.Vars(r)
-	categoryId, _ := vars["category"]
+	categoryId := vars["category"]
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	if categoryId == "" {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{

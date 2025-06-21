@@ -29,7 +29,7 @@ func CustomNewsIndex(data *CoreData, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	newsId, _ := vars["news"]
+	newsId := vars["news"]
 	if newsId != "" {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Return to list",

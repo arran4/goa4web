@@ -24,7 +24,7 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
-	username, _ := vars["username"]
+	username := vars["username"]
 	session, ok := GetSessionOrFail(w, r)
 	if !ok {
 		return

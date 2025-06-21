@@ -53,4 +53,7 @@ const (
 	EnvPageSizeMin = "PAGE_SIZE_MIN"
 	// EnvPageSizeMax defines the maximum allowed page size.
 	EnvPageSizeMax = "PAGE_SIZE_MAX"
+
+	// EnvStatsStartYear sets the first year displayed by the usage stats page.
+	EnvStatsStartYear = "STATS_START_YEAR"
 )

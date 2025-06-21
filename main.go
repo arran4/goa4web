@@ -61,13 +61,14 @@ var (
 	dbNameFlag         = flag.String("db-name", "", "database name")
 	dbLogVerbosityFlag = flag.Int("db-log-verbosity", 0, "database logging verbosity")
 
-	listenFlag       = flag.String("listen", ":8080", "server listen address")
-	hostnameFlag     = flag.String("hostname", "", "server base URL")
-	httpCfgPath      = flag.String("http-config", "", "path to HTTP configuration file")
-	feedsEnabledFlag = flag.String("feeds-enabled", "", "enable or disable feeds")
-	listenFlagSet    bool
-	hostnameFlagSet  bool
-	feedsFlagSet     bool
+	listenFlag         = flag.String("listen", ":8080", "server listen address")
+	hostnameFlag       = flag.String("hostname", "", "server base URL")
+	httpCfgPath        = flag.String("http-config", "", "path to HTTP configuration file")
+	feedsEnabledFlag   = flag.String("feeds-enabled", "", "enable or disable feeds")
+	statsStartYearFlag = flag.String("stats-start-year", "", "start year for usage stats")
+	listenFlagSet      bool
+	hostnameFlagSet    bool
+	feedsFlagSet       bool
 
 	srv *Server
 	//
@@ -190,12 +191,13 @@ func run() error {
 		cliFeeds = *feedsEnabledFlag
 	}
 	loadFeedsEnabled(cliFeeds, appCfg)
+	loadStatsStartYear(*statsStartYearFlag, appCfg)
 
 	if err := performStartupChecks(); err != nil {
 		return err
 	}
 
-  dbCfg := loadDBConfig()
+	dbCfg := loadDBConfig()
 	emailCfg := loadEmailConfig()
 
 	if err := performStartupChecks(dbCfg); err != nil {
@@ -499,6 +501,7 @@ func run() error {
 	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
 	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
+	ar.HandleFunc("/usage", adminUsageStatsPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeCommentsSearch))
 	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeNewsSearch))

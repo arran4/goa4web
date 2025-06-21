@@ -18,6 +18,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"text/template"
+
+	"goa4web/config"
 )
 
 var (
@@ -346,48 +348,9 @@ func getEmailProvider() MailProvider {
 // cli > file > env > defaults.
 func resolveEmailConfig(cli, file, env EmailConfig) EmailConfig {
 	var cfg EmailConfig
-	merge := func(src EmailConfig) {
-		if src.Provider != "" {
-			cfg.Provider = src.Provider
-		}
-		if src.SMTPHost != "" {
-			cfg.SMTPHost = src.SMTPHost
-		}
-		if src.SMTPPort != "" {
-			cfg.SMTPPort = src.SMTPPort
-		}
-		if src.SMTPUser != "" {
-			cfg.SMTPUser = src.SMTPUser
-		}
-		if src.SMTPPass != "" {
-			cfg.SMTPPass = src.SMTPPass
-		}
-		if src.AWSRegion != "" {
-			cfg.AWSRegion = src.AWSRegion
-		}
-		if src.JMAPEndpoint != "" {
-			cfg.JMAPEndpoint = src.JMAPEndpoint
-		}
-		if src.JMAPAccount != "" {
-			cfg.JMAPAccount = src.JMAPAccount
-		}
-		if src.JMAPIdentity != "" {
-			cfg.JMAPIdentity = src.JMAPIdentity
-		}
-		if src.JMAPUser != "" {
-			cfg.JMAPUser = src.JMAPUser
-		}
-		if src.JMAPPass != "" {
-			cfg.JMAPPass = src.JMAPPass
-		}
-		if src.SendGridKey != "" {
-			cfg.SendGridKey = src.SendGridKey
-		}
-	}
-
-	merge(env)
-	merge(file)
-	merge(cli)
+	config.Merge(&cfg, env)
+	config.Merge(&cfg, file)
+	config.Merge(&cfg, cli)
 	return cfg
 }
 

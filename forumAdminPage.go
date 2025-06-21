@@ -24,11 +24,12 @@ func forumAdminPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	ctx := r.Context()
-	count := func(query string, dest *int64) {
-		if err := queries.db.QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
+	count := func(q string, dest *int64) {
+		if err := queries.db.QueryRowContext(ctx, q).Scan(dest); err != nil && err != sql.ErrNoRows {
 			log.Printf("forumAdminPage count query error: %v", err)
 		}
 	}
+
 	count("SELECT COUNT(*) FROM forumcategory", &data.Stats.Categories)
 	count("SELECT COUNT(*) FROM forumtopic", &data.Stats.Topics)
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.Threads)

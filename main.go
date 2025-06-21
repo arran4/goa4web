@@ -47,6 +47,10 @@ var (
 	dbHostFlag = flag.String("db-host", "", "database host")
 	dbPortFlag = flag.String("db-port", "", "database port")
 	dbNameFlag = flag.String("db-name", "", "database name")
+
+	listenFlag    = flag.String("listen", ":8080", "server listen address")
+	httpCfgPath   = flag.String("http-config", "", "path to HTTP configuration file")
+	listenFlagSet bool
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -63,6 +67,12 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	flag.CommandLine.Visit(func(f *flag.Flag) {
+		if f.Name == "listen" {
+			listenFlagSet = true
+		}
+	})
 
 	sessionSecret, err := loadSessionSecret(*sessionSecretFlag, *sessionSecretFileFlag)
 	if err != nil {
@@ -81,7 +91,7 @@ func main() {
 
 	performStartupChecks()
 
-  cliDBConfig = DBConfig{
+	cliDBConfig = DBConfig{
 		User: *dbUserFlag,
 		Pass: *dbPassFlag,
 		Host: *dbHostFlag,
@@ -90,7 +100,6 @@ func main() {
 	}
 	dbConfigFile = *dbCfgPath
 
-  
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,
@@ -105,6 +114,11 @@ func main() {
 		JMAPPass:     *jmapPassFlag,
 	}
 	emailConfigFile = *emailCfgPath
+
+	if listenFlagSet {
+		cliHTTPConfig.Listen = *listenFlag
+	}
+	httpConfigFile = *httpCfgPath
 
 	performStartupChecks()
 
@@ -376,8 +390,9 @@ func main() {
 
 	http.Handle("/", csrfMiddleware(r))
 
-	log.Println("Server started on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	httpCfg := loadHTTPConfig()
+	log.Printf("Server started on %s", httpCfg.Listen)
+	log.Fatal(http.ListenAndServe(httpCfg.Listen, nil))
 }
 
 func runTemplate(template string) func(http.ResponseWriter, *http.Request) {

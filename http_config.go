@@ -15,7 +15,11 @@ type HTTPConfig struct {
 var cliHTTPConfig HTTPConfig
 
 // httpConfigFile is the optional path to a configuration file read at startup.
+// If empty, the HTTP_CONFIG_FILE environment variable is consulted.
 var httpConfigFile string
+
+// httpReadFile abstracts file reads for tests.
+var httpReadFile = os.ReadFile
 
 // resolveHTTPConfig merges configuration values with the order of precedence
 // cli > file > env > defaults.
@@ -42,7 +46,7 @@ func loadHTTPConfigFile(path string) (HTTPConfig, error) {
 	if path == "" {
 		return cfg, nil
 	}
-	b, err := os.ReadFile(path)
+	b, err := httpReadFile(path)
 	if err != nil {
 		return cfg, err
 	}
@@ -62,7 +66,11 @@ func loadHTTPConfigFile(path string) (HTTPConfig, error) {
 // and command line flags applying the precedence defined in AGENTS.md.
 func loadHTTPConfig() HTTPConfig {
 	env := HTTPConfig{Listen: os.Getenv("LISTEN")}
-	fileCfg, err := loadHTTPConfigFile(httpConfigFile)
+	cfgPath := httpConfigFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("HTTP_CONFIG_FILE")
+	}
+	fileCfg, err := loadHTTPConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("HTTP config file error: %v", err)
 	}

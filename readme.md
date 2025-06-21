@@ -90,7 +90,7 @@ This project was originally developed for a single server environment and remain
 Database connection details can be supplied in several ways. Values are resolved in the following order:
 
 1. Command line flags (`--db-user` etc.)
-2. Values from a config file specified with `--db-config`
+2. Values from a config file specified with `--db-config` or `DB_CONFIG_FILE`
 3. Environment variables such as `DB_USER`
 4. Built-in defaults
 
@@ -115,7 +115,7 @@ Configuration values can also be provided in a file and via command line flags.
 The resolution order is:
 
 1. Command line flags (`--smtp-host` etc.)
-2. Values from a config file specified with `--email-config`
+2. Values from a config file specified with `--email-config` or `EMAIL_CONFIG_FILE`
 3. Environment variables such as `SMTP_HOST`
 4. Built-in defaults
 

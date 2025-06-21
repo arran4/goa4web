@@ -4,10 +4,10 @@
 <table border="1" class="perm-table" data-section="{{.Section}}">
     <thead>
         <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Email</th>
-            <th>Level</th>
+            <th class="sortable">ID</th>
+            <th class="sortable">User</th>
+            <th class="sortable">Email</th>
+            <th class="sortable">Level</th>
             <th>Edit</th>
             <th>Delete</th>
         </tr>
@@ -82,6 +82,23 @@
         var data = new URLSearchParams(new FormData(e.target));
         data.set('task','User Allow');
         post(data).then(function(){ location.reload(); });
+    });
+    document.querySelectorAll('.perm-table th.sortable').forEach(function(th){
+        th.addEventListener('click', function(){
+            var table = th.closest('table');
+            var tbody = table.querySelector('tbody');
+            var rows = Array.from(tbody.querySelectorAll('tr'));
+            var idx = Array.from(th.parentNode.children).indexOf(th);
+            var asc = th.dataset.asc === 'true';
+            rows.sort(function(a,b){
+                var av = a.children[idx].textContent.trim();
+                var bv = b.children[idx].textContent.trim();
+                if(av === bv) return 0;
+                return (av > bv ? 1 : -1) * (asc ? 1 : -1);
+            });
+            th.dataset.asc = !asc;
+            rows.forEach(function(r){ tbody.appendChild(r); });
+        });
     });
 })();
 </script>

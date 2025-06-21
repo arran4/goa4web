@@ -34,4 +34,8 @@ const (
 	EnvJMAPUser = "JMAP_USER"
 	// EnvJMAPPass is the password for the JMAP provider.
 	EnvJMAPPass = "JMAP_PASS"
+
+	// EnvConfigFile is the environment variable specifying the path to the
+	// main application configuration file.
+	EnvConfigFile = "CONFIG_FILE"
 )

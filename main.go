@@ -20,7 +20,11 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/arran4/goa4web/config"
 )
+
+var configFile string
 
 var (
 	//	// Replace these with your Google OAuth2 credentials
@@ -34,6 +38,8 @@ var (
 	sessionSecretFileFlag = flag.String("session-secret-file", "", "path to session secret file")
 	//sessionKey  = "authenticated"
 	store *sessions.CookieStore
+
+	configFileFlag = flag.String("config-file", "", "path to application configuration file")
 
 	emailCfgPath      = flag.String("email-config", "", "path to email configuration file")
 	emailProviderFlag = flag.String("email-provider", "", "email provider")
@@ -79,7 +85,21 @@ func init() {
 }
 
 func run() error {
+	early := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	var cfgPath string
+	early.StringVar(&cfgPath, "config-file", "", "path to application configuration file")
+	_ = early.Parse(os.Args[1:])
+	if cfgPath == "" {
+		cfgPath = os.Getenv(config.EnvConfigFile)
+	}
+	appCfg := loadAppConfigFile(cfgPath)
+
 	flag.Parse()
+
+	configFile = *configFileFlag
+	if configFile == "" {
+		configFile = cfgPath
+	}
 
 	flag.CommandLine.Visit(func(f *flag.Flag) {
 		if f.Name == "listen" {
@@ -89,7 +109,13 @@ func run() error {
 		}
 	})
 
-	sessionSecret, err := loadSessionSecret(*sessionSecretFlag, *sessionSecretFileFlag)
+	sessionSecretPath := *sessionSecretFileFlag
+	if sessionSecretPath == "" {
+		if v, ok := appCfg["SESSION_SECRET_FILE"]; ok {
+			sessionSecretPath = v
+		}
+	}
+	sessionSecret, err := loadSessionSecret(*sessionSecretFlag, sessionSecretPath)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
@@ -113,6 +139,11 @@ func run() error {
 		LogVerbosity: *dbLogVerbosityFlag,
 	}
 	dbConfigFile = *dbCfgPath
+	if dbConfigFile == "" {
+		if v, ok := appCfg["DB_CONFIG_FILE"]; ok {
+			dbConfigFile = v
+		}
+	}
 
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
@@ -129,6 +160,11 @@ func run() error {
 		SendGridKey:  *sendGridKeyFlag,
 	}
 	emailConfigFile = *emailCfgPath
+	if emailConfigFile == "" {
+		if v, ok := appCfg["EMAIL_CONFIG_FILE"]; ok {
+			emailConfigFile = v
+		}
+	}
 
 	if listenFlagSet {
 		cliHTTPConfig.Listen = *listenFlag
@@ -137,6 +173,11 @@ func run() error {
 		cliHTTPConfig.Hostname = *hostnameFlag
 	}
 	httpConfigFile = *httpCfgPath
+	if httpConfigFile == "" {
+		if v, ok := appCfg["HTTP_CONFIG_FILE"]; ok {
+			httpConfigFile = v
+		}
+	}
 
 	if err := performStartupChecks(); err != nil {
 		return err

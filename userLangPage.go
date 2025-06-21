@@ -75,7 +75,6 @@ func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
 
 	for _, l := range langs {
 		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
-			// TODO use queries
 			if _, err := queries.db.ExecContext(r.Context(), "INSERT INTO userlang (users_idusers, language_idlanguage) VALUES (?, ?)", uid, l.Idlanguage); err != nil {
 				return err
 			}

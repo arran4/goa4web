@@ -1,4 +1,11 @@
 {{ template "head" $ }}
+{{- if $.Messages }}
+        <ul>
+        {{- range $.Messages }}
+                <li>{{ . }}</li>
+        {{- end }}
+        </ul>
+{{- end }}
 {{- if $.Errors }}
         Errors occurred:
         <ul>

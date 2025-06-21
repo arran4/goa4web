@@ -1,0 +1,14 @@
+{{ template "head" $ }}
+<table border="1">
+    <tr><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
+    {{- range .Notifications }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .UsersIdusers }}</td>
+        <td>{{ .Message.String }}</td>
+        <td>{{ .Link.String }}</td>
+        <td>{{ if .ReadAt.Valid }}yes{{ else }}no{{ end }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

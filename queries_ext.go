@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -138,6 +137,24 @@ func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
 	return err
 }
 
+// ListUnsentPendingEmails returns all queued emails that have not been sent yet.
+func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*PendingEmail
+	for rows.Next() {
+		var p PendingEmail
+		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &p)
+	}
+	return items, rows.Err()
+}
+
 // ListUsers returns a limited set of users ordered by ID.
 type ListUsersParams struct {
 	Limit  int32
@@ -258,6 +275,24 @@ func (q *Queries) GetPermissionsBySectionWithUsers(ctx context.Context, section 
 			return nil, err
 		}
 		items = append(items, &p)
+	}
+	return items, rows.Err()
+}
+
+// RecentNotifications returns the newest notifications across all users limited by the provided count.
+func (q *Queries) RecentNotifications(ctx context.Context, limit int32) ([]*Notification, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT id, users_idusers, link, message, created_at, read_at FROM notifications ORDER BY id DESC LIMIT ?", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Notification
+	for rows.Next() {
+		var n Notification
+		if err := rows.Scan(&n.ID, &n.UsersIdusers, &n.Link, &n.Message, &n.CreatedAt, &n.ReadAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &n)
 	}
 	return items, rows.Err()
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/gorilla/sessions"
 	"log"
 	"net"
@@ -29,12 +30,15 @@ func (s *Server) Addr() string { return s.addr }
 func (s *Server) Start(addr string) error {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		return err
+		return fmt.Errorf("listen %s: %w", addr, err)
 	}
 	s.addr = ln.Addr().String()
 	s.httpServer = &http.Server{Handler: s.Router}
 	log.Printf("Server started on http://%s", s.addr)
-	return s.httpServer.Serve(ln)
+	if err := s.httpServer.Serve(ln); err != nil {
+		return fmt.Errorf("serve: %w", err)
+	}
+	return nil
 }
 
 // Shutdown gracefully stops the HTTP server.
@@ -42,5 +46,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	if s.httpServer == nil {
 		return nil
 	}
-	return s.httpServer.Shutdown(ctx)
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		return fmt.Errorf("shutdown server: %w", err)
+	}
+	return nil
 }

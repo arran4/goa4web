@@ -197,7 +197,7 @@ func run() error {
 	emailCfg := loadEmailConfig()
 
 	if err := performStartupChecks(dbCfg); err != nil {
-		return err
+		return fmt.Errorf("startup checks: %w", err)
 	}
 
 	if dbPool != nil {

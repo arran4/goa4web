@@ -98,3 +98,39 @@ func (q *Queries) UpdatePreference(ctx context.Context, arg UpdatePreferencePara
 	_, err := q.db.ExecContext(ctx, "UPDATE preferences SET language_idlanguage = ? WHERE users_idusers = ?", arg.LanguageIdlanguage, arg.UsersIdusers)
 	return err
 }
+
+// InsertPendingEmail adds an email to the sending queue.
+type InsertPendingEmailParams struct {
+	ToEmail string
+	Subject string
+	Body    string
+}
+
+func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
+	_, err := q.db.ExecContext(ctx, "INSERT INTO pending_emails (to_email, subject, body) VALUES (?, ?, ?)", arg.ToEmail, arg.Subject, arg.Body)
+	return err
+}
+
+// FetchPendingEmails returns unsent queued emails up to the provided limit.
+func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*PendingEmail, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body FROM pending_emails WHERE sent_at IS NULL ORDER BY id LIMIT ?", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*PendingEmail
+	for rows.Next() {
+		var p PendingEmail
+		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body); err != nil {
+			return nil, err
+		}
+		items = append(items, &p)
+	}
+	return items, rows.Err()
+}
+
+// MarkEmailSent updates a pending email once successfully delivered.
+func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, "UPDATE pending_emails SET sent_at = NOW() WHERE id = ?", id)
+	return err
+}

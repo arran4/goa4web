@@ -410,6 +410,9 @@ func run() error {
 	ur.HandleFunc("/email", userEmailPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/email", userEmailSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskTestMail))
+	ur.HandleFunc("/notifications", userNotificationsPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskDismiss))
+	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 
 	// Redirect legacy paths to the updated usr endpoints.
 	r.HandleFunc("/user/lang", redirectPermanent("/usr/lang"))
@@ -467,6 +470,10 @@ func run() error {
 		Store:       store,
 		DB:          dbPool,
 	}
+
+	// Start background email queue processing.
+	go emailQueueWorker(context.Background(), New(dbPool), getEmailProvider(), time.Minute)
+	go notificationPurgeWorker(context.Background(), New(dbPool), time.Hour)
 
 	httpCfg := loadHTTPConfig()
 

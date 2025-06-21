@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+{{ range .Notifications }}
+    <div>
+        {{ if .Link.Valid }}<a href="{{ .Link.String }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
+        <form method="post" action="/user/notifications/dismiss">
+            <input type="hidden" name="id" value="{{ .ID }}">
+            <input type="submit" name="task" value="Dismiss">
+        </form>
+    </div>
+{{ else }}
+    No notifications
+{{ end }}
+{{ template "tail" $ }}

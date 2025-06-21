@@ -180,6 +180,9 @@ const (
 	// TaskTestMail sends a test email to the current user.
 	TaskTestMail = "Test mail"
 
+	// TaskDismiss marks a notification as read.
+	TaskDismiss = "Dismiss"
+
 	// TaskUpdate updates an existing item.
 	TaskUpdate = "Update"
 

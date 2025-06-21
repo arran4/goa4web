@@ -57,27 +57,39 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		idx := make([]IndexItem, len(indexItems))
+		copy(idx, indexItems)
+		var count int32
+		if uid != 0 && notificationsEnabled() {
+			c, err := queries.CountUnreadNotifications(request.Context(), uid)
+			if err == nil {
+				count = c
+				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/user/notifications"})
+			}
+		}
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
-			SecurityLevel: level,
-			IndexItems:    indexItems,
-			UserID:        uid,
-			Title:         "Arran4's Website",
-			FeedsEnabled:  FeedsEnabled,
+			SecurityLevel:     level,
+			IndexItems:        idx,
+			UserID:            uid,
+			Title:             "Arran4's Website",
+			FeedsEnabled:      FeedsEnabled,
+			NotificationCount: count,
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }
 
 type CoreData struct {
-	IndexItems       []IndexItem
-	CustomIndexItems []IndexItem
-	UserID           int32
-	SecurityLevel    string
-	Title            string
-	AutoRefresh      bool
-	FeedsEnabled     bool
-	RSSFeedUrl       string
-	AtomFeedUrl      string
+	IndexItems        []IndexItem
+	CustomIndexItems  []IndexItem
+	UserID            int32
+	SecurityLevel     string
+	Title             string
+	AutoRefresh       bool
+	FeedsEnabled      bool
+	RSSFeedUrl        string
+	AtomFeedUrl       string
+	NotificationCount int32
 }
 
 func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {

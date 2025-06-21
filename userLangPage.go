@@ -218,3 +218,9 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 
 	taskDoneAutoRefreshPage(w, r)
 }
+
+// userLangSaveLanguageActionPage is kept for compatibility and forwards to
+// userLangSaveLanguagePreferenceActionPage.
+func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
+	userLangSaveLanguagePreferenceActionPage(w, r)
+}

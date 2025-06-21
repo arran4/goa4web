@@ -204,6 +204,9 @@ const (
 	// TaskUserDoNothing is used when no action should be taken on a user.
 	TaskUserDoNothing = "User do nothing"
 
+	// TaskUserResetPassword resets a user's password.
+	TaskUserResetPassword = "Reset Password"
+
 	// TaskAllow approves a news user level.
 	TaskAllow = "allow"
 

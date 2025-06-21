@@ -81,7 +81,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	var pthid int32 = link.ForumthreadIdforumthread
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
-		String: LinkderTopicName,
+		String: LinkerTopicName,
 		Valid:  true,
 	})
 	var ptid int32
@@ -89,11 +89,11 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
-				String: LinkderTopicName,
+				String: LinkerTopicName,
 				Valid:  true,
 			},
 			Description: sql.NullString{
-				String: LinkderTopicName,
+				String: LinkerTopicName,
 				Valid:  true,
 			},
 		})

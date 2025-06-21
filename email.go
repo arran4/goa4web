@@ -34,7 +34,11 @@ const (
 var cliEmailConfig EmailConfig
 
 // emailConfigFile is the optional path to a configuration file read at startup.
+// If empty, the EMAIL_CONFIG_FILE environment variable is consulted.
 var emailConfigFile string
+
+// emailReadFile abstracts file reads for tests.
+var emailReadFile = os.ReadFile
 
 // EmailConfig stores configuration for selecting and configuring the mail
 // provider. Tests can supply a custom configuration instead of relying on
@@ -397,7 +401,7 @@ func loadEmailConfigFile(path string) (EmailConfig, error) {
 	if path == "" {
 		return cfg, nil
 	}
-	b, err := os.ReadFile(path)
+	b, err := emailReadFile(path)
 	if err != nil {
 		return cfg, err
 	}
@@ -452,7 +456,11 @@ func loadEmailConfig() EmailConfig {
 		SendGridKey:  os.Getenv("SENDGRID_KEY"),
 	}
 
-	fileCfg, err := loadEmailConfigFile(emailConfigFile)
+	cfgPath := emailConfigFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("EMAIL_CONFIG_FILE")
+	}
+	fileCfg, err := loadEmailConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("Email config file error: %v", err)
 	}

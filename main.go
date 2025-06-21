@@ -400,8 +400,9 @@ func main() {
 	}
 
 	httpCfg := loadHTTPConfig()
-	log.Printf("Server started on %s", httpCfg.Listen)
-	log.Fatal(http.ListenAndServe(httpCfg.Listen, nil))
+	if err := srv.Start(httpCfg.Listen); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func runTemplate(template string) func(http.ResponseWriter, *http.Request) {

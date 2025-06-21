@@ -1,19 +1,19 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
+	"io/fs"
 	"testing"
+	"testing/fstest"
 )
 
 func TestLoadDBConfigFile(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "db.conf")
-	content := "DB_USER=u\nDB_PASS=p\nDB_HOST=h\nDB_PORT=3307\nDB_NAME=n\n"
-	if err := os.WriteFile(file, []byte(content), 0644); err != nil {
-		t.Fatalf("write config: %v", err)
+	fsys := fstest.MapFS{
+		"db.conf": {Data: []byte("DB_USER=u\nDB_PASS=p\nDB_HOST=h\nDB_PORT=3307\nDB_NAME=n\n")},
 	}
-	cfg, err := loadDBConfigFile(file)
+	old := dbReadFile
+	dbReadFile = func(name string) ([]byte, error) { return fs.ReadFile(fsys, name) }
+	defer func() { dbReadFile = old }()
+	cfg, err := loadDBConfigFile("db.conf")
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
@@ -31,5 +31,21 @@ func TestResolveDBConfigPrecedence(t *testing.T) {
 
 	if cfg.User != "file" || cfg.Pass != "cli" || cfg.Host != "env" || cfg.Port != "1" {
 		t.Fatalf("merged %#v", cfg)
+	}
+}
+
+func TestLoadDBConfigEnvPath(t *testing.T) {
+	fsys := fstest.MapFS{
+		"db.conf": {Data: []byte("DB_USER=envfile\n")},
+	}
+	old := dbReadFile
+	dbReadFile = func(name string) ([]byte, error) { return fs.ReadFile(fsys, name) }
+	defer func() { dbReadFile = old }()
+	t.Setenv("DB_CONFIG_FILE", "db.conf")
+	dbConfigFile = ""
+	cliDBConfig = DBConfig{}
+	cfg := loadDBConfig()
+	if cfg.User != "envfile" {
+		t.Fatalf("want envfile got %q", cfg.User)
 	}
 }

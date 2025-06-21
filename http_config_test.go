@@ -1,18 +1,19 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
+	"io/fs"
 	"testing"
+	"testing/fstest"
 )
 
 func TestLoadHTTPConfigFile(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "http.conf")
-	if err := os.WriteFile(file, []byte("LISTEN=1.2.3.4:80\n"), 0644); err != nil {
-		t.Fatalf("write config: %v", err)
+	fsys := fstest.MapFS{
+		"http.conf": {Data: []byte("LISTEN=1.2.3.4:80\n")},
 	}
-	cfg, err := loadHTTPConfigFile(file)
+	old := httpReadFile
+	httpReadFile = func(name string) ([]byte, error) { return fs.ReadFile(fsys, name) }
+	defer func() { httpReadFile = old }()
+	cfg, err := loadHTTPConfigFile("http.conf")
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
@@ -30,5 +31,21 @@ func TestResolveHTTPConfigPrecedence(t *testing.T) {
 
 	if cfg.Listen != ":3" {
 		t.Fatalf("merged %#v", cfg)
+	}
+}
+
+func TestLoadHTTPConfigEnvPath(t *testing.T) {
+	fsys := fstest.MapFS{
+		"http.conf": {Data: []byte("LISTEN=:9\n")},
+	}
+	old := httpReadFile
+	httpReadFile = func(name string) ([]byte, error) { return fs.ReadFile(fsys, name) }
+	defer func() { httpReadFile = old }()
+	t.Setenv("HTTP_CONFIG_FILE", "http.conf")
+	httpConfigFile = ""
+	cliHTTPConfig = HTTPConfig{}
+	cfg := loadHTTPConfig()
+	if cfg.Listen != ":9" {
+		t.Fatalf("want :9 got %q", cfg.Listen)
 	}
 }

@@ -19,7 +19,11 @@ type DBConfig struct {
 var cliDBConfig DBConfig
 
 // dbConfigFile is the optional path to a configuration file read at startup.
+// If empty, the DB_CONFIG_FILE environment variable is consulted.
 var dbConfigFile string
+
+// dbReadFile abstracts file reads for tests.
+var dbReadFile = os.ReadFile
 
 // resolveDBConfig merges configuration values with the order of precedence
 // cli > file > env > defaults.
@@ -56,7 +60,7 @@ func loadDBConfigFile(path string) (DBConfig, error) {
 	if path == "" {
 		return cfg, nil
 	}
-	b, err := os.ReadFile(path)
+	b, err := dbReadFile(path)
 	if err != nil {
 		return cfg, err
 	}
@@ -92,7 +96,11 @@ func loadDBConfig() DBConfig {
 		Name: os.Getenv("DB_NAME"),
 	}
 
-	fileCfg, err := loadDBConfigFile(dbConfigFile)
+	cfgPath := dbConfigFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("DB_CONFIG_FILE")
+	}
+	fileCfg, err := loadDBConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("DB config file error: %v", err)
 	}

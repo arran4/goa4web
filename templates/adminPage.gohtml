@@ -1,3 +1,23 @@
 {{ template "head" $ }}
-Please select something from the menu to the left.
+<p>Please select an option:</p>
+<ul>
+    <li><a href="/admin/users">Users</a></li>
+    <li><a href="/admin/users/permissions">User Permissions</a></li>
+    <li><a href="/admin/languages">Languages</a></li>
+    <li><a href="/admin/search">Search</a></li>
+    <li><a href="/admin/forum">Forum</a></li>
+    <li><a href="/admin/permissions/sections">Permission Sections</a></li>
+</ul>
+
+<p>Site statistics:</p>
+<table border="1">
+    <tr><th>Item</th><th>Count</th></tr>
+    <tr><td>Users</td><td>{{ .Stats.Users }}</td></tr>
+    <tr><td>Languages</td><td>{{ .Stats.Languages }}</td></tr>
+    <tr><td>News Posts</td><td>{{ .Stats.News }}</td></tr>
+    <tr><td>Blogs</td><td>{{ .Stats.Blogs }}</td></tr>
+    <tr><td>Forum Topics</td><td>{{ .Stats.ForumTopics }}</td></tr>
+    <tr><td>Forum Threads</td><td>{{ .Stats.ForumThreads }}</td></tr>
+    <tr><td>Writings</td><td>{{ .Stats.Writings }}</td></tr>
+</table>
 {{ template "tail" $ }}

@@ -1,0 +1,8 @@
+{{ template "head" $ }}
+    <form method="post">
+        <input type="hidden" name="uid" value="{{.User.Idusers}}">
+        Username: <input name="username" value="{{.User.Username.String}}"><br>
+        Email: <input name="email" value="{{.User.Email.String}}"><br>
+        <input type="submit" value="Save">
+    </form>
+{{ template "tail" $ }}

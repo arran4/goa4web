@@ -1,4 +1,8 @@
 {{ template "head" $ }}
+    <form method="get">
+        <input name="search" value="{{$.Search}}">
+        <input type="submit" value="Search">
+    </form>
     <table border="1">
         <tr>
             <th>ID</th>
@@ -12,9 +16,18 @@
                 <td>{{.Username.String}}</td>
                 <td>{{.Email.String}}</td>
                 <td>
-                    <form method="post">
+                    <a href="/blogs/blogger/{{.Username.String}}">View profile</a>
+                    <form style="display:inline" method="get" action="/admin/users/edit">
                         <input type="hidden" name="uid" value="{{.Idusers}}">
-                        <input type="submit" name="task" value="User do nothing">
+                        <input type="submit" value="Edit">
+                    </form>
+                    <form style="display:inline" method="post" action="/admin/users/disable">
+                        <input type="hidden" name="uid" value="{{.Idusers}}">
+                        <input type="submit" value="Disable account">
+                    </form>
+                    <form style="display:inline" method="post" action="/admin/users/reset">
+                        <input type="hidden" name="uid" value="{{.Idusers}}">
+                        <input type="submit" value="Reset password">
                     </form>
                 </td>
             </tr>

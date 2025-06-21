@@ -50,7 +50,8 @@ func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.RenameLinkerCategory(r.Context(), RenameLinkerCategoryParams{
 		Title:            sql.NullString{Valid: true, String: title},
 		Position:         int32(pos),
-  }; err != nil {
+		Idlinkercategory: int32(cid),
+	}); err != nil {
 		log.Printf("updateLinkerCategorySortOrder Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -93,7 +94,7 @@ func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Category in use", http.StatusBadRequest)
 			return
 		}
-  }
+	}
 	count, err := queries.CountLinksByCategory(r.Context(), int32(cid))
 	if err != nil {
 		log.Printf("countLinks Error: %s", err)

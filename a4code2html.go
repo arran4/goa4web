@@ -83,14 +83,21 @@ func (c *A4code2html) getNext(endAtEqual bool) string {
 		c.input = c.input[1:]
 
 		switch ch {
-		case '\n', ']', '[', ' ', '\r', '=' /*, '*', '/', '_'*/ :
+		case '\n', ']', '[', ' ', '\r', '=':
 			loop = false
 		case '\\':
-			ch = c.input[0]
-			c.input = c.input[1:]
-			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' /* && ch != '*' && ch != '/' && ch != '_'*/ {
-				result.WriteByte('\\')
+			if len(c.input) > 0 {
+				ch = c.input[0]
 				c.input = c.input[1:]
+				switch ch {
+				case ' ', '[', ']', '=', '\\', '*', '/', '_':
+					result.WriteByte(ch)
+				default:
+					result.WriteByte('\\')
+					result.WriteByte(ch)
+				}
+			} else {
+				result.WriteByte('\\')
 			}
 		default:
 			result.WriteByte(ch)
@@ -269,7 +276,7 @@ func (c *A4code2html) nextcomm() {
 		case '\\':
 			ch = c.input[0]
 			c.input = c.input[1:]
-			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' {
+			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' && ch != '*' && ch != '/' && ch != '_' {
 				c.output.WriteByte('\\')
 			}
 			fallthrough

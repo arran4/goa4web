@@ -1,20 +1,35 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/sessions"
 )
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
+		UserData        *User
+		UserPreferences struct {
+			EmailUpdates bool
+		}
 	}
+
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	user, _ := r.Context().Value(ContextValues("user")).(*User)
+	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: cd,
+		UserData: user,
 	}
-
-	// Custom Index???
+	if pref != nil {
+		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Valid && pref.Emailforumupdates.Bool
+	}
 
 	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userEmailPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -23,28 +38,51 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
-		query.set("SELECT emailforumupdates FROM preferences WHERE users_idusers=%d", cont.user.UID);
-		result = cont.sql.query(query.raw());
-		int updates = cont.post.getS("emailupdates") != NULL;
-		if (result->hasRow())
-		{
-			query.set("UPDATE preferences SET emailforumupdates=%d WHERE users_idusers=%d", updates, cont.user.UID);
-		} else {
-			query.set("INSERT INTO preferences (emailforumupdates, users_idusers) VALUES (%d, %d)", updates, cont.user.UID);
-		}
-		delete result;
-		result = cont.sql.query(query.raw());
-		delete result;
-	*/
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	updates := r.PostFormValue("emailupdates") != ""
+
+	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("GetPreferenceByUserID Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	var execErr error
+	if errors.Is(err, sql.ErrNoRows) {
+		_, execErr = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (emailforumupdates, users_idusers) VALUES (?, ?)", updates, uid)
+	} else {
+		_, execErr = queries.db.ExecContext(r.Context(), "UPDATE preferences SET emailforumupdates=? WHERE users_idusers=?", updates, uid)
+	}
+	if execErr != nil {
+		log.Printf("Preference save Error: %s", execErr)
+		http.Redirect(w, r, "?error="+execErr.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	taskDoneAutoRefreshPage(w, r)
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	/*
-		a4string url("http://%s%s", cont.env.get("HTTP_HOST"), cont.env.get("SCRIPT_NAME"));
-		notifyChange(cont, cont.user.UID, url.raw());
-		printf("Sent testmail.<br>\n");
-	*/
+	user, _ := r.Context().Value(ContextValues("user")).(*User)
+	if user != nil && user.Email.Valid {
+		provider := getEmailProvider()
+		if provider != nil {
+			url := fmt.Sprintf("http://%s%s", r.Host, r.URL.Path)
+			if err := notifyChange(r.Context(), provider, user.Email.String, url); err != nil {
+				log.Printf("notifyChange Error: %s", err)
+			}
+		}
+	}
+
+	taskDoneAutoRefreshPage(w, r)
 }

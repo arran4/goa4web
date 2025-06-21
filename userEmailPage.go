@@ -3,9 +3,9 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/sessions"
 )
@@ -76,7 +76,11 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
-	url := fmt.Sprintf("http://%s%s", r.Host, r.URL.Path)
+	base := "http://" + r.Host
+	if appHTTPConfig.Hostname != "" {
+		base = strings.TrimRight(appHTTPConfig.Hostname, "/")
+	}
+	url := base + r.URL.Path
 	if err := notifyChange(r.Context(), getEmailProvider(), user.Email.String, url); err != nil {
 		log.Printf("send test mail: %v", err)
 	}

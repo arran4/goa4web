@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"flag"
+	"fmt"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -49,9 +51,11 @@ var (
 	dbPortFlag = flag.String("db-port", "", "database port")
 	dbNameFlag = flag.String("db-name", "", "database name")
 
-	listenFlag    = flag.String("listen", ":8080", "server listen address")
-	httpCfgPath   = flag.String("http-config", "", "path to HTTP configuration file")
-	listenFlagSet bool
+	listenFlag      = flag.String("listen", ":8080", "server listen address")
+	hostnameFlag    = flag.String("hostname", "", "server base URL")
+	httpCfgPath     = flag.String("http-config", "", "path to HTTP configuration file")
+	listenFlagSet   bool
+	hostnameFlagSet bool
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -66,18 +70,20 @@ func init() {
 	log.SetFlags(log.Flags() | log.Lshortfile)
 }
 
-func main() {
+func run() error {
 	flag.Parse()
 
 	flag.CommandLine.Visit(func(f *flag.Flag) {
 		if f.Name == "listen" {
 			listenFlagSet = true
+		} else if f.Name == "hostname" {
+			hostnameFlagSet = true
 		}
 	})
 
 	sessionSecret, err := loadSessionSecret(*sessionSecretFlag, *sessionSecretFileFlag)
 	if err != nil {
-		log.Fatalf("session secret: %v", err)
+		return fmt.Errorf("session secret: %w", err)
 	}
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	store.Options = &sessions.Options{
@@ -89,8 +95,6 @@ func main() {
 
 	csrfKey := sha256.Sum256([]byte(sessionSecret))
 	csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(true))
-
-	performStartupChecks()
 
 	cliDBConfig = DBConfig{
 		User: *dbUserFlag,
@@ -120,9 +124,14 @@ func main() {
 	if listenFlagSet {
 		cliHTTPConfig.Listen = *listenFlag
 	}
+	if hostnameFlagSet {
+		cliHTTPConfig.Hostname = *hostnameFlag
+	}
 	httpConfigFile = *httpCfgPath
 
-	performStartupChecks()
+	if err := performStartupChecks(); err != nil {
+		return err
+	}
 
 	if dbPool != nil {
 		defer func() {
@@ -400,8 +409,14 @@ func main() {
 	}
 
 	httpCfg := loadHTTPConfig()
-	log.Printf("Server started on %s", httpCfg.Listen)
-	log.Fatal(http.ListenAndServe(httpCfg.Listen, nil))
+	return srv.Start(httpCfg.Listen)
+}
+
+func main() {
+	if err := run(); err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
 }
 
 func runTemplate(template string) func(http.ResponseWriter, *http.Request) {

@@ -1,4 +1,5 @@
 {{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/users/permissions">(This page/Refresh)</a>]<br />
 {{range .Sections}}
 <h3>{{.Section}}</h3>
 <table border="1" class="perm-table" data-section="{{.Section}}">

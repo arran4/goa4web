@@ -1,4 +1,5 @@
 {{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/notifications">(This page/Refresh)</a>]<br />
 <table border="1">
     <tr><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
     {{- range .Notifications }}

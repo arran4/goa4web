@@ -1,4 +1,5 @@
 {{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/users">Users</a>: <a href="/admin/users/edit?uid={{.User.Idusers}}">(This page/Refresh)</a>]<br />
     <form method="post">
         <input type="hidden" name="uid" value="{{.User.Idusers}}">
         Username: <input name="username" value="{{.User.Username.String}}"><br>

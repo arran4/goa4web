@@ -201,6 +201,9 @@ const (
 	// TaskUserAllow grants a user a permission or level.
 	TaskUserAllow = "User Allow"
 
+	// TaskUpdatePermission modifies an existing user permission.
+	TaskUpdatePermission = "Update permission"
+
 	// TaskUserDisallow removes a user's permission or level.
 	TaskUserDisallow = "User Disallow"
 

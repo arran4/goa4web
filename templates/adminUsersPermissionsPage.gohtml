@@ -1,45 +1,88 @@
 {{ template "head" $ }}
-	<table border="1">
-			<tr>
-				<th>ID</th>
-				<th>User</th>
-				<th>Email</th>
-				<th>Level</th>
-				<th>Where</th>
-				<th>Delete?</th>
-			</tr>
-			{{range $.UserLevels}}
-				<tr>
-					<td>{{.Idpermissions}}</td>
-					<td>{{.Username.String}}</td>
-					<td>{{.Email.String}}</td>
-					<td>{{.Level.String}}</td>
-					<td>{{.Section.String}}</td>
-					<td>
-                        <form method="post">
-                            <input type="hidden" name="permid" value="{{.Idpermissions}}">
-                            <input type="submit" name="task" value="User Disallow">
-                        </form>
-					</td>
-				</tr>
-			{{end}}
-			<tr>
-				<td>
-					<form method="post">NEW</td>
-				<td><input name="username"></td>
-				<td>?</td>
-				<td>
-					<select name="level">
-						<option value="reader">reader</option>
-						<option value="writer">writer</option>
-						<option value="moderator">moderator</option>
-						<option value="administrator">administrator</option>
-					</select>
-				</td>
-				<td><input name="where"></td>
-				<td><input type="submit" name="task" value="User Allow"></form>
-				</td>
-			</tr>
-		</table>
-		Permissions should be valid only.
+{{range .Sections}}
+<h3>{{.Section}}</h3>
+<table border="1" class="perm-table" data-section="{{.Section}}">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Level</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Rows}}
+        <tr data-id="{{.Idpermissions}}">
+            <td>{{.Idpermissions}}</td>
+            <td class="username">{{.Username.String}}</td>
+            <td class="email">{{.Email.String}}</td>
+            <td class="level">{{.Level.String}}</td>
+            <td class="section" style="display:none">{{.Section.String}}</td>
+            <td><button class="edit-btn" data-id="{{.Idpermissions}}">Edit</button></td>
+            <td><button class="delete-btn" data-id="{{.Idpermissions}}">Delete</button></td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}
+<h3>Add Permission</h3>
+<form id="add-permission-form">
+    Username: <input name="username">
+    Section: <input name="where">
+    Level:
+    <select name="level">
+        <option value="reader">reader</option>
+        <option value="writer">writer</option>
+        <option value="moderator">moderator</option>
+        <option value="administrator">administrator</option>
+    </select>
+    <button type="submit">Add</button>
+</form>
+<script>
+(function(){
+    function post(data){
+        return fetch('/admin/users/permissions', {method:'POST', body:data});
+    }
+    document.querySelectorAll('.delete-btn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            var data = new URLSearchParams();
+            data.set('task','User Disallow');
+            data.set('permid',btn.dataset.id);
+            post(data).then(function(){ location.reload(); });
+        });
+    });
+    document.querySelectorAll('.edit-btn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            var tr = btn.closest('tr');
+            var levelCell = tr.querySelector('.level');
+            var sectionCell = tr.querySelector('.section');
+            var curLevel = levelCell.textContent.trim();
+            var curSection = sectionCell.textContent.trim();
+            levelCell.innerHTML = '<select><option value="reader">reader</option><option value="writer">writer</option><option value="moderator">moderator</option><option value="administrator">administrator</option></select>';
+            levelCell.querySelector('select').value = curLevel;
+            sectionCell.innerHTML = '<input value="'+curSection+'">';
+            btn.textContent = 'Save';
+            btn.addEventListener('click', function(ev){
+                ev.preventDefault();
+                var data = new URLSearchParams();
+                data.set('task','Update permission');
+                data.set('permid',btn.dataset.id);
+                data.set('level',levelCell.querySelector('select').value);
+                data.set('where',sectionCell.querySelector('input').value);
+                post(data).then(function(){ location.reload(); });
+            }, {once:true});
+        }, {once:true});
+    });
+    document.getElementById('add-permission-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        var data = new URLSearchParams(new FormData(e.target));
+        data.set('task','User Allow');
+        post(data).then(function(){ location.reload(); });
+    });
+})();
+</script>
 {{ template "tail" $ }}

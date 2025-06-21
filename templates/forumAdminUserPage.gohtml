@@ -1,18 +1,32 @@
 {{ template "head" $ }}
-    <table border="1">
+    <form method="get">
+        <input name="search" value="{{ $.Search }}">
+        <input type="submit" value="Search">
+    </form>
+    {{- range $.Rows }}
+    <h3>{{ .User.Username.String }} ({{ .User.Email.String }})</h3>
+    <table border="1" width="100%">
         <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Email</th>
-            <th>Options?</th>
+            <th>Topic</th>
+            <th>Level</th>
+            <th>Invite Level Max</th>
+            <th>Options</th>
         </tr>
-        {{range $.Rows}}
-            <tr>
-                <td>{{.Idusers}}</td>
-                <td>{{.Username.String}}</td>
-                <td>{{.Email.String}}</td>
-                <td><a href="/forum/admin/user/{{.Idusers}}/levels">Configure users access levels</a>
-            </tr>
-        {{end}}
+        {{- $u := .User }}
+        {{- range .Topics }}
+        <tr>
+            <form method="post" action="/forum/admin/user/{{ $u.Idusers }}/levels">
+                <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}</td>
+                <td><input name="level" value="{{ .Level.Int32 }}" size="8"></td>
+                <td><input name="inviteMax" value="{{ .Invitemax.Int32 }}" size="8"></td>
+                <td>
+                    <input type="submit" name="task" value="Update user level">
+                    <input type="submit" name="task" value="Delete user level">
+                </td>
+            </form>
+        </tr>
+        {{- end }}
     </table>
+    <a href="/forum/admin/user/{{ .User.Idusers }}/levels">Configure users access levels</a>
+    {{- end }}
 {{ template "tail" $ }}

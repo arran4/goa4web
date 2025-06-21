@@ -157,6 +157,9 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
 		}
+		if dbLogVerbosity > 0 {
+			log.Printf("db pool stats: %+v", dbPool.Stats())
+		}
 		ctx := request.Context()
 		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)
 		ctx = context.WithValue(ctx, ContextValues("queries"), New(dbPool))

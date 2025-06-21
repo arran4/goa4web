@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 )
 
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +15,8 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Rows     []*User
 		Search   string
+		Role     string
+		Status   string
 		NextLink string
 		PrevLink string
 		PageSize int
@@ -24,6 +25,8 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Search:   r.URL.Query().Get("search"),
+		Role:     r.URL.Query().Get("role"),
+		Status:   r.URL.Query().Get("status"),
 		PageSize: getPageSize(r),
 	}
 
@@ -34,13 +37,17 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	var rows []*User
 	var err error
 	if data.Search != "" {
-		rows, err = queries.SearchUsers(r.Context(), SearchUsersParams{
+		rows, err = queries.SearchUsersFiltered(r.Context(), SearchUsersFilteredParams{
 			Query:  data.Search,
+			Role:   data.Role,
+			Status: data.Status,
 			Limit:  int32(pageSize + 1),
 			Offset: int32(offset),
 		})
 	} else {
-		rows, err = queries.ListUsers(r.Context(), ListUsersParams{
+		rows, err = queries.ListUsersFiltered(r.Context(), ListUsersFilteredParams{
+			Role:   data.Role,
+			Status: data.Status,
 			Limit:  int32(pageSize + 1),
 			Offset: int32(offset),
 		})
@@ -56,27 +63,29 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	base := "/admin/users"
+	params := url.Values{}
 	if data.Search != "" {
-		base += "?search=" + url.QueryEscape(data.Search)
+		params.Set("search", data.Search)
+	}
+	if data.Role != "" {
+		params.Set("role", data.Role)
+	}
+	if data.Status != "" {
+		params.Set("status", data.Status)
 	}
 	if hasMore {
-		if strings.Contains(base, "?") {
-			data.NextLink = fmt.Sprintf("%s&offset=%d", base, offset+pageSize)
-		} else {
-			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
-		}
+		nextVals := params.Clone()
+		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
+		data.NextLink = "/admin/users?" + nextVals.Encode()
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: data.NextLink,
 		})
 	}
 	if offset > 0 {
-		if strings.Contains(base, "?") {
-			data.PrevLink = fmt.Sprintf("%s&offset=%d", base, offset-pageSize)
-		} else {
-			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
-		}
+		prevVals := params.Clone()
+		prevVals.Set("offset", strconv.Itoa(offset-pageSize))
+		data.PrevLink = "/admin/users?" + prevVals.Encode()
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: data.PrevLink,

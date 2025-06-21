@@ -1,8 +1,11 @@
 {{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/email/queue">(This page/Refresh)</a>]<br />
+<form method="post">
 <table border="1">
-    <tr><th>ID</th><th>To</th><th>Subject</th><th>Created</th></tr>
+    <tr><th>Select</th><th>ID</th><th>To</th><th>Subject</th><th>Created</th></tr>
     {{- range .Emails }}
     <tr>
+        <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
         <td>{{ .ID }}</td>
         <td>{{ .ToEmail }}</td>
         <td>{{ .Subject }}</td>
@@ -10,4 +13,7 @@
     </tr>
     {{- end }}
 </table>
+<input type="submit" name="task" value="Resend">
+<input type="submit" name="task" value="Delete">
+</form>
 {{ template "tail" $ }}

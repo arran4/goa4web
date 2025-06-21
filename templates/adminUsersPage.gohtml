@@ -1,6 +1,19 @@
 {{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/users">(This page/Refresh)</a>]<br />
     <form method="get">
         <input name="search" value="{{$.Search}}">
+        <select name="role">
+            <option value="">All Roles</option>
+            <option value="reader" {{if eq $.Role "reader"}}selected{{end}}>reader</option>
+            <option value="writer" {{if eq $.Role "writer"}}selected{{end}}>writer</option>
+            <option value="moderator" {{if eq $.Role "moderator"}}selected{{end}}>moderator</option>
+            <option value="administrator" {{if eq $.Role "administrator"}}selected{{end}}>administrator</option>
+        </select>
+        <select name="status">
+            <option value="">All Statuses</option>
+            <option value="active" {{if eq $.Status "active"}}selected{{end}}>active</option>
+            <option value="disabled" {{if eq $.Status "disabled"}}selected{{end}}>disabled</option>
+        </select>
         <input type="submit" value="Search">
     </form>
     <table border="1">

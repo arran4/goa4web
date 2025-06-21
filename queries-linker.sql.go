@@ -116,9 +116,13 @@ func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int3
 }
 
 const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
-SELECT idlinkerCategory, position, title, sortorder
-FROM linkerCategory
-ORDER BY position
+SELECT
+    lc.idlinkerCategory,
+    lc.position,
+    lc.title,
+    lc.sortorder
+FROM linkerCategory lc
+ORDER BY lc.position
 `
 
 func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory, error) {
@@ -150,7 +154,11 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory
 }
 
 const getAllLinkerCategoriesWithSortOrder = `-- name: GetAllLinkerCategoriesWithSortOrder :many
-SELECT idlinkerCategory, title, sortorder
+SELECT
+    idlinkerCategory,
+    position,
+    title,
+    sortorder
 FROM linkerCategory
 ORDER BY sortorder
 `

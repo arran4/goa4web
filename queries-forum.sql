@@ -1,6 +1,7 @@
 -- name: UpdateForumCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?;
 
+-- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
        COUNT(t.idforumtopic)   as TopicCount
 FROM forumcategory c
@@ -17,7 +18,7 @@ GROUP BY t.idforumtopic;
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
-SELECT t.*, lu.username AS LastPosterUsername
+SELECT t.*, lu.username AS LastPosterUsername, u.expires_at
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
@@ -26,7 +27,7 @@ WHERE t.forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seele
 ORDER BY t.lastaddition DESC;
 
 -- name: GetAllForumTopicsForUser :many
-SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
+SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level, u.expires_at
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
@@ -47,9 +48,9 @@ ORDER BY t.lastaddition DESC;
 DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
 -- name: UpsertUsersForumTopicLevelPermission :exec
-INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax)
-VALUES (?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax);
+INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax, expires_at)
+VALUES (?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax), expires_at = VALUES(expires_at);
 
 -- name: GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic :many
 SELECT u.*, t.*, utl.*, tr.*
@@ -149,4 +150,10 @@ DELETE FROM forumcategory WHERE idforumcategory = ?;
 -- Removes a forum topic by ID.
 DELETE FROM forumtopic WHERE idforumtopic = ?;
 
+
+-- name: GetAllForumThreadsWithTopic :many
+SELECT th.*, t.title AS topic_title
+FROM forumthread th
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+ORDER BY t.idforumtopic, th.lastaddition DESC;
 

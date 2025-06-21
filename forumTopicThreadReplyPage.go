@@ -84,7 +84,7 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO listUsersSubscribedToThread
+	notifyThreadSubscribers(r.Context(), provider, queries, int32(threadId), uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

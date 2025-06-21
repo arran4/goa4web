@@ -287,6 +287,7 @@ CREATE TABLE `userstopiclevel` (
   `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
   `level` int(10) DEFAULT NULL,
   `invitemax` int(10) DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
   PRIMARY KEY (`users_idusers`,`forumtopic_idforumtopic`),
   KEY `users_has_forumtopic_FKIndex1` (`users_idusers`),
   KEY `users_has_forumtopic_FKIndex2` (`forumtopic_idforumtopic`)
@@ -372,5 +373,14 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `read_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
+);
+
+-- Track active user sessions.
+CREATE TABLE IF NOT EXISTS `sessions` (
+  `session_id` varchar(128) NOT NULL,
+  `users_idusers` int NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`session_id`),
+  KEY `sessions_user_idx` (`users_idusers`)
 );
 

@@ -8,9 +8,14 @@ UPDATE linkerCategory SET title = ?, position = ? WHERE idlinkerCategory = ?;
 INSERT INTO linkerCategory (title, position) VALUES (?, ?);
 
 -- name: GetAllLinkerCategories :many
-SELECT idlinkerCategory, position, title, sortorder
-FROM linkerCategory
-ORDER BY position;
+SELECT
+    lc.idlinkerCategory,
+    lc.position,
+    lc.title,
+    lc.sortorder
+FROM linkerCategory lc
+ORDER BY lc.position
+;
 
 -- name: GetLinkerCategoryLinkCounts :many
 SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
@@ -21,7 +26,11 @@ ORDER BY c.position
 ;
 
 -- name: GetAllLinkerCategoriesWithSortOrder :many
-SELECT idlinkerCategory, title, sortorder
+SELECT
+    idlinkerCategory,
+    position,
+    title,
+    sortorder
 FROM linkerCategory
 ORDER BY sortorder;
 

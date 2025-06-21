@@ -1,4 +1,5 @@
 {{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/search/list">(This page/Refresh)</a>]<br />
                         Complete word list with counts:<ul>
                         {{range $.Rows}}
                                 <li>{{.Word.String}} - {{.Count}}</li>

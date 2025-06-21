@@ -1,11 +1,21 @@
 {{ template "head" $ }}
-		<strong>What shall we do?</strong><br>
-		View something:<br>
-		<a href="/admin/search/list">Show complete word list</a><br>
-		<br>
-		Preform something:<br>
-		<form method="post">
-			<input type="submit" name="task" value="Remake comments search"><br>
+                <strong>What shall we do?</strong><br>
+                Current search index counts:<br>
+                <ul>
+                        <li>Word list: {{ .Stats.WordList }}</li>
+                        <li>Comments: {{ .Stats.Comments }}</li>
+                        <li>News: {{ .Stats.News }}</li>
+                        <li>Blogs: {{ .Stats.Blogs }}</li>
+                        <li>Linker: {{ .Stats.Linker }}</li>
+                        <li>Writings: {{ .Stats.Writings }}</li>
+                </ul>
+                View something:<br>
+                <a href="/admin/search/list">Show complete word list</a><br>
+                <a href="/admin/search/list?download=1">Download word list</a><br>
+                <br>
+                Preform something:<br>
+                <form method="post">
+                        <input type="submit" name="task" value="Remake comments search"><br>
 			<input type="submit" name="task" value="Remake news search"><br>
 			<input type="submit" name="task" value="Remake blog search"><br>
 			<input type="submit" name="task" value="Remake linker search"><br>

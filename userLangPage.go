@@ -144,7 +144,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 	taskDoneAutoRefreshPage(w, r)
 }
 
-func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
+func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

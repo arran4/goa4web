@@ -11,3 +11,6 @@ Defaults should only be used when a value is still empty after applying the abov
 All const declarations should include a short comment describing their purpose.
 
 Environment variable names are centralised in `config/env.go`.
+
+Tests must not interact with the real file system. Use in-memory file systems
+provided by the `io/fs` package or mocks when file access is required.

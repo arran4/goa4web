@@ -1,16 +1,14 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestLoadDBConfigFile(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "db.conf")
+	useMemFS(t)
+	file := "db.conf"
 	content := "DB_USER=u\nDB_PASS=p\nDB_HOST=h\nDB_PORT=3307\nDB_NAME=n\n"
-	if err := os.WriteFile(file, []byte(content), 0644); err != nil {
+	if err := writeFile(file, []byte(content), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	cfg, err := loadDBConfigFile(file)
@@ -35,9 +33,9 @@ func TestResolveDBConfigPrecedence(t *testing.T) {
 }
 
 func TestLoadDBConfigEnvPath(t *testing.T) {
-	dir := t.TempDir()
-	file := filepath.Join(dir, "db.conf")
-	if err := os.WriteFile(file, []byte("DB_USER=envfile\n"), 0644); err != nil {
+	useMemFS(t)
+	file := "db.conf"
+	if err := writeFile(file, []byte("DB_USER=envfile\n"), 0644); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 	t.Setenv("DB_CONFIG_FILE", file)

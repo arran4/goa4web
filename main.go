@@ -41,12 +41,13 @@ var (
 	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
 
-	dbCfgPath  = flag.String("db-config", "", "path to database configuration file")
-	dbUserFlag = flag.String("db-user", "", "database user")
-	dbPassFlag = flag.String("db-pass", "", "database password")
-	dbHostFlag = flag.String("db-host", "", "database host")
-	dbPortFlag = flag.String("db-port", "", "database port")
-	dbNameFlag = flag.String("db-name", "", "database name")
+	dbCfgPath          = flag.String("db-config", "", "path to database configuration file")
+	dbUserFlag         = flag.String("db-user", "", "database user")
+	dbPassFlag         = flag.String("db-pass", "", "database password")
+	dbHostFlag         = flag.String("db-host", "", "database host")
+	dbPortFlag         = flag.String("db-port", "", "database port")
+	dbNameFlag         = flag.String("db-name", "", "database name")
+	dbLogVerbosityFlag = flag.Int("db-log-verbosity", 0, "database logging verbosity")
 	//
 	//	oauth2Config = oauth2.Config{
 	//		ClientID:     clientID,
@@ -81,16 +82,16 @@ func main() {
 
 	performStartupChecks()
 
-  cliDBConfig = DBConfig{
-		User: *dbUserFlag,
-		Pass: *dbPassFlag,
-		Host: *dbHostFlag,
-		Port: *dbPortFlag,
-		Name: *dbNameFlag,
+	cliDBConfig = DBConfig{
+		User:         *dbUserFlag,
+		Pass:         *dbPassFlag,
+		Host:         *dbHostFlag,
+		Port:         *dbPortFlag,
+		Name:         *dbNameFlag,
+		LogVerbosity: *dbLogVerbosityFlag,
 	}
 	dbConfigFile = *dbCfgPath
 
-  
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,
@@ -121,6 +122,7 @@ func main() {
 	r.Use(DBAdderMiddleware)
 	r.Use(UserAdderMiddleware)
 	r.Use(CoreAdderMiddleware)
+	r.Use(RequestLoggerMiddleware)
 	r.Use(SecurityHeadersMiddleware)
 
 	// TODO consider adsense / adwords / etc
@@ -389,6 +391,8 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 		}
 
 		CustomNewsIndex(data.CoreData, r)
+
+		log.Printf("rendering template %s", template)
 
 		if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, template, data); err != nil {
 			log.Printf("Template Error: %s", err)

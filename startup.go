@@ -2,14 +2,21 @@ package main
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"log"
+
+	"github.com/go-sql-driver/mysql"
 )
 
-var dbPool *sql.DB
+var (
+	dbPool         *sql.DB
+	dbLogVerbosity int
+)
 
 func InitDB() *UserError {
 	cfg := loadDBConfig()
+	dbLogVerbosity = cfg.LogVerbosity
 	if cfg.User == "" {
 		cfg.User = "a4web"
 	}
@@ -26,13 +33,24 @@ func InitDB() *UserError {
 		cfg.Name = "a4web"
 	}
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.User, cfg.Pass, cfg.Host, cfg.Port, cfg.Name)
-	var err error
-	dbPool, err = sql.Open("mysql", dsn)
+	mysqlCfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
-		return &UserError{Err: err, ErrorMessage: "failed to open database connection"}
+		return &UserError{Err: err, ErrorMessage: "failed to parse DSN"}
 	}
+	baseConnector, err := mysql.NewConnector(mysqlCfg)
+	if err != nil {
+		return &UserError{Err: err, ErrorMessage: "failed to create connector"}
+	}
+	var connector driver.Connector = baseConnector
+	if dbLogVerbosity > 0 {
+		connector = loggingConnector{baseConnector}
+	}
+	dbPool = sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
 		return &UserError{Err: err, ErrorMessage: "failed to communicate with database"}
+	}
+	if dbLogVerbosity > 0 {
+		log.Printf("db pool stats after init: %+v", dbPool.Stats())
 	}
 	return nil
 }

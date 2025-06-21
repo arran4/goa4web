@@ -26,6 +26,7 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func registerActionPage(w http.ResponseWriter, r *http.Request) {
+	log.Printf("registration attempt %s", r.PostFormValue("username"))
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -112,6 +113,8 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("registration success uid=%d", lastInsertID)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 

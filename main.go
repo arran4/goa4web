@@ -504,8 +504,11 @@ func run() error {
 	provider := providerFromConfig(emailCfg)
 
 	// Start background email queue processing.
-	safeGo(func() { emailQueueWorker(context.Background(), New(dbPool), provider, time.Minute) })
-	safeGo(func() { notificationPurgeWorker(context.Background(), New(dbPool), time.Hour) })
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	safeGo(func() { emailQueueWorker(ctx, New(dbPool), provider, time.Minute) })
+	safeGo(func() { notificationPurgeWorker(ctx, New(dbPool), time.Hour) })
 
 	httpCfg := loadHTTPConfig()
 
@@ -515,14 +518,12 @@ func run() error {
 		}
 	}()
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
+	<-ctx.Done()
 
 	log.Printf("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown error: %w", err)
 	}
 

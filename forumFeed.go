@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
@@ -63,7 +64,7 @@ func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
 		Idforumtopic: int32(topicID),
 	})
 	if err != nil {
-		if err != sql.ErrNoRows {
+		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
 		}
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -74,7 +75,7 @@ func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
 		UsersIdusers:           uid,
 		ForumtopicIdforumtopic: int32(topicID),
 	})
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -100,7 +101,7 @@ func forumTopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		Idforumtopic: int32(topicID),
 	})
 	if err != nil {
-		if err != sql.ErrNoRows {
+		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
 		}
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -111,7 +112,7 @@ func forumTopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		UsersIdusers:           uid,
 		ForumtopicIdforumtopic: int32(topicID),
 	})
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

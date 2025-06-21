@@ -44,3 +44,9 @@ LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
 WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories;
 
+-- name: GetFAQCategoriesWithQuestionCount :many
+SELECT c.*, COUNT(f.idfaq) AS QuestionCount
+FROM faqCategories c
+LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
+GROUP BY c.idfaqCategories;
+

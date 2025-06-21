@@ -11,7 +11,7 @@ import (
 func faqAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows []*Faqcategory
+		Rows []*GetFAQCategoriesWithQuestionCountRow
 	}
 
 	data := Data{
@@ -20,7 +20,7 @@ func faqAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.GetAllFAQCategories(r.Context())
+	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

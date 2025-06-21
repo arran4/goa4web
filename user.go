@@ -6,7 +6,10 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/gorilla/sessions"
 )
 
 func UserAdderMiddleware(next http.Handler) http.Handler {
@@ -45,8 +48,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 					delete(session.Values, "UID")
 					delete(session.Values, "LoginTime")
 					delete(session.Values, "ExpiryTime")
-					_ = session.Save(request, writer)
-					http.Redirect(writer, request, "/login", http.StatusTemporaryRedirect)
+					redirectToLogin(writer, request, session)
 					return
 				}
 			}
@@ -75,4 +77,22 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, ContextValues("languages"), languages)
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
+}
+
+func redirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
+	if session != nil {
+		backURL := r.URL.RequestURI()
+		session.Values["BackURL"] = backURL
+		if r.Method != http.MethodGet {
+			if err := r.ParseForm(); err == nil {
+				session.Values["BackMethod"] = r.Method
+				session.Values["BackData"] = r.Form.Encode()
+			}
+		} else {
+			delete(session.Values, "BackMethod")
+			delete(session.Values, "BackData")
+		}
+		_ = session.Save(r, w)
+	}
+	http.Redirect(w, r, "/login?back="+url.QueryEscape(r.URL.RequestURI()), http.StatusTemporaryRedirect)
 }

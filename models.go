@@ -103,6 +103,11 @@ type Imagepost struct {
 	Fullimage                sql.NullString
 }
 
+type Imagepostsearch struct {
+	ImagepostIdimagepost           int32
+	SearchwordlistIdsearchwordlist int32
+}
+
 type Language struct {
 	Idlanguage int32
 	Nameof     sql.NullString
@@ -252,11 +257,11 @@ type Userlang struct {
 }
 
 type Userstopiclevel struct {
-        UsersIdusers           int32
-        ForumtopicIdforumtopic int32
-        Level                  sql.NullInt32
-        Invitemax              sql.NullInt32
-       ExpiresAt              sql.NullTime
+	UsersIdusers           int32
+	ForumtopicIdforumtopic int32
+	Level                  sql.NullInt32
+	Invitemax              sql.NullInt32
+	ExpiresAt              sql.NullTime
 }
 
 type Writing struct {

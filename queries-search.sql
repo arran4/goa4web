@@ -10,7 +10,8 @@ SELECT swl.word,
        + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
        + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
        + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM imagepostSearch ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 ORDER BY swl.word
 LIMIT ? OFFSET ?;
@@ -223,4 +224,30 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchw
 WHERE swl.word=?
 AND cs.linker_idlinker IN (sqlc.slice('ids'))
 ;
+
+-- name: AddToImagePostSearch :exec
+INSERT IGNORE INTO imagepostSearch
+(imagepost_idimagepost, searchwordlist_idsearchwordlist)
+VALUES (?, ?);
+
+-- name: DeleteImagePostSearch :exec
+DELETE FROM imagepostSearch;
+
+-- name: RemakeImagePostSearchInsert :exec
+INSERT INTO imagepostSearch (text, imagepost_idimagepost)
+SELECT description, idimagepost
+FROM imagepost;
+
+-- name: ImagePostSearchFirst :many
+SELECT DISTINCT cs.imagepost_idimagepost
+FROM imagepostSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?;
+
+-- name: ImagePostSearchNext :many
+SELECT DISTINCT cs.imagepost_idimagepost
+FROM imagepostSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.imagepost_idimagepost IN (sqlc.slice('ids'));
 

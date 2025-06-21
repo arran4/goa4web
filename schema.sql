@@ -144,6 +144,14 @@ CREATE TABLE `imagepost` (
   KEY `imagepost_FKIndex3` (`forumthread_idforumthread`)
 );
 
+CREATE TABLE `imagepostSearch` (
+  `imagepost_idimagepost` int(10) NOT NULL DEFAULT 0,
+  `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`imagepost_idimagepost`,`searchwordlist_idsearchwordlist`),
+  KEY `imagepostSearch_FKIndex1` (`imagepost_idimagepost`),
+  KEY `imagepostSearch_FKIndex2` (`searchwordlist_idsearchwordlist`)
+);
+
 CREATE TABLE `language` (
   `idlanguage` int(10) NOT NULL AUTO_INCREMENT,
   `nameof` tinytext DEFAULT NULL,

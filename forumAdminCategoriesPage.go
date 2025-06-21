@@ -100,3 +100,17 @@ func forumAdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
 }
+
+func forumAdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	cid, err := strconv.Atoi(r.PostFormValue("cid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if err := queries.DeleteForumCategory(r.Context(), int32(cid)); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+}

@@ -13,35 +13,6 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-// Subscription represents a user's subscription to an item.
-type Subscription struct {
-	ID           int32
-	UsersIdusers int32
-	ItemType     string
-	TargetID     int32
-	CreatedAt    sql.NullTime
-}
-
-// PendingEmail holds an email queued for later delivery.
-type PendingEmail struct {
-	ID        int32
-	ToEmail   string
-	Subject   string
-	Body      string
-	CreatedAt sql.NullTime
-	SentAt    sql.NullTime
-}
-
-// Notification is an internal notification for a user.
-type Notification struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	CreatedAt    sql.NullTime
-	ReadAt       sql.NullTime
-}
-
 // notificationsEnabled reports if the internal notification system should run.
 func notificationsEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvNotificationsEnabled))
@@ -135,9 +106,7 @@ func notificationsFeed(r *http.Request, notifications []*Notification) *feeds.Fe
 			Created:     time.Now(),
 			Description: msg,
 		}
-		if n.CreatedAt.Valid {
-			item.Created = n.CreatedAt.Time
-		}
+		item.Created = n.CreatedAt
 		feed.Items = append(feed.Items, item)
 	}
 	return feed

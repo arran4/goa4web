@@ -20,3 +20,6 @@ SQL query files are compiled using `sqlc`. Do not manually edit the generated
 
 All database schema changes must include a migration script in the `migrations/`
 directory so existing installations can be upgraded.
+
+- Errors in critical functions like main() or run() must be logged or wrapped using fmt.Errorf with context. Prefer doing both when the error propagates.
+

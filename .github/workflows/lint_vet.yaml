@@ -1,0 +1,24 @@
+name: lint-vet
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-vet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Go Vet
+        run: go vet ./...
+      - name: Golangci Lint
+        uses: golangci/golangci-lint-action@v5
+        with:
+          version: latest

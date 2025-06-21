@@ -1,6 +1,9 @@
 package main
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // PostUpdate refreshes metadata on the given forum thread and topic.
 // It recalculates thread counters and rebuilds the topic aggregates.
@@ -21,10 +24,10 @@ import "context"
 // and RebuildForumTopicByIdMetaColumns generated via sqlc.
 func PostUpdate(ctx context.Context, q *Queries, threadID, topicID int32) error {
 	if err := q.RecalculateForumThreadByIdMetaData(ctx, threadID); err != nil {
-		return err
+		return fmt.Errorf("recalc thread metadata: %w", err)
 	}
 	if err := q.RebuildForumTopicByIdMetaColumns(ctx, topicID); err != nil {
-		return err
+		return fmt.Errorf("rebuild topic metadata: %w", err)
 	}
 	return nil
 }

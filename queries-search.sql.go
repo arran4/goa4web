@@ -257,17 +257,6 @@ SELECT word
 FROM searchwordlist
 `
 
-const wordListWithCounts = `-- name: WordListWithCounts :many
-SELECT swl.word,
-       (SELECT COUNT(*) FROM commentsSearch cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
-FROM searchwordlist swl
-ORDER BY swl.word
-LIMIT ? OFFSET ?`
-
 // This query selects all words from the "searchwordlist" table and prints them.
 func (q *Queries) CompleteWordList(ctx context.Context) ([]sql.NullString, error) {
 	rows, err := q.db.QueryContext(ctx, completeWordList)
@@ -282,39 +271,6 @@ func (q *Queries) CompleteWordList(ctx context.Context) ([]sql.NullString, error
 			return nil, err
 		}
 		items = append(items, word)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-type WordListWithCountsParams struct {
-	Limit  int32
-	Offset int32
-}
-
-type WordListWithCountsRow struct {
-	Word  sql.NullString
-	Count int64
-}
-
-func (q *Queries) WordListWithCounts(ctx context.Context, arg WordListWithCountsParams) ([]*WordListWithCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, wordListWithCounts, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*WordListWithCountsRow
-	for rows.Next() {
-		var i WordListWithCountsRow
-		if err := rows.Scan(&i.Word, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -675,6 +631,52 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 			return nil, err
 		}
 		items = append(items, sitenews_idsitenews)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const wordListWithCounts = `-- name: WordListWithCounts :many
+SELECT swl.word,
+       (SELECT COUNT(*) FROM commentsSearch cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+FROM searchwordlist swl
+ORDER BY swl.word
+LIMIT ? OFFSET ?
+`
+
+type WordListWithCountsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type WordListWithCountsRow struct {
+	Word  sql.NullString
+	Count int32
+}
+
+// Show each search word with total usage counts across all search tables.
+func (q *Queries) WordListWithCounts(ctx context.Context, arg WordListWithCountsParams) ([]*WordListWithCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, wordListWithCounts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WordListWithCountsRow
+	for rows.Next() {
+		var i WordListWithCountsRow
+		if err := rows.Scan(&i.Word, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

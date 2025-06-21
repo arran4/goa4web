@@ -48,7 +48,7 @@ func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) 
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/user/notifications", http.StatusSeeOther)
+		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
@@ -62,7 +62,7 @@ func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 	}
-	http.Redirect(w, r, "/user/notifications", http.StatusSeeOther)
+	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
 }
 
 func notificationsRssPage(w http.ResponseWriter, r *http.Request) {

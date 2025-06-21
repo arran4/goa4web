@@ -41,10 +41,11 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		CategoryBreadcrumbs []*Writingcategory
 	}
 
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		CanReply: true,  // TODO
-		CanEdit:  false, // TODO
+		CoreData: cd,
+		CanReply: cd.UserID != 0,
+		CanEdit:  false,
 	}
 
 	vars := mux.Vars(r)
@@ -70,6 +71,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	data.Writing = writing
 	data.IsAuthor = writing.UsersIdusers == uid
+	data.CanEdit = cd.HasRole("administrator") || (cd.HasRole("writer") && data.IsAuthor)
 	data.CategoryId = writing.WritingcategoryIdwritingcategory
 
 	languageRows, err := queries.FetchLanguages(r.Context())

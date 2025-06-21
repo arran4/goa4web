@@ -62,3 +62,7 @@ ORDER BY t.lastaddition DESC;
 -- name: MakeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 
+
+-- name: DeleteForumThread :exec
+DELETE FROM forumthread WHERE idforumthread = ?;
+

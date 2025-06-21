@@ -2,7 +2,7 @@
     {{- template "indexItems" $ }}
     {{ if $.UserID }}
         <hr>
-        <a href="/user/logout">Logout</a><br>
+        <a href="/usr/logout">Logout</a><br>
         {{ if eq $.SecurityLevel "administrator"}}
             <a href="/admin">Admin page of mystery</a><br>
         {{ end }}

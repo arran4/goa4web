@@ -43,6 +43,11 @@ const (
 	EnvEmailEnabled = "EMAIL_ENABLED"
 	// EnvNotificationsEnabled toggles the internal notification system.
 	EnvNotificationsEnabled = "NOTIFICATIONS_ENABLED"
+	// EnvCSRFEnabled toggles CSRF protection.
+	EnvCSRFEnabled = "CSRF_ENABLED"
+
+	// EnvFeedsEnabled toggles RSS and Atom feed generation.
+	EnvFeedsEnabled = "FEEDS_ENABLED"
 
 	// EnvPageSizeMin defines the minimum allowed page size.
 	EnvPageSizeMin = "PAGE_SIZE_MIN"

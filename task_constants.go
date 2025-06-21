@@ -82,6 +82,9 @@ const (
 	// TaskForumTopicDelete removes a forum topic.
 	TaskForumTopicDelete = "Forum topic delete"
 
+	// TaskForumThreadDelete removes a forum thread.
+	TaskForumThreadDelete = "Forum thread delete"
+
 	// TaskLogin performs a user login.
 	TaskLogin = "Login"
 
@@ -185,6 +188,9 @@ const (
 
 	// TaskTestMail sends a test email to the current user.
 	TaskTestMail = "Test mail"
+
+	// TaskResend attempts to send queued emails immediately.
+	TaskResend = "Resend"
 
 	// TaskDismiss marks a notification as read.
 	TaskDismiss = "Dismiss"

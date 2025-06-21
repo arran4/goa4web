@@ -167,6 +167,19 @@ Create a new file implementing this interface and add a case in
 dependencies should live behind a build tag. See `email_sendgrid.go` for an
 example provider built with the `sendgrid` tag.
 
+## Database Upgrades
+
+When upgrading from v0.0.1 use the SQL script under `migrations/0002.sql` to
+bring the database schema up to date. Apply it using the `mysql` command line
+tool:
+
+```bash
+mysql -u a4web -p a4web < migrations/0002.sql
+```
+
+The script adds new tables for notifications and email queues, updates existing
+columns and records the schema version.
+
 ## Admin tools
 
 ### Permission section checker

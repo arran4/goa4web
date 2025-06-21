@@ -475,6 +475,7 @@ func run() error {
 	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeLinkerSearch))
 	ar.HandleFunc("/search", adminSearchRemakeWritingSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeWritingSearch))
 	ar.HandleFunc("/search/list", adminSearchWordListPage).Methods("GET")
+	ar.HandleFunc("/search/list.txt", adminSearchWordListDownloadPage).Methods("GET")
 	ar.HandleFunc("/shutdown", adminShutdownPage).Methods("POST")
 
 	// oauth shit

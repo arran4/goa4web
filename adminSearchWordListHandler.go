@@ -79,3 +79,22 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// adminSearchWordListDownloadPage sends the full word list as a text file.
+func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	rows, err := queries.CompleteWordList(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Disposition", "attachment; filename=wordlist.txt")
+	for _, row := range rows {
+		if row.Valid {
+			_, _ = w.Write([]byte(row.String + "\n"))
+		}
+	}
+}

@@ -40,10 +40,12 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		session, err := GetSession(request)
 		if err != nil {
-			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
-			return
+			sessionErrorRedirect(writer, request, err)
 		}
-		uid, _ := session.Values["UID"].(int32)
+		var uid int32
+		if err == nil {
+			uid, _ = session.Values["UID"].(int32)
+		}
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
 
 		level := "reader"

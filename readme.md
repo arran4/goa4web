@@ -95,6 +95,7 @@ Database connection details can be supplied in several ways. Values are resolved
 4. Built-in defaults
 
 The config file uses the same `key=value` format as the email configuration file.
+See `examples/db.conf` for a complete list of supported keys.
 
 ## Email Provider Configuration
 
@@ -105,6 +106,7 @@ Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to se
 - `local`: Uses the local `sendmail` binary.
 - `jmap`: Sends mail using JMAP. Requires `JMAP_ENDPOINT`, `JMAP_USER`, `JMAP_PASS`,
   `JMAP_ACCOUNT`, and `JMAP_IDENTITY`.
+- `sendgrid`: Uses the SendGrid API. Requires the `sendgrid` build tag and a `SENDGRID_KEY`.
 - `log`: Writes emails to the application log.
 
 If configuration or credentials are missing, email is disabled and a log message is printed.
@@ -118,7 +120,23 @@ The resolution order is:
 4. Built-in defaults
 
 The config file uses a simple `key=value` format matching the environment
-variable names.
+variable names. See `examples/email.conf` for an example file containing all keys.
+
+### Implementing Custom Providers
+
+New email backends can be added by satisfying the `MailProvider` interface
+defined in `email.go`:
+
+```go
+type MailProvider interface {
+    Send(ctx context.Context, to, subject, body string) error
+}
+```
+
+Create a new file implementing this interface and add a case in
+`providerFromConfig` that returns your provider. Providers that rely on optional
+dependencies should live behind a build tag. See `email_sendgrid.go` for an
+example provider built with the `sendgrid` tag.
 
 ## Admin tools
 

@@ -40,6 +40,7 @@ var (
 	jmapIdentityFlag  = flag.String("jmap-identity", "", "JMAP identity")
 	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
+	sendGridKeyFlag   = flag.String("sendgrid-key", "", "SendGrid API key")
 
 	dbCfgPath  = flag.String("db-config", "", "path to database configuration file")
 	dbUserFlag = flag.String("db-user", "", "database user")
@@ -112,6 +113,7 @@ func main() {
 		JMAPIdentity: *jmapIdentityFlag,
 		JMAPUser:     *jmapUserFlag,
 		JMAPPass:     *jmapPassFlag,
+		SendGridKey:  *sendGridKeyFlag,
 	}
 	emailConfigFile = *emailCfgPath
 
@@ -140,6 +142,7 @@ func main() {
 	// TODO consider adsense / adwords / etc
 
 	r.HandleFunc("/main.css", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = writer.Write(getMainCSSData())
 	}).Methods("GET")
 
@@ -388,7 +391,13 @@ func main() {
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
 
-	http.Handle("/", csrfMiddleware(r))
+	srv := &Server{
+		DBConfig:    loadDBConfig(),
+		EmailConfig: loadEmailConfig(),
+		Router:      csrfMiddleware(r),
+		Store:       store,
+		DB:          dbPool,
+	}
 
 	httpCfg := loadHTTPConfig()
 	log.Printf("Server started on %s", httpCfg.Listen)

@@ -1,10 +1,11 @@
 -- name: UpdateForumCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?;
 
--- name: GetAllGetAllForumCategoriesWithSubcategoryCount :many
-SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount
+SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
+       COUNT(t.idforumtopic)   as TopicCount
 FROM forumcategory c
-LEFT JOIN forumcategory c2 ON c.forumcategory_idforumcategory = c2.idforumcategory
+LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
+LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 GROUP BY c.idforumcategory;
 
 -- name: GetAllForumTopics :many
@@ -140,4 +141,7 @@ SET threads = (
     LIMIT 1
 )
 WHERE idforumtopic = ?;
+
+-- name: DeleteForumCategory :exec
+DELETE FROM forumcategory WHERE idforumcategory = ?;
 

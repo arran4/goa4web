@@ -33,7 +33,10 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
 		http.Error(w, "forbidden", http.StatusForbidden)

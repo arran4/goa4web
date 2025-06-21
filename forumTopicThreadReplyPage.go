@@ -10,7 +10,10 @@ import (
 )
 
 func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])

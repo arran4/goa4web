@@ -125,7 +125,10 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -145,7 +148,10 @@ func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -165,7 +171,10 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -185,7 +194,10 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 

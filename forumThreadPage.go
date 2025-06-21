@@ -56,7 +56,10 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	//topicId, _ := strconv.Atoi(vars["topic"])
 	threadId, _ := strconv.Atoi(vars["thread"])
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{

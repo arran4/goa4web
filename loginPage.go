@@ -56,7 +56,10 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	session.Values["UID"] = int32(user.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()

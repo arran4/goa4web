@@ -1,4 +1,4 @@
-module goa4web
+module github.com/arran4/goa4web
 
 go 1.21
 

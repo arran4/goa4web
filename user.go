@@ -17,8 +17,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 		// Get the session.
 		session, err := GetSession(request)
 		if err != nil {
-			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
-			return
+			sessionError(writer, request, err)
 		}
 
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)

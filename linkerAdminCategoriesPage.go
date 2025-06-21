@@ -118,7 +118,10 @@ func linkerAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 	title := r.PostFormValue("title")
 	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
 	pos := len(rows) + 1
-	if err := queries.CreateLinkerCategory(r.Context(), sql.NullString{Valid: true, String: title}, int32(pos)); err != nil {
+	if err := queries.CreateLinkerCategory(r.Context(), CreateLinkerCategoryParams{
+		Title:    sql.NullString{Valid: true, String: title},
+		Position: int32(pos),
+	}); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

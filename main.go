@@ -3,13 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
 	. "github.com/arran4/gorillamuxlogic"
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
@@ -80,6 +78,8 @@ var (
 	//		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 	//		Endpoint:     endpoints.Google,
 	//	}
+
+	version = "dev"
 )
 
 func init() {
@@ -132,8 +132,8 @@ func run() error {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	csrfKey := sha256.Sum256([]byte(sessionSecret))
-	csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(true))
+	//csrfKey := sha256.Sum256([]byte(sessionSecret))
+	//csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(version != "dev"))
 
 	cliDBConfig = DBConfig{
 		User:         *dbUserFlag,
@@ -191,6 +191,12 @@ func run() error {
 	loadFeedsEnabled(cliFeeds, appCfg)
 
 	if err := performStartupChecks(); err != nil {
+		return err
+	}
+	dbCfg := loadDBConfig()
+	emailCfg := loadEmailConfig()
+
+	if err := performStartupChecks(dbCfg); err != nil {
 		return err
 	}
 
@@ -299,6 +305,9 @@ func run() error {
 	fr.HandleFunc("/admin/category/delete", forumAdminCategoryDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDeleteCategory))
 	fr.HandleFunc("/admin/topics", forumAdminTopicsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	fr.HandleFunc("/admin/topics", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
+
+	fr.HandleFunc("/admin/conversations", forumAdminThreadsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	fr.HandleFunc("/admin/thread/{thread}/delete", forumAdminThreadDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumThreadDelete))
 	fr.HandleFunc("/admin/topic/{topic}/edit", forumAdminTopicEditPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicChange))
 	fr.HandleFunc("/admin/topic/{topic}/delete", forumAdminTopicDeletePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicDelete))
 	fr.HandleFunc("/admin/topic", forumTopicCreatePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskForumTopicCreate))
@@ -352,7 +361,7 @@ func run() error {
 	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
 
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
-	bmr.HandleFunc("", bookmarksPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("", bookmarksPage).Methods("GET")
 	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	bmr.HandleFunc("/edit", bookmarksEditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSave))
@@ -424,7 +433,7 @@ func run() error {
 	ir.HandleFunc("", informationPage).Methods("GET")
 
 	ur := r.PathPrefix("/usr").Subrouter()
-	ur.HandleFunc("", userPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("", userPage).Methods("GET")
 	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
 	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguages))
@@ -451,7 +460,7 @@ func run() error {
 	ulr.HandleFunc("", loginUserPassPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
 	ulr.HandleFunc("", loginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(TaskMatcher(TaskLogin))
 
-	ar := r.PathPrefix("/admin").MatcherFunc(RequiredAccess("administrator")).Subrouter()
+	ar := r.PathPrefix("/admin").Subrouter()
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminPage).Methods("GET")
 	ar.HandleFunc("/", adminPage).Methods("GET")
@@ -480,8 +489,11 @@ func run() error {
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameSection))
 	ar.HandleFunc("/email/queue", adminEmailQueuePage).Methods("GET")
+	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskResend))
+	ar.HandleFunc("/email/queue", adminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
 	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
 	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
+	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeCommentsSearch))
 	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeNewsSearch))
@@ -498,36 +510,45 @@ func run() error {
 	//r.HandleFunc("/logout", logoutHandler)
 
 	srv = &Server{
-		DBConfig:    loadDBConfig(),
-		EmailConfig: loadEmailConfig(),
+		DBConfig:    dbCfg,
+		EmailConfig: emailCfg,
 		// Load pagination bounds at startup.
 		// The values are stored in appPaginationConfig.
-		Router: csrfMiddleware(r),
+		//Router: csrfMiddleware(r),
+		Router: r,
 		Store:  store,
 		DB:     dbPool,
 	}
 	loadPaginationConfig()
 
-	// Start background email queue processing.
-	go emailQueueWorker(context.Background(), New(dbPool), getEmailProvider(), time.Minute)
-	go notificationPurgeWorker(context.Background(), New(dbPool), time.Hour)
+	log.Printf("Getting email parser")
+	provider := providerFromConfig(emailCfg)
 
+	// Start background email queue processing.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	log.Printf("Staring email worker")
+	safeGo(func() { emailQueueWorker(ctx, New(dbPool), provider, time.Minute) })
+	log.Printf("Starting notification purger worker")
+	safeGo(func() { notificationPurgeWorker(ctx, New(dbPool), time.Hour) })
+
+	log.Printf("Loading http config")
 	httpCfg := loadHTTPConfig()
 
+	log.Printf("Starting web server")
 	go func() {
 		if err := srv.Start(httpCfg.Listen); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %v", err)
 		}
 	}()
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
+	<-ctx.Done()
 
 	log.Printf("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown error: %w", err)
 	}
 
@@ -569,6 +590,19 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 		CustomNewsIndex(cd, r)
 		handler.ServeHTTP(w, r)
 	})
+}
+
+// safeGo runs fn in a goroutine and terminates the program if a panic occurs.
+func safeGo(fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("goroutine panic: %v", r)
+				os.Exit(1)
+			}
+		}()
+		fn()
+	}()
 }
 
 // mainCSSHandler serves the site's stylesheet.

@@ -12,7 +12,7 @@ import (
 func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories []*GetAllGetAllForumCategoriesWithSubcategoryCountRow
+		Categories []*GetAllForumCategoriesWithSubcategoryCountRow
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -20,7 +20,7 @@ func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	categoryRows, err := queries.GetAllGetAllForumCategoriesWithSubcategoryCount(r.Context())
+	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

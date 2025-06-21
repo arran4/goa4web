@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+<h2>Server Runtime Statistics</h2>
+<table border="1">
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Goroutines</td><td>{{ .Stats.Goroutines }}</td></tr>
+    <tr><td>Alloc</td><td>{{ .Stats.Alloc }}</td></tr>
+    <tr><td>Total Alloc</td><td>{{ .Stats.TotalAlloc }}</td></tr>
+    <tr><td>System</td><td>{{ .Stats.Sys }}</td></tr>
+    <tr><td>Heap Alloc</td><td>{{ .Stats.HeapAlloc }}</td></tr>
+    <tr><td>Heap Sys</td><td>{{ .Stats.HeapSys }}</td></tr>
+    <tr><td>GC Count</td><td>{{ .Stats.NumGC }}</td></tr>
+</table>
+{{ template "tail" $ }}

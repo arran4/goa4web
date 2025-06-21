@@ -10,17 +10,32 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-	}
+       session, ok := GetSessionOrFail(w, r)
+       if !ok {
+               return
+       }
+       uid, _ := session.Values["UID"].(int32)
 
-	bookmarksCustomIndex(data.CoreData)
+       data := Data{
+               CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+       }
 
-	if err := renderTemplate(w, r, "bookmarksPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+       if uid == 0 {
+               if err := renderTemplate(w, r, "bookmarksInfoPage.gohtml", data); err != nil {
+                       log.Printf("Template Error: %s", err)
+                       http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+                       return
+               }
+               return
+       }
+
+       bookmarksCustomIndex(data.CoreData)
+
+       if err := renderTemplate(w, r, "bookmarksPage.gohtml", data); err != nil {
+               log.Printf("Template Error: %s", err)
+               http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+               return
+       }
 }
 
 func bookmarksCustomIndex(data *CoreData) {

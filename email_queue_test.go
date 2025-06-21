@@ -7,13 +7,13 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-type recordProvider struct {
+type emailRecordProvider struct {
 	to   string
 	subj string
 	body string
 }
 
-func (r *recordProvider) Send(ctx context.Context, to, sub, body string) error {
+func (r *emailRecordProvider) Send(ctx context.Context, to, sub, body string) error {
 	r.to = to
 	r.subj = sub
 	r.body = body
@@ -49,7 +49,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	mock.ExpectQuery("SELECT id, to_email").WillReturnRows(rows)
 	mock.ExpectExec("UPDATE pending_emails SET sent_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rec := &recordProvider{}
+	rec := &emailRecordProvider{}
 	processPendingEmail(context.Background(), q, rec)
 
 	if rec.to != "a@test" {

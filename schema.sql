@@ -287,6 +287,7 @@ CREATE TABLE `userstopiclevel` (
   `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
   `level` int(10) DEFAULT NULL,
   `invitemax` int(10) DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
   PRIMARY KEY (`users_idusers`,`forumtopic_idforumtopic`),
   KEY `users_has_forumtopic_FKIndex1` (`users_idusers`),
   KEY `users_has_forumtopic_FKIndex2` (`forumtopic_idforumtopic`)

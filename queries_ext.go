@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -155,6 +156,23 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 	return items, rows.Err()
 }
 
+// GetPendingEmailByID returns a single pending email.
+func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*PendingEmail, error) {
+	row := q.db.QueryRowContext(ctx, "SELECT id, to_email, subject, body FROM pending_emails WHERE id = ?", id)
+	var p PendingEmail
+	err := row.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// DeletePendingEmail removes an email from the queue.
+func (q *Queries) DeletePendingEmail(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, "DELETE FROM pending_emails WHERE id = ?", id)
+	return err
+}
+
 // ListUsers returns a limited set of users ordered by ID.
 type ListUsersParams struct {
 	Limit  int32
@@ -295,4 +313,13 @@ func (q *Queries) RecentNotifications(ctx context.Context, limit int32) ([]*Noti
 		items = append(items, &n)
 	}
 	return items, rows.Err()
+}
+
+// CountThreadsByBoard returns the number of unique threads for a board.
+func (q *Queries) CountThreadsByBoard(ctx context.Context, boardID int32) (int32, error) {
+	var c int32
+	err := q.db.QueryRowContext(ctx,
+		"SELECT COUNT(DISTINCT forumthread_idforumthread) FROM imagepost WHERE imageboard_idimageboard = ?",
+		boardID).Scan(&c)
+	return c, err
 }

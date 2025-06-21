@@ -33,17 +33,18 @@ var indexItems = []IndexItem{
 	{Name: "Search", Link: "/search"},
 	{Name: "Writings", Link: "/writings"},
 	{Name: "Information", Link: "/information"},
-	{Name: "Preferences", Link: "/user"},
 }
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		session, err := GetSession(request)
 		if err != nil {
-			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
-			return
+			sessionErrorRedirect(writer, request, err)
 		}
-		uid, _ := session.Values["UID"].(int32)
+		var uid int32
+		if err == nil {
+			uid, _ = session.Values["UID"].(int32)
+		}
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
 
 		level := "reader"
@@ -59,12 +60,15 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		idx := make([]IndexItem, len(indexItems))
 		copy(idx, indexItems)
+		if uid != 0 {
+			idx = append(idx, IndexItem{Name: "Preferences", Link: "/usr"})
+		}
 		var count int32
 		if uid != 0 && notificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(request.Context(), uid)
 			if err == nil {
 				count = c
-				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/user/notifications"})
+				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{

@@ -72,7 +72,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			IndexItems:        idx,
 			UserID:            uid,
 			Title:             "Arran4's Website",
-			FeedsEnabled:      FeedsEnabled,
+			FeedsEnabled:      feedsEnabled,
 			NotificationCount: count,
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))

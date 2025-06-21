@@ -63,11 +63,13 @@ var (
 	dbNameFlag         = flag.String("db-name", "", "database name")
 	dbLogVerbosityFlag = flag.Int("db-log-verbosity", 0, "database logging verbosity")
 
-	listenFlag      = flag.String("listen", ":8080", "server listen address")
-	hostnameFlag    = flag.String("hostname", "", "server base URL")
-	httpCfgPath     = flag.String("http-config", "", "path to HTTP configuration file")
-	listenFlagSet   bool
-	hostnameFlagSet bool
+	listenFlag       = flag.String("listen", ":8080", "server listen address")
+	hostnameFlag     = flag.String("hostname", "", "server base URL")
+	httpCfgPath      = flag.String("http-config", "", "path to HTTP configuration file")
+	feedsEnabledFlag = flag.String("feeds-enabled", "", "enable or disable feeds")
+	listenFlagSet    bool
+	hostnameFlagSet  bool
+	feedsFlagSet     bool
 
 	srv *Server
 	//
@@ -102,10 +104,13 @@ func run() error {
 	}
 
 	flag.CommandLine.Visit(func(f *flag.Flag) {
-		if f.Name == "listen" {
+		switch f.Name {
+		case "listen":
 			listenFlagSet = true
-		} else if f.Name == "hostname" {
+		case "hostname":
 			hostnameFlagSet = true
+		case "feeds-enabled":
+			feedsFlagSet = true
 		}
 	})
 
@@ -178,6 +183,12 @@ func run() error {
 			httpConfigFile = v
 		}
 	}
+
+	var cliFeeds string
+	if feedsFlagSet {
+		cliFeeds = *feedsEnabledFlag
+	}
+	loadFeedsEnabled(cliFeeds, appCfg)
 
 	if err := performStartupChecks(); err != nil {
 		return err
@@ -470,6 +481,7 @@ func run() error {
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameSection))
 	ar.HandleFunc("/email/queue", adminEmailQueuePage).Methods("GET")
 	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
+	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeCommentsSearch))
 	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeNewsSearch))

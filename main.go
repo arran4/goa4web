@@ -239,6 +239,7 @@ func run() error {
 	faqr.HandleFunc("/admin/questions", faqAdminQuestionsPage).Methods("GET", "POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(NoTask())
 	faqr.HandleFunc("/admin/questions", faqQuestionsEditActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskEdit))
 	faqr.HandleFunc("/admin/questions", faqQuestionsDeleteActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskRemoveRemove))
+	faqr.HandleFunc("/admin/questions", faqQuestionsCreateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskCreate))
 
 	br := r.PathPrefix("/blogs").Subrouter()
 	br.HandleFunc("/rss", blogsRssPage).Methods("GET")

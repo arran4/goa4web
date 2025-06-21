@@ -100,3 +100,33 @@ func faqQuestionsEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	taskDoneAutoRefreshPage(w, r)
 }
+
+func faqQuestionsCreateActionPage(w http.ResponseWriter, r *http.Request) {
+	question := r.PostFormValue("question")
+	answer := r.PostFormValue("answer")
+	category, err := strconv.Atoi(r.PostFormValue("category"))
+	if err != nil {
+		log.Printf("Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+
+	if _, err := queries.db.ExecContext(r.Context(),
+		"INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage) VALUES (?, ?, ?, ?, ?)",
+		sql.NullString{String: question, Valid: true},
+		sql.NullString{String: answer, Valid: true},
+		int32(category), uid, 1,
+	); err != nil {
+		log.Printf("Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	taskDoneAutoRefreshPage(w, r)
+}

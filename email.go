@@ -280,7 +280,7 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 		}
 		return smtpMailProvider{addr: addr, auth: auth, from: SourceEmail}
 
-	case "ses", "":
+	case "ses":
 		// Attempt to create an AWS session using default credentials. If this
 		// fails, emails are effectively disabled.
 		awsCfg := aws.NewConfig()

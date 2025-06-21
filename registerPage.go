@@ -102,7 +102,10 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	session.Values["UID"] = int32(lastInsertID)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()

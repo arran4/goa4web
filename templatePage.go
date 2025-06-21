@@ -14,10 +14,8 @@ func templatePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	// Custom Index???
-
 	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "templatePage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
+		log.Printf("template page: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

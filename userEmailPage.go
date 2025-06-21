@@ -12,32 +12,31 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		UserData        *User
-		UserPreferences struct {
-			EmailUpdates bool
-		}
+		UserPreferences struct{ EmailUpdates bool }
 	}
 
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 	user, _ := r.Context().Value(ContextValues("user")).(*User)
 	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
 
 	data := Data{
-		CoreData: cd,
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		UserData: user,
 	}
-	if pref != nil {
-		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Valid && pref.Emailforumupdates.Bool
+	if pref != nil && pref.Emailforumupdates.Valid {
+		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Bool
 	}
 
 	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userEmailPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
+		log.Printf("user email page: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
-
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
 		http.Error(w, "forbidden", http.StatusForbidden)
@@ -50,7 +49,6 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-
 	updates := r.PostFormValue("emailupdates") != ""
 
 	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
@@ -60,21 +58,26 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var execErr error
-	if errors.Is(err, sql.ErrNoRows) {
-		/// TODO use queries
-		_, execErr = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (emailforumupdates, users_idusers) VALUES (?, ?)", updates, uid)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = queries.InsertEmailPreference(r.Context(), InsertEmailPreferenceParams{
+				Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
+				UsersIdusers:      uid,
+			})
+		}
 	} else {
-		/// TODO use queries
-		_, execErr = queries.db.ExecContext(r.Context(), "UPDATE preferences SET emailforumupdates=? WHERE users_idusers=?", updates, uid)
+		err = queries.UpdateEmailForumUpdatesByUserID(r.Context(), UpdateEmailForumUpdatesByUserIDParams{
+			Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
+			UsersIdusers:      uid,
+		})
 	}
-	if execErr != nil {
-		log.Printf("Preference save Error: %s", execErr)
-		http.Redirect(w, r, "?error="+execErr.Error(), http.StatusTemporaryRedirect)
+	if err != nil {
+		log.Printf("save email pref: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	http.Redirect(w, r, "/user/email", http.StatusSeeOther)
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +99,5 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
-	taskDoneAutoRefreshPage(w, r)
+	http.Redirect(w, r, "/user/email", http.StatusSeeOther)
 }

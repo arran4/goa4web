@@ -13,7 +13,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"goa4web/config"
+	"github.com/arran4/goa4web/config"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"

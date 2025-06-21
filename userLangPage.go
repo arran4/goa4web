@@ -84,6 +84,30 @@ func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
 	return nil
 }
 
+func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) error {
+	langID, err := strconv.Atoi(r.PostFormValue("defaultLanguage"))
+	if err != nil {
+		return err
+	}
+
+	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return queries.InsertPreference(r.Context(), InsertPreferenceParams{
+				LanguageIdlanguage: int32(langID),
+				UsersIdusers:       uid,
+			})
+		}
+		return err
+	}
+
+	pref.LanguageIdlanguage = int32(langID)
+	return queries.UpdatePreference(r.Context(), UpdatePreferenceParams{
+		LanguageIdlanguage: pref.LanguageIdlanguage,
+		UsersIdusers:       uid,
+	})
+}
+
 func saveDefaultLanguage(r *http.Request, queries *Queries, uid int32) error {
 	langID, _ := strconv.Atoi(r.PostFormValue("defaultLanguage"))
 	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
@@ -105,7 +129,10 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -118,6 +145,29 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
 }
 
+func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
+	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
+		log.Printf("Save language Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	taskDoneAutoRefreshPage(w, r)
+}
+
 func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
@@ -125,7 +175,10 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -151,7 +204,10 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"goa4web/config"
+	"github.com/arran4/goa4web/config"
 )
 
 // DBConfig holds parameters for connecting to the database.

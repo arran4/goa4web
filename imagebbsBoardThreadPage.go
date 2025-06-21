@@ -38,7 +38,10 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 	thid, _ := strconv.Atoi(vars["thread"])
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	data := Data{
@@ -133,7 +136,10 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["board"])

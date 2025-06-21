@@ -27,7 +27,10 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	buid := r.URL.Query().Get("uid")
 	userId, _ := strconv.Atoi(buid)
-	session, _ := GetSession(r)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	userLanguagePref := 0

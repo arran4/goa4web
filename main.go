@@ -501,14 +501,19 @@ func run() error {
 	}
 	loadPaginationConfig()
 
+	log.Printf("Getting email parser")
 	provider := providerFromConfig(emailCfg)
 
 	// Start background email queue processing.
+	log.Printf("Staring email worker")
 	safeGo(func() { emailQueueWorker(context.Background(), New(dbPool), provider, time.Minute) })
+	log.Printf("Starting notification purger worker")
 	safeGo(func() { notificationPurgeWorker(context.Background(), New(dbPool), time.Hour) })
 
+	log.Printf("Loading http config")
 	httpCfg := loadHTTPConfig()
 
+	log.Printf("Starting web server")
 	go func() {
 		if err := srv.Start(httpCfg.Listen); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %v", err)

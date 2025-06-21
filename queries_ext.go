@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -182,13 +181,6 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*Us
 		items = append(items, &u)
 	}
 	return items, rows.Err()
-}
-
-// PermissionWithUser includes permission information along with user details.
-type PermissionWithUser struct {
-	Permission
-	Username sql.NullString
-	Email    sql.NullString
 }
 
 // GetPermissionsBySectionWithUsers lists permissions for a section with user info.

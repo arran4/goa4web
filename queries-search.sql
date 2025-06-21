@@ -3,6 +3,18 @@
 SELECT word
 FROM searchwordlist;
 
+-- name: WordListWithCounts :many
+-- Show each search word with total usage counts across all search tables.
+SELECT swl.word,
+       (SELECT COUNT(*) FROM commentsSearch cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+FROM searchwordlist swl
+ORDER BY swl.word
+LIMIT ? OFFSET ?;
+
 -- name: RemakeCommentsSearch :exec
 -- This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
 -- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".

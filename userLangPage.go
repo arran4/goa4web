@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/sessions"
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -63,61 +65,17 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
-	if _, err := queries.db.ExecContext(r.Context(), "DELETE FROM userlang WHERE users_idusers = ?", uid); err != nil {
-		return err
-	}
-}
-func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, _ := GetSession(r)
-	uid, _ := session.Values["UID"].(int32)
-
-	if err := saveUserLanguages(r, queries, uid); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
-}
-
-func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, _ := GetSession(r)
-	uid, _ := session.Values["UID"].(int32)
-
-	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
-}
-
-func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, _ := GetSession(r)
-	uid, _ := session.Values["UID"].(int32)
-
-	if err := saveUserLanguages(r, queries, uid); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
-}
-
-func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
 	langs, err := queries.FetchLanguages(r.Context())
 	if err != nil {
 		return err
 	}
+	// Clear existing language selections for the user.
+	if _, err := queries.db.ExecContext(r.Context(), "DELETE FROM userlang WHERE users_idusers = ?", uid); err != nil {
+		return err
+	}
 	for _, l := range langs {
 		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
-      // TODO use queries
+			// TODO use queries
 			if _, err := queries.db.ExecContext(r.Context(), "INSERT INTO userlang (users_idusers, language_idlanguage) VALUES (?, ?)", uid, l.Idlanguage); err != nil {
 				return err
 			}
@@ -157,7 +115,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
 }
 
 func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Request) {
@@ -177,7 +135,13 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+}
+
+// userLangSaveLanguageActionPage is kept for backwards compatibility.
+// It simply delegates to userLangSaveDefaultLanguageActionPage.
+func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
+	userLangSaveDefaultLanguageActionPage(w, r)
 }
 
 func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
@@ -203,5 +167,5 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
 }

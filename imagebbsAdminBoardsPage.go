@@ -8,9 +8,16 @@ import (
 )
 
 func imagebbsAdminBoardsPage(w http.ResponseWriter, r *http.Request) {
+	type BoardRow struct {
+		*Imageboard
+		Threads  int32
+		ModLevel int32
+		Visible  bool
+		Nsfw     bool
+	}
 	type Data struct {
 		*CoreData
-		Boards []*Imageboard
+		Boards []*BoardRow
 	}
 
 	data := Data{
@@ -29,7 +36,20 @@ func imagebbsAdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.Boards = boardRows
+	for _, b := range boardRows {
+		threads, err := queries.CountThreadsByBoard(r.Context(), b.Idimageboard)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("countThreads error: %s", err)
+			threads = 0
+		}
+		data.Boards = append(data.Boards, &BoardRow{
+			Imageboard: b,
+			Threads:    threads,
+			ModLevel:   0,
+			Visible:    true,
+			Nsfw:       false,
+		})
+	}
 
 	CustomImageBBSIndex(data.CoreData, r)
 

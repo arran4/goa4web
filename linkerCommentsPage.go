@@ -37,10 +37,11 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		CanReply: true,  // TODO
-		CanEdit:  false, // TODO
+		CoreData: cd,
+		CanReply: cd.UserID != 0,
+		CanEdit:  false,
 		Offset:   offset,
 	}
 
@@ -70,6 +71,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Link = link
+	data.CanEdit = cd.HasRole("administrator") || uid == link.UsersIdusers
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,

@@ -1,30 +1,43 @@
 {{ template "head" $ }}
+    <form method="get">
+        <label>Search <input name="search" value="{{ .Search }}"></label>
+        <label>User <input name="user" value="{{ .User }}"></label>
+        <label>Category <input name="category" value="{{ .Category }}"></label>
+        <input type="submit" value="Filter">
+    </form>
+    <form method="post" id="bulkForm">
     <table>
         <tr>
+            <th>Select</th>
             <th>ID</th>
             <th>Title</th>
             <th>URL</th>
             <th>Description</th>
             <th>Poster</th>
             <th>Category</th>
-            <th>Options</th>
+            <th>Preview</th>
+            <th>Update</th>
         </tr>
         {{- range .Queue }}
             <tr>
-                <form method="post">
-                    <td><input type="hidden" name="qid" value="{{ .Idlinkerqueue }}">{{ .Idlinkerqueue }}</td>
-                    <td><input name="title" value="{{ .Title.String }}"></td>
-                    <td><input name="URL" value="{{ .URL.String }}"></td>
-                    <td><textarea name="desc">{{ .Description.String }}</textarea></td>
-                    <td>{{ .Username.String }}</td>
-                    <td><input type="hidden" name="category" value="{{ .IdlinkerCategory }}">{{ .CategoryTitle.String }}</td>
-                    <td>
-                        <input type="submit" name="task" value="Update"><br>
-                        <input type="submit" name="task" value="Approve"><br>
-                        <input type="submit" name="task" value="Delete"><br>
-                    </td>
-                </form>
+                <td><input type="checkbox" name="qid" value="{{ .Idlinkerqueue }}"></td>
+                <td>{{ .Idlinkerqueue }}</td>
+                <td><input name="title" form="u{{ .Idlinkerqueue }}" value="{{ .Title.String }}"></td>
+                <td><input name="URL" form="u{{ .Idlinkerqueue }}" value="{{ .URL.String }}"></td>
+                <td><textarea name="desc" form="u{{ .Idlinkerqueue }}">{{ .Description.String }}</textarea></td>
+                <td>{{ .Username.String }}</td>
+                <td><input type="hidden" name="category" form="u{{ .Idlinkerqueue }}" value="{{ .IdlinkerCategory }}">{{ .CategoryTitle.String }}</td>
+                <td>{{ .Preview }}</td>
+                <td>
+                    <form method="post" id="u{{ .Idlinkerqueue }}">
+                        <input type="hidden" name="qid" value="{{ .Idlinkerqueue }}">
+                        <input type="submit" name="task" value="Update">
+                    </form>
+                </td>
             </tr>
         {{- end }}
     </table>
+    <input type="submit" name="task" value="Bulk Approve">
+    <input type="submit" name="task" value="Bulk Delete">
+    </form>
 {{ template "tail" $ }}

@@ -328,6 +328,8 @@ func run() error {
 	lr.HandleFunc("/admin/queue", linkerAdminQueueDeleteActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDelete))
 	lr.HandleFunc("/admin/queue", linkerAdminQueueApproveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskApprove))
 	lr.HandleFunc("/admin/queue", linkerAdminQueueUpdateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUpdate))
+	lr.HandleFunc("/admin/queue", linkerAdminQueueBulkApproveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskBulkApprove))
+	lr.HandleFunc("/admin/queue", linkerAdminQueueBulkDeleteActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskBulkDelete))
 	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
 	lr.HandleFunc("/admin/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))

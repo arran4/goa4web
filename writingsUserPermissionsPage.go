@@ -47,8 +47,9 @@ func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *h
 	level := r.PostFormValue("level")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/writings",
@@ -83,8 +84,9 @@ func writingsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/writings",

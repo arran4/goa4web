@@ -44,8 +44,9 @@ func adminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
 	to := r.PostFormValue("to")
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/permissions/sections",

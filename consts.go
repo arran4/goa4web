@@ -12,4 +12,5 @@ const (
 	LinkerTopicName          = "A LINKER TOPIC"
 	LinkerTopicDescription   = "THIS IS A HIDDEN FORUM FOR A LINKER TOPIC"
 	FeedsEnabled             = true
+	DefaultPageSize          = 15 // default items per page
 )

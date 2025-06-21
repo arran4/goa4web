@@ -123,6 +123,16 @@ type Linker struct {
 type Linkercategory struct {
 	Idlinkercategory int32
 	Title            sql.NullString
+	Position         int32
+       Sortorder        int32
+}
+
+// LinkercategoryCount holds a category with the number of links assigned.
+type LinkercategoryCount struct {
+       Idlinkercategory int32
+       Title            sql.NullString
+       Sortorder        int32
+       Linkcount        int64
 }
 
 type Linkerqueue struct {
@@ -152,6 +162,7 @@ type Preference struct {
 	LanguageIdlanguage int32
 	UsersIdusers       int32
 	Emailforumupdates  sql.NullBool
+	PageSize           int32
 }
 
 type Searchwordlist struct {

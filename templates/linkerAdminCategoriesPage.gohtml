@@ -2,7 +2,10 @@
     <table>
         <tr>
             <th>ID</th>
+            <th>Order</th>
             <th>Title</th>
+            <th>Links</th>
+            <th>Order</th>
             <th>Options</th>
         </tr>
         {{- range .Categories }}
@@ -11,21 +14,27 @@
                 <td>
                     <form method="post">
                         <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
-                        <input name="cname" value="{{ .Title.String }}">
+                        <input type="number" name="position" value="{{ .Position }}" size="3">
                 </td>
+                <td><input name="title" value="{{ .Title.String }}"></td>
+                <td>{{ .Linkcount }}</td>
                 <td>
+                    <input type="submit" name="task" value="Update">
                     <input type="submit" name="task" value="Rename Category">
-                    <input type="submit" name="task" value="Delete Category">
+                    {{ if eq .Linkcount 0 }}<input type="submit" name="task" value="Delete Category">{{ end }}
                     </form>
                 </td>
             </tr>
         {{- end }}
         <tr>
             <td>NEW</td>
+            <td></td>
             <td>
                 <form method="post">
-                    <input name="cname" value="">
+                    <input name="title" value="">
             </td>
+            <td>0</td>
+            <td><input name="order" type="number" value="0" style="width:4em"></td>
             <td>
                 <input type="submit" name="task" value="Create Category">
                 </form>

@@ -66,7 +66,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		filtered = append(filtered, &QueueRow{q, fetchPageTitle(r.Context(), q.Url.String)})
 	}
 
-	const pageSize = 15
+	pageSize := getPageSize(r)
 	if data.Offset < 0 {
 		data.Offset = 0
 	}
@@ -97,12 +97,12 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		next = "?offset=%d"
 	}
 	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-		Name: "Next 15",
+		Name: fmt.Sprintf("Next %d", pageSize),
 		Link: baseURL + fmt.Sprintf(next, data.Offset+pageSize),
 	})
 	if data.Offset > 0 {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Previous 15",
+			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: baseURL + fmt.Sprintf(next, data.Offset-pageSize),
 		})
 	}

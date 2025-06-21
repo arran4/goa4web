@@ -43,4 +43,9 @@ const (
 	EnvEmailEnabled = "EMAIL_ENABLED"
 	// EnvNotificationsEnabled toggles the internal notification system.
 	EnvNotificationsEnabled = "NOTIFICATIONS_ENABLED"
+
+	// EnvPageSizeMin defines the minimum allowed page size.
+	EnvPageSizeMin = "PAGE_SIZE_MIN"
+	// EnvPageSizeMax defines the maximum allowed page size.
+	EnvPageSizeMax = "PAGE_SIZE_MAX"
 )

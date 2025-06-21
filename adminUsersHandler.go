@@ -18,28 +18,30 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		Search   string
 		NextLink string
 		PrevLink string
+		PageSize int
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Search:   r.URL.Query().Get("search"),
+		PageSize: getPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	const pageSize = 15
+	pageSize := data.PageSize
 	var rows []*User
 	var err error
 	if data.Search != "" {
 		rows, err = queries.SearchUsers(r.Context(), SearchUsersParams{
 			Query:  data.Search,
-			Limit:  pageSize + 1,
+			Limit:  int32(pageSize + 1),
 			Offset: int32(offset),
 		})
 	} else {
 		rows, err = queries.ListUsers(r.Context(), ListUsersParams{
-			Limit:  pageSize + 1,
+			Limit:  int32(pageSize + 1),
 			Offset: int32(offset),
 		})
 	}
@@ -65,7 +67,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Next 15",
+			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: data.NextLink,
 		})
 	}
@@ -76,7 +78,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
-			Name: "Previous 15",
+			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: data.PrevLink,
 		})
 	}

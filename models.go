@@ -161,6 +161,7 @@ type Preference struct {
 	LanguageIdlanguage int32
 	UsersIdusers       int32
 	Emailforumupdates  sql.NullBool
+	PageSize           int32
 }
 
 type Searchwordlist struct {

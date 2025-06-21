@@ -1,0 +1,7 @@
+{{ template "head" $ }}
+<form method="post">
+    Page size:
+    <input type="number" name="size" value="{{.Size}}" min="{{.Min}}" max="{{.Max}}"><br>
+    <input type="submit" name="task" value="Save size">
+</form>
+{{ template "tail" $ }}

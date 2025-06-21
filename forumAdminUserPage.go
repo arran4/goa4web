@@ -68,7 +68,7 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 		users = filtered
 	}
 
-	const pageSize = 15
+	pageSize := getPageSize(r)
 	if offset < 0 {
 		offset = 0
 	}
@@ -93,21 +93,26 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 	hasMore := end < len(users)
 	base := "/forum/admin/users"
 	if data.Search != "" {
-		base += "?search=" + url.QueryEscape(data.Search)
-	}
-	if hasMore {
-		if strings.Contains(base, "?") {
-			data.NextLink = fmt.Sprintf("%s&offset=%d", base, offset+pageSize)
-		} else {
-			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: fmt.Sprintf("Next %d", pageSize),
+			Link: fmt.Sprintf("/forum/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset+pageSize),
+		})
+		if offset > 0 {
+			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+				Name: fmt.Sprintf("Previous %d", pageSize),
+				Link: fmt.Sprintf("/forum/admin/users?search=%s&offset=%d", url.QueryEscape(data.Search), offset-pageSize),
+			})
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{Name: "Next 15", Link: data.NextLink})
-	}
-	if offset > 0 {
-		if strings.Contains(base, "?") {
-			data.PrevLink = fmt.Sprintf("%s&offset=%d", base, offset-pageSize)
-		} else {
-			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
+	} else {
+		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			Name: fmt.Sprintf("Next %d", pageSize),
+			Link: fmt.Sprintf("/forum/admin/users?offset=%d", offset+pageSize),
+		})
+		if offset > 0 {
+			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+				Name: fmt.Sprintf("Previous %d", pageSize),
+				Link: fmt.Sprintf("/forum/admin/users?offset=%d", offset-pageSize),
+			})
 		}
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{Name: "Previous 15", Link: data.PrevLink})
 	}

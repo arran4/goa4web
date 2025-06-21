@@ -28,15 +28,20 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/forum",
 	}
 
+	data.Messages = append(data.Messages, "Recalculating forum thread metadata...")
+
 	if err := queries.RecalculateAllForumThreadMetaData(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("recalculateForumThreadByIdMetaData_firstpost: %w", err).Error())
+	} else {
+		data.Messages = append(data.Messages, "Thread metadata rebuilt.")
 	}
 	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 	if err != nil {
@@ -50,14 +55,18 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := struct {
 		*CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Back:     "/admin/forum",
 	}
+	data.Messages = append(data.Messages, "Rebuilding forum topic metadata...")
 	if err := queries.RebuildAllForumTopicMetaColumns(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("rebuildForumTopicByIdMetaColumns_lastaddition_lastposter: %w", err).Error())
+	} else {
+		data.Messages = append(data.Messages, "Topic metadata rebuilt.")
 	}
 	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 	if err != nil {

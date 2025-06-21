@@ -15,8 +15,9 @@ var (
 	dbLogVerbosity int
 )
 
-func InitDB() *UserError {
-	cfg := loadDBConfig()
+// InitDB opens the database connection using the provided configuration
+// and ensures the schema exists.
+func InitDB(cfg DBConfig) *UserError {
 	dbLogVerbosity = cfg.LogVerbosity
 	if cfg.User == "" {
 		cfg.User = "a4web"
@@ -60,12 +61,12 @@ func InitDB() *UserError {
 }
 
 // checkDatabase attempts to connect and ping the configured database.
-func checkDatabase() *UserError {
-	return InitDB()
+func checkDatabase(cfg DBConfig) *UserError {
+	return InitDB(cfg)
 }
 
-func performStartupChecks() error {
-	if ue := checkDatabase(); ue != nil {
+func performStartupChecks(cfg DBConfig) error {
+	if ue := checkDatabase(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	return nil
@@ -74,15 +75,15 @@ func performStartupChecks() error {
 // ensureSchema creates core tables if they do not exist and inserts a version row.
 func ensureSchema(ctx context.Context, db *sql.DB) error {
 	if _, err := db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)"); err != nil {
-		return err
+		return fmt.Errorf("create schema_version: %w", err)
 	}
 	var count int
 	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM schema_version").Scan(&count); err != nil {
-		return err
+		return fmt.Errorf("count schema_version: %w", err)
 	}
 	if count == 0 {
 		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (1)"); err != nil {
-			return err
+			return fmt.Errorf("insert schema_version: %w", err)
 		}
 	}
 	return nil

@@ -244,12 +244,3 @@ func (q *Queries) UpdateImagePostByIdForumThreadId(ctx context.Context, arg Upda
 	_, err := q.db.ExecContext(ctx, updateImagePostByIdForumThreadId, arg.ForumthreadIdforumthread, arg.Idimagepost)
 	return err
 }
-
-// CountThreadsByBoard returns the number of unique threads for a board.
-func (q *Queries) CountThreadsByBoard(ctx context.Context, boardID int32) (int32, error) {
-	var c int32
-	err := q.db.QueryRowContext(ctx,
-		"SELECT COUNT(DISTINCT forumthread_idforumthread) FROM imagepost WHERE imageboard_idimageboard = ?",
-		boardID).Scan(&c)
-	return c, err
-}

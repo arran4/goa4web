@@ -1,0 +1,10 @@
+{{ template "head" $ }}
+<form method="post">
+    <label>
+        <input type="checkbox" name="feeds_enabled" value="1"{{ if $.FeedsEnabled }} checked{{ end }}>
+        Enable Feeds
+    </label>
+    <br>
+    <input type="submit" value="Save">
+</form>
+{{ template "tail" $ }}

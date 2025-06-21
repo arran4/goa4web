@@ -65,33 +65,6 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 
 	provider := getEmailProvider()
 
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: int32(threadId),
-		Idusers:                  uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
-		Idusers:                  uid,
-		ForumthreadIdforumthread: int32(threadId),
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
-
 	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
@@ -122,7 +95,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO listUsersSubscribedToThread
+	notifyThreadSubscribers(r.Context(), provider, queries, int32(threadId), uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

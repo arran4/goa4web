@@ -280,7 +280,7 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 		}
 		return smtpMailProvider{addr: addr, auth: auth, from: SourceEmail}
 
-	case "ses", "":
+	case "ses":
 		// Attempt to create an AWS session using default credentials. If this
 		// fails, emails are effectively disabled.
 		awsCfg := aws.NewConfig()
@@ -451,9 +451,9 @@ func getAdminEmails(ctx context.Context, q *Queries) []string {
 			log.Printf("list admin emails: %v", err)
 			return emails
 		}
-		for _, row := range rows {
-			if row.Email.Valid {
-				emails = append(emails, row.Email.String)
+		for _, email := range rows {
+			if email.Valid {
+				emails = append(emails, email.String)
 			}
 		}
 	}
@@ -494,6 +494,26 @@ func notifyAdmins(ctx context.Context, provider MailProvider, q *Queries, page s
 	}
 	for _, email := range getAdminEmails(ctx, q) {
 		if err := notifyChange(ctx, provider, email, page); err != nil {
+			log.Printf("Error: notifyChange: %s", err)
+		}
+	}
+}
+
+// notifyThreadSubscribers emails users subscribed to the forum thread.
+func notifyThreadSubscribers(ctx context.Context, provider MailProvider, q *Queries, threadID, excludeUser int32, page string) {
+	if provider == nil {
+		return
+	}
+	rows, err := q.ListUsersSubscribedToThread(ctx, ListUsersSubscribedToThreadParams{
+		ForumthreadIdforumthread: threadID,
+		Idusers:                  excludeUser,
+	})
+	if err != nil {
+		log.Printf("Error: listUsersSubscribedToThread: %s", err)
+		return
+	}
+	for _, row := range rows {
+		if err := notifyChange(ctx, provider, row.Username.String, page); err != nil {
 			log.Printf("Error: notifyChange: %s", err)
 		}
 	}

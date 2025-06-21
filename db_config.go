@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"goa4web/config"
 )
 
 // DBConfig holds parameters for connecting to the database.
@@ -25,27 +27,9 @@ var dbConfigFile string
 // cli > file > env > defaults.
 func resolveDBConfig(cli, file, env DBConfig) DBConfig {
 	var cfg DBConfig
-	merge := func(src DBConfig) {
-		if src.User != "" {
-			cfg.User = src.User
-		}
-		if src.Pass != "" {
-			cfg.Pass = src.Pass
-		}
-		if src.Host != "" {
-			cfg.Host = src.Host
-		}
-		if src.Port != "" {
-			cfg.Port = src.Port
-		}
-		if src.Name != "" {
-			cfg.Name = src.Name
-		}
-	}
-
-	merge(env)
-	merge(file)
-	merge(cli)
+	config.Merge(&cfg, env)
+	config.Merge(&cfg, file)
+	config.Merge(&cfg, cli)
 	return cfg
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -188,6 +189,92 @@ type SearchUsersParams struct {
 func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*User, error) {
 	like := "%" + arg.Query + "%"
 	rows, err := q.db.QueryContext(ctx, "SELECT idusers, email, passwd, username FROM users WHERE LOWER(username) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?) ORDER BY idusers LIMIT ? OFFSET ?", like, like, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &u)
+	}
+	return items, rows.Err()
+}
+
+// ListUsersFiltered returns users filtered by role and status with pagination.
+type ListUsersFilteredParams struct {
+	Role   string
+	Status string
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]*User, error) {
+	query := "SELECT u.idusers, u.email, u.passwd, u.username FROM users u"
+	var args []interface{}
+	var cond []string
+	if arg.Role != "" {
+		query += " JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all'"
+		cond = append(cond, "p.level = ?")
+		args = append(args, arg.Role)
+	}
+	if arg.Status != "" {
+		cond = append(cond, "u.status = ?")
+		args = append(args, arg.Status)
+	}
+	if len(cond) > 0 {
+		query += " WHERE " + strings.Join(cond, " AND ")
+	}
+	query += " ORDER BY u.idusers LIMIT ? OFFSET ?"
+	args = append(args, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &u)
+	}
+	return items, rows.Err()
+}
+
+// SearchUsersFiltered finds users by username or email with role and status filters.
+type SearchUsersFilteredParams struct {
+	Query  string
+	Role   string
+	Status string
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilteredParams) ([]*User, error) {
+	like := "%" + arg.Query + "%"
+	query := "SELECT u.idusers, u.email, u.passwd, u.username FROM users u"
+	var args []interface{}
+	var cond []string
+	if arg.Role != "" {
+		query += " JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all'"
+		cond = append(cond, "p.level = ?")
+		args = append(args, arg.Role)
+	}
+	cond = append(cond, "(LOWER(u.username) LIKE LOWER(?) OR LOWER(u.email) LIKE LOWER(?))")
+	args = append(args, like, like)
+	if arg.Status != "" {
+		cond = append(cond, "u.status = ?")
+		args = append(args, arg.Status)
+	}
+	query += " WHERE " + strings.Join(cond, " AND ")
+	query += " ORDER BY u.idusers LIMIT ? OFFSET ?"
+	args = append(args, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

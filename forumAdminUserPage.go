@@ -90,8 +90,6 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 		data.Rows = append(data.Rows, &UserTopic{User: u, Topics: topics})
 	}
 
-	hasMore := end < len(users)
-	base := "/forum/admin/users"
 	if data.Search != "" {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: fmt.Sprintf("Next %d", pageSize),

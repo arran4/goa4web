@@ -101,8 +101,38 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Res
 	return q.db.ExecContext(ctx, insertUser, arg.Username, arg.MD5, arg.Email)
 }
 
+const listAdministratorEmails = `-- name: ListAdministratorEmails :many
+SELECT u.email
+FROM users u
+JOIN permissions p ON p.users_idusers = u.idusers
+WHERE p.section = 'administrator'
+`
+
+func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, listAdministratorEmails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var email sql.NullString
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
-SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
 FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -128,6 +158,7 @@ type ListUsersSubscribedToBlogsRow struct {
 	LanguageIdlanguage_2     int32
 	UsersIdusers_2           int32
 	Emailforumupdates        sql.NullBool
+	PageSize                 int32
 }
 
 func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]*ListUsersSubscribedToBlogsRow, error) {
@@ -154,6 +185,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 			&i.LanguageIdlanguage_2,
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
+			&i.PageSize,
 		); err != nil {
 			return nil, err
 		}
@@ -169,7 +201,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 }
 
 const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
-SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
 FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -198,6 +230,7 @@ type ListUsersSubscribedToLinkerRow struct {
 	LanguageIdlanguage_2           int32
 	UsersIdusers_2                 int32
 	Emailforumupdates              sql.NullBool
+	PageSize                       int32
 }
 
 func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]*ListUsersSubscribedToLinkerRow, error) {
@@ -227,6 +260,7 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 			&i.LanguageIdlanguage_2,
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
+			&i.PageSize,
 		); err != nil {
 			return nil, err
 		}
@@ -242,7 +276,7 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
-SELECT idcomments, forumthread_idforumthread, c.users_idusers, c.language_idlanguage, written, text, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+SELECT idcomments, forumthread_idforumthread, c.users_idusers, c.language_idlanguage, written, text, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
 FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -268,6 +302,7 @@ type ListUsersSubscribedToThreadRow struct {
 	LanguageIdlanguage_2     int32
 	UsersIdusers_2           int32
 	Emailforumupdates        sql.NullBool
+	PageSize                 int32
 }
 
 func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsersSubscribedToThreadParams) ([]*ListUsersSubscribedToThreadRow, error) {
@@ -294,6 +329,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 			&i.LanguageIdlanguage_2,
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
+			&i.PageSize,
 		); err != nil {
 			return nil, err
 		}
@@ -309,7 +345,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates
+SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, idusers, email, passwd, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -339,6 +375,7 @@ type ListUsersSubscribedToWritingRow struct {
 	LanguageIdlanguage_2             int32
 	UsersIdusers_2                   int32
 	Emailforumupdates                sql.NullBool
+	PageSize                         int32
 }
 
 func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]*ListUsersSubscribedToWritingRow, error) {
@@ -369,6 +406,7 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.LanguageIdlanguage_2,
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
+			&i.PageSize,
 		); err != nil {
 			return nil, err
 		}
@@ -440,38 +478,4 @@ func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (
 		&i.Username,
 	)
 	return &i, err
-}
-
-const listAdministratorEmails = `-- name: ListAdministratorEmails :many
-SELECT u.email
-FROM users u
-JOIN permissions p ON p.users_idusers = u.idusers
-WHERE p.section = 'administrator'
-`
-
-type ListAdministratorEmailsRow struct {
-	Email sql.NullString
-}
-
-func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]*ListAdministratorEmailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAdministratorEmails)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListAdministratorEmailsRow
-	for rows.Next() {
-		var i ListAdministratorEmailsRow
-		if err := rows.Scan(&i.Email); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

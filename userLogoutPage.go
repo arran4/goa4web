@@ -17,8 +17,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	session, err := GetSession(r)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		sessionError(w, r, err)
 	}
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")

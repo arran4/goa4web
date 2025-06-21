@@ -18,7 +18,20 @@ func GetSession(r *http.Request) (*sessions.Session, error) {
 		}
 		return sess, nil
 	}
-	return store.Get(r, sessionName)
+	sess, err := store.Get(r, sessionName)
+	if err != nil {
+		log.Printf("get session: %v", err)
+	}
+	return sess, err
+}
+
+// clearSession removes the session cookie so the user is effectively logged out.
+func clearSession(w http.ResponseWriter, r *http.Request) {
+	sess, _ := store.New(r, sessionName)
+	sess.Options.MaxAge = -1
+	if err := sess.Save(r, w); err != nil {
+		log.Printf("clear session: %v", err)
+	}
 }
 
 // GetSessionOrFail wraps GetSession and writes a 500 response if retrieving the
@@ -26,9 +39,18 @@ func GetSession(r *http.Request) (*sessions.Session, error) {
 func GetSessionOrFail(w http.ResponseWriter, r *http.Request) (*sessions.Session, bool) {
 	sess, err := GetSession(r)
 	if err != nil {
-		log.Printf("session error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		sessionErrorRedirect(w, r, err)
 		return nil, false
 	}
 	return sess, true
+}
+
+func sessionErrorRedirect(w http.ResponseWriter, r *http.Request, err error) {
+	sessionError(w, r, err)
+	http.Redirect(w, r, "/login", http.StatusFound)
+}
+
+func sessionError(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("session error: %v", err)
+	clearSession(w, r)
 }

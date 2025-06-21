@@ -234,6 +234,24 @@ func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]
 	return items, nil
 }
 
+const getPermissionsByUserIdAndSectionNews = `-- name: GetPermissionsByUserIdAndSectionNews :many
+SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.username
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND p.section = "news"
+ORDER BY p.level
+`
+
+type GetPermissionsByUserIdAndSectionNewsRow struct {
+	Idpermissions int32
+	UsersIdusers  int32
+	Section       sql.NullString
+	Level         sql.NullString
+	Idusers       int32
+	Email         sql.NullString
+	Passwd        sql.NullString
+	Username      sql.NullString
+}
+
 const getPermissionsByUserIdAndSectionWritings = `-- name: GetPermissionsByUserIdAndSectionWritings :many
 SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.username
 FROM permissions p, users u
@@ -250,6 +268,38 @@ type GetPermissionsByUserIdAndSectionWritingsRow struct {
 	Email         sql.NullString
 	Passwd        sql.NullString
 	Username      sql.NullString
+}
+
+func (q *Queries) GetPermissionsByUserIdAndSectionNews(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionNewsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPermissionsByUserIdAndSectionNews)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPermissionsByUserIdAndSectionNewsRow
+	for rows.Next() {
+		var i GetPermissionsByUserIdAndSectionNewsRow
+		if err := rows.Scan(
+			&i.Idpermissions,
+			&i.UsersIdusers,
+			&i.Section,
+			&i.Level,
+			&i.Idusers,
+			&i.Email,
+			&i.Passwd,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionWritingsRow, error) {

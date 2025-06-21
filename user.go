@@ -27,9 +27,9 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			permissions []*Permission
 			preference  *Preference
 			languages   []*Userlang
+			uid         int32
 		)
 		if uidi, ok := session.Values["UID"]; ok {
-			var uid int32
 			if v, ok := uidi.(int32); ok {
 				uid = v
 			}
@@ -67,6 +67,14 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 					preference, _ = queries.GetPreferenceByUserID(request.Context(), uid)
 					languages, _ = queries.GetUserLanguages(request.Context(), uid)
 				}
+			}
+		}
+
+		if session.ID != "" {
+			if uid != 0 {
+				_ = queries.InsertSession(request.Context(), InsertSessionParams{SessionID: session.ID, UsersIdusers: uid})
+			} else {
+				_ = queries.DeleteSessionByID(request.Context(), session.ID)
 			}
 		}
 

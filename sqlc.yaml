@@ -19,6 +19,7 @@ sql:
         - "queries-imagebbs.sql"
         - "queries-news.sql"
         - "queries-preferences.sql"
+        - "queries-sessions.sql"
       gen:
           go:
               package: "main"

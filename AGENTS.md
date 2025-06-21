@@ -17,3 +17,6 @@ provided by the `io/fs` package or mocks when file access is required.
 
 SQL query files are compiled using `sqlc`. Do not manually edit the generated
 `*.sql.go` files; instead update the corresponding `.sql` file and run `sqlc generate`.
+
+All database schema changes must include a migration script in the `migrations/`
+directory so existing installations can be upgraded.

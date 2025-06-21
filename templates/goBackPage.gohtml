@@ -1,0 +1,11 @@
+{{ template "head" $ }}
+<p>You were redirected to login. Click the button below to return.</p>
+<form method="{{ .Method }}" action="{{ .Path }}">
+{{- range $k, $vals := .Form }}
+    {{- range $vals }}
+    <input type="hidden" name="{{ $k }}" value="{{ . }}">
+    {{- end }}
+{{- end }}
+    <button type="submit">Go back</button>
+</form>
+{{ template "tail" $ }}

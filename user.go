@@ -11,10 +11,25 @@ import (
 
 func UserAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		// Get the session.
+		// Get the session. If the session cannot be loaded (for example due to
+		// invalid cookie data), start a fresh session and redirect the user to
+		// the login page.
 		session, err := store.Get(request, sessionName)
 		if err != nil {
-			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+			log.Printf("invalid session: %v", err)
+			session, _ = store.New(request, sessionName)
+			// remember where the user was going
+			session.Values["return_path"] = request.URL.RequestURI()
+			session.Values["return_method"] = request.Method
+			if request.Method != http.MethodGet && request.Method != http.MethodHead {
+				request.ParseForm()
+				session.Values["return_form"] = request.PostForm.Encode()
+			}
+			delete(session.Values, "UID")
+			delete(session.Values, "LoginTime")
+			delete(session.Values, "ExpiryTime")
+			_ = session.Save(request, writer)
+			http.Redirect(writer, request, "/login", http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -42,6 +57,12 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 					exp = int64(t)
 				}
 				if exp != 0 && time.Now().Unix() > exp {
+					session.Values["return_path"] = request.URL.RequestURI()
+					session.Values["return_method"] = request.Method
+					if request.Method != http.MethodGet && request.Method != http.MethodHead {
+						request.ParseForm()
+						session.Values["return_form"] = request.PostForm.Encode()
+					}
 					delete(session.Values, "UID")
 					delete(session.Values, "LoginTime")
 					delete(session.Values, "ExpiryTime")

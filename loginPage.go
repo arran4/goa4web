@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -61,9 +62,42 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 
+	returnPath, _ := session.Values["return_path"].(string)
+	returnMethod, _ := session.Values["return_method"].(string)
+	returnForm, _ := session.Values["return_form"].(string)
+
+	delete(session.Values, "return_path")
+	delete(session.Values, "return_method")
+	delete(session.Values, "return_form")
+
 	if err := session.Save(r, w); err != nil {
 		log.Printf("session.Save Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if returnPath != "" {
+		if returnMethod == "" || returnMethod == http.MethodGet || returnMethod == http.MethodHead {
+			http.Redirect(w, r, returnPath, http.StatusTemporaryRedirect)
+		} else {
+			type Data struct {
+				*CoreData
+				Path   string
+				Method string
+				Form   url.Values
+			}
+			vals, _ := url.ParseQuery(returnForm)
+			data := Data{
+				CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+				Path:     returnPath,
+				Method:   returnMethod,
+				Form:     vals,
+			}
+			if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "goBackPage.gohtml", data); err != nil {
+				log.Printf("Template Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}
 		return
 	}
 

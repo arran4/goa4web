@@ -52,6 +52,46 @@ func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
 	}
 }
 
+func TestUserAdderMiddleware_InvalidSession(t *testing.T) {
+	// use one store to generate a cookie and a different one for the middleware
+	badStore := sessions.NewCookieStore([]byte("bad"))
+	store = sessions.NewCookieStore([]byte("good"))
+
+	// create a cookie signed by badStore
+	cr := httptest.NewRequest("GET", "/", nil)
+	cw := httptest.NewRecorder()
+	sess, _ := badStore.Get(cr, sessionName)
+	sess.Values["UID"] = int32(1)
+	sess.Save(cr, cw)
+
+	// new request that includes the invalid cookie
+	r := httptest.NewRequest("GET", "/", nil)
+	for _, c := range cw.Result().Cookies() {
+		r.AddCookie(c)
+	}
+
+	rr := httptest.NewRecorder()
+	ctx := context.WithValue(r.Context(), ContextValues("queries"), New(nil))
+	r = r.WithContext(ctx)
+
+	called := false
+	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	handler.ServeHTTP(rr, r)
+
+	if rr.Result().StatusCode != http.StatusTemporaryRedirect {
+		t.Fatalf("expected redirect, got %d", rr.Result().StatusCode)
+	}
+	if loc := rr.Result().Header.Get("Location"); loc != "/login" {
+		t.Errorf("expected redirect to /login, got %s", loc)
+	}
+	if called {
+		t.Errorf("handler should not be called")
+	}
+}
+
 func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {

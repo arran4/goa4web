@@ -27,7 +27,11 @@ func categoryLevel(categoryName string, level int) string {
 }
 
 func externalLink(pagename, linkName string) string {
-	return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">%s</a>", pagename, linkName)
+	safe, ok := sanitizeURL(pagename)
+	if ok {
+		return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">%s</a>", safe, linkName)
+	}
+	return safe
 }
 
 func formatCategories(input string) string {

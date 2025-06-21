@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -46,7 +45,10 @@ func faqAskActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := queries.CreateFAQQuestion(r.Context(), CreateFAQQuestionParams{

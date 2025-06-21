@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func linkerPage(w http.ResponseWriter, r *http.Request) {
@@ -68,10 +69,12 @@ func linkerPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func CustomLinkerIndex(data *CoreData, r *http.Request) {
-	data.RSSFeedUrl = "/linker/rss"
-	data.AtomFeedUrl = "/linker/atom"
+	if r.URL.Path == "/linker" || strings.HasPrefix(r.URL.Path, "/linker/category/") {
+		data.RSSFeedUrl = "/linker/rss"
+		data.AtomFeedUrl = "/linker/atom"
+	}
 
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",

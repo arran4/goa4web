@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -12,17 +13,22 @@ func writingsCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Categories                       []*Writingcategory
 		CategoryBreadcrumbs              []*Writingcategory
-		EditingCategoryId                int32 // TODO
-		IsAdmin                          bool  // TODO
-		IsWriter                         bool  // TODO
+		EditingCategoryId                int32
+		IsAdmin                          bool
+		IsWriter                         bool
 		Abstracts                        []*GetPublicWritingsInCategoryRow
 		WritingcategoryIdwritingcategory int32
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		IsWriter: true,
 	}
+
+	data.IsAdmin = data.CoreData.HasRole("administrator")
+	data.IsWriter = data.CoreData.HasRole("writer") || data.IsAdmin
+	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
+	data.EditingCategoryId = int32(editID)
+	data.WritingcategoryIdwritingcategory = 0
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 

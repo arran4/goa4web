@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/feeds"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"net/url"
@@ -28,7 +27,10 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	buid := r.URL.Query().Get("uid")
 	userId, _ := strconv.Atoi(buid)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	userLanguagePref := 0
@@ -78,40 +80,42 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 
 func CustomBlogIndex(data *CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
-	if user == "" {
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: "Everyones Atom Feed",
-				Link: "/blogs/atom",
-			},
-			IndexItem{
-				Name: "Everyones RSS Feed",
-				Link: "/blogs/rss",
-			},
-		)
-	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: fmt.Sprintf("%s Atom Feed", user),
-				Link: fmt.Sprintf("/blogs/atom?user=%s", url.QueryEscape(user)),
-			},
-			IndexItem{
-				Name: fmt.Sprintf("%s RSS Feed", user),
-				Link: fmt.Sprintf("/blogs/rss?user=%s", url.QueryEscape(user)),
-			},
-		)
+	if data.FeedsEnabled {
+		if user == "" {
+			data.CustomIndexItems = append(data.CustomIndexItems,
+				IndexItem{
+					Name: "Everyones Atom Feed",
+					Link: "/blogs/atom",
+				},
+				IndexItem{
+					Name: "Everyones RSS Feed",
+					Link: "/blogs/rss",
+				},
+			)
+		} else {
+			data.CustomIndexItems = append(data.CustomIndexItems,
+				IndexItem{
+					Name: fmt.Sprintf("%s Atom Feed", user),
+					Link: fmt.Sprintf("/blogs/atom?user=%s", url.QueryEscape(user)),
+				},
+				IndexItem{
+					Name: fmt.Sprintf("%s RSS Feed", user),
+					Link: fmt.Sprintf("/blogs/rss?user=%s", url.QueryEscape(user)),
+				},
+			)
+		}
+		data.RSSFeedUrl = "/blogs/rss"
+		data.AtomFeedUrl = "/blogs/atom"
 	}
-	data.RSSFeedUrl = "/blogs/rss"
-	data.AtomFeedUrl = "/blogs/atom"
 
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
 			Link: "/blogs/user/permissions",
 		})
 	}
-	userHasWriter := true // TODO
+	userHasWriter := data.HasRole("writer")
 	if userHasWriter {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Write blog",
@@ -166,7 +170,8 @@ func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := feed.WriteAtom(w); err != nil {
+	w.Header().Set("Content-Type", "application/rss+xml")
+	if err := feed.WriteRss(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

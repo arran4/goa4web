@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"html"
+	"net/url"
 	"strings"
 )
 
@@ -26,6 +28,19 @@ type A4code2html struct {
 func NewA4Code2HTML() *A4code2html {
 	return &A4code2html{
 		codeType: ct_html,
+	}
+}
+
+func sanitizeURL(raw string) (string, bool) {
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme == "" {
+		return html.EscapeString(raw), false
+	}
+	switch u.Scheme {
+	case "http", "https":
+		return html.EscapeString(u.String()), true
+	default:
+		return html.EscapeString(raw), false
 	}
 }
 
@@ -68,14 +83,21 @@ func (c *A4code2html) getNext(endAtEqual bool) string {
 		c.input = c.input[1:]
 
 		switch ch {
-		case '\n', ']', '[', ' ', '\r', '=' /*, '*', '/', '_'*/ :
+		case '\n', ']', '[', ' ', '\r', '=':
 			loop = false
 		case '\\':
-			ch = c.input[0]
-			c.input = c.input[1:]
-			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' /* && ch != '*' && ch != '/' && ch != '_'*/ {
-				result.WriteByte('\\')
+			if len(c.input) > 0 {
+				ch = c.input[0]
 				c.input = c.input[1:]
+				switch ch {
+				case ' ', '[', ']', '=', '\\', '*', '/', '_':
+					result.WriteByte(ch)
+				default:
+					result.WriteByte('\\')
+					result.WriteByte(ch)
+				}
+			} else {
+				result.WriteByte('\\')
 			}
 		default:
 			result.WriteByte(ch)
@@ -170,9 +192,15 @@ func (a *A4code2html) acomm() int {
 		case ct_tagstrip, ct_wordsonly:
 			a.getNext(false)
 		default:
-			// TODO make URL safe
-			a.output.WriteString("<a href=\"" + a.getNext(false) + "\" target=\"_BLANK\">")
-			a.stack = append(a.stack, "</a>")
+			raw := a.getNext(false)
+			safe, ok := sanitizeURL(raw)
+			if ok {
+				a.output.WriteString("<a href=\"" + safe + "\" target=\"_BLANK\">")
+				a.stack = append(a.stack, "</a>")
+			} else {
+				a.output.WriteString(safe)
+				a.stack = append(a.stack, "")
+			}
 		}
 	case "code":
 		switch a.codeType {
@@ -248,7 +276,7 @@ func (c *A4code2html) nextcomm() {
 		case '\\':
 			ch = c.input[0]
 			c.input = c.input[1:]
-			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' {
+			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' && ch != '*' && ch != '/' && ch != '_' {
 				c.output.WriteByte('\\')
 			}
 			fallthrough

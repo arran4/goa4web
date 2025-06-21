@@ -77,15 +77,28 @@ func linkerAdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 func linkerAdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
-	if err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid)); err != nil {
+	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
+	if err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	/*
-		// TODO
-			addToGeneralSearch(cont, description, value, "linkerSearch", "linker_idlinker");
-			addToGeneralSearch(cont, title, value, "linkerSearch", "linker_idlinker");
-	*/
+
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(lid))
+	if err != nil {
+		log.Printf("getLinkerItemById Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	for _, text := range []string{link.Title.String, link.Description.String} {
+		wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+		if done {
+			return
+		}
+		if InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+			return
+		}
+	}
 	taskDoneAutoRefreshPage(w, r)
 }

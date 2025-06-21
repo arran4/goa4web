@@ -26,7 +26,7 @@ FROM linkerQueue l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
 ;
--- name: SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId :exec
+-- name: SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId :execlastid
 INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, language_idlanguage, title, `url`, description)
 SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
 FROM linkerQueue l

@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -20,7 +19,10 @@ func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	if comments, emptyWords, noResults, err := ForumCommentSearchNotInRestrictedTopic(w, r, queries, uid); err != nil {

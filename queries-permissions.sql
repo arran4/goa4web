@@ -52,6 +52,21 @@ WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
 ;
 
+
+-- name: GetPermissionsByUserIdAndSectionNews :many
+SELECT p.*, u.*
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND p.section = "news"
+ORDER BY p.level
+;
+
+-- name: GetPermissionsByUserIdAndSectionWritings :many
+SELECT p.*, u.*
+FROM permissions p, users u
+WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
+ORDER BY p.level
+;
+
 -- name: GetUsersTopicLevelByUserIdAndThreadId :one
 SELECT utl.*
 FROM userstopiclevel utl
@@ -85,3 +100,12 @@ SELECT t.idforumtopic, r.*
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 
+-- name: CountPermissionSections :many
+SELECT section, COUNT(*) AS SectionCount
+FROM permissions
+GROUP BY section;
+
+-- name: RenamePermissionSection :exec
+UPDATE permissions
+SET section = ?
+WHERE section = ?;

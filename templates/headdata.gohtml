@@ -1,8 +1,10 @@
 {{- define "headdata"}}
-    {{ if $.RSSFeedUrl }}
-        <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{{$.RSSFeedUrl}}">
-    {{ end }}
-    {{ if $.AtomFeedUrl }}
-        <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="{{$.AtomFeedUrl}}">
+    {{ if $.FeedsEnabled }}
+        {{ if $.RSSFeedUrl }}
+            <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{{$.RSSFeedUrl}}">
+        {{ end }}
+        {{ if $.AtomFeedUrl }}
+            <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="{{$.AtomFeedUrl}}">
+        {{ end }}
     {{ end }}
 {{- end}}

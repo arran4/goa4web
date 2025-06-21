@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -39,7 +38,10 @@ func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
 func writingsArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))

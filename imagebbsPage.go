@@ -47,10 +47,12 @@ func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 
 func CustomImageBBSIndex(data *CoreData, r *http.Request) {
 
-	data.RSSFeedUrl = "/imagebbs/rss"
-	data.AtomFeedUrl = "/imagebbs/atom"
+	if data.FeedsEnabled {
+		data.RSSFeedUrl = "/imagebbs/rss"
+		data.AtomFeedUrl = "/imagebbs/atom"
+	}
 
-	userHasAdmin := true // TODO
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Admin",

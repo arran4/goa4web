@@ -3,9 +3,9 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -25,10 +25,29 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func registerActionPage(w http.ResponseWriter, r *http.Request) {
+	log.Printf("registration attempt %s", r.PostFormValue("username"))
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm Error: %s", err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	uVals, uOK := r.PostForm["username"]
+	pVals, pOK := r.PostForm["password"]
+	eVals, eOK := r.PostForm["email"]
+	if !uOK || len(uVals) == 0 || uVals[0] == "" ||
+		!pOK || len(pVals) == 0 || pVals[0] == "" ||
+		!eOK || len(eVals) == 0 || eVals[0] == "" {
+		http.Error(w, "missing required fields", http.StatusBadRequest)
+		return
+	}
+	username := uVals[0]
+	password := pVals[0]
+	email := eVals[0]
+	if !strings.Contains(email, "@") {
+		http.Error(w, "invalid email", http.StatusBadRequest)
+		return
+	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	username := r.PostFormValue("username")
-	password := r.PostFormValue("password")
-	email := r.PostFormValue("email")
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -83,7 +102,10 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	session.Values["UID"] = int32(lastInsertID)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
@@ -93,6 +115,8 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("registration success uid=%d", lastInsertID)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 

@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -20,7 +19,10 @@ func bookmarksEditPage(w http.ResponseWriter, r *http.Request) {
 		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	bookmarks, err := queries.GetBookmarksForUser(r.Context(), uid)
@@ -48,7 +50,10 @@ func bookmarksEditPage(w http.ResponseWriter, r *http.Request) {
 func bookmarksEditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := queries.UpdateBookmarks(r.Context(), UpdateBookmarksParams{
@@ -69,7 +74,10 @@ func bookmarksEditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 func bookmarksEditCreateActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := queries.CreateBookmarks(r.Context(), CreateBookmarksParams{

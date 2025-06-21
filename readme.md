@@ -4,6 +4,8 @@ This repository contains the source code for a collection of web services writte
 
 Goa4Web is a monolithic web application written in Go. It powers the original `arran4` website, providing a collection of community features including blogs, forums, a bookmark manager and an image board.
 
+Project URL: <https://github.com/arran4/goa4web>
+
 The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in MySQL. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
 
 ## Features
@@ -30,7 +32,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    ```bash
    mysql -u a4web -p a4web < schema.sql
    ```
-3. Adjust the connection string in `core.go` if your database credentials differ from the default `a4web:a4web@tcp(localhost:3306)/a4web`.
+3. Provide your database credentials via command line flags, a configuration file, or environment variables. Defaults assume `a4web:a4web@tcp(localhost:3306)/a4web`.
 4. Download dependencies and build the application:
    ```bash
    go mod download
@@ -50,6 +52,16 @@ Run the compiled binary and open <http://localhost:8080> in your browser:
 ./goa4web
 ```
 The server relies on the MySQL instance and (optionally) AWS credentials for sending email notifications. Most features require users to be logged in; sessions are stored in signed cookies via `gorilla/sessions`.
+The secret used to sign these cookies is resolved in the following order:
+1. `--session-secret` flag
+2. `SESSION_SECRET` environment variable
+3. The file specified by `--session-secret-file` or `SESSION_SECRET_FILE` (defaults to `.session_secret`)
+
+If the file does not exist a new random secret is generated and written to it.
+
+Form submissions are protected using the `gorilla/csrf` middleware. Tokens are
+embedded in templates (for example the login form) and verified on POST
+requests.
 
 ## Repository Layout
 
@@ -75,6 +87,18 @@ go test ./...
 
 This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
 
+## Database Configuration
+
+Database connection details can be supplied in several ways. Values are resolved in the following order:
+
+1. Command line flags (`--db-user` etc.)
+2. Values from a config file specified with `--db-config` or `DB_CONFIG_FILE`
+3. Environment variables such as `DB_USER`
+4. Built-in defaults
+
+The config file uses the same `key=value` format as the email configuration file.
+See `examples/db.conf` for a complete list of supported keys.
+
 ## Email Provider Configuration
 
 Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
@@ -84,6 +108,7 @@ Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to se
 - `local`: Uses the local `sendmail` binary.
 - `jmap`: Sends mail using JMAP. Requires `JMAP_ENDPOINT`, `JMAP_USER`, `JMAP_PASS`,
   `JMAP_ACCOUNT`, and `JMAP_IDENTITY`.
+- `sendgrid`: Uses the SendGrid API. Requires the `sendgrid` build tag and a `SENDGRID_KEY`.
 - `log`: Writes emails to the application log.
 
 If configuration or credentials are missing, email is disabled and a log message is printed.
@@ -92,7 +117,7 @@ Configuration values can also be provided in a file and via command line flags.
 The resolution order is:
 
 1. Command line flags (`--smtp-host` etc.)
-2. Values from a config file specified with `--email-config`
+2. Values from a config file specified with `--email-config` or `EMAIL_CONFIG_FILE`
 3. Environment variables such as `SMTP_HOST`
 4. Built-in defaults
 
@@ -101,3 +126,41 @@ variable names.
 
 Administrator change notifications are enabled by default when a valid mail
 provider is configured. Set `ADMIN_NOTIFY=false` to disable these messages.
+
+See `examples/email.conf` for an example file containing all keys.
+
+## HTTP Server Configuration
+
+The address the HTTP server listens on and the base URL used for absolute URLs
+can be configured the same way as other settings:
+
+1. Command line flags (`--listen` and `--hostname`)
+2. Values from a config file specified with `--http-config`
+3. Environment variables `LISTEN` and `HOSTNAME`
+4. Built-in defaults (`:8080` and `http://localhost:8080`)
+
+See `examples/http.conf` for the file format.
+
+`HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
+
+### Implementing Custom Providers
+
+New email backends can be added by satisfying the `MailProvider` interface
+defined in `email.go`:
+
+```go
+type MailProvider interface {
+    Send(ctx context.Context, to, subject, body string) error
+}
+```
+
+Create a new file implementing this interface and add a case in
+`providerFromConfig` that returns your provider. Providers that rely on optional
+dependencies should live behind a build tag. See `email_sendgrid.go` for an
+example provider built with the `sendgrid` tag.
+
+## Admin tools
+
+### Permission section checker
+
+The `/admin/permissions/sections` page lists all distinct values found in the `permissions.section` column. It provides buttons to convert existing rows between `writing` and `writings`. These once-off tools help normalise data if older migrations used inconsistent names.

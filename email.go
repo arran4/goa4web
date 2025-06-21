@@ -13,6 +13,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/arran4/goa4web/config"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
@@ -26,6 +28,7 @@ var (
 )
 
 const (
+	// SourceEmail is the From address for notification emails.
 	SourceEmail = "a4web@arran.net.au"
 )
 
@@ -34,6 +37,7 @@ const (
 var cliEmailConfig EmailConfig
 
 // emailConfigFile is the optional path to a configuration file read at startup.
+// If empty, the EMAIL_CONFIG_FILE environment variable is consulted.
 var emailConfigFile string
 
 // EmailConfig stores configuration for selecting and configuring the mail
@@ -51,6 +55,7 @@ type EmailConfig struct {
 	JMAPIdentity string
 	JMAPUser     string
 	JMAPPass     string
+	SendGridKey  string
 }
 
 // MailProvider defines a simple interface that all mail backends must
@@ -261,7 +266,7 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 		user := cfg.SMTPUser
 		pass := cfg.SMTPPass
 		if host == "" {
-			log.Printf("Email disabled: SMTP_HOST not set")
+			log.Printf("Email disabled: %s not set", config.EnvSMTPHost)
 			return nil
 		}
 		addr := host
@@ -305,13 +310,13 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 	case "jmap":
 		ep := cfg.JMAPEndpoint
 		if ep == "" {
-			log.Printf("Email disabled: JMAP_ENDPOINT not set")
+			log.Printf("Email disabled: %s not set", config.EnvJMAPEndpoint)
 			return nil
 		}
 		acc := cfg.JMAPAccount
 		id := cfg.JMAPIdentity
 		if acc == "" || id == "" {
-			log.Printf("Email disabled: JMAP_ACCOUNT or JMAP_IDENTITY not set")
+			log.Printf("Email disabled: %s or %s not set", config.EnvJMAPAccount, config.EnvJMAPIdentity)
 			return nil
 		}
 		return jmapMailProvider{
@@ -321,6 +326,9 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 			accountID: acc,
 			identity:  id,
 		}
+
+	case "sendgrid":
+		return sendGridProviderFromConfig(cfg)
 
 	case "log":
 		return logMailProvider{}
@@ -341,45 +349,9 @@ func getEmailProvider() MailProvider {
 // cli > file > env > defaults.
 func resolveEmailConfig(cli, file, env EmailConfig) EmailConfig {
 	var cfg EmailConfig
-	merge := func(src EmailConfig) {
-		if src.Provider != "" {
-			cfg.Provider = src.Provider
-		}
-		if src.SMTPHost != "" {
-			cfg.SMTPHost = src.SMTPHost
-		}
-		if src.SMTPPort != "" {
-			cfg.SMTPPort = src.SMTPPort
-		}
-		if src.SMTPUser != "" {
-			cfg.SMTPUser = src.SMTPUser
-		}
-		if src.SMTPPass != "" {
-			cfg.SMTPPass = src.SMTPPass
-		}
-		if src.AWSRegion != "" {
-			cfg.AWSRegion = src.AWSRegion
-		}
-		if src.JMAPEndpoint != "" {
-			cfg.JMAPEndpoint = src.JMAPEndpoint
-		}
-		if src.JMAPAccount != "" {
-			cfg.JMAPAccount = src.JMAPAccount
-		}
-		if src.JMAPIdentity != "" {
-			cfg.JMAPIdentity = src.JMAPIdentity
-		}
-		if src.JMAPUser != "" {
-			cfg.JMAPUser = src.JMAPUser
-		}
-		if src.JMAPPass != "" {
-			cfg.JMAPPass = src.JMAPPass
-		}
-	}
-
-	merge(env)
-	merge(file)
-	merge(cli)
+	config.Merge(&cfg, env)
+	config.Merge(&cfg, file)
+	config.Merge(&cfg, cli)
 	return cfg
 }
 
@@ -399,28 +371,30 @@ func loadEmailConfigFile(path string) (EmailConfig, error) {
 			key := strings.TrimSpace(line[:i])
 			val := strings.TrimSpace(line[i+1:])
 			switch key {
-			case "EMAIL_PROVIDER":
+			case config.EnvEmailProvider:
 				cfg.Provider = val
-			case "SMTP_HOST":
+			case config.EnvSMTPHost:
 				cfg.SMTPHost = val
-			case "SMTP_PORT":
+			case config.EnvSMTPPort:
 				cfg.SMTPPort = val
-			case "SMTP_USER":
+			case config.EnvSMTPUser:
 				cfg.SMTPUser = val
-			case "SMTP_PASS":
+			case config.EnvSMTPPass:
 				cfg.SMTPPass = val
-			case "AWS_REGION":
+			case config.EnvAWSRegion:
 				cfg.AWSRegion = val
-			case "JMAP_ENDPOINT":
+			case config.EnvJMAPEndpoint:
 				cfg.JMAPEndpoint = val
-			case "JMAP_ACCOUNT":
+			case config.EnvJMAPAccount:
 				cfg.JMAPAccount = val
-			case "JMAP_IDENTITY":
+			case config.EnvJMAPIdentity:
 				cfg.JMAPIdentity = val
-			case "JMAP_USER":
+			case config.EnvJMAPUser:
 				cfg.JMAPUser = val
-			case "JMAP_PASS":
+			case config.EnvJMAPPass:
 				cfg.JMAPPass = val
+			case "SENDGRID_KEY":
+				cfg.SendGridKey = val
 			}
 		}
 	}
@@ -429,20 +403,25 @@ func loadEmailConfigFile(path string) (EmailConfig, error) {
 
 func loadEmailConfig() EmailConfig {
 	env := EmailConfig{
-		Provider:     os.Getenv("EMAIL_PROVIDER"),
-		SMTPHost:     os.Getenv("SMTP_HOST"),
-		SMTPPort:     os.Getenv("SMTP_PORT"),
-		SMTPUser:     os.Getenv("SMTP_USER"),
-		SMTPPass:     os.Getenv("SMTP_PASS"),
-		AWSRegion:    os.Getenv("AWS_REGION"),
-		JMAPEndpoint: os.Getenv("JMAP_ENDPOINT"),
-		JMAPAccount:  os.Getenv("JMAP_ACCOUNT"),
-		JMAPIdentity: os.Getenv("JMAP_IDENTITY"),
-		JMAPUser:     os.Getenv("JMAP_USER"),
-		JMAPPass:     os.Getenv("JMAP_PASS"),
+		Provider:     os.Getenv(config.EnvEmailProvider),
+		SMTPHost:     os.Getenv(config.EnvSMTPHost),
+		SMTPPort:     os.Getenv(config.EnvSMTPPort),
+		SMTPUser:     os.Getenv(config.EnvSMTPUser),
+		SMTPPass:     os.Getenv(config.EnvSMTPPass),
+		AWSRegion:    os.Getenv(config.EnvAWSRegion),
+		JMAPEndpoint: os.Getenv(config.EnvJMAPEndpoint),
+		JMAPAccount:  os.Getenv(config.EnvJMAPAccount),
+		JMAPIdentity: os.Getenv(config.EnvJMAPIdentity),
+		JMAPUser:     os.Getenv(config.EnvJMAPUser),
+		JMAPPass:     os.Getenv(config.EnvJMAPPass),
+		SendGridKey:  os.Getenv("SENDGRID_KEY"),
 	}
 
-	fileCfg, err := loadEmailConfigFile(emailConfigFile)
+	cfgPath := emailConfigFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("EMAIL_CONFIG_FILE")
+	}
+	fileCfg, err := loadEmailConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("Email config file error: %v", err)
 	}

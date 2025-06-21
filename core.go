@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"os"
@@ -13,8 +12,7 @@ import (
 )
 
 func handleDie(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<b><font color=red>You encountered an error: "+message+"....</font></b>")
+	http.Error(w, message, http.StatusInternalServerError)
 }
 
 // IndexItem struct.
@@ -40,14 +38,31 @@ var indexItems = []IndexItem{
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session := request.Context().Value(ContextValues("session")).(*sessions.Session)
+		session, err := GetSession(request)
+		if err != nil {
+			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		uid, _ := session.Values["UID"].(int32)
+		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+
+		level := "reader"
+		if uid != 0 {
+			perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
+				UsersIdusers: uid,
+				Section:      sql.NullString{String: "all", Valid: true},
+			})
+			if err == nil && perm.Level.Valid {
+				level = perm.Level.String
+			}
+		}
 
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
-			SecurityLevel: "administrator",
+			SecurityLevel: level,
 			IndexItems:    indexItems,
 			UserID:        uid,
 			Title:         "Arran4's Website",
+			FeedsEnabled:  FeedsEnabled,
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
@@ -60,12 +75,24 @@ type CoreData struct {
 	SecurityLevel    string
 	Title            string
 	AutoRefresh      bool
+	FeedsEnabled     bool
 	RSSFeedUrl       string
 	AtomFeedUrl      string
 }
 
 func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {
 	return cd.SecurityLevel
+}
+
+var rolePriority = map[string]int{
+	"reader":        1,
+	"writer":        2,
+	"moderator":     3,
+	"administrator": 4,
+}
+
+func (cd *CoreData) HasRole(role string) bool {
+	return rolePriority[cd.SecurityLevel] >= rolePriority[role]
 }
 
 type Configuration struct {
@@ -127,21 +154,18 @@ type ContextValues string
 
 func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		db, err := sql.Open("mysql", "a4web:a4web@tcp(localhost:3306)/a4web?parseTime=true")
-		if err != nil {
-			log.Printf("error sql init: %s", err)
-			http.Error(writer, "ERROR", 500)
+		if dbPool == nil {
+			ue := UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
 		}
-		defer func(db *sql.DB) {
-			err := db.Close()
-			if err != nil {
-				log.Printf("Error closing db: %s", err)
-			}
-		}(db)
+		if dbLogVerbosity > 0 {
+			log.Printf("db pool stats: %+v", dbPool.Stats())
+		}
 		ctx := request.Context()
-		ctx = context.WithValue(ctx, ContextValues("sql.DB"), db)
-		ctx = context.WithValue(ctx, ContextValues("queries"), New(db))
+		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)
+		ctx = context.WithValue(ctx, ContextValues("queries"), New(dbPool))
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }

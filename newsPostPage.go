@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -55,7 +54,10 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -128,7 +130,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 		data.Comments = append(data.Comments, &CommentPlus{
 			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       true,
+			ShowReply:                       data.CoreData.UserID != 0,
 			EditUrl:                         editUrl,
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         editCommentId != 0 && int32(editCommentId) == row.Idcomments,
@@ -141,8 +143,8 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	data.Thread = threadRow
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
-		ShowReply: true, // TODO
-		ShowEdit:  true, // TODO
+		ShowReply: data.CoreData.UserID != 0,
+		ShowEdit:  data.CoreData.HasRole("writer"),
 		Editing:   editingId == int(post.Idsitenews),
 	}
 
@@ -163,7 +165,10 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 
 	vars := mux.Vars(r)
 	pid, err := strconv.Atoi(vars["post"])
@@ -287,26 +292,8 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/* TODO
-	-- name: postUpdate :exec
-	UPDATE comments c, forumthread th, forumtopic t
-	SET
-	th.lastposter=c.users_idusers, t.lastposter=c.users_idusers,
-	th.lastaddition=c.written, t.lastaddition=c.written,
-	t.comments=IF(th.comments IS NULL, 0, t.comments+1),
-	t.threads=IF(th.comments IS NULL, IF(t.threads IS NULL, 1, t.threads+1), t.threads),
-	th.comments=IF(th.comments IS NULL, 0, th.comments+1),
-	th.firstpost=IF(th.firstpost=0, c.idcomments, th.firstpost)
-	WHERE c.idcomments=?;
-	*/
-	if err := queries.RecalculateForumThreadByIdMetaData(r.Context(), pthid); err != nil {
-		log.Printf("Error: recalculateForumThreadByIdMetaData: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	if err := queries.RebuildForumTopicByIdMetaColumns(r.Context(), ptid); err != nil {
-		log.Printf("Error: rebuildForumTopicByIdMetaColumns: %s", err)
+	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -360,7 +347,10 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	err = queries.CreateNewsPost(r.Context(), CreateNewsPostParams{

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -24,7 +23,10 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
@@ -130,7 +132,15 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 	threadId := vars["thread"]
 	topicId := vars["topic"]
 	categoryId := vars["category"]
-	userHasAdmin := true // TODO
+	if data.FeedsEnabled && topicId != "" && threadId == "" {
+		data.RSSFeedUrl = fmt.Sprintf("/forum/topic/%s.rss", topicId)
+		data.AtomFeedUrl = fmt.Sprintf("/forum/topic/%s.atom", topicId)
+		data.CustomIndexItems = append(data.CustomIndexItems,
+			IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
+			IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
+		)
+	}
+	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			IndexItem{

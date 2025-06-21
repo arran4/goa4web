@@ -9,6 +9,7 @@ const (
 	ImagebbsTopicDescription = "THIS IS A HIDDEN FORUM FOR A IMAGE BBS"
 	NewsTopicName            = "A NEWS TOPIC"
 	NewsTopicDescription     = "THIS IS A HIDDEN FORUM FOR A NEWS TOPIC"
-	LinkderTopicName         = "A LINKER TOPIC"
-	LinkderTopicDescription  = "THIS IS A HIDDEN FORUM FOR A LINKER TOPIC"
+	LinkerTopicName          = "A LINKER TOPIC"
+	LinkerTopicDescription   = "THIS IS A HIDDEN FORUM FOR A LINKER TOPIC"
+	FeedsEnabled             = true
 )

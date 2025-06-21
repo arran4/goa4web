@@ -9,13 +9,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/csrf"
 )
 
 func NewFuncs(r *http.Request) template.FuncMap {
 	var LatestNews any
 	return map[string]any{
 		//"getPermissionsByUserIdAndSectionAndSectionAll":
-		"now": func() time.Time { return time.Now() },
+		"now":       func() time.Time { return time.Now() },
+		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
 		"a4code2html": func(s string) template.HTML {
 			c := NewA4Code2HTML()
 			c.codeType = ct_html
@@ -69,11 +72,12 @@ func NewFuncs(r *http.Request) template.FuncMap {
 
 			editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
 
+			cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 			for _, post := range posts {
 				result = append(result, &Post{
 					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
-					ShowReply: true, // TODO
-					ShowEdit:  true, // TODO
+					ShowReply: cd.UserID != 0,
+					ShowEdit:  cd.HasRole("writer"),
 					Editing:   editingId == int(post.Idsitenews),
 				})
 			}

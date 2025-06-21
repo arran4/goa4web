@@ -3,13 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
 	. "github.com/arran4/gorillamuxlogic"
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
@@ -129,8 +127,8 @@ func run() error {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	csrfKey := sha256.Sum256([]byte(sessionSecret))
-	csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(version != "dev"))
+	//csrfKey := sha256.Sum256([]byte(sessionSecret))
+	//csrfMiddleware := csrf.Protect(csrfKey[:], csrf.Secure(version != "dev"))
 
 	cliDBConfig = DBConfig{
 		User:         *dbUserFlag,
@@ -500,7 +498,8 @@ func run() error {
 		EmailConfig: emailCfg,
 		// Load pagination bounds at startup.
 		// The values are stored in appPaginationConfig.
-		Router: csrfMiddleware(r),
+		//Router: csrfMiddleware(r),
+		Router: r,
 		Store:  store,
 		DB:     dbPool,
 	}

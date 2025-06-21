@@ -79,6 +79,9 @@ const (
 	// TaskForumTopicCreate creates a new forum topic.
 	TaskForumTopicCreate = "Forum topic create"
 
+	// TaskForumTopicDelete removes a forum topic.
+	TaskForumTopicDelete = "Forum topic delete"
+
 	// TaskLogin performs a user login.
 	TaskLogin = "Login"
 
@@ -168,6 +171,9 @@ const (
 	// TaskSetTopicRestriction sets a new topic restriction.
 	TaskSetTopicRestriction = "Set topic restriction"
 
+	// TaskCopyTopicRestriction copies restriction levels from one topic to another.
+	TaskCopyTopicRestriction = "Copy topic restriction"
+
 	// TaskSetUserLevel sets a user's access level.
 	TaskSetUserLevel = "Set user level"
 
@@ -195,11 +201,20 @@ const (
 	// TaskUpdateUserLevel updates a user's access level.
 	TaskUpdateUserLevel = "Update user level"
 
+	// TaskBulkApprove approves multiple queued items at once.
+	TaskBulkApprove = "Bulk Approve"
+
+	// TaskBulkDelete removes multiple queued items at once.
+	TaskBulkDelete = "Bulk Delete"
+
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting = "Update writing"
 
 	// TaskUserAllow grants a user a permission or level.
 	TaskUserAllow = "User Allow"
+
+	// TaskUpdatePermission modifies an existing user permission.
+	TaskUpdatePermission = "Update permission"
 
 	// TaskUserDisallow removes a user's permission or level.
 	TaskUserDisallow = "User Disallow"

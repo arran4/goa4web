@@ -145,3 +145,8 @@ WHERE idforumtopic = ?;
 -- name: DeleteForumCategory :exec
 DELETE FROM forumcategory WHERE idforumcategory = ?;
 
+-- name: DeleteForumTopic :exec
+-- Removes a forum topic by ID.
+DELETE FROM forumtopic WHERE idforumtopic = ?;
+
+

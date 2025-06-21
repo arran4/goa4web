@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -133,4 +134,77 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Pendi
 func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, "UPDATE pending_emails SET sent_at = NOW() WHERE id = ?", id)
 	return err
+}
+
+// ListUsers returns a limited set of users ordered by ID.
+type ListUsersParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT idusers, email, passwd, username FROM users ORDER BY idusers LIMIT ? OFFSET ?", arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &u)
+	}
+	return items, rows.Err()
+}
+
+// SearchUsers finds users by username or email with pagination.
+type SearchUsersParams struct {
+	Query  string
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*User, error) {
+	like := "%" + arg.Query + "%"
+	rows, err := q.db.QueryContext(ctx, "SELECT idusers, email, passwd, username FROM users WHERE LOWER(username) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?) ORDER BY idusers LIMIT ? OFFSET ?", like, like, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &u)
+	}
+	return items, rows.Err()
+}
+
+// PermissionWithUser includes permission information along with user details.
+type PermissionWithUser struct {
+	Permission
+	Username sql.NullString
+	Email    sql.NullString
+}
+
+// GetPermissionsBySectionWithUsers lists permissions for a section with user info.
+func (q *Queries) GetPermissionsBySectionWithUsers(ctx context.Context, section string) ([]*PermissionWithUser, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, u.email FROM permissions p JOIN users u ON u.idusers = p.users_idusers WHERE p.section = ? ORDER BY p.level", section)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*PermissionWithUser
+	for rows.Next() {
+		var p PermissionWithUser
+		if err := rows.Scan(&p.Idpermissions, &p.UsersIdusers, &p.Section, &p.Level, &p.Username, &p.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &p)
+	}
+	return items, rows.Err()
 }

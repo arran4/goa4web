@@ -6,13 +6,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
+	type SectionGroup struct {
+		Section string
+		Rows    []*PermissionWithUser
+	}
 	type Data struct {
 		*CoreData
-		UserLevels []*Permission
+		Sections []SectionGroup
 	}
 
 	data := Data{
@@ -21,7 +26,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	rows, err := queries.GetUsersPermissions(r.Context())
+	rows, err := queries.GetPermissionsWithUsers(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -30,7 +35,21 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.UserLevels = rows
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].Section.String == rows[j].Section.String {
+			return rows[i].Username.String < rows[j].Username.String
+		}
+		return rows[i].Section.String < rows[j].Section.String
+	})
+	var groups []SectionGroup
+	for _, r := range rows {
+		sec := r.Section.String
+		if len(groups) == 0 || groups[len(groups)-1].Section != sec {
+			groups = append(groups, SectionGroup{Section: sec})
+		}
+		groups[len(groups)-1].Rows = append(groups[len(groups)-1].Rows, r)
+	}
+	data.Sections = groups
 
 	err = renderTemplate(w, r, "adminUsersPermissionsPage.gohtml", data)
 	if err != nil {
@@ -94,6 +113,38 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 	if err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	permid := r.PostFormValue("permid")
+	level := r.PostFormValue("level")
+	where := r.PostFormValue("where")
+
+	data := struct {
+		*CoreData
+		Errors []string
+		Back   string
+	}{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Back:     "/admin/users/permissions",
+	}
+
+	if id, err := strconv.Atoi(permid); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
+	} else if err := queries.UpdatePermission(r.Context(), UpdatePermissionParams{
+		ID:      int32(id),
+		Section: sql.NullString{String: where, Valid: true},
+		Level:   sql.NullString{String: level, Valid: true},
+	}); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
+	}
+
+	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

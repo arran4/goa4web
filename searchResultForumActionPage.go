@@ -31,11 +31,7 @@ func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 		data.CommentsEmptyWords = noResults
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "searchResultForumActionPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "searchResultForumActionPage.gohtml", data)
 }
 
 func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {

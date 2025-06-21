@@ -29,11 +29,7 @@ func adminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sections = rows
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminPermissionsSectionPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminPermissionsSectionPage.gohtml", data)
 }
 
 // adminPermissionsSectionRenamePage converts one permission section value to
@@ -60,9 +56,5 @@ func adminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RenamePermissionSection: %w", err).Error())
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "adminRunTaskPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
 }

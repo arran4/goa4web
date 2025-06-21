@@ -81,7 +81,7 @@ func main() {
 
 	performStartupChecks()
 
-  cliDBConfig = DBConfig{
+	cliDBConfig = DBConfig{
 		User: *dbUserFlag,
 		Pass: *dbPassFlag,
 		Host: *dbHostFlag,
@@ -90,7 +90,6 @@ func main() {
 	}
 	dbConfigFile = *dbCfgPath
 
-  
 	cliEmailConfig = EmailConfig{
 		Provider:     *emailProviderFlag,
 		SMTPHost:     *smtpHostFlag,
@@ -392,11 +391,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 
 		CustomNewsIndex(data.CoreData, r)
 
-		if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, template, data); err != nil {
-			log.Printf("Template Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		renderTemplate(w, r, template, data)
 	})
 }
 

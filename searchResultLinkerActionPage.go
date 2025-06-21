@@ -50,11 +50,7 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "searchResultLinkerActionPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "searchResultLinkerActionPage.gohtml", data)
 }
 
 func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {

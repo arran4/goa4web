@@ -19,11 +19,7 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "registerPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "registerPage.gohtml", data)
 }
 func registerActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {

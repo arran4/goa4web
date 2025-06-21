@@ -34,11 +34,7 @@ func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomImageBBSIndex(data.CoreData, r)
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "imagebbsAdminNewBoardPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "imagebbsAdminNewBoardPage.gohtml", data)
 }
 
 func imagebbsAdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {

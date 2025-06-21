@@ -29,9 +29,5 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	data.CoreData.UserID = 0
 	data.CoreData.SecurityLevel = ""
 
-	if err := getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "userLogoutPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, r, "userLogoutPage.gohtml", data)
 }

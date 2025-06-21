@@ -1,6 +1,11 @@
 {{ template "head" $ }}
+    <form method="get">
+        <input name="search" value="{{$.Search}}">
+        <input type="submit" value="Filter">
+    </form>
     <table border="1">
         <tr>
+            <th>Select</th>
             <th>ID</th>
             <th>User</th>
             <th>Email</th>
@@ -10,6 +15,7 @@
         {{- if .UserLevels }}
             {{- range $result := .UserLevels }}
                 <tr>
+                    <td><input type="checkbox" name="permids" form="batchRemoveForm" value="{{ $result.ID }}"></td>
                     <td>{{ $result.ID }}</td>
                     <td>{{ $result.Username.String }}</td>
                     <td>{{ $result.Email.String }}</td>
@@ -23,27 +29,26 @@
                 </tr>
             {{- end }}
         {{- else }}
-            <tr><td colspan="5">No results</td></tr>
+            <tr><td colspan="6">No results</td></tr>
         {{- end }}
         <tr>
-            <td>
-                <form method="post">NEW
-            </td>
-            <td><input name="username"></td>
-            <td>?</td>
-            <td>
-                <select name="level">
-                    <option value="reader">reader</option>
-                    <option value="writer">writer</option>
-                    <option value="moderator">moderator</option>
-                    <option value="administrator">administrator</option>
-                </select>
-            </td>
-            <td>
-                <input type="submit" name="task" value="User Allow">
+            <td colspan="6">
+                <form method="post">
+                    Usernames (space or comma separated):<br>
+                    <textarea name="usernames" rows="2" cols="40"></textarea><br>
+                    <select name="level">
+                        <option value="reader">reader</option>
+                        <option value="writer">writer</option>
+                        <option value="moderator">moderator</option>
+                        <option value="administrator">administrator</option>
+                    </select>
+                    <input type="submit" name="task" value="User Allow">
                 </form>
             </td>
         </tr>
     </table>
+    <form id="batchRemoveForm" method="post">
+        <input type="submit" name="task" value="User Disallow">
+    </form>
     <p>Permissions should be valid only.</p>
 {{ template "tail" $ }}

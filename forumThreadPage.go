@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
@@ -53,9 +52,9 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	vars := mux.Vars(r)
-	//topicId, _ := strconv.Atoi(vars["topic"])
-	threadId, _ := strconv.Atoi(vars["thread"])
+	threadRow := r.Context().Value(ContextValues("thread")).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(ContextValues("topic")).(*GetForumTopicByIdForUserRow)
+
 	session, ok := GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -64,7 +63,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,
-		ForumthreadIdforumthread: int32(threadId),
+		ForumthreadIdforumthread: threadRow.Idforumthread,
 	})
 	if err != nil {
 		switch {
@@ -76,29 +75,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
-		UsersIdusers:  uid,
-		Idforumthread: int32(threadId),
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
-	}
-
-	topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
-		UsersIdusers: uid,
-		Idforumtopic: int32(threadRow.ForumtopicIdforumtopic),
-	})
-	if err != nil {
-		log.Printf("getForumTopicByIdForUser Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
+	// threadRow and topicRow are provided by the GetThreadAndTopic matcher
 
 	data.Topic = &ForumtopicPlus{
 		Idforumtopic:                 topicRow.Idforumtopic,
@@ -121,8 +98,8 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
-			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadRow.Idforumthread, row.Idcomments)
+			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadRow.Idforumthread, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
 				data.IsReplyable = false
 			}

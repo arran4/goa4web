@@ -62,3 +62,6 @@ ORDER BY t.lastaddition DESC;
 -- name: MakeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 
+
+-- name: GetForumTopicIdByThreadId :one
+SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;

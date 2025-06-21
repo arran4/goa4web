@@ -168,6 +168,9 @@ const (
 	// TaskSetTopicRestriction sets a new topic restriction.
 	TaskSetTopicRestriction = "Set topic restriction"
 
+	// TaskCopyTopicRestriction copies restriction levels from one topic to another.
+	TaskCopyTopicRestriction = "Copy topic restriction"
+
 	// TaskSetUserLevel sets a user's access level.
 	TaskSetUserLevel = "Set user level"
 

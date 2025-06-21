@@ -33,3 +33,18 @@ func TestResolveDBConfigPrecedence(t *testing.T) {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
+
+func TestLoadDBConfigEnvPath(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "db.conf")
+	if err := os.WriteFile(file, []byte("DB_USER=envfile\n"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+	t.Setenv("DB_CONFIG_FILE", file)
+	dbConfigFile = ""
+	cliDBConfig = DBConfig{}
+	cfg := loadDBConfig()
+	if cfg.User != "envfile" {
+		t.Fatalf("want envfile got %q", cfg.User)
+	}
+}

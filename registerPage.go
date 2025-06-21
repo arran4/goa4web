@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strings"
@@ -26,6 +25,7 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func registerActionPage(w http.ResponseWriter, r *http.Request) {
+	log.Printf("registration attempt %s", r.PostFormValue("username"))
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -102,7 +102,7 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	session.Values["UID"] = int32(lastInsertID)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
@@ -112,6 +112,8 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("registration success uid=%d", lastInsertID)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 

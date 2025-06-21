@@ -10,6 +10,7 @@
             <th>Topic</th>
             <th>Level</th>
             <th>Invite Level Max</th>
+            <th>Expiration</th>
             <th>Options</th>
         </tr>
         {{- $u := .User }}
@@ -19,6 +20,7 @@
                 <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}</td>
                 <td><input name="level" value="{{ .Level.Int32 }}" size="8"></td>
                 <td><input name="inviteMax" value="{{ .Invitemax.Int32 }}" size="8"></td>
+                <td><input type="date" name="expiresAt" value="{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time.Format \"2006-01-02\" }}{{ end }}"></td>
                 <td>
                     <input type="submit" name="task" value="Update user level">
                     <input type="submit" name="task" value="Delete user level">

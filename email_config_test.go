@@ -33,3 +33,18 @@ func TestResolveEmailConfigPrecedence(t *testing.T) {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
+
+func TestLoadEmailConfigEnvPath(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "email.conf")
+	if err := os.WriteFile(file, []byte("EMAIL_PROVIDER=log\n"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+	t.Setenv("EMAIL_CONFIG_FILE", file)
+	emailConfigFile = ""
+	cliEmailConfig = EmailConfig{}
+	cfg := loadEmailConfig()
+	if cfg.Provider != "log" {
+		t.Fatalf("want log got %q", cfg.Provider)
+	}
+}

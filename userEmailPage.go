@@ -59,8 +59,10 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 	var execErr error
 	if errors.Is(err, sql.ErrNoRows) {
+    /// TODO use queries
 		_, execErr = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (emailforumupdates, users_idusers) VALUES (?, ?)", updates, uid)
 	} else {
+    /// TODO use queries
 		_, execErr = queries.db.ExecContext(r.Context(), "UPDATE preferences SET emailforumupdates=? WHERE users_idusers=?", updates, uid)
 	}
 	if execErr != nil {
@@ -74,6 +76,10 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(ContextValues("user")).(*User)
+	if user == nil || !user.Email.Valid {
+		http.Error(w, "email unknown", http.StatusBadRequest)
+		return
+	}
 	if user != nil && user.Email.Valid {
 		provider := getEmailProvider()
 		if provider != nil {

@@ -68,12 +68,58 @@ func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
 	if _, err := queries.db.ExecContext(r.Context(), "DELETE FROM userlang WHERE users_idusers = ?", uid); err != nil {
 		return err
 	}
+}
+func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	if err := saveUserLanguages(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+}
+
+func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+}
+
+func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	uid, _ := session.Values["UID"].(int32)
+
+	if err := saveUserLanguages(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.Redirect(w, r, "/user/lang", http.StatusTemporaryRedirect)
+}
+
+func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
 	langs, err := queries.FetchLanguages(r.Context())
 	if err != nil {
 		return err
 	}
 	for _, l := range langs {
 		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
+      // TODO use queries
 			if _, err := queries.db.ExecContext(r.Context(), "INSERT INTO userlang (users_idusers, language_idlanguage) VALUES (?, ?)", uid, l.Idlanguage); err != nil {
 				return err
 			}

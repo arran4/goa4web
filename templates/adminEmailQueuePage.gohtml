@@ -1,4 +1,5 @@
 {{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/email/queue">(This page/Refresh)</a>]<br />
 <table border="1">
     <tr><th>ID</th><th>To</th><th>Subject</th><th>Created</th></tr>
     {{- range .Emails }}

@@ -8,9 +8,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-type recordProvider struct{ to string }
+type dummyProvider struct{ to string }
 
-func (r *recordProvider) Send(ctx context.Context, to, subj, body string) error {
+func (r *dummyProvider) Send(ctx context.Context, to, subj, body string) error {
 	r.to = to
 	return nil
 }
@@ -22,15 +22,15 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	}
 	defer db.Close()
 	q := New(db)
-	rows := sqlmock.NewRows([]string{
-		"idcomments", "forumthread_idforumthread", "users_idusers", "language_idlanguage",
-		"written", "text", "idusers", "email", "passwd", "username",
-		"idpreferences", "language_idlanguage_2", "users_idusers_2", "emailforumupdates",
-	}).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "p", "bob", 1, 1, 2, 1)
+       rows := sqlmock.NewRows([]string{
+               "idcomments", "forumthread_idforumthread", "users_idusers", "language_idlanguage",
+               "written", "text", "idusers", "email", "passwd", "username",
+               "idpreferences", "language_idlanguage_2", "users_idusers_2", "emailforumupdates", "page_size",
+       }).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "p", "bob", 1, 1, 2, 1, 10)
 	mock.ExpectQuery(regexp.QuoteMeta(listUsersSubscribedToThread)).
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)
-	rec := &recordProvider{}
+       rec := &dummyProvider{}
 	notifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
 	if rec.to != "bob" {
 		t.Fatalf("expected mail to bob got %s", rec.to)

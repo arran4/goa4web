@@ -1,0 +1,43 @@
+name: Update SQLC Output
+
+on:
+  push:
+    paths:
+      - '**/*.sql'
+  pull_request:
+    paths:
+      - '**/*.sql'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+      - name: Generate code
+        run: sqlc generate
+      - name: Check for changes
+        id: diff
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(sqlc): regenerate code'
+          branch: sqlc-autogen-${{ github.run_id }}
+          base: ${{ github.ref_name }}
+          title: 'Update sqlc generated files'
+          body: |
+            This PR updates generated code after SQL file changes.
+

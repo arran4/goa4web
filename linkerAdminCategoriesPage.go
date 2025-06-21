@@ -50,9 +50,17 @@ func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.RenameLinkerCategory(r.Context(), RenameLinkerCategoryParams{
 		Title:            sql.NullString{Valid: true, String: title},
 		Position:         int32(pos),
+  }; err != nil {
+		log.Printf("updateLinkerCategorySortOrder Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	order, _ := strconv.Atoi(r.PostFormValue("order"))
+	if err := queries.UpdateLinkerCategorySortOrder(r.Context(), UpdateLinkerCategorySortOrderParams{
+		Sortorder:        int32(order),
 		Idlinkercategory: int32(cid),
 	}); err != nil {
-		log.Printf("renameLinkerCategory Error: %s", err)
+		log.Printf("updateLinkerCategorySortOrder Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -85,6 +93,16 @@ func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Category in use", http.StatusBadRequest)
 			return
 		}
+  }
+	count, err := queries.CountLinksByCategory(r.Context(), int32(cid))
+	if err != nil {
+		log.Printf("countLinks Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if count > 0 {
+		http.Error(w, "Category in use", http.StatusBadRequest)
+		return
 	}
 	if err := queries.DeleteLinkerCategory(r.Context(), int32(cid)); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)

@@ -171,6 +171,7 @@ CREATE TABLE `linkerCategory` (
   `idlinkerCategory` int(10) NOT NULL AUTO_INCREMENT,
   `position` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
+  `sortorder` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idlinkerCategory`)
 );
 
@@ -210,6 +211,7 @@ CREATE TABLE `preferences` (
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `emailforumupdates` tinyint(1) DEFAULT 0,
+  `page_size` int(10) NOT NULL DEFAULT 15,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_idlanguage`)

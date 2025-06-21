@@ -8,6 +8,7 @@
     <table border="1" width="100%">
         <tr>
             <th>Topic</th>
+            <th>Forum</th>
             <th>Level</th>
             <th>Invite Level Max</th>
             <th>Options</th>
@@ -17,6 +18,7 @@
         <tr>
             <form method="post" action="/forum/admin/user/{{ $u.Idusers }}/levels">
                 <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}</td>
+                <td>{{ with index $.Categories .ForumcategoryIdforumcategory }}{{ .Title.String }}{{ end }}</td>
                 <td><input name="level" value="{{ .Level.Int32 }}" size="8"></td>
                 <td><input name="inviteMax" value="{{ .Invitemax.Int32 }}" size="8"></td>
                 <td>
@@ -29,4 +31,6 @@
     </table>
     <a href="/forum/admin/user/{{ .User.Idusers }}/levels">Configure users access levels</a>
     {{- end }}
+    {{- if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous 15</a>{{ end }}
+    {{- if $.NextLink }} <a href="{{ $.NextLink }}">Next 15</a>{{ end }}
 {{ template "tail" $ }}

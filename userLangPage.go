@@ -95,6 +95,7 @@ func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) er
 			return queries.InsertPreference(r.Context(), InsertPreferenceParams{
 				LanguageIdlanguage: int32(langID),
 				UsersIdusers:       uid,
+				PageSize:           DefaultPageSize,
 			})
 		}
 		return err
@@ -104,20 +105,21 @@ func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) er
 	return queries.UpdatePreference(r.Context(), UpdatePreferenceParams{
 		LanguageIdlanguage: pref.LanguageIdlanguage,
 		UsersIdusers:       uid,
+		PageSize:           pref.PageSize,
 	})
 }
 
 func saveDefaultLanguage(r *http.Request, queries *Queries, uid int32) error {
 	langID, _ := strconv.Atoi(r.PostFormValue("defaultLanguage"))
-	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			_, err = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", langID, uid, DefaultPageSize)
+			return err
+		}
 		return err
 	}
-	if errors.Is(err, sql.ErrNoRows) {
-		_, err = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers) VALUES (?, ?)", langID, uid)
-	} else {
-		_, err = queries.db.ExecContext(r.Context(), "UPDATE preferences SET language_idlanguage=? WHERE users_idusers=?", langID, uid)
-	}
+	_, err = queries.db.ExecContext(r.Context(), "UPDATE preferences SET language_idlanguage=?, page_size=? WHERE users_idusers=?", langID, pref.PageSize, uid)
 	return err
 }
 

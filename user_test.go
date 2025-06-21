@@ -77,9 +77,9 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	mock.ExpectQuery("SELECT idpermissions, users_idusers, section, level FROM permissions WHERE users_idusers = ?").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idpermissions", "users_idusers", "section", "level"}).AddRow(1, 1, "all", "admin"))
-	mock.ExpectQuery("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates FROM preferences WHERE users_idusers = ?").
+	mock.ExpectQuery("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size FROM preferences WHERE users_idusers = ?").
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates"}).AddRow(1, 2, 1, false))
+		WillReturnRows(sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).AddRow(1, 2, 1, false, 15))
 	mock.ExpectQuery("SELECT iduserlang, users_idusers, language_idlanguage FROM userlang WHERE users_idusers = ?").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"iduserlang", "users_idusers", "language_idlanguage"}).AddRow(1, 1, 2))

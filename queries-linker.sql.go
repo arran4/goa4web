@@ -25,6 +25,17 @@ func (q *Queries) AssignLinkerThisThreadId(ctx context.Context, arg AssignLinker
 	return err
 }
 
+const countLinksByCategory = `-- name: CountLinksByCategory :one
+SELECT COUNT(*) FROM linker WHERE linkerCategory_idlinkerCategory = ?
+`
+
+func (q *Queries) CountLinksByCategory(ctx context.Context, linkercategoryIdlinkercategory int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLinksByCategory, linkercategoryIdlinkercategory)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLinkerCategory = `-- name: CreateLinkerCategory :exec
 INSERT INTO linkerCategory (title, position) VALUES (?, ?)
 `
@@ -103,6 +114,11 @@ const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
 SELECT idlinkercategory, title, position
 FROM linkerCategory
 ORDER BY position
+```
+const getAllLinkerCategoriesWithSortOrder = `-- name: GetAllLinkerCategoriesWithSortOrder :many
+SELECT idlinkerCategory, title, sortorder
+FROM linkerCategory
+ORDER BY sortorder
 `
 
 func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory, error) {
@@ -115,6 +131,29 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*Linkercategory
 	for rows.Next() {
 		var i Linkercategory
 		if err := rows.Scan(&i.Idlinkercategory, &i.Title, &i.Position); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*Linkercategory, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Linkercategory
+	for rows.Next() {
+		var i Linkercategory
+		if err := rows.Scan(&i.Idlinkercategory, &i.Title, &i.Sortorder); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -229,6 +268,49 @@ func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx co
 			&i.Username,
 			&i.CategoryTitle,
 			&i.Idlinkercategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLinkerCategoriesWithCount = `-- name: GetLinkerCategoriesWithCount :many
+SELECT c.idlinkerCategory, c.title, c.sortorder, COUNT(l.idlinker) AS linkcount
+FROM linkerCategory c
+LEFT JOIN linker l ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
+GROUP BY c.idlinkerCategory
+ORDER BY c.sortorder
+`
+
+type GetLinkerCategoriesWithCountRow struct {
+	Idlinkercategory int32
+	Title            sql.NullString
+	Sortorder        int32
+	Linkcount        int64
+}
+
+func (q *Queries) GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getLinkerCategoriesWithCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetLinkerCategoriesWithCountRow
+	for rows.Next() {
+		var i GetLinkerCategoriesWithCountRow
+		if err := rows.Scan(
+			&i.Idlinkercategory,
+			&i.Title,
+			&i.Sortorder,
+			&i.Linkcount,
 		); err != nil {
 			return nil, err
 		}
@@ -422,6 +504,20 @@ func (q *Queries) SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx cont
 		return 0, err
 	}
 	return result.LastInsertId()
+}
+
+const updateLinkerCategorySortOrder = `-- name: UpdateLinkerCategorySortOrder :exec
+UPDATE linkerCategory SET sortorder = ? WHERE idlinkerCategory = ?
+`
+
+type UpdateLinkerCategorySortOrderParams struct {
+	Sortorder        int32
+	Idlinkercategory int32
+}
+
+func (q *Queries) UpdateLinkerCategorySortOrder(ctx context.Context, arg UpdateLinkerCategorySortOrderParams) error {
+	_, err := q.db.ExecContext(ctx, updateLinkerCategorySortOrder, arg.Sortorder, arg.Idlinkercategory)
+	return err
 }
 
 const updateLinkerQueuedItem = `-- name: UpdateLinkerQueuedItem :exec

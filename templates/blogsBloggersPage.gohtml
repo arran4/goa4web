@@ -1,10 +1,16 @@
 {{ template "head" $ }}
-		{{if .Rows}}
-			<font size="5">All bloggers.</font><br>
-			{{range .Rows}}
-				Blogger: <a href="/blogs/blogger/user={{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
-			{{end}}
-		{{else}}
-			No bloggers here.
-		{{end}}
+    <form method="get">
+        <input name="search" value="{{$.Search}}">
+        <input type="submit" value="Search">
+    </form>
+    {{if .Rows}}
+        <font size="5">All bloggers.</font><br>
+        {{range .Rows}}
+            Blogger: <a href="/blogs/blogger/user={{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
+        {{end}}
+    {{else}}
+        No bloggers here.
+    {{end}}
+    {{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous {{$.PageSize}}</a>{{end}}
+    {{if $.NextLink}}<a href="{{$.NextLink}}">Next {{$.PageSize}}</a>{{end}}
 {{ template "tail" $ }}

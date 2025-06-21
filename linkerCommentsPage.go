@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -47,7 +46,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
@@ -136,7 +135,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])
@@ -162,7 +161,7 @@ func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	var pthid int32 = link.ForumthreadIdforumthread
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
-		String: LinkderTopicName,
+		String: LinkerTopicName,
 		Valid:  true,
 	})
 	var ptid int32
@@ -170,11 +169,11 @@ func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
-				String: LinkderTopicName,
+				String: LinkerTopicName,
 				Valid:  true,
 			},
 			Description: sql.NullString{
-				String: LinkderTopicDescription,
+				String: LinkerTopicDescription,
 				Valid:  true,
 			},
 		})

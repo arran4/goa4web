@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
 )
 
 func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])

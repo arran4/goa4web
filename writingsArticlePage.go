@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"golang.org/x/exp/slices"
 	"log"
 	"net/http"
@@ -51,7 +50,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -175,7 +174,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	aid, err := strconv.Atoi(vars["post"])

@@ -33,3 +33,18 @@ func TestResolveHTTPConfigPrecedence(t *testing.T) {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
+
+func TestLoadHTTPConfigEnvPath(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "http.conf")
+	if err := os.WriteFile(file, []byte("LISTEN=:9\n"), 0644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	t.Setenv("HTTP_CONFIG_FILE", file)
+	httpConfigFile = ""
+	cliHTTPConfig = HTTPConfig{}
+	cfg := loadHTTPConfig()
+	if cfg.Listen != ":9" {
+		t.Fatalf("want :9 got %q", cfg.Listen)
+	}
+}

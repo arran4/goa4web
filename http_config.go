@@ -19,6 +19,7 @@ var cliHTTPConfig HTTPConfig
 var appHTTPConfig HTTPConfig
 
 // httpConfigFile is the optional path to a configuration file read at startup.
+// If empty, the HTTP_CONFIG_FILE environment variable is consulted.
 var httpConfigFile string
 
 // resolveHTTPConfig merges configuration values with the order of precedence
@@ -79,6 +80,11 @@ func loadHTTPConfig() HTTPConfig {
 		Hostname: os.Getenv("HOSTNAME"),
 	}
 	fileCfg, err := loadHTTPConfigFile(httpConfigFile)
+	cfgPath := httpConfigFile
+	if cfgPath == "" {
+		cfgPath = os.Getenv("HTTP_CONFIG_FILE")
+	}
+	fileCfg, err := loadHTTPConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("HTTP config file error: %v", err)
 	}

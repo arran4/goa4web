@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strconv"
@@ -39,7 +38,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 	thid, _ := strconv.Atoi(vars["thread"])
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 	uid, _ := session.Values["UID"].(int32)
 
 	data := Data{
@@ -134,7 +133,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(ContextValues("session")).(*sessions.Session)
+	session, _ := GetSession(r)
 
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["board"])

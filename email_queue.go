@@ -8,6 +8,10 @@ import (
 
 // emailQueueWorker periodically sends pending emails using the provided provider.
 func emailQueueWorker(ctx context.Context, q *Queries, provider MailProvider, interval time.Duration) {
+	if q == nil || provider == nil {
+		log.Printf("email queue worker disabled: missing queue or provider")
+		return
+	}
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
@@ -22,6 +26,9 @@ func emailQueueWorker(ctx context.Context, q *Queries, provider MailProvider, in
 
 // processPendingEmail sends a single queued email if available.
 func processPendingEmail(ctx context.Context, q *Queries, provider MailProvider) {
+	if q == nil || provider == nil {
+		return
+	}
 	if !emailSendingEnabled() {
 		return
 	}

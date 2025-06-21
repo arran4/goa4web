@@ -25,6 +25,10 @@ func processPendingEmail(ctx context.Context, q *Queries, provider MailProvider)
 	if !emailSendingEnabled() {
 		return
 	}
+	if provider == nil {
+		log.Println("No mail provider specified")
+		return
+	}
 	emails, err := q.FetchPendingEmails(ctx, 1)
 	if err != nil {
 		log.Printf("fetch queue: %v", err)

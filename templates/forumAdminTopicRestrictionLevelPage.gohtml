@@ -9,14 +9,14 @@
                 <tr>
                     <form method="post">
                         <td><input type="hidden" name="ftid" value="{{ .Idforumtopic }}">{{ $format }}</td>
-                        <td><input name="view" value="{{ .Viewlevel.Int32 }}" size="8"></td>
-                        <td><input name="reply" value="{{ .Replylevel.Int32 }}" size="8"></td>
-                        <td><input name="newthread" value="{{ .Newthreadlevel.Int32 }}" size="8"></td>
-                        <td><input name="see" value="{{ .Seelevel.Int32 }}" size="8"></td>
-                        <td><input name="invite" value="{{ .Invitelevel.Int32 }}" size="8"></td>
-                        <td><input name="read" value="{{ .Readlevel.Int32 }}" size="8"></td>
-                        <td><input name="mod" value="{{ .Modlevel.Int32 }}" size="8"></td>
-                        <td><input name="admin" value="{{ .Adminlevel.Int32 }}" size="8"></td>
+                        <td><input type="number" name="view" value="{{ .Viewlevel.Int32 }}" size="8" min="0" step="1" required></td>
+                        <td><input type="number" name="reply" value="{{ .Replylevel.Int32 }}" size="8" min="0" step="1" required></td>
+                        <td><input type="number" name="newthread" value="{{ .Newthreadlevel.Int32 }}" size="8" min="0" step="1" required></td>
+                        <td><input type="number" name="see" value="{{ .Seelevel.Int32 }}" size="8" min="0" step="1" required></td>
+                        <td><input type="number" name="invite" value="{{ .Invitelevel.Int32 }}" size="8" min="0" step="1" required></td>
+                        <td><input type="number" name="read" value="{{ .Readlevel.Int32 }}" size="8" min="0" step="1" required></td>
+                        <td><input type="number" name="mod" value="{{ .Modlevel.Int32 }}" size="8" min="0" step="1" required></td>
+                        <td><input type="number" name="admin" value="{{ .Adminlevel.Int32 }}" size="8" min="0" step="1" required></td>
                         <td>
                             {{- if .ForumtopicIdforumtopic.Valid }}
                                 <input type="submit" name="task" value="Update topic restriction">
@@ -28,6 +28,25 @@
                     </form>
                 </tr>
             {{- end }}
+            <tr>
+                <form method="post">
+                    <td colspan="10">
+                        Copy restrictions from
+                        <select name="fromTopic" required>
+                            {{- range $.Restrictions }}
+                                <option value="{{ .Idforumtopic }}">{{ .Title.String }}</option>
+                            {{- end }}
+                        </select>
+                        to
+                        <select name="toTopic" required>
+                            {{- range $.Restrictions }}
+                                <option value="{{ .Idforumtopic }}">{{ .Title.String }}</option>
+                            {{- end }}
+                        </select>
+                        <input type="submit" name="task" value="Copy topic restriction">
+                    </td>
+                </form>
+            </tr>
     </table><br>
     Remember:
     <ul>

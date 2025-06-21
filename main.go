@@ -469,6 +469,8 @@ func run() error {
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameSection))
 	ar.HandleFunc("/email/queue", adminEmailQueuePage).Methods("GET")
+	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskResend))
+	ar.HandleFunc("/email/queue", adminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
 	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
 	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeCommentsSearch))

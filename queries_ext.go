@@ -155,6 +155,23 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 	return items, rows.Err()
 }
 
+// GetPendingEmailByID returns a single pending email.
+func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*PendingEmail, error) {
+	row := q.db.QueryRowContext(ctx, "SELECT id, to_email, subject, body FROM pending_emails WHERE id = ?", id)
+	var p PendingEmail
+	err := row.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// DeletePendingEmail removes an email from the queue.
+func (q *Queries) DeletePendingEmail(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, "DELETE FROM pending_emails WHERE id = ?", id)
+	return err
+}
+
 // ListUsers returns a limited set of users ordered by ID.
 type ListUsersParams struct {
 	Limit  int32

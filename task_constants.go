@@ -186,6 +186,9 @@ const (
 	// TaskTestMail sends a test email to the current user.
 	TaskTestMail = "Test mail"
 
+	// TaskResend attempts to send queued emails immediately.
+	TaskResend = "Resend"
+
 	// TaskDismiss marks a notification as read.
 	TaskDismiss = "Dismiss"
 

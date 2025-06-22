@@ -13,7 +13,7 @@ func loadAppConfigFile(path string) map[string]string {
 	if path == "" {
 		return values
 	}
-	b, err := os.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.Printf("app config file error: %v", err)

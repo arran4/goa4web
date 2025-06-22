@@ -195,7 +195,7 @@ func run() error {
 		return err
 	}
 
-  dbCfg := loadDBConfig()
+	dbCfg := loadDBConfig()
 	emailCfg := loadEmailConfig()
 
 	if err := performStartupChecks(dbCfg); err != nil {
@@ -505,6 +505,7 @@ func run() error {
 	ar.HandleFunc("/search", adminSearchRemakeBlogSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeBlogSearch))
 	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeLinkerSearch))
 	ar.HandleFunc("/search", adminSearchRemakeWritingSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeWritingSearch))
+	ar.HandleFunc("/search", adminSearchRemakeImageSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeImageSearch))
 	ar.HandleFunc("/search/list", adminSearchWordListPage).Methods("GET")
 	ar.HandleFunc("/search/list.txt", adminSearchWordListDownloadPage).Methods("GET")
 	ar.HandleFunc("/reload", adminReloadConfigPage).Methods("POST")

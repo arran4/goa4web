@@ -129,6 +129,9 @@ const (
 	// TaskRemakeWritingSearch rebuilds the writing search index.
 	TaskRemakeWritingSearch = "Remake writing search"
 
+	// TaskRemakeImageSearch rebuilds the image search index.
+	TaskRemakeImageSearch = "Remake image search"
+
 	// TaskRemoveRemove removes an item, typically from a list.
 	TaskRemoveRemove = "Remove"
 

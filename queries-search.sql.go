@@ -43,6 +43,22 @@ func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWri
 	return err
 }
 
+const addToImagePostSearch = `-- name: AddToImagePostSearch :exec
+INSERT IGNORE INTO imagepostSearch
+(imagepost_idimagepost, searchwordlist_idsearchwordlist)
+VALUES (?, ?)
+`
+
+type AddToImagePostSearchParams struct {
+	ImagepostIdimagepost           int32
+	SearchwordlistIdsearchwordlist int32
+}
+
+func (q *Queries) AddToImagePostSearch(ctx context.Context, arg AddToImagePostSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagepostIdimagepost, arg.SearchwordlistIdsearchwordlist)
+	return err
+}
+
 const addToLinkerSearch = `-- name: AddToLinkerSearch :exec
 INSERT IGNORE INTO linkerSearch
 (linker_idlinker, searchwordlist_idsearchwordlist)
@@ -314,6 +330,15 @@ func (q *Queries) DeleteCommentsSearch(ctx context.Context) error {
 	return err
 }
 
+const deleteImagePostSearch = `-- name: DeleteImagePostSearch :exec
+DELETE FROM imagepostSearch
+`
+
+func (q *Queries) DeleteImagePostSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteImagePostSearch)
+	return err
+}
+
 const deleteLinkerSearch = `-- name: DeleteLinkerSearch :exec
 DELETE FROM linkerSearch
 `
@@ -355,6 +380,83 @@ func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase strin
 	var i Searchwordlist
 	err := row.Scan(&i.Idsearchwordlist, &i.Word)
 	return &i, err
+}
+
+const imagePostSearchFirst = `-- name: ImagePostSearchFirst :many
+SELECT DISTINCT cs.imagepost_idimagepost
+FROM imagepostSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+`
+
+func (q *Queries) ImagePostSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, imagePostSearchFirst, word)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var imagepost_idimagepost int32
+		if err := rows.Scan(&imagepost_idimagepost); err != nil {
+			return nil, err
+		}
+		items = append(items, imagepost_idimagepost)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const imagePostSearchNext = `-- name: ImagePostSearchNext :many
+SELECT DISTINCT cs.imagepost_idimagepost
+FROM imagepostSearch cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+WHERE swl.word=?
+AND cs.imagepost_idimagepost IN (/*SLICE:ids*/?)
+`
+
+type ImagePostSearchNextParams struct {
+	Word sql.NullString
+	Ids  []int32
+}
+
+func (q *Queries) ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNextParams) ([]int32, error) {
+	query := imagePostSearchNext
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var imagepost_idimagepost int32
+		if err := rows.Scan(&imagepost_idimagepost); err != nil {
+			return nil, err
+		}
+		items = append(items, imagepost_idimagepost)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
@@ -483,6 +585,17 @@ FROM comments
 // Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
 func (q *Queries) RemakeCommentsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeCommentsSearchInsert)
+	return err
+}
+
+const remakeImagePostSearchInsert = `-- name: RemakeImagePostSearchInsert :exec
+INSERT INTO imagepostSearch (text, imagepost_idimagepost)
+SELECT description, idimagepost
+FROM imagepost
+`
+
+func (q *Queries) RemakeImagePostSearchInsert(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, remakeImagePostSearchInsert)
 	return err
 }
 
@@ -647,7 +760,8 @@ SELECT swl.word,
        + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
        + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
        + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM imagepostSearch ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 ORDER BY swl.word
 LIMIT ? OFFSET ?

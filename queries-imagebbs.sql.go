@@ -25,7 +25,7 @@ func (q *Queries) CreateImageBoard(ctx context.Context, arg CreateImageBoardPara
 	return err
 }
 
-const createImagePost = `-- name: CreateImagePost :exec
+const createImagePost = `-- name: CreateImagePost :execlastid
 INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
 VALUES (?, ?, ?, ?, ?, NOW())
 `
@@ -38,15 +38,18 @@ type CreateImagePostParams struct {
 	Description            sql.NullString
 }
 
-func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams) error {
-	_, err := q.db.ExecContext(ctx, createImagePost,
+func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createImagePost,
 		arg.ImageboardIdimageboard,
 		arg.Thumbnail,
 		arg.Fullimage,
 		arg.UsersIdusers,
 		arg.Description,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const getAllBoardsByParentBoardId = `-- name: GetAllBoardsByParentBoardId :many

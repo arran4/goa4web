@@ -9,6 +9,7 @@
                         <tr><td>Blogs</td><td>{{ .Stats.Blogs }}</td></tr>
                         <tr><td>Linker</td><td>{{ .Stats.Linker }}</td></tr>
                         <tr><td>Writing</td><td>{{ .Stats.Writing }}</td></tr>
+                        <tr><td>Image posts</td><td>{{ .Stats.Images }}</td></tr>
                 </table>
                 <br>
                 <strong>What shall we do?</strong><br>
@@ -22,7 +23,7 @@
                         <input type="submit" name="task" value="Remake news search"><br>
                         <input type="submit" name="task" value="Remake blog search"><br>
 			<input type="submit" name="task" value="Remake linker search"><br>
-			<input type="submit" name="task" value="Remake writing search">
-		</form>
-
+                        <input type="submit" name="task" value="Remake writing search"><br>
+                        <input type="submit" name="task" value="Remake image search">
+                </form>
 {{ template "tail" $ }}

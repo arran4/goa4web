@@ -80,19 +80,27 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	if err := queries.CreateImagePost(r.Context(), CreateImagePostParams{
+	pid, err := queries.CreateImagePost(r.Context(), CreateImagePostParams{
 		ImageboardIdimageboard: int32(bid),
 		Thumbnail:              sql.NullString{Valid: true, String: thumbnailURL},
 		Fullimage:              sql.NullString{Valid: true, String: fullimageURL},
 		UsersIdusers:           uid,
 		Description:            sql.NullString{Valid: true, String: text},
-	}); err != nil {
+	})
+	if err != nil {
 		log.Printf("printTopicRestrictions Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	// TODO not searchable: updateSearch
+	wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+	if done {
+		return
+	}
+
+	if InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
+		return
+	}
 
 	taskDoneAutoRefreshPage(w, r)
 }

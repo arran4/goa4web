@@ -151,6 +151,18 @@ See `examples/http.conf` for the file format.
 
 `HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
 
+## Pagination Configuration
+
+The minimum, maximum and default page sizes used throughout the site can be
+configured in the same manner:
+
+1. Command line flags (`--page-size-min`, `--page-size-max`, `--page-size-default`)
+2. Values from a config file specified with `--pagination-config` or `PAGINATION_CONFIG_FILE`
+3. Environment variables `PAGE_SIZE_MIN`, `PAGE_SIZE_MAX` and `PAGE_SIZE_DEFAULT`
+4. Built-in defaults (5, 50 and 15 respectively)
+
+The config file uses the same `key=value` format as other configuration files.
+
 ### Implementing Custom Providers
 
 New email backends can be added by satisfying the `MailProvider` interface

@@ -48,4 +48,6 @@ const (
 	EnvPageSizeMin = "PAGE_SIZE_MIN"
 	// EnvPageSizeMax defines the maximum allowed page size.
 	EnvPageSizeMax = "PAGE_SIZE_MAX"
+	// EnvPageSizeDefault defines the default page size.
+	EnvPageSizeDefault = "PAGE_SIZE_DEFAULT"
 )

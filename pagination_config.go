@@ -9,10 +9,11 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
-// PaginationConfig holds allowed minimum and maximum page sizes.
+// PaginationConfig holds runtime page size limits and a default value.
 type PaginationConfig struct {
-	Min int
-	Max int
+	Min     int // smallest selectable page size
+	Max     int // largest selectable page size
+	Default int // default page size when a user has no preference
 }
 
 var cliPaginationConfig PaginationConfig
@@ -27,11 +28,17 @@ func resolvePaginationConfig(cli, file, env PaginationConfig) PaginationConfig {
 	if env.Max != 0 {
 		cfg.Max = env.Max
 	}
+	if env.Default != 0 {
+		cfg.Default = env.Default
+	}
 	if file.Min != 0 {
 		cfg.Min = file.Min
 	}
 	if file.Max != 0 {
 		cfg.Max = file.Max
+	}
+	if file.Default != 0 {
+		cfg.Default = file.Default
 	}
 	if cli.Min != 0 {
 		cfg.Min = cli.Min
@@ -39,14 +46,26 @@ func resolvePaginationConfig(cli, file, env PaginationConfig) PaginationConfig {
 	if cli.Max != 0 {
 		cfg.Max = cli.Max
 	}
+	if cli.Default != 0 {
+		cfg.Default = cli.Default
+	}
 	if cfg.Min == 0 {
 		cfg.Min = 5
 	}
 	if cfg.Max == 0 {
 		cfg.Max = 50
 	}
+	if cfg.Default == 0 {
+		cfg.Default = DefaultPageSize
+	}
 	if cfg.Min > cfg.Max {
 		cfg.Min = cfg.Max
+	}
+	if cfg.Default < cfg.Min {
+		cfg.Default = cfg.Min
+	}
+	if cfg.Default > cfg.Max {
+		cfg.Default = cfg.Max
 	}
 	return cfg
 }
@@ -73,6 +92,10 @@ func loadPaginationConfigFile(path string) (PaginationConfig, error) {
 				if v, err := strconv.Atoi(val); err == nil {
 					cfg.Max = v
 				}
+			case "PAGE_SIZE_DEFAULT":
+				if v, err := strconv.Atoi(val); err == nil {
+					cfg.Default = v
+				}
 			}
 		}
 	}
@@ -89,6 +112,11 @@ func loadPaginationConfig() PaginationConfig {
 	if v := os.Getenv(config.EnvPageSizeMax); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			env.Max = n
+		}
+	}
+	if v := os.Getenv(config.EnvPageSizeDefault); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			env.Default = n
 		}
 	}
 

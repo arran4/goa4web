@@ -10,7 +10,10 @@ import (
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
-	size := DefaultPageSize
+	size := appPaginationConfig.Default
+	if size == 0 {
+		size = DefaultPageSize
+	}
 	if pref != nil {
 		size = int(pref.PageSize)
 	}

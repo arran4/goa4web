@@ -114,7 +114,8 @@ const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
 SELECT idlinkercategory, title, position
 FROM linkerCategory
 ORDER BY position
-```
+`
+
 const getAllLinkerCategoriesWithSortOrder = `-- name: GetAllLinkerCategoriesWithSortOrder :many
 SELECT idlinkerCategory, title, sortorder
 FROM linkerCategory

@@ -63,6 +63,11 @@ var (
 	dbNameFlag         = flag.String("db-name", "", "database name")
 	dbLogVerbosityFlag = flag.Int("db-log-verbosity", 0, "database logging verbosity")
 
+	pageSizeMinFlag     = flag.Int("page-size-min", 0, "minimum allowed page size")
+	pageSizeMaxFlag     = flag.Int("page-size-max", 0, "maximum allowed page size")
+	pageSizeDefaultFlag = flag.Int("page-size-default", 0, "default page size")
+	paginationCfgPath   = flag.String("pagination-config", "", "path to pagination configuration file")
+
 	listenFlag      = flag.String("listen", ":8080", "server listen address")
 	hostnameFlag    = flag.String("hostname", "", "server base URL")
 	httpCfgPath     = flag.String("http-config", "", "path to HTTP configuration file")
@@ -163,6 +168,18 @@ func run() error {
 	if emailConfigFile == "" {
 		if v, ok := appCfg["EMAIL_CONFIG_FILE"]; ok {
 			emailConfigFile = v
+		}
+	}
+
+	cliPaginationConfig = PaginationConfig{
+		Min:     *pageSizeMinFlag,
+		Max:     *pageSizeMaxFlag,
+		Default: *pageSizeDefaultFlag,
+	}
+	paginationConfigFile = *paginationCfgPath
+	if paginationConfigFile == "" {
+		if v, ok := appCfg["PAGINATION_CONFIG_FILE"]; ok {
+			paginationConfigFile = v
 		}
 	}
 
@@ -424,6 +441,8 @@ func run() error {
 	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskTestMail))
 	ur.HandleFunc("/paging", userPagingPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/paging", userPagingSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
+	ur.HandleFunc("/page-size", userPageSizePage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	ur.HandleFunc("/page-size", userPageSizeSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskDismiss))
 	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods("GET").MatcherFunc(RequiresAnAccount())

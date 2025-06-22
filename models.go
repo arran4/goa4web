@@ -125,7 +125,6 @@ type Linkercategory struct {
 	Position         int32
 	Sortorder        int32
 	Title            sql.NullString
-	Sortorder        int32
 }
 
 // LinkercategoryCount holds a category with the number of links assigned.
@@ -252,11 +251,11 @@ type Userlang struct {
 }
 
 type Userstopiclevel struct {
-        UsersIdusers           int32
-        ForumtopicIdforumtopic int32
-        Level                  sql.NullInt32
-        Invitemax              sql.NullInt32
-       ExpiresAt              sql.NullTime
+	UsersIdusers           int32
+	ForumtopicIdforumtopic int32
+	Level                  sql.NullInt32
+	Invitemax              sql.NullInt32
+	ExpiresAt              sql.NullTime
 }
 
 type Writing struct {

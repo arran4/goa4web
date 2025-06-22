@@ -193,10 +193,6 @@ func run() error {
 	loadFeedsEnabled(cliFeeds, appCfg)
 	loadStatsStartYear(*statsStartYearFlag, appCfg)
 
-	if err := performStartupChecks(); err != nil {
-		return err
-	}
-
 	dbCfg := loadDBConfig()
 	emailCfg := loadEmailConfig()
 

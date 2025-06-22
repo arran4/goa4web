@@ -103,6 +103,11 @@ type Imagepost struct {
 	Fullimage                sql.NullString
 }
 
+type Imagepostsearch struct {
+	ImagepostIdimagepost           int32
+	SearchwordlistIdsearchwordlist int32
+}
+
 type Language struct {
 	Idlanguage int32
 	Nameof     sql.NullString

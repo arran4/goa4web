@@ -23,7 +23,7 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
 WHERE i.idimagepost = ?;
 
--- name: CreateImagePost :exec
+-- name: CreateImagePost :execlastid
 INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
 VALUES (?, ?, ?, ?, ?, NOW());
 

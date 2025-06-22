@@ -17,6 +17,7 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 		Linker   int64
 		Writing  int64
 		Writings int64
+		Images   int64
 	}
 
 	type Data struct {
@@ -43,6 +44,7 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM linkerSearch", &data.Stats.Linker)
 	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writing)
 	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writings)
+	count("SELECT COUNT(*) FROM imagepostSearch", &data.Stats.Images)
 
 	if err := renderTemplate(w, r, "adminSearchPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -246,6 +248,31 @@ func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := queries.RemakeWritingSearchInsert(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeWritingSearchInsert: %w", err).Error())
+	}
+
+	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func adminSearchRemakeImageSearchPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := struct {
+		*CoreData
+		Errors   []string
+		Messages []string
+		Back     string
+	}{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Back:     "/admin/search",
+	}
+	if err := queries.DeleteImagePostSearch(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("DeleteImagePostSearch: %w", err).Error())
+	}
+	if err := queries.RemakeImagePostSearchInsert(r.Context()); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("RemakeImagePostSearchInsert: %w", err).Error())
 	}
 
 	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {

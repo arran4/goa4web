@@ -415,12 +415,12 @@ func loadEmailConfig() EmailConfig {
 		JMAPIdentity: os.Getenv(config.EnvJMAPIdentity),
 		JMAPUser:     os.Getenv(config.EnvJMAPUser),
 		JMAPPass:     os.Getenv(config.EnvJMAPPass),
-		SendGridKey:  os.Getenv("SENDGRID_KEY"),
+		SendGridKey:  os.Getenv(config.EnvSendGridKey),
 	}
 
 	cfgPath := emailConfigFile
 	if cfgPath == "" {
-		cfgPath = os.Getenv("EMAIL_CONFIG_FILE")
+		cfgPath = os.Getenv(config.EnvEmailConfigFile)
 	}
 	fileCfg, err := loadEmailConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {
@@ -435,7 +435,7 @@ func loadEmailConfig() EmailConfig {
 // interpreted as a comma-separated list. If not set and a Queries value is
 // provided, the database is queried for administrator accounts.
 func getAdminEmails(ctx context.Context, q *Queries) []string {
-	env := os.Getenv("ADMIN_EMAILS")
+	env := os.Getenv(config.EnvAdminEmails)
 	var emails []string
 	if env != "" {
 		for _, e := range strings.Split(env, ",") {
@@ -463,7 +463,7 @@ func getAdminEmails(ctx context.Context, q *Queries) []string {
 // notifyAdmins sends a change notification email to all administrator
 // addresses returned by getAdminEmails.
 func adminNotificationsEnabled() bool {
-	v := strings.ToLower(os.Getenv("ADMIN_NOTIFY"))
+	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
 	if v == "" {
 		return true
 	}

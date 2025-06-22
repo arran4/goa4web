@@ -62,7 +62,7 @@ func loadDBConfigFile(path string) (DBConfig, error) {
 				cfg.Port = val
 			case config.EnvDBName:
 				cfg.Name = val
-			case "DB_LOG_VERBOSITY":
+			case config.EnvDBLogVerbosity:
 				if v, err := strconv.Atoi(val); err == nil {
 					cfg.LogVerbosity = v
 				}
@@ -82,7 +82,7 @@ func loadDBConfig() DBConfig {
 		Port: os.Getenv(config.EnvDBPort),
 		Name: os.Getenv(config.EnvDBName),
 	}
-	if lv := os.Getenv("DB_LOG_VERBOSITY"); lv != "" {
+	if lv := os.Getenv(config.EnvDBLogVerbosity); lv != "" {
 		if v, err := strconv.Atoi(lv); err == nil {
 			env.LogVerbosity = v
 		}
@@ -90,7 +90,7 @@ func loadDBConfig() DBConfig {
 
 	cfgPath := dbConfigFile
 	if cfgPath == "" {
-		cfgPath = os.Getenv("DB_CONFIG_FILE")
+		cfgPath = os.Getenv(config.EnvDBConfigFile)
 	}
 	fileCfg, err := loadDBConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {

@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/arran4/goa4web/config"
 )
 
 // HTTPConfig holds parameters for the HTTP server.
@@ -62,9 +64,9 @@ func loadHTTPConfigFile(path string) (HTTPConfig, error) {
 			key := strings.TrimSpace(line[:i])
 			val := strings.TrimSpace(line[i+1:])
 			switch key {
-			case "LISTEN":
+			case config.EnvListen:
 				cfg.Listen = val
-			case "HOSTNAME":
+			case config.EnvHostname:
 				cfg.Hostname = val
 			}
 		}
@@ -76,12 +78,12 @@ func loadHTTPConfigFile(path string) (HTTPConfig, error) {
 // and command line flags applying the precedence defined in AGENTS.md.
 func loadHTTPConfig() HTTPConfig {
 	env := HTTPConfig{
-		Listen:   os.Getenv("LISTEN"),
-		Hostname: os.Getenv("HOSTNAME"),
+		Listen:   os.Getenv(config.EnvListen),
+		Hostname: os.Getenv(config.EnvHostname),
 	}
 	cfgPath := httpConfigFile
 	if cfgPath == "" {
-		cfgPath = os.Getenv("HTTP_CONFIG_FILE")
+		cfgPath = os.Getenv(config.EnvHTTPConfigFile)
 	}
 	fileCfg, err := loadHTTPConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {

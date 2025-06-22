@@ -6,6 +6,8 @@ import (
 	"errors"
 	"os"
 	"strings"
+
+	"github.com/arran4/goa4web/config"
 )
 
 // loadSessionSecret returns the session secret using the following priority:
@@ -20,12 +22,12 @@ func loadSessionSecret(cliSecret, path string) (string, error) {
 		return cliSecret, nil
 	}
 
-	if env := os.Getenv("SESSION_SECRET"); env != "" {
+	if env := os.Getenv(config.EnvSessionSecret); env != "" {
 		return env, nil
 	}
 
 	if path == "" {
-		path = os.Getenv("SESSION_SECRET_FILE")
+		path = os.Getenv(config.EnvSessionSecretFile)
 		if path == "" {
 			path = ".session_secret"
 		}

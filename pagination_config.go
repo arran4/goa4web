@@ -94,7 +94,7 @@ func loadPaginationConfig() PaginationConfig {
 
 	cfgPath := paginationConfigFile
 	if cfgPath == "" {
-		cfgPath = os.Getenv("PAGINATION_CONFIG_FILE")
+		cfgPath = os.Getenv(config.EnvPaginationConfigFile)
 	}
 	fileCfg, err := loadPaginationConfigFile(cfgPath)
 	if err != nil && !os.IsNotExist(err) {

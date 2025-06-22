@@ -11,7 +11,7 @@ func adminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Section           string
-		ForumCategories   []*GetAllGetAllForumCategoriesWithSubcategoryCountRow
+		ForumCategories   []*GetAllForumCategoriesWithSubcategoryCountRow
 		WritingCategories []*Writingcategory
 		LinkerCategories  []*GetLinkerCategoryLinkCountsRow
 	}
@@ -23,7 +23,7 @@ func adminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	if data.Section == "" || data.Section == "forum" {
-		rows, err := queries.GetAllGetAllForumCategoriesWithSubcategoryCount(r.Context())
+		rows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("adminCategories forum: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

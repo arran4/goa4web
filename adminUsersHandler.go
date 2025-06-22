@@ -10,6 +10,14 @@ import (
 	"strconv"
 )
 
+func cloneValues(v url.Values) url.Values {
+	c := make(url.Values, len(v))
+	for k, vals := range v {
+		c[k] = append([]string(nil), vals...)
+	}
+	return c
+}
+
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
@@ -74,7 +82,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		params.Set("status", data.Status)
 	}
 	if hasMore {
-		nextVals := params.Clone()
+		nextVals := cloneValues(params)
 		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
 		data.NextLink = "/admin/users?" + nextVals.Encode()
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
@@ -83,7 +91,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	if offset > 0 {
-		prevVals := params.Clone()
+		prevVals := cloneValues(params)
 		prevVals.Set("offset", strconv.Itoa(offset-pageSize))
 		data.PrevLink = "/admin/users?" + prevVals.Encode()
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{

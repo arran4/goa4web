@@ -63,6 +63,9 @@ ORDER BY t.lastaddition DESC;
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 
 
+-- name: GetForumTopicIdByThreadId :one
+SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
+
 -- name: DeleteForumThread :exec
 DELETE FROM forumthread WHERE idforumthread = ?;
 

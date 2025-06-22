@@ -130,7 +130,6 @@ type Linkercategory struct {
 	Position         int32
 	Sortorder        int32
 	Title            sql.NullString
-	Sortorder        int32
 }
 
 // LinkercategoryCount holds a category with the number of links assigned.

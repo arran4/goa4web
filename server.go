@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/sessions"
 	"log"
 	"net"
 	"net/http"
+	"time"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
@@ -48,6 +50,34 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	}
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown server: %w", err)
+	}
+	return nil
+}
+
+// newServer returns a Server with the supplied dependencies.
+func newServer(handler http.Handler, store *sessions.CookieStore, db *sql.DB, dbCfg DBConfig, emailCfg EmailConfig) *Server {
+	return &Server{
+		DBConfig:    dbCfg,
+		EmailConfig: emailCfg,
+		Router:      handler,
+		Store:       store,
+		DB:          db,
+	}
+}
+
+// runServer starts the HTTP server and blocks until the context is cancelled.
+func runServer(ctx context.Context, srv *Server, addr string) error {
+	go func() {
+		if err := srv.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+	<-ctx.Done()
+	log.Printf("Shutting down server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("shutdown error: %w", err)
 	}
 	return nil
 }

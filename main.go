@@ -193,10 +193,6 @@ func run() error {
 	loadFeedsEnabled(cliFeeds, appCfg)
 	loadStatsStartYear(*statsStartYearFlag, appCfg)
 
-	if err := performStartupChecks(); err != nil {
-		return err
-	}
-
 	dbCfg := loadDBConfig()
 	emailCfg := loadEmailConfig()
 
@@ -524,45 +520,20 @@ func run() error {
 		handler = newCSRFMiddleware(sessionSecret, httpCfg, version).Wrap(handler)
 	}
 
-	srv = &Server{
-		DBConfig:    dbCfg,
-		EmailConfig: emailCfg,
-		// Load pagination bounds at startup.
-		// The values are stored in appPaginationConfig.
-		Router: handler,
-		Store:  store,
-		DB:     dbPool,
-	}
+	srv = newServer(handler, store, dbPool, dbCfg, emailCfg)
 	loadPaginationConfig()
 
 	log.Printf("Getting email parser")
 	provider := providerFromConfig(emailCfg)
 
-	// Start background email queue processing.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	log.Printf("Staring email worker")
-	safeGo(func() { emailQueueWorker(ctx, New(dbPool), provider, time.Minute) })
-	log.Printf("Starting notification purger worker")
-	safeGo(func() { notificationPurgeWorker(ctx, New(dbPool), time.Hour) })
-
-	log.Printf("Loading http config")
+	startWorkers(ctx, dbPool, provider)
 
 	log.Printf("Starting web server")
-	go func() {
-		if err := srv.Start(httpCfg.Listen); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server error: %v", err)
-		}
-	}()
-
-	<-ctx.Done()
-
-	log.Printf("Shutting down server...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("shutdown error: %w", err)
+	if err := runServer(ctx, srv, httpCfg.Listen); err != nil {
+		return fmt.Errorf("run server: %w", err)
 	}
 
 	return nil

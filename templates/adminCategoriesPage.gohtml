@@ -25,10 +25,11 @@
     {{ range .ForumCategories }}
     <tr>
         <form method="post" action="/forum/admin/category/{{ .Idforumcategory }}">
+        {{ csrfField }}
             <td>{{ .Idforumcategory }}</td>
             <td>{{ $fcid := .ForumcategoryIdforumcategory }} {{ $fcid }} <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
-            <td><textarea name="desc">{{ .Description.String }}</textarea></td>
+            <td><textarea name="desc" rows="3" cols="60">{{ .Description.String }}</textarea></td>
             <td>{{ .Subcategorycount }}</td>
             <td>{{ .Topiccount }}</td>
             <td>
@@ -41,10 +42,11 @@
     {{ end }}
     <tr>
         <form method="post" action="/forum/admin/category">
+        {{ csrfField }}
             <td>NEW</td>
             <td><select name="pcid" value=""><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value=""></td>
-            <td><textarea name="desc"></textarea></td>
+            <td><textarea name="desc" rows="3" cols="60"></textarea></td>
             <td>TBA</td>
             <td>0</td>
             <td><input type="submit" name="task" value="Forum category create"></td>
@@ -66,10 +68,11 @@
     {{ range .WritingCategories }}
     <tr>
         <form method="post" action="/writings/admin/category">
+        {{ csrfField }}
             <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</td>
             <td>{{ $fcid := .WritingcategoryIdwritingcategory }} {{ $fcid }} <select name="pcid" value="{{ .WritingcategoryIdwritingcategory }}"><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
-            <td><textarea name="desc">{{ .Description.String }}</textarea></td>
+            <td><textarea name="desc" rows="3" cols="60">{{ .Description.String }}</textarea></td>
             <td>
                 <input type="hidden" name="cid" value="{{ .Idwritingcategory }}">
                 <input type="submit" name="task" value="writing category change">
@@ -80,10 +83,11 @@
     {{ end }}
     <tr>
         <form method="post" action="/writings/admin/category">
+        {{ csrfField }}
             <td>NEW</td>
             <td><select name="pcid" value=""><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value=""></td>
-            <td><textarea name="desc"></textarea></td>
+            <td><textarea name="desc" rows="3" cols="60"></textarea></td>
             <td><input type="submit" name="task" value="writing category create"></td>
         </form>
     </tr>
@@ -92,7 +96,7 @@
 
 {{ if or (eq .Section "" ) (eq .Section "linker") }}
 <h2>Linker Categories</h2>
-<table>
+<table border="1">
     <tr>
         <th>ID</th>
         <th>Order</th>
@@ -105,6 +109,7 @@
         <td>{{ .Idlinkercategory }}</td>
         <td>
             <form method="post" action="/linker/admin/categories">
+        {{ csrfField }}
                 <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
                 <input type="number" name="position" value="{{ .Position }}" size="3">
         </td>
@@ -123,6 +128,7 @@
         <td></td>
         <td>
             <form method="post" action="/linker/admin/categories">
+        {{ csrfField }}
                 <input name="title" value="">
         </td>
         <td>0</td>

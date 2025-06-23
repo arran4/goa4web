@@ -2,6 +2,7 @@
 		{{if $.IsReplyable}}
 			<font size="4">Reply:</font><br>
 			<form method="post" action="/forum/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">
+        {{ csrfField }}
 				<textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
                 {{ template "languageCombobox" $ }}
 				<input type="submit" name="task" value="Reply">

@@ -16,6 +16,7 @@
                 <td>{{ .Idforumtopic }}</td>
                 <td>
                     <form method="post" action="/forum/admin/topic/{{ .Idforumtopic }}/edit">
+        {{ csrfField }}
                         <input name="name" value="{{ .Title.String }}">
                 </td>
                 <td><textarea name="desc">{{ .Description.String }}</textarea></td>
@@ -29,6 +30,7 @@
                         <input type="submit" name="task" value="Forum topic change">
                     </form>
                     <form method="post" action="/forum/admin/topic/{{ .Idforumtopic }}/delete" style="display:inline">
+        {{ csrfField }}
                         <input type="submit" name="task" value="Forum topic delete">
                     </form>
                 </td>
@@ -38,6 +40,7 @@
             <td>New</td>
             <td>
                 <form method="post" action="/forum/admin/topic">
+        {{ csrfField }}
                     <input name="name" value="">
             </td>
             <td><textarea name="desc"></textarea></td>

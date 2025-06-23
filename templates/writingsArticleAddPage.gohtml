@@ -2,6 +2,7 @@
     <font size="4">New writing:</font><br>
     (Please select an appropriate section before writing this.)<br>
     <form method="post">
+        {{ csrfField }}
         Title:<br><input name="title"><br>
         Abstract:<br><textarea name="abstract" cols="60" rows="10"></textarea><br>
         Writing:<br><textarea name="body" cols="60" rows="30"></textarea><br>

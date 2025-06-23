@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -238,9 +237,9 @@ func run() error {
 	nr.HandleFunc("/user/permissions", newsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	nr.HandleFunc("/users/permissions", newsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
 	nr.HandleFunc("/users/permissions", newsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
-	nr.HandleFunc("/news/admin/users/levels", newsAdminUserLevelsPage).Methods("GET")
-	nr.HandleFunc("/news/admin/users/levels", newsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAllow))
-	nr.HandleFunc("/news/admin/users/levels", newsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskRemoveLower))
+	nr.HandleFunc("/admin/users/levels", newsAdminUserLevelsPage).Methods("GET")
+	nr.HandleFunc("/admin/users/levels", newsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAllow))
+	nr.HandleFunc("/admin/users/levels", newsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskRemoveLower))
 
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.HandleFunc("", faqPage).Methods("GET", "POST")
@@ -488,6 +487,7 @@ func run() error {
 	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateLanguage))
 	ar.HandleFunc("/categories", adminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections/view", adminPermissionsSectionViewPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameSection))
 	ar.HandleFunc("/email/queue", adminEmailQueuePage).Methods("GET")
 	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskResend))
@@ -680,36 +680,7 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		cd, ok := request.Context().Value(ContextValues("coreData")).(*CoreData)
-		if ok && cd != nil {
-			for _, lvl := range accessLevels {
-				if cd.HasRole(lvl) {
-					return true
-				}
-			}
-			return false
-		}
-
-		user, uok := request.Context().Value(ContextValues("user")).(*User)
-		queries, qok := request.Context().Value(ContextValues("queries")).(*Queries)
-		if !uok || !qok {
-			return false
-		}
-		section := strings.Split(strings.TrimPrefix(request.URL.Path, "/"), "/")[0]
-		perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
-			UsersIdusers: user.Idusers,
-			Section:      sql.NullString{String: section, Valid: true},
-		})
-		if err != nil || !perm.Level.Valid {
-			return false
-		}
-		cd = &CoreData{SecurityLevel: perm.Level.String}
-		for _, lvl := range accessLevels {
-			if cd.HasRole(lvl) {
-				return true
-			}
-		}
-		return false
+		return roleAllowed(request, accessLevels...)
 	}
 }
 

@@ -1,5 +1,6 @@
 {{ template "head" $ }}
     <form method="post">
+        {{ csrfField }}
     {{ range .LanguageOptions }}
         <input type="checkbox" name="language{{ .ID }}"{{ if .IsSelected }} checked{{ end }}>{{ .Name }}<br>
     {{ end }}

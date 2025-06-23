@@ -16,6 +16,28 @@ FROM searchwordlist swl
 ORDER BY swl.word
 LIMIT ? OFFSET ?;
 
+-- name: CountWordList :one
+SELECT COUNT(*)
+FROM searchwordlist;
+
+-- name: CountWordListByPrefix :one
+SELECT COUNT(*)
+FROM searchwordlist
+WHERE word LIKE CONCAT(sqlc.arg(prefix), '%');
+
+-- name: WordListWithCountsByPrefix :many
+SELECT swl.word,
+       (SELECT COUNT(*) FROM commentsSearch cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM imagepostSearch ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+FROM searchwordlist swl
+WHERE swl.word LIKE CONCAT(sqlc.arg(prefix), '%')
+ORDER BY swl.word
+LIMIT ? OFFSET ?;
+
 -- name: RemakeCommentsSearch :exec
 -- This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
 -- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".

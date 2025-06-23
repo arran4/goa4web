@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-    Your registered email address is: {{ .UserData.Email }}<br>
+    Your registered email address is: {{ .UserData.Email.String }}<br>
 
     <form method="post">
         {{ csrfField }}

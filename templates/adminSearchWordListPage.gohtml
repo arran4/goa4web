@@ -1,10 +1,16 @@
 {{ template "head" $ }}
-    [<a href="/admin">Admin:</a> <a href="/admin/search/list">(This page/Refresh)</a>]<br />
-                        Complete word list with counts:<ul>
-                        {{range $.Rows}}
-                                <li>{{.Word.String}} - {{.Count}}</li>
-                        {{- end}}
-                        </ul>
-                        {{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous</a>{{end}}
-                        {{if $.NextLink}}<a href="{{$.NextLink}}">Next</a>{{end}}
+[<a href="/admin">Admin:</a> <a href="/admin/search/list">Word List</a>]<br />
+Jump to:
+{{ range $.Letters }} <a href="/admin/search/list?letter={{.}}">{{ . }}</a> {{ end }}<br />
+{{ if $.CurrentLtr }}Showing words starting with "{{ $.CurrentLtr }}"{{ end }}
+<ul>
+{{ range $.Rows }}
+    <li>{{ .Word.String }} - {{ .Count }}</li>
+{{- end }}
+</ul>
+{{ if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous</a>{{ end }}
+{{ range $.PageLinks }}
+    {{ if .Active }}<strong>{{ .Num }}</strong>{{ else }}<a href="{{ .Link }}">{{ .Num }}</a>{{ end }}
+{{ end }}
+{{ if $.NextLink }}<a href="{{ $.NextLink }}">Next</a>{{ end }}
 {{ template "tail" $ }}

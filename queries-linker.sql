@@ -70,7 +70,7 @@ FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
-WHERE lc.idlinkerCategory = ?
+WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercategory) = 0)
 ORDER BY l.listed DESC;
 
 -- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one

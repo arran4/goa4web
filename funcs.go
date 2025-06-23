@@ -19,6 +19,7 @@ func NewFuncs(r *http.Request) template.FuncMap {
 		//"getPermissionsByUserIdAndSectionAndSectionAll":
 		"now":       func() time.Time { return time.Now() },
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
+		"version":   func() string { return version },
 		"a4code2html": func(s string) template.HTML {
 			c := NewA4Code2HTML()
 			c.codeType = ct_html

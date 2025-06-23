@@ -1,0 +1,21 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin:</a> <a href="/admin/audit">(This page/Refresh)</a>]<br />
+<form method="get">
+    User: <input name="user" value="{{$.User}}">
+    Action: <input name="action" value="{{$.Action}}">
+    <input type="submit" value="Filter">
+</form>
+<table border="1">
+    <tr><th>ID</th><th>User</th><th>Action</th><th>Time</th></tr>
+    {{- range .Rows}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.Username.String}}</td>
+        <td>{{.Action}}</td>
+        <td>{{.CreatedAt}}</td>
+    </tr>
+    {{- end}}
+</table>
+{{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous {{$.PageSize}}</a>{{end}}
+{{if $.NextLink}}<a href="{{$.NextLink}}">Next {{$.PageSize}}</a>{{end}}
+{{ template "tail" $ }}

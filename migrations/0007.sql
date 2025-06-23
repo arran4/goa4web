@@ -1,3 +1,13 @@
+-- Add audit_log table for tracking admin actions
+CREATE TABLE IF NOT EXISTS audit_log (
+    id INT NOT NULL AUTO_INCREMENT,
+    users_idusers INT NOT NULL,
+    action TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY audit_log_user_idx (users_idusers)
+);
+
 -- Add passwd_algorithm column to track the password hashing scheme
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS passwd_algorithm TINYTEXT DEFAULT NULL;

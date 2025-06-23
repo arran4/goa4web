@@ -6,3 +6,6 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
+
+-- Record upgrade to schema version 6
+UPDATE schema_version SET version = 6 WHERE version = 5;

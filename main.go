@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -680,36 +679,7 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		cd, ok := request.Context().Value(ContextValues("coreData")).(*CoreData)
-		if ok && cd != nil {
-			for _, lvl := range accessLevels {
-				if cd.HasRole(lvl) {
-					return true
-				}
-			}
-			return false
-		}
-
-		user, uok := request.Context().Value(ContextValues("user")).(*User)
-		queries, qok := request.Context().Value(ContextValues("queries")).(*Queries)
-		if !uok || !qok {
-			return false
-		}
-		section := strings.Split(strings.TrimPrefix(request.URL.Path, "/"), "/")[0]
-		perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
-			UsersIdusers: user.Idusers,
-			Section:      sql.NullString{String: section, Valid: true},
-		})
-		if err != nil || !perm.Level.Valid {
-			return false
-		}
-		cd = &CoreData{SecurityLevel: perm.Level.String}
-		for _, lvl := range accessLevels {
-			if cd.HasRole(lvl) {
-				return true
-			}
-		}
-		return false
+		return roleAllowed(request, accessLevels...)
 	}
 }
 

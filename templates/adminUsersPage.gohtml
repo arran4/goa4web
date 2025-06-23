@@ -35,10 +35,12 @@
                         <input type="submit" value="Edit">
                     </form>
                     <form style="display:inline" method="post" action="/admin/users/disable">
+        {{ csrfField }}
                         <input type="hidden" name="uid" value="{{.Idusers}}">
                         <input type="submit" value="Disable account">
                     </form>
                     <form style="display:inline" method="post" action="/admin/users/reset">
+        {{ csrfField }}
                         <input type="hidden" name="uid" value="{{.Idusers}}">
                         <input type="submit" value="Reset password">
                     </form>

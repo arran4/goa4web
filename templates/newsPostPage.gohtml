@@ -6,6 +6,7 @@
     {{ if or .IsReplyable }}
         <font size=4>Reply:</font>
         <form method="post" action="?#reply">
+        {{ csrfField }}
             <input type="hidden" name="replyto" value="{{ .Thread.Idforumthread }}">
             <textarea name="replytext" cols=40 rows=20>{{.ReplyText}}</textarea><br>
             {{ template "languageCombobox" $ }}

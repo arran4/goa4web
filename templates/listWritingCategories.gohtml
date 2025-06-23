@@ -13,6 +13,7 @@
                 <tr>
                     <td>
                         <form method="post">
+        {{ csrfField }}
                             <input name="name" value="{{ $title }}">
                         </td>
                         <td>
@@ -36,6 +37,7 @@
             <tr>
                 <td>
                     <form method="post">
+        {{ csrfField }}
                         <input name="name" value="New">
                     </td>
                     <td>

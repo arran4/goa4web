@@ -12,6 +12,7 @@
                         {{ range .Boards }}
                                 <tr>
                                         <form method="post" action="/imagebbs/admin/board/{{.Idimageboard}}">
+        {{ csrfField }}
                                                 <td>{{ .Idimageboard }}
                                                 <td><input name="name" value="{{ .Title.String }}">
                                                 <td><textarea name="desc">{{ .Description.String }}</textarea>

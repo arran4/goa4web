@@ -3,6 +3,7 @@
     <div>
         {{ if .Link.Valid }}<a href="{{ .Link.String }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
         <form method="post" action="/usr/notifications/dismiss">
+        {{ csrfField }}
             <input type="hidden" name="id" value="{{ .ID }}">
             <input type="submit" name="task" value="Dismiss">
         </form>

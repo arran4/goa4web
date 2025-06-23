@@ -11,6 +11,7 @@
             <td>
                 {{ if and $.Admin .Edit }}
                     <form method="post">
+        {{ csrfField }}
                         <input name="name" value="{{ .Title.String }}"><br>
                         <textarea name="desc" cols="30" rows="3">{{ .Description.String }}</textarea><br>
                 {{ else }}

@@ -25,6 +25,7 @@
     {{ range .ForumCategories }}
     <tr>
         <form method="post" action="/forum/admin/category/{{ .Idforumcategory }}">
+        {{ csrfField }}
             <td>{{ .Idforumcategory }}</td>
             <td>{{ $fcid := .ForumcategoryIdforumcategory }} {{ $fcid }} <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
@@ -41,6 +42,7 @@
     {{ end }}
     <tr>
         <form method="post" action="/forum/admin/category">
+        {{ csrfField }}
             <td>NEW</td>
             <td><select name="pcid" value=""><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value=""></td>
@@ -66,6 +68,7 @@
     {{ range .WritingCategories }}
     <tr>
         <form method="post" action="/writings/admin/category">
+        {{ csrfField }}
             <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</td>
             <td>{{ $fcid := .WritingcategoryIdwritingcategory }} {{ $fcid }} <select name="pcid" value="{{ .WritingcategoryIdwritingcategory }}"><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
@@ -80,6 +83,7 @@
     {{ end }}
     <tr>
         <form method="post" action="/writings/admin/category">
+        {{ csrfField }}
             <td>NEW</td>
             <td><select name="pcid" value=""><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value=""></td>
@@ -105,6 +109,7 @@
         <td>{{ .Idlinkercategory }}</td>
         <td>
             <form method="post" action="/linker/admin/categories">
+        {{ csrfField }}
                 <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
                 <input type="number" name="position" value="{{ .Position }}" size="3">
         </td>
@@ -123,6 +128,7 @@
         <td></td>
         <td>
             <form method="post" action="/linker/admin/categories">
+        {{ csrfField }}
                 <input name="title" value="">
         </td>
         <td>0</td>

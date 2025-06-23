@@ -3,8 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/csrf"
-	"html/template"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,12 +12,10 @@ import (
 func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		CSRFField template.HTML
 	}
 
 	data := Data{
-		CoreData:  r.Context().Value(ContextValues("coreData")).(*CoreData),
-		CSRFField: csrf.TemplateField(r),
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
 	if err := renderTemplate(w, r, "loginPage.gohtml", data); err != nil {

@@ -11,6 +11,7 @@
                                 <td>{{ .Idfaqcategories }}</td>
                                 <td>
                                         <form method="post">
+        {{ csrfField }}
                                                 <input type="hidden" name="cid" value="{{ .Idfaqcategories }}">
                                                 <input name="cname" value="{{ .Name.String }}">
                                 </td>
@@ -26,6 +27,7 @@
                                 <td>NEW</td>
                                 <td>
                                         <form method="post">
+        {{ csrfField }}
                                                 <input name="cname" value="">
                                 </td>
                                 <td></td>

@@ -189,9 +189,23 @@ The following environment variables can be used to configure the application:
 | `EMAIL_ENABLED` | Toggles sending queued emails. |
 | `NOTIFICATIONS_ENABLED` | Toggles the internal notification system. |
 | `CSRF_ENABLED` | Enables or disables CSRF protection. |
+| `FEEDS_ENABLED` | Toggles RSS and Atom feed generation. |
 | `PAGE_SIZE_MIN` | Defines the minimum allowed page size. |
 | `PAGE_SIZE_MAX` | Defines the maximum allowed page size. |
 | `PAGE_SIZE_DEFAULT` | Defines the default page size. |
+| `STATS_START_YEAR` | First year displayed on the usage stats page. |
+| `DB_LOG_VERBOSITY` | Controls the verbosity level of database logging. |
+| `DB_CONFIG_FILE` | Path to the database configuration file. |
+| `HTTP_CONFIG_FILE` | Path to the HTTP configuration file. |
+| `LISTEN` | Network address the HTTP server listens on. |
+| `HOSTNAME` | Base URL advertised by the HTTP server. |
+| `PAGINATION_CONFIG_FILE` | Path to the pagination configuration file. |
+| `SESSION_SECRET` | Secret used to encrypt session cookies. |
+| `SESSION_SECRET_FILE` | File containing the session secret. |
+| `SENDGRID_KEY` | API key for the SendGrid email provider. |
+| `EMAIL_CONFIG_FILE` | Path to the email configuration file. |
+| `ADMIN_EMAILS` | Comma-separated list of administrator email addresses. |
+| `ADMIN_NOTIFY` | Toggles sending administrator notification emails. |
 
 ### Implementing Custom Providers
 

@@ -286,6 +286,7 @@ CREATE TABLE `users` (
   `idusers` int(10) NOT NULL AUTO_INCREMENT,
   `email` tinytext DEFAULT NULL,
   `passwd` tinytext DEFAULT NULL,
+  `passwd_algorithm` tinytext DEFAULT NULL,
   `username` tinytext DEFAULT NULL,
   PRIMARY KEY (`idusers`)
 );
@@ -417,5 +418,15 @@ CREATE TABLE IF NOT EXISTS `template_overrides` (
   `body` text NOT NULL,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`name`)
+);
+
+-- Audit log of administrative actions.
+CREATE TABLE IF NOT EXISTS `audit_log` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `action` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `audit_log_user_idx` (`users_idusers`)
 );
 

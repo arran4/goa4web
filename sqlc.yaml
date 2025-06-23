@@ -22,6 +22,7 @@ sql:
         - "queries-preferences.sql"
         - "queries-sessions.sql"
         - "queries-login_attempts.sql"
+        - "queries-auditlog.sql"
       gen:
           go:
               package: "main"

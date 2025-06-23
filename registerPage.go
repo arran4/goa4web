@@ -78,17 +78,16 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 
 	//hashedPassword := hex.EncodeToString(sum[:])
 
-	result, err := queries.InsertUser(r.Context(), InsertUserParams{
-		Username: sql.NullString{
-			Valid:  true,
-			String: username,
-		},
-		MD5: password,
-		Email: sql.NullString{
-			Valid:  true,
-			String: email,
-		},
-	})
+	hash, alg, err := hashPassword(password)
+	if err != nil {
+		log.Printf("hashPassword Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	result, err := queries.db.ExecContext(r.Context(),
+		"INSERT INTO users (username, passwd, passwd_algorithm, email) VALUES (?, ?, ?, ?)",
+		username, hash, alg, email,
+	)
 	if err != nil {
 		log.Printf("InsertUser Error: %s", err)
 		http.Error(w, "Can't create user", http.StatusForbidden)

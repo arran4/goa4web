@@ -286,6 +286,7 @@ CREATE TABLE `users` (
   `idusers` int(10) NOT NULL AUTO_INCREMENT,
   `email` tinytext DEFAULT NULL,
   `passwd` tinytext DEFAULT NULL,
+  `passwd_algorithm` tinytext DEFAULT NULL,
   `username` tinytext DEFAULT NULL,
   PRIMARY KEY (`idusers`)
 );

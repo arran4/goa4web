@@ -198,9 +198,11 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("rand.Read: %w", err).Error())
 	}
 	newPass := hex.EncodeToString(buf[:])
-	if uidi, err := strconv.Atoi(uid); err != nil {
+	if hash, alg, err := hashPassword(newPass); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("hashPassword: %w", err).Error())
+	} else if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := queries.db.ExecContext(r.Context(), "UPDATE users SET passwd=MD5(?) WHERE idusers=?", newPass, uidi); err != nil {
+	} else if _, err := queries.db.ExecContext(r.Context(), "UPDATE users SET passwd=?, passwd_algorithm=? WHERE idusers=?", hash, alg, uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("reset password: %w", err).Error())
 	} else {
 		data.Password = newPass

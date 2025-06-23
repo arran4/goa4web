@@ -50,8 +50,8 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(fetchLanguages)).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
-	appPaginationConfig = PaginationConfig{Default: 15}
-	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(appPaginationConfig.Default)).WillReturnResult(sqlmock.NewResult(1, 1))
+	appRuntimeConfig.PageSizeDefault = 15
+	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(appRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveAllActionPage(rr, req)
 
@@ -117,7 +117,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	defer db.Close()
 
 	queries := New(db)
-	appPaginationConfig = PaginationConfig{Default: 15}
+	appRuntimeConfig.PageSizeDefault = 15
 	store = sessions.NewCookieStore([]byte("test"))
 
 	form := url.Values{}
@@ -142,9 +142,9 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).
-		AddRow(1, 1, 1, nil, appPaginationConfig.Default)
+		AddRow(1, 1, 1, nil, appRuntimeConfig.PageSizeDefault)
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
-	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(appPaginationConfig.Default), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(appRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveLanguagePreferenceActionPage(rr, req)
 

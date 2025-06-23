@@ -32,32 +32,6 @@ const (
 	SourceEmail = "a4web@arran.net.au"
 )
 
-// cliEmailConfig holds command line overrides for email configuration. It is
-// populated in main() after parsing flags.
-var cliEmailConfig EmailConfig
-
-// emailConfigFile is the optional path to a configuration file read at startup.
-// If empty, the EMAIL_CONFIG_FILE environment variable is consulted.
-var emailConfigFile string
-
-// EmailConfig stores configuration for selecting and configuring the mail
-// provider. Tests can supply a custom configuration instead of relying on
-// environment variables.
-type EmailConfig struct {
-	Provider     string
-	SMTPHost     string
-	SMTPPort     string
-	SMTPUser     string
-	SMTPPass     string
-	AWSRegion    string
-	JMAPEndpoint string
-	JMAPAccount  string
-	JMAPIdentity string
-	JMAPUser     string
-	JMAPPass     string
-	SendGridKey  string
-}
-
 // MailProvider defines a simple interface that all mail backends must
 // implement. Only the fields necessary for sending basic notification emails
 // are included.
@@ -257,15 +231,15 @@ func notifyChange(ctx context.Context, provider MailProvider, email string, page
 	return nil
 }
 
-func providerFromConfig(cfg EmailConfig) MailProvider {
-	mode := strings.ToLower(cfg.Provider)
+func providerFromConfig(cfg RuntimeConfig) MailProvider {
+	mode := strings.ToLower(cfg.EmailProvider)
 
 	switch mode {
 	case "smtp":
-		host := cfg.SMTPHost
-		port := cfg.SMTPPort
-		user := cfg.SMTPUser
-		pass := cfg.SMTPPass
+		host := cfg.EmailSMTPHost
+		port := cfg.EmailSMTPPort
+		user := cfg.EmailSMTPUser
+		pass := cfg.EmailSMTPPass
 		if host == "" {
 			log.Printf("Email disabled: %s not set", config.EnvSMTPHost)
 			return nil
@@ -284,7 +258,7 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 		// Attempt to create an AWS session using default credentials. If this
 		// fails, emails are effectively disabled.
 		awsCfg := aws.NewConfig()
-		if region := cfg.AWSRegion; region != "" {
+		if region := cfg.EmailAWSRegion; region != "" {
 			awsCfg = awsCfg.WithRegion(region)
 		}
 
@@ -309,21 +283,21 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 		return localMailProvider{}
 
 	case "jmap":
-		ep := cfg.JMAPEndpoint
+		ep := cfg.EmailJMAPEndpoint
 		if ep == "" {
 			log.Printf("Email disabled: %s not set", config.EnvJMAPEndpoint)
 			return nil
 		}
-		acc := cfg.JMAPAccount
-		id := cfg.JMAPIdentity
+		acc := cfg.EmailJMAPAccount
+		id := cfg.EmailJMAPIdentity
 		if acc == "" || id == "" {
 			log.Printf("Email disabled: %s or %s not set", config.EnvJMAPAccount, config.EnvJMAPIdentity)
 			return nil
 		}
 		return jmapMailProvider{
 			endpoint:  ep,
-			username:  cfg.JMAPUser,
-			password:  cfg.JMAPPass,
+			username:  cfg.EmailJMAPUser,
+			password:  cfg.EmailJMAPPass,
 			accountID: acc,
 			identity:  id,
 		}
@@ -343,92 +317,11 @@ func providerFromConfig(cfg EmailConfig) MailProvider {
 // getEmailProvider returns the mail provider configured by environment variables.
 // Production code uses this, while tests can call providerFromConfig directly.
 func getEmailProvider() MailProvider {
-	return providerFromConfig(loadEmailConfig())
-}
-
-// resolveEmailConfig merges configuration values with the order of precedence
-// cli > file > env > defaults.
-func resolveEmailConfig(cli, file, env EmailConfig) EmailConfig {
-	var cfg EmailConfig
-	config.Merge(&cfg, env)
-	config.Merge(&cfg, file)
-	config.Merge(&cfg, cli)
-	return cfg
+	return providerFromConfig(appRuntimeConfig)
 }
 
 // loadEmailConfigFile reads EMAIL_* style configuration values from a simple
 // key=value file. Missing files return an empty configuration.
-func loadEmailConfigFile(path string) (EmailConfig, error) {
-	var cfg EmailConfig
-	if path == "" {
-		return cfg, nil
-	}
-	b, err := readFile(path)
-	if err != nil {
-		return cfg, err
-	}
-	for _, line := range strings.Split(string(b), "\n") {
-		if i := strings.IndexByte(line, '='); i > 0 {
-			key := strings.TrimSpace(line[:i])
-			val := strings.TrimSpace(line[i+1:])
-			switch key {
-			case config.EnvEmailProvider:
-				cfg.Provider = val
-			case config.EnvSMTPHost:
-				cfg.SMTPHost = val
-			case config.EnvSMTPPort:
-				cfg.SMTPPort = val
-			case config.EnvSMTPUser:
-				cfg.SMTPUser = val
-			case config.EnvSMTPPass:
-				cfg.SMTPPass = val
-			case config.EnvAWSRegion:
-				cfg.AWSRegion = val
-			case config.EnvJMAPEndpoint:
-				cfg.JMAPEndpoint = val
-			case config.EnvJMAPAccount:
-				cfg.JMAPAccount = val
-			case config.EnvJMAPIdentity:
-				cfg.JMAPIdentity = val
-			case config.EnvJMAPUser:
-				cfg.JMAPUser = val
-			case config.EnvJMAPPass:
-				cfg.JMAPPass = val
-			case "SENDGRID_KEY":
-				cfg.SendGridKey = val
-			}
-		}
-	}
-	return cfg, nil
-}
-
-func loadEmailConfig() EmailConfig {
-	env := EmailConfig{
-		Provider:     os.Getenv(config.EnvEmailProvider),
-		SMTPHost:     os.Getenv(config.EnvSMTPHost),
-		SMTPPort:     os.Getenv(config.EnvSMTPPort),
-		SMTPUser:     os.Getenv(config.EnvSMTPUser),
-		SMTPPass:     os.Getenv(config.EnvSMTPPass),
-		AWSRegion:    os.Getenv(config.EnvAWSRegion),
-		JMAPEndpoint: os.Getenv(config.EnvJMAPEndpoint),
-		JMAPAccount:  os.Getenv(config.EnvJMAPAccount),
-		JMAPIdentity: os.Getenv(config.EnvJMAPIdentity),
-		JMAPUser:     os.Getenv(config.EnvJMAPUser),
-		JMAPPass:     os.Getenv(config.EnvJMAPPass),
-		SendGridKey:  os.Getenv(config.EnvSendGridKey),
-	}
-
-	cfgPath := emailConfigFile
-	if cfgPath == "" {
-		cfgPath = os.Getenv(config.EnvEmailConfigFile)
-	}
-	fileCfg, err := loadEmailConfigFile(cfgPath)
-	if err != nil && !os.IsNotExist(err) {
-		log.Printf("Email config file error: %v", err)
-	}
-
-	return resolveEmailConfig(cliEmailConfig, fileCfg, env)
-}
 
 // getAdminEmails returns a slice of administrator email addresses. If the
 // ADMIN_EMAILS environment variable is set, it takes precedence and is

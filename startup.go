@@ -17,24 +17,24 @@ var (
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg DBConfig) *UserError {
-	dbLogVerbosity = cfg.LogVerbosity
-	if cfg.User == "" {
-		cfg.User = "a4web"
+func InitDB(cfg RuntimeConfig) *UserError {
+	dbLogVerbosity = cfg.DBLogVerbosity
+	if cfg.DBUser == "" {
+		cfg.DBUser = "a4web"
 	}
-	if cfg.Pass == "" {
-		cfg.Pass = "a4web"
+	if cfg.DBPass == "" {
+		cfg.DBPass = "a4web"
 	}
-	if cfg.Host == "" {
-		cfg.Host = "localhost"
+	if cfg.DBHost == "" {
+		cfg.DBHost = "localhost"
 	}
-	if cfg.Port == "" {
-		cfg.Port = "3306"
+	if cfg.DBPort == "" {
+		cfg.DBPort = "3306"
 	}
-	if cfg.Name == "" {
-		cfg.Name = "a4web"
+	if cfg.DBName == "" {
+		cfg.DBName = "a4web"
 	}
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.User, cfg.Pass, cfg.Host, cfg.Port, cfg.Name)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
 	mysqlCfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
 		return &UserError{Err: err, ErrorMessage: "failed to parse DSN"}
@@ -61,11 +61,11 @@ func InitDB(cfg DBConfig) *UserError {
 }
 
 // checkDatabase attempts to connect and ping the configured database.
-func checkDatabase(cfg DBConfig) *UserError {
+func checkDatabase(cfg RuntimeConfig) *UserError {
 	return InitDB(cfg)
 }
 
-func performStartupChecks(cfg DBConfig) error {
+func performStartupChecks(cfg RuntimeConfig) error {
 	if ue := checkDatabase(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}

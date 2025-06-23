@@ -10,7 +10,7 @@ import (
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
-	size := appPaginationConfig.Default
+	size := appRuntimeConfig.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
 	}
@@ -22,8 +22,8 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Size:     size,
-		Min:      appPaginationConfig.Min,
-		Max:      appPaginationConfig.Max,
+		Min:      appRuntimeConfig.PageSizeMin,
+		Max:      appRuntimeConfig.PageSizeMax,
 	}
 	if err := renderTemplate(w, r, "userPagingPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
@@ -43,11 +43,11 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	size, _ := strconv.Atoi(r.FormValue("size"))
-	if size < appPaginationConfig.Min {
-		size = appPaginationConfig.Min
+	if size < appRuntimeConfig.PageSizeMin {
+		size = appRuntimeConfig.PageSizeMin
 	}
-	if size > appPaginationConfig.Max {
-		size = appPaginationConfig.Max
+	if size > appRuntimeConfig.PageSizeMax {
+		size = appRuntimeConfig.PageSizeMax
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)

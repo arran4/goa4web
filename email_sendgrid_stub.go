@@ -3,6 +3,6 @@
 
 package main
 
-func sendGridProviderFromConfig(cfg EmailConfig) MailProvider {
+func sendGridProviderFromConfig(cfg RuntimeConfig) MailProvider {
 	return nil
 }

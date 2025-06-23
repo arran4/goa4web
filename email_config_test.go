@@ -1,48 +1,39 @@
 package main
 
 import (
+	"os"
 	"testing"
+
+	"github.com/arran4/goa4web/config"
 )
 
-func TestLoadEmailConfigFile(t *testing.T) {
-	useMemFS(t)
-	file := "email.conf"
-	content := "EMAIL_PROVIDER=smtp\nSMTP_HOST=host\nSMTP_PORT=2525\n"
-	if err := writeFile(file, []byte(content), 0644); err != nil {
-		t.Fatalf("write config: %v", err)
-	}
-	cfg, err := loadEmailConfigFile(file)
-	if err != nil {
-		t.Fatalf("load: %v", err)
-	}
-	if cfg.Provider != "smtp" || cfg.SMTPHost != "host" || cfg.SMTPPort != "2525" {
-		t.Fatalf("unexpected cfg: %#v", cfg)
-	}
-}
+func TestEmailConfigPrecedence(t *testing.T) {
+	os.Setenv(config.EnvEmailProvider, "ses")
+	os.Setenv(config.EnvSMTPHost, "env")
+	defer os.Unsetenv(config.EnvEmailProvider)
+	defer os.Unsetenv(config.EnvSMTPHost)
 
-func TestResolveEmailConfigPrecedence(t *testing.T) {
-	env := EmailConfig{Provider: "ses", SMTPHost: "env"}
-	file := EmailConfig{Provider: "log", SMTPHost: "file"}
-	cli := EmailConfig{Provider: "smtp", SMTPPort: "25"}
-
-	cfg := resolveEmailConfig(cli, file, env)
-
-	if cfg.Provider != "smtp" || cfg.SMTPHost != "file" || cfg.SMTPPort != "25" {
+	cliRuntimeConfig = RuntimeConfig{
+		EmailProvider: "smtp",
+		EmailSMTPPort: "25",
+	}
+	vals := map[string]string{
+		config.EnvEmailProvider: "log",
+		config.EnvSMTPHost:      "file",
+	}
+	cfg := loadRuntimeConfig(vals)
+	if cfg.EmailProvider != "smtp" || cfg.EmailSMTPHost != "file" || cfg.EmailSMTPPort != "25" {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
 
-func TestLoadEmailConfigEnvPath(t *testing.T) {
-	useMemFS(t)
-	file := "email.conf"
-	if err := writeFile(file, []byte("EMAIL_PROVIDER=log\n"), 0644); err != nil {
-		t.Fatalf("write file: %v", err)
+func TestLoadEmailConfigFromFileValues(t *testing.T) {
+	cliRuntimeConfig = RuntimeConfig{}
+	vals := map[string]string{
+		config.EnvEmailProvider: "log",
 	}
-	t.Setenv("EMAIL_CONFIG_FILE", file)
-	emailConfigFile = ""
-	cliEmailConfig = EmailConfig{}
-	cfg := loadEmailConfig()
-	if cfg.Provider != "log" {
-		t.Fatalf("want log got %q", cfg.Provider)
+	cfg := loadRuntimeConfig(vals)
+	if cfg.EmailProvider != "log" {
+		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}
 }

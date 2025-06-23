@@ -414,6 +414,7 @@ func run() error {
 	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
 	ar.HandleFunc("/sessions", adminSessionsPage).Methods("GET")
 	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
+	ar.HandleFunc("/login/attempts", adminLoginAttemptsPage).Methods("GET")
 	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/usage", adminUsageStatsPage).Methods("GET")

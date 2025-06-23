@@ -18,6 +18,9 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 
 	cfgMap := loadAppConfigFile(configFile)
 	srv.Config = generateRuntimeConfig(nil, cfgMap)
+	if err := validateDefaultLanguage(r.Context(), New(dbPool), srv.Config.DefaultLanguage); err != nil {
+		data.Errors = append(data.Errors, err.Error())
+	}
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 

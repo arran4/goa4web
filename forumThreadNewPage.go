@@ -16,12 +16,11 @@ func forumThreadNewPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
-		SelectedLanguageId: 1, // TODO update these from user prefs and make it an optional filter
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 	}
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

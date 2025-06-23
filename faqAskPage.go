@@ -14,12 +14,11 @@ func faqAskPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int32
 	}
 
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
-		SelectedLanguageId: 1, // TODO user pref
+		SelectedLanguageId: resolveDefaultLanguageID(r.Context(), queries),
 	}
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

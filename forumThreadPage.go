@@ -36,14 +36,13 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: 1,
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 	}
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

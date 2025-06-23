@@ -23,13 +23,12 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		Mode               string
 	}
 
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: 1,
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 		Mode:               "Edit",
 	}
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

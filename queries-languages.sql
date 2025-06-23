@@ -25,3 +25,6 @@ VALUES (?);
 SELECT *
 FROM language;
 
+-- name: GetLanguageIDByName :one
+SELECT idlanguage FROM language WHERE nameof = ?;
+

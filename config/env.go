@@ -82,4 +82,7 @@ const (
 	EnvImageUploadDir = "IMAGE_UPLOAD_DIR"
 	// EnvImageMaxBytes sets the maximum allowed size of uploaded images in bytes.
 	EnvImageMaxBytes = "IMAGE_MAX_BYTES"
+
+	// EnvDefaultLanguage specifies the site's default language.
+	EnvDefaultLanguage = "DEFAULT_LANGUAGE"
 )

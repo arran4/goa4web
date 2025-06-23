@@ -22,6 +22,7 @@ import (
 )
 
 var configFile string
+var cliRuntimeConfig RuntimeConfig
 
 var (
 	//      // Replace these with your Google OAuth2 credentials
@@ -61,6 +62,7 @@ func run() error {
 	fs.StringVar(&configFileFlag, "config-file", "", "path to application configuration file")
 
 	_ = fs.Parse(os.Args[1:])
+	cliRuntimeConfig.DefaultLanguage = fs.Lookup("default-language").Value.String()
 
 	configFile = configFileFlag
 	if configFile == "" {
@@ -91,6 +93,10 @@ func run() error {
 
 	if err := performStartupChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
+	}
+
+	if err := validateDefaultLanguage(context.Background(), New(dbPool), cfg.DefaultLanguage); err != nil {
+		return fmt.Errorf("default language: %w", err)
 	}
 
 	if dbPool != nil {

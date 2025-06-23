@@ -44,14 +44,14 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	data := Data{
-		CoreData:      r.Context().Value(ContextValues("coreData")).(*CoreData),
-		Replyable:     true,
-		BoardId:       bid,
-		ForumThreadId: thid,
-	}
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := Data{
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		Replyable:          true,
+		BoardId:            bid,
+		ForumThreadId:      thid,
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
+	}
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,

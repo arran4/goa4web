@@ -20,15 +20,14 @@ func linkerShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
-		CoreData: cd,
-		CanReply: cd.UserID != 0,
+		CoreData:           cd,
+		CanReply:           cd.UserID != 0,
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 	}
-
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

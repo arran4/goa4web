@@ -49,10 +49,12 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		ReplyText          string
 	}
 
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
-		CoreData:    r.Context().Value(ContextValues("coreData")).(*CoreData),
-		IsReplying:  r.URL.Query().Has("comment"),
-		IsReplyable: true,
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		IsReplying:         r.URL.Query().Has("comment"),
+		IsReplyable:        true,
+		SelectedLanguageId: resolveDefaultLanguageID(r.Context(), queries),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
@@ -61,8 +63,6 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
 	if err != nil {

@@ -1,0 +1,12 @@
+{{ template "head" $ }}
+<table border="1">
+    <tr><th>Time</th><th>Username</th><th>IP</th></tr>
+    {{- range .Attempts }}
+    <tr>
+        <td>{{ .CreatedAt }}</td>
+        <td>{{ .Username }}</td>
+        <td>{{ .IpAddress }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

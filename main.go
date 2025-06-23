@@ -250,6 +250,8 @@ func run() error {
 	faqr.HandleFunc("/admin/answer", faqAnswerAnswerActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAnswer))
 	faqr.HandleFunc("/admin/answer", faqAnswerRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskRemoveRemove))
 	faqr.HandleFunc("/admin/categories", faqAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	// also handle trailing slash for compatibility
+	faqr.HandleFunc("/admin/categories/", faqAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	faqr.HandleFunc("/admin/categories", faqCategoriesRenameActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskRenameCategory))
 	faqr.HandleFunc("/admin/categories", faqCategoriesDeleteActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDeleteCategory))
 	faqr.HandleFunc("/admin/categories", faqCategoriesCreateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskCreateCategory))

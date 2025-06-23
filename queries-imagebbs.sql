@@ -30,6 +30,15 @@ VALUES (?, ?, ?, ?, ?, NOW());
 -- name: UpdateImagePostByIdForumThreadId :exec
 UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?;
 
+-- name: GetImagePostsByUserDescending :many
+SELECT i.*, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+WHERE i.users_idusers = ?
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?;
+
 -- name: GetAllImageBoards :many
 SELECT b.*
 FROM imageboard b

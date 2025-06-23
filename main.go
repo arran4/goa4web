@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -257,10 +258,12 @@ func run() error {
 	br.HandleFunc("/rss", blogsRssPage).Methods("GET")
 	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
 	br.HandleFunc("", blogsPage).Methods("GET")
+	br.HandleFunc("/", blogsPage).Methods("GET")
 	br.HandleFunc("/add", blogsBlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
 	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskAdd))
 	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
 	br.HandleFunc("/blogger/{blogger}", blogsBloggerPage).Methods("GET")
+	br.HandleFunc("/blogger/{blogger}/", blogsBloggerPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", taskDoneAutoRefreshPage).Methods("POST")
 	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET", "POST")
@@ -292,6 +295,8 @@ func run() error {
 	lr.HandleFunc("/rss", linkerRssPage).Methods("GET")
 	lr.HandleFunc("/atom", linkerAtomPage).Methods("GET")
 	lr.HandleFunc("", linkerPage).Methods("GET")
+	lr.HandleFunc("/linker/{username}", linkerLinkerPage).Methods("GET")
+	lr.HandleFunc("/linker/{username}/", linkerLinkerPage).Methods("GET")
 	lr.HandleFunc("/categories", linkerCategoriesPage).Methods("GET")
 	lr.HandleFunc("/category/{category}", linkerCategoryPage).Methods("GET")
 	lr.HandleFunc("/comments/{link}", linkerCommentsPage).Methods("GET")
@@ -319,6 +324,9 @@ func run() error {
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
 	ibr.HandleFunc("", imagebbsPage).Methods("GET")
+	ibr.HandleFunc("/", imagebbsPage).Methods("GET")
+	ibr.HandleFunc("/poster/{username}", imagebbsPosterPage).Methods("GET")
+	ibr.HandleFunc("/poster/{username}/", imagebbsPosterPage).Methods("GET")
 
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", searchPage).Methods("GET")
@@ -328,10 +336,16 @@ func run() error {
 	sr.HandleFunc("", searchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchBlogs))
 	sr.HandleFunc("", searchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchWritings))
 
+	r.PathPrefix("/writing").HandlerFunc(redirectPermanentPrefix("/writing", "/writings"))
+	r.PathPrefix("/links").HandlerFunc(redirectPermanentPrefix("/links", "/linker"))
+
 	wr := r.PathPrefix("/writings").Subrouter()
 	wr.HandleFunc("/rss", writingsRssPage).Methods("GET")
 	wr.HandleFunc("/atom", writingsAtomPage).Methods("GET")
 	wr.HandleFunc("", writingsPage).Methods("GET")
+	wr.HandleFunc("/", writingsPage).Methods("GET")
+	wr.HandleFunc("/writer/{username}", writingsWriterPage).Methods("GET")
+	wr.HandleFunc("/writer/{username}/", writingsWriterPage).Methods("GET")
 	wr.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	wr.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
 	wr.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
@@ -519,6 +533,21 @@ func run() error {
 	ar.HandleFunc("/reload", adminReloadConfigPage).Methods("POST")
 	ar.HandleFunc("/shutdown", adminShutdownPage).Methods("POST")
 
+  /* TODO (agent) reintegrate these admin pages 
+  	br.HandleFunc("/user/permissions", getPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersAllow))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersDisallow))
+	ibr.HandleFunc("/admin", imagebbsAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/boards", imagebbsAdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/boards", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskNewBoard))
+	ibr.HandleFunc("/admin/board", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
+  */
+  
 	// oauth shit
 	//r.HandleFunc("/login", loginPage)
 	//r.HandleFunc("/callback", callbackHandler)
@@ -614,6 +643,22 @@ func mainCSSHandler(w http.ResponseWriter, r *http.Request) {
 func redirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, to, http.StatusPermanentRedirect)
+	}
+}
+
+// redirectPermanentPrefix redirects any path starting with the given prefix to
+// the same path under a new prefix while preserving query parameters.
+func redirectPermanentPrefix(from, to string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rest := strings.TrimPrefix(r.URL.Path, from)
+		if !strings.HasPrefix(rest, "/") && rest != "" {
+			rest = "/" + rest
+		}
+		target := to + rest
+		if r.URL.RawQuery != "" {
+			target += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, target, http.StatusPermanentRedirect)
 	}
 }
 

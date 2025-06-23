@@ -21,6 +21,7 @@ sql:
         - "queries-announcements.sql"
         - "queries-preferences.sql"
         - "queries-sessions.sql"
+        - "queries-login_attempts.sql"
       gen:
           go:
               package: "main"

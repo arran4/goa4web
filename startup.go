@@ -86,5 +86,12 @@ func ensureSchema(ctx context.Context, db *sql.DB) error {
 			return fmt.Errorf("insert schema_version: %w", err)
 		}
 	}
+	var version int
+	if err := db.QueryRowContext(ctx, "SELECT version FROM schema_version").Scan(&version); err != nil {
+		return fmt.Errorf("select schema_version: %w", err)
+	}
+	if version != ExpectedSchemaVersion {
+		return fmt.Errorf("database schema version %d does not match expected %d", version, ExpectedSchemaVersion)
+	}
 	return nil
 }

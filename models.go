@@ -147,6 +147,13 @@ type Linkersearch struct {
 	LinkerIdlinker                 int32
 }
 
+type LoginAttempt struct {
+	ID        int32
+	Username  string
+	IpAddress string
+	CreatedAt time.Time
+}
+
 type Notification struct {
 	ID           int32
 	UsersIdusers int32

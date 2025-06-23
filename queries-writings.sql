@@ -6,6 +6,15 @@ ORDER BY w.published DESC
 LIMIT ? OFFSET ?
 ;
 
+-- name: GetPublicWritingsByUser :many
+SELECT w.*, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.private = 0 AND w.users_idusers = ?
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?;
+
 -- name: GetPublicWritingsInCategory :many
 SELECT w.*, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments

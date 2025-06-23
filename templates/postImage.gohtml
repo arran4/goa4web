@@ -3,6 +3,7 @@
 		<font size="2">Due to Bandwidth issues all images are hosted off site,
 			please use a service like <a href="Http://www.imageshack.us/">Imageshack.us</a>.</font><br>
 		<form method="post">
+        {{ csrfField }}
 			Thumbnail URL: <input name="thumbnailURL" value=""><br>
 			Fullimage URL: <input name="fullimageURL" value=""><br>
 			About the image: <textarea name="text" cols="40" rows="5"></textarea><br>

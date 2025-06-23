@@ -2,6 +2,7 @@
     <font size="5">Section: Unanswered/Uncategorized Questions</font><br>
     {{- range .Rows }}
 		<form method="post" action="">
+        {{ csrfField }}
 			<table width="100%">
 				<tr>
 					<th bgcolor="lightgrey">Q:

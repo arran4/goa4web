@@ -31,14 +31,17 @@
                 <td>
                     <a style="display:inline-block;margin:0 4px" href="/blogs/blogger/{{.Username.String}}">View profile</a>
                     <form style="display:inline-block;margin:0 4px" method="get" action="/admin/users/edit">
+                        {{ csrfField }}
                         <input type="hidden" name="uid" value="{{.Idusers}}">
                         <input type="submit" value="Edit">
                     </form>
                     <form style="display:inline-block;margin:0 4px" method="post" action="/admin/users/disable">
+                        {{ csrfField }}
                         <input type="hidden" name="uid" value="{{.Idusers}}">
                         <input type="submit" value="Disable account">
                     </form>
                     <form style="display:inline-block;margin:0 4px" method="post" action="/admin/users/reset">
+                        {{ csrfField }}
                         <input type="hidden" name="uid" value="{{.Idusers}}">
                         <input type="submit" value="Reset password">
                     </form>

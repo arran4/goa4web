@@ -18,6 +18,7 @@
         {{- range .Topics }}
         <tr>
             <form method="post" action="/forum/admin/user/{{ $u.Idusers }}/levels">
+        {{ csrfField }}
                 <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}</td>
                 <td>{{ with index $.Categories .ForumcategoryIdforumcategory }}{{ .Title.String }}{{ end }}</td>
                 <td><input name="level" value="{{ .Level.Int32 }}" size="8"></td>

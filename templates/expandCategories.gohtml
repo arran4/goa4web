@@ -6,6 +6,7 @@
                 <td>
                     {{ if .Admin }}
                         <form method="post">
+        {{ csrfField }}
                             Title <input name="name" value="{{ .Title }}">: - Description:
                             <textarea name="desc" cols="30" rows="2">{{ .Description }}</textarea>
                             <input type="hidden" name="cid" value="{{ .ID }}">
@@ -27,6 +28,7 @@
             {{ if eq .CategoryID .ID }}
                 {{ if .Admin }}
                     <form method="post">
+        {{ csrfField }}
                         <input name="name" value="{{ .Title }}"><br>
                         <textarea name="desc" cols="30" rows="3">{{ .Description }}</textarea><br>
                 {{ else }}

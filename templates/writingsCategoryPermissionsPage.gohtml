@@ -16,6 +16,7 @@ Category {{.CategoryID}} permissions:<br>
         <td>{{ .Level.String }}</td>
         <td>
             <form method="post">
+        {{ csrfField }}
                 <input type="hidden" name="permid" value="{{ .Idpermissions }}">
                 <input type="submit" name="task" value="User Disallow">
             </form>
@@ -24,6 +25,7 @@ Category {{.CategoryID}} permissions:<br>
     {{- end }}
     <tr>
         <form method="post">
+        {{ csrfField }}
             <td>NEW</td>
             <td><input name="username"></td>
             <td>?</td>

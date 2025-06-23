@@ -2,6 +2,7 @@
     Your registered email address is: {{ .UserData.Email.String }}<br>
 
     <form method="post">
+        {{ csrfField }}
         <input type="checkbox" name="emailupdates" {{ if .UserPreferences.EmailUpdates }}checked{{ end }}>Receive replies notifications via email<br>
         <input type="submit" name="task" value="Save all"><br>
         <input type="submit" name="task" value="Test mail"><br>

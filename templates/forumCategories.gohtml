@@ -9,6 +9,7 @@
                 <td>
                     {{ if and $.Admin .Edit }}
                         <form method="post" action="/forum/admin/category/{{ .Idforumcategory }}">
+        {{ csrfField }}
                             Title <input name="name" value="{{ .Title.String }}">: -
                             Description: <textarea name="desc" cols="30" rows="2">{{ .Description.String }}</textarea>
                             {{ $pid := .ForumcategoryIdforumcategory }}

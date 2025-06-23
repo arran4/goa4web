@@ -1,6 +1,7 @@
 {{ template "head" $ }}
     New board:
     <form method="post" action="/imagebbs/admin/board">
+        {{ csrfField }}
         Name: <input name="name" value=""><br>
         Description: <textarea name="desc" cols="40" rows="5"></textarea><br>
         Parent Board: <select name="pbid" value=""><option value="0">None</option>{{ range $.Boards }}<option value="{{.Idimageboard}}">{{.Title.String}}</option>  {{ end }}</select>

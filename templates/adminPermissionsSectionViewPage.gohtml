@@ -1,0 +1,15 @@
+{{ template "head" $ }}
+[<a href="/admin/permissions/sections">Back to sections</a>]<br/>
+<h3>Permissions for {{ .Section }}</h3>
+<table border="1">
+    <tr><th>ID</th><th>User</th><th>Email</th><th>Level</th></tr>
+    {{ range .Rows }}
+    <tr>
+        <td>{{ .Idpermissions }}</td>
+        <td>{{ .Username.String }}</td>
+        <td>{{ .Email.String }}</td>
+        <td>{{ .Level.String }}</td>
+    </tr>
+    {{ end }}
+</table>
+{{ template "tail" $ }}

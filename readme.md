@@ -217,3 +217,5 @@ columns and records the schema version.
 ### Permission section checker
 
 The `/admin/permissions/sections` page lists all distinct values found in the `permissions.section` column. It provides buttons to convert existing rows between `writing` and `writings`. These once-off tools help normalise data if older migrations used inconsistent names.
+
+The linked counts now let you drill down to view all permissions for a section via `/admin/permissions/sections/view?section=<name>`.

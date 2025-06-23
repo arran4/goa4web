@@ -4,7 +4,7 @@
     <tr><th>Section</th><th>Count</th></tr>
     {{ range $.Sections }}
     <tr>
-        <td>{{ .Section.String }}</td>
+        <td><a href="/admin/permissions/sections/view?section={{ .Section.String }}">{{ .Section.String }}</a></td>
         <td>{{ .Sectioncount }}</td>
     </tr>
     {{ end }}

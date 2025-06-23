@@ -45,6 +45,7 @@
                         <input type="hidden" name="uid" value="{{.Idusers}}">
                         <input type="submit" value="Reset password">
                     </form>
+                    <a style="display:inline-block;margin:0 4px" href="/admin/users/export?uid={{.Idusers}}">Export ZIP</a>
                 </td>
             </tr>
         {{end}}

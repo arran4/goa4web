@@ -124,6 +124,58 @@ func (q *Queries) CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams
 	return result.LastInsertId()
 }
 
+const getAllBlogEntriesByUser = `-- name: GetAllBlogEntriesByUser :many
+SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE b.users_idusers = ?
+ORDER BY b.written DESC
+`
+
+type GetAllBlogEntriesByUserRow struct {
+	Idblogs                  int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Blog                     sql.NullString
+	Written                  time.Time
+	Username                 sql.NullString
+	Comments                 int32
+}
+
+func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int32) ([]*GetAllBlogEntriesByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBlogEntriesByUser, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllBlogEntriesByUserRow
+	for rows.Next() {
+		var i GetAllBlogEntriesByUserRow
+		if err := rows.Scan(
+			&i.Idblogs,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Blog,
+			&i.Written,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getBlogEntriesByIdsDescending = `-- name: GetBlogEntriesByIdsDescending :many
 SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b

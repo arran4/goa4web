@@ -54,3 +54,10 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_idforumthread=? AND c.forumthread_idforumthread!=0 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY c.written;
 
+
+-- name: GetAllCommentsByUser :many
+SELECT c.*, th.forumtopic_idforumtopic
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread = th.idforumthread
+WHERE c.users_idusers = ?
+ORDER BY c.written;

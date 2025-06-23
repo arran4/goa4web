@@ -18,6 +18,7 @@ sql:
         - "queries-linker.sql"
         - "queries-imagebbs.sql"
         - "queries-news.sql"
+        - "queries-announcements.sql"
         - "queries-preferences.sql"
         - "queries-sessions.sql"
         - "queries-login_attempts.sql"

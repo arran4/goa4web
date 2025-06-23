@@ -1,48 +1,37 @@
 package main
 
 import (
+	"os"
 	"testing"
+
+	"github.com/arran4/goa4web/config"
 )
 
-func TestLoadHTTPConfigFile(t *testing.T) {
-	useMemFS(t)
-	file := "http.conf"
-	content := "LISTEN=1.2.3.4:80\nHOSTNAME=http://example.com\n"
-	if err := writeFile(file, []byte(content), 0644); err != nil {
-		t.Fatalf("write config: %v", err)
-	}
-	cfg, err := loadHTTPConfigFile(file)
-	if err != nil {
-		t.Fatalf("load: %v", err)
-	}
-	if cfg.Listen != "1.2.3.4:80" || cfg.Hostname != "http://example.com" {
-		t.Fatalf("unexpected cfg: %#v", cfg)
-	}
-}
+func TestHTTPConfigPrecedence(t *testing.T) {
+	os.Setenv(config.EnvListen, ":1")
+	os.Setenv(config.EnvHostname, "http://env")
+	defer os.Unsetenv(config.EnvListen)
+	defer os.Unsetenv(config.EnvHostname)
 
-func TestResolveHTTPConfigPrecedence(t *testing.T) {
-	env := HTTPConfig{Listen: ":1", Hostname: "http://env"}
-	file := HTTPConfig{Listen: ":2", Hostname: "http://file"}
-	cli := HTTPConfig{Listen: ":3", Hostname: "http://cli"}
+	cliRuntimeConfig = RuntimeConfig{HTTPListen: ":3", HTTPHostname: "http://cli"}
+	vals := map[string]string{
+		config.EnvListen:   ":2",
+		config.EnvHostname: "http://file",
+	}
+	cfg := loadRuntimeConfig(vals)
 
-	cfg := resolveHTTPConfig(cli, file, env)
-
-	if cfg.Listen != ":3" || cfg.Hostname != "http://cli" {
+	if cfg.HTTPListen != ":3" || cfg.HTTPHostname != "http://cli" {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
 
-func TestLoadHTTPConfigEnvPath(t *testing.T) {
-	useMemFS(t)
-	file := "http.conf"
-	if err := writeFile(file, []byte("LISTEN=:9\n"), 0644); err != nil {
-		t.Fatalf("write config: %v", err)
+func TestLoadHTTPConfigFromFileValues(t *testing.T) {
+	cliRuntimeConfig = RuntimeConfig{}
+	vals := map[string]string{
+		config.EnvListen: ":9",
 	}
-	t.Setenv("HTTP_CONFIG_FILE", file)
-	httpConfigFile = ""
-	cliHTTPConfig = HTTPConfig{}
-	cfg := loadHTTPConfig()
-	if cfg.Listen != ":9" {
-		t.Fatalf("want :9 got %q", cfg.Listen)
+	cfg := loadRuntimeConfig(vals)
+	if cfg.HTTPListen != ":9" {
+		t.Fatalf("want :9 got %q", cfg.HTTPListen)
 	}
 }

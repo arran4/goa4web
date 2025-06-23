@@ -16,11 +16,8 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 		Back:     "/admin",
 	}
 
-	loadAppConfigFile(configFile)
-	srv.DBConfig = loadDBConfig()
-	srv.EmailConfig = loadEmailConfig()
-	loadPaginationConfig()
-	loadHTTPConfig()
+	cfgMap := loadAppConfigFile(configFile)
+	srv.Config = loadRuntimeConfig(cfgMap)
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 

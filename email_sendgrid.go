@@ -30,8 +30,8 @@ func (s sendGridProvider) Send(ctx context.Context, to, subject, body string) er
 	return nil
 }
 
-func sendGridProviderFromConfig(cfg EmailConfig) MailProvider {
-	key := cfg.SendGridKey
+func sendGridProviderFromConfig(cfg RuntimeConfig) MailProvider {
+	key := cfg.EmailSendGridKey
 	if key == "" {
 		log.Printf("Email disabled: SENDGRID_KEY not set")
 		return nil

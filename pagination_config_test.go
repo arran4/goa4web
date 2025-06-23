@@ -1,44 +1,40 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"testing"
 
-func TestLoadPaginationConfigFile(t *testing.T) {
-	useMemFS(t)
-	file := "pagination.conf"
-	content := "PAGE_SIZE_MIN=10\nPAGE_SIZE_MAX=40\nPAGE_SIZE_DEFAULT=20\n"
-	if err := writeFile(file, []byte(content), 0644); err != nil {
-		t.Fatalf("write config: %v", err)
-	}
-	cfg, err := loadPaginationConfigFile(file)
-	if err != nil {
-		t.Fatalf("load: %v", err)
-	}
-	if cfg.Min != 10 || cfg.Max != 40 || cfg.Default != 20 {
-		t.Fatalf("unexpected cfg: %#v", cfg)
-	}
-}
+	"github.com/arran4/goa4web/config"
+)
 
-func TestResolvePaginationConfigPrecedence(t *testing.T) {
-	env := PaginationConfig{Min: 5, Max: 30, Default: 25}
-	file := PaginationConfig{Min: 8, Max: 20, Default: 18}
-	cli := PaginationConfig{Min: 12, Default: 15}
-	cfg := resolvePaginationConfig(cli, file, env)
-	if cfg.Min != 12 || cfg.Max != 20 || cfg.Default != 15 {
+func TestPaginationConfigPrecedence(t *testing.T) {
+	os.Setenv(config.EnvPageSizeMin, "5")
+	os.Setenv(config.EnvPageSizeMax, "30")
+	os.Setenv(config.EnvPageSizeDefault, "25")
+	defer os.Unsetenv(config.EnvPageSizeMin)
+	defer os.Unsetenv(config.EnvPageSizeMax)
+	defer os.Unsetenv(config.EnvPageSizeDefault)
+
+	cliRuntimeConfig = RuntimeConfig{PageSizeMin: 12, PageSizeDefault: 15}
+	vals := map[string]string{
+		config.EnvPageSizeMin:     "8",
+		config.EnvPageSizeMax:     "20",
+		config.EnvPageSizeDefault: "18",
+	}
+	cfg := loadRuntimeConfig(vals)
+	if cfg.PageSizeMin != 12 || cfg.PageSizeMax != 20 || cfg.PageSizeDefault != 15 {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
 
-func TestLoadPaginationConfigEnvPath(t *testing.T) {
-	useMemFS(t)
-	file := "pagination.conf"
-	if err := writeFile(file, []byte("PAGE_SIZE_MIN=7\nPAGE_SIZE_DEFAULT=9\n"), 0644); err != nil {
-		t.Fatalf("write file: %v", err)
+func TestLoadPaginationConfigFromFileValues(t *testing.T) {
+	cliRuntimeConfig = RuntimeConfig{}
+	vals := map[string]string{
+		config.EnvPageSizeMin:     "7",
+		config.EnvPageSizeDefault: "9",
 	}
-	t.Setenv("PAGINATION_CONFIG_FILE", file)
-	paginationConfigFile = ""
-	cliPaginationConfig = PaginationConfig{}
-	cfg := loadPaginationConfig()
-	if cfg.Min != 7 || cfg.Default != 9 {
+	cfg := loadRuntimeConfig(vals)
+	if cfg.PageSizeMin != 7 || cfg.PageSizeDefault != 9 {
 		t.Fatalf("want 7/9 got %#v", cfg)
 	}
 }

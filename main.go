@@ -39,7 +39,6 @@ var (
 
 	configFileFlag = flag.String("config-file", "", "path to application configuration file")
 
-	emailCfgPath      = flag.String("email-config", "", "path to email configuration file")
 	emailProviderFlag = flag.String("email-provider", "", "email provider")
 	smtpHostFlag      = flag.String("smtp-host", "", "SMTP host")
 	smtpPortFlag      = flag.String("smtp-port", "", "SMTP port")
@@ -53,7 +52,6 @@ var (
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
 	sendGridKeyFlag   = flag.String("sendgrid-key", "", "SendGrid API key")
 
-	dbCfgPath          = flag.String("db-config", "", "path to database configuration file")
 	dbUserFlag         = flag.String("db-user", "", "database user")
 	dbPassFlag         = flag.String("db-pass", "", "database password")
 	dbHostFlag         = flag.String("db-host", "", "database host")
@@ -63,13 +61,11 @@ var (
 
 	listenFlag          = flag.String("listen", ":8080", "server listen address")
 	hostnameFlag        = flag.String("hostname", "", "server base URL")
-	httpCfgPath         = flag.String("http-config", "", "path to HTTP configuration file")
 	feedsEnabledFlag    = flag.String("feeds-enabled", "", "enable or disable feeds")
 	statsStartYearFlag  = flag.String("stats-start-year", "", "start year for usage stats")
 	pageSizeMinFlag     = flag.Int("page-size-min", 0, "minimum allowed page size")
 	pageSizeMaxFlag     = flag.Int("page-size-max", 0, "maximum allowed page size")
 	pageSizeDefaultFlag = flag.Int("page-size-default", 0, "default page size")
-	paginationCfgPath   = flag.String("pagination-config", "", "path to pagination configuration file")
 	listenFlagSet       bool
 	hostnameFlagSet     bool
 	feedsFlagSet        bool
@@ -137,68 +133,38 @@ func run() error {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	cliDBConfig = DBConfig{
-		User:         *dbUserFlag,
-		Pass:         *dbPassFlag,
-		Host:         *dbHostFlag,
-		Port:         *dbPortFlag,
-		Name:         *dbNameFlag,
-		LogVerbosity: *dbLogVerbosityFlag,
-	}
-	dbConfigFile = *dbCfgPath
-	if dbConfigFile == "" {
-		if v, ok := appCfg["DB_CONFIG_FILE"]; ok {
-			dbConfigFile = v
-		}
-	}
+	cliRuntimeConfig.DBUser = *dbUserFlag
+	cliRuntimeConfig.DBPass = *dbPassFlag
+	cliRuntimeConfig.DBHost = *dbHostFlag
+	cliRuntimeConfig.DBPort = *dbPortFlag
+	cliRuntimeConfig.DBName = *dbNameFlag
+	cliRuntimeConfig.DBLogVerbosity = *dbLogVerbosityFlag
 
-	cliEmailConfig = EmailConfig{
-		Provider:     *emailProviderFlag,
-		SMTPHost:     *smtpHostFlag,
-		SMTPPort:     *smtpPortFlag,
-		SMTPUser:     *smtpUserFlag,
-		SMTPPass:     *smtpPassFlag,
-		AWSRegion:    *awsRegionFlag,
-		JMAPEndpoint: *jmapEndpointFlag,
-		JMAPAccount:  *jmapAccountFlag,
-		JMAPIdentity: *jmapIdentityFlag,
-		JMAPUser:     *jmapUserFlag,
-		JMAPPass:     *jmapPassFlag,
-		SendGridKey:  *sendGridKeyFlag,
-	}
-	emailConfigFile = *emailCfgPath
-	if emailConfigFile == "" {
-		if v, ok := appCfg["EMAIL_CONFIG_FILE"]; ok {
-			emailConfigFile = v
-		}
-	}
+	cliRuntimeConfig.EmailProvider = *emailProviderFlag
+	cliRuntimeConfig.EmailSMTPHost = *smtpHostFlag
+	cliRuntimeConfig.EmailSMTPPort = *smtpPortFlag
+	cliRuntimeConfig.EmailSMTPUser = *smtpUserFlag
+	cliRuntimeConfig.EmailSMTPPass = *smtpPassFlag
+	cliRuntimeConfig.EmailAWSRegion = *awsRegionFlag
+	cliRuntimeConfig.EmailJMAPEndpoint = *jmapEndpointFlag
+	cliRuntimeConfig.EmailJMAPAccount = *jmapAccountFlag
+	cliRuntimeConfig.EmailJMAPIdentity = *jmapIdentityFlag
+	cliRuntimeConfig.EmailJMAPUser = *jmapUserFlag
+	cliRuntimeConfig.EmailJMAPPass = *jmapPassFlag
+	cliRuntimeConfig.EmailSendGridKey = *sendGridKeyFlag
 
 	if listenFlagSet {
-		cliHTTPConfig.Listen = *listenFlag
+		cliRuntimeConfig.HTTPListen = *listenFlag
 	}
 	if hostnameFlagSet {
-		cliHTTPConfig.Hostname = *hostnameFlag
-	}
-	httpConfigFile = *httpCfgPath
-	if httpConfigFile == "" {
-		if v, ok := appCfg["HTTP_CONFIG_FILE"]; ok {
-			httpConfigFile = v
-		}
+		cliRuntimeConfig.HTTPHostname = *hostnameFlag
 	}
 
-	cliPaginationConfig = PaginationConfig{
-		Min:     *pageSizeMinFlag,
-		Max:     *pageSizeMaxFlag,
-		Default: *pageSizeDefaultFlag,
-	}
-	paginationConfigFile = *paginationCfgPath
-	if paginationConfigFile == "" {
-		if v, ok := appCfg["PAGINATION_CONFIG_FILE"]; ok {
-			paginationConfigFile = v
-		}
-	}
+	cliRuntimeConfig.PageSizeMin = *pageSizeMinFlag
+	cliRuntimeConfig.PageSizeMax = *pageSizeMaxFlag
+	cliRuntimeConfig.PageSizeDefault = *pageSizeDefaultFlag
 
-	httpCfg := loadHTTPConfig()
+	cfg := loadRuntimeConfig(appCfg)
 
 	var handler http.Handler
 
@@ -209,10 +175,7 @@ func run() error {
 	loadFeedsEnabled(cliFeeds, appCfg)
 	loadStatsStartYear(*statsStartYearFlag, appCfg)
 
-	dbCfg := loadDBConfig()
-	emailCfg := loadEmailConfig()
-
-	if err := performStartupChecks(dbCfg); err != nil {
+	if err := performStartupChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
@@ -398,28 +361,6 @@ func run() error {
 	ar.Use(AdminCheckerMiddleware)
 	ar.HandleFunc("", adminPage).Methods("GET")
 	ar.HandleFunc("/", adminPage).Methods("GET")
-	ar.HandleFunc("/forum", adminForumPage).Methods("GET")
-	ar.HandleFunc("/forum", adminForumRemakeForumThreadPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumthread))
-	ar.HandleFunc("/forum", adminForumRemakeForumTopicPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumtopic))
-	ar.HandleFunc("/forum/flagged", adminForumFlaggedPostsPage).Methods("GET")
-	ar.HandleFunc("/forum/logs", adminForumModeratorLogsPage).Methods("GET")
-	ar.HandleFunc("/forum/list", adminForumWordListPage).Methods("GET")
-	ar.HandleFunc("/forum/flagged", adminForumFlaggedPostsPage).Methods("GET")
-	ar.HandleFunc("/forum/modlog", adminForumModeratorLogsPage).Methods("GET")
-	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
-	ar.HandleFunc("/users/disable", adminUserDisablePage).Methods("POST")
-	ar.HandleFunc("/users/reset", adminUserResetPasswordPage).Methods("POST")
-	ar.HandleFunc("/users/edit", adminUserEditFormPage).Methods("GET")
-	ar.HandleFunc("/users/edit", adminUserEditSavePage).Methods("POST")
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsUpdatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdatePermission))
-	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
-	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
-	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameLanguage))
-	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteLanguage))
-	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateLanguage))
 	ar.HandleFunc("/categories", adminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
 	ar.HandleFunc("/permissions/sections/view", adminPermissionsSectionViewPage).Methods("GET")
@@ -473,18 +414,14 @@ func run() error {
 	ar.HandleFunc("/faq/questions", faqQuestionsEditActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskEdit))
 	ar.HandleFunc("/faq/questions", faqQuestionsDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveRemove))
 	ar.HandleFunc("/faq/questions", faqQuestionsCreateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreate))
-	ar.HandleFunc("/blogs/user/permissions", getPermissionsByUserIdAndSectionBlogsPage).Methods("GET")
-	ar.HandleFunc("/blogs/users/permissions", blogsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
-	ar.HandleFunc("/blogs/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
-	ar.HandleFunc("/blogs/users/permissions", blogsUsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUsersAllow))
-	ar.HandleFunc("/blogs/users/permissions", blogsUsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUsersDisallow))
-	ar.HandleFunc("/imagebbs", imagebbsAdminPage).Methods("GET")
-	ar.HandleFunc("/imagebbs/boards", imagebbsAdminBoardsPage).Methods("GET")
-	ar.HandleFunc("/imagebbs/boards", taskDoneAutoRefreshPage).Methods("POST")
-	ar.HandleFunc("/imagebbs/board", imagebbsAdminNewBoardPage).Methods("GET")
-	ar.HandleFunc("/imagebbs/board", imagebbsAdminNewBoardMakePage).Methods("POST").MatcherFunc(TaskMatcher(TaskNewBoard))
-	ar.HandleFunc("/imagebbs/board", taskDoneAutoRefreshPage).Methods("POST")
-	ar.HandleFunc("/imagebbs/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskModifyBoard))
+	ar.HandleFunc("/forum", adminForumPage).Methods("GET")
+	ar.HandleFunc("/forum", adminForumRemakeForumThreadPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumthread))
+	ar.HandleFunc("/forum", adminForumRemakeForumTopicPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumtopic))
+	ar.HandleFunc("/forum/flagged", adminForumFlaggedPostsPage).Methods("GET")
+	ar.HandleFunc("/forum/logs", adminForumModeratorLogsPage).Methods("GET")
+	ar.HandleFunc("/forum/list", adminForumWordListPage).Methods("GET")
+	ar.HandleFunc("/forum/flagged", adminForumFlaggedPostsPage).Methods("GET")
+	ar.HandleFunc("/forum/modlog", adminForumModeratorLogsPage).Methods("GET")
 	ar.HandleFunc("/forum/categories", forumAdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/forum/categories", taskDoneAutoRefreshPage).Methods("POST")
 	ar.HandleFunc("/forum/category/{category}", forumAdminCategoryEditPage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumCategoryChange))
@@ -516,6 +453,61 @@ func run() error {
 	ar.HandleFunc("/forum/restrictions/topics", forumAdminTopicsRestrictionLevelDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteTopicRestriction))
 	ar.HandleFunc("/forum/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskSetTopicRestriction))
 	ar.HandleFunc("/forum/restrictions/topics", forumAdminTopicsRestrictionLevelCopyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCopyTopicRestriction))
+	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
+	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
+	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameLanguage))
+	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteLanguage))
+	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateLanguage))
+	ar.HandleFunc("/linker/categories", linkerAdminCategoriesPage).Methods("GET")
+	ar.HandleFunc("/linker/categories", linkerAdminCategoriesUpdatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
+	ar.HandleFunc("/linker/categories", linkerAdminCategoriesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameCategory))
+	ar.HandleFunc("/linker/categories", linkerAdminCategoriesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
+	ar.HandleFunc("/linker/categories", linkerAdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateCategory))
+	ar.HandleFunc("/linker/add", linkerAdminAddPage).Methods("GET")
+	ar.HandleFunc("/linker/add", linkerAdminAddActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAdd))
+	ar.HandleFunc("/linker/queue", linkerAdminQueuePage).Methods("GET")
+	ar.HandleFunc("/linker/queue", linkerAdminQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
+	ar.HandleFunc("/linker/queue", linkerAdminQueueApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskApprove))
+	ar.HandleFunc("/linker/queue", linkerAdminQueueUpdateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
+	ar.HandleFunc("/linker/queue", linkerAdminQueueBulkApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkApprove))
+	ar.HandleFunc("/linker/queue", linkerAdminQueueBulkDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkDelete))
+	ar.HandleFunc("/linker/users/levels", linkerAdminUserLevelsPage).Methods("GET")
+	ar.HandleFunc("/linker/users/levels", linkerAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
+	ar.HandleFunc("/linker/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
+	ar.HandleFunc("/news/users/levels", newsAdminUserLevelsPage).Methods("GET")
+	ar.HandleFunc("/news/users/levels", newsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAllow))
+	ar.HandleFunc("/news/users/levels", newsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveLower))
+	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections/view", adminPermissionsSectionViewPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameSection))
+	ar.HandleFunc("/email/queue", adminEmailQueuePage).Methods("GET")
+	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskResend))
+	ar.HandleFunc("/email/queue", adminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
+	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
+	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeCommentsSearch))
+	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeNewsSearch))
+	ar.HandleFunc("/search", adminSearchRemakeBlogSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeBlogSearch))
+	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeLinkerSearch))
+	ar.HandleFunc("/search", adminSearchRemakeWritingSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeWritingSearch))
+	ar.HandleFunc("/search", adminSearchRemakeImageSearchPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeImageSearch))
+	ar.HandleFunc("/search/list", adminSearchWordListPage).Methods("GET")
+	ar.HandleFunc("/search/list.txt", adminSearchWordListDownloadPage).Methods("GET")
+	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
+	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
+	ar.HandleFunc("/usage", adminUsageStatsPage).Methods("GET")
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsUpdatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdatePermission))
+	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
+	ar.HandleFunc("/users/disable", adminUserDisablePage).Methods("POST")
+	ar.HandleFunc("/users/reset", adminUserResetPasswordPage).Methods("POST")
+	ar.HandleFunc("/users/edit", adminUserEditFormPage).Methods("GET")
+	ar.HandleFunc("/users/edit", adminUserEditSavePage).Methods("POST")
+	ar.HandleFunc("/sessions", adminSessionsPage).Methods("GET")
+	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
+	ar.HandleFunc("/login/attempts", adminLoginAttemptsPage).Methods("GET")
 	ar.HandleFunc("/writings/user/permissions", writingsUserPermissionsPage).Methods("GET")
 	ar.HandleFunc("/writings/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
 	ar.HandleFunc("/writings/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
@@ -532,28 +524,24 @@ func run() error {
 	ar.HandleFunc("/writings/categories", writingsAdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/writings/categories", writingsAdminCategoriesModifyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskWritingCategoryChange))
 	ar.HandleFunc("/writings/categories", writingsAdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskWritingCategoryCreate))
-	ar.HandleFunc("/news/users/levels", newsAdminUserLevelsPage).Methods("GET")
-	ar.HandleFunc("/news/users/levels", newsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAllow))
-	ar.HandleFunc("/news/users/levels", newsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveLower))
 	ar.HandleFunc("/reload", adminReloadConfigPage).Methods("POST")
 	ar.HandleFunc("/shutdown", adminShutdownPage).Methods("POST")
+	// Admin endpoints for blogs and image boards.
 
-	/* TODO (agent) reintegrate these admin pages
-	  	br.HandleFunc("/user/permissions", getPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-		br.HandleFunc("/users/permissions", blogsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
-		br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
-		br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersAllow))
-		br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersDisallow))
-		ibr.HandleFunc("/admin", imagebbsAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-		ibr.HandleFunc("/admin/boards", imagebbsAdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-		ibr.HandleFunc("/admin/boards", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
-		ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-		ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskNewBoard))
-		ibr.HandleFunc("/admin/board", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
-		ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
-	*/
+	br.HandleFunc("/user/permissions", getPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersAllow))
+	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersDisallow))
+	ibr.HandleFunc("/admin", imagebbsAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/boards", imagebbsAdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/boards", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskNewBoard))
+	ibr.HandleFunc("/admin/board", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
 
-	// oauth shit
+  // oauth shit
 	//r.HandleFunc("/login", loginPage)
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
@@ -566,14 +554,13 @@ func run() error {
 		SecurityHeadersMiddleware,
 	).Wrap(r)
 	if csrfEnabled() {
-		handler = newCSRFMiddleware(sessionSecret, httpCfg, version).Wrap(handler)
+		handler = newCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version).Wrap(handler)
 	}
 
-	srv = newServer(handler, store, dbPool, dbCfg, emailCfg)
-	loadPaginationConfig()
+	srv = newServer(handler, store, dbPool, cfg)
 
 	log.Printf("Getting email parser")
-	provider := providerFromConfig(emailCfg)
+	provider := providerFromConfig(cfg)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -581,7 +568,7 @@ func run() error {
 	startWorkers(ctx, dbPool, provider)
 
 	log.Printf("Starting web server")
-	if err := runServer(ctx, srv, httpCfg.Listen); err != nil {
+	if err := runServer(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
 	}
 

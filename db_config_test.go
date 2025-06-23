@@ -1,48 +1,36 @@
 package main
 
 import (
+	"os"
 	"testing"
+
+	"github.com/arran4/goa4web/config"
 )
 
-func TestLoadDBConfigFile(t *testing.T) {
-	useMemFS(t)
-	file := "db.conf"
-	content := "DB_USER=u\nDB_PASS=p\nDB_HOST=h\nDB_PORT=3307\nDB_NAME=n\n"
-	if err := writeFile(file, []byte(content), 0644); err != nil {
-		t.Fatalf("write config: %v", err)
-	}
-	cfg, err := loadDBConfigFile(file)
-	if err != nil {
-		t.Fatalf("load: %v", err)
-	}
-	if cfg.User != "u" || cfg.Pass != "p" || cfg.Host != "h" || cfg.Port != "3307" || cfg.Name != "n" {
-		t.Fatalf("unexpected cfg: %#v", cfg)
-	}
-}
+func TestDBConfigPrecedence(t *testing.T) {
+	os.Setenv(config.EnvDBUser, "env")
+	os.Setenv(config.EnvDBHost, "env")
+	defer os.Unsetenv(config.EnvDBUser)
+	defer os.Unsetenv(config.EnvDBHost)
 
-func TestResolveDBConfigPrecedence(t *testing.T) {
-	env := DBConfig{User: "env", Host: "env"}
-	file := DBConfig{User: "file", Port: "1"}
-	cli := DBConfig{Pass: "cli"}
-
-	cfg := resolveDBConfig(cli, file, env)
-
-	if cfg.User != "file" || cfg.Pass != "cli" || cfg.Host != "env" || cfg.Port != "1" {
+	cliRuntimeConfig = RuntimeConfig{DBPass: "cli"}
+	vals := map[string]string{
+		config.EnvDBUser: "file",
+		config.EnvDBPort: "1",
+	}
+	cfg := loadRuntimeConfig(vals)
+	if cfg.DBUser != "file" || cfg.DBPass != "cli" || cfg.DBHost != "env" || cfg.DBPort != "1" {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
 
-func TestLoadDBConfigEnvPath(t *testing.T) {
-	useMemFS(t)
-	file := "db.conf"
-	if err := writeFile(file, []byte("DB_USER=envfile\n"), 0644); err != nil {
-		t.Fatalf("write file: %v", err)
+func TestLoadDBConfigFromFileValues(t *testing.T) {
+	cliRuntimeConfig = RuntimeConfig{}
+	vals := map[string]string{
+		config.EnvDBUser: "fileval",
 	}
-	t.Setenv("DB_CONFIG_FILE", file)
-	dbConfigFile = ""
-	cliDBConfig = DBConfig{}
-	cfg := loadDBConfig()
-	if cfg.User != "envfile" {
-		t.Fatalf("want envfile got %q", cfg.User)
+	cfg := loadRuntimeConfig(vals)
+	if cfg.DBUser != "fileval" {
+		t.Fatalf("want fileval got %q", cfg.DBUser)
 	}
 }

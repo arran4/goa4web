@@ -14,11 +14,10 @@ import (
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
-	DBConfig    DBConfig
-	EmailConfig EmailConfig
-	Router      http.Handler
-	Store       *sessions.CookieStore
-	DB          *sql.DB
+	Config RuntimeConfig
+	Router http.Handler
+	Store  *sessions.CookieStore
+	DB     *sql.DB
 
 	addr       string
 	httpServer *http.Server
@@ -55,13 +54,12 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 // newServer returns a Server with the supplied dependencies.
-func newServer(handler http.Handler, store *sessions.CookieStore, db *sql.DB, dbCfg DBConfig, emailCfg EmailConfig) *Server {
+func newServer(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg RuntimeConfig) *Server {
 	return &Server{
-		DBConfig:    dbCfg,
-		EmailConfig: emailCfg,
-		Router:      handler,
-		Store:       store,
-		DB:          db,
+		Config: cfg,
+		Router: handler,
+		Store:  store,
+		DB:     db,
 	}
 }
 

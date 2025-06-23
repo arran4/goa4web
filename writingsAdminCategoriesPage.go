@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,7 +11,7 @@ import (
 func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Categories []*GetAllForumCategoriesWithSubcategoryCountRow
+		Categories []*Writingcategory
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
@@ -20,7 +19,7 @@ func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
+	categoryRows, err := queries.FetchAllCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -51,8 +50,11 @@ func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	vars := mux.Vars(r)
-	categoryId, _ := strconv.Atoi(vars["category"])
+	categoryId, err := strconv.Atoi(r.PostFormValue("cid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 
 	if err := queries.UpdateWritingCategory(r.Context(), UpdateWritingCategoryParams{
 		Title: sql.NullString{

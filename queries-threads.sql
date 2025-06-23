@@ -69,3 +69,10 @@ SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
 -- name: DeleteForumThread :exec
 DELETE FROM forumthread WHERE idforumthread = ?;
 
+
+-- name: GetThreadsStartedByUser :many
+SELECT th.*
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+WHERE c.users_idusers = ?
+ORDER BY th.lastaddition DESC;

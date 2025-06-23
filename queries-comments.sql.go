@@ -36,6 +36,55 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (i
 	return result.LastInsertId()
 }
 
+const getAllCommentsByUser = `-- name: GetAllCommentsByUser :many
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, th.forumtopic_idforumtopic
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_idforumthread = th.idforumthread
+WHERE c.users_idusers = ?
+ORDER BY c.written
+`
+
+type GetAllCommentsByUserRow struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	ForumtopicIdforumtopic   sql.NullInt32
+}
+
+func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) ([]*GetAllCommentsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllCommentsByUser, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllCommentsByUserRow
+	for rows.Next() {
+		var i GetAllCommentsByUserRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+			&i.ForumtopicIdforumtopic,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCommentById = `-- name: GetCommentById :one
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
 FROM comments c

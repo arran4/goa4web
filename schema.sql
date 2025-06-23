@@ -289,6 +289,7 @@ CREATE TABLE `users` (
   `idusers` int(10) NOT NULL AUTO_INCREMENT,
   `email` tinytext DEFAULT NULL,
   `passwd` tinytext DEFAULT NULL,
+  `passwd_algorithm` tinytext DEFAULT NULL,
   `username` tinytext DEFAULT NULL,
   PRIMARY KEY (`idusers`)
 );
@@ -412,5 +413,35 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
   `ip_address` varchar(45) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
+);
+
+-- IP addresses banned from accessing the site.
+CREATE TABLE IF NOT EXISTS `banned_ips` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `ip_net` varchar(50) NOT NULL,
+  `reason` text,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` datetime DEFAULT NULL,
+  `canceled_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `banned_ips_ip_idx` (`ip_net`)
+);
+
+-- Optional template overrides for dynamic content.
+CREATE TABLE IF NOT EXISTS `template_overrides` (
+  `name` varchar(128) NOT NULL,
+  `body` text NOT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`name`)
+);
+
+-- Audit log of administrative actions.
+CREATE TABLE IF NOT EXISTS `audit_log` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `action` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `audit_log_user_idx` (`users_idusers`)
 );
 

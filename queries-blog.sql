@@ -60,3 +60,11 @@ WHERE swl.word=?
 AND cs.blogs_idblogs IN (sqlc.slice('ids'))
 ;
 
+
+-- name: GetAllBlogEntriesByUser :many
+SELECT b.*, u.username, coalesce(th.comments, 0)
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE b.users_idusers = ?
+ORDER BY b.written DESC;

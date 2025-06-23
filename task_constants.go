@@ -251,4 +251,10 @@ const (
 
 	// TaskWritingCategoryCreate creates a new writing category.
 	TaskWritingCategoryCreate = "writing category create"
+
+	// TaskNotify sends a custom notification to users.
+	TaskNotify = "Notify"
+
+	// TaskPurge removes old records.
+	TaskPurge = "Purge"
 )

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -44,6 +45,10 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			log.Printf("No rows Error: %s", err)
+			_ = queries.InsertLoginAttempt(r.Context(), InsertLoginAttemptParams{
+				Username:  username,
+				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
+			})
 			http.Error(w, "No such user", http.StatusNotFound)
 			return
 		default:

@@ -17,7 +17,7 @@ func CustomNewsIndex(data *CoreData, r *http.Request) {
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
-			Link: "/news/user/permissions",
+			Link: "/admin/news/user/permissions",
 		})
 	}
 	userHasWriter := data.HasRole("writer")

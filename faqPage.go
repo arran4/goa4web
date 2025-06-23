@@ -75,15 +75,15 @@ func CustomFAQIndex(data *CoreData) {
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Question Qontrols",
-			Link: "/faq/admin/questions",
+			Link: "/admin/faq/questions",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Answer",
-			Link: "/faq/admin/answer",
+			Link: "/admin/faq/answer",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Category Controls",
-			Link: "/faq/admin/categories",
+			Link: "/admin/faq/categories",
 		})
 	}
 }

@@ -112,7 +112,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
-			Link: "/blogs/user/permissions",
+			Link: "/admin/blogs/user/permissions",
 		})
 	}
 	userHasWriter := data.HasRole("writer")

@@ -7,7 +7,7 @@
             {{ $id := .Idwritingcategory }}
             {{ if and $.IsAdmin (eq $.EditingCategoryId $id) }}
                 <tr>
-                    <th><a href="/writings/admin/categories?category={{ $id }}">{{ $title }}</a></th>
+                    <th><a href="/admin/writings/categories?category={{ $id }}">{{ $title }}</a></th>
                     <td>{{ $description }}</td>
                 </tr>
                 <tr>

@@ -37,10 +37,16 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	user, err := queries.Login(r.Context(), LoginParams{
-		Username: sql.NullString{String: username, Valid: true},
-		MD5:      password,
-	})
+	var (
+		uid    int32
+		email  sql.NullString
+		hashed sql.NullString
+		alg    sql.NullString
+	)
+	err := queries.db.QueryRowContext(r.Context(),
+		"SELECT idusers, email, passwd, IFNULL(passwd_algorithm,''), username FROM users WHERE username = ?",
+		username,
+	).Scan(&uid, &email, &hashed, &alg, new(string))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -52,11 +58,32 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "No such user", http.StatusNotFound)
 			return
 		default:
-			log.Printf("getCommentsByThreadIdForUser Error: %s", err)
+			log.Printf("query Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 	}
+
+	if !verifyPassword(password, hashed.String, alg.String) {
+		_ = queries.InsertLoginAttempt(r.Context(), InsertLoginAttemptParams{
+			Username:  username,
+			IpAddress: strings.Split(r.RemoteAddr, ":")[0],
+		})
+		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		return
+	}
+
+	if alg.String == "" || alg.String == "md5" {
+		newHash, newAlg, err := hashPassword(password)
+		if err == nil {
+			_, _ = queries.db.ExecContext(r.Context(),
+				"UPDATE users SET passwd=?, passwd_algorithm=? WHERE idusers=?",
+				newHash, newAlg, uid,
+			)
+		}
+	}
+
+	user := &User{Idusers: uid, Email: email}
 
 	session, ok := GetSessionOrFail(w, r)
 	if !ok {

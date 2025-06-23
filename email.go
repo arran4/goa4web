@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -20,11 +19,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"text/template"
-)
-
-var (
-	//go:embed "templates/updateEmail.txt"
-	updateEmailText string
 )
 
 const (
@@ -208,7 +202,7 @@ func notifyChange(ctx context.Context, provider MailProvider, email string, page
 	var notification bytes.Buffer
 
 	// Parse and execute the email template
-	tmpl, err := template.New("email").Parse(updateEmailText)
+	tmpl, err := template.New("email").Parse(getUpdateEmailText(ctx))
 	if err != nil {
 		return fmt.Errorf("parse email template: %w", err)
 	}

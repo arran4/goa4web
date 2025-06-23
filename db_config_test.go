@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"testing"
 
@@ -13,23 +14,25 @@ func TestDBConfigPrecedence(t *testing.T) {
 	defer os.Unsetenv(config.EnvDBUser)
 	defer os.Unsetenv(config.EnvDBHost)
 
-	cliRuntimeConfig = RuntimeConfig{DBPass: "cli"}
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs.String("db-pass", "cli", "")
 	vals := map[string]string{
 		config.EnvDBUser: "file",
 		config.EnvDBPort: "1",
 	}
-	cfg := loadRuntimeConfig(vals)
+	_ = fs.Parse([]string{"--db-pass=cli"})
+	cfg := generateRuntimeConfig(fs, vals)
 	if cfg.DBUser != "file" || cfg.DBPass != "cli" || cfg.DBHost != "env" || cfg.DBPort != "1" {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
 
 func TestLoadDBConfigFromFileValues(t *testing.T) {
-	cliRuntimeConfig = RuntimeConfig{}
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	vals := map[string]string{
 		config.EnvDBUser: "fileval",
 	}
-	cfg := loadRuntimeConfig(vals)
+	cfg := generateRuntimeConfig(fs, vals)
 	if cfg.DBUser != "fileval" {
 		t.Fatalf("want fileval got %q", cfg.DBUser)
 	}

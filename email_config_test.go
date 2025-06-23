@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"testing"
 
@@ -13,26 +14,26 @@ func TestEmailConfigPrecedence(t *testing.T) {
 	defer os.Unsetenv(config.EnvEmailProvider)
 	defer os.Unsetenv(config.EnvSMTPHost)
 
-	cliRuntimeConfig = RuntimeConfig{
-		EmailProvider: "smtp",
-		EmailSMTPPort: "25",
-	}
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs.String("email-provider", "smtp", "")
+	fs.String("smtp-port", "25", "")
 	vals := map[string]string{
 		config.EnvEmailProvider: "log",
 		config.EnvSMTPHost:      "file",
 	}
-	cfg := loadRuntimeConfig(vals)
+	_ = fs.Parse([]string{"--email-provider=smtp", "--smtp-port=25"})
+	cfg := generateRuntimeConfig(fs, vals)
 	if cfg.EmailProvider != "smtp" || cfg.EmailSMTPHost != "file" || cfg.EmailSMTPPort != "25" {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
 
 func TestLoadEmailConfigFromFileValues(t *testing.T) {
-	cliRuntimeConfig = RuntimeConfig{}
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	vals := map[string]string{
 		config.EnvEmailProvider: "log",
 	}
-	cfg := loadRuntimeConfig(vals)
+	cfg := generateRuntimeConfig(fs, vals)
 	if cfg.EmailProvider != "log" {
 		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}

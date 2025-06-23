@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"strconv"
 
@@ -41,111 +42,142 @@ type RuntimeConfig struct {
 	StatsStartYear int
 }
 
-var cliRuntimeConfig RuntimeConfig
 var appRuntimeConfig RuntimeConfig
-var cliFeedsEnabled string
-var cliStatsStartYear string
 
-// loadRuntimeConfig builds the runtime configuration from CLI flags, optional
-// config files and environment variables following the precedence rules from
-// AGENTS.md.
-func loadRuntimeConfig(fileVals map[string]string) RuntimeConfig {
-	env := RuntimeConfig{
-		DBUser:            os.Getenv(config.EnvDBUser),
-		DBPass:            os.Getenv(config.EnvDBPass),
-		DBHost:            os.Getenv(config.EnvDBHost),
-		DBPort:            os.Getenv(config.EnvDBPort),
-		DBName:            os.Getenv(config.EnvDBName),
-		HTTPListen:        os.Getenv(config.EnvListen),
-		HTTPHostname:      os.Getenv(config.EnvHostname),
-		EmailProvider:     os.Getenv(config.EnvEmailProvider),
-		EmailSMTPHost:     os.Getenv(config.EnvSMTPHost),
-		EmailSMTPPort:     os.Getenv(config.EnvSMTPPort),
-		EmailSMTPUser:     os.Getenv(config.EnvSMTPUser),
-		EmailSMTPPass:     os.Getenv(config.EnvSMTPPass),
-		EmailAWSRegion:    os.Getenv(config.EnvAWSRegion),
-		EmailJMAPEndpoint: os.Getenv(config.EnvJMAPEndpoint),
-		EmailJMAPAccount:  os.Getenv(config.EnvJMAPAccount),
-		EmailJMAPIdentity: os.Getenv(config.EnvJMAPIdentity),
-		EmailJMAPUser:     os.Getenv(config.EnvJMAPUser),
-		EmailJMAPPass:     os.Getenv(config.EnvJMAPPass),
-		EmailSendGridKey:  os.Getenv(config.EnvSendGridKey),
-	}
-	if v := os.Getenv(config.EnvDBLogVerbosity); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			env.DBLogVerbosity = n
-		}
-	}
-	if v := os.Getenv(config.EnvPageSizeMin); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			env.PageSizeMin = n
-		}
-	}
-	if v := os.Getenv(config.EnvPageSizeMax); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			env.PageSizeMax = n
-		}
-	}
-	if v := os.Getenv(config.EnvPageSizeDefault); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			env.PageSizeDefault = n
-		}
-	}
+// newRuntimeFlagSet returns a FlagSet containing all runtime configuration
+// options. The returned FlagSet uses ContinueOnError to allow tests to supply
+// their own arguments without triggering os.Exit.
+func newRuntimeFlagSet(name string) *flag.FlagSet {
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 
-	fileCfg := RuntimeConfig{
-		DBUser:            fileVals[config.EnvDBUser],
-		DBPass:            fileVals[config.EnvDBPass],
-		DBHost:            fileVals[config.EnvDBHost],
-		DBPort:            fileVals[config.EnvDBPort],
-		DBName:            fileVals[config.EnvDBName],
-		HTTPListen:        fileVals[config.EnvListen],
-		HTTPHostname:      fileVals[config.EnvHostname],
-		EmailProvider:     fileVals[config.EnvEmailProvider],
-		EmailSMTPHost:     fileVals[config.EnvSMTPHost],
-		EmailSMTPPort:     fileVals[config.EnvSMTPPort],
-		EmailSMTPUser:     fileVals[config.EnvSMTPUser],
-		EmailSMTPPass:     fileVals[config.EnvSMTPPass],
-		EmailAWSRegion:    fileVals[config.EnvAWSRegion],
-		EmailJMAPEndpoint: fileVals[config.EnvJMAPEndpoint],
-		EmailJMAPAccount:  fileVals[config.EnvJMAPAccount],
-		EmailJMAPIdentity: fileVals[config.EnvJMAPIdentity],
-		EmailJMAPUser:     fileVals[config.EnvJMAPUser],
-		EmailJMAPPass:     fileVals[config.EnvJMAPPass],
-		EmailSendGridKey:  fileVals[config.EnvSendGridKey],
-	}
-	if v := fileVals[config.EnvDBLogVerbosity]; v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			fileCfg.DBLogVerbosity = n
-		}
-	}
-	if v := fileVals[config.EnvPageSizeMin]; v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			fileCfg.PageSizeMin = n
-		}
-	}
-	if v := fileVals[config.EnvPageSizeMax]; v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			fileCfg.PageSizeMax = n
-		}
-	}
-	if v := fileVals[config.EnvPageSizeDefault]; v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			fileCfg.PageSizeDefault = n
-		}
+	fs.String("db-user", "", "database user")
+	fs.String("db-pass", "", "database password")
+	fs.String("db-host", "", "database host")
+	fs.String("db-port", "", "database port")
+	fs.String("db-name", "", "database name")
+	fs.Int("db-log-verbosity", 0, "database logging verbosity")
+
+	fs.String("listen", ":8080", "server listen address")
+	fs.String("hostname", "", "server base URL")
+
+	fs.String("email-provider", "", "email provider")
+	fs.String("smtp-host", "", "SMTP host")
+	fs.String("smtp-port", "", "SMTP port")
+	fs.String("smtp-user", "", "SMTP user")
+	fs.String("smtp-pass", "", "SMTP pass")
+	fs.String("aws-region", "", "AWS region")
+	fs.String("jmap-endpoint", "", "JMAP endpoint")
+	fs.String("jmap-account", "", "JMAP account")
+	fs.String("jmap-identity", "", "JMAP identity")
+	fs.String("jmap-user", "", "JMAP user")
+	fs.String("jmap-pass", "", "JMAP pass")
+	fs.String("sendgrid-key", "", "SendGrid API key")
+
+	fs.Int("page-size-min", 0, "minimum allowed page size")
+	fs.Int("page-size-max", 0, "maximum allowed page size")
+	fs.Int("page-size-default", 0, "default page size")
+
+	fs.String("feeds-enabled", "", "enable or disable feeds")
+	fs.String("stats-start-year", "", "start year for usage stats")
+
+	return fs
+}
+
+// generateRuntimeConfig builds the runtime configuration from a FlagSet,
+// optional config file values and environment variables following the
+// precedence rules from AGENTS.md.
+func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) RuntimeConfig {
+	setFlags := map[string]bool{}
+	if fs != nil {
+		fs.Visit(func(f *flag.Flag) { setFlags[f.Name] = true })
 	}
 
 	cfg := RuntimeConfig{}
-	config.Merge(&cfg, env)
-	config.Merge(&cfg, fileCfg)
-	config.Merge(&cfg, cliRuntimeConfig)
+
+	strOpts := []struct {
+		name string
+		env  string
+		dst  *string
+	}{
+		{"db-user", config.EnvDBUser, &cfg.DBUser},
+		{"db-pass", config.EnvDBPass, &cfg.DBPass},
+		{"db-host", config.EnvDBHost, &cfg.DBHost},
+		{"db-port", config.EnvDBPort, &cfg.DBPort},
+		{"db-name", config.EnvDBName, &cfg.DBName},
+		{"listen", config.EnvListen, &cfg.HTTPListen},
+		{"hostname", config.EnvHostname, &cfg.HTTPHostname},
+		{"email-provider", config.EnvEmailProvider, &cfg.EmailProvider},
+		{"smtp-host", config.EnvSMTPHost, &cfg.EmailSMTPHost},
+		{"smtp-port", config.EnvSMTPPort, &cfg.EmailSMTPPort},
+		{"smtp-user", config.EnvSMTPUser, &cfg.EmailSMTPUser},
+		{"smtp-pass", config.EnvSMTPPass, &cfg.EmailSMTPPass},
+		{"aws-region", config.EnvAWSRegion, &cfg.EmailAWSRegion},
+		{"jmap-endpoint", config.EnvJMAPEndpoint, &cfg.EmailJMAPEndpoint},
+		{"jmap-account", config.EnvJMAPAccount, &cfg.EmailJMAPAccount},
+		{"jmap-identity", config.EnvJMAPIdentity, &cfg.EmailJMAPIdentity},
+		{"jmap-user", config.EnvJMAPUser, &cfg.EmailJMAPUser},
+		{"jmap-pass", config.EnvJMAPPass, &cfg.EmailJMAPPass},
+		{"sendgrid-key", config.EnvSendGridKey, &cfg.EmailSendGridKey},
+	}
+	for _, o := range strOpts {
+		if fs != nil && setFlags[o.name] {
+			if f := fs.Lookup(o.name); f != nil {
+				*o.dst = f.Value.String()
+				continue
+			}
+		}
+		if v := fileVals[o.env]; v != "" {
+			*o.dst = v
+			continue
+		}
+		if v := os.Getenv(o.env); v != "" {
+			*o.dst = v
+		}
+	}
+
+	intOpts := []struct {
+		name string
+		env  string
+		dst  *int
+	}{
+		{"db-log-verbosity", config.EnvDBLogVerbosity, &cfg.DBLogVerbosity},
+		{"page-size-min", config.EnvPageSizeMin, &cfg.PageSizeMin},
+		{"page-size-max", config.EnvPageSizeMax, &cfg.PageSizeMax},
+		{"page-size-default", config.EnvPageSizeDefault, &cfg.PageSizeDefault},
+	}
+	for _, o := range intOpts {
+		var val string
+		if fs != nil && setFlags[o.name] {
+			if f := fs.Lookup(o.name); f != nil {
+				val = f.Value.String()
+			}
+		} else if v := fileVals[o.env]; v != "" {
+			val = v
+		} else if v := os.Getenv(o.env); v != "" {
+			val = v
+		}
+		if val != "" {
+			if n, err := strconv.Atoi(val); err == nil {
+				*o.dst = n
+			}
+		}
+	}
+
+	var cliFeeds, cliStats string
+	if fs != nil && setFlags["feeds-enabled"] {
+		cliFeeds = fs.Lookup("feeds-enabled").Value.String()
+	}
+	if fs != nil && setFlags["stats-start-year"] {
+		cliStats = fs.Lookup("stats-start-year").Value.String()
+	}
 
 	cfg.FeedsEnabled = resolveFeedsEnabled(
-		cliFeedsEnabled,
+		cliFeeds,
 		fileVals[config.EnvFeedsEnabled],
 		os.Getenv(config.EnvFeedsEnabled),
 	)
 	cfg.StatsStartYear = resolveStatsStartYear(
-		cliStatsStartYear,
+		cliStats,
 		fileVals[config.EnvStatsStartYear],
 		os.Getenv(config.EnvStatsStartYear),
 	)

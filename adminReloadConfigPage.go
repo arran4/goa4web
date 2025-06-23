@@ -17,7 +17,7 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfgMap := loadAppConfigFile(configFile)
-	srv.Config = loadRuntimeConfig(cfgMap)
+	srv.Config = generateRuntimeConfig(nil, cfgMap)
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 

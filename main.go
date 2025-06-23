@@ -209,12 +209,6 @@ func run() error {
 
 	r := mux.NewRouter()
 
-	r.Use(DBAdderMiddleware)
-	r.Use(UserAdderMiddleware)
-	r.Use(CoreAdderMiddleware)
-	r.Use(RequestLoggerMiddleware)
-	r.Use(SecurityHeadersMiddleware)
-
 	// TODO consider adsense / adwords / etc
 
 	r.HandleFunc("/main.css", mainCSSHandler).Methods("GET")
@@ -249,6 +243,8 @@ func run() error {
 	faqr.HandleFunc("/admin/answer", faqAnswerAnswerActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAnswer))
 	faqr.HandleFunc("/admin/answer", faqAnswerRemoveActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskRemoveRemove))
 	faqr.HandleFunc("/admin/categories", faqAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	// also handle trailing slash for compatibility
+	faqr.HandleFunc("/admin/categories/", faqAdminCategoriesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	faqr.HandleFunc("/admin/categories", faqCategoriesRenameActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskRenameCategory))
 	faqr.HandleFunc("/admin/categories", faqCategoriesDeleteActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDeleteCategory))
 	faqr.HandleFunc("/admin/categories", faqCategoriesCreateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskCreateCategory))
@@ -515,7 +511,13 @@ func run() error {
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)
 
-	handler = r
+	handler = newMiddlewareChain(
+		DBAdderMiddleware,
+		UserAdderMiddleware,
+		CoreAdderMiddleware,
+		RequestLoggerMiddleware,
+		SecurityHeadersMiddleware,
+	).Wrap(r)
 	if csrfEnabled() {
 		handler = newCSRFMiddleware(sessionSecret, httpCfg, version).Wrap(handler)
 	}

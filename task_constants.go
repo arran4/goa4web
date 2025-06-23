@@ -14,8 +14,8 @@ const (
 	// TaskAddApproval adds an approval for a user or item.
 	TaskAddApproval = "Add approval"
 
-	// TaskAddOffsiteImage posts an image hosted elsewhere.
-	TaskAddOffsiteImage = "Add offsite image"
+	// TaskUploadImage uploads an image file to the image board.
+	TaskUploadImage = "Upload image"
 
 	// TaskAnswer submits an answer in the FAQ admin interface.
 	TaskAnswer = "Answer"

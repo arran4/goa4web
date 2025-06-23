@@ -106,6 +106,7 @@ type Imageboard struct {
 	ImageboardIdimageboard int32
 	Title                  sql.NullString
 	Description            sql.NullString
+	ApprovalRequired       bool
 }
 
 type Imagepost struct {
@@ -117,6 +118,8 @@ type Imagepost struct {
 	Description              sql.NullString
 	Thumbnail                sql.NullString
 	Fullimage                sql.NullString
+	FileSize                 int32
+	Approved                 bool
 }
 
 type Imagepostsearch struct {

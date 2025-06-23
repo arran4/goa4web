@@ -10,24 +10,48 @@ import (
 	"database/sql"
 )
 
+const approveImagePost = `-- name: ApproveImagePost :exec
+UPDATE imagepost SET approved = 1 WHERE idimagepost = ?
+`
+
+func (q *Queries) ApproveImagePost(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, approveImagePost, idimagepost)
+	return err
+}
+
 const createImageBoard = `-- name: CreateImageBoard :exec
-INSERT INTO imageboard (imageboard_idimageboard, title, description) VALUES (?, ?, ?)
+INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?)
 `
 
 type CreateImageBoardParams struct {
 	ImageboardIdimageboard int32
 	Title                  sql.NullString
 	Description            sql.NullString
+	ApprovalRequired       bool
 }
 
 func (q *Queries) CreateImageBoard(ctx context.Context, arg CreateImageBoardParams) error {
-	_, err := q.db.ExecContext(ctx, createImageBoard, arg.ImageboardIdimageboard, arg.Title, arg.Description)
+	_, err := q.db.ExecContext(ctx, createImageBoard,
+		arg.ImageboardIdimageboard,
+		arg.Title,
+		arg.Description,
+		arg.ApprovalRequired,
+	)
 	return err
 }
 
 const createImagePost = `-- name: CreateImagePost :execlastid
-INSERT INTO imagepost (imageboard_idimageboard, thumbnail, fullimage, users_idusers, description, posted)
-VALUES (?, ?, ?, ?, ?, NOW())
+INSERT INTO imagepost (
+    imageboard_idimageboard,
+    thumbnail,
+    fullimage,
+    users_idusers,
+    description,
+    posted,
+    approved,
+    file_size
+)
+VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)
 `
 
 type CreateImagePostParams struct {
@@ -36,6 +60,8 @@ type CreateImagePostParams struct {
 	Fullimage              sql.NullString
 	UsersIdusers           int32
 	Description            sql.NullString
+	Approved               bool
+	FileSize               int32
 }
 
 func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams) (int64, error) {
@@ -45,6 +71,8 @@ func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams
 		arg.Fullimage,
 		arg.UsersIdusers,
 		arg.Description,
+		arg.Approved,
+		arg.FileSize,
 	)
 	if err != nil {
 		return 0, err
@@ -53,7 +81,7 @@ func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams
 }
 
 const getAllBoardsByParentBoardId = `-- name: GetAllBoardsByParentBoardId :many
-SELECT idimageboard, imageboard_idimageboard, title, description
+SELECT idimageboard, imageboard_idimageboard, title, description, approval_required
 FROM imageboard
 WHERE imageboard_idimageboard = ?
 `
@@ -72,6 +100,7 @@ func (q *Queries) GetAllBoardsByParentBoardId(ctx context.Context, imageboardIdi
 			&i.ImageboardIdimageboard,
 			&i.Title,
 			&i.Description,
+			&i.ApprovalRequired,
 		); err != nil {
 			return nil, err
 		}
@@ -87,7 +116,7 @@ func (q *Queries) GetAllBoardsByParentBoardId(ctx context.Context, imageboardIdi
 }
 
 const getAllImageBoards = `-- name: GetAllImageBoards :many
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
 `
 
@@ -105,6 +134,7 @@ func (q *Queries) GetAllImageBoards(ctx context.Context) ([]*Imageboard, error) 
 			&i.ImageboardIdimageboard,
 			&i.Title,
 			&i.Description,
+			&i.ApprovalRequired,
 		); err != nil {
 			return nil, err
 		}
@@ -120,11 +150,11 @@ func (q *Queries) GetAllImageBoards(ctx context.Context) ([]*Imageboard, error) 
 }
 
 const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
-WHERE i.imageboard_idimageboard = ?
+WHERE i.imageboard_idimageboard = ? AND i.approved = 1
 `
 
 type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow struct {
@@ -136,6 +166,8 @@ type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow struct 
 	Description              sql.NullString
 	Thumbnail                sql.NullString
 	Fullimage                sql.NullString
+	FileSize                 int32
+	Approved                 bool
 	Username                 sql.NullString
 	Comments                 sql.NullInt32
 }
@@ -158,6 +190,8 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 			&i.Description,
 			&i.Thumbnail,
 			&i.Fullimage,
+			&i.FileSize,
+			&i.Approved,
 			&i.Username,
 			&i.Comments,
 		); err != nil {
@@ -175,11 +209,11 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 }
 
 const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
-WHERE i.idimagepost = ?
+WHERE i.idimagepost = ? AND i.approved = 1
 `
 
 type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow struct {
@@ -191,6 +225,8 @@ type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow struct {
 	Description              sql.NullString
 	Thumbnail                sql.NullString
 	Fullimage                sql.NullString
+	FileSize                 int32
+	Approved                 bool
 	Username                 sql.NullString
 	Comments                 sql.NullInt32
 }
@@ -207,18 +243,37 @@ func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ct
 		&i.Description,
 		&i.Thumbnail,
 		&i.Fullimage,
+		&i.FileSize,
+		&i.Approved,
 		&i.Username,
 		&i.Comments,
 	)
 	return &i, err
 }
 
+const getImageBoardById = `-- name: GetImageBoardById :one
+SELECT idimageboard, imageboard_idimageboard, title, description, approval_required FROM imageboard WHERE idimageboard = ?
+`
+
+func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error) {
+	row := q.db.QueryRowContext(ctx, getImageBoardById, idimageboard)
+	var i Imageboard
+	err := row.Scan(
+		&i.Idimageboard,
+		&i.ImageboardIdimageboard,
+		&i.Title,
+		&i.Description,
+		&i.ApprovalRequired,
+	)
+	return &i, err
+}
+
 const getImagePostsByUserDescending = `-- name: GetImagePostsByUserDescending :many
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
-WHERE i.users_idusers = ?
+WHERE i.users_idusers = ? AND i.approved = 1
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?
 `
@@ -238,6 +293,8 @@ type GetImagePostsByUserDescendingRow struct {
 	Description              sql.NullString
 	Thumbnail                sql.NullString
 	Fullimage                sql.NullString
+	FileSize                 int32
+	Approved                 bool
 	Username                 sql.NullString
 	Comments                 sql.NullInt32
 }
@@ -260,6 +317,8 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 			&i.Description,
 			&i.Thumbnail,
 			&i.Fullimage,
+			&i.FileSize,
+			&i.Approved,
 			&i.Username,
 			&i.Comments,
 		); err != nil {
@@ -277,13 +336,14 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 }
 
 const updateImageBoard = `-- name: UpdateImageBoard :exec
-UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?
+UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?
 `
 
 type UpdateImageBoardParams struct {
 	Title                  sql.NullString
 	Description            sql.NullString
 	ImageboardIdimageboard int32
+	ApprovalRequired       bool
 	Idimageboard           int32
 }
 
@@ -292,6 +352,7 @@ func (q *Queries) UpdateImageBoard(ctx context.Context, arg UpdateImageBoardPara
 		arg.Title,
 		arg.Description,
 		arg.ImageboardIdimageboard,
+		arg.ApprovalRequired,
 		arg.Idimageboard,
 	)
 	return err

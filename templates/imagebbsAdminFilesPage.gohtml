@@ -1,0 +1,14 @@
+{{ template "head" $ }}
+<h2>Uploaded Files - {{ .Path }}</h2>
+{{ if .Parent }}<a href="/imagebbs/admin/files?path={{ .Parent }}">Parent</a><br>{{ end }}
+<table border="1">
+<tr><th>Name<th>Size<th>Type</tr>
+{{ range .Entries }}
+<tr>
+<td>{{ if .IsDir }}<a href="/imagebbs/admin/files?path={{ .Path }}">{{ .Name }}/</a>{{ else }}{{ .Name }}{{ end }}</td>
+<td>{{ .Size }}</td>
+<td>{{ if .IsDir }}dir{{ else }}file{{ end }}</td>
+</tr>
+{{ end }}
+</table>
+{{ template "tail" $ }}

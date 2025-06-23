@@ -40,6 +40,9 @@ type RuntimeConfig struct {
 
 	FeedsEnabled   bool
 	StatsStartYear int
+
+	ImageUploadDir string
+	ImageMaxBytes  int
 }
 
 var appRuntimeConfig RuntimeConfig
@@ -79,6 +82,8 @@ func newRuntimeFlagSet(name string) *flag.FlagSet {
 
 	fs.String("feeds-enabled", "", "enable or disable feeds")
 	fs.String("stats-start-year", "", "start year for usage stats")
+	fs.String("image-upload-dir", "", "directory to store uploaded images")
+	fs.Int("image-max-bytes", 0, "maximum allowed upload size in bytes")
 
 	return fs
 }
@@ -118,6 +123,7 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) Runtime
 		{"jmap-user", config.EnvJMAPUser, &cfg.EmailJMAPUser},
 		{"jmap-pass", config.EnvJMAPPass, &cfg.EmailJMAPPass},
 		{"sendgrid-key", config.EnvSendGridKey, &cfg.EmailSendGridKey},
+		{"image-upload-dir", config.EnvImageUploadDir, &cfg.ImageUploadDir},
 	}
 	for _, o := range strOpts {
 		if fs != nil && setFlags[o.name] {
@@ -144,6 +150,7 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) Runtime
 		{"page-size-min", config.EnvPageSizeMin, &cfg.PageSizeMin},
 		{"page-size-max", config.EnvPageSizeMax, &cfg.PageSizeMax},
 		{"page-size-default", config.EnvPageSizeDefault, &cfg.PageSizeDefault},
+		{"image-max-bytes", config.EnvImageMaxBytes, &cfg.ImageMaxBytes},
 	}
 	for _, o := range intOpts {
 		var val string
@@ -215,6 +222,12 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.StatsStartYear == 0 {
 		cfg.StatsStartYear = 2005
+	}
+	if cfg.ImageUploadDir == "" {
+		cfg.ImageUploadDir = "uploads/images"
+	}
+	if cfg.ImageMaxBytes == 0 {
+		cfg.ImageMaxBytes = 5 * 1024 * 1024
 	}
 }
 

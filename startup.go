@@ -6,6 +6,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -69,6 +72,29 @@ func performStartupChecks(cfg RuntimeConfig) error {
 	if ue := checkDatabase(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
+	if ue := checkUploadDir(cfg); ue != nil {
+		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+	}
+	return nil
+}
+
+func checkUploadDir(cfg RuntimeConfig) *UserError {
+	if cfg.ImageUploadDir == "" {
+		return &UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
+	}
+	if strings.HasPrefix(cfg.ImageUploadDir, "s3://") {
+		// TODO: validate S3 upload targets
+		return nil
+	}
+	info, err := os.Stat(cfg.ImageUploadDir)
+	if err != nil || !info.IsDir() {
+		return &UserError{Err: err, ErrorMessage: "image upload directory invalid"}
+	}
+	test := filepath.Join(cfg.ImageUploadDir, ".check")
+	if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
+		return &UserError{Err: err, ErrorMessage: "image upload directory not writable"}
+	}
+	os.Remove(test)
 	return nil
 }
 

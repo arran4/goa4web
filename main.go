@@ -24,60 +24,15 @@ import (
 var configFile string
 
 var (
-	//	// Replace these with your Google OAuth2 credentials
-	//	clientID     = ""
-	//	clientSecret = ""
-	//	redirectURL  = "http://localhost:8080/callback"
+	//      // Replace these with your Google OAuth2 credentials
+	//      clientID     = ""
+	//      clientSecret = ""
+	//      redirectURL  = "http://localhost:8080/callback"
 	//
-	//	// Change this to your desired session key
-	sessionName           = "my-session"
-	sessionSecretFlag     = flag.String("session-secret", "", "session secret key")
-	sessionSecretFileFlag = flag.String("session-secret-file", "", "path to session secret file")
-	//sessionKey  = "authenticated"
-	store *sessions.CookieStore
-
-	configFileFlag = flag.String("config-file", "", "path to application configuration file")
-
-	emailProviderFlag = flag.String("email-provider", "", "email provider")
-	smtpHostFlag      = flag.String("smtp-host", "", "SMTP host")
-	smtpPortFlag      = flag.String("smtp-port", "", "SMTP port")
-	smtpUserFlag      = flag.String("smtp-user", "", "SMTP user")
-	smtpPassFlag      = flag.String("smtp-pass", "", "SMTP pass")
-	awsRegionFlag     = flag.String("aws-region", "", "AWS region")
-	jmapEndpointFlag  = flag.String("jmap-endpoint", "", "JMAP endpoint")
-	jmapAccountFlag   = flag.String("jmap-account", "", "JMAP account")
-	jmapIdentityFlag  = flag.String("jmap-identity", "", "JMAP identity")
-	jmapUserFlag      = flag.String("jmap-user", "", "JMAP user")
-	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
-	sendGridKeyFlag   = flag.String("sendgrid-key", "", "SendGrid API key")
-
-	dbUserFlag         = flag.String("db-user", "", "database user")
-	dbPassFlag         = flag.String("db-pass", "", "database password")
-	dbHostFlag         = flag.String("db-host", "", "database host")
-	dbPortFlag         = flag.String("db-port", "", "database port")
-	dbNameFlag         = flag.String("db-name", "", "database name")
-	dbLogVerbosityFlag = flag.Int("db-log-verbosity", 0, "database logging verbosity")
-
-	listenFlag          = flag.String("listen", ":8080", "server listen address")
-	hostnameFlag        = flag.String("hostname", "", "server base URL")
-	feedsEnabledFlag    = flag.String("feeds-enabled", "", "enable or disable feeds")
-	statsStartYearFlag  = flag.String("stats-start-year", "", "start year for usage stats")
-	pageSizeMinFlag     = flag.Int("page-size-min", 0, "minimum allowed page size")
-	pageSizeMaxFlag     = flag.Int("page-size-max", 0, "maximum allowed page size")
-	pageSizeDefaultFlag = flag.Int("page-size-default", 0, "default page size")
-	listenFlagSet       bool
-	hostnameFlagSet     bool
-	feedsFlagSet        bool
-
-	srv *Server
-	//
-	//	oauth2Config = oauth2.Config{
-	//		ClientID:     clientID,
-	//		ClientSecret: clientSecret,
-	//		RedirectURL:  redirectURL,
-	//		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-	//		Endpoint:     endpoints.Google,
-	//	}
+	//      // Change this to your desired session key
+	sessionName = "my-session"
+	store       *sessions.CookieStore
+	srv         *Server
 
 	version = "dev"
 )
@@ -95,36 +50,34 @@ func run() error {
 		cfgPath = os.Getenv(config.EnvConfigFile)
 	}
 	appCfg := loadAppConfigFile(cfgPath)
+	fs := newRuntimeFlagSet(os.Args[0])
+	var (
+		sessionSecret     string
+		sessionSecretFile string
+		configFileFlag    string
+	)
+	fs.StringVar(&sessionSecret, "session-secret", "", "session secret key")
+	fs.StringVar(&sessionSecretFile, "session-secret-file", "", "path to session secret file")
+	fs.StringVar(&configFileFlag, "config-file", "", "path to application configuration file")
 
-	flag.Parse()
+	_ = fs.Parse(os.Args[1:])
 
-	configFile = *configFileFlag
+	configFile = configFileFlag
 	if configFile == "" {
 		configFile = cfgPath
 	}
 
-	flag.CommandLine.Visit(func(f *flag.Flag) {
-		switch f.Name {
-		case "listen":
-			listenFlagSet = true
-		case "hostname":
-			hostnameFlagSet = true
-		case "feeds-enabled":
-			feedsFlagSet = true
-		}
-	})
-
-	sessionSecretPath := *sessionSecretFileFlag
+	sessionSecretPath := sessionSecretFile
 	if sessionSecretPath == "" {
 		if v, ok := appCfg["SESSION_SECRET_FILE"]; ok {
 			sessionSecretPath = v
 		}
 	}
-	sessionSecret, err := loadSessionSecret(*sessionSecretFlag, sessionSecretPath)
+	sessionSecretValue, err := loadSessionSecret(sessionSecret, sessionSecretPath)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
-	store = sessions.NewCookieStore([]byte(sessionSecret))
+	store = sessions.NewCookieStore([]byte(sessionSecretValue))
 	store.Options = &sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
@@ -132,43 +85,7 @@ func run() error {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	cliRuntimeConfig.DBUser = *dbUserFlag
-	cliRuntimeConfig.DBPass = *dbPassFlag
-	cliRuntimeConfig.DBHost = *dbHostFlag
-	cliRuntimeConfig.DBPort = *dbPortFlag
-	cliRuntimeConfig.DBName = *dbNameFlag
-	cliRuntimeConfig.DBLogVerbosity = *dbLogVerbosityFlag
-
-	cliRuntimeConfig.EmailProvider = *emailProviderFlag
-	cliRuntimeConfig.EmailSMTPHost = *smtpHostFlag
-	cliRuntimeConfig.EmailSMTPPort = *smtpPortFlag
-	cliRuntimeConfig.EmailSMTPUser = *smtpUserFlag
-	cliRuntimeConfig.EmailSMTPPass = *smtpPassFlag
-	cliRuntimeConfig.EmailAWSRegion = *awsRegionFlag
-	cliRuntimeConfig.EmailJMAPEndpoint = *jmapEndpointFlag
-	cliRuntimeConfig.EmailJMAPAccount = *jmapAccountFlag
-	cliRuntimeConfig.EmailJMAPIdentity = *jmapIdentityFlag
-	cliRuntimeConfig.EmailJMAPUser = *jmapUserFlag
-	cliRuntimeConfig.EmailJMAPPass = *jmapPassFlag
-	cliRuntimeConfig.EmailSendGridKey = *sendGridKeyFlag
-
-	if listenFlagSet {
-		cliRuntimeConfig.HTTPListen = *listenFlag
-	}
-	if hostnameFlagSet {
-		cliRuntimeConfig.HTTPHostname = *hostnameFlag
-	}
-
-	cliRuntimeConfig.PageSizeMin = *pageSizeMinFlag
-	cliRuntimeConfig.PageSizeMax = *pageSizeMaxFlag
-	cliRuntimeConfig.PageSizeDefault = *pageSizeDefaultFlag
-
-	if feedsFlagSet {
-		cliFeedsEnabled = *feedsEnabledFlag
-	}
-	cliStatsStartYear = *statsStartYearFlag
-
-	cfg := loadRuntimeConfig(appCfg)
+	cfg := generateRuntimeConfig(fs, appCfg)
 
 	var handler http.Handler
 

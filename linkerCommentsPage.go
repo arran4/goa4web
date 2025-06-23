@@ -38,13 +38,14 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
-		CoreData: cd,
-		CanReply: cd.UserID != 0,
-		CanEdit:  false,
-		Offset:   offset,
+		CoreData:           cd,
+		CanReply:           cd.UserID != 0,
+		CanEdit:            false,
+		Offset:             offset,
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 	}
-
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
 	session, ok := GetSessionOrFail(w, r)
@@ -54,7 +55,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries = r.Context().Value(ContextValues("queries")).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

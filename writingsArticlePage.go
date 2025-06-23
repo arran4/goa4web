@@ -42,10 +42,12 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
-		CoreData: cd,
-		CanReply: cd.UserID != 0,
-		CanEdit:  false,
+		CoreData:           cd,
+		CanReply:           cd.UserID != 0,
+		CanEdit:            false,
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 	}
 
 	vars := mux.Vars(r)
@@ -57,7 +59,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries = r.Context().Value(ContextValues("queries")).(*Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,

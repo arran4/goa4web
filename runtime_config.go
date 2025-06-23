@@ -38,8 +38,9 @@ type RuntimeConfig struct {
 	PageSizeMax     int
 	PageSizeDefault int
 
-	FeedsEnabled   bool
-	StatsStartYear int
+	FeedsEnabled    bool
+	StatsStartYear  int
+	DefaultLanguage string
 
 	ImageUploadDir string
 	ImageMaxBytes  int
@@ -82,6 +83,7 @@ func newRuntimeFlagSet(name string) *flag.FlagSet {
 
 	fs.String("feeds-enabled", "", "enable or disable feeds")
 	fs.String("stats-start-year", "", "start year for usage stats")
+	fs.String("default-language", "", "default language name")
 	fs.String("image-upload-dir", "", "directory to store uploaded images")
 	fs.Int("image-max-bytes", 0, "maximum allowed upload size in bytes")
 
@@ -123,6 +125,7 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) Runtime
 		{"jmap-user", config.EnvJMAPUser, &cfg.EmailJMAPUser},
 		{"jmap-pass", config.EnvJMAPPass, &cfg.EmailJMAPPass},
 		{"sendgrid-key", config.EnvSendGridKey, &cfg.EmailSendGridKey},
+		{"default-language", config.EnvDefaultLanguage, &cfg.DefaultLanguage},
 		{"image-upload-dir", config.EnvImageUploadDir, &cfg.ImageUploadDir},
 	}
 	for _, o := range strOpts {

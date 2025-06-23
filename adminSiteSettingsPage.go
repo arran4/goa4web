@@ -3,27 +3,51 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/arran4/goa4web/config"
 )
 
 func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
 		appRuntimeConfig.FeedsEnabled = r.PostFormValue("feeds_enabled") != ""
+		langID, _ := strconv.Atoi(r.PostFormValue("default_language"))
+		langs, _ := queries.FetchLanguages(r.Context())
+		name := ""
+		for _, l := range langs {
+			if int(l.Idlanguage) == langID {
+				name = l.Nameof.String
+				break
+			}
+		}
+		appRuntimeConfig.DefaultLanguage = name
+		if err := updateConfigKey(configFile, config.EnvDefaultLanguage, name); err != nil {
+			log.Printf("config write error: %v", err)
+		}
 		http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
 		return
 	}
 
 	type Data struct {
 		*CoreData
+		Languages          []*Language
+		SelectedLanguageId int32
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		SelectedLanguageId: resolveDefaultLanguageID(r.Context(), queries),
 	}
 	data.CoreData.FeedsEnabled = appRuntimeConfig.FeedsEnabled
+	if langs, err := queries.FetchLanguages(r.Context()); err == nil {
+		data.Languages = langs
+	}
 
 	if err := renderTemplate(w, r, "adminSiteSettingsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)

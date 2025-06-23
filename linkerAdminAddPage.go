@@ -16,11 +16,11 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 		Categories         []*Linkercategory
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-	}
-
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := Data{
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
+	}
 
 	categoryRows, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {

@@ -42,15 +42,14 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	data := Data{
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: 1,
+		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 		EditUrl:            fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 	}
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

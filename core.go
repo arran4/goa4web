@@ -71,6 +71,12 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
+		var ann *GetActiveAnnouncementWithNewsRow
+		if queries.db != nil {
+			if a, err := queries.GetActiveAnnouncementWithNews(request.Context()); err == nil {
+				ann = a
+			}
+		}
 		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
 			SecurityLevel:     level,
 			IndexItems:        idx,
@@ -78,6 +84,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			Title:             "Arran4's Website",
 			FeedsEnabled:      feedsEnabled,
 			NotificationCount: count,
+			Announcement:      ann,
 		})
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
@@ -94,6 +101,7 @@ type CoreData struct {
 	RSSFeedUrl        string
 	AtomFeedUrl       string
 	NotificationCount int32
+	Announcement      *GetActiveAnnouncementWithNewsRow
 }
 
 func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {

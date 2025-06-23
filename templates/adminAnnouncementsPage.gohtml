@@ -1,0 +1,25 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin:</a> <a href="/admin/announcements">(This page/Refresh)</a>]<br />
+<form method="post">
+    {{ csrfField }}
+    News ID: <input type="text" name="news_id">
+    <input type="submit" name="task" value="Add">
+</form>
+<form method="post">
+    {{ csrfField }}
+<table border="1">
+    <tr><th>Select</th><th>ID</th><th>News ID</th><th>Created</th><th>Active</th><th>News</th></tr>
+    {{- range .Announcements }}
+    <tr>
+        <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
+        <td>{{ .ID }}</td>
+        <td>{{ .SiteNewsID }}</td>
+        <td>{{ .CreatedAt }}</td>
+        <td>{{ if .Active }}yes{{ else }}no{{ end }}</td>
+        <td>{{ .News.String }}</td>
+    </tr>
+    {{- end }}
+</table>
+<input type="submit" name="task" value="Delete">
+</form>
+{{ template "tail" $ }}

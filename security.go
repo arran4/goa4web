@@ -13,7 +13,11 @@ func requestIP(r *http.Request) string {
 		if comma := strings.IndexByte(ip, ','); comma >= 0 {
 			ip = ip[:comma]
 		}
-		return strings.TrimSpace(ip)
+		ip = strings.TrimSpace(ip)
+		if host, _, err := net.SplitHostPort(ip); err == nil {
+			ip = host
+		}
+		return ip
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -26,7 +30,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
 		if queries, ok := r.Context().Value(ContextValues("queries")).(*Queries); ok {
-			if _, err := queries.GetBannedIpByAddress(r.Context(), ip); err == nil {
+			if _, err := queries.GetActiveBanByAddress(r.Context(), ip); err == nil {
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			} else if err != nil && !errors.Is(err, sql.ErrNoRows) {

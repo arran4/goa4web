@@ -10,17 +10,35 @@ import (
 	"database/sql"
 )
 
-const deleteBannedIp = `-- name: DeleteBannedIp :exec
-DELETE FROM banned_ips WHERE ip_address = ?
+const cancelBannedIp = `-- name: CancelBannedIp :exec
+UPDATE banned_ips SET canceled_at = CURRENT_TIMESTAMP WHERE ip_address = ? AND canceled_at IS NULL
 `
 
-func (q *Queries) DeleteBannedIp(ctx context.Context, ipAddress string) error {
-	_, err := q.db.ExecContext(ctx, deleteBannedIp, ipAddress)
+func (q *Queries) CancelBannedIp(ctx context.Context, ipAddress string) error {
+	_, err := q.db.ExecContext(ctx, cancelBannedIp, ipAddress)
 	return err
 }
 
+const getActiveBanByAddress = `-- name: GetActiveBanByAddress :one
+SELECT id, ip_address, reason, created_at, expires_at, canceled_at FROM banned_ips WHERE ip_address = ? AND canceled_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+`
+
+func (q *Queries) GetActiveBanByAddress(ctx context.Context, ipAddress string) (*BannedIp, error) {
+	row := q.db.QueryRowContext(ctx, getActiveBanByAddress, ipAddress)
+	var i BannedIp
+	err := row.Scan(
+		&i.ID,
+		&i.IpAddress,
+		&i.Reason,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.CanceledAt,
+	)
+	return &i, err
+}
+
 const getBannedIpByAddress = `-- name: GetBannedIpByAddress :one
-SELECT id, ip_address, reason, created_at FROM banned_ips WHERE ip_address = ?
+SELECT id, ip_address, reason, created_at, expires_at, canceled_at FROM banned_ips WHERE ip_address = ?
 `
 
 func (q *Queries) GetBannedIpByAddress(ctx context.Context, ipAddress string) (*BannedIp, error) {
@@ -31,26 +49,30 @@ func (q *Queries) GetBannedIpByAddress(ctx context.Context, ipAddress string) (*
 		&i.IpAddress,
 		&i.Reason,
 		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.CanceledAt,
 	)
 	return &i, err
 }
 
 const insertBannedIp = `-- name: InsertBannedIp :exec
-INSERT INTO banned_ips (ip_address, reason) VALUES (?, ?)
+INSERT INTO banned_ips (ip_address, reason, expires_at)
+VALUES (?, ?, ?)
 `
 
 type InsertBannedIpParams struct {
 	IpAddress string
 	Reason    sql.NullString
+	ExpiresAt sql.NullTime
 }
 
 func (q *Queries) InsertBannedIp(ctx context.Context, arg InsertBannedIpParams) error {
-	_, err := q.db.ExecContext(ctx, insertBannedIp, arg.IpAddress, arg.Reason)
+	_, err := q.db.ExecContext(ctx, insertBannedIp, arg.IpAddress, arg.Reason, arg.ExpiresAt)
 	return err
 }
 
 const listBannedIps = `-- name: ListBannedIps :many
-SELECT id, ip_address, reason, created_at FROM banned_ips ORDER BY created_at DESC
+SELECT id, ip_address, reason, created_at, expires_at, canceled_at FROM banned_ips ORDER BY created_at DESC
 `
 
 func (q *Queries) ListBannedIps(ctx context.Context) ([]*BannedIp, error) {
@@ -67,6 +89,8 @@ func (q *Queries) ListBannedIps(ctx context.Context) ([]*BannedIp, error) {
 			&i.IpAddress,
 			&i.Reason,
 			&i.CreatedAt,
+			&i.ExpiresAt,
+			&i.CanceledAt,
 		); err != nil {
 			return nil, err
 		}

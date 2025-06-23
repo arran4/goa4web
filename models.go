@@ -10,10 +10,12 @@ import (
 )
 
 type BannedIp struct {
-	ID        int32
-	IpAddress string
-	Reason    sql.NullString
-	CreatedAt time.Time
+	ID         int32
+	IpAddress  string
+	Reason     sql.NullString
+	CreatedAt  time.Time
+	ExpiresAt  sql.NullTime
+	CanceledAt sql.NullTime
 }
 
 type Blog struct {

@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+type BannedIp struct {
+	ID        int32
+	IpAddress string
+	Reason    sql.NullString
+	CreatedAt time.Time
+}
+
 type Blog struct {
 	Idblogs                  int32
 	ForumthreadIdforumthread int32

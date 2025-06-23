@@ -1,9 +1,39 @@
 package main
 
-import "net/http"
+import (
+	"database/sql"
+	"errors"
+	"net"
+	"net/http"
+	"strings"
+)
+
+func requestIP(r *http.Request) string {
+	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+		if comma := strings.IndexByte(ip, ','); comma >= 0 {
+			ip = ip[:comma]
+		}
+		return strings.TrimSpace(ip)
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
 
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := requestIP(r)
+		if queries, ok := r.Context().Value(ContextValues("queries")).(*Queries); ok {
+			if _, err := queries.GetBannedIpByAddress(r.Context(), ip); err == nil {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")

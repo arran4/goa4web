@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 		{{if .Rows}}
-			{{if .UID}}
-				<font size="5"><a href="/blogs/bloggers/{{(index $.Rows 0).Username.String}}">{{(index $.Rows 0).Username.String}}</a>'s blogs.</font><br>
+                        {{if .UID}}
+                                <font size="5"><a href="/blogs/blogger/{{(index $.Rows 0).Username.String}}">{{(index $.Rows 0).Username.String}}</a>'s blogs.</font><br>
 			{{else}}
 				<font size="5"><a href="/blogs/bloggers">All bloggers</a>' blogs.</font><br>
 			{{end}}

@@ -1,4 +1,7 @@
 {{ template "head" $ }}
+{{- if $.Error }}
+    <p style="color:red;">{{ $.Error }}</p>
+{{- end }}
     Your registered email address is: {{ .UserData.Email }}<br>
 
     <form method="post">

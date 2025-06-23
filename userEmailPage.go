@@ -5,14 +5,18 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
+
+const errMailNotConfigured = "mail isn't configured" // shown when Test mail has no provider
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		UserData        *User
 		UserPreferences struct{ EmailUpdates bool }
+		Error           string
 	}
 
 	user, _ := r.Context().Value(ContextValues("user")).(*User)
@@ -21,6 +25,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		UserData: user,
+		Error:    r.URL.Query().Get("error"),
 	}
 	if pref != nil && pref.Emailforumupdates.Valid {
 		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Bool
@@ -90,14 +95,15 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	if appHTTPConfig.Hostname != "" {
 		base = strings.TrimRight(appHTTPConfig.Hostname, "/")
 	}
-	url := base + r.URL.Path
-	if user != nil && user.Email.Valid {
-		provider := getEmailProvider()
-		if provider != nil {
-			if err := notifyChange(r.Context(), provider, user.Email.String, url); err != nil {
-				log.Printf("notifyChange Error: %s", err)
-			}
-		}
+	pageURL := base + r.URL.Path
+	provider := getEmailProvider()
+	if provider == nil {
+		q := url.QueryEscape(errMailNotConfigured)
+		http.Redirect(w, r, "/usr/email?error="+q, http.StatusTemporaryRedirect)
+		return
+	}
+	if err := notifyChange(r.Context(), provider, user.Email.String, pageURL); err != nil {
+		log.Printf("notifyChange Error: %s", err)
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

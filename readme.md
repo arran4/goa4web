@@ -95,7 +95,7 @@ This project was originally developed for a single server environment and remain
 The path to a general configuration file can be specified with the `--config-file`
 flag or the `CONFIG_FILE` environment variable. Command line parsing happens in
 two phases: first only this flag is processed so the file location is known. The
-file can set values such as `DB_CONFIG_FILE` which are applied before the rest
+file can set values for any configuration key which are applied before the rest
 of the flags are parsed.
 
 ## Database Configuration
@@ -103,7 +103,7 @@ of the flags are parsed.
 Database connection details can be supplied in several ways. Values are resolved in the following order:
 
 1. Command line flags (`--db-user` etc.)
-2. Values from a config file specified with `--db-config` or `DB_CONFIG_FILE`
+2. Values from a config file specified with `--config-file` or `CONFIG_FILE`
 3. Environment variables such as `DB_USER`
 4. Built-in defaults
 
@@ -128,7 +128,7 @@ Configuration values can also be provided in a file and via command line flags.
 The resolution order is:
 
 1. Command line flags (`--smtp-host` etc.)
-2. Values from a config file specified with `--email-config` or `EMAIL_CONFIG_FILE`
+2. Values from a config file specified with `--config-file` or `CONFIG_FILE`
 3. Environment variables such as `SMTP_HOST`
 4. Built-in defaults
 
@@ -146,7 +146,7 @@ The address the HTTP server listens on and the base URL used for absolute URLs
 can be configured the same way as other settings:
 
 1. Command line flags (`--listen` and `--hostname`)
-2. Values from a config file specified with `--http-config`
+2. Values from a config file specified with `--config-file` or `CONFIG_FILE`
 3. Environment variables `LISTEN` and `HOSTNAME`
 4. Built-in defaults (`:8080` and `http://localhost:8080`)
 
@@ -159,7 +159,7 @@ See `examples/http.conf` for the file format.
 The allowed page size range and default value are resolved in the following order:
 
 1. Command line flags (`--page-size-min`, `--page-size-max`, `--page-size-default`)
-2. Values from a config file specified with `--pagination-config` or `PAGINATION_CONFIG_FILE`
+2. Values from a config file specified with `--config-file` or `CONFIG_FILE`
 3. Environment variables (`PAGE_SIZE_MIN`, `PAGE_SIZE_MAX`, `PAGE_SIZE_DEFAULT`)
 4. Built-in defaults (5, 50 and 15)
 

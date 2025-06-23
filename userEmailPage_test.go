@@ -13,6 +13,7 @@ import (
 
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	os.Unsetenv("EMAIL_PROVIDER")
+	appRuntimeConfig.EmailProvider = ""
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := context.WithValue(req.Context(), ContextValues("user"), &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
 	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
@@ -32,6 +33,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 
 func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	os.Setenv("EMAIL_PROVIDER", "log")
+	appRuntimeConfig.EmailProvider = "log"
 	defer os.Unsetenv("EMAIL_PROVIDER")
 
 	req := httptest.NewRequest("POST", "/email", nil)

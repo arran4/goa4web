@@ -39,7 +39,6 @@ var (
 
 	configFileFlag = flag.String("config-file", "", "path to application configuration file")
 
-	emailCfgPath      = flag.String("email-config", "", "path to email configuration file")
 	emailProviderFlag = flag.String("email-provider", "", "email provider")
 	smtpHostFlag      = flag.String("smtp-host", "", "SMTP host")
 	smtpPortFlag      = flag.String("smtp-port", "", "SMTP port")
@@ -53,7 +52,6 @@ var (
 	jmapPassFlag      = flag.String("jmap-pass", "", "JMAP pass")
 	sendGridKeyFlag   = flag.String("sendgrid-key", "", "SendGrid API key")
 
-	dbCfgPath          = flag.String("db-config", "", "path to database configuration file")
 	dbUserFlag         = flag.String("db-user", "", "database user")
 	dbPassFlag         = flag.String("db-pass", "", "database password")
 	dbHostFlag         = flag.String("db-host", "", "database host")
@@ -63,13 +61,11 @@ var (
 
 	listenFlag          = flag.String("listen", ":8080", "server listen address")
 	hostnameFlag        = flag.String("hostname", "", "server base URL")
-	httpCfgPath         = flag.String("http-config", "", "path to HTTP configuration file")
 	feedsEnabledFlag    = flag.String("feeds-enabled", "", "enable or disable feeds")
 	statsStartYearFlag  = flag.String("stats-start-year", "", "start year for usage stats")
 	pageSizeMinFlag     = flag.Int("page-size-min", 0, "minimum allowed page size")
 	pageSizeMaxFlag     = flag.Int("page-size-max", 0, "maximum allowed page size")
 	pageSizeDefaultFlag = flag.Int("page-size-default", 0, "default page size")
-	paginationCfgPath   = flag.String("pagination-config", "", "path to pagination configuration file")
 	listenFlagSet       bool
 	hostnameFlagSet     bool
 	feedsFlagSet        bool
@@ -137,68 +133,38 @@ func run() error {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	cliDBConfig = DBConfig{
-		User:         *dbUserFlag,
-		Pass:         *dbPassFlag,
-		Host:         *dbHostFlag,
-		Port:         *dbPortFlag,
-		Name:         *dbNameFlag,
-		LogVerbosity: *dbLogVerbosityFlag,
-	}
-	dbConfigFile = *dbCfgPath
-	if dbConfigFile == "" {
-		if v, ok := appCfg["DB_CONFIG_FILE"]; ok {
-			dbConfigFile = v
-		}
-	}
+	cliRuntimeConfig.DBUser = *dbUserFlag
+	cliRuntimeConfig.DBPass = *dbPassFlag
+	cliRuntimeConfig.DBHost = *dbHostFlag
+	cliRuntimeConfig.DBPort = *dbPortFlag
+	cliRuntimeConfig.DBName = *dbNameFlag
+	cliRuntimeConfig.DBLogVerbosity = *dbLogVerbosityFlag
 
-	cliEmailConfig = EmailConfig{
-		Provider:     *emailProviderFlag,
-		SMTPHost:     *smtpHostFlag,
-		SMTPPort:     *smtpPortFlag,
-		SMTPUser:     *smtpUserFlag,
-		SMTPPass:     *smtpPassFlag,
-		AWSRegion:    *awsRegionFlag,
-		JMAPEndpoint: *jmapEndpointFlag,
-		JMAPAccount:  *jmapAccountFlag,
-		JMAPIdentity: *jmapIdentityFlag,
-		JMAPUser:     *jmapUserFlag,
-		JMAPPass:     *jmapPassFlag,
-		SendGridKey:  *sendGridKeyFlag,
-	}
-	emailConfigFile = *emailCfgPath
-	if emailConfigFile == "" {
-		if v, ok := appCfg["EMAIL_CONFIG_FILE"]; ok {
-			emailConfigFile = v
-		}
-	}
+	cliRuntimeConfig.EmailProvider = *emailProviderFlag
+	cliRuntimeConfig.EmailSMTPHost = *smtpHostFlag
+	cliRuntimeConfig.EmailSMTPPort = *smtpPortFlag
+	cliRuntimeConfig.EmailSMTPUser = *smtpUserFlag
+	cliRuntimeConfig.EmailSMTPPass = *smtpPassFlag
+	cliRuntimeConfig.EmailAWSRegion = *awsRegionFlag
+	cliRuntimeConfig.EmailJMAPEndpoint = *jmapEndpointFlag
+	cliRuntimeConfig.EmailJMAPAccount = *jmapAccountFlag
+	cliRuntimeConfig.EmailJMAPIdentity = *jmapIdentityFlag
+	cliRuntimeConfig.EmailJMAPUser = *jmapUserFlag
+	cliRuntimeConfig.EmailJMAPPass = *jmapPassFlag
+	cliRuntimeConfig.EmailSendGridKey = *sendGridKeyFlag
 
 	if listenFlagSet {
-		cliHTTPConfig.Listen = *listenFlag
+		cliRuntimeConfig.HTTPListen = *listenFlag
 	}
 	if hostnameFlagSet {
-		cliHTTPConfig.Hostname = *hostnameFlag
-	}
-	httpConfigFile = *httpCfgPath
-	if httpConfigFile == "" {
-		if v, ok := appCfg["HTTP_CONFIG_FILE"]; ok {
-			httpConfigFile = v
-		}
+		cliRuntimeConfig.HTTPHostname = *hostnameFlag
 	}
 
-	cliPaginationConfig = PaginationConfig{
-		Min:     *pageSizeMinFlag,
-		Max:     *pageSizeMaxFlag,
-		Default: *pageSizeDefaultFlag,
-	}
-	paginationConfigFile = *paginationCfgPath
-	if paginationConfigFile == "" {
-		if v, ok := appCfg["PAGINATION_CONFIG_FILE"]; ok {
-			paginationConfigFile = v
-		}
-	}
+	cliRuntimeConfig.PageSizeMin = *pageSizeMinFlag
+	cliRuntimeConfig.PageSizeMax = *pageSizeMaxFlag
+	cliRuntimeConfig.PageSizeDefault = *pageSizeDefaultFlag
 
-	httpCfg := loadHTTPConfig()
+	cfg := loadRuntimeConfig(appCfg)
 
 	var handler http.Handler
 
@@ -209,10 +175,7 @@ func run() error {
 	loadFeedsEnabled(cliFeeds, appCfg)
 	loadStatsStartYear(*statsStartYearFlag, appCfg)
 
-	dbCfg := loadDBConfig()
-	emailCfg := loadEmailConfig()
-
-	if err := performStartupChecks(dbCfg); err != nil {
+	if err := performStartupChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
@@ -590,14 +553,13 @@ func run() error {
 		SecurityHeadersMiddleware,
 	).Wrap(r)
 	if csrfEnabled() {
-		handler = newCSRFMiddleware(sessionSecret, httpCfg, version).Wrap(handler)
+		handler = newCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version).Wrap(handler)
 	}
 
-	srv = newServer(handler, store, dbPool, dbCfg, emailCfg)
-	loadPaginationConfig()
+	srv = newServer(handler, store, dbPool, cfg)
 
 	log.Printf("Getting email parser")
-	provider := providerFromConfig(emailCfg)
+	provider := providerFromConfig(cfg)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -605,7 +567,7 @@ func run() error {
 	startWorkers(ctx, dbPool, provider)
 
 	log.Printf("Starting web server")
-	if err := runServer(ctx, srv, httpCfg.Listen); err != nil {
+	if err := runServer(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
 	}
 

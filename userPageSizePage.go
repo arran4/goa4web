@@ -12,8 +12,7 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 			min, _ := strconv.Atoi(r.PostFormValue("min"))
 			max, _ := strconv.Atoi(r.PostFormValue("max"))
 			def, _ := strconv.Atoi(r.PostFormValue("default"))
-			cfg := PaginationConfig{Min: min, Max: max, Default: def}
-			appPaginationConfig = resolvePaginationConfig(cfg, PaginationConfig{}, PaginationConfig{})
+			updatePaginationConfig(&appRuntimeConfig, min, max, def)
 		}
 		http.Redirect(w, r, "/usr/page-size", http.StatusSeeOther)
 		return
@@ -25,9 +24,9 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Default int
 	}{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-		Min:      appPaginationConfig.Min,
-		Max:      appPaginationConfig.Max,
-		Default:  appPaginationConfig.Default,
+		Min:      appRuntimeConfig.PageSizeMin,
+		Max:      appRuntimeConfig.PageSizeMax,
+		Default:  appRuntimeConfig.PageSizeDefault,
 	}
 	if err := renderTemplate(w, r, "userPageSizePage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)

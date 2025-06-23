@@ -92,8 +92,8 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	base := "http://" + r.Host
-	if appHTTPConfig.Hostname != "" {
-		base = strings.TrimRight(appHTTPConfig.Hostname, "/")
+	if appRuntimeConfig.HTTPHostname != "" {
+		base = strings.TrimRight(appRuntimeConfig.HTTPHostname, "/")
 	}
 	pageURL := base + r.URL.Path
 	provider := getEmailProvider()

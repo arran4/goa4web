@@ -95,7 +95,7 @@ func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) er
 			return queries.InsertPreference(r.Context(), InsertPreferenceParams{
 				LanguageIdlanguage: int32(langID),
 				UsersIdusers:       uid,
-				PageSize:           int32(appPaginationConfig.Default),
+				PageSize:           int32(appRuntimeConfig.PageSizeDefault),
 			})
 		}
 		return err
@@ -114,7 +114,7 @@ func saveDefaultLanguage(r *http.Request, queries *Queries, uid int32) error {
 	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			_, err = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", langID, uid, appPaginationConfig.Default)
+			_, err = queries.db.ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", langID, uid, appRuntimeConfig.PageSizeDefault)
 			return err
 		}
 		return err

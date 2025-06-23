@@ -30,7 +30,7 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 }
 
 func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
-	req := httptest.NewRequest("GET", "/blogs/user/permissions", nil)
+	req := httptest.NewRequest("GET", "/admin/blogs/user/permissions", nil)
 	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

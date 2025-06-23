@@ -9,7 +9,7 @@
         </tr>
         {{ range .Categories }}
             <tr>
-                <form method="post" action="/writings/admin/categories">
+                <form method="post" action="/admin/writings/categories">
         {{ csrfField }}
                     <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}">{{ .Idwritingcategory }}
                     <td>{{ $fcid := .WritingcategoryIdwritingcategory }} {{ $fcid }} <select name="pcid" value="{{ .WritingcategoryIdwritingcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
@@ -18,13 +18,13 @@
                     <td>
                         <input type="hidden" name="cid" value="{{ .Idwritingcategory }}">
                         <input type="submit" name="task" value="writing category change">
-                        <br><a href="/admin/category/{{ .Idwritingcategory }}/permissions">Permissions</a>
+                        <br><a href="/admin/writings/category/{{ .Idwritingcategory }}/permissions">Permissions</a>
                     </td>
                 </form>
             </tr>
         {{ end }}
         <tr>
-            <form method="post" action="/writings/admin/categories">
+            <form method="post" action="/admin/writings/categories">
         {{ csrfField }}
                 <td>NEW
                 <td><select name="pcid" value=""><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idwritingcategory}}">{{.Title.String}}</option>{{ end }}</select>

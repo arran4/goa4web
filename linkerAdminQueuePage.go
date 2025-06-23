@@ -79,7 +79,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Queue = filtered[data.Offset:end]
 
-	baseURL := "/linker/admin/queue"
+	baseURL := "/admin/linker/queue"
 	qv := make(url.Values)
 	if data.Search != "" {
 		qv.Set("search", data.Search)

@@ -1,8 +1,8 @@
 {{ define "writingCategoryBreadcrumbs" }}
     [
-        <a href="{{ if .IsAdmin }}/writings/admin/categories{{ else }}/writings{{ end }}">Writings</a>:
+        <a href="{{ if .IsAdmin }}/admin/writings/categories{{ else }}/writings{{ end }}">Writings</a>:
         {{ range .CategoryBreadcrumbs }}
-            <a href="{{ if $.IsAdmin }}/writings/admin/categories{{ else }}/writings/category/{{ .Idwritingcategory }}{{ end }}">{{ if eq $.CategoryId .Idwritingcategory }}(This category/Refresh){{ else }}{{ .Title.String }}{{ end }}</a>{{ if ne $.CategoryId .Idwritingcategory }}:{{ end }}
+            <a href="{{ if $.IsAdmin }}/admin/writings/categories{{ else }}/writings/category/{{ .Idwritingcategory }}{{ end }}">{{ if eq $.CategoryId .Idwritingcategory }}(This category/Refresh){{ else }}{{ .Title.String }}{{ end }}</a>{{ if ne $.CategoryId .Idwritingcategory }}:{{ end }}
         {{ end }}
     ]<br>
 {{ end }}

@@ -67,7 +67,7 @@
     </tr>
     {{ range .WritingCategories }}
     <tr>
-        <form method="post" action="/writings/admin/categories">
+        <form method="post" action="/admin/writings/categories">
         {{ csrfField }}
             <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</td>
             <td>{{ $fcid := .WritingcategoryIdwritingcategory }} {{ $fcid }} <select name="pcid" value="{{ .WritingcategoryIdwritingcategory }}"><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
@@ -76,13 +76,13 @@
             <td>
                 <input type="hidden" name="cid" value="{{ .Idwritingcategory }}">
                 <input type="submit" name="task" value="writing category change">
-                <br><a href="/admin/category/{{ .Idwritingcategory }}/permissions">Permissions</a>
+                <br><a href="/admin/writings/category/{{ .Idwritingcategory }}/permissions">Permissions</a>
             </td>
         </form>
     </tr>
     {{ end }}
     <tr>
-        <form method="post" action="/writings/admin/categories">
+        <form method="post" action="/admin/writings/categories">
         {{ csrfField }}
             <td>NEW</td>
             <td><select name="pcid" value=""><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
@@ -108,7 +108,7 @@
     <tr>
         <td>{{ .Idlinkercategory }}</td>
         <td>
-            <form method="post" action="/linker/admin/categories">
+            <form method="post" action="/admin/linker/categories">
         {{ csrfField }}
                 <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
                 <input type="number" name="position" value="{{ .Position }}" size="3">
@@ -127,7 +127,7 @@
         <td>NEW</td>
         <td></td>
         <td>
-            <form method="post" action="/linker/admin/categories">
+            <form method="post" action="/admin/linker/categories">
         {{ csrfField }}
                 <input name="title" value="">
         </td>

@@ -221,6 +221,73 @@ func (q *Queries) GetPublicWritings(ctx context.Context, arg GetPublicWritingsPa
 	return items, nil
 }
 
+const getPublicWritingsByUser = `-- name: GetPublicWritingsByUser :many
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.private = 0 AND w.users_idusers = ?
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?
+`
+
+type GetPublicWritingsByUserParams struct {
+	UsersIdusers int32
+	Limit        int32
+	Offset       int32
+}
+
+type GetPublicWritingsByUserRow struct {
+	Idwriting                        int32
+	UsersIdusers                     int32
+	ForumthreadIdforumthread         int32
+	LanguageIdlanguage               int32
+	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Published                        sql.NullTime
+	Writting                         sql.NullString
+	Abstract                         sql.NullString
+	Private                          sql.NullBool
+	Username                         sql.NullString
+	Comments                         int64
+}
+
+func (q *Queries) GetPublicWritingsByUser(ctx context.Context, arg GetPublicWritingsByUserParams) ([]*GetPublicWritingsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPublicWritingsByUser, arg.UsersIdusers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPublicWritingsByUserRow
+	for rows.Next() {
+		var i GetPublicWritingsByUserRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadIdforumthread,
+			&i.LanguageIdlanguage,
+			&i.WritingcategoryIdwritingcategory,
+			&i.Title,
+			&i.Published,
+			&i.Writting,
+			&i.Abstract,
+			&i.Private,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPublicWritingsInCategory = `-- name: GetPublicWritingsInCategory :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments

@@ -163,22 +163,21 @@ FROM linkerCategory
 ORDER BY sortorder
 `
 
-type GetAllLinkerCategoriesWithSortOrderRow struct {
-	Idlinkercategory int32
-	Title            sql.NullString
-	Sortorder        int32
-}
-
-func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*GetAllLinkerCategoriesWithSortOrderRow, error) {
+func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*Linkercategory, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerCategoriesWithSortOrder)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllLinkerCategoriesWithSortOrderRow
+	var items []*Linkercategory
 	for rows.Next() {
-		var i GetAllLinkerCategoriesWithSortOrderRow
-		if err := rows.Scan(&i.Idlinkercategory, &i.Title, &i.Sortorder); err != nil {
+		var i Linkercategory
+		if err := rows.Scan(
+			&i.Idlinkercategory,
+			&i.Position,
+			&i.Title,
+			&i.Sortorder,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -198,9 +197,13 @@ FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
-WHERE (? = 0 OR lc.idlinkerCategory = ?)
+WHERE (lc.idlinkerCategory = ? OR ? = 0)
 ORDER BY l.listed DESC
 `
+
+type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams struct {
+	Idlinkercategory int32
+}
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker                       int32
@@ -217,8 +220,8 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 	Posterusername                 sql.NullString
 }
 
-func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(ctx context.Context, idlinkercategory int32) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending, idlinkercategory, idlinkercategory)
+func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending, arg.Idlinkercategory, arg.Idlinkercategory)
 	if err != nil {
 		return nil, err
 	}
@@ -487,6 +490,74 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 			&i.Listed,
 			&i.Username,
 			&i.Title_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLinkerItemsByUserDescending = `-- name: GetLinkerItemsByUserDescending :many
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.comments, lc.title as Category_Title, u.username as PosterUsername
+FROM linker l
+LEFT JOIN users u ON l.users_idusers = u.idusers
+LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
+WHERE l.users_idusers = ?
+ORDER BY l.listed DESC
+LIMIT ? OFFSET ?
+`
+
+type GetLinkerItemsByUserDescendingParams struct {
+	UsersIdusers int32
+	Limit        int32
+	Offset       int32
+}
+
+type GetLinkerItemsByUserDescendingRow struct {
+	Idlinker                       int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	ForumthreadIdforumthread       int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Listed                         sql.NullTime
+	Comments                       sql.NullInt32
+	CategoryTitle                  sql.NullString
+	Posterusername                 sql.NullString
+}
+
+func (q *Queries) GetLinkerItemsByUserDescending(ctx context.Context, arg GetLinkerItemsByUserDescendingParams) ([]*GetLinkerItemsByUserDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, getLinkerItemsByUserDescending, arg.UsersIdusers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetLinkerItemsByUserDescendingRow
+	for rows.Next() {
+		var i GetLinkerItemsByUserDescendingRow
+		if err := rows.Scan(
+			&i.Idlinker,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkercategoryIdlinkercategory,
+			&i.ForumthreadIdforumthread,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Listed,
+			&i.Comments,
+			&i.CategoryTitle,
+			&i.Posterusername,
 		); err != nil {
 			return nil, err
 		}

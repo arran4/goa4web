@@ -213,6 +213,69 @@ func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ct
 	return &i, err
 }
 
+const getImagePostsByUserDescending = `-- name: GetImagePostsByUserDescending :many
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+WHERE i.users_idusers = ?
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?
+`
+
+type GetImagePostsByUserDescendingParams struct {
+	UsersIdusers int32
+	Limit        int32
+	Offset       int32
+}
+
+type GetImagePostsByUserDescendingRow struct {
+	Idimagepost              int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	ImageboardIdimageboard   int32
+	Posted                   sql.NullTime
+	Description              sql.NullString
+	Thumbnail                sql.NullString
+	Fullimage                sql.NullString
+	Username                 sql.NullString
+	Comments                 sql.NullInt32
+}
+
+func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, getImagePostsByUserDescending, arg.UsersIdusers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetImagePostsByUserDescendingRow
+	for rows.Next() {
+		var i GetImagePostsByUserDescendingRow
+		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.ForumthreadIdforumthread,
+			&i.UsersIdusers,
+			&i.ImageboardIdimageboard,
+			&i.Posted,
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateImageBoard = `-- name: UpdateImageBoard :exec
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ? WHERE idimageboard = ?
 `

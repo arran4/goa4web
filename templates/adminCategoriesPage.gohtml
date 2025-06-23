@@ -26,8 +26,8 @@
     <tr>
         <form method="post" action="/forum/admin/category/{{ .Idforumcategory }}">
         {{ csrfField }}
-            <td>{{ .Idforumcategory }}</td>
-            <td>{{ $fcid := .ForumcategoryIdforumcategory }} {{ $fcid }} <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
+            <td><a id="fc{{ .Idforumcategory }}" href="/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
+            <td>{{ $fcid := .ForumcategoryIdforumcategory }} <a href="#fc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
             <td><textarea name="desc" rows="3" cols="60">{{ .Description.String }}</textarea></td>
             <td>{{ .Subcategorycount }}</td>
@@ -69,8 +69,8 @@
     <tr>
         <form method="post" action="/writings/admin/categories">
         {{ csrfField }}
-            <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</td>
-            <td>{{ $fcid := .WritingcategoryIdwritingcategory }} {{ $fcid }} <select name="pcid" value="{{ .WritingcategoryIdwritingcategory }}"><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
+            <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}"><a id="wc{{ .Idwritingcategory }}" href="/writings/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a></td>
+            <td>{{ $fcid := .WritingcategoryIdwritingcategory }} <a href="#wc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .WritingcategoryIdwritingcategory }}"><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
             <td><textarea name="desc" rows="3" cols="60">{{ .Description.String }}</textarea></td>
             <td>
@@ -106,7 +106,7 @@
     </tr>
     {{- range .LinkerCategories }}
     <tr>
-        <td>{{ .Idlinkercategory }}</td>
+        <td><a id="lc{{ .Idlinkercategory }}" href="/linker/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
         <td>
             <form method="post" action="/linker/admin/categories">
         {{ csrfField }}

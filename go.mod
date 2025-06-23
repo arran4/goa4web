@@ -16,6 +16,7 @@ require (
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	github.com/shirou/gopsutil/v3 v3.23.7
+	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20230807204917-050eac23e9de
 	golang.org/x/net v0.38.0
 )
@@ -32,7 +33,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 )

@@ -1,0 +1,27 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin:</a> <a href="/admin/ipbans">(This page/Refresh)</a>]<br />
+<form method="post">
+    {{ csrfField }}
+    IP: <input type="text" name="ip">
+    Reason: <input type="text" name="reason">
+    Expires (YYYY-MM-DD): <input type="text" name="expires">
+    <input type="submit" name="task" value="Add">
+</form>
+<form method="post">
+    {{ csrfField }}
+<table border="1">
+    <tr><th>Select</th><th>IP</th><th>Reason</th><th>Created</th><th>Expires</th><th>Cancelled</th></tr>
+    {{- range .Bans }}
+    <tr>
+        <td><input type="checkbox" name="ip" value="{{ .IpNet }}"></td>
+        <td>{{ .IpNet }}</td>
+        <td>{{ .Reason.String }}</td>
+        <td>{{ .CreatedAt }}</td>
+        <td>{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time }}{{ end }}</td>
+        <td>{{ if .CanceledAt.Valid }}{{ .CanceledAt.Time }}{{ end }}</td>
+    </tr>
+    {{- end }}
+</table>
+<input type="submit" name="task" value="Delete">
+</form>
+{{ template "tail" $ }}

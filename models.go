@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type BannedIp struct {
+	ID         int32
+	IpNet      string
+	Reason     sql.NullString
+	CreatedAt  time.Time
+	ExpiresAt  sql.NullTime
+	CanceledAt sql.NullTime
+}
+
 type AuditLog struct {
 	ID           int32
 	UsersIdusers int32

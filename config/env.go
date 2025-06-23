@@ -77,4 +77,9 @@ const (
 	EnvAdminEmails = "ADMIN_EMAILS"
 	// EnvAdminNotify toggles sending administrator notification emails.
 	EnvAdminNotify = "ADMIN_NOTIFY"
+
+	// EnvImageUploadDir defines the directory where uploaded images are stored.
+	EnvImageUploadDir = "IMAGE_UPLOAD_DIR"
+	// EnvImageMaxBytes sets the maximum allowed size of uploaded images in bytes.
+	EnvImageMaxBytes = "IMAGE_MAX_BYTES"
 )

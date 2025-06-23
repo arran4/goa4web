@@ -125,6 +125,7 @@ CREATE TABLE `imageboard` (
   `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
+  `approval_required` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idimageboard`),
   KEY `imageboard_FKIndex1` (`imageboard_idimageboard`)
 );
@@ -138,6 +139,8 @@ CREATE TABLE `imagepost` (
   `description` mediumtext DEFAULT NULL,
   `thumbnail` tinytext DEFAULT NULL,
   `fullimage` tinytext DEFAULT NULL,
+  `file_size` int(10) NOT NULL DEFAULT 0,
+  `approved` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idimagepost`),
   KEY `imagepost_FKIndex1` (`imageboard_idimageboard`),
   KEY `imagepost_FKIndex2` (`users_idusers`),

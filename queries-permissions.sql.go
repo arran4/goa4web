@@ -402,7 +402,7 @@ func (q *Queries) GetUsersPermissions(ctx context.Context) ([]*Permission, error
 }
 
 const getUsersTopicLevelByUserIdAndThreadId = `-- name: GetUsersTopicLevelByUserIdAndThreadId :one
-SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax
+SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at
 FROM userstopiclevel utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 `
@@ -420,6 +420,7 @@ func (q *Queries) GetUsersTopicLevelByUserIdAndThreadId(ctx context.Context, arg
 		&i.ForumtopicIdforumtopic,
 		&i.Level,
 		&i.Invitemax,
+		&i.ExpiresAt,
 	)
 	return &i, err
 }

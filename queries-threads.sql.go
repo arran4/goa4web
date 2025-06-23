@@ -10,6 +10,15 @@ import (
 	"database/sql"
 )
 
+const deleteForumThread = `-- name: DeleteForumThread :exec
+DELETE FROM forumthread WHERE idforumthread = ?
+`
+
+func (q *Queries) DeleteForumThread(ctx context.Context, idforumthread int32) error {
+	_, err := q.db.ExecContext(ctx, deleteForumThread, idforumthread)
+	return err
+}
+
 const getForumTopicIdByThreadId = `-- name: GetForumTopicIdByThreadId :one
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?
 `
@@ -19,15 +28,6 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 	var forumtopic_idforumtopic int32
 	err := row.Scan(&forumtopic_idforumtopic)
 	return forumtopic_idforumtopic, err
-}
-
-const deleteForumThread = `-- name: DeleteForumThread :exec
-DELETE FROM forumthread WHERE idforumthread = ?
-`
-
-func (q *Queries) DeleteForumThread(ctx context.Context, idforumthread int32) error {
-	_, err := q.db.ExecContext(ctx, deleteForumThread, idforumthread)
-	return err
 }
 
 const getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions = `-- name: GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions :one

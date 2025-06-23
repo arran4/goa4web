@@ -128,16 +128,8 @@ type Linker struct {
 type Linkercategory struct {
 	Idlinkercategory int32
 	Position         int32
-	Sortorder        int32
-	Title            sql.NullString
-}
-
-// LinkercategoryCount holds a category with the number of links assigned.
-type LinkercategoryCount struct {
-	Idlinkercategory int32
 	Title            sql.NullString
 	Sortorder        int32
-	Linkcount        int64
 }
 
 type Linkerqueue struct {
@@ -202,6 +194,19 @@ type SearchwordlistHasLinker struct {
 	LinkerIdlinker                 int32
 }
 
+type Session struct {
+	SessionID    string
+	UsersIdusers int32
+	CreatedAt    time.Time
+}
+
+type SiteAnnouncement struct {
+	ID         int32
+	SiteNewsID int32
+	Active     bool
+	CreatedAt  time.Time
+}
+
 type Sitenews struct {
 	Idsitenews               int32
 	ForumthreadIdforumthread int32
@@ -214,12 +219,6 @@ type Sitenews struct {
 type Sitenewssearch struct {
 	SitenewsIdsitenews             int32
 	SearchwordlistIdsearchwordlist int32
-}
-
-type Session struct {
-	SessionID    string
-	UsersIdusers int32
-	CreatedAt    sql.NullTime
 }
 
 type Subscription struct {

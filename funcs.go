@@ -50,9 +50,11 @@ func NewFuncs(r *http.Request) template.FuncMap {
 			}
 			type Post struct {
 				*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-				ShowReply bool
-				ShowEdit  bool
-				Editing   bool
+				ShowReply    bool
+				ShowEdit     bool
+				Editing      bool
+				Announcement *SiteAnnouncement
+				IsAdmin      bool
 			}
 			var result []*Post
 			queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -75,11 +77,17 @@ func NewFuncs(r *http.Request) template.FuncMap {
 
 			cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 			for _, post := range posts {
+				ann, err := queries.GetLatestAnnouncementByNewsID(r.Context(), post.Idsitenews)
+				if err != nil && !errors.Is(err, sql.ErrNoRows) {
+					return nil, fmt.Errorf("getLatestAnnouncementByNewsID: %w", err)
+				}
 				result = append(result, &Post{
 					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
-					ShowReply: cd.UserID != 0,
-					ShowEdit:  cd.HasRole("writer"),
-					Editing:   editingId == int(post.Idsitenews),
+					ShowReply:    cd.UserID != 0,
+					ShowEdit:     cd.HasRole("writer"),
+					Editing:      editingId == int(post.Idsitenews),
+					Announcement: ann,
+					IsAdmin:      cd.HasRole("administrator"),
 				})
 			}
 			LatestNews = result

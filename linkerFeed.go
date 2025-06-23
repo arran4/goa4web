@@ -55,7 +55,7 @@ func linkerFeed(r *http.Request, rows []*GetAllLinkerItemsByCategoryIdWitherPost
 func linkerRssPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), int32(catID))
+	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -70,7 +70,7 @@ func linkerRssPage(w http.ResponseWriter, r *http.Request) {
 func linkerAtomPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), int32(catID))
+	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -29,9 +29,11 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Post struct {
 		*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
-		ShowReply bool
-		ShowEdit  bool
-		Editing   bool
+		ShowReply    bool
+		ShowEdit     bool
+		Editing      bool
+		Announcement *SiteAnnouncement
+		IsAdmin      bool
 	}
 	type Data struct {
 		*CoreData
@@ -141,11 +143,17 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
+	ann, err := queries.GetLatestAnnouncementByNewsID(r.Context(), post.Idsitenews)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("getLatestAnnouncementByNewsID: %v", err)
+	}
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
-		ShowReply: data.CoreData.UserID != 0,
-		ShowEdit:  data.CoreData.HasRole("writer"),
-		Editing:   editingId == int(post.Idsitenews),
+		ShowReply:    data.CoreData.UserID != 0,
+		ShowEdit:     data.CoreData.HasRole("writer"),
+		Editing:      editingId == int(post.Idsitenews),
+		Announcement: ann,
+		IsAdmin:      data.CoreData.HasRole("administrator"),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())

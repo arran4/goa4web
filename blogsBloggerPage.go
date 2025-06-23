@@ -35,10 +35,20 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	bu, _ := queries.GetUserByUsername(r.Context(), sql.NullString{
+	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			http.NotFound(w, r)
+		default:
+			log.Printf("GetUserByUsername Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
 
 	buid := bu.Idusers
 

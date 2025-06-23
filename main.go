@@ -62,6 +62,7 @@ var (
 	hostnameFlag        = flag.String("hostname", "", "server base URL")
 	feedsEnabledFlag    = flag.String("feeds-enabled", "", "enable or disable feeds")
 	statsStartYearFlag  = flag.String("stats-start-year", "", "start year for usage stats")
+	defaultLanguageFlag = flag.String("default-language", "", "site default language")
 	pageSizeMinFlag     = flag.Int("page-size-min", 0, "minimum allowed page size")
 	pageSizeMaxFlag     = flag.Int("page-size-max", 0, "maximum allowed page size")
 	pageSizeDefaultFlag = flag.Int("page-size-default", 0, "default page size")
@@ -162,6 +163,7 @@ func run() error {
 	cliRuntimeConfig.PageSizeMin = *pageSizeMinFlag
 	cliRuntimeConfig.PageSizeMax = *pageSizeMaxFlag
 	cliRuntimeConfig.PageSizeDefault = *pageSizeDefaultFlag
+	cliRuntimeConfig.DefaultLanguage = *defaultLanguageFlag
 
 	if feedsFlagSet {
 		cliFeedsEnabled = *feedsEnabledFlag
@@ -175,6 +177,11 @@ func run() error {
 	if err := performStartupChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
+
+	if err := validateDefaultLanguage(context.Background(), dbPool, &cfg); err != nil {
+		return fmt.Errorf("validate default language: %w", err)
+	}
+	appRuntimeConfig = cfg
 
 	if dbPool != nil {
 		defer func() {

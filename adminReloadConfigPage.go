@@ -17,9 +17,14 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfgMap := loadAppConfigFile(configFile)
-	srv.Config = loadRuntimeConfig(cfgMap)
-
-	data.Messages = append(data.Messages, "Configuration reloaded")
+	cfg := loadRuntimeConfig(cfgMap)
+	if err := validateDefaultLanguage(r.Context(), srv.DB, &cfg); err != nil {
+		data.Errors = append(data.Errors, err.Error())
+	} else {
+		appRuntimeConfig = cfg
+		srv.Config = cfg
+		data.Messages = append(data.Messages, "Configuration reloaded")
+	}
 
 	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)

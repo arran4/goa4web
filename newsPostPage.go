@@ -50,9 +50,10 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:    r.Context().Value(ContextValues("coreData")).(*CoreData),
-		IsReplying:  r.URL.Query().Has("comment"),
-		IsReplyable: true,
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		IsReplying:         r.URL.Query().Has("comment"),
+		IsReplyable:        true,
+		SelectedLanguageId: int32(resolveDefaultLanguageID(r, 0)),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])

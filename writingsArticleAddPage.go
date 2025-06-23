@@ -11,11 +11,13 @@ import (
 func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Languages []*Language
+		Languages          []*Language
+		SelectedLanguageId int
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		SelectedLanguageId: resolveDefaultLanguageID(r, 0),
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)

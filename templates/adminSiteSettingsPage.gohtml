@@ -6,6 +6,14 @@
         Enable Feeds
     </label>
     <br>
+    Default language:
+    <select name="default_language">
+        <option value="">None</option>
+        {{ range $.Languages }}
+            <option value="{{ .Nameof.String }}"{{ if eq $.DefaultLanguage .Nameof.String }} selected{{ end }}>{{ .Nameof.String }}</option>
+        {{ end }}
+    </select>
+    <br>
     <input type="submit" value="Save">
 </form>
 {{ template "tail" $ }}

@@ -24,9 +24,8 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:           cd,
-		SelectedLanguageId: 1,
-		Mode:               "Edit",
+		CoreData: cd,
+		Mode:     "Edit",
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
@@ -47,6 +46,7 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Blog = row
+	data.SelectedLanguageId = int(row.LanguageIdlanguage)
 
 	CustomBlogIndex(data.CoreData, r)
 

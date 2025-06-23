@@ -42,7 +42,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: 1,
+		SelectedLanguageId: resolveDefaultLanguageID(r, 0),
 		EditUrl:            fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 	}
 

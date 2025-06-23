@@ -40,7 +40,7 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: 1,
+		SelectedLanguageId: resolveDefaultLanguageID(r, 0),
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)

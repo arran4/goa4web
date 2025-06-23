@@ -56,6 +56,9 @@ const (
 	// EnvPageSizeDefault defines the default page size.
 	EnvPageSizeDefault = "PAGE_SIZE_DEFAULT"
 
+	// EnvDefaultLanguage sets the site's default language name.
+	EnvDefaultLanguage = "DEFAULT_LANGUAGE"
+
 	// EnvStatsStartYear sets the first year displayed by the usage stats page.
 	EnvStatsStartYear = "STATS_START_YEAR"
 

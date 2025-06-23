@@ -44,6 +44,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Writing = writing
+	data.SelectedLanguageId = int(writing.LanguageIdlanguage)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {

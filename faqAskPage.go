@@ -16,7 +16,7 @@ func faqAskPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
-		SelectedLanguageId: 1, // TODO user pref
+		SelectedLanguageId: int32(resolveDefaultLanguageID(r, 0)),
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)

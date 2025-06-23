@@ -37,6 +37,8 @@ type RuntimeConfig struct {
 	PageSizeMax     int
 	PageSizeDefault int
 
+	DefaultLanguage string
+
 	FeedsEnabled   bool
 	StatsStartYear int
 }
@@ -70,6 +72,7 @@ func loadRuntimeConfig(fileVals map[string]string) RuntimeConfig {
 		EmailJMAPUser:     os.Getenv(config.EnvJMAPUser),
 		EmailJMAPPass:     os.Getenv(config.EnvJMAPPass),
 		EmailSendGridKey:  os.Getenv(config.EnvSendGridKey),
+		DefaultLanguage:   os.Getenv(config.EnvDefaultLanguage),
 	}
 	if v := os.Getenv(config.EnvDBLogVerbosity); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
@@ -112,6 +115,7 @@ func loadRuntimeConfig(fileVals map[string]string) RuntimeConfig {
 		EmailJMAPUser:     fileVals[config.EnvJMAPUser],
 		EmailJMAPPass:     fileVals[config.EnvJMAPPass],
 		EmailSendGridKey:  fileVals[config.EnvSendGridKey],
+		DefaultLanguage:   fileVals[config.EnvDefaultLanguage],
 	}
 	if v := fileVals[config.EnvDBLogVerbosity]; v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
@@ -151,7 +155,6 @@ func loadRuntimeConfig(fileVals map[string]string) RuntimeConfig {
 	)
 
 	normalizeRuntimeConfig(&cfg)
-	appRuntimeConfig = cfg
 	return cfg
 }
 

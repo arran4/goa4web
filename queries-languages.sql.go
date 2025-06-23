@@ -66,6 +66,17 @@ func (q *Queries) FetchLanguages(ctx context.Context) ([]*Language, error) {
 	return items, nil
 }
 
+const getLanguageIDByName = `-- name: GetLanguageIDByName :one
+SELECT idlanguage FROM language WHERE nameof = ?
+`
+
+func (q *Queries) GetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getLanguageIDByName, nameof)
+	var idlanguage int32
+	err := row.Scan(&idlanguage)
+	return idlanguage, err
+}
+
 const renameLanguage = `-- name: RenameLanguage :exec
 UPDATE language
 SET nameof = ?

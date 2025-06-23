@@ -23,7 +23,7 @@ func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: 1,
+		SelectedLanguageId: resolveDefaultLanguageID(r, 0),
 		Mode:               "Add",
 	}
 

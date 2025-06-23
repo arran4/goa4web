@@ -77,6 +77,45 @@ func (q *Queries) GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(ct
 	return &i, err
 }
 
+const getThreadsStartedByUser = `-- name: GetThreadsStartedByUser :many
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+WHERE c.users_idusers = ?
+ORDER BY th.lastaddition DESC
+`
+
+func (q *Queries) GetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error) {
+	rows, err := q.db.QueryContext(ctx, getThreadsStartedByUser, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Forumthread
+	for rows.Next() {
+		var i Forumthread
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const makeThread = `-- name: MakeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `

@@ -23,6 +23,7 @@ sql:
         - "queries-sessions.sql"
         - "queries-login_attempts.sql"
         - "queries-banned_ips.sql"
+        - "queries-auditlog.sql"
       gen:
           go:
               package: "main"

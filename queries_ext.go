@@ -310,6 +310,45 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 	return items, rows.Err()
 }
 
+// ListUserIDsByRole returns all user IDs with the specified role.
+func (q *Queries) ListUserIDsByRole(ctx context.Context, role string) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx,
+		"SELECT u.idusers FROM users u JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all' WHERE p.level = ? ORDER BY u.idusers",
+		role,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// AllUserIDs returns all user IDs in the system.
+func (q *Queries) AllUserIDs(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT idusers FROM users ORDER BY idusers")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 // BloggerCountRow includes a username with their blog post count.
 type BloggerCountRow struct {
 	Username sql.NullString
@@ -731,4 +770,22 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 		rows = append(rows, data[k.user][k.ym])
 	}
 	return rows, nil
+}
+
+// GetTemplateOverride retrieves the stored override for the named template.
+func (q *Queries) GetTemplateOverride(ctx context.Context, name string) (string, error) {
+	row := q.db.QueryRowContext(ctx, "SELECT body FROM template_overrides WHERE name = ?", name)
+	var body string
+	switch err := row.Scan(&body); err {
+	case sql.ErrNoRows:
+		return "", nil
+	default:
+		return body, err
+	}
+}
+
+// SetTemplateOverride stores or updates a template override.
+func (q *Queries) SetTemplateOverride(ctx context.Context, name, body string) error {
+	_, err := q.db.ExecContext(ctx, "INSERT INTO template_overrides (name, body) VALUES (?, ?) ON DUPLICATE KEY UPDATE body = VALUES(body)", name, body)
+	return err
 }

@@ -1,9 +1,26 @@
 {{ template "head" $ }}
     [<a href="/admin">Admin:</a> <a href="/admin/notifications">(This page/Refresh)</a>]<br />
+    <div>Total: {{ .Total }} Unread: {{ .Unread }}</div>
+<form method="post">
+    {{ csrfField }}
+    Message: <input type="text" name="message" size="40"><br />
+    Link: <input type="text" name="link" size="40"><br />
+    Users: <input type="text" name="users" size="20"> (comma separated usernames)<br />
+    Role: <select name="role">
+        <option value="">Everyone</option>
+        <option value="writer">writer</option>
+        <option value="moderator">moderator</option>
+        <option value="administrator">administrator</option>
+    </select>
+    <input type="submit" name="task" value="Notify">
+</form>
+<form method="post">
+    {{ csrfField }}
 <table border="1">
-    <tr><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
+    <tr><th>Select</th><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
     {{- range .Notifications }}
     <tr>
+        <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
         <td>{{ .ID }}</td>
         <td>{{ .UsersIdusers }}</td>
         <td>{{ .Message.String }}</td>
@@ -12,4 +29,7 @@
     </tr>
     {{- end }}
 </table>
+<input type="submit" name="task" value="Dismiss">
+<input type="submit" name="task" value="Purge">
+</form>
 {{ template "tail" $ }}

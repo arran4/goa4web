@@ -18,6 +18,13 @@ type BannedIp struct {
 	CanceledAt sql.NullTime
 }
 
+type AuditLog struct {
+	ID           int32
+	UsersIdusers int32
+	Action       string
+	CreatedAt    time.Time
+}
+
 type Blog struct {
 	Idblogs                  int32
 	ForumthreadIdforumthread int32

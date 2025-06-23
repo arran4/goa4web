@@ -164,16 +164,14 @@ func run() error {
 	cliRuntimeConfig.PageSizeMax = *pageSizeMaxFlag
 	cliRuntimeConfig.PageSizeDefault = *pageSizeDefaultFlag
 
+	if feedsFlagSet {
+		cliFeedsEnabled = *feedsEnabledFlag
+	}
+	cliStatsStartYear = *statsStartYearFlag
+
 	cfg := loadRuntimeConfig(appCfg)
 
 	var handler http.Handler
-
-	var cliFeeds string
-	if feedsFlagSet {
-		cliFeeds = *feedsEnabledFlag
-	}
-	loadFeedsEnabled(cliFeeds, appCfg)
-	loadStatsStartYear(*statsStartYearFlag, appCfg)
 
 	if err := performStartupChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
@@ -541,7 +539,7 @@ func run() error {
 	ibr.HandleFunc("/admin/board", taskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
 	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
 
-  // oauth shit
+	// oauth shit
 	//r.HandleFunc("/login", loginPage)
 	//r.HandleFunc("/callback", callbackHandler)
 	//r.HandleFunc("/logout", logoutHandler)

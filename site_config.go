@@ -1,13 +1,6 @@
 package main
 
-import (
-	"os"
-	"strings"
-
-	"github.com/arran4/goa4web/config"
-)
-
-var feedsEnabled = true
+import "strings"
 
 func parseBool(v string) (bool, bool) {
 	if v == "" {
@@ -34,12 +27,4 @@ func resolveFeedsEnabled(cli, file, env string) bool {
 		return b
 	}
 	return true
-}
-
-func loadFeedsEnabled(cli string, file map[string]string) {
-	fileVal := ""
-	if v, ok := file["FEEDS_ENABLED"]; ok {
-		fileVal = v
-	}
-	feedsEnabled = resolveFeedsEnabled(cli, fileVal, os.Getenv(config.EnvFeedsEnabled))
 }

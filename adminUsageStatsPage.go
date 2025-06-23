@@ -40,13 +40,13 @@ func adminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	if data.LinkerCategories, err = queries.GetLinkerCategoryLinkCounts(r.Context()); err != nil {
 		log.Printf("linker category counts: %v", err)
 	}
-	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(statsStartYear)); err != nil {
+	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(appRuntimeConfig.StatsStartYear)); err != nil {
 		log.Printf("monthly usage counts: %v", err)
 	}
-	if data.UserMonthly, err = queries.UserMonthlyUsageCounts(r.Context(), int32(statsStartYear)); err != nil {
+	if data.UserMonthly, err = queries.UserMonthlyUsageCounts(r.Context(), int32(appRuntimeConfig.StatsStartYear)); err != nil {
 		log.Printf("user monthly usage counts: %v", err)
 	}
-	data.StartYear = statsStartYear
+	data.StartYear = appRuntimeConfig.StatsStartYear
 
 	if err := renderTemplate(w, r, "adminUsageStatsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)

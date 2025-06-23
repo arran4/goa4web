@@ -78,19 +78,19 @@ func CustomLinkerIndex(data *CoreData, r *http.Request) {
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",
-			Link: "/linker/admin/users/levels",
+			Link: "/admin/linker/users/levels",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Category Controls",
-			Link: "/linker/admin/categories",
+			Link: "/admin/linker/categories",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Approve links",
-			Link: "/linker/admin/queue",
+			Link: "/admin/linker/queue",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Add link",
-			Link: "/linker/admin/add",
+			Link: "/admin/linker/add",
 		})
 	}
 	vars := mux.Vars(r)

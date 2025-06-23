@@ -11,7 +11,7 @@
                                 <th>Options?
                         {{ range .Boards }}
                                 <tr>
-                                        <form method="post" action="/imagebbs/admin/board/{{.Idimageboard}}">
+                                        <form method="post" action="/admin/imagebbs/board/{{.Idimageboard}}">
         {{ csrfField }}
                                                 <td>{{ .Idimageboard }}
                                                 <td><input name="name" value="{{ .Title.String }}">

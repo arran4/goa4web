@@ -59,5 +59,5 @@ func imagebbsAdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/imagebbs/admin/boards", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/imagebbs/boards", http.StatusTemporaryRedirect)
 }

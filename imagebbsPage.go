@@ -59,10 +59,10 @@ func CustomImageBBSIndex(data *CoreData, r *http.Request) {
 			Link: "/admin",
 		}, IndexItem{
 			Name: "Modify Boards",
-			Link: "/imagebbs/admin/boards",
+			Link: "/admin/imagebbs/boards",
 		}, IndexItem{
 			Name: "New Board",
-			Link: "/imagebbs/admin/board",
+			Link: "/admin/imagebbs/board",
 		})
 	}
 }

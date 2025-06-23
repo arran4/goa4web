@@ -23,7 +23,7 @@ func TestWritingsAdminCategoriesPage(t *testing.T) {
 		AddRow(1, 0, "a", "b")
 	mock.ExpectQuery(regexp.QuoteMeta(fetchAllCategories)).WillReturnRows(rows)
 
-	req := httptest.NewRequest("GET", "/writings/admin/categories", nil)
+	req := httptest.NewRequest("GET", "/admin/writings/categories", nil)
 	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
 	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
 	req = req.WithContext(ctx)

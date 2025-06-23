@@ -411,3 +411,13 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
   PRIMARY KEY (`id`)
 );
 
+
+-- Audit log of administrative actions.
+CREATE TABLE IF NOT EXISTS `audit_log` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `action` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `audit_log_user_idx` (`users_idusers`)
+);

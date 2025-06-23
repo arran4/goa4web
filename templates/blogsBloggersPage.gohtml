@@ -6,7 +6,7 @@
     {{if .Rows}}
         <font size="5">All bloggers.</font><br>
         {{range .Rows}}
-            Blogger: <a href="/blogs/blogger/user={{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
+            Blogger: <a href="/blogs/blogger/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
         {{end}}
     {{else}}
         No bloggers here.

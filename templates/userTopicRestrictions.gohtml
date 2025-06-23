@@ -10,6 +10,7 @@
         </tr>
         {{- range .TopicRestrictions }}
         <form method="post">
+        {{ csrfField }}
             <tr>
                 <td><input type="hidden" name="tid" value="{{ .ForumTopicID }}">{{ .Title }}
                 <td><input type="hidden" name="uid" value="{{ .UserID }}">{{ .Username }}
@@ -22,6 +23,7 @@
         </form>
         {{- end }}
         <form method="post">
+        {{ csrfField }}
             <tr>
                 <td><input type="hidden" name="tid" value="{{ .TopicID }}">
                 <td><input name="username" value="USERNAME">

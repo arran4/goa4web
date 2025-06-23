@@ -198,7 +198,7 @@ FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
-WHERE lc.idlinkerCategory = ?
+WHERE (? = 0 OR lc.idlinkerCategory = ?)
 ORDER BY l.listed DESC
 `
 
@@ -218,7 +218,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 }
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(ctx context.Context, idlinkercategory int32) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending, idlinkercategory)
+	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending, idlinkercategory, idlinkercategory)
 	if err != nil {
 		return nil, err
 	}

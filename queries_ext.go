@@ -540,7 +540,7 @@ func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountRow, erro
 	var items []*UserPostCountRow
 	for rows.Next() {
 		var i UserPostCountRow
-		if err := rows.Scan(&i.Username, &i.Blogs, &i.News, &i.Comments, &i.Images); err != nil {
+		if err := rows.Scan(&i.Username, &i.Blogs, &i.News, &i.Comments, &i.Images, &i.Links, &i.Writings); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

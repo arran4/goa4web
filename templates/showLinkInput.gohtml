@@ -1,5 +1,6 @@
 {{ define "getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingInput" }}
     <form method="post" action="?">
+        {{ csrfField }}
         <label>Title <input name="title" value=""></label><br>
         <label>URL <input name="URL" value=""></label><br>
         <label>Description:<br><textarea name="desc" cols="40" rows="20"></textarea></label><br>

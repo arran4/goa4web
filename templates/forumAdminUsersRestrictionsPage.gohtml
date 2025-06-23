@@ -12,6 +12,7 @@
         {{ range .UserTopicLevels }}
             <tr>
                 <form method="post" action="/forum/admin/user/{{ .Idusers }}/levels">
+        {{ csrfField }}
                     <td>{{ .Title.String }}<input type="hidden" name="tid" value="{{ .Idforumtopic }}">
                     <td>{{ .Username.String }}<input type="hidden" name="uid" value="{{ .Idusers }}">
                     <td><input name="level" value="{{ .Level.Int32 }}" size="8">
@@ -38,6 +39,7 @@
         {{ end }}
         <tr>
             <form method="post">
+        {{ csrfField }}
                 <td><select name="uid"><option value="">Select User</option>{{ range $.Users }}<option value="{{.Idusers}}">{{.Username.String}}</option>  {{ end }}</select>
                 <td><select name="tid"><option value="">Select Topic</option>{{ range $.Topics }}<option value="{{.Idforumtopic}}">{{.Title.String}}</option>  {{ end }}</select>
                 <td><input name="level" value="0" size="8">

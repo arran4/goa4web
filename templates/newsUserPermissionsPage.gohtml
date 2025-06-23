@@ -15,6 +15,7 @@
                                         <td>{{.Level.String}}</td>
                                         <td>
                                                 <form method="post">
+        {{ csrfField }}
                                                         <input type="hidden" name="permid" value="{{.Idpermissions}}">
                                                         <input type="submit" name="task" value="User Disallow">
                                                 </form>
@@ -23,6 +24,7 @@
                         {{end}}
                         <tr>
                                 <td><form method="post">NEW</td>
+        {{ csrfField }}
                                 <td><input name="username"></td>
                                 <td>?</td>
                                 <td>

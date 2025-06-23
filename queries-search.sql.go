@@ -297,6 +297,31 @@ func (q *Queries) CompleteWordList(ctx context.Context) ([]sql.NullString, error
 	return items, nil
 }
 
+const countWordList = `-- name: CountWordList :one
+SELECT COUNT(*)
+FROM searchwordlist
+`
+
+func (q *Queries) CountWordList(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countWordList)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countWordListByPrefix = `-- name: CountWordListByPrefix :one
+SELECT COUNT(*)
+FROM searchwordlist
+WHERE word LIKE CONCAT(?, '%')
+`
+
+func (q *Queries) CountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countWordListByPrefix, prefix)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createSearchWord = `-- name: CreateSearchWord :execlastid
 INSERT IGNORE INTO searchwordlist (word)
 VALUES (lcase(?))
@@ -787,6 +812,54 @@ func (q *Queries) WordListWithCounts(ctx context.Context, arg WordListWithCounts
 	var items []*WordListWithCountsRow
 	for rows.Next() {
 		var i WordListWithCountsRow
+		if err := rows.Scan(&i.Word, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const wordListWithCountsByPrefix = `-- name: WordListWithCountsByPrefix :many
+SELECT swl.word,
+       (SELECT COUNT(*) FROM commentsSearch cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM imagepostSearch ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+FROM searchwordlist swl
+WHERE swl.word LIKE CONCAT(?, '%')
+ORDER BY swl.word
+LIMIT ? OFFSET ?
+`
+
+type WordListWithCountsByPrefixParams struct {
+	Prefix interface{}
+	Limit  int32
+	Offset int32
+}
+
+type WordListWithCountsByPrefixRow struct {
+	Word  sql.NullString
+	Count int32
+}
+
+func (q *Queries) WordListWithCountsByPrefix(ctx context.Context, arg WordListWithCountsByPrefixParams) ([]*WordListWithCountsByPrefixRow, error) {
+	rows, err := q.db.QueryContext(ctx, wordListWithCountsByPrefix, arg.Prefix, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WordListWithCountsByPrefixRow
+	for rows.Next() {
+		var i WordListWithCountsByPrefixRow
 		if err := rows.Scan(&i.Word, &i.Count); err != nil {
 			return nil, err
 		}

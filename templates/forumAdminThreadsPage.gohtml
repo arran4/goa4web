@@ -12,6 +12,7 @@
                 <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
                 <td>
                     <form method="post" action="/forum/admin/thread/{{ .Idforumthread }}/delete" style="display:inline">
+        {{ csrfField }}
                         <input type="hidden" name="topic" value="{{ .ForumtopicIdforumtopic }}">
                         <input type="submit" name="task" value="Forum thread delete">
                     </form>

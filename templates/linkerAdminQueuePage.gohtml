@@ -6,6 +6,7 @@
         <input type="submit" value="Filter">
     </form>
     <form method="post" id="bulkForm">
+        {{ csrfField }}
     <table>
         <tr>
             <th>Select</th>
@@ -30,6 +31,7 @@
                 <td>{{ .Preview }}</td>
                 <td>
                     <form method="post" id="u{{ .Idlinkerqueue }}">
+        {{ csrfField }}
                         <input type="hidden" name="qid" value="{{ .Idlinkerqueue }}">
                         <input type="submit" name="task" value="Update">
                     </form>

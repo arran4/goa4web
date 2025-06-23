@@ -1,5 +1,6 @@
 {{ template "head" $ }}
 	<form method="post">
+        {{ csrfField }}
 		Search words: <input name="searchwords" value="{{.SearchWords}}">, (No keywords exist as of this moment.)<br>
 		<input type="submit" name="task" value="Search forum">
 		<input type="submit" name="task" value="Search news">

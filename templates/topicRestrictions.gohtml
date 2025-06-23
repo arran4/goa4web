@@ -15,6 +15,7 @@
         </tr>
         {{- range .Restrictions }}
             <form method="post">
+        {{ csrfField }}
                 <tr>
                     <td><input type="hidden" name="ftid" value="{{ .ForumTopicID }}">{{ .Title }}
                     <td><input name="view" value="{{ .ViewLevel }}" size="8">

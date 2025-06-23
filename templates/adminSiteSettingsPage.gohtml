@@ -1,5 +1,6 @@
 {{ template "head" $ }}
 <form method="post">
+        {{ csrfField }}
     <label>
         <input type="checkbox" name="feeds_enabled" value="1"{{ if $.FeedsEnabled }} checked{{ end }}>
         Enable Feeds

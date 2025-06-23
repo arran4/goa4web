@@ -33,4 +33,7 @@ const (
 
 	// DefaultPageSize defines the number of items shown per page.
 	DefaultPageSize = 15
+
+	// Alphabet lists letters for search navigation.
+	Alphabet = "abcdefghijklmnopqrstuvwxyz"
 )

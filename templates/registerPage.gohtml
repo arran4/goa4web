@@ -1,6 +1,7 @@
 {{ template "head" $ }}
 Register:<br>
 <form method="post">
+        {{ csrfField }}
     Username: <input name="username"><br>
     Password: <input name="password" type="password"><br>
     EmailAdr: <input name="email"><br>

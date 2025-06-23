@@ -18,6 +18,7 @@
             {{ if .CanReply }}
                 <hr><font size="4">Reply:</font><br>
                 <form method="post">
+        {{ csrfField }}
                     <input type="hidden" name="replyTo" value="{{ .Writing.ForumthreadIdforumthread }}">
                     <textarea name="replytext" cols="40" rows="20"></textarea><br>
                     {{ template "languageCombobox" $ }}

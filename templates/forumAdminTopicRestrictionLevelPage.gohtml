@@ -8,6 +8,7 @@
                 {{- $format := printf "%s" .Title.String | a4code2html }}
                 <tr>
                     <form method="post">
+        {{ csrfField }}
                         <td><input type="hidden" name="ftid" value="{{ .Idforumtopic }}">{{ $format }}</td>
                         <td><input type="number" name="view" value="{{ .Viewlevel.Int32 }}" size="8" min="0" step="1" required></td>
                         <td><input type="number" name="reply" value="{{ .Replylevel.Int32 }}" size="8" min="0" step="1" required></td>
@@ -30,6 +31,7 @@
             {{- end }}
             <tr>
                 <form method="post">
+        {{ csrfField }}
                     <td colspan="10">
                         Copy restrictions from
                         <select name="fromTopic" required>

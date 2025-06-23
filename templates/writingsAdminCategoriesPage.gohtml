@@ -10,6 +10,7 @@
         {{ range .Categories }}
             <tr>
                 <form method="post" action="/writings/admin/categories">
+        {{ csrfField }}
                     <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}">{{ .Idwritingcategory }}
                     <td>{{ $fcid := .WritingcategoryIdwritingcategory }} {{ $fcid }} <select name="pcid" value="{{ .WritingcategoryIdwritingcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
                     <td><input name="name" value="{{ .Title.String }}">
@@ -24,6 +25,7 @@
         {{ end }}
         <tr>
             <form method="post" action="/writings/admin/categories">
+        {{ csrfField }}
                 <td>NEW
                 <td><select name="pcid" value=""><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idwritingcategory}}">{{.Title.String}}</option>{{ end }}</select>
                 <td><input name="name" value="">

@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-    <table>
+    <table border="1">
         <tr>
             <th>ID</th>
             <th>Order</th>
@@ -13,6 +13,7 @@
                 <td>{{ .Idlinkercategory }}</td>
                 <td>
                     <form method="post">
+        {{ csrfField }}
                         <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
                         <input type="number" name="position" value="{{ .Position }}" size="3">
                 </td>
@@ -31,6 +32,7 @@
             <td></td>
             <td>
                 <form method="post">
+        {{ csrfField }}
                     <input name="title" value="">
             </td>
             <td>0</td>

@@ -7,12 +7,12 @@ import (
 func TestLoadAppConfigFile(t *testing.T) {
 	useMemFS(t)
 	file := "app.conf"
-	content := "DB_CONFIG_FILE=db.conf\nEMAIL_CONFIG_FILE=email.conf\n"
+	content := "DB_USER=dbuser\nEMAIL_PROVIDER=smtp\n"
 	if err := writeFile(file, []byte(content), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	m := loadAppConfigFile(file)
-	if m["DB_CONFIG_FILE"] != "db.conf" || m["EMAIL_CONFIG_FILE"] != "email.conf" {
+	if m["DB_USER"] != "dbuser" || m["EMAIL_PROVIDER"] != "smtp" {
 		t.Fatalf("unexpected map: %#v", m)
 	}
 }

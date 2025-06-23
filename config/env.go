@@ -61,18 +61,10 @@ const (
 
 	// EnvDBLogVerbosity controls the verbosity level of database logging.
 	EnvDBLogVerbosity = "DB_LOG_VERBOSITY"
-	// EnvDBConfigFile specifies the path to the database configuration file.
-	EnvDBConfigFile = "DB_CONFIG_FILE"
-
-	// EnvHTTPConfigFile specifies the path to the HTTP configuration file.
-	EnvHTTPConfigFile = "HTTP_CONFIG_FILE"
 	// EnvListen is the network address the HTTP server listens on.
 	EnvListen = "LISTEN"
 	// EnvHostname is the base URL advertised by the HTTP server.
 	EnvHostname = "HOSTNAME"
-
-	// EnvPaginationConfigFile specifies the path to the pagination configuration file.
-	EnvPaginationConfigFile = "PAGINATION_CONFIG_FILE"
 
 	// EnvSessionSecret is the secret used to encrypt session cookies.
 	EnvSessionSecret = "SESSION_SECRET"
@@ -81,8 +73,6 @@ const (
 
 	// EnvSendGridKey is the API key for the SendGrid email provider.
 	EnvSendGridKey = "SENDGRID_KEY"
-	// EnvEmailConfigFile specifies the path to the email configuration file.
-	EnvEmailConfigFile = "EMAIL_CONFIG_FILE"
 	// EnvAdminEmails is a comma-separated list of administrator email addresses.
 	EnvAdminEmails = "ADMIN_EMAILS"
 	// EnvAdminNotify toggles sending administrator notification emails.

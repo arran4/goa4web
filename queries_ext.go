@@ -771,3 +771,21 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 	}
 	return rows, nil
 }
+
+// GetTemplateOverride retrieves the stored override for the named template.
+func (q *Queries) GetTemplateOverride(ctx context.Context, name string) (string, error) {
+	row := q.db.QueryRowContext(ctx, "SELECT body FROM template_overrides WHERE name = ?", name)
+	var body string
+	switch err := row.Scan(&body); err {
+	case sql.ErrNoRows:
+		return "", nil
+	default:
+		return body, err
+	}
+}
+
+// SetTemplateOverride stores or updates a template override.
+func (q *Queries) SetTemplateOverride(ctx context.Context, name, body string) error {
+	_, err := q.db.ExecContext(ctx, "INSERT INTO template_overrides (name, body) VALUES (?, ?) ON DUPLICATE KEY UPDATE body = VALUES(body)", name, body)
+	return err
+}

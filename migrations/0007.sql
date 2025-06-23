@@ -1,3 +1,11 @@
+-- Store template overrides
+CREATE TABLE IF NOT EXISTS `template_overrides` (
+    `name` varchar(128) NOT NULL,
+    `body` text NOT NULL,
+    `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`name`)
+);
+
 -- Add audit_log table for tracking admin actions
 CREATE TABLE IF NOT EXISTS audit_log (
     id INT NOT NULL AUTO_INCREMENT,

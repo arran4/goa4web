@@ -411,3 +411,11 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
   PRIMARY KEY (`id`)
 );
 
+-- Optional template overrides for dynamic content.
+CREATE TABLE IF NOT EXISTS `template_overrides` (
+  `name` varchar(128) NOT NULL,
+  `body` text NOT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`name`)
+);
+

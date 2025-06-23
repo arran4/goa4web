@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 )
 
@@ -17,6 +18,17 @@ func normalizeIP(ip string) string {
 		return v4.String()
 	}
 	return parsed.String()
+}
+
+func normalizeIPNet(ip string) string {
+	ip = strings.TrimSpace(ip)
+	if strings.Contains(ip, "/") {
+		if p, err := netip.ParsePrefix(ip); err == nil {
+			return p.String()
+		}
+		return ip
+	}
+	return normalizeIP(ip)
 }
 
 func requestIP(r *http.Request) string {
@@ -41,12 +53,24 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
 		if queries, ok := r.Context().Value(ContextValues("queries")).(*Queries); ok {
-			if _, err := queries.GetActiveBanByAddress(r.Context(), ip); err == nil {
-				http.Error(w, "Forbidden", http.StatusForbidden)
-				return
-			} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			bans, err := queries.ListActiveBans(r.Context())
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
+			}
+			addr, parseErr := netip.ParseAddr(ip)
+			if parseErr == nil {
+				for _, b := range bans {
+					if p, err := netip.ParsePrefix(b.IpNet); err == nil {
+						if p.Contains(addr) {
+							http.Error(w, "Forbidden", http.StatusForbidden)
+							return
+						}
+					} else if b.IpNet == ip {
+						http.Error(w, "Forbidden", http.StatusForbidden)
+						return
+					}
+				}
 			}
 		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")

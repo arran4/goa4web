@@ -11,7 +11,7 @@ import (
 
 type BannedIp struct {
 	ID         int32
-	IpAddress  string
+	IpNet      string
 	Reason     sql.NullString
 	CreatedAt  time.Time
 	ExpiresAt  sql.NullTime

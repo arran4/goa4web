@@ -13,8 +13,8 @@
     <tr><th>Select</th><th>IP</th><th>Reason</th><th>Created</th><th>Expires</th><th>Cancelled</th></tr>
     {{- range .Bans }}
     <tr>
-        <td><input type="checkbox" name="ip" value="{{ .IpAddress }}"></td>
-        <td>{{ .IpAddress }}</td>
+        <td><input type="checkbox" name="ip" value="{{ .IpNet }}"></td>
+        <td>{{ .IpNet }}</td>
         <td>{{ .Reason.String }}</td>
         <td>{{ .CreatedAt }}</td>
         <td>{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time }}{{ end }}</td>

@@ -32,8 +32,8 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 
 func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	ip := strings.TrimSpace(r.PostFormValue("ip"))
-	ip = normalizeIP(ip)
+	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
+	ipNet = normalizeIPNet(ipNet)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
 	expiresStr := strings.TrimSpace(r.PostFormValue("expires"))
 	var expires sql.NullTime
@@ -42,9 +42,9 @@ func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 			expires = sql.NullTime{Time: t, Valid: true}
 		}
 	}
-	if ip != "" {
+	if ipNet != "" {
 		_ = queries.InsertBannedIp(r.Context(), InsertBannedIpParams{
-			IpAddress: ip,
+			IpNet:     ipNet,
 			Reason:    sql.NullString{String: reason, Valid: reason != ""},
 			ExpiresAt: expires,
 		})
@@ -58,9 +58,9 @@ func adminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ParseForm: %v", err)
 	}
 	for _, ip := range r.Form["ip"] {
-		ip = normalizeIP(ip)
-		if err := queries.CancelBannedIp(r.Context(), ip); err != nil {
-			log.Printf("cancel banned ip %s: %v", ip, err)
+		ipNet := normalizeIPNet(ip)
+		if err := queries.CancelBannedIp(r.Context(), ipNet); err != nil {
+			log.Printf("cancel banned ip %s: %v", ipNet, err)
 		}
 	}
 	taskDoneAutoRefreshPage(w, r)

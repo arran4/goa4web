@@ -10,7 +10,7 @@
         </tr>
         {{- range .Categories }}
             <tr>
-                <td>{{ .Idlinkercategory }}</td>
+                <td><a id="lc{{ .Idlinkercategory }}" href="/linker/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
                 <td>
                     <form method="post">
         {{ csrfField }}

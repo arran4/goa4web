@@ -154,6 +154,15 @@ See `examples/http.conf` for the file format.
 
 `HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
 
+## Pagination Configuration
+
+The allowed page size range and default value are resolved in the following order:
+
+1. Command line flags (`--page-size-min`, `--page-size-max`, `--page-size-default`)
+2. Values from a config file specified with `--pagination-config` or `PAGINATION_CONFIG_FILE`
+3. Environment variables (`PAGE_SIZE_MIN`, `PAGE_SIZE_MAX`, `PAGE_SIZE_DEFAULT`)
+4. Built-in defaults (5, 50 and 15)
+
 ## Environment Variables
 
 The following environment variables can be used to configure the application:
@@ -182,6 +191,7 @@ The following environment variables can be used to configure the application:
 | `CSRF_ENABLED` | Enables or disables CSRF protection. |
 | `PAGE_SIZE_MIN` | Defines the minimum allowed page size. |
 | `PAGE_SIZE_MAX` | Defines the maximum allowed page size. |
+| `PAGE_SIZE_DEFAULT` | Defines the default page size. |
 
 ### Implementing Custom Providers
 

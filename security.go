@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+func normalizeIP(ip string) string {
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return ip
+	}
+	if v4 := parsed.To4(); v4 != nil {
+		return v4.String()
+	}
+	return parsed.String()
+}
+
 func requestIP(r *http.Request) string {
 	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
 		if comma := strings.IndexByte(ip, ','); comma >= 0 {
@@ -17,13 +28,13 @@ func requestIP(r *http.Request) string {
 		if host, _, err := net.SplitHostPort(ip); err == nil {
 			ip = host
 		}
-		return ip
+		return normalizeIP(ip)
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		return normalizeIP(r.RemoteAddr)
 	}
-	return host
+	return normalizeIP(host)
 }
 
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {

@@ -1,9 +1,11 @@
--- Add banned_ips table
+-- Add banned_ips table with expiry and cancellation tracking
 CREATE TABLE IF NOT EXISTS `banned_ips` (
     `id` int NOT NULL AUTO_INCREMENT,
     `ip_address` varchar(45) NOT NULL,
     `reason` text,
     `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `expires_at` datetime DEFAULT NULL,
+    `canceled_at` datetime DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `banned_ips_ip_idx` (`ip_address`)
 );

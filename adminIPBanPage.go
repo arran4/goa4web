@@ -33,6 +33,7 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	ip := strings.TrimSpace(r.PostFormValue("ip"))
+	ip = normalizeIP(ip)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
 	expiresStr := strings.TrimSpace(r.PostFormValue("expires"))
 	var expires sql.NullTime
@@ -57,6 +58,7 @@ func adminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ParseForm: %v", err)
 	}
 	for _, ip := range r.Form["ip"] {
+		ip = normalizeIP(ip)
 		if err := queries.CancelBannedIp(r.Context(), ip); err != nil {
 			log.Printf("cancel banned ip %s: %v", ip, err)
 		}

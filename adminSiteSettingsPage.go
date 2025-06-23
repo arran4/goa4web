@@ -11,7 +11,7 @@ func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
-		feedsEnabled = r.PostFormValue("feeds_enabled") != ""
+		appRuntimeConfig.FeedsEnabled = r.PostFormValue("feeds_enabled") != ""
 		http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
 		return
 	}
@@ -23,7 +23,7 @@ func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	data.CoreData.FeedsEnabled = feedsEnabled
+	data.CoreData.FeedsEnabled = appRuntimeConfig.FeedsEnabled
 
 	if err := renderTemplate(w, r, "adminSiteSettingsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)

@@ -82,7 +82,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			IndexItems:        idx,
 			UserID:            uid,
 			Title:             "Arran4's Website",
-			FeedsEnabled:      feedsEnabled,
+			FeedsEnabled:      appRuntimeConfig.FeedsEnabled,
 			NotificationCount: count,
 			Announcement:      ann,
 		})

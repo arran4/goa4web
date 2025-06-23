@@ -1,13 +1,6 @@
 package main
 
-import (
-	"os"
-	"strconv"
-
-	"github.com/arran4/goa4web/config"
-)
-
-var statsStartYear int
+import "strconv"
 
 func parseInt(v string) (int, bool) {
 	if v == "" {
@@ -31,12 +24,4 @@ func resolveStatsStartYear(cli, file, env string) int {
 		return n
 	}
 	return 2005
-}
-
-func loadStatsStartYear(cli string, file map[string]string) {
-	fileVal := ""
-	if v, ok := file["STATS_START_YEAR"]; ok {
-		fileVal = v
-	}
-	statsStartYear = resolveStatsStartYear(cli, fileVal, os.Getenv(config.EnvStatsStartYear))
 }

@@ -36,10 +36,15 @@ type RuntimeConfig struct {
 	PageSizeMin     int
 	PageSizeMax     int
 	PageSizeDefault int
+
+	FeedsEnabled   bool
+	StatsStartYear int
 }
 
 var cliRuntimeConfig RuntimeConfig
 var appRuntimeConfig RuntimeConfig
+var cliFeedsEnabled string
+var cliStatsStartYear string
 
 // loadRuntimeConfig builds the runtime configuration from CLI flags, optional
 // config files and environment variables following the precedence rules from
@@ -134,6 +139,17 @@ func loadRuntimeConfig(fileVals map[string]string) RuntimeConfig {
 	config.Merge(&cfg, fileCfg)
 	config.Merge(&cfg, cliRuntimeConfig)
 
+	cfg.FeedsEnabled = resolveFeedsEnabled(
+		cliFeedsEnabled,
+		fileVals[config.EnvFeedsEnabled],
+		os.Getenv(config.EnvFeedsEnabled),
+	)
+	cfg.StatsStartYear = resolveStatsStartYear(
+		cliStatsStartYear,
+		fileVals[config.EnvStatsStartYear],
+		os.Getenv(config.EnvStatsStartYear),
+	)
+
 	normalizeRuntimeConfig(&cfg)
 	appRuntimeConfig = cfg
 	return cfg
@@ -164,6 +180,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.PageSizeDefault > cfg.PageSizeMax {
 		cfg.PageSizeDefault = cfg.PageSizeMax
+	}
+	if cfg.StatsStartYear == 0 {
+		cfg.StatsStartYear = 2005
 	}
 }
 

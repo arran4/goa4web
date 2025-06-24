@@ -15,7 +15,7 @@ func getCompiledTemplates(funcs template.FuncMap) *template.Template {
 }
 
 func getMainCSSData() []byte {
-	b, err := os.ReadFile("main.css")
+	b, err := os.ReadFile("assets/main.css")
 	if err != nil {
 		panic(err)
 	}

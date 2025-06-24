@@ -2,12 +2,19 @@
 // versions:
 //   sqlc v1.29.0
 
-package main
+package goa4web
 
 import (
 	"database/sql"
 	"time"
 )
+
+type AuditLog struct {
+	ID           int32
+	UsersIdusers int32
+	Action       string
+	CreatedAt    time.Time
+}
 
 type BannedIp struct {
 	ID         int32
@@ -16,13 +23,6 @@ type BannedIp struct {
 	CreatedAt  time.Time
 	ExpiresAt  sql.NullTime
 	CanceledAt sql.NullTime
-}
-
-type AuditLog struct {
-	ID           int32
-	UsersIdusers int32
-	Action       string
-	CreatedAt    time.Time
 }
 
 type Blog struct {
@@ -255,6 +255,12 @@ type Subscription struct {
 	CreatedAt    time.Time
 }
 
+type TemplateOverride struct {
+	Name      string
+	Body      string
+	UpdatedAt time.Time
+}
+
 type Topicrestriction struct {
 	ForumtopicIdforumtopic int32
 	Viewlevel              sql.NullInt32
@@ -268,10 +274,11 @@ type Topicrestriction struct {
 }
 
 type User struct {
-	Idusers  int32
-	Email    sql.NullString
-	Passwd   sql.NullString
-	Username sql.NullString
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
 }
 
 type Userlang struct {

@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"database/sql"
@@ -31,7 +31,7 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-       queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -50,12 +50,12 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	buid := bu.Idusers
 
-       rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
-               UsersIdusers:  buid,
-               ViewerIdusers: uid,
-               Limit:         15,
-               Offset:        int32(offset),
-       })
+	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+		UsersIdusers:  buid,
+		ViewerIdusers: uid,
+		Limit:         15,
+		Offset:        int32(offset),
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

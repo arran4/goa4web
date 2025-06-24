@@ -3,4 +3,4 @@
 //   sqlc v1.20.0
 // source: queries.sql
 
-package main
+package goa4web

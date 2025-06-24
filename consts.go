@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 const (
 	// WritingTopicName is the default name for the hidden writing forum.

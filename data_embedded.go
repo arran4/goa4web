@@ -1,7 +1,7 @@
 //go:build !live
 // +build !live
 
-package main
+package goa4web
 
 import (
 	"embed"

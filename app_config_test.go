@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ func TestLoadAppConfigFile(t *testing.T) {
 	if err := writeFile(file, []byte(content), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
-	m := loadAppConfigFile(file)
+	m := LoadAppConfigFile(file)
 	if m["DB_USER"] != "dbuser" || m["EMAIL_PROVIDER"] != "smtp" {
 		t.Fatalf("unexpected map: %#v", m)
 	}
@@ -20,7 +20,7 @@ func TestLoadAppConfigFile(t *testing.T) {
 func TestLoadAppConfigFileMissing(t *testing.T) {
 	useMemFS(t)
 	file := "none.conf"
-	m := loadAppConfigFile(file)
+	m := LoadAppConfigFile(file)
 	if len(m) != 0 {
 		t.Fatalf("expected empty map, got %#v", m)
 	}

@@ -1,7 +1,7 @@
 //go:build sendgrid
 // +build sendgrid
 
-package main
+package goa4web
 
 import "testing"
 

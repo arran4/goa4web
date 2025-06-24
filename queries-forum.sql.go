@@ -3,7 +3,7 @@
 //   sqlc v1.29.0
 // source: queries-forum.sql
 
-package main
+package goa4web
 
 import (
 	"context"
@@ -391,7 +391,7 @@ func (q *Queries) GetAllForumTopicsForUser(ctx context.Context, usersIdusers int
 }
 
 const getAllForumTopicsForUserWithPermissionsRestrictionsAndTopic = `-- name: GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic :many
-SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
+SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
 JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
@@ -403,6 +403,7 @@ type GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
 	Passwd                       sql.NullString
+	PasswdAlgorithm              sql.NullString
 	Username                     sql.NullString
 	Idforumtopic                 int32
 	Lastposter                   int32
@@ -441,6 +442,7 @@ func (q *Queries) GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(ct
 			&i.Idusers,
 			&i.Email,
 			&i.Passwd,
+			&i.PasswdAlgorithm,
 			&i.Username,
 			&i.Idforumtopic,
 			&i.Lastposter,
@@ -479,7 +481,7 @@ func (q *Queries) GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(ct
 }
 
 const getAllForumTopicsWithPermissionsAndTopic = `-- name: GetAllForumTopicsWithPermissionsAndTopic :many
-SELECT u.idusers, u.email, u.passwd, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
+SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
 JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
@@ -490,6 +492,7 @@ type GetAllForumTopicsWithPermissionsAndTopicRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
 	Passwd                       sql.NullString
+	PasswdAlgorithm              sql.NullString
 	Username                     sql.NullString
 	Idforumtopic                 int32
 	Lastposter                   int32
@@ -528,6 +531,7 @@ func (q *Queries) GetAllForumTopicsWithPermissionsAndTopic(ctx context.Context) 
 			&i.Idusers,
 			&i.Email,
 			&i.Passwd,
+			&i.PasswdAlgorithm,
 			&i.Username,
 			&i.Idforumtopic,
 			&i.Lastposter,

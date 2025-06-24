@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ func updateConfigKey(path, key, value string) error {
 	if path == "" {
 		return nil
 	}
-	cfg := loadAppConfigFile(path)
+	cfg := LoadAppConfigFile(path)
 	if value == "" {
 		delete(cfg, key)
 	} else {

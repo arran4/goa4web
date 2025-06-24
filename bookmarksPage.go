@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"log"
@@ -10,32 +10,32 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 	}
 
-       session, ok := GetSessionOrFail(w, r)
-       if !ok {
-               return
-       }
-       uid, _ := session.Values["UID"].(int32)
+	session, ok := GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
 
-       data := Data{
-               CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
-       }
+	data := Data{
+		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+	}
 
-       if uid == 0 {
-               if err := renderTemplate(w, r, "bookmarksInfoPage.gohtml", data); err != nil {
-                       log.Printf("Template Error: %s", err)
-                       http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-                       return
-               }
-               return
-       }
+	if uid == 0 {
+		if err := renderTemplate(w, r, "bookmarksInfoPage.gohtml", data); err != nil {
+			log.Printf("Template Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		return
+	}
 
-       bookmarksCustomIndex(data.CoreData)
+	bookmarksCustomIndex(data.CoreData)
 
-       if err := renderTemplate(w, r, "bookmarksPage.gohtml", data); err != nil {
-               log.Printf("Template Error: %s", err)
-               http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-               return
-       }
+	if err := renderTemplate(w, r, "bookmarksPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func bookmarksCustomIndex(data *CoreData) {

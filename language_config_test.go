@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"flag"
@@ -17,7 +17,7 @@ func TestDefaultLanguageConfigPrecedence(t *testing.T) {
 	vals := map[string]string{config.EnvDefaultLanguage: "file"}
 	_ = fs.Parse([]string{"--default-language=cli"})
 
-	cfg := generateRuntimeConfig(fs, vals)
+	cfg := GenerateRuntimeConfig(fs, vals)
 	if cfg.DefaultLanguage != "cli" {
 		t.Fatalf("merged %#v", cfg.DefaultLanguage)
 	}
@@ -26,7 +26,7 @@ func TestDefaultLanguageConfigPrecedence(t *testing.T) {
 func TestLoadDefaultLanguageFromFileValues(t *testing.T) {
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	vals := map[string]string{config.EnvDefaultLanguage: "fileval"}
-	cfg := generateRuntimeConfig(fs, vals)
+	cfg := GenerateRuntimeConfig(fs, vals)
 	if cfg.DefaultLanguage != "fileval" {
 		t.Fatalf("want fileval got %q", cfg.DefaultLanguage)
 	}

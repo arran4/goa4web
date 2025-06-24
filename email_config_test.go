@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"flag"
@@ -22,7 +22,7 @@ func TestEmailConfigPrecedence(t *testing.T) {
 		config.EnvSMTPHost:      "file",
 	}
 	_ = fs.Parse([]string{"--email-provider=smtp", "--smtp-port=25"})
-	cfg := generateRuntimeConfig(fs, vals)
+	cfg := GenerateRuntimeConfig(fs, vals)
 	if cfg.EmailProvider != "smtp" || cfg.EmailSMTPHost != "file" || cfg.EmailSMTPPort != "25" {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -33,7 +33,7 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvEmailProvider: "log",
 	}
-	cfg := generateRuntimeConfig(fs, vals)
+	cfg := GenerateRuntimeConfig(fs, vals)
 	if cfg.EmailProvider != "log" {
 		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}

@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"log"
@@ -16,8 +16,8 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 		Back:     "/admin",
 	}
 
-	cfgMap := loadAppConfigFile(configFile)
-	srv.Config = generateRuntimeConfig(nil, cfgMap)
+	cfgMap := LoadAppConfigFile(ConfigFile)
+	srv.Config = GenerateRuntimeConfig(nil, cfgMap)
 	if err := validateDefaultLanguage(r.Context(), New(dbPool), srv.Config.DefaultLanguage); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	}

@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import "testing"
 

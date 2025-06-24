@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -22,6 +23,7 @@ var (
 // and ensures the schema exists.
 func InitDB(cfg RuntimeConfig) *UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
+	db.LogVerbosity = cfg.DBLogVerbosity
 	if cfg.DBUser == "" {
 		cfg.DBUser = "a4web"
 	}
@@ -46,10 +48,7 @@ func InitDB(cfg RuntimeConfig) *UserError {
 	if err != nil {
 		return &UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
-	var connector driver.Connector = baseConnector
-	if dbLogVerbosity > 0 {
-		connector = loggingConnector{baseConnector}
-	}
+	var connector driver.Connector = db.NewLoggingConnector(baseConnector)
 	dbPool = sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
 		return &UserError{Err: err, ErrorMessage: "failed to communicate with database"}

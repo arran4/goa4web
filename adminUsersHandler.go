@@ -121,7 +121,7 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := r.Context().Value(ContextValues("queries")).(*Queries).db.ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
+	} else if _, err := r.Context().Value(ContextValues("queries")).(*Queries).DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
 	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
@@ -170,7 +170,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := queries.db.ExecContext(r.Context(), "UPDATE users SET username=?, email=? WHERE idusers=?", username, email, uidi); err != nil {
+	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET username=?, email=? WHERE idusers=?", username, email, uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
 	}
 	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
@@ -202,7 +202,7 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("hashPassword: %w", err).Error())
 	} else if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := queries.db.ExecContext(r.Context(), "UPDATE users SET passwd=?, passwd_algorithm=? WHERE idusers=?", hash, alg, uidi); err != nil {
+	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET passwd=?, passwd_algorithm=? WHERE idusers=?", hash, alg, uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("reset password: %w", err).Error())
 	} else {
 		data.Password = newPass

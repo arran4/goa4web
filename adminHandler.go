@@ -30,7 +30,7 @@ func adminPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 	ctx := r.Context()
 	count := func(query string, dest *int64) {
-		if err := queries.db.QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
+		if err := queries.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
 			log.Printf("adminPage count query error: %v", err)
 		}
 	}

@@ -84,7 +84,7 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	result, err := queries.db.ExecContext(r.Context(),
+	result, err := queries.DB().ExecContext(r.Context(),
 		"INSERT INTO users (username, passwd, passwd_algorithm, email) VALUES (?, ?, ?, ?)",
 		username, hash, alg, email,
 	)

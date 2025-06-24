@@ -11,11 +11,12 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	os.Unsetenv("EMAIL_PROVIDER")
-	appRuntimeConfig.EmailProvider = ""
+	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{UserID: 1})
@@ -35,7 +36,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 
 func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	os.Setenv("EMAIL_PROVIDER", "log")
-	appRuntimeConfig.EmailProvider = "log"
+	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
 	defer os.Unsetenv("EMAIL_PROVIDER")
 
 	db, mock, err := sqlmock.New()

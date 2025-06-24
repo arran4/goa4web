@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func handleDie(w http.ResponseWriter, message string) {
@@ -83,7 +85,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			IndexItems:        idx,
 			UserID:            uid,
 			Title:             "Arran4's Website",
-			FeedsEnabled:      appRuntimeConfig.FeedsEnabled,
+			FeedsEnabled:      runtimeconfig.AppRuntimeConfig.FeedsEnabled,
 			NotificationCount: count,
 			Announcement:      ann,
 		})
@@ -190,15 +192,15 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 
 // getPageSize returns the preferred page size within configured bounds.
 func getPageSize(r *http.Request) int {
-	size := appRuntimeConfig.PageSizeDefault
+	size := runtimeconfig.AppRuntimeConfig.PageSizeDefault
 	if pref, _ := r.Context().Value(ContextValues("preference")).(*Preference); pref != nil && pref.PageSize != 0 {
 		size = int(pref.PageSize)
 	}
-	if size < appRuntimeConfig.PageSizeMin {
-		size = appRuntimeConfig.PageSizeMin
+	if size < runtimeconfig.AppRuntimeConfig.PageSizeMin {
+		size = runtimeconfig.AppRuntimeConfig.PageSizeMin
 	}
-	if size > appRuntimeConfig.PageSizeMax {
-		size = appRuntimeConfig.PageSizeMax
+	if size > runtimeconfig.AppRuntimeConfig.PageSizeMax {
+		size = runtimeconfig.AppRuntimeConfig.PageSizeMax
 	}
 	return size
 }

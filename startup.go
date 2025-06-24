@@ -13,6 +13,7 @@ import (
 
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -23,7 +24,7 @@ var (
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg RuntimeConfig) *UserError {
+func InitDB(cfg runtimeconfig.RuntimeConfig) *UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
 	if cfg.DBUser == "" {
@@ -65,11 +66,11 @@ func InitDB(cfg RuntimeConfig) *UserError {
 }
 
 // checkDatabase attempts to connect and ping the configured database.
-func checkDatabase(cfg RuntimeConfig) *UserError {
+func checkDatabase(cfg runtimeconfig.RuntimeConfig) *UserError {
 	return InitDB(cfg)
 }
 
-func performStartupChecks(cfg RuntimeConfig) error {
+func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
 	if ue := checkDatabase(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
@@ -79,7 +80,7 @@ func performStartupChecks(cfg RuntimeConfig) error {
 	return nil
 }
 
-func checkUploadDir(cfg RuntimeConfig) *UserError {
+func checkUploadDir(cfg runtimeconfig.RuntimeConfig) *UserError {
 	if cfg.ImageUploadDir == "" {
 		return &UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}

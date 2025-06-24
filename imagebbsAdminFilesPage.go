@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +25,7 @@ func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
-	base := appRuntimeConfig.ImageUploadDir
+	base := runtimeconfig.AppRuntimeConfig.ImageUploadDir
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)

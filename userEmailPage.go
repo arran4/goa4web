@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 const errMailNotConfigured = "mail isn't configured" // shown when Test mail has no provider
@@ -92,8 +94,8 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	base := "http://" + r.Host
-	if appRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(appRuntimeConfig.HTTPHostname, "/")
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
 	}
 	pageURL := base + r.URL.Path
 	provider := getEmailProvider()

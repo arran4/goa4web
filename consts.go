@@ -31,9 +31,6 @@ const (
 	// LinkerTopicDescription describes the hidden linker forum.
 	LinkerTopicDescription = "THIS IS A HIDDEN FORUM FOR A LINKER TOPIC"
 
-	// DefaultPageSize defines the number of items shown per page.
-	DefaultPageSize = 15
-
 	// Alphabet lists letters for search navigation.
 	Alphabet = "abcdefghijklmnopqrstuvwxyz"
 

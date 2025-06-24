@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestGetEmailProviderSMTP(t *testing.T) {
-	p := providerFromConfig(RuntimeConfig{
+	p := providerFromConfig(runtimeconfig.RuntimeConfig{
 		EmailProvider: "smtp",
 		EmailSMTPHost: "localhost",
 		EmailSMTPPort: "25",
@@ -22,13 +23,13 @@ func TestGetEmailProviderSMTP(t *testing.T) {
 }
 
 func TestGetEmailProviderLocal(t *testing.T) {
-	if _, ok := providerFromConfig(RuntimeConfig{EmailProvider: "local"}).(email.LocalProvider); !ok {
+	if _, ok := providerFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "local"}).(email.LocalProvider); !ok {
 		t.Fatalf("expected LocalProvider")
 	}
 }
 
 func TestGetEmailProviderJMAP(t *testing.T) {
-	p := providerFromConfig(RuntimeConfig{
+	p := providerFromConfig(runtimeconfig.RuntimeConfig{
 		EmailProvider:     "jmap",
 		EmailJMAPEndpoint: "http://example.com",
 		EmailJMAPAccount:  "acct",
@@ -44,7 +45,7 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 }
 
 func TestGetEmailProviderSESNoCreds(t *testing.T) {
-	if p := providerFromConfig(RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
+	if p := providerFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
 		t.Errorf("expected nil provider, got %#v", p)
 	}
 }

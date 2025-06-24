@@ -10,6 +10,7 @@ import (
 
 	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func main() {
@@ -23,7 +24,7 @@ func main() {
 
 	fileVals := goa4web.LoadAppConfigFile(cfgPath)
 
-	fs := goa4web.NewRuntimeFlagSet(os.Args[0])
+	fs := runtimeconfig.NewRuntimeFlagSet(os.Args[0])
 	var (
 		sessionSecret     string
 		sessionSecretFile string
@@ -47,7 +48,7 @@ func main() {
 		log.Fatalf("session secret: %v", err)
 	}
 
-	cfg := goa4web.GenerateRuntimeConfig(fs, fileVals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, fileVals)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

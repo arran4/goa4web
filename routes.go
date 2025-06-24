@@ -4,6 +4,8 @@ import (
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func registerRoutes(r *mux.Router) {
@@ -135,7 +137,7 @@ func registerBookmarksRoutes(r *mux.Router) {
 
 func registerImagebbsRoutes(r *mux.Router) {
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
-	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(appRuntimeConfig.ImageUploadDir))))
+	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(runtimeconfig.AppRuntimeConfig.ImageUploadDir))))
 	ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", imagebbsBoardRssPage).Methods("GET")
 	ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")

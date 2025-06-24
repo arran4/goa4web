@@ -1,4 +1,4 @@
-package goa4web
+package runtimeconfig
 
 import (
 	"flag"
@@ -7,6 +7,9 @@ import (
 
 	"github.com/arran4/goa4web/config"
 )
+
+// DefaultPageSize defines the number of items shown per page.
+const DefaultPageSize = 15
 
 // RuntimeConfig stores configuration values resolved from environment
 // variables, optional files and command line flags.
@@ -46,7 +49,8 @@ type RuntimeConfig struct {
 	ImageMaxBytes  int
 }
 
-var appRuntimeConfig RuntimeConfig
+// AppRuntimeConfig stores the current application configuration.
+var AppRuntimeConfig RuntimeConfig
 
 // NewRuntimeFlagSet returns a FlagSet containing all runtime configuration
 // options. The returned FlagSet uses ContinueOnError to allow tests to supply
@@ -193,7 +197,7 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) Runtime
 	)
 
 	normalizeRuntimeConfig(&cfg)
-	appRuntimeConfig = cfg
+	AppRuntimeConfig = cfg
 	return cfg
 }
 
@@ -234,9 +238,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 }
 
-// updatePaginationConfig adjusts the pagination fields of cfg and enforces
+// UpdatePaginationConfig adjusts the pagination fields of cfg and enforces
 // valid limits.
-func updatePaginationConfig(cfg *RuntimeConfig, min, max, def int) {
+func UpdatePaginationConfig(cfg *RuntimeConfig, min, max, def int) {
 	if min != 0 {
 		cfg.PageSizeMin = min
 	}

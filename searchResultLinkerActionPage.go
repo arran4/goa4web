@@ -52,7 +52,7 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := renderTemplate(w, r, "searchResultLinkerActionPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "resultLinkerActionPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

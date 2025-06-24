@@ -21,7 +21,7 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if uid == 0 {
-		if err := renderTemplate(w, r, "bookmarksInfoPage.gohtml", data); err != nil {
+		if err := renderTemplate(w, r, "infoPage.gohtml", data); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -31,7 +31,7 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 
 	bookmarksCustomIndex(data.CoreData)
 
-	if err := renderTemplate(w, r, "bookmarksPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "page.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

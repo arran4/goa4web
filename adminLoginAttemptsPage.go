@@ -19,7 +19,7 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Attempts = items
-	if err := renderTemplate(w, r, "adminLoginAttemptsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "loginAttemptsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

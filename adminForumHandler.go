@@ -17,7 +17,7 @@ func adminForumPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	err := renderTemplate(w, r, "adminForumPage.gohtml", data)
+	err := renderTemplate(w, r, "page.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -47,7 +47,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Thread metadata rebuild complete.")
 	}
-	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
+	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -76,7 +76,7 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Topic metadata rebuild complete.")
 	}
-	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
+	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

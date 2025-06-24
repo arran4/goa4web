@@ -34,7 +34,7 @@ func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	if err := renderTemplate(w, r, "adminNotificationsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "notificationsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

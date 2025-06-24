@@ -165,7 +165,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomNewsIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "newsPostPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "postPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

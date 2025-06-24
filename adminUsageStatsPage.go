@@ -48,7 +48,7 @@ func adminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.StartYear = appRuntimeConfig.StatsStartYear
 
-	if err := renderTemplate(w, r, "adminUsageStatsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "usageStatsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

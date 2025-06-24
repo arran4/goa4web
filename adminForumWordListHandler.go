@@ -32,7 +32,7 @@ func adminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = renderTemplate(w, r, "adminForumWordListPage.gohtml", data)
+	err = renderTemplate(w, r, "forumWordListPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

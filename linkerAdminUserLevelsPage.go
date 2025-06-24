@@ -62,7 +62,7 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	data.UserLevels = perms
 
 	CustomLinkerIndex(data.CoreData, r)
-	if err := renderTemplate(w, r, "linkerAdminUserLevelsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "adminUserLevelsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

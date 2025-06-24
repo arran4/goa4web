@@ -33,7 +33,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = renderTemplate(w, r, "adminLanguagesPage.gohtml", data)
+	err = renderTemplate(w, r, "languagesPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
 	}
-	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
+	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -86,7 +86,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 	}
-	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
+	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -111,7 +111,7 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
+	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

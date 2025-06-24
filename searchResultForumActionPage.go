@@ -33,7 +33,7 @@ func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 		data.CommentsEmptyWords = noResults
 	}
 
-	if err := renderTemplate(w, r, "searchResultForumActionPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "resultForumActionPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

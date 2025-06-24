@@ -31,12 +31,12 @@ func registerRoutes(r *mux.Router) {
 
 func registerNewsRoutes(r *mux.Router) {
 	// News
-	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("newsPage.gohtml")))).Methods("GET")
+	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("page.gohtml")))).Methods("GET")
 	r.HandleFunc("/", taskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(AddNewsIndex)
 	nr.HandleFunc(".rss", newsRssPage).Methods("GET")
-	nr.HandleFunc("", runTemplate("newsPage.gohtml")).Methods("GET")
+	nr.HandleFunc("", runTemplate("page.gohtml")).Methods("GET")
 	nr.HandleFunc("", taskDoneAutoRefreshPage).Methods("POST")
 	//TODO nr.HandleFunc("/news/{id:[0-9]+}", newsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", newsPostPage).Methods("GET")

@@ -38,7 +38,7 @@ func adminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err := renderTemplate(w, r, "adminServerStatsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "serverStatsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

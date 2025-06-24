@@ -22,7 +22,7 @@ func adminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Announcements = rows
-	if err := renderTemplate(w, r, "adminAnnouncementsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "announcementsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

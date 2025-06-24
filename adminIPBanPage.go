@@ -23,7 +23,7 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	if err := renderTemplate(w, r, "adminIPBanPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "iPBanPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

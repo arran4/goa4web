@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -28,7 +29,7 @@ func writingsCategoryPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Data{CoreData: cd, CategoryID: int32(cid), UserLevels: rows}
 	CustomWritingsIndex(cd, r)
-	if err := renderTemplate(w, r, "categoryPermissionsPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "categoryPermissionsPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

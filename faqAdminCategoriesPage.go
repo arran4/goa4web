@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func faqAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +35,7 @@ func faqAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomFAQIndex(data.CoreData)
 
-	if err := renderTemplate(w, r, "adminCategoriesPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "adminCategoriesPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

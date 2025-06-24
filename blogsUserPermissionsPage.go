@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func getPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +55,7 @@ func getPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	data.Rows = rows
 
 	CustomBlogIndex(data.CoreData, r)
-	err = renderTemplate(w, r, "userPermissionsPage.gohtml", data)
+	err = templates.RenderTemplate(w, "userPermissionsPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -93,7 +95,7 @@ func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 
 	CustomBlogIndex(data.CoreData, r)
 
-	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -119,7 +121,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomBlogIndex(data.CoreData, r)
-	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -160,7 +162,7 @@ func blogsUsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	CustomBlogIndex(data.CoreData, r)
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -195,7 +197,7 @@ func blogsUsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Reques
 	}
 
 	CustomBlogIndex(data.CoreData, r)
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

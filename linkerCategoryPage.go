@@ -3,10 +3,12 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/mux"
 )
 
 func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +48,7 @@ func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomLinkerIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "categoryPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "categoryPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

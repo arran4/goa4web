@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func copyValues(v url.Values) url.Values {
@@ -92,7 +94,7 @@ func adminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := renderTemplate(w, r, "auditLogPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "auditLogPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +37,7 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomLinkerIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "categoriesPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "categoriesPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

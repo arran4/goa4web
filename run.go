@@ -6,8 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -113,7 +115,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 
 		log.Printf("rendering template %s", template)
 
-		if err := renderTemplate(w, r, template, data); err != nil {
+		if err := templates.RenderTemplate(w, template, data, NewFuncs(r)); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -144,7 +146,7 @@ func safeGo(fn func()) {
 
 // mainCSSHandler serves the site's stylesheet.
 func mainCSSHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(getMainCSSData()))
+	http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(templates.GetMainCSSData()))
 }
 
 // redirectPermanent returns a handler that redirects to the provided path using

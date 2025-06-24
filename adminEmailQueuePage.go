@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func adminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +24,7 @@ func adminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Emails = items
-	if err := renderTemplate(w, r, "emailQueuePage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "emailQueuePage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

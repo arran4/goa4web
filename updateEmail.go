@@ -8,7 +8,7 @@ import (
 // defaultUpdateEmailText contains the compiled-in notification email template.
 // Administrators may override it by saving a new body in the template_overrides table.
 //
-//go:embed templates/updateEmail.txt
+//go:embed core/templates/templates/updateEmail.txt
 var defaultUpdateEmailText string
 
 // getUpdateEmailText returns the update email template body, preferring a database

@@ -3,9 +3,11 @@ package goa4web
 import (
 	"database/sql"
 	_ "embed"
-	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/templates"
+	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
 func adminPage(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +44,7 @@ func adminPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)
 	count("SELECT COUNT(*) FROM writing", &data.Stats.Writings)
 
-	err := renderTemplate(w, r, "page.gohtml", data)
+	err := templates.RenderTemplate(w, "page.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

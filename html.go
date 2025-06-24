@@ -2,7 +2,6 @@ package goa4web
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/a4code2html"
@@ -273,8 +272,4 @@ func formatBlob(input string) string {
 		}
 	}
 	return formatter.String()
-}
-
-func renderTemplate(w http.ResponseWriter, r *http.Request, name string, data interface{}) error {
-	return getCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, name, data)
 }

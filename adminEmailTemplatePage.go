@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -41,7 +42,7 @@ func adminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		Error:    r.URL.Query().Get("error"),
 	}
 
-	if err := renderTemplate(w, r, "emailTemplatePage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "emailTemplatePage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

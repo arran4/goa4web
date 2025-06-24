@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +53,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sections = groups
 
-	err = renderTemplate(w, r, "usersPermissionsPage.gohtml", data)
+	err = templates.RenderTemplate(w, "usersPermissionsPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -90,7 +92,7 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	} else {
 		logAudit(r, "Permission allow")
 	}
-	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -117,7 +119,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		logAudit(r, "Permission disallow")
 	}
-	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -153,7 +155,7 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 		logAudit(r, "Permission update")
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -221,18 +221,18 @@ The following environment variables can be used to configure the application:
 
 ### Implementing Custom Providers
 
-New email backends can be added by satisfying the `MailProvider` interface
-defined in `email.go`:
+New email backends can be added by satisfying the `Provider` interface
+defined in `internal/email/provider.go`:
 
 ```go
-type MailProvider interface {
+type Provider interface {
     Send(ctx context.Context, to, subject, body string) error
 }
 ```
 
 Create a new file implementing this interface and add a case in
 `providerFromConfig` that returns your provider. Providers that rely on optional
-dependencies should live behind a build tag. See `email_sendgrid.go` for an
+dependencies should live behind a build tag. See `internal/email/sendgrid.go` for an
 example provider built with the `sendgrid` tag.
 
 ## Database Upgrades

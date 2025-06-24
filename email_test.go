@@ -9,12 +9,13 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/email"
 )
 
 func TestGetEmailProviderLog(t *testing.T) {
 	cfg := RuntimeConfig{EmailProvider: "log"}
-	if p := providerFromConfig(cfg); reflect.TypeOf(p) != reflect.TypeOf(logMailProvider{}) {
-		t.Errorf("expected logMailProvider, got %#v", p)
+	if p := providerFromConfig(cfg); reflect.TypeOf(p) != reflect.TypeOf(email.LogProvider{}) {
+		t.Errorf("expected LogProvider, got %#v", p)
 	}
 }
 
@@ -143,9 +144,9 @@ func TestEmailQueueWorker(t *testing.T) {
 
 func TestSendGridProviderFromConfig(t *testing.T) {
 	p := providerFromConfig(RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k"})
-	if sendgridBuilt {
-		if _, ok := p.(sendGridProvider); !ok {
-			t.Fatalf("expected sendGridProvider, got %#v", p)
+	if email.SendgridBuilt {
+		if _, ok := p.(email.SendGridProvider); !ok {
+			t.Fatalf("expected SendGridProvider, got %#v", p)
 		}
 	} else {
 		if p != nil {

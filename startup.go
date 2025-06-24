@@ -12,6 +12,7 @@ import (
 	"time"
 
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -123,7 +124,7 @@ func ensureSchema(ctx context.Context, db *sql.DB) error {
 }
 
 // startWorkers launches goroutines for email processing and notification cleanup.
-func startWorkers(ctx context.Context, db *sql.DB, provider MailProvider) {
+func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
 	log.Printf("Starting email worker")
 	safeGo(func() { emailQueueWorker(ctx, New(db), provider, time.Minute) })
 	log.Printf("Starting notification purger worker")

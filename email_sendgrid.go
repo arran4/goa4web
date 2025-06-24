@@ -12,6 +12,9 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+// sendgridBuilt indicates whether the SendGrid provider is compiled in.
+const sendgridBuilt = true
+
 // sendGridProvider sends mail using the SendGrid API.
 type sendGridProvider struct{ apiKey string }
 

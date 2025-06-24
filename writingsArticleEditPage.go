@@ -2,11 +2,13 @@ package goa4web
 
 import (
 	"database/sql"
-	"github.com/arran4/goa4web/core"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/mux"
 )
 
 func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +59,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomWritingsIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "articleEditPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "articleEditPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

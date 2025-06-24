@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +119,7 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "adminUserPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "adminUserPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

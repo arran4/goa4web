@@ -10,17 +10,17 @@ import (
 	"testing"
 )
 
-//go:embed templates/*.gohtml templates/*/*.gohtml
+//go:embed core/templates/templates/*.gohtml core/templates/templates/*/*.gohtml
 var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(testTemplates,
-		"templates/*.gohtml", "templates/*/*.gohtml"))
+		"core/templates/templates/*.gohtml", "core/templates/templates/*/*.gohtml"))
 }
 
 func TestParseEachTemplate(t *testing.T) {
-	err := fs.WalkDir(testTemplates, "templates", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(testTemplates, "core/templates/templates", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

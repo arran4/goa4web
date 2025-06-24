@@ -3,12 +3,14 @@ package goa4web
 import (
 	"database/sql"
 	_ "embed"
-	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
+	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
 type PageLink struct {
@@ -139,7 +141,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		data.PrevLink = base + "?" + vals.Encode()
 	}
 
-	if err = renderTemplate(w, r, "searchWordListPage.gohtml", data); err != nil {
+	if err = templates.RenderTemplate(w, "searchWordListPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

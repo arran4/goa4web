@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +36,7 @@ func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	if err := renderTemplate(w, r, "notificationsPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "notificationsPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

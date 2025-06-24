@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/mux"
 )
 
 func linkerPage(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +63,7 @@ func linkerPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomLinkerIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "page.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "page.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

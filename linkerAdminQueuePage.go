@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +111,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	CustomLinkerIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "adminQueuePage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "adminQueuePage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

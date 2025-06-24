@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/templates"
+	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
 func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +35,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = renderTemplate(w, r, "languagesPage.gohtml", data)
+	err = templates.RenderTemplate(w, "languagesPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -62,7 +64,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
 	}
-	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -86,7 +88,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 	}
-	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -111,7 +113,7 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

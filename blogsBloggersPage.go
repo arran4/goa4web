@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func blogsBloggersPage(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +91,7 @@ func blogsBloggersPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "bloggersPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "bloggersPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

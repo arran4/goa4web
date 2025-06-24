@@ -3,9 +3,11 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +54,7 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := renderTemplate(w, r, "resultWritingsActionPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "resultWritingsActionPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

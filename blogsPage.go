@@ -14,7 +14,7 @@ import (
 
 func blogsPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*GetBlogEntriesForUserDescendingRow
+		*GetBlogEntriesForUserDescendingLanguagesRow
 		EditUrl string
 	}
 	type Data struct {
@@ -33,15 +33,13 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	userLanguagePref := 0
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	rows, err := queries.GetBlogEntriesForUserDescending(r.Context(), GetBlogEntriesForUserDescendingParams{
-		UsersIdusers:       int32(userId),
-		LanguageIdlanguage: int32(userLanguagePref),
-		Limit:              15,
-		Offset:             int32(offset),
-	})
+       queries := r.Context().Value(ContextValues("queries")).(*Queries)
+       rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+               UsersIdusers:  int32(userId),
+               ViewerIdusers: uid,
+               Limit:         15,
+               Offset:        int32(offset),
+       })
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -64,8 +62,8 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
-			GetBlogEntriesForUserDescendingRow: row,
-			EditUrl:                            editUrl,
+			GetBlogEntriesForUserDescendingLanguagesRow: row,
+			EditUrl: editUrl,
 		})
 	}
 
@@ -215,10 +213,12 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		Created:     time.Date(2005, 6, 25, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows, err := queries.GetBlogEntriesForUserDescending(r.Context(), GetBlogEntriesForUserDescendingParams{
-		UsersIdusers: int32(uid),
-		Limit:        15,
-	})
+       rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+               UsersIdusers:  int32(uid),
+               ViewerIdusers: int32(uid),
+               Limit:         15,
+               Offset:        0,
+       })
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -12,7 +12,7 @@ import (
 
 func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*GetBlogEntriesForUserDescendingRow
+		*GetBlogEntriesForUserDescendingLanguagesRow
 		EditUrl string
 	}
 	type Data struct {
@@ -31,9 +31,7 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	userLanguagePref := 0
-
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+       queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -52,12 +50,12 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	buid := bu.Idusers
 
-	rows, err := queries.GetBlogEntriesForUserDescending(r.Context(), GetBlogEntriesForUserDescendingParams{
-		UsersIdusers:       buid,
-		LanguageIdlanguage: int32(userLanguagePref),
-		Limit:              15,
-		Offset:             int32(offset),
-	})
+       rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+               UsersIdusers:  buid,
+               ViewerIdusers: uid,
+               Limit:         15,
+               Offset:        int32(offset),
+       })
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -80,8 +78,8 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
-			GetBlogEntriesForUserDescendingRow: row,
-			EditUrl:                            editUrl,
+			GetBlogEntriesForUserDescendingLanguagesRow: row,
+			EditUrl: editUrl,
 		})
 	}
 	CustomBlogIndex(data.CoreData, r)

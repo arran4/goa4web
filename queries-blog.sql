@@ -22,6 +22,21 @@ AND (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
+-- name: GetBlogEntriesForUserDescendingLanguages :many
+SELECT b.*, u.username, coalesce(th.comments, 0)
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+WHERE (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
+AND (
+    NOT EXISTS (SELECT 1 FROM userlang ul WHERE ul.users_idusers = sqlc.arg(Viewer_idusers))
+    OR b.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM userlang ul WHERE ul.users_idusers = sqlc.arg(Viewer_idusers)
+    )
+)
+ORDER BY b.written DESC
+LIMIT ? OFFSET ?;
+
 -- name: GetBlogEntriesByIdsDescending :many
 SELECT b.*
 FROM blogs b

@@ -1,4 +1,6 @@
-package goa4web
+// Package a4code2html converts a small markup language into HTML or
+// alternative formats.
+package a4code2html
 
 import (
 	"bytes"
@@ -8,38 +10,39 @@ import (
 	"strings"
 )
 
-type codetype int
+// CodeType defines the output mode for A4code2html.
+type CodeType int
 
-// codetype defines the output mode for A4code2html.
 const (
-	// ct_html produces standard HTML output.
-	ct_html codetype = iota
+	// CTHTML produces standard HTML output.
+	CTHTML CodeType = iota
 
-	// ct_tableOfContents outputs only the table of contents.
-	ct_tableOfContents
+	// CTTableOfContents outputs only the table of contents.
+	CTTableOfContents
 
-	// ct_tagstrip removes all formatting tags.
-	ct_tagstrip
+	// CTTagStrip removes all formatting tags.
+	CTTagStrip
 
-	// ct_wordsonly returns only the raw words.
-	ct_wordsonly
+	// CTWordsOnly returns only the raw words.
+	CTWordsOnly
 )
 
 type A4code2html struct {
 	input    string
 	output   bytes.Buffer
-	codeType codetype
+	CodeType CodeType
 	makeTC   bool
 	stack    []string
 }
 
 func NewA4Code2HTML() *A4code2html {
 	return &A4code2html{
-		codeType: ct_html,
+		CodeType: CTHTML,
 	}
 }
 
-func sanitizeURL(raw string) (string, bool) {
+// SanitizeURL validates a hyperlink and returns a safe version.
+func SanitizeURL(raw string) (string, bool) {
 	u, err := url.Parse(raw)
 	if err != nil || u.Scheme == "" {
 		return html.EscapeString(raw), false
@@ -58,8 +61,13 @@ func (c *A4code2html) clear() {
 	c.stack = nil
 }
 
+// SetInput assigns the text to be processed.
+func (c *A4code2html) SetInput(s string) {
+	c.input = s
+}
+
 func (c *A4code2html) Escape(ch byte) string {
-	if c.codeType == ct_wordsonly {
+	if c.CodeType == CTWordsOnly {
 		return " "
 	}
 	switch ch {
@@ -70,8 +78,8 @@ func (c *A4code2html) Escape(ch byte) string {
 	case '>':
 		return "&gt;"
 	case '\n':
-		switch c.codeType {
-		case ct_tagstrip:
+		switch c.CodeType {
+		case CTTagStrip:
 			return "\n"
 		default:
 			return "<br />\n"
@@ -153,61 +161,61 @@ func (a *A4code2html) acomm() int {
 	command := a.getNext(true)
 	switch command {
 	case "*", "b", "bold":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<strong>")
 			a.stack = append(a.stack, "</strong>")
 		}
 	case "/", "i", "italic":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<i>")
 			a.stack = append(a.stack, "</i>")
 		}
 	case "_", "u", "underline":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<u>")
 			a.stack = append(a.stack, "</u>")
 		}
 	case "^", "p", "power", "sup":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<sup>")
 			a.stack = append(a.stack, "</sup>")
 		}
 	case ".", "s", "sub":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<sub>")
 			a.stack = append(a.stack, "</sub>")
 		}
 	case "img", "image":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<img src=\"")
 			a.stack = append(a.stack, "\" />")
 		}
 	case "a", "link", "url":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 			a.getNext(false)
 		default:
 			raw := a.getNext(false)
-			safe, ok := sanitizeURL(raw)
+			safe, ok := SanitizeURL(raw)
 			if ok {
 				a.output.WriteString("<a href=\"" + safe + "\" target=\"_BLANK\">")
 				a.stack = append(a.stack, "</a>")
@@ -217,50 +225,50 @@ func (a *A4code2html) acomm() int {
 			}
 		}
 	case "code":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>")
 			a.directOutput("code]")
 			a.output.WriteString("</pre></table>")
 		}
 	case "quoteof":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString(fmt.Sprintf("<table width=90%% align=center bgcolor=lightgreen><tr><th>Quote of %s: <tr><td>", a.getNext(false)))
 			a.stack = append(a.stack, "</table>")
 		}
 	case "quote", "q":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<table width=90% align=center bgcolor=lightgreen><tr><th>Quote: <tr><td>")
 			a.stack = append(a.stack, "</table>")
 		}
 	case "spoiler", "sp":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<span onmouseover=\"this.style.color='#FFFFFF';\" onmouseout=\"this.style.color=this.style.backgroundColor='#000000'\" style=\"color: rgb(0, 0, 0); background: rgb(0, 0, 0);\">")
 			a.stack = append(a.stack, "</span>")
 		}
 	case "indent":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<table width=90% align=center><tr><td>")
 			a.stack = append(a.stack, "</table>")
 		}
 	case "hr":
-		switch a.codeType {
-		case ct_tableOfContents:
-		case ct_tagstrip, ct_wordsonly:
+		switch a.CodeType {
+		case CTTableOfContents:
+		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<hr>")
 			a.stack = append(a.stack, "/>")

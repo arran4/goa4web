@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/a4code2html"
 	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
@@ -30,7 +31,9 @@ func writingsFeedGen(r *http.Request, queries *Queries) (*feeds.Feed, error) {
 		if desc == "" {
 			desc = row.Writting.String
 		}
-		conv := &A4code2html{codeType: ct_tagstrip, input: desc}
+		conv := a4code2html.NewA4Code2HTML()
+		conv.CodeType = a4code2html.CTTagStrip
+		conv.SetInput(desc)
 		conv.Process()
 		title := row.Title.String
 		if title == "" {
@@ -44,7 +47,7 @@ func writingsFeedGen(r *http.Request, queries *Queries) (*feeds.Feed, error) {
 			Title:       title,
 			Link:        &feeds.Link{Href: fmt.Sprintf("/writings/article/%d", row.Idwriting)},
 			Created:     time.Now(),
-			Description: conv.output.String(),
+			Description: conv.Output(),
 		}
 		if row.Published.Valid {
 			item.Created = row.Published.Time

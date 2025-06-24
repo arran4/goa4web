@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/a4code2html"
 	"github.com/gorilla/csrf"
 )
 
@@ -21,18 +22,18 @@ func NewFuncs(r *http.Request) template.FuncMap {
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
 		"version":   func() string { return version },
 		"a4code2html": func(s string) template.HTML {
-			c := NewA4Code2HTML()
-			c.codeType = ct_html
-			c.input = s
+			c := a4code2html.NewA4Code2HTML()
+			c.CodeType = a4code2html.CTHTML
+			c.SetInput(s)
 			c.Process()
-			return template.HTML(c.output.String())
+			return template.HTML(c.Output())
 		},
 		"a4code2string": func(s string) string {
-			c := NewA4Code2HTML()
-			c.codeType = ct_wordsonly
-			c.input = s
+			c := a4code2html.NewA4Code2HTML()
+			c.CodeType = a4code2html.CTWordsOnly
+			c.SetInput(s)
 			c.Process()
-			return c.output.String()
+			return c.Output()
 		},
 		"firstline": func(s string) string {
 			return strings.Split(s, "\n")[0]

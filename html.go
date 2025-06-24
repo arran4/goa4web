@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/arran4/goa4web/a4code2html"
 )
 
 func anchorLink(anchor, linkName string) string {
@@ -28,7 +30,7 @@ func categoryLevel(categoryName string, level int) string {
 }
 
 func externalLink(pagename, linkName string) string {
-	safe, ok := sanitizeURL(pagename)
+	safe, ok := a4code2html.SanitizeURL(pagename)
 	if ok {
 		return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">%s</a>", safe, linkName)
 	}

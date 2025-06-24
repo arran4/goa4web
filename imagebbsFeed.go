@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/a4code2html"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"log"
@@ -31,7 +32,9 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*GetAllImag
 			continue
 		}
 		desc := row.Description.String
-		conv := &A4code2html{codeType: ct_tagstrip, input: desc}
+		conv := a4code2html.NewA4Code2HTML()
+		conv.CodeType = a4code2html.CTTagStrip
+		conv.SetInput(desc)
 		conv.Process()
 		i := len(desc)
 		if i > 255 {
@@ -41,7 +44,7 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*GetAllImag
 			Title:   desc[:i],
 			Link:    &feeds.Link{Href: fmt.Sprintf("/imagebbs/board/%d/thread/%d", boardID, row.ForumthreadIdforumthread)},
 			Created: time.Now(),
-			Description: fmt.Sprintf("%s\n-\n%s", conv.output.String(), func() string {
+			Description: fmt.Sprintf("%s\n-\n%s", conv.Output(), func() string {
 				if row.Username.Valid {
 					return row.Username.String
 				}

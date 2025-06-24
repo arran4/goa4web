@@ -40,6 +40,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		session, err := GetSession(request)
 		if err != nil {
 			sessionErrorRedirect(writer, request, err)
+			return
 		}
 		var uid int32
 		if err == nil {

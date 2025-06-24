@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 // adminPermissionsSectionPage displays the current distinct permission sections
@@ -29,7 +31,7 @@ func adminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sections = rows
 
-	if err := renderTemplate(w, r, "permissionsSectionPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "permissionsSectionPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -61,7 +63,7 @@ func adminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RenamePermissionSection: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

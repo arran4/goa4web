@@ -3,11 +3,13 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/mux"
 )
 
 func forumAdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +42,7 @@ func forumAdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "adminUserLevelPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "adminUserLevelPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

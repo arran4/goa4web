@@ -3,10 +3,12 @@ package goa4web
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/mux"
 )
 
 func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +51,7 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "blogEditPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "blogEditPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

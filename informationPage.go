@@ -1,12 +1,14 @@
 package goa4web
 
 import (
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/host"
-	"github.com/shirou/gopsutil/v3/load"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/v3/load"
 )
 
 func informationPage(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +59,7 @@ func informationPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.System.Processors = cpuInfo
 
-	if err := renderTemplate(w, r, "informationPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "informationPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

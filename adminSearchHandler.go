@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func adminSearchPage(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +48,7 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writings)
 	count("SELECT COUNT(*) FROM imagepostSearch", &data.Stats.Images)
 
-	if err := renderTemplate(w, r, "searchPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "searchPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -71,7 +73,7 @@ func adminSearchRemakeCommentsSearchPage(w http.ResponseWriter, r *http.Request)
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeCommentsSearchInsert: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -95,7 +97,7 @@ func adminSearchRemakeNewsSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeNewsSearchInsert: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -119,7 +121,7 @@ func adminSearchRemakeBlogSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeBlogsSearchInsert: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -143,7 +145,7 @@ func adminSearchRemakeLinkerSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeLinkerSearchInsert: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -167,7 +169,7 @@ func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) 
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeWritingSearchInsert: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -192,7 +194,7 @@ func adminSearchRemakeImageSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeImagePostSearchInsert: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/arran4/goa4web/core/templates"
 )
 
 func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +25,7 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	if err := renderTemplate(w, r, "iPBanPage.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "iPBanPage.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

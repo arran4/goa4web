@@ -4,14 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code2html"
-	"github.com/arran4/goa4web/core"
-	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/feeds"
 )
 
 func blogsPage(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +73,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "page.gohtml", data); err != nil {
+	if err := templates.RenderTemplate(w, "page.gohtml", data, NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

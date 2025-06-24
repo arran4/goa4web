@@ -170,8 +170,6 @@ func X2c(what string) byte {
 	return d1*16 + d2
 }
 
-type ContextValues string
-
 func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if dbPool == nil {

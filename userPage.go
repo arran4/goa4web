@@ -3,6 +3,8 @@ package goa4web
 import (
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func userPage(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +22,7 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		redirectToLogin(w, r, session)
+		core.RedirectToLogin(w, r, session)
 		return
 	}
 

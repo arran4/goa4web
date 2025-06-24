@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/sessions"
 )
 
@@ -30,6 +31,7 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 
 func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test-key"))
+	core.SetSessionStore(store)
 	req, rr := newRequestWithSession("GET", "/", map[string]interface{}{
 		"UID":        int32(1),
 		"ExpiryTime": time.Now().Add(-time.Hour).Unix(),
@@ -38,7 +40,7 @@ func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	called := false
-	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := core.UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 	}))
 
@@ -61,6 +63,7 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	}
 	defer db.Close()
 	store = sessions.NewCookieStore([]byte("test-key"))
+	core.SetSessionStore(store)
 
 	req, rr := newRequestWithSession("GET", "/", map[string]interface{}{
 		"UID":        int32(1),
@@ -89,7 +92,7 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	var gotPref *Preference
 	var gotLangs []*Userlang
 
-	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := core.UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPerms, _ = r.Context().Value(ContextValues("permissions")).([]*Permission)
 		gotPref, _ = r.Context().Value(ContextValues("preference")).(*Preference)
 		gotLangs, _ = r.Context().Value(ContextValues("languages")).([]*Userlang)

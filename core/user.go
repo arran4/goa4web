@@ -1,4 +1,4 @@
-package goa4web
+package core
 
 import (
 	"context"
@@ -9,9 +9,12 @@ import (
 	"net/url"
 	"time"
 
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/sessions"
 )
 
+// UserAdderMiddleware loads the current user's information from the database
+// and attaches it along with preferences and permissions to the request context.
 func UserAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// Get the session.
@@ -20,12 +23,12 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			sessionError(writer, request, err)
 		}
 
-		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+		queries := request.Context().Value(ContextValues("queries")).(*db.Queries)
 		var (
-			user        *User
-			permissions []*Permission
-			preference  *Preference
-			languages   []*Userlang
+			user        *db.User
+			permissions []*db.Permission
+			preference  *db.Preference
+			languages   []*db.Userlang
 			uid         int32
 		)
 		if uidi, ok := session.Values["UID"]; ok {
@@ -47,7 +50,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 					delete(session.Values, "UID")
 					delete(session.Values, "LoginTime")
 					delete(session.Values, "ExpiryTime")
-					redirectToLogin(writer, request, session)
+					RedirectToLogin(writer, request, session)
 					return
 				}
 			}
@@ -71,7 +74,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 
 		if session.ID != "" {
 			if uid != 0 {
-				_ = queries.InsertSession(request.Context(), InsertSessionParams{SessionID: session.ID, UsersIdusers: uid})
+				_ = queries.InsertSession(request.Context(), db.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid})
 			} else {
 				_ = queries.DeleteSessionByID(request.Context(), session.ID)
 			}
@@ -86,7 +89,9 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func redirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
+// RedirectToLogin stores the current request so the user can be redirected back
+// after logging in, then issues the redirect to /login.
+func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
 	if session != nil {
 		backURL := r.URL.RequestURI()
 		session.Values["BackURL"] = backURL

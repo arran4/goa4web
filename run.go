@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -50,6 +51,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
+	core.SetSessionStore(store)
 
 	var handler http.Handler
 
@@ -74,7 +76,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 
 	handler = newMiddlewareChain(
 		DBAdderMiddleware,
-		UserAdderMiddleware,
+		core.UserAdderMiddleware,
 		CoreAdderMiddleware,
 		RequestLoggerMiddleware,
 		SecurityHeadersMiddleware,

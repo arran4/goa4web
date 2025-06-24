@@ -5,33 +5,37 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
-//go:embed templates/*.gohtml
+//go:embed templates/*.gohtml templates/*/*.gohtml
 var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(testTemplates, "templates/*.gohtml"))
+	template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(testTemplates,
+		"templates/*.gohtml", "templates/*/*.gohtml"))
 }
 
 func TestParseEachTemplate(t *testing.T) {
-	entries, err := fs.ReadDir(testTemplates, "templates")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".gohtml") {
-			continue
+	err := fs.WalkDir(testTemplates, "templates", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		t.Run(e.Name(), func(t *testing.T) {
+		if d.IsDir() || !strings.HasSuffix(path, ".gohtml") {
+			return nil
+		}
+		t.Run(filepath.Base(path), func(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
-			path := "templates/" + e.Name()
 			if _, err := template.New("").Funcs(NewFuncs(r)).ParseFS(testTemplates, path); err != nil {
-				t.Errorf("failed to parse %s: %v", e.Name(), err)
+				t.Errorf("failed to parse %s: %v", path, err)
 			}
 		})
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }

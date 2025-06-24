@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -43,8 +44,10 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	}
 	defer db.Close()
 	q := New(db)
-	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "username"}).AddRow(1, "u@example.com", "", "u")
-	mock.ExpectQuery("SELECT idusers, email, passwd, username FROM users WHERE idusers = ?").WithArgs(int32(1)).WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "u@example.com", "", "", "u")
+	mock.ExpectQuery(regexp.QuoteMeta(getUserById)).
+		WithArgs(int32(1)).WillReturnRows(rows)
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{UserID: 1})

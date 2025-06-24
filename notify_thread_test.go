@@ -24,10 +24,10 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	q := New(db)
 	rows := sqlmock.NewRows([]string{
 		"idcomments", "forumthread_idforumthread", "users_idusers", "language_idlanguage",
-		"written", "text", "idusers", "email", "passwd", "username",
+		"written", "text", "idusers", "email", "passwd", "passwd_algorithm", "username",
 		"idpreferences", "language_idlanguage_2", "users_idusers_2", "emailforumupdates",
 		"page_size",
-	}).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "p", "bob", 1, 1, 2, 1, 10)
+	}).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "p", "", "bob", 1, 1, 2, 1, 10)
 	mock.ExpectQuery(regexp.QuoteMeta(listUsersSubscribedToThread)).
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)

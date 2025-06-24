@@ -43,8 +43,8 @@ func TestBlogsBloggerPage(t *testing.T) {
 	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
 	req = req.WithContext(ctx)
 
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "username"}).
-		AddRow(1, "e", "p", "bob")
+	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "e", "p", "", "bob")
 	mock.ExpectQuery(regexp.QuoteMeta(getUserByUsername)).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(userRows)

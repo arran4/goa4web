@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/a4code2html"
 	"github.com/gorilla/feeds"
 	"net/http"
 	"strconv"
@@ -23,11 +24,11 @@ func linkerFeed(r *http.Request, rows []*GetAllLinkerItemsByCategoryIdWitherPost
 		}
 		desc := ""
 		if row.Description.Valid {
-			var conv = &A4code2html{}
-			conv.codeType = ct_tagstrip
-			conv.input = row.Description.String
+			conv := a4code2html.NewA4Code2HTML()
+			conv.CodeType = a4code2html.CTTagStrip
+			conv.SetInput(row.Description.String)
 			conv.Process()
-			desc = conv.output.String()
+			desc = conv.Output()
 		}
 		href := fmt.Sprintf("/linker/show/%d", row.Idlinker)
 		if row.Url.Valid && row.Url.String != "" {

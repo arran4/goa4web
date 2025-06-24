@@ -1,4 +1,4 @@
-package goa4web
+package a4code2html
 
 import (
 	"github.com/google/go-cmp/cmp"
@@ -44,11 +44,11 @@ func TestA4code2htmlEscape(t *testing.T) {
 	if got := c.Escape('\n'); got != "<br />\n" {
 		t.Errorf("newline %q", got)
 	}
-	c.codeType = ct_tagstrip
+	c.CodeType = CTTagStrip
 	if got := c.Escape('\n'); got != "\n" {
 		t.Errorf("tagstrip %q", got)
 	}
-	c.codeType = ct_wordsonly
+	c.CodeType = CTWordsOnly
 	if got := c.Escape('&'); got != " " {
 		t.Errorf("wordsonly %q", got)
 	}

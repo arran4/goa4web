@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/a4code2html"
 	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
@@ -31,9 +32,9 @@ func newsRssPage(w http.ResponseWriter, r *http.Request) {
 
 	for _, row := range posts {
 		text := row.News.String
-		conv := &A4code2html{}
-		conv.codeType = ct_tagstrip
-		conv.input = text
+		conv := a4code2html.NewA4Code2HTML()
+		conv.CodeType = a4code2html.CTTagStrip
+		conv.SetInput(text)
 		conv.Process()
 		i := len(text)
 		if i > 255 {
@@ -48,7 +49,7 @@ func newsRssPage(w http.ResponseWriter, r *http.Request) {
 				}
 				return time.Now()
 			}(),
-			Description: fmt.Sprintf("%s\n-\n%s", conv.output.String(), row.Writername.String),
+			Description: fmt.Sprintf("%s\n-\n%s", conv.Output(), row.Writername.String),
 		})
 	}
 

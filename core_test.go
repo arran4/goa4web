@@ -22,8 +22,8 @@ func TestHandleDie(t *testing.T) {
 
 func TestConfigurationSetGet(t *testing.T) {
 	c := NewConfiguration()
-	c.set("foo", "bar")
-	if got := c.get("foo"); got != "bar" {
+	c.Set("foo", "bar")
+	if got := c.Get("foo"); got != "bar" {
 		t.Errorf("get(foo)=%q want bar", got)
 	}
 }
@@ -36,17 +36,17 @@ func TestConfigurationRead(t *testing.T) {
 		t.Fatalf("write temp file: %v", err)
 	}
 	c := NewConfiguration()
-	c.readConfiguration(fname)
-	if got := c.get("k1"); got != "v1" {
+	c.ReadConfiguration(fname)
+	if got := c.Get("k1"); got != "v1" {
 		t.Errorf("k1=%q want v1", got)
 	}
-	if got := c.get("k2"); got != "v=2" {
+	if got := c.Get("k2"); got != "v=2" {
 		t.Errorf("k2=%q want v=2", got)
 	}
-	if got := c.get("invalid"); got != "" {
+	if got := c.Get("invalid"); got != "" {
 		t.Errorf("invalid=%q want empty", got)
 	}
-	if got := c.get(" spaced "); got != " value with spaces" {
+	if got := c.Get(" spaced "); got != " value with spaces" {
 		t.Errorf("spaced=%q", got)
 	}
 }

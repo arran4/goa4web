@@ -4,6 +4,8 @@ import (
 	"io/fs"
 	"os"
 	"testing"
+
+	"github.com/arran4/goa4web/core"
 )
 
 type memFS struct{ files map[string]memFile }
@@ -35,9 +37,12 @@ func useMemFS(t *testing.T) *memFS {
 	origRead, origWrite := readFile, writeFile
 	readFile = m.ReadFile
 	writeFile = m.WriteFile
+	coreOrigRead := core.ReadFile
+	core.ReadFile = m.ReadFile
 	t.Cleanup(func() {
 		readFile = origRead
 		writeFile = origWrite
+		core.ReadFile = coreOrigRead
 	})
 	return m
 }

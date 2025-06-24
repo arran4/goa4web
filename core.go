@@ -1,204 +1,39 @@
 package goa4web
 
 import (
-	"bufio"
-	"bytes"
-	"context"
-	"database/sql"
-	"fmt"
-	"log"
 	"net/http"
-	"strings"
+
+	corepkg "github.com/arran4/goa4web/core"
 )
 
-func handleDie(w http.ResponseWriter, message string) {
-	http.Error(w, message, http.StatusInternalServerError)
-}
+func handleDie(w http.ResponseWriter, message string) { corepkg.HandleDie(w, message) }
 
-// IndexItem struct.
-type IndexItem struct {
-	Name string // Name of URL displayed in <a href>
-	Link string // URL for link.
-}
-
-// indexItems.
-var indexItems = []IndexItem{
-	{Name: "News", Link: "/"},
-	{Name: "FAQ", Link: "/faq"},
-	{Name: "Blogs", Link: "/blogs"},
-	{Name: "Forum", Link: "/forum"},
-	{Name: "Linker", Link: "/linker"},
-	{Name: "Bookmarks", Link: "/bookmarks"},
-	{Name: "ImageBBS", Link: "/imagebbs"},
-	{Name: "Search", Link: "/search"},
-	{Name: "Writings", Link: "/writings"},
-	{Name: "Information", Link: "/information"},
-}
+type IndexItem = corepkg.IndexItem
+type CoreData = corepkg.CoreData
+type ContextValues = corepkg.ContextValues
+type Configuration = corepkg.Configuration
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session, err := GetSession(request)
-		if err != nil {
-			sessionErrorRedirect(writer, request, err)
-			return
-		}
-		var uid int32
-		if err == nil {
-			uid, _ = session.Values["UID"].(int32)
-		}
-		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-
-		level := "reader"
-		if uid != 0 {
-			perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
-				UsersIdusers: uid,
-				Section:      sql.NullString{String: "all", Valid: true},
-			})
-			if err == nil && perm.Level.Valid {
-				level = perm.Level.String
-			}
-		}
-
-		idx := make([]IndexItem, len(indexItems))
-		copy(idx, indexItems)
-		if uid != 0 {
-			idx = append(idx, IndexItem{Name: "Preferences", Link: "/usr"})
-		}
-		var count int32
-		if uid != 0 && notificationsEnabled() {
-			c, err := queries.CountUnreadNotifications(request.Context(), uid)
-			if err == nil {
-				count = c
-				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
-			}
-		}
-		var ann *GetActiveAnnouncementWithNewsRow
-		if queries.DB() != nil {
-			if a, err := queries.GetActiveAnnouncementWithNews(request.Context()); err == nil {
-				ann = a
-			}
-		}
-		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
-			SecurityLevel:     level,
-			IndexItems:        idx,
-			UserID:            uid,
-			Title:             "Arran4's Website",
-			FeedsEnabled:      appRuntimeConfig.FeedsEnabled,
-			NotificationCount: count,
-			Announcement:      ann,
-		})
-		next.ServeHTTP(writer, request.WithContext(ctx))
-	})
+	corepkg.GetSession = GetSession
+	corepkg.SessionErrorRedirect = sessionErrorRedirect
+	corepkg.NotificationsEnabled = notificationsEnabled
+	corepkg.FeedsEnabled = appRuntimeConfig.FeedsEnabled
+	return corepkg.CoreAdderMiddleware(next)
 }
-
-type CoreData struct {
-	IndexItems        []IndexItem
-	CustomIndexItems  []IndexItem
-	UserID            int32
-	SecurityLevel     string
-	Title             string
-	AutoRefresh       bool
-	FeedsEnabled      bool
-	RSSFeedUrl        string
-	AtomFeedUrl       string
-	NotificationCount int32
-	Announcement      *GetActiveAnnouncementWithNewsRow
-}
-
-func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {
-	return cd.SecurityLevel
-}
-
-var rolePriority = map[string]int{
-	"reader":        1,
-	"writer":        2,
-	"moderator":     3,
-	"administrator": 4,
-}
-
-func (cd *CoreData) HasRole(role string) bool {
-	return rolePriority[cd.SecurityLevel] >= rolePriority[role]
-}
-
-type Configuration struct {
-	data map[string]string
-}
-
-func NewConfiguration() *Configuration {
-	return &Configuration{
-		data: make(map[string]string),
-	}
-}
-
-func (c *Configuration) set(key, value string) {
-	c.data[key] = value
-}
-
-func (c *Configuration) get(key string) string {
-	return c.data[key]
-}
-
-func (c *Configuration) readConfiguration(filename string) {
-	b, err := readFile(filename)
-	if err != nil {
-		return
-	}
-	scanner := bufio.NewScanner(bytes.NewReader(b))
-	for scanner.Scan() {
-		line := scanner.Text()
-		sep := strings.Index(line, "=")
-		if sep >= 0 {
-			key := line[:sep]
-			value := line[sep+1:]
-			c.set(key, value)
-		}
-	}
-}
-
-func X2c(what string) byte {
-	digit := func(c byte) byte {
-		if c >= 'A' {
-			return (c & 0xdf) - 'A' + 10
-		}
-		return c - '0'
-	}
-
-	d1 := digit(what[0])
-	d2 := digit(what[1])
-	return d1*16 + d2
-}
-
-type ContextValues string
 
 func DBAdderMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if dbPool == nil {
-			ue := UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
-			return
-		}
-		if dbLogVerbosity > 0 {
-			log.Printf("db pool stats: %+v", dbPool.Stats())
-		}
-		ctx := request.Context()
-		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)
-		ctx = context.WithValue(ctx, ContextValues("queries"), New(dbPool))
-		next.ServeHTTP(writer, request.WithContext(ctx))
-	})
+	corepkg.DBPool = dbPool
+	corepkg.DBLogVerbosity = dbLogVerbosity
+	return corepkg.DBAdderMiddleware(next)
 }
 
-// getPageSize returns the preferred page size within configured bounds.
+func NewConfiguration() *Configuration { return corepkg.NewConfiguration() }
+
+func X2c(what string) byte { return corepkg.X2c(what) }
+
 func getPageSize(r *http.Request) int {
-	size := appRuntimeConfig.PageSizeDefault
-	if pref, _ := r.Context().Value(ContextValues("preference")).(*Preference); pref != nil && pref.PageSize != 0 {
-		size = int(pref.PageSize)
-	}
-	if size < appRuntimeConfig.PageSizeMin {
-		size = appRuntimeConfig.PageSizeMin
-	}
-	if size > appRuntimeConfig.PageSizeMax {
-		size = appRuntimeConfig.PageSizeMax
-	}
-	return size
+	corepkg.PageSizeDefault = appRuntimeConfig.PageSizeDefault
+	corepkg.PageSizeMin = appRuntimeConfig.PageSizeMin
+	corepkg.PageSizeMax = appRuntimeConfig.PageSizeMax
+	return corepkg.GetPageSize(r)
 }

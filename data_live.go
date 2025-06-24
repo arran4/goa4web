@@ -9,7 +9,9 @@ import (
 )
 
 func getCompiledTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("./templates"), "*.gohtml"))
+	return template.Must(
+		template.New("").Funcs(funcs).ParseFS(os.DirFS("./templates"),
+			"*.gohtml", "*/*.gohtml"))
 }
 
 func getMainCSSData() []byte {

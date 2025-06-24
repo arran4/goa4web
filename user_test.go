@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -70,10 +71,10 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
 	req = req.WithContext(ctx)
 
-	mock.ExpectQuery("SELECT idusers, email, passwd, username").
+	mock.ExpectQuery(regexp.QuoteMeta(getUserById)).
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "username"}).
-			AddRow(1, "e", "p", "u"))
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
+			AddRow(1, "e", "p", "", "u"))
 	mock.ExpectQuery("SELECT idpermissions, users_idusers, section, level FROM permissions WHERE users_idusers = ?").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idpermissions", "users_idusers", "section", "level"}).AddRow(1, 1, "all", "admin"))

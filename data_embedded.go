@@ -9,14 +9,15 @@ import (
 )
 
 var (
-	//go:embed "templates/*.gohtml"
+	//go:embed "templates/*.gohtml" "templates/*/*.gohtml"
 	templateFS embed.FS
 	//go:embed "main.css"
 	mainCSSData []byte
 )
 
 func getCompiledTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(templateFS, "templates/*.gohtml"))
+	return template.Must(template.New("").Funcs(funcs).ParseFS(templateFS,
+		"templates/*.gohtml", "templates/*/*.gohtml"))
 }
 
 func getMainCSSData() []byte {

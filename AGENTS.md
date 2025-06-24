@@ -12,14 +12,19 @@ All const declarations should include a short comment describing their purpose.
 
 Environment variable names are centralised in `config/env.go`.
 
+Example configuration files can be found in `examples/` and are referenced using
+the same keys as the environment variables.
+
 Tests must not interact with the real file system. Use in-memory file systems
 provided by the `io/fs` package or mocks when file access is required.
 
 SQL query files are compiled using `sqlc`. Do not manually edit the generated
 `*.sql.go` files; instead update the corresponding `.sql` file and run `sqlc generate`.
+The `.sql` files live at the repository root with names such as `queries-users.sql`.
 
 All database schema changes must include a migration script in the `migrations/`
-directory so existing installations can be upgraded.
+directory so existing installations can be upgraded. Example migration files are
+named `0002.sql`, `0003.sql` and so on.
 
 - Errors in critical functions like main() or run() must be logged or wrapped using fmt.Errorf with context. Prefer doing both when the error propagates.
 

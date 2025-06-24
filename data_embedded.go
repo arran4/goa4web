@@ -11,7 +11,7 @@ import (
 var (
 	//go:embed "templates/*.gohtml" "templates/*/*.gohtml"
 	templateFS embed.FS
-	//go:embed "main.css"
+	//go:embed "assets/main.css"
 	mainCSSData []byte
 )
 

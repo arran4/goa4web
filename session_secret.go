@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"crypto/rand"
@@ -10,14 +10,14 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
-// loadSessionSecret returns the session secret using the following priority:
+// LoadSessionSecret returns the session secret using the following priority:
 //  1. cliSecret if non-empty
 //  2. SESSION_SECRET environment variable
 //  3. contents of the file at path. If path is empty it uses SESSION_SECRET_FILE
 //     or a default file named ".session_secret" in the working directory.
 //
 // If the file does not exist, a new random secret is generated and saved.
-func loadSessionSecret(cliSecret, path string) (string, error) {
+func LoadSessionSecret(cliSecret, path string) (string, error) {
 	if cliSecret != "" {
 		return cliSecret, nil
 	}

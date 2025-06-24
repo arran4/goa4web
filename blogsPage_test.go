@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"context"
@@ -25,10 +25,10 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "username"}).
 			AddRow(1, "e", "p", "bob"))
 
-       mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
-               WithArgs(int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).
-               WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_idforumthread", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)"}).
-                       AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
+		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).
+		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_idforumthread", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)"}).
+			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
 	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)

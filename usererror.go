@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 // UserError carries an internal error along with a user friendly message.
 type UserError struct {

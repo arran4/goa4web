@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"database/sql"
@@ -33,13 +33,13 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-       queries := r.Context().Value(ContextValues("queries")).(*Queries)
-       rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
-               UsersIdusers:  int32(userId),
-               ViewerIdusers: uid,
-               Limit:         15,
-               Offset:        int32(offset),
-       })
+	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+		UsersIdusers:  int32(userId),
+		ViewerIdusers: uid,
+		Limit:         15,
+		Offset:        int32(offset),
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -213,12 +213,12 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		Created:     time.Date(2005, 6, 25, 0, 0, 0, 0, time.UTC),
 	}
 
-       rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
-               UsersIdusers:  int32(uid),
-               ViewerIdusers: int32(uid),
-               Limit:         15,
-               Offset:        0,
-       })
+	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+		UsersIdusers:  int32(uid),
+		ViewerIdusers: int32(uid),
+		Limit:         15,
+		Offset:        0,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

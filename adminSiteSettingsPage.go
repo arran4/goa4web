@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"log"
@@ -27,7 +27,7 @@ func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		appRuntimeConfig.DefaultLanguage = name
-		if err := updateConfigKey(configFile, config.EnvDefaultLanguage, name); err != nil {
+		if err := updateConfigKey(ConfigFile, config.EnvDefaultLanguage, name); err != nil {
 			log.Printf("config write error: %v", err)
 		}
 		http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)

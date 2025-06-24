@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"log"
@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// loadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
+// LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
-func loadAppConfigFile(path string) map[string]string {
+func LoadAppConfigFile(path string) map[string]string {
 	values := make(map[string]string)
 	if path == "" {
 		return values

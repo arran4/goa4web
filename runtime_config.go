@@ -1,4 +1,4 @@
-package main
+package goa4web
 
 import (
 	"flag"
@@ -48,10 +48,10 @@ type RuntimeConfig struct {
 
 var appRuntimeConfig RuntimeConfig
 
-// newRuntimeFlagSet returns a FlagSet containing all runtime configuration
+// NewRuntimeFlagSet returns a FlagSet containing all runtime configuration
 // options. The returned FlagSet uses ContinueOnError to allow tests to supply
 // their own arguments without triggering os.Exit.
-func newRuntimeFlagSet(name string) *flag.FlagSet {
+func NewRuntimeFlagSet(name string) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 
 	fs.String("db-user", "", "database user")
@@ -90,10 +90,10 @@ func newRuntimeFlagSet(name string) *flag.FlagSet {
 	return fs
 }
 
-// generateRuntimeConfig builds the runtime configuration from a FlagSet,
+// GenerateRuntimeConfig builds the runtime configuration from a FlagSet,
 // optional config file values and environment variables following the
 // precedence rules from AGENTS.md.
-func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) RuntimeConfig {
+func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) RuntimeConfig {
 	setFlags := map[string]bool{}
 	if fs != nil {
 		fs.Visit(func(f *flag.Flag) { setFlags[f.Name] = true })

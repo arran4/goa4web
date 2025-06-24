@@ -26,7 +26,7 @@ sql:
         - "queries-auditlog.sql"
       gen:
           go:
-              package: "main"
+              package: "goa4web"
               out: "."
               emit_result_struct_pointers: true
               emit_enum_valid_method: true

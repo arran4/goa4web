@@ -1,12 +1,12 @@
-package main
+package goa4web
 
 import (
-        "database/sql"
-        "errors"
-        "log"
-        "net/http"
-        "strconv"
-       "time"
+	"database/sql"
+	"errors"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
@@ -81,26 +81,26 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-       inviteMax, err := strconv.Atoi(r.PostFormValue("inviteMax"))
-       if err != nil {
-               http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-               return
-       }
-       level, err := strconv.Atoi(r.PostFormValue("level"))
-       if err != nil {
-               http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-               return
-       }
-       expStr := r.PostFormValue("expiresAt")
-       var expires sql.NullTime
-       if expStr != "" {
-               t, err := time.Parse("2006-01-02", expStr)
-               if err != nil {
-                       http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-                       return
-               }
-               expires = sql.NullTime{Time: t, Valid: true}
-       }
+	inviteMax, err := strconv.Atoi(r.PostFormValue("inviteMax"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	level, err := strconv.Atoi(r.PostFormValue("level"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	expStr := r.PostFormValue("expiresAt")
+	var expires sql.NullTime
+	if expStr != "" {
+		t, err := time.Parse("2006-01-02", expStr)
+		if err != nil {
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
+		expires = sql.NullTime{Time: t, Valid: true}
+	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
 	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), UpsertUsersForumTopicLevelPermissionParams{
@@ -108,14 +108,14 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 			Valid: true,
 			Int32: int32(level),
 		},
-               Invitemax: sql.NullInt32{
-                       Valid: true,
-                       Int32: int32(inviteMax),
-               },
-               ExpiresAt:            expires,
-               ForumtopicIdforumtopic: int32(tid),
-               UsersIdusers:           int32(uid),
-       }); err != nil {
+		Invitemax: sql.NullInt32{
+			Valid: true,
+			Int32: int32(inviteMax),
+		},
+		ExpiresAt:              expires,
+		ForumtopicIdforumtopic: int32(tid),
+		UsersIdusers:           int32(uid),
+	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

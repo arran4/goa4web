@@ -1,9 +1,9 @@
-package main
+package goa4web
 
 import "testing"
 
 func TestLoadSessionSecretCLI(t *testing.T) {
-	secret, err := loadSessionSecret("cli", "")
+	secret, err := LoadSessionSecret("cli", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -14,7 +14,7 @@ func TestLoadSessionSecretCLI(t *testing.T) {
 
 func TestLoadSessionSecretEnv(t *testing.T) {
 	t.Setenv("SESSION_SECRET", "env")
-	secret, err := loadSessionSecret("", "")
+	secret, err := LoadSessionSecret("", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestLoadSessionSecretFile(t *testing.T) {
 	if err := writeFile(file, []byte("fromfile"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
-	secret, err := loadSessionSecret("", file)
+	secret, err := LoadSessionSecret("", file)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -41,7 +41,7 @@ func TestLoadSessionSecretFile(t *testing.T) {
 func TestLoadSessionSecretGenerate(t *testing.T) {
 	fs := useMemFS(t)
 	file := "new"
-	secret, err := loadSessionSecret("", file)
+	secret, err := LoadSessionSecret("", file)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

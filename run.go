@@ -1,28 +1,24 @@
-package main
+package goa4web
 
 import (
 	"bytes"
 	"context"
 	"database/sql"
 	"errors"
-	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
-
-	"github.com/arran4/goa4web/config"
 )
 
-var configFile string
-var cliRuntimeConfig RuntimeConfig
+// ConfigFile stores the path to the configuration file if provided on the
+// command line. It is used by admin handlers when updating settings.
+var ConfigFile string
 
 var (
 	//      // Replace these with your Google OAuth2 credentials
@@ -42,52 +38,16 @@ func init() {
 	log.SetFlags(log.Flags() | log.Lshortfile)
 }
 
-func run() error {
-	early := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	var cfgPath string
-	early.StringVar(&cfgPath, "config-file", "", "path to application configuration file")
-	_ = early.Parse(os.Args[1:])
-	if cfgPath == "" {
-		cfgPath = os.Getenv(config.EnvConfigFile)
-	}
-	appCfg := loadAppConfigFile(cfgPath)
-	fs := newRuntimeFlagSet(os.Args[0])
-	var (
-		sessionSecret     string
-		sessionSecretFile string
-		configFileFlag    string
-	)
-	fs.StringVar(&sessionSecret, "session-secret", "", "session secret key")
-	fs.StringVar(&sessionSecretFile, "session-secret-file", "", "path to session secret file")
-	fs.StringVar(&configFileFlag, "config-file", "", "path to application configuration file")
-
-	_ = fs.Parse(os.Args[1:])
-	cliRuntimeConfig.DefaultLanguage = fs.Lookup("default-language").Value.String()
-
-	configFile = configFileFlag
-	if configFile == "" {
-		configFile = cfgPath
-	}
-
-	sessionSecretPath := sessionSecretFile
-	if sessionSecretPath == "" {
-		if v, ok := appCfg["SESSION_SECRET_FILE"]; ok {
-			sessionSecretPath = v
-		}
-	}
-	sessionSecretValue, err := loadSessionSecret(sessionSecret, sessionSecretPath)
-	if err != nil {
-		return fmt.Errorf("session secret: %w", err)
-	}
-	store = sessions.NewCookieStore([]byte(sessionSecretValue))
+// RunWithConfig starts the application using the provided configuration and
+// session secret. The context controls the lifetime of the HTTP server.
+func RunWithConfig(ctx context.Context, cfg RuntimeConfig, sessionSecret string) error {
+	store = sessions.NewCookieStore([]byte(sessionSecret))
 	store.Options = &sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
-
-	cfg := generateRuntimeConfig(fs, appCfg)
 
 	var handler http.Handler
 
@@ -110,11 +70,6 @@ func run() error {
 	r := mux.NewRouter()
 	registerRoutes(r)
 
-	// oauth shit
-	//r.HandleFunc("/login", loginPage)
-	//r.HandleFunc("/callback", callbackHandler)
-	//r.HandleFunc("/logout", logoutHandler)
-
 	handler = newMiddlewareChain(
 		DBAdderMiddleware,
 		UserAdderMiddleware,
@@ -128,27 +83,15 @@ func run() error {
 
 	srv = newServer(handler, store, dbPool, cfg)
 
-	log.Printf("Getting email parser")
 	provider := providerFromConfig(cfg)
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	startWorkers(ctx, dbPool, provider)
 
-	log.Printf("Starting web server")
 	if err := runServer(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
 	}
 
 	return nil
-}
-
-func main() {
-	if err := run(); err != nil {
-		log.Printf("%v", err)
-		os.Exit(1)
-	}
 }
 
 func runTemplate(template string) func(http.ResponseWriter, *http.Request) {

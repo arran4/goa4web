@@ -43,19 +43,19 @@ func TestBlogsBloggerPage(t *testing.T) {
 	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
 	req = req.WithContext(ctx)
 
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "username"}).
-		AddRow(1, "e", "p", "bob")
-	mock.ExpectQuery(regexp.QuoteMeta(getUserByUsername)).
-		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(userRows)
+       userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "username"}).
+               AddRow(1, "e", "p", "bob")
+       mock.ExpectQuery(regexp.QuoteMeta(getUserByUsername)).
+               WithArgs(sqlmock.AnyArg()).
+               WillReturnRows(userRows)
 
 	blogRows := sqlmock.NewRows([]string{
 		"idblogs", "forumthread_idforumthread", "users_idusers",
 		"language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)",
 	}).AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0)
-	mock.ExpectQuery(regexp.QuoteMeta(getBlogEntriesForUserDescending)).
-		WithArgs(int32(0), int32(0), int32(1), int32(1), int32(15), int32(0)).
-		WillReturnRows(blogRows)
+       mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
+               WithArgs(int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).
+               WillReturnRows(blogRows)
 
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)

@@ -46,7 +46,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	q := New(db)
 	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "u@example.com", "", "", "u")
-	mock.ExpectQuery(regexp.QuoteMeta(getUserById)).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)

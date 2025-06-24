@@ -72,7 +72,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		var ann *GetActiveAnnouncementWithNewsRow
-		if queries.db != nil {
+		if queries.DB() != nil {
 			if a, err := queries.GetActiveAnnouncementWithNews(request.Context()); err == nil {
 				ann = a
 			}

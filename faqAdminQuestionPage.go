@@ -117,7 +117,7 @@ func faqQuestionsCreateActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if _, err := queries.db.ExecContext(r.Context(),
+	if _, err := queries.DB().ExecContext(r.Context(),
 		"INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage) VALUES (?, ?, ?, ?, ?)",
 		sql.NullString{String: question, Valid: true},
 		sql.NullString{String: answer, Valid: true},

@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.29.0
 
-package goa4web
+package db
 
 import (
 	"context"
@@ -22,6 +22,11 @@ func New(db DBTX) *Queries {
 
 type Queries struct {
 	db DBTX
+}
+
+// DB exposes the underlying database handle.
+func (q *Queries) DB() DBTX {
+	return q.db
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {

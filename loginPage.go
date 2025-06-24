@@ -43,7 +43,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		hashed sql.NullString
 		alg    sql.NullString
 	)
-	err := queries.db.QueryRowContext(r.Context(),
+	err := queries.DB().QueryRowContext(r.Context(),
 		"SELECT idusers, email, passwd, IFNULL(passwd_algorithm,''), username FROM users WHERE username = ?",
 		username,
 	).Scan(&uid, &email, &hashed, &alg, new(string))
@@ -76,7 +76,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 	if alg.String == "" || alg.String == "md5" {
 		newHash, newAlg, err := hashPassword(password)
 		if err == nil {
-			_, _ = queries.db.ExecContext(r.Context(),
+			_, _ = queries.DB().ExecContext(r.Context(),
 				"UPDATE users SET passwd=?, passwd_algorithm=? WHERE idusers=?",
 				newHash, newAlg, uid,
 			)

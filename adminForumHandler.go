@@ -86,12 +86,12 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 
 func countForumThreads(ctx context.Context, q *Queries) (int64, error) {
 	var c int64
-	err := q.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
+	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
 	return c, err
 }
 
 func countForumTopics(ctx context.Context, q *Queries) (int64, error) {
 	var c int64
-	err := q.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
+	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
 	return c, err
 }

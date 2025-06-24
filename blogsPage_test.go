@@ -20,7 +20,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 	queries := New(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(getUserByUsername)).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE username = ?")).
 		WithArgs("bob").
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 			AddRow(1, "e", "p", "", "bob"))

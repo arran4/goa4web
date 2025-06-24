@@ -3,7 +3,7 @@
 //   sqlc v1.29.0
 // source: queries-blog.sql
 
-package goa4web
+package db
 
 import (
 	"context"

@@ -71,7 +71,7 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
 	req = req.WithContext(ctx)
 
-	mock.ExpectQuery(regexp.QuoteMeta(getUserById)).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE idusers = ?")).
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 			AddRow(1, "e", "p", "", "u"))

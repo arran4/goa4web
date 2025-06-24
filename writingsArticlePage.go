@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
 	"log"
@@ -53,7 +54,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -181,7 +182,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

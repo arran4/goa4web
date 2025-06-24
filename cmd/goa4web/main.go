@@ -10,6 +10,7 @@ import (
 
 	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -43,7 +44,7 @@ func main() {
 			secretPath = v
 		}
 	}
-	secret, err := goa4web.LoadSessionSecret(sessionSecret, secretPath)
+	secret, err := core.LoadSessionSecret(sessionSecret, secretPath)
 	if err != nil {
 		log.Fatalf("session secret: %v", err)
 	}

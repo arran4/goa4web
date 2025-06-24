@@ -3,13 +3,14 @@ package goa4web
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"strconv"
 )
 
 func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

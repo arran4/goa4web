@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"strconv"
@@ -44,7 +45,7 @@ func faqAskActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

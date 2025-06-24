@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -39,9 +40,9 @@ var indexItems = []IndexItem{
 
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session, err := GetSession(request)
+		session, err := core.GetSession(request)
 		if err != nil {
-			sessionErrorRedirect(writer, request, err)
+			core.SessionErrorRedirect(writer, request, err)
 			return
 		}
 		var uid int32
@@ -170,7 +171,8 @@ func X2c(what string) byte {
 	return d1*16 + d2
 }
 
-type ContextValues string
+// ContextValues is an alias to core.ContextValues for backward compatibility.
+type ContextValues = core.ContextValues
 
 func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -54,7 +55,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

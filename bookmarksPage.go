@@ -1,6 +1,7 @@
 package goa4web
 
 import (
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 )
@@ -10,7 +11,7 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 	}
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

@@ -1,4 +1,4 @@
-package goa4web
+package core
 
 import (
 	"fmt"
@@ -7,6 +7,15 @@ import (
 
 	"github.com/gorilla/sessions"
 )
+
+// SessionName is the cookie name used for storing session data.
+var SessionName string
+
+// Store holds the session store implementation.
+var Store *sessions.CookieStore
+
+// ContextValues represents context key names used across the application.
+type ContextValues string
 
 // GetSession returns the session from the request context if present,
 // otherwise it retrieves the session from the session store.
@@ -18,7 +27,7 @@ func GetSession(r *http.Request) (*sessions.Session, error) {
 		}
 		return sess, nil
 	}
-	sess, err := store.Get(r, sessionName)
+	sess, err := Store.Get(r, SessionName)
 	if err != nil {
 		log.Printf("get session: %v", err)
 	}
@@ -27,7 +36,7 @@ func GetSession(r *http.Request) (*sessions.Session, error) {
 
 // clearSession removes the session cookie so the user is effectively logged out.
 func clearSession(w http.ResponseWriter, r *http.Request) {
-	sess, _ := store.New(r, sessionName)
+	sess, _ := Store.New(r, SessionName)
 	sess.Options.MaxAge = -1
 	if err := sess.Save(r, w); err != nil {
 		log.Printf("clear session: %v", err)
@@ -39,18 +48,21 @@ func clearSession(w http.ResponseWriter, r *http.Request) {
 func GetSessionOrFail(w http.ResponseWriter, r *http.Request) (*sessions.Session, bool) {
 	sess, err := GetSession(r)
 	if err != nil {
-		sessionErrorRedirect(w, r, err)
+		SessionErrorRedirect(w, r, err)
 		return nil, false
 	}
 	return sess, true
 }
 
-func sessionErrorRedirect(w http.ResponseWriter, r *http.Request, err error) {
-	sessionError(w, r, err)
+// SessionErrorRedirect clears the session and redirects to the login page when
+// an error occurs retrieving the session.
+func SessionErrorRedirect(w http.ResponseWriter, r *http.Request, err error) {
+	SessionError(w, r, err)
 	http.Redirect(w, r, "/login", http.StatusFound)
 }
 
-func sessionError(w http.ResponseWriter, r *http.Request, err error) {
+// SessionError logs the error and clears the session cookie.
+func SessionError(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("session error: %v", err)
 	clearSession(w, r)
 }

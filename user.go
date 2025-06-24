@@ -10,14 +10,16 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func UserAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// Get the session.
-		session, err := GetSession(request)
+		session, err := core.GetSession(request)
 		if err != nil {
-			sessionError(writer, request, err)
+			core.SessionError(writer, request, err)
 		}
 
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)

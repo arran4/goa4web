@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"strings"
@@ -72,7 +73,7 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

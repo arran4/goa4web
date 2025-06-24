@@ -13,6 +13,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/sessions"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
@@ -24,6 +26,10 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 
 	queries := New(db)
 	store = sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
+	core.Store = store
+	core.SessionName = sessionName
 
 	form := url.Values{}
 	form.Set("dothis", "Save all")
@@ -120,6 +126,8 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	queries := New(db)
 	runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
 	store = sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
 
 	form := url.Values{}
 	form.Set("dothis", "Save language")

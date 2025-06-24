@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
@@ -28,7 +29,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	buid := r.URL.Query().Get("uid")
 	userId, _ := strconv.Atoi(buid)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

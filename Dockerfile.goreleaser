@@ -1,0 +1,8 @@
+# This Dockerfile is used by GoReleaser to build container images.
+# GoReleaser builds the binary first and then copies it into the image,
+# so no build step is required here.
+FROM scratch
+COPY goa4web /goa4web
+# Image uploads are stored under /data/imagebbs inside the container.
+VOLUME ["/data/imagebbs"]
+ENTRYPOINT ["/goa4web"]

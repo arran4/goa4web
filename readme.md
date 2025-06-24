@@ -93,6 +93,15 @@ go test ./...
 
 This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
 
+## GitLab CI
+
+Tagged releases trigger the `.gitlab-ci.yml` pipeline which runs GoReleaser.
+The job publishes multi‑architecture Docker images to
+`registry-gitlab.arran.net.au/arran4/goa4web`.
+When reusing snippets from other projects be sure to update the image name or
+use the `$CI_REGISTRY_IMAGE` variable which already points to the correct
+registry path for this repository.
+
 ## Application Configuration File
 
 The path to a general configuration file can be specified with the `--config-file`

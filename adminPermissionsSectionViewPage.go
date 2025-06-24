@@ -23,7 +23,7 @@ func adminPermissionsSectionViewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := Data{CoreData: cd, Section: section, Rows: rows}
-	if err := renderTemplate(w, r, "adminPermissionsSectionViewPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "permissionsSectionViewPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

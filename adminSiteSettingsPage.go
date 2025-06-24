@@ -49,7 +49,7 @@ func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 		data.Languages = langs
 	}
 
-	if err := renderTemplate(w, r, "adminSiteSettingsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "siteSettingsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

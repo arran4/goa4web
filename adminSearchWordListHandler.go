@@ -139,7 +139,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		data.PrevLink = base + "?" + vals.Encode()
 	}
 
-	if err = renderTemplate(w, r, "adminSearchWordListPage.gohtml", data); err != nil {
+	if err = renderTemplate(w, r, "searchWordListPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

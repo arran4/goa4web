@@ -51,7 +51,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sections = groups
 
-	err = renderTemplate(w, r, "adminUsersPermissionsPage.gohtml", data)
+	err = renderTemplate(w, r, "usersPermissionsPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -90,7 +90,7 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	} else {
 		logAudit(r, "Permission allow")
 	}
-	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
+	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -117,7 +117,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		logAudit(r, "Permission disallow")
 	}
-	err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data)
+	err := renderTemplate(w, r, "runTaskPage.gohtml", data)
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -153,7 +153,7 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 		logAudit(r, "Permission update")
 	}
 
-	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -22,7 +22,7 @@ func adminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Emails = items
-	if err := renderTemplate(w, r, "adminEmailQueuePage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "emailQueuePage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

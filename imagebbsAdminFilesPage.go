@@ -64,7 +64,7 @@ func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	if err := renderTemplate(w, r, "imagebbsAdminFilesPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "adminFilesPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

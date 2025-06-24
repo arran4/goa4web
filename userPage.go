@@ -24,7 +24,7 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := renderTemplate(w, r, "userPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "page.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

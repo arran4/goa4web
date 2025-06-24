@@ -45,7 +45,7 @@ func forumAdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "forumAdminThreadsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "adminThreadsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -30,7 +30,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:      r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Notifications: notifs,
 	}
-	if err := renderTemplate(w, r, "userNotifications.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "notifications.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

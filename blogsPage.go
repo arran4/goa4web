@@ -69,7 +69,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := renderTemplate(w, r, "blogsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "page.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

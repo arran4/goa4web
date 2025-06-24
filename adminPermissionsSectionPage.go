@@ -29,7 +29,7 @@ func adminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sections = rows
 
-	if err := renderTemplate(w, r, "adminPermissionsSectionPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "permissionsSectionPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -61,7 +61,7 @@ func adminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RenamePermissionSection: %w", err).Error())
 	}
 
-	if err := renderTemplate(w, r, "adminRunTaskPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "runTaskPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

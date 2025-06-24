@@ -25,7 +25,7 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 		Min:      appRuntimeConfig.PageSizeMin,
 		Max:      appRuntimeConfig.PageSizeMax,
 	}
-	if err := renderTemplate(w, r, "userPagingPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "pagingPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

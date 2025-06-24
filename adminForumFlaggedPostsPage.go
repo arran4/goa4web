@@ -11,7 +11,7 @@ func adminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 	}
 	data := Data{CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData)}
-	if err := renderTemplate(w, r, "adminForumFlaggedPostsPage.gohtml", data); err != nil {
+	if err := renderTemplate(w, r, "forumFlaggedPostsPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

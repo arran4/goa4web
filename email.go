@@ -3,185 +3,30 @@ package goa4web
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"net/smtp"
 	"os"
-	"os/exec"
 	"strings"
+	"text/template"
 
 	"github.com/arran4/goa4web/config"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
-	"github.com/aws/aws-sdk-go/service/ses/sesiface"
-	"text/template"
+
+	"github.com/arran4/goa4web/internal/email"
 )
 
-const (
-	// SourceEmail is the From address for notification emails.
-	SourceEmail = "a4web@arran.net.au"
-)
-
-// MailProvider defines a simple interface that all mail backends must
-// implement. Only the fields necessary for sending basic notification emails
-// are included.
-type MailProvider interface {
-	Send(ctx context.Context, to, subject, body string) error
-}
-
-// sesMailProvider wraps the AWS SES client.
-type sesMailProvider struct{ client sesiface.SESAPI }
-
-func (s sesMailProvider) Send(ctx context.Context, to, subject, body string) error {
-	dest := &ses.Destination{ToAddresses: []*string{aws.String(to)}}
-	msg := &ses.Message{
-		Subject: &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(subject)},
-		Body:    &ses.Body{Text: &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(body)}},
-	}
-	input := &ses.SendEmailInput{Destination: dest, Message: msg, Source: aws.String(SourceEmail)}
-	_, err := s.client.SendEmailWithContext(ctx, input)
-	return err
-}
-
-// smtpMailProvider uses the standard net/smtp package.
-type smtpMailProvider struct {
-	addr string
-	auth smtp.Auth
-	from string
-}
-
-func (s smtpMailProvider) Send(ctx context.Context, to, subject, body string) error {
-	msg := []byte("To: " + to + "\r\nSubject: " + subject + "\r\n\r\n" + body)
-	return smtp.SendMail(s.addr, s.auth, s.from, []string{to}, msg)
-}
-
-// localMailProvider relies on the local sendmail binary.
-type localMailProvider struct{}
-
-func (localMailProvider) Send(ctx context.Context, to, subject, body string) error {
-	cmd := exec.CommandContext(ctx, "sendmail", to)
-	cmd.Stdin = strings.NewReader("Subject: " + subject + "\n\n" + body)
-	return cmd.Run()
-}
-
-// jmapMailProvider is a placeholder for sending mail via JMAP.
-type jmapMailProvider struct {
-	endpoint  string
-	username  string
-	password  string
-	accountID string
-	identity  string
-}
-
-// Send delivers a message using the JMAP EmailSubmission API. The provider
-// uploads the RFC822 message to the JMAP server and then creates an
-// EmailSubmission referencing the uploaded blob.
-func (j jmapMailProvider) Send(ctx context.Context, to, subject, body string) error {
-	// Build a simple RFC822 message.
-	var msg bytes.Buffer
-	fmt.Fprintf(&msg, "From: %s\r\n", SourceEmail)
-	fmt.Fprintf(&msg, "To: %s\r\n", to)
-	fmt.Fprintf(&msg, "Subject: %s\r\n", subject)
-	msg.WriteString("\r\n")
-	msg.WriteString(body)
-
-	uploadURL := fmt.Sprintf("%s/upload/%s", strings.TrimRight(j.endpoint, "/"), j.accountID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, bytes.NewReader(msg.Bytes()))
-	if err != nil {
-		return err
-	}
-	req.SetBasicAuth(j.username, j.password)
-	req.Header.Set("Content-Type", "message/rfc822")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("upload failed: %s", resp.Status)
-	}
-	var up struct {
-		BlobID string `json:"blobId"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&up); err != nil {
-		return err
-	}
-
-	// Create the Email and submit it for sending.
-	payload := map[string]interface{}{
-		"using": []string{"urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"},
-		"methodCalls": [][]interface{}{
-			{
-				"Email/import",
-				map[string]interface{}{
-					"accountId": j.accountID,
-					"emails": map[string]interface{}{
-						"msg": map[string]interface{}{
-							"blobId":     up.BlobID,
-							"mailboxIds": map[string]bool{"outbox": true},
-						},
-					},
-				},
-				"c1",
-			},
-			{
-				"EmailSubmission/set",
-				map[string]interface{}{
-					"accountId": j.accountID,
-					"create": map[string]interface{}{
-						"sub": map[string]interface{}{
-							"emailId":    "#msg",
-							"identityId": j.identity,
-						},
-					},
-				},
-				"c2",
-			},
-		},
-	}
-
-	buf, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	req, err = http.NewRequestWithContext(ctx, http.MethodPost, j.endpoint, bytes.NewReader(buf))
-	if err != nil {
-		return err
-	}
-	req.SetBasicAuth(j.username, j.password)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err = http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("jmap send failed: %s", resp.Status)
-	}
-	return nil
-}
-
-// logMailProvider just logs emails for development purposes.
-type logMailProvider struct{}
-
-func (logMailProvider) Send(ctx context.Context, to, subject, body string) error {
-	log.Printf("sending mail to %s subject %q\n%s", to, subject, body)
-	return nil
-}
-
-func notifyChange(ctx context.Context, provider MailProvider, email string, page string) error {
-	if email == "" {
+func notifyChange(ctx context.Context, provider email.Provider, emailAddr string, page string) error {
+	if emailAddr == "" {
 		return fmt.Errorf("no email specified")
 	}
 	if !emailSendingEnabled() {
 		return nil
 	}
-	from := SourceEmail
+	from := email.SourceEmail
 
 	type EmailContent struct {
 		To      string
@@ -192,7 +37,7 @@ func notifyChange(ctx context.Context, provider MailProvider, email string, page
 
 	// Define email content
 	content := EmailContent{
-		To:      email,
+		To:      emailAddr,
 		From:    from,
 		Subject: "Website Update Notification",
 		URL:     page,
@@ -214,18 +59,18 @@ func notifyChange(ctx context.Context, provider MailProvider, email string, page
 	}
 
 	if q, ok := ctx.Value(ContextValues("queries")).(*Queries); ok {
-		if err := q.InsertPendingEmail(ctx, InsertPendingEmailParams{ToEmail: email, Subject: content.Subject, Body: notification.String()}); err != nil {
+		if err := q.InsertPendingEmail(ctx, InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: notification.String()}); err != nil {
 			return err
 		}
 	} else if provider != nil {
-		if err := provider.Send(ctx, email, content.Subject, notification.String()); err != nil {
+		if err := provider.Send(ctx, emailAddr, content.Subject, notification.String()); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}
 	return nil
 }
 
-func providerFromConfig(cfg RuntimeConfig) MailProvider {
+func providerFromConfig(cfg RuntimeConfig) email.Provider {
 	mode := strings.ToLower(cfg.EmailProvider)
 
 	switch mode {
@@ -246,7 +91,7 @@ func providerFromConfig(cfg RuntimeConfig) MailProvider {
 		if user != "" {
 			auth = smtp.PlainAuth("", user, pass, host)
 		}
-		return smtpMailProvider{addr: addr, auth: auth, from: SourceEmail}
+		return email.SMTPProvider{Addr: addr, Auth: auth, From: email.SourceEmail}
 
 	case "ses":
 		// Attempt to create an AWS session using default credentials. If this
@@ -271,10 +116,10 @@ func providerFromConfig(cfg RuntimeConfig) MailProvider {
 			return nil
 		}
 
-		return sesMailProvider{client: ses.New(sess)}
+		return email.SESProvider{Client: ses.New(sess)}
 
 	case "local":
-		return localMailProvider{}
+		return email.LocalProvider{}
 
 	case "jmap":
 		ep := cfg.EmailJMAPEndpoint
@@ -288,19 +133,19 @@ func providerFromConfig(cfg RuntimeConfig) MailProvider {
 			log.Printf("Email disabled: %s or %s not set", config.EnvJMAPAccount, config.EnvJMAPIdentity)
 			return nil
 		}
-		return jmapMailProvider{
-			endpoint:  ep,
-			username:  cfg.EmailJMAPUser,
-			password:  cfg.EmailJMAPPass,
-			accountID: acc,
-			identity:  id,
+		return email.JMAPProvider{
+			Endpoint:  ep,
+			Username:  cfg.EmailJMAPUser,
+			Password:  cfg.EmailJMAPPass,
+			AccountID: acc,
+			Identity:  id,
 		}
 
 	case "sendgrid":
-		return sendGridProviderFromConfig(cfg)
+		return email.SendGridProviderFromConfig(cfg.EmailSendGridKey)
 
 	case "log":
-		return logMailProvider{}
+		return email.LogProvider{}
 
 	default:
 		log.Printf("Email disabled: unknown provider %q", mode)
@@ -310,7 +155,7 @@ func providerFromConfig(cfg RuntimeConfig) MailProvider {
 
 // getEmailProvider returns the mail provider configured by environment variables.
 // Production code uses this, while tests can call providerFromConfig directly.
-func getEmailProvider() MailProvider {
+func getEmailProvider() email.Provider {
 	return providerFromConfig(appRuntimeConfig)
 }
 
@@ -375,7 +220,7 @@ func emailSendingEnabled() bool {
 	}
 }
 
-func notifyAdmins(ctx context.Context, provider MailProvider, q *Queries, page string) {
+func notifyAdmins(ctx context.Context, provider email.Provider, q *Queries, page string) {
 	if provider == nil || !adminNotificationsEnabled() {
 		return
 	}
@@ -387,7 +232,7 @@ func notifyAdmins(ctx context.Context, provider MailProvider, q *Queries, page s
 }
 
 // notifyThreadSubscribers emails users subscribed to the forum thread.
-func notifyThreadSubscribers(ctx context.Context, provider MailProvider, q *Queries, threadID, excludeUser int32, page string) {
+func notifyThreadSubscribers(ctx context.Context, provider email.Provider, q *Queries, threadID, excludeUser int32, page string) {
 	if provider == nil {
 		return
 	}

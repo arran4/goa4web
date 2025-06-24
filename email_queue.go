@@ -4,10 +4,12 @@ import (
 	"context"
 	"log"
 	"time"
+
+	"github.com/arran4/goa4web/internal/email"
 )
 
 // emailQueueWorker periodically sends pending emails using the provided provider.
-func emailQueueWorker(ctx context.Context, q *Queries, provider MailProvider, interval time.Duration) {
+func emailQueueWorker(ctx context.Context, q *Queries, provider email.Provider, interval time.Duration) {
 	if q == nil || provider == nil {
 		log.Printf("email queue worker disabled: missing queue or provider")
 		return
@@ -25,7 +27,7 @@ func emailQueueWorker(ctx context.Context, q *Queries, provider MailProvider, in
 }
 
 // processPendingEmail sends a single queued email if available.
-func processPendingEmail(ctx context.Context, q *Queries, provider MailProvider) {
+func processPendingEmail(ctx context.Context, q *Queries, provider email.Provider) {
 	if q == nil || provider == nil {
 		return
 	}

@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"text/template"
+
+	"github.com/arran4/goa4web/internal/email"
 )
 
 // adminEmailTemplatePage allows administrators to edit the update email template.
@@ -19,7 +21,7 @@ func adminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		var buf bytes.Buffer
 		tmpl.Execute(&buf, struct{ To, From, Subject, URL string }{
 			To:      "test@example.com",
-			From:    SourceEmail,
+			From:    email.SourceEmail,
 			Subject: "Website Update Notification",
 			URL:     "http://example.com/page",
 		})
@@ -94,7 +96,7 @@ func adminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	content := struct{ To, From, Subject, URL string }{
 		To:      user.Email.String,
-		From:    SourceEmail,
+		From:    email.SourceEmail,
 		Subject: "Website Update Notification",
 		URL:     pageURL,
 	}

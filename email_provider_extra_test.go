@@ -1,6 +1,10 @@
 package goa4web
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/arran4/goa4web/internal/email"
+)
 
 func TestGetEmailProviderSMTP(t *testing.T) {
 	p := providerFromConfig(RuntimeConfig{
@@ -8,18 +12,18 @@ func TestGetEmailProviderSMTP(t *testing.T) {
 		EmailSMTPHost: "localhost",
 		EmailSMTPPort: "25",
 	})
-	s, ok := p.(smtpMailProvider)
+	s, ok := p.(email.SMTPProvider)
 	if !ok {
-		t.Fatalf("expected smtpMailProvider, got %#v", p)
+		t.Fatalf("expected SMTPProvider, got %#v", p)
 	}
-	if s.addr != "localhost:25" || s.from != SourceEmail {
+	if s.Addr != "localhost:25" || s.From != email.SourceEmail {
 		t.Errorf("unexpected provider values: %#v", s)
 	}
 }
 
 func TestGetEmailProviderLocal(t *testing.T) {
-	if _, ok := providerFromConfig(RuntimeConfig{EmailProvider: "local"}).(localMailProvider); !ok {
-		t.Fatalf("expected localMailProvider")
+	if _, ok := providerFromConfig(RuntimeConfig{EmailProvider: "local"}).(email.LocalProvider); !ok {
+		t.Fatalf("expected LocalProvider")
 	}
 }
 
@@ -30,11 +34,11 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 		EmailJMAPAccount:  "acct",
 		EmailJMAPIdentity: "id",
 	})
-	j, ok := p.(jmapMailProvider)
+	j, ok := p.(email.JMAPProvider)
 	if !ok {
-		t.Fatalf("expected jmapMailProvider, got %#v", p)
+		t.Fatalf("expected JMAPProvider, got %#v", p)
 	}
-	if j.endpoint != "http://example.com" || j.accountID != "acct" || j.identity != "id" {
+	if j.Endpoint != "http://example.com" || j.AccountID != "acct" || j.Identity != "id" {
 		t.Errorf("unexpected provider values: %#v", j)
 	}
 }

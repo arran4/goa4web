@@ -1,7 +1,7 @@
 //go:build sendgrid
 // +build sendgrid
 
-package goa4web
+package email
 
 import (
 	"context"
@@ -12,17 +12,17 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
-// sendgridBuilt indicates whether the SendGrid provider is compiled in.
-const sendgridBuilt = true
+// SendgridBuilt indicates whether the SendGrid provider is compiled in.
+const SendgridBuilt = true
 
-// sendGridProvider sends mail using the SendGrid API.
-type sendGridProvider struct{ apiKey string }
+// SendGridProvider sends mail using the SendGrid API.
+type SendGridProvider struct{ APIKey string }
 
-func (s sendGridProvider) Send(ctx context.Context, to, subject, body string) error {
+func (s SendGridProvider) Send(ctx context.Context, to, subject, body string) error {
 	from := mail.NewEmail("", SourceEmail)
 	toAddr := mail.NewEmail("", to)
 	msg := mail.NewSingleEmail(from, subject, toAddr, body, body)
-	client := sendgrid.NewSendClient(s.apiKey)
+	client := sendgrid.NewSendClient(s.APIKey)
 	resp, err := client.SendWithContext(ctx, msg)
 	if err != nil {
 		return err
@@ -33,11 +33,10 @@ func (s sendGridProvider) Send(ctx context.Context, to, subject, body string) er
 	return nil
 }
 
-func sendGridProviderFromConfig(cfg RuntimeConfig) MailProvider {
-	key := cfg.EmailSendGridKey
+func SendGridProviderFromConfig(key string) Provider {
 	if key == "" {
 		log.Printf("Email disabled: SENDGRID_KEY not set")
 		return nil
 	}
-	return sendGridProvider{apiKey: key}
+	return SendGridProvider{APIKey: key}
 }

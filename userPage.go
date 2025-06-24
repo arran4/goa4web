@@ -3,6 +3,8 @@ package goa4web
 import (
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func userPage(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +17,7 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if data.CoreData.UserID == 0 {
-		session, err := GetSession(r)
+		session, err := core.GetSession(r)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

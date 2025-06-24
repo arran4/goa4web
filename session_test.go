@@ -8,10 +8,14 @@ import (
 	"testing"
 
 	"github.com/gorilla/sessions"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func TestCoreAdderMiddlewareBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
 	h := CoreAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -32,10 +36,12 @@ func TestCoreAdderMiddlewareBadSession(t *testing.T) {
 
 func TestGetSessionOrFailBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
 	rr := httptest.NewRecorder()
-	sess, ok := GetSessionOrFail(rr, req)
+	sess, ok := core.GetSessionOrFail(rr, req)
 	if ok {
 		t.Fatalf("expected failure, got session %v", sess)
 	}

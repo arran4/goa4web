@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"strconv"
@@ -132,7 +133,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -155,7 +156,7 @@ func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -178,7 +179,7 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -201,7 +202,7 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

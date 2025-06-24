@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -25,7 +26,7 @@ func blogsBloggerPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
 	username := vars["username"]
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

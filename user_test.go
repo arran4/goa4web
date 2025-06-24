@@ -11,6 +11,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
+
+	"github.com/arran4/goa4web/core"
 )
 
 // helper to setup session cookie
@@ -30,6 +32,10 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 
 func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test-key"))
+	core.Store = store
+	core.SessionName = sessionName
+	core.Store = store
+	core.SessionName = sessionName
 	req, rr := newRequestWithSession("GET", "/", map[string]interface{}{
 		"UID":        int32(1),
 		"ExpiryTime": time.Now().Add(-time.Hour).Unix(),

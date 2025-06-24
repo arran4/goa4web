@@ -11,6 +11,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func TestBlogsBloggerPage(t *testing.T) {
@@ -22,6 +24,8 @@ func TestBlogsBloggerPage(t *testing.T) {
 
 	q := New(db)
 	store = sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
 
 	r := mux.NewRouter()
 	br := r.PathPrefix("/blogs").Subrouter()

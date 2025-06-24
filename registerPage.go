@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"strings"
@@ -101,7 +102,7 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

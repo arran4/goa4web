@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 )
@@ -22,7 +23,7 @@ func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

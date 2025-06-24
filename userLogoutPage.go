@@ -3,6 +3,8 @@ package goa4web
 import (
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func userLogoutPage(w http.ResponseWriter, r *http.Request) {
@@ -15,9 +17,9 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	session, err := GetSession(r)
+	session, err := core.GetSession(r)
 	if err != nil {
-		sessionError(w, r, err)
+		core.SessionError(w, r, err)
 	}
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")

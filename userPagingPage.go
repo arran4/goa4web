@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"strconv"
@@ -39,7 +40,7 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/paging", http.StatusSeeOther)
 		return
 	}
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

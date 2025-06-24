@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -44,6 +45,8 @@ func init() {
 // session secret. The context controls the lifetime of the HTTP server.
 func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, sessionSecret string) error {
 	store = sessions.NewCookieStore([]byte(sessionSecret))
+	core.Store = store
+	core.SessionName = sessionName
 	store.Options = &sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
@@ -171,7 +174,7 @@ func redirectPermanentPrefix(from, to string) http.HandlerFunc {
 // TODO we could do better
 func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {
-		session, err := GetSession(r)
+		session, err := core.GetSession(r)
 		if err != nil {
 			return false
 		}
@@ -212,7 +215,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 // TODO we could do better
 func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {
-		session, err := GetSession(r)
+		session, err := core.GetSession(r)
 		if err != nil {
 			return false
 		}
@@ -252,7 +255,7 @@ func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		session, err := GetSession(request)
+		session, err := core.GetSession(request)
 		if err != nil {
 			return false
 		}
@@ -266,7 +269,7 @@ func NewsPostAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		newsPostId, _ := strconv.Atoi(vars["post"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session, err := GetSession(request)
+		session, err := core.GetSession(request)
 		if err != nil {
 			return false
 		}
@@ -287,7 +290,7 @@ func BlogAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		blogId, _ := strconv.Atoi(vars["blog"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session, err := GetSession(request)
+		session, err := core.GetSession(request)
 		if err != nil {
 			return false
 		}
@@ -312,7 +315,7 @@ func WritingAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		writingId, _ := strconv.Atoi(vars["writing"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session, err := GetSession(request)
+		session, err := core.GetSession(request)
 		if err != nil {
 			return false
 		}
@@ -336,7 +339,7 @@ func CommentAuthor() mux.MatcherFunc {
 		vars := mux.Vars(request)
 		commentId, _ := strconv.Atoi(vars["comment"])
 		queries := request.Context().Value(ContextValues("queries")).(*Queries)
-		session, err := GetSession(request)
+		session, err := core.GetSession(request)
 		if err != nil {
 			return false
 		}
@@ -369,7 +372,7 @@ func GetThreadAndTopic() mux.MatcherFunc {
 
 		queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-		session, _ := GetSession(r)
+		session, _ := core.GetSession(r)
 		var uid int32
 		if session != nil {
 			uid, _ = session.Values["UID"].(int32)

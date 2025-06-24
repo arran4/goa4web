@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 )
@@ -19,7 +20,7 @@ func bookmarksEditPage(w http.ResponseWriter, r *http.Request) {
 		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
 	}
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -50,7 +51,7 @@ func bookmarksEditPage(w http.ResponseWriter, r *http.Request) {
 func bookmarksEditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -74,7 +75,7 @@ func bookmarksEditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 func bookmarksEditCreateActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

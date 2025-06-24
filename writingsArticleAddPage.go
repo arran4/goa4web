@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -38,7 +39,7 @@ func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
 func writingsArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

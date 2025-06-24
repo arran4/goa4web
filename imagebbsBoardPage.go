@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
 	"io"
@@ -80,7 +81,7 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

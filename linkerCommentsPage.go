@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -48,7 +49,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -141,7 +142,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

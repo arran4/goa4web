@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"net/url"
@@ -40,7 +41,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

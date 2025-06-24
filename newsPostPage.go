@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -58,7 +59,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -173,7 +174,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -355,7 +356,7 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -38,7 +39,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 	thid, _ := strconv.Atoi(vars["thread"])
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -136,7 +137,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := GetSessionOrFail(w, r)
+	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

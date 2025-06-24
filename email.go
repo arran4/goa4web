@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func notifyChange(ctx context.Context, provider email.Provider, emailAddr string, page string) error {
@@ -70,7 +71,7 @@ func notifyChange(ctx context.Context, provider email.Provider, emailAddr string
 	return nil
 }
 
-func providerFromConfig(cfg RuntimeConfig) email.Provider {
+func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
 	mode := strings.ToLower(cfg.EmailProvider)
 
 	switch mode {
@@ -156,7 +157,7 @@ func providerFromConfig(cfg RuntimeConfig) email.Provider {
 // getEmailProvider returns the mail provider configured by environment variables.
 // Production code uses this, while tests can call providerFromConfig directly.
 func getEmailProvider() email.Provider {
-	return providerFromConfig(appRuntimeConfig)
+	return providerFromConfig(runtimeconfig.AppRuntimeConfig)
 }
 
 // loadEmailConfigFile reads EMAIL_* style configuration values from a simple

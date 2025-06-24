@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestDBConfigPrecedence(t *testing.T) {
@@ -21,7 +22,7 @@ func TestDBConfigPrecedence(t *testing.T) {
 		config.EnvDBPort: "1",
 	}
 	_ = fs.Parse([]string{"--db-pass=cli"})
-	cfg := GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
 	if cfg.DBUser != "file" || cfg.DBPass != "cli" || cfg.DBHost != "env" || cfg.DBPort != "1" {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -32,7 +33,7 @@ func TestLoadDBConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvDBUser: "fileval",
 	}
-	cfg := GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
 	if cfg.DBUser != "fileval" {
 		t.Fatalf("want fileval got %q", cfg.DBUser)
 	}

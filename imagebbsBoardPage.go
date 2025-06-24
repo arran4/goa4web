@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
@@ -93,14 +95,14 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.HasPrefix(appRuntimeConfig.ImageUploadDir, "s3://") {
+	if strings.HasPrefix(runtimeconfig.AppRuntimeConfig.ImageUploadDir, "s3://") {
 		// TODO: upload to S3 instead of the local filesystem
 		http.Error(w, "s3 uploads not implemented", http.StatusNotImplemented)
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, int64(appRuntimeConfig.ImageMaxBytes))
-	if err := r.ParseMultipartForm(int64(appRuntimeConfig.ImageMaxBytes)); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes))
+	if err := r.ParseMultipartForm(int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes)); err != nil {
 		http.Error(w, "bad upload", http.StatusBadRequest)
 		return
 	}
@@ -112,14 +114,14 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	info, err := os.Stat(appRuntimeConfig.ImageUploadDir)
+	info, err := os.Stat(runtimeconfig.AppRuntimeConfig.ImageUploadDir)
 	if err != nil || !info.IsDir() {
 		log.Printf("invalid upload dir: %v", err)
 		http.Error(w, "Uploads disabled", http.StatusInternalServerError)
 		return
 	}
 
-	tmp, err := os.CreateTemp(appRuntimeConfig.ImageUploadDir, "upload-")
+	tmp, err := os.CreateTemp(runtimeconfig.AppRuntimeConfig.ImageUploadDir, "upload-")
 	if err != nil {
 		log.Printf("tempfile error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -140,7 +142,7 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	shaHex := fmt.Sprintf("%x", h.Sum(nil))
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
-	destDir := filepath.Join(appRuntimeConfig.ImageUploadDir, sub1, sub2)
+	destDir := filepath.Join(runtimeconfig.AppRuntimeConfig.ImageUploadDir, sub1, sub2)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		log.Printf("mkdir error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

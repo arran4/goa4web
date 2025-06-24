@@ -3,6 +3,8 @@ package goa4web
 import (
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func adminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -40,13 +42,13 @@ func adminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	if data.LinkerCategories, err = queries.GetLinkerCategoryLinkCounts(r.Context()); err != nil {
 		log.Printf("linker category counts: %v", err)
 	}
-	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(appRuntimeConfig.StatsStartYear)); err != nil {
+	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(runtimeconfig.AppRuntimeConfig.StatsStartYear)); err != nil {
 		log.Printf("monthly usage counts: %v", err)
 	}
-	if data.UserMonthly, err = queries.UserMonthlyUsageCounts(r.Context(), int32(appRuntimeConfig.StatsStartYear)); err != nil {
+	if data.UserMonthly, err = queries.UserMonthlyUsageCounts(r.Context(), int32(runtimeconfig.AppRuntimeConfig.StatsStartYear)); err != nil {
 		log.Printf("user monthly usage counts: %v", err)
 	}
-	data.StartYear = appRuntimeConfig.StatsStartYear
+	data.StartYear = runtimeconfig.AppRuntimeConfig.StatsStartYear
 
 	if err := renderTemplate(w, r, "usageStatsPage.gohtml", data); err != nil {
 		log.Printf("template error: %v", err)

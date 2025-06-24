@@ -10,17 +10,18 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestGetEmailProviderLog(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "log"}
+	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "log"}
 	if p := providerFromConfig(cfg); reflect.TypeOf(p) != reflect.TypeOf(email.LogProvider{}) {
 		t.Errorf("expected LogProvider, got %#v", p)
 	}
 }
 
 func TestGetEmailProviderUnknown(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "unknown"}
+	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "unknown"}
 	if p := providerFromConfig(cfg); p != nil {
 		t.Errorf("expected nil for unknown provider, got %#v", p)
 	}
@@ -40,7 +41,7 @@ func TestEmailConfigPrecedence(t *testing.T) {
 		config.EnvSMTPHost:      "file",
 	}
 	_ = fs.Parse([]string{"--email-provider=smtp", "--smtp-port=25"})
-	cfg := GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
 	if cfg.EmailProvider != "smtp" || cfg.EmailSMTPHost != "file" || cfg.EmailSMTPPort != "25" {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -51,7 +52,7 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvEmailProvider: "log",
 	}
-	cfg := GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
 	if cfg.EmailProvider != "log" {
 		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}
@@ -143,7 +144,7 @@ func TestEmailQueueWorker(t *testing.T) {
 }
 
 func TestSendGridProviderFromConfig(t *testing.T) {
-	p := providerFromConfig(RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k"})
+	p := providerFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k"})
 	if email.SendgridBuilt {
 		if _, ok := p.(email.SendGridProvider); !ok {
 			t.Fatalf("expected SendGridProvider, got %#v", p)

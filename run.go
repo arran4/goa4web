@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // ConfigFile stores the path to the configuration file if provided on the
@@ -40,7 +42,7 @@ func init() {
 
 // RunWithConfig starts the application using the provided configuration and
 // session secret. The context controls the lifetime of the HTTP server.
-func RunWithConfig(ctx context.Context, cfg RuntimeConfig, sessionSecret string) error {
+func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, sessionSecret string) error {
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	store.Options = &sessions.Options{
 		Path:     "/",

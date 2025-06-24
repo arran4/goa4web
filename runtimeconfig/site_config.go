@@ -1,4 +1,4 @@
-package goa4web
+package runtimeconfig
 
 import "strings"
 

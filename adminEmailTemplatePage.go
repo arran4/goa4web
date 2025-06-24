@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // adminEmailTemplatePage allows administrators to edit the update email template.
@@ -82,8 +83,8 @@ func adminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	base := "http://" + r.Host
-	if appRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(appRuntimeConfig.HTTPHostname, "/")
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
 	}
 	pageURL := base + r.URL.Path
 

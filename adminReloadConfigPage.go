@@ -3,6 +3,8 @@ package goa4web
 import (
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +19,7 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfgMap := LoadAppConfigFile(ConfigFile)
-	srv.Config = GenerateRuntimeConfig(nil, cfgMap)
+	srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap)
 	if err := validateDefaultLanguage(r.Context(), New(dbPool), srv.Config.DefaultLanguage); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	}

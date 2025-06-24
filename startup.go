@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/go-sql-driver/mysql"
@@ -119,4 +120,12 @@ func ensureSchema(ctx context.Context, db *sql.DB) error {
 		return fmt.Errorf("database schema version %d does not match expected %d", version, ExpectedSchemaVersion)
 	}
 	return nil
+}
+
+// startWorkers launches goroutines for email processing and notification cleanup.
+func startWorkers(ctx context.Context, db *sql.DB, provider MailProvider) {
+	log.Printf("Starting email worker")
+	safeGo(func() { emailQueueWorker(ctx, New(db), provider, time.Minute) })
+	log.Printf("Starting notification purger worker")
+	safeGo(func() { notificationPurgeWorker(ctx, New(db), time.Hour) })
 }

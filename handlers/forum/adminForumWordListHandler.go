@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -13,7 +13,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
-func adminForumWordListPage(w http.ResponseWriter, r *http.Request) {
+func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Rows []sql.NullString

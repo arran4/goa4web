@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -13,10 +13,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
+func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Categories []*GetAllForumCategoriesWithSubcategoryCountRow
+		Topics     []*Forumtopic
 	}
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
@@ -37,28 +38,41 @@ func forumAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
+	topicRows, err := queries.GetAllForumTopics(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			log.Printf("forumTopics Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
+	}
+
+	data.Topics = topicRows
+
 	CustomForumIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminCategoriesPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminTopicsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func forumAdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
+func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
-	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
+	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
-	categoryId, _ := strconv.Atoi(vars["category"])
+	topicId, _ := strconv.Atoi(vars["topic"])
 
-	if err := queries.UpdateForumCategory(r.Context(), UpdateForumCategoryParams{
+	if err := queries.UpdateForumTopic(r.Context(), UpdateForumTopicParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -67,17 +81,18 @@ func forumAdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 			Valid:  true,
 			String: desc,
 		},
-		Idforumcategory:              int32(categoryId),
-		ForumcategoryIdforumcategory: int32(pcid),
+		Idforumtopic:                 int32(topicId),
+		ForumcategoryIdforumcategory: int32(cid),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
+
 }
 
-func forumAdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
+func TopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
@@ -85,10 +100,9 @@ func forumAdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	if err := queries.CreateForumCategory(r.Context(), CreateForumCategoryParams{
-		ForumcategoryIdforumcategory: int32(pcid),
+
+	if _, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -97,24 +111,23 @@ func forumAdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 			Valid:  true,
 			String: desc,
 		},
+		ForumcategoryIdforumcategory: int32(pcid),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
+
 }
 
-func forumAdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
+func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	cid, err := strconv.Atoi(r.PostFormValue("cid"))
-	if err != nil {
+	vars := mux.Vars(r)
+	topicId, _ := strconv.Atoi(vars["topic"])
+	if err := queries.DeleteForumTopic(r.Context(), int32(topicId)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if err := queries.DeleteForumCategory(r.Context(), int32(cid)); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
 }

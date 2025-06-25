@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
-func adminForumPage(w http.ResponseWriter, r *http.Request) {
+func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
@@ -29,7 +29,7 @@ func adminForumPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
+func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := struct {
 		*CoreData
@@ -59,7 +59,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
+func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := struct {
 		*CoreData

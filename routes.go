@@ -8,10 +8,11 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	bookmarks "github.com/arran4/goa4web/handlers/bookmarks"
 	"github.com/arran4/goa4web/handlers/common"
-	news "github.com/arran4/goa4web/handlers/news"
-	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
 	faq "github.com/arran4/goa4web/handlers/faq"
+	forum "github.com/arran4/goa4web/handlers/forum"
+	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
 	linker "github.com/arran4/goa4web/handlers/linker"
+	news "github.com/arran4/goa4web/handlers/news"
 	writings "github.com/arran4/goa4web/handlers/writings"
 
 	userhandlers "github.com/arran4/goa4web/handlers/user"
@@ -95,20 +96,20 @@ func registerBlogsRoutes(r *mux.Router) {
 
 func registerForumRoutes(r *mux.Router) {
 	fr := r.PathPrefix("/forum").Subrouter()
-	fr.HandleFunc("/topic/{topic}.rss", forumTopicRssPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}.atom", forumTopicAtomPage).Methods("GET")
-	fr.HandleFunc("", forumPage).Methods("GET")
-	fr.HandleFunc("/category/{category}", forumPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}", forumTopicsPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateThread))
-	fr.HandleFunc("/topic/{topic}/thread", forumThreadNewCancelPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}", forumThreadPage).Methods("GET").MatcherFunc(GetThreadAndTopic())
+	fr.HandleFunc("/topic/{topic}.rss", forum.TopicRssPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}.atom", forum.TopicAtomPage).Methods("GET")
+	fr.HandleFunc("", forum.Page).Methods("GET")
+	fr.HandleFunc("/category/{category}", forum.Page).Methods("GET")
+	fr.HandleFunc("/topic/{topic}", forum.TopicsPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/thread", forum.ThreadNewPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/thread", forum.ThreadNewActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateThread))
+	fr.HandleFunc("/topic/{topic}/thread", forum.ThreadNewCancelPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}", forum.ThreadPage).Methods("GET").MatcherFunc(GetThreadAndTopic())
 	fr.HandleFunc("/topic/{topic}/thread/{thread}", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(GetThreadAndTopic())
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskReply))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forumTopicThreadReplyCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskCancel))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskEditReply)).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor()))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forumTopicThreadCommentEditActionCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskCancel))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forum.TopicThreadReplyPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskReply))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", forum.TopicThreadReplyCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskCancel))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forum.TopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskEditReply)).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor()))
+	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", forum.TopicThreadCommentEditActionCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(TaskMatcher(TaskCancel))
 }
 
 func registerLinkerRoutes(r *mux.Router) {
@@ -283,43 +284,43 @@ func registerAdminRoutes(r *mux.Router) {
 
 	// forum admin routes
 	far := ar.PathPrefix("/forum").Subrouter()
-	far.HandleFunc("", adminForumPage).Methods("GET")
-	far.HandleFunc("", adminForumRemakeForumThreadPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumthread))
-	far.HandleFunc("", adminForumRemakeForumTopicPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumtopic))
-	far.HandleFunc("/flagged", adminForumFlaggedPostsPage).Methods("GET")
-	far.HandleFunc("/logs", adminForumModeratorLogsPage).Methods("GET")
-	far.HandleFunc("/list", adminForumWordListPage).Methods("GET")
-	far.HandleFunc("/categories", forumAdminCategoriesPage).Methods("GET")
+	far.HandleFunc("", forum.AdminForumPage).Methods("GET")
+	far.HandleFunc("", forum.AdminForumRemakeForumThreadPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumthread))
+	far.HandleFunc("", forum.AdminForumRemakeForumTopicPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemakeStatisticInformationOnForumtopic))
+	far.HandleFunc("/flagged", forum.AdminForumFlaggedPostsPage).Methods("GET")
+	far.HandleFunc("/logs", forum.AdminForumModeratorLogsPage).Methods("GET")
+	far.HandleFunc("/list", forum.AdminForumWordListPage).Methods("GET")
+	far.HandleFunc("/categories", forum.AdminCategoriesPage).Methods("GET")
 	far.HandleFunc("/categories", common.TaskDoneAutoRefreshPage).Methods("POST")
-	far.HandleFunc("/category/{category}", forumAdminCategoryEditPage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumCategoryChange))
-	far.HandleFunc("/category", forumAdminCategoryCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumCategoryCreate))
-	far.HandleFunc("/category/delete", forumAdminCategoryDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
-	far.HandleFunc("/topics", forumAdminTopicsPage).Methods("GET")
+	far.HandleFunc("/category/{category}", forum.AdminCategoryEditPage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumCategoryChange))
+	far.HandleFunc("/category", forum.AdminCategoryCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumCategoryCreate))
+	far.HandleFunc("/category/delete", forum.AdminCategoryDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
+	far.HandleFunc("/topics", forum.AdminTopicsPage).Methods("GET")
 	far.HandleFunc("/topics", common.TaskDoneAutoRefreshPage).Methods("POST")
-	far.HandleFunc("/conversations", forumAdminThreadsPage).Methods("GET")
-	far.HandleFunc("/thread/{thread}/delete", forumAdminThreadDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumThreadDelete))
-	far.HandleFunc("/topic/{topic}/edit", forumAdminTopicEditPage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumTopicChange))
-	far.HandleFunc("/topic/{topic}/delete", forumAdminTopicDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumTopicDelete))
-	far.HandleFunc("/topic", forumTopicCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumTopicCreate))
-	far.HandleFunc("/topic/{topic}/levels", forumAdminTopicRestrictionLevelPage).Methods("GET")
-	far.HandleFunc("/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdateTopicRestriction))
-	far.HandleFunc("/topic/{topic}/levels", forumAdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskSetTopicRestriction))
-	far.HandleFunc("/topic/{topic}/levels", forumAdminTopicRestrictionLevelDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteTopicRestriction))
-	far.HandleFunc("/topic/{topic}/levels", forumAdminTopicRestrictionLevelCopyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCopyTopicRestriction))
-	far.HandleFunc("/users", forumAdminUserPage).Methods("GET")
-	far.HandleFunc("/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskSetUserLevel))
-	far.HandleFunc("/user/{user}/levels", forumAdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskUpdateUserLevel))
-	far.HandleFunc("/user/{user}/levels", forumAdminUserLevelDeletePage).Methods("GET", "POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel())).MatcherFunc(TaskMatcher(TaskDeleteUserLevel))
-	far.HandleFunc("/user/{user}/levels", forumAdminUserLevelPage).Methods("GET")
-	far.HandleFunc("/restrictions/users", forumAdminUsersRestrictionsDeletePage).Methods("POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel())).MatcherFunc(TaskMatcher(TaskDeleteUserLevel))
-	far.HandleFunc("/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskUpdateUserLevel))
-	far.HandleFunc("/restrictions/users", forumAdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskSetUserLevel))
-	far.HandleFunc("/restrictions/users", forumAdminUsersRestrictionsPage).Methods("GET")
-	far.HandleFunc("/restrictions/topics", forumAdminTopicsRestrictionLevelPage).Methods("GET")
-	far.HandleFunc("/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdateTopicRestriction))
-	far.HandleFunc("/restrictions/topics", forumAdminTopicsRestrictionLevelDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteTopicRestriction))
-	far.HandleFunc("/restrictions/topics", forumAdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskSetTopicRestriction))
-	far.HandleFunc("/restrictions/topics", forumAdminTopicsRestrictionLevelCopyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCopyTopicRestriction))
+	far.HandleFunc("/conversations", forum.AdminThreadsPage).Methods("GET")
+	far.HandleFunc("/thread/{thread}/delete", forum.AdminThreadDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumThreadDelete))
+	far.HandleFunc("/topic/{topic}/edit", forum.AdminTopicEditPage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumTopicChange))
+	far.HandleFunc("/topic/{topic}/delete", forum.AdminTopicDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumTopicDelete))
+	far.HandleFunc("/topic", forum.TopicCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskForumTopicCreate))
+	far.HandleFunc("/topic/{topic}/levels", forum.AdminTopicRestrictionLevelPage).Methods("GET")
+	far.HandleFunc("/topic/{topic}/levels", forum.AdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdateTopicRestriction))
+	far.HandleFunc("/topic/{topic}/levels", forum.AdminTopicRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskSetTopicRestriction))
+	far.HandleFunc("/topic/{topic}/levels", forum.AdminTopicRestrictionLevelDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteTopicRestriction))
+	far.HandleFunc("/topic/{topic}/levels", forum.AdminTopicRestrictionLevelCopyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCopyTopicRestriction))
+	far.HandleFunc("/users", forum.AdminUserPage).Methods("GET")
+	far.HandleFunc("/user/{user}/levels", forum.AdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskSetUserLevel))
+	far.HandleFunc("/user/{user}/levels", forum.AdminUserLevelUpdatePage).Methods("GET", "POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskUpdateUserLevel))
+	far.HandleFunc("/user/{user}/levels", forum.AdminUserLevelDeletePage).Methods("GET", "POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel())).MatcherFunc(TaskMatcher(TaskDeleteUserLevel))
+	far.HandleFunc("/user/{user}/levels", forum.AdminUserLevelPage).Methods("GET")
+	far.HandleFunc("/restrictions/users", forum.AdminUsersRestrictionsDeletePage).Methods("POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel())).MatcherFunc(TaskMatcher(TaskDeleteUserLevel))
+	far.HandleFunc("/restrictions/users", forum.AdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskUpdateUserLevel))
+	far.HandleFunc("/restrictions/users", forum.AdminUsersRestrictionsUpdatePage).Methods("POST").MatcherFunc(And(AdminUsersMaxLevelNotLowerThanTargetLevel(), TargetUsersLevelNotHigherThanAdminsMax())).MatcherFunc(TaskMatcher(TaskSetUserLevel))
+	far.HandleFunc("/restrictions/users", forum.AdminUsersRestrictionsPage).Methods("GET")
+	far.HandleFunc("/restrictions/topics", forum.AdminTopicsRestrictionLevelPage).Methods("GET")
+	far.HandleFunc("/restrictions/topics", forum.AdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdateTopicRestriction))
+	far.HandleFunc("/restrictions/topics", forum.AdminTopicsRestrictionLevelDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteTopicRestriction))
+	far.HandleFunc("/restrictions/topics", forum.AdminTopicsRestrictionLevelChangePage).Methods("POST").MatcherFunc(TaskMatcher(TaskSetTopicRestriction))
+	far.HandleFunc("/restrictions/topics", forum.AdminTopicsRestrictionLevelCopyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCopyTopicRestriction))
 
 	// linker admin
 	lar := ar.PathPrefix("/linker").Subrouter()

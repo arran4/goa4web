@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -11,15 +11,14 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/mux"
 )
 
-func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		MaxUserLevel    int32
-		UserTopicLevels []*GetAllForumTopicsWithPermissionsAndTopicRow
-		Users           []*User
-		Topics          []*Forumtopic
+		UserTopicLevels []*GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
 	}
 
 	data := Data{
@@ -27,8 +26,10 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	vars := mux.Vars(r)
+	uid, _ := strconv.Atoi(vars["user"])
 
-	rows, err := queries.GetAllForumTopicsWithPermissionsAndTopic(r.Context())
+	rows, err := queries.GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(r.Context(), int32(uid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -41,46 +42,17 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.UserTopicLevels = rows
 
-	userRows, err := queries.AllUsers(r.Context())
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("allUsers Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-	data.Users = userRows
-
-	topicRows, err := queries.GetAllForumTopics(r.Context())
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("allTopics Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-	data.Topics = topicRows
-
 	CustomForumIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminUsersRestrictionsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminUserLevelPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Request) {
+func AdminUserLevelUpdatePage(w http.ResponseWriter, r *http.Request) {
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	uid, err := strconv.Atoi(r.PostFormValue("uid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -106,6 +78,8 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 		expires = sql.NullTime{Time: t, Valid: true}
 	}
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	vars := mux.Vars(r)
+	uid, _ := strconv.Atoi(vars["user"])
 
 	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), UpsertUsersForumTopicLevelPermissionParams{
 		Level: sql.NullInt32{
@@ -130,18 +104,15 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 
 }
 
-func forumAdminUsersRestrictionsDeletePage(w http.ResponseWriter, r *http.Request) {
+func AdminUserLevelDeletePage(w http.ResponseWriter, r *http.Request) {
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	uid, err := strconv.Atoi(r.PostFormValue("uid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	vars := mux.Vars(r)
+	uid, _ := strconv.Atoi(vars["user"])
 
 	if err := queries.DeleteUsersForumTopicLevelPermission(r.Context(), DeleteUsersForumTopicLevelPermissionParams{
 		ForumtopicIdforumtopic: int32(tid),

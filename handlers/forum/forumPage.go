@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func forumPage(w http.ResponseWriter, r *http.Request) {
+func Page(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*CoreData

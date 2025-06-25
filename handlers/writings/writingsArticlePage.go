@@ -302,12 +302,13 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+	if err := common.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
+	cid := int64(0)
 	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return

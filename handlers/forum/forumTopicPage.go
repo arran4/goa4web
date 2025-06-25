@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
+func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		CategoryBreadcrumbs     []*ForumcategoryPlus

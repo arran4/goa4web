@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func forumThreadNewPage(w http.ResponseWriter, r *http.Request) {
+func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Languages          []*Language
@@ -45,7 +45,7 @@ func forumThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
+func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
@@ -106,7 +106,7 @@ func forumThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
 
-func forumThreadNewCancelPage(w http.ResponseWriter, r *http.Request) {
+func ThreadNewCancelPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 

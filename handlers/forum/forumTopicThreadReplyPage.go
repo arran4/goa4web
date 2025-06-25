@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
+func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -91,7 +91,7 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
 
-func forumTopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
+func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
 	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
 

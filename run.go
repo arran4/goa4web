@@ -1,7 +1,6 @@
 package goa4web
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -10,14 +9,13 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/pkg/server"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -34,7 +32,7 @@ var (
 	//      // Change this to your desired session key
 	sessionName = "my-session"
 	store       *sessions.CookieStore
-	srv         *Server
+	srv         *server.Server
 
 	version = "dev"
 )
@@ -88,13 +86,13 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		handler = newCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version).Wrap(handler)
 	}
 
-	srv = newServer(handler, store, dbPool, cfg)
+	srv = server.New(handler, store, dbPool, cfg)
 
 	provider := providerFromConfig(cfg)
 
 	startWorkers(ctx, dbPool, provider)
 
-	if err := runServer(ctx, srv, cfg.HTTPListen); err != nil {
+	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
 	}
 
@@ -142,35 +140,6 @@ func safeGo(fn func()) {
 		}()
 		fn()
 	}()
-}
-
-// mainCSSHandler serves the site's stylesheet.
-func mainCSSHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(templates.GetMainCSSData()))
-}
-
-// redirectPermanent returns a handler that redirects to the provided path using
-// StatusPermanentRedirect to preserve the request method.
-func redirectPermanent(to string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, to, http.StatusPermanentRedirect)
-	}
-}
-
-// redirectPermanentPrefix redirects any path starting with the given prefix to
-// the same path under a new prefix while preserving query parameters.
-func redirectPermanentPrefix(from, to string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		rest := strings.TrimPrefix(r.URL.Path, from)
-		if !strings.HasPrefix(rest, "/") && rest != "" {
-			rest = "/" + rest
-		}
-		target := to + rest
-		if r.URL.RawQuery != "" {
-			target += "?" + r.URL.RawQuery
-		}
-		http.Redirect(w, r, target, http.StatusPermanentRedirect)
-	}
 }
 
 // TODO we could do better

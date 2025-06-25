@@ -5,11 +5,12 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	"github.com/arran4/goa4web/pkg/handlers"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func registerRoutes(r *mux.Router) {
-	r.HandleFunc("/main.css", mainCSSHandler).Methods("GET")
+	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
 
 	registerNewsRoutes(r)
 	registerFAQRoutes(r)
@@ -27,8 +28,8 @@ func registerRoutes(r *mux.Router) {
 	registerAdminRoutes(r)
 
 	// legacy redirects
-	r.PathPrefix("/writing").HandlerFunc(redirectPermanentPrefix("/writing", "/writings"))
-	r.PathPrefix("/links").HandlerFunc(redirectPermanentPrefix("/links", "/linker"))
+	r.PathPrefix("/writing").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
+	r.PathPrefix("/links").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
 }
 
 func registerNewsRoutes(r *mux.Router) {
@@ -220,8 +221,8 @@ func registerUserRoutes(r *mux.Router) {
 	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods("GET").MatcherFunc(RequiresAnAccount())
 
 	// legacy redirects
-	r.HandleFunc("/user/lang", redirectPermanent("/usr/lang"))
-	r.HandleFunc("/user/email", redirectPermanent("/usr/email"))
+	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))
+	r.HandleFunc("/user/email", handlers.RedirectPermanent("/usr/email"))
 }
 
 func registerRegisterRoutes(r *mux.Router) {

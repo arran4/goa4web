@@ -1,4 +1,4 @@
-package goa4web
+package server
 
 import (
 	"context"
@@ -55,8 +55,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// newServer returns a Server with the supplied dependencies.
-func newServer(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg runtimeconfig.RuntimeConfig) *Server {
+// New returns a Server with the supplied dependencies.
+func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg runtimeconfig.RuntimeConfig) *Server {
 	return &Server{
 		Config: cfg,
 		Router: handler,
@@ -65,8 +65,8 @@ func newServer(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cf
 	}
 }
 
-// runServer starts the HTTP server and blocks until the context is cancelled.
-func runServer(ctx context.Context, srv *Server, addr string) error {
+// Run starts the HTTP server and blocks until the context is cancelled.
+func Run(ctx context.Context, srv *Server, addr string) error {
 	go func() {
 		if err := srv.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %v", err)

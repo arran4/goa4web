@@ -1,4 +1,4 @@
-package goa4web
+package blogs
 
 import (
 	"context"
@@ -17,6 +17,11 @@ import (
 	"github.com/arran4/goa4web/handlers/common"
 )
 
+var (
+	store       *sessions.CookieStore
+	sessionName = "test-session"
+)
+
 func TestBlogsBloggerPage(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -31,8 +36,8 @@ func TestBlogsBloggerPage(t *testing.T) {
 
 	r := mux.NewRouter()
 	br := r.PathPrefix("/blogs").Subrouter()
-	br.HandleFunc("/blogger/{username}", blogsBloggerPage).Methods("GET")
-	br.HandleFunc("/blogger/{username}/", blogsBloggerPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}", BloggerPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}/", BloggerPage).Methods("GET")
 
 	req := httptest.NewRequest("GET", "/blogs/blogger/bob", nil)
 
@@ -98,7 +103,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	blogsRssPage(rr, req)
+	RssPage(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -121,7 +126,7 @@ func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	blogsBlogAddPage(rr, req)
+	BlogAddPage(rr, req)
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}
@@ -132,7 +137,7 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	blogsBlogEditPage(rr, req)
+	BlogEditPage(rr, req)
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}
@@ -143,7 +148,7 @@ func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	getPermissionsByUserIdAndSectionBlogsPage(rr, req)
+	GetPermissionsByUserIdAndSectionBlogsPage(rr, req)
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}

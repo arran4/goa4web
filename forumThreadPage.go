@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
+	blogs "github.com/arran4/goa4web/handlers/blogs"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -165,13 +166,13 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 		switch replyType {
 		case "full":
-			data.Text = processCommentFullQuote(comment.Username.String, comment.Text.String)
+			data.Text = common.ProcessCommentFullQuote(comment.Username.String, comment.Text.String)
 		default:
-			data.Text = processCommentQuote(comment.Username.String, comment.Text.String)
+			data.Text = common.ProcessCommentQuote(comment.Username.String, comment.Text.String)
 		}
 	}
 
-	CustomBlogIndex(data.CoreData, r)
+	blogs.CustomBlogIndex(data.CoreData, r)
 
 	if err := templates.RenderTemplate(w, "threadPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

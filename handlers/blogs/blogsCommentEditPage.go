@@ -1,4 +1,4 @@
-package goa4web
+package blogs
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
+func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
@@ -74,7 +74,7 @@ func blogsCommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func blogsCommentEditPostCancelPage(w http.ResponseWriter, r *http.Request) {
+func CommentEditPostCancelPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])

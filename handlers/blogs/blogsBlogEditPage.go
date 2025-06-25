@@ -1,9 +1,9 @@
-package goa4web
+package blogs
 
 import (
 	"database/sql"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
+
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
+func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
@@ -54,14 +54,14 @@ func blogsBlogEditPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "blogEditPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "blogEditPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func blogsBlogEditActionPage(w http.ResponseWriter, r *http.Request) {
+func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

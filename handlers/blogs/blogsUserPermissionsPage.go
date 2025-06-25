@@ -1,10 +1,10 @@
-package goa4web
+package blogs
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
+
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func getPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {
+func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
@@ -57,7 +57,7 @@ func getPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	data.Rows = rows
 
 	CustomBlogIndex(data.CoreData, r)
-	err = templates.RenderTemplate(w, "userPermissionsPage.gohtml", data, corecommon.NewFuncs(r))
+	err = templates.RenderTemplate(w, "userPermissionsPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -65,7 +65,7 @@ func getPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
+func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	username := r.PostFormValue("username")
 	where := "blogs"
@@ -97,7 +97,7 @@ func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 
 	CustomBlogIndex(data.CoreData, r)
 
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -105,7 +105,7 @@ func blogsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	}
 }
 
-func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
+func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
@@ -123,7 +123,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomBlogIndex(data.CoreData, r)
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -131,7 +131,7 @@ func blogsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func blogsUsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
+func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	names := strings.FieldsFunc(r.PostFormValue("usernames"), func(r rune) bool { return r == ',' || r == '\n' || r == ' ' || r == '\t' })
 	level := r.PostFormValue("level")
@@ -164,14 +164,14 @@ func blogsUsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	CustomBlogIndex(data.CoreData, r)
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func blogsUsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Request) {
+func UsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	permids := r.PostForm["permid"]
 	data := struct {
@@ -199,7 +199,7 @@ func blogsUsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Reques
 	}
 
 	CustomBlogIndex(data.CoreData, r)
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

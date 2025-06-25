@@ -1,4 +1,4 @@
-package goa4web
+package blogs
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
+func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

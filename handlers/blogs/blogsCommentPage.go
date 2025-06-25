@@ -1,10 +1,10 @@
-package goa4web
+package blogs
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
+
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
+func CommentPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*GetBlogEntryForUserByIdRow
 		EditUrl string
@@ -104,9 +104,9 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 			}
 			switch replyType {
 			case "full":
-				data.Text = processCommentFullQuote(comment.Username.String, comment.Text.String)
+				data.Text = common.ProcessCommentFullQuote(comment.Username.String, comment.Text.String)
 			default:
-				data.Text = processCommentQuote(comment.Username.String, comment.Text.String)
+				data.Text = common.ProcessCommentQuote(comment.Username.String, comment.Text.String)
 			}
 		}
 
@@ -150,7 +150,7 @@ func blogsCommentPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "commentPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "commentPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

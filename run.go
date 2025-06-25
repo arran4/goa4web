@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	common "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -63,7 +64,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
-	if err := validateDefaultLanguage(context.Background(), New(dbPool), cfg.DefaultLanguage); err != nil {
+	if err := corelanguage.ValidateDefaultLanguage(context.Background(), New(dbPool), cfg.DefaultLanguage); err != nil {
 		return fmt.Errorf("default language: %w", err)
 	}
 

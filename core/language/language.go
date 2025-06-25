@@ -1,4 +1,4 @@
-package goa4web
+package language
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"unicode"
 
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -21,8 +22,8 @@ func validateLanguageName(name string) error {
 	return nil
 }
 
-// validateDefaultLanguage verifies that the configured default language exists.
-func validateDefaultLanguage(ctx context.Context, q *Queries, name string) error {
+// ValidateDefaultLanguage verifies that the configured default language exists.
+func ValidateDefaultLanguage(ctx context.Context, q *db.Queries, name string) error {
 	if name == "" {
 		return nil
 	}
@@ -36,8 +37,8 @@ func validateDefaultLanguage(ctx context.Context, q *Queries, name string) error
 	return err
 }
 
-// resolveDefaultLanguageID converts the configured language name to its ID.
-func resolveDefaultLanguageID(ctx context.Context, q *Queries) int32 {
+// ResolveDefaultLanguageID converts the configured language name to its ID.
+func ResolveDefaultLanguageID(ctx context.Context, q *db.Queries) int32 {
 	if runtimeconfig.AppRuntimeConfig.DefaultLanguage == "" {
 		return 0
 	}

@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -23,7 +24,7 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 
 	cfgMap := LoadAppConfigFile(ConfigFile)
 	srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap)
-	if err := validateDefaultLanguage(r.Context(), New(dbPool), srv.Config.DefaultLanguage); err != nil {
+	if err := corelanguage.ValidateDefaultLanguage(r.Context(), New(dbPool), srv.Config.DefaultLanguage); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	}
 

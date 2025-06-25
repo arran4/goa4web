@@ -1,29 +1,31 @@
-package goa4web
+package faq
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func faqAdminAnswerPage(w http.ResponseWriter, r *http.Request) {
+func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Categories []*Faqcategory
-		Rows       []*Faq
+		*corecommon.CoreData
+		Categories []*db.Faqcategory
+		Rows       []*db.Faq
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	catrows, err := queries.GetAllFAQCategories(r.Context())
 	if err != nil {
@@ -36,7 +38,7 @@ func faqAdminAnswerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Categories = catrows
 
-	rows, err := queries.GetFAQUnansweredQuestions(r.Context())
+	rows, err := queries.GetAllFAQQuestions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -49,14 +51,32 @@ func faqAdminAnswerPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomFAQIndex(data.CoreData)
 
-	if err := templates.RenderTemplate(w, "adminAnswerPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminQuestionPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func faqAnswerAnswerActionPage(w http.ResponseWriter, r *http.Request) {
+func QuestionsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+	faq, err := strconv.Atoi(r.PostFormValue("faq"))
+	if err != nil {
+		log.Printf("Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+
+	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
+		log.Printf("Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	common.TaskDoneAutoRefreshPage(w, r)
+}
+
+func QuestionsEditActionPage(w http.ResponseWriter, r *http.Request) {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
 	category, err := strconv.Atoi(r.PostFormValue("category"))
@@ -71,9 +91,9 @@ func faqAnswerAnswerActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	if err := queries.UpdateFAQQuestionAnswer(r.Context(), UpdateFAQQuestionAnswerParams{
+	if err := queries.UpdateFAQQuestionAnswer(r.Context(), db.UpdateFAQQuestionAnswerParams{
 		Answer:                       sql.NullString{Valid: true, String: answer},
 		Question:                     sql.NullString{Valid: true, String: question},
 		FaqcategoriesIdfaqcategories: int32(category),
@@ -87,16 +107,28 @@ func faqAnswerAnswerActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func faqAnswerRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	faq, err := strconv.Atoi(r.PostFormValue("faq"))
+func QuestionsCreateActionPage(w http.ResponseWriter, r *http.Request) {
+	question := r.PostFormValue("question")
+	answer := r.PostFormValue("answer")
+	category, err := strconv.Atoi(r.PostFormValue("category"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
+	if _, err := queries.DB().ExecContext(r.Context(),
+		"INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage) VALUES (?, ?, ?, ?, ?)",
+		sql.NullString{String: question, Valid: true},
+		sql.NullString{String: answer, Valid: true},
+		int32(category), uid, 1,
+	); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -55,7 +56,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		Replyable:          true,
 		BoardId:            bid,
 		ForumThreadId:      thid,
-		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
 	}
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{

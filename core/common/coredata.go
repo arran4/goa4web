@@ -39,3 +39,13 @@ var rolePriority = map[string]int{
 func (cd *CoreData) HasRole(role string) bool {
 	return rolePriority[cd.SecurityLevel] >= rolePriority[role]
 }
+
+// ContainsItem returns true if items includes an entry with the given name.
+func ContainsItem(items []IndexItem, name string) bool {
+	for _, it := range items {
+		if it.Name == name {
+			return true
+		}
+	}
+	return false
+}

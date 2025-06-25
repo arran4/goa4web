@@ -1,10 +1,8 @@
-package goa4web
+package auth
 
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,16 +10,19 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
-func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
+// LoginUserPassPage serves the username/password login form.
+func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "loginPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
@@ -31,7 +32,8 @@ func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loginActionPage(w http.ResponseWriter, r *http.Request) {
+// LoginActionPage processes the submitted login form.
+func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("login attempt for %s", r.PostFormValue("username"))
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
@@ -120,13 +122,13 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 		vals, _ := url.ParseQuery(backData)
 		type Data struct {
-			*CoreData
+			*corecommon.CoreData
 			BackURL string
 			Method  string
 			Values  url.Values
 		}
 		data := Data{
-			CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+			CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 			BackURL:  backURL,
 			Method:   backMethod,
 			Values:   vals,

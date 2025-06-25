@@ -8,3 +8,6 @@ const LinkerTopicName = "A LINKER TOPIC"
 
 // WritingTopicName is the default name for the hidden writing forum.
 const WritingTopicName = "A WRITING TOPIC"
+
+// Alphabet lists letters for search navigation.
+const Alphabet = "abcdefghijklmnopqrstuvwxyz"

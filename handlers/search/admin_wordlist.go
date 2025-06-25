@@ -1,17 +1,18 @@
-package goa4web
+package search
 
 import (
 	"database/sql"
 	_ "embed"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
@@ -28,7 +29,7 @@ type WordCount struct {
 
 func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows       []WordCount
 		NextLink   string
 		PrevLink   string
@@ -38,7 +39,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	letters := make([]string, len(Alphabet))
@@ -61,7 +62,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * pageSize
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if r.URL.Query().Get("download") != "" {
 		rows, err := queries.CompleteWordList(r.Context())
@@ -90,7 +91,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		prefRows, err2 := queries.WordListWithCountsByPrefix(r.Context(), WordListWithCountsByPrefixParams{
+		prefRows, err2 := queries.WordListWithCountsByPrefix(r.Context(), db.WordListWithCountsByPrefixParams{
 			Prefix: letter,
 			Limit:  int32(pageSize),
 			Offset: int32(offset),
@@ -108,7 +109,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		allRows, err2 := queries.WordListWithCounts(r.Context(), WordListWithCountsParams{
+		allRows, err2 := queries.WordListWithCounts(r.Context(), db.WordListWithCountsParams{
 			Limit:  int32(pageSize),
 			Offset: int32(offset),
 		})
@@ -152,7 +153,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	rows, err := queries.CompleteWordList(r.Context())
 	if err != nil {

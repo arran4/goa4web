@@ -1,34 +1,35 @@
-package goa4web
+package user
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type SectionGroup struct {
 		Section string
-		Rows    []*PermissionWithUser
+		Rows    []*db.PermissionWithUser
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Sections []SectionGroup
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetPermissionsWithUsers(r.Context())
 	if err != nil {
@@ -64,22 +65,22 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
-	} else if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+	} else if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
 		Section: sql.NullString{
 			String: where,
@@ -103,15 +104,15 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 }
 
 func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
@@ -130,24 +131,24 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	level := r.PostFormValue("level")
 	where := r.PostFormValue("where")
 
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 
 	if id, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.UpdatePermission(r.Context(), UpdatePermissionParams{
+	} else if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
 		ID:      int32(id),
 		Section: sql.NullString{String: where, Valid: true},
 		Level:   sql.NullString{String: level, Valid: true},

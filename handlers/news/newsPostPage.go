@@ -1,19 +1,23 @@
-package goa4web
+package news
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
-	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
+	"github.com/arran4/goa4web/core/templates"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	email "github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 type NewsPost struct {
@@ -22,42 +26,42 @@ type NewsPost struct {
 	// TODO or (eq .Level "authWriter") (and (ge .Level "authModerator") (le .Level "authAdministrator"))
 }
 
-func newsPostPage(w http.ResponseWriter, r *http.Request) {
+func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*GetCommentsByThreadIdForUserRow
+		*db.GetCommentsByThreadIdForUserRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
 		Offset             int
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
 		EditSaveUrl        string
 	}
 	type Post struct {
-		*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
+		*db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		ShowReply    bool
 		ShowEdit     bool
 		Editing      bool
-		Announcement *SiteAnnouncement
+		Announcement *db.SiteAnnouncement
 		IsAdmin      bool
 	}
 	type Data struct {
-		*CoreData
+		*hcommon.CoreData
 		Post               *Post
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int32
-		Topic              *Forumtopic
+		Topic              *db.Forumtopic
 		Comments           []*CommentPlus
 		Offset             int
 		IsReplying         bool
 		IsReplyable        bool
-		Thread             *GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread             *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
 		ReplyText          string
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries),
@@ -80,7 +84,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
+	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(post.ForumthreadIdforumthread),
 	})
@@ -94,7 +98,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(post.ForumthreadIdforumthread),
 	})
@@ -178,7 +182,7 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -197,7 +201,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
 	if err != nil {
@@ -213,7 +217,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
+		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: NewsTopicName,
@@ -245,7 +249,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignNewsThisThreadId(r.Context(), AssignNewsThisThreadIdParams{
+		if err := queries.AssignNewsThisThreadId(r.Context(), db.AssignNewsThisThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idsitenews:               int32(pid),
 		}); err != nil {
@@ -261,9 +265,9 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/news/news/%d", pid)
 
-	provider := getEmailProvider()
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
+	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
@@ -284,14 +288,14 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	//	log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	//} else {
 	//	for _, row := range rows {
-	//		if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
+	//		if err := notifyChange(r.Context(), email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig), row.String, endUrl); err != nil {
 	//			log.Printf("Error: notifyChange: %s", err)
 	//
 	//		}
 	//	}
 	//}
 
-	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -306,25 +310,25 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+	if err := PostUpdateLocal(r.Context(), queries, pthid, ptid); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := common.SearchWordIdsFromTextLocal(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if common.InsertWordsToForumSearchLocal(w, r, wordIds, queries, cid) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }
 
-func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
+func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// TODO verify field names
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
@@ -332,11 +336,11 @@ func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
-	err = queries.UpdateNewsPost(r.Context(), UpdateNewsPostParams{
+	err = queries.UpdateNewsPost(r.Context(), db.UpdateNewsPostParams{
 		Idsitenews:         int32(postId),
 		LanguageIdlanguage: int32(languageId),
 		News: sql.NullString{
@@ -349,10 +353,10 @@ func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }
 
-func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
+func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	// TODO verify field names
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
@@ -360,14 +364,14 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	err = queries.CreateNewsPost(r.Context(), CreateNewsPostParams{
+	err = queries.CreateNewsPost(r.Context(), db.CreateNewsPostParams{
 		LanguageIdlanguage: int32(languageId),
 		News: sql.NullString{
 			String: text,
@@ -380,5 +384,5 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }

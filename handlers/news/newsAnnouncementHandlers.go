@@ -1,18 +1,20 @@
-package goa4web
+package news
 
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
+
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
-func newsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -27,15 +29,15 @@ func newsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 			log.Printf("create announcement: %v", err)
 		}
 	} else if !ann.Active {
-		if err := queries.SetAnnouncementActive(r.Context(), SetAnnouncementActiveParams{Active: true, ID: ann.ID}); err != nil {
+		if err := queries.SetAnnouncementActive(r.Context(), db.SetAnnouncementActiveParams{Active: true, ID: ann.ID}); err != nil {
 			log.Printf("activate announcement: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }
 
-func newsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -44,13 +46,13 @@ func newsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("getLatestAnnouncementByNewsID: %v", err)
 		}
-		common.TaskDoneAutoRefreshPage(w, r)
+		hcommon.TaskDoneAutoRefreshPage(w, r)
 		return
 	}
 	if ann != nil && ann.Active {
-		if err := queries.SetAnnouncementActive(r.Context(), SetAnnouncementActiveParams{Active: false, ID: ann.ID}); err != nil {
+		if err := queries.SetAnnouncementActive(r.Context(), db.SetAnnouncementActiveParams{Active: false, ID: ann.ID}); err != nil {
 			log.Printf("deactivate announcement: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }

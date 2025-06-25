@@ -1,20 +1,23 @@
-package goa4web
+package news
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code2html"
-	"github.com/arran4/goa4web/handlers/common"
-	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/feeds"
+
+	"github.com/arran4/goa4web/a4code2html"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
-func newsRssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
+func NewsRssPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
 		Limit:  15,
 		Offset: 0,
 	})

@@ -14,7 +14,7 @@ func templatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "templatePage.gohtml", data, common.NewFuncs(r)); err != nil {

@@ -9,6 +9,7 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -73,7 +74,7 @@ func TestNotifyChange(t *testing.T) {
 	defer db.Close()
 	q := New(db)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("a@b.com", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), q)
+	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
 	rec := &recordMail{}
 	if err := notifyChange(ctx, rec, "a@b.com", "http://host"); err != nil {
 		t.Fatalf("notify error: %v", err)

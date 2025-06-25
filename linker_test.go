@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func TestLinkerFeed(t *testing.T) {
@@ -57,8 +58,8 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	mock.ExpectExec("INSERT IGNORE INTO linkerSearch").WithArgs(int32(1), int32(2)).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	linkerAdminQueueApproveActionPage(rr, req)

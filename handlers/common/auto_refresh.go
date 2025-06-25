@@ -12,7 +12,7 @@ func TaskDoneAutoRefreshPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 	}
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(ContextKey("coreData")).(*CoreData),
 	}
 	data.AutoRefresh = true
 

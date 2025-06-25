@@ -3,6 +3,7 @@ package goa4web
 import (
 	"context"
 	_ "embed"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 // defaultUpdateEmailText contains the compiled-in notification email template.
@@ -14,7 +15,7 @@ var defaultUpdateEmailText string
 // getUpdateEmailText returns the update email template body, preferring a database
 // override when available.
 func getUpdateEmailText(ctx context.Context) string {
-	if q, ok := ctx.Value(ContextValues("queries")).(*Queries); ok && q != nil {
+	if q, ok := ctx.Value(common.KeyQueries).(*Queries); ok && q != nil {
 		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
 			return body
 		}

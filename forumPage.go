@@ -26,7 +26,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 		Back                    bool
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -36,7 +36,7 @@ func forumPage(w http.ResponseWriter, r *http.Request) {
 	categoryId, _ := strconv.Atoi(vars["category"])
 
 	data := &Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Admin:    true,
 	}
 

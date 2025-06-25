@@ -24,7 +24,7 @@ func writingsWriterPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -49,7 +49,7 @@ func writingsWriterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:  r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:  r.Context().Value(common.KeyCoreData).(*CoreData),
 		Abstracts: rows,
 		Username:  username,
 		IsOffset:  offset != 0,

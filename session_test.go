@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func TestCoreAdderMiddlewareBadSession(t *testing.T) {
@@ -21,7 +22,7 @@ func TestCoreAdderMiddlewareBadSession(t *testing.T) {
 	}))
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), New(nil))
+	ctx := context.WithValue(req.Context(), common.KeyQueries, New(nil))
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)

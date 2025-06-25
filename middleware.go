@@ -40,7 +40,7 @@ func AdminCheckerMiddleware(next http.Handler) http.Handler {
 func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var uid int32
-		if u, ok := r.Context().Value(ContextValues("user")).(*User); ok && u != nil {
+		if u, ok := r.Context().Value(common.KeyUser).(*User); ok && u != nil {
 			uid = u.Idusers
 		}
 		log.Printf("%s %s uid=%d", r.Method, r.URL.Path, uid)
@@ -50,7 +50,7 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 
 // roleAllowed checks if the current request has one of the provided roles.
 func roleAllowed(r *http.Request, roles ...string) bool {
-	cd, ok := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	cd, ok := r.Context().Value(common.KeyCoreData).(*CoreData)
 	if ok && cd != nil {
 		for _, lvl := range roles {
 			if cd.HasRole(lvl) {
@@ -60,8 +60,8 @@ func roleAllowed(r *http.Request, roles ...string) bool {
 		return false
 	}
 
-	user, uok := r.Context().Value(ContextValues("user")).(*User)
-	queries, qok := r.Context().Value(ContextValues("queries")).(*Queries)
+	user, uok := r.Context().Value(common.KeyUser).(*User)
+	queries, qok := r.Context().Value(common.KeyQueries).(*Queries)
 	if !uok || !qok {
 		return false
 	}
@@ -87,7 +87,7 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !roleAllowed(r, roles...) {
-				err := templates.GetCompiledTemplates(common.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(ContextValues("coreData")).(*CoreData))
+				err := templates.GetCompiledTemplates(common.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(common.KeyCoreData).(*CoreData))
 				if err != nil {
 					log.Printf("Template Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)

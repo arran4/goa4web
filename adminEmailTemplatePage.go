@@ -37,7 +37,7 @@ func adminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		Preview string
 		Error   string
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Body:     b,
 		Preview:  preview,
 		Error:    r.URL.Query().Get("error"),
@@ -56,7 +56,7 @@ func adminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := r.PostFormValue("body")
-	q := r.Context().Value(ContextValues("queries")).(*Queries)
+	q := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := q.SetTemplateOverride(r.Context(), "updateEmail", body); err != nil {
 		log.Printf("db save template: %v", err)
 	}
@@ -71,8 +71,8 @@ func adminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	user, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {
 		log.Printf("get user: %v", err)

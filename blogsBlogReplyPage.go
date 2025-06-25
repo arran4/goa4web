@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -30,7 +31,7 @@ func blogsBlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(bid))
 	if err != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -44,7 +45,7 @@ func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
 		"UID":        int32(1),
 		"ExpiryTime": time.Now().Add(-time.Hour).Unix(),
 	})
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), New(nil))
+	ctx := context.WithValue(req.Context(), common.KeyQueries, New(nil))
 	req = req.WithContext(ctx)
 
 	called := false
@@ -78,7 +79,7 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	})
 
 	queries := New(db)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE idusers = ?")).
@@ -100,9 +101,9 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	var gotLangs []*Userlang
 
 	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPerms, _ = r.Context().Value(ContextValues("permissions")).([]*Permission)
-		gotPref, _ = r.Context().Value(ContextValues("preference")).(*Preference)
-		gotLangs, _ = r.Context().Value(ContextValues("languages")).([]*Userlang)
+		gotPerms, _ = r.Context().Value(common.KeyPermissions).([]*Permission)
+		gotPref, _ = r.Context().Value(common.KeyPreference).(*Preference)
+		gotLangs, _ = r.Context().Value(common.KeyLanguages).([]*Userlang)
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -130,8 +131,8 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	os.Unsetenv("EMAIL_PROVIDER")
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("user"), &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -152,8 +153,8 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	defer os.Unsetenv("EMAIL_PROVIDER")
 
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("user"), &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -169,8 +170,8 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 
 func TestUserEmailPage_ShowError(t *testing.T) {
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("user"), &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -215,9 +216,9 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	ctx = context.WithValue(ctx, ContextValues("session"), sess)
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx = context.WithValue(ctx, common.KeySession, sess)
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
 	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -263,9 +264,9 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	ctx = context.WithValue(ctx, ContextValues("session"), sess)
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx = context.WithValue(ctx, common.KeySession, sess)
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
@@ -312,9 +313,9 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	ctx = context.WithValue(ctx, ContextValues("session"), sess)
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx = context.WithValue(ctx, common.KeySession, sess)
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).

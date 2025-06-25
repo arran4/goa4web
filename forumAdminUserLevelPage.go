@@ -21,10 +21,10 @@ func forumAdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
@@ -76,7 +76,7 @@ func forumAdminUserLevelUpdatePage(w http.ResponseWriter, r *http.Request) {
 		}
 		expires = sql.NullTime{Time: t, Valid: true}
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
@@ -109,7 +109,7 @@ func forumAdminUserLevelDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 

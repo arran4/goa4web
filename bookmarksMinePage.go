@@ -75,7 +75,7 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 		Columns []*BookmarkColumn
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -94,7 +94,7 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
 	bookmarksCustomIndex(data.CoreData)

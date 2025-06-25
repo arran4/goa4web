@@ -15,10 +15,10 @@ func blogsBloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	//queries := r.Context().Name(ContextValues("queries")).(*Queries)
+	//queries := r.Context().Name(common.KeyQueries).(*Queries)
 	//
 	//rows, err := queries.GetCountOfBlogPostsByUser(r.Context())
 	//if err != nil {

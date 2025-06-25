@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -17,9 +18,9 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
-	threadRow := r.Context().Value(ContextValues("thread")).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(ContextValues("topic")).(*GetForumTopicByIdForUserRow)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
 	err = queries.UpdateComment(r.Context(), UpdateCommentParams{
@@ -45,8 +46,8 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 }
 
 func forumTopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(ContextValues("thread")).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(ContextValues("topic")).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

@@ -26,11 +26,11 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Search:   r.URL.Query().Get("search"),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.GetUsersPermissions(r.Context())
 	if err != nil {
 		switch {
@@ -73,7 +73,7 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	usernames := r.PostFormValue("usernames")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
@@ -101,7 +101,7 @@ func linkerAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request
 }
 
 func linkerAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	r.ParseForm()
 	ids := r.Form["permids"]
 	if len(ids) == 0 {

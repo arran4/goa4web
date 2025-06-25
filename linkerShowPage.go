@@ -23,8 +23,8 @@ func linkerShowPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -76,7 +76,7 @@ func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
 	if err != nil {

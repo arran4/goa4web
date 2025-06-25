@@ -17,8 +17,8 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Bans []*BannedIp
 	}
-	data := Data{CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData)}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)
@@ -34,7 +34,7 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = normalizeIPNet(ipNet)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
@@ -56,7 +56,7 @@ func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

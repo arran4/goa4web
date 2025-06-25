@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"log"
@@ -60,7 +61,7 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*GetAllImag
 }
 
 func imagebbsRssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	boards, err := queries.GetAllImageBoards(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
@@ -86,7 +87,7 @@ func imagebbsRssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func imagebbsAtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	boards, err := queries.GetAllImageBoards(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
@@ -114,7 +115,7 @@ func imagebbsAtomPage(w http.ResponseWriter, r *http.Request) {
 func imagebbsBoardRssPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
@@ -144,7 +145,7 @@ func imagebbsBoardRssPage(w http.ResponseWriter, r *http.Request) {
 func imagebbsBoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)

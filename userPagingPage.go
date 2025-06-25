@@ -15,7 +15,7 @@ import (
 )
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
-	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
+	pref, _ := r.Context().Value(common.KeyPreference).(*Preference)
 	size := runtimeconfig.AppRuntimeConfig.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
@@ -26,7 +26,7 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 		Min  int
 		Max  int
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Size:     size,
 		Min:      runtimeconfig.AppRuntimeConfig.PageSizeMin,
 		Max:      runtimeconfig.AppRuntimeConfig.PageSizeMax,
@@ -55,7 +55,7 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	if size > runtimeconfig.AppRuntimeConfig.PageSizeMax {
 		size = runtimeconfig.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

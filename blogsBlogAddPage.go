@@ -13,7 +13,7 @@ import (
 )
 
 func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -25,7 +25,7 @@ func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
 		Mode               string
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
@@ -55,7 +55,7 @@ func blogsBlogAddActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

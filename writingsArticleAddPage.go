@@ -19,10 +19,10 @@ func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -54,7 +54,7 @@ func writingsArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	articleId, err := queries.InsertWriting(r.Context(), InsertWritingParams{
 		WritingcategoryIdwritingcategory: int32(categoryId),

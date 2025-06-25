@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func UserAdderMiddleware(next http.Handler) http.Handler {
@@ -22,7 +23,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			core.SessionError(writer, request, err)
 		}
 
-		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+		queries := request.Context().Value(common.KeyQueries).(*Queries)
 		var (
 			user        *User
 			permissions []*Permission
@@ -79,11 +80,11 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		ctx := context.WithValue(request.Context(), ContextValues("session"), session)
-		ctx = context.WithValue(ctx, ContextValues("user"), user)
-		ctx = context.WithValue(ctx, ContextValues("permissions"), permissions)
-		ctx = context.WithValue(ctx, ContextValues("preference"), preference)
-		ctx = context.WithValue(ctx, ContextValues("languages"), languages)
+		ctx := context.WithValue(request.Context(), common.KeySession, session)
+		ctx = context.WithValue(ctx, common.KeyUser, user)
+		ctx = context.WithValue(ctx, common.KeyPermissions, permissions)
+		ctx = context.WithValue(ctx, common.KeyPreference, preference)
+		ctx = context.WithValue(ctx, common.KeyLanguages, languages)
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }

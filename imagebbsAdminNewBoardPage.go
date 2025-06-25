@@ -18,9 +18,9 @@ func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	boardRows, err := queries.GetAllImageBoards(r.Context())
 	if err != nil {
@@ -49,7 +49,7 @@ func imagebbsAdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	err := queries.CreateImageBoard(r.Context(), CreateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),

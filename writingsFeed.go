@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
@@ -58,7 +59,7 @@ func writingsFeedGen(r *http.Request, queries *Queries) (*feeds.Feed, error) {
 }
 
 func writingsRssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	feed, err := writingsFeedGen(r, queries)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
@@ -73,7 +74,7 @@ func writingsRssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsAtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	feed, err := writingsFeedGen(r, queries)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)

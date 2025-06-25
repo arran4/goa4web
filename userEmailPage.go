@@ -25,11 +25,11 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		Error           string
 	}
 
-	user, _ := r.Context().Value(ContextValues("user")).(*User)
-	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
+	user, _ := r.Context().Value(common.KeyUser).(*User)
+	pref, _ := r.Context().Value(common.KeyPreference).(*Preference)
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		UserData: user,
 		Error:    r.URL.Query().Get("error"),
 	}
@@ -59,7 +59,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	updates := r.PostFormValue("emailupdates") != ""
 
 	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
@@ -92,7 +92,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(ContextValues("user")).(*User)
+	user, _ := r.Context().Value(common.KeyUser).(*User)
 	if user == nil || !user.Email.Valid {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,10 +16,10 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadRow := r.Context().Value(ContextValues("thread")).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(ContextValues("topic")).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
@@ -91,8 +92,8 @@ func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func forumTopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(ContextValues("thread")).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(ContextValues("topic")).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

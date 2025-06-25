@@ -27,7 +27,7 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max     int
 		Default int
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Min:      runtimeconfig.AppRuntimeConfig.PageSizeMin,
 		Max:      runtimeconfig.AppRuntimeConfig.PageSizeMax,
 		Default:  runtimeconfig.AppRuntimeConfig.PageSizeDefault,

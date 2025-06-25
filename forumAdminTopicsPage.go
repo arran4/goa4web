@@ -18,10 +18,10 @@ func forumAdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Categories []*GetAllForumCategoriesWithSubcategoryCountRow
 		Topics     []*Forumtopic
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
@@ -67,7 +67,7 @@ func forumAdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 
@@ -99,7 +99,7 @@ func forumTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if _, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 		Title: sql.NullString{
@@ -121,7 +121,7 @@ func forumTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func forumAdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 	if err := queries.DeleteForumTopic(r.Context(), int32(topicId)); err != nil {

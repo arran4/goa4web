@@ -45,8 +45,8 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		CategoryBreadcrumbs []*Writingcategory
 	}
 
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -63,7 +63,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
-	queries = r.Context().Value(ContextValues("queries")).(*Queries)
+	queries = r.Context().Value(common.KeyQueries).(*Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
@@ -203,7 +203,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{

@@ -22,10 +22,10 @@ func forumAdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	rows, err := queries.GetAllForumTopicsWithPermissionsAndTopic(r.Context())
 	if err != nil {
@@ -104,7 +104,7 @@ func forumAdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Reques
 		}
 		expires = sql.NullTime{Time: t, Valid: true}
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), UpsertUsersForumTopicLevelPermissionParams{
 		Level: sql.NullInt32{
@@ -140,7 +140,7 @@ func forumAdminUsersRestrictionsDeletePage(w http.ResponseWriter, r *http.Reques
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.DeleteUsersForumTopicLevelPermission(r.Context(), DeleteUsersForumTopicLevelPermissionParams{
 		ForumtopicIdforumtopic: int32(tid),

@@ -29,7 +29,7 @@ func adminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,

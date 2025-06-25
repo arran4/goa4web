@@ -18,10 +18,10 @@ func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	approvedUserRows, err := queries.GetAllWritingApprovals(r.Context())
 	if err != nil {
@@ -46,7 +46,7 @@ func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
@@ -76,7 +76,7 @@ func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Reque
 }
 
 func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 	username := r.PostFormValue("username")
 	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
@@ -101,7 +101,7 @@ func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 func writingsAdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	uid, _ := strconv.Atoi(r.PostFormValue("uid"))
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
@@ -121,7 +121,7 @@ func writingsAdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Requ
 }
 
 func writingsAdminUserAccessRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	uid, _ := strconv.Atoi(r.PostFormValue("uid"))
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 

@@ -19,10 +19,10 @@ func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	rows, err := queries.GetPermissionsByUserIdAndSectionWritings(r.Context())
 	if err != nil {
@@ -44,7 +44,7 @@ func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	username := r.PostFormValue("username")
 	where := "writing"
 	level := r.PostFormValue("level")
@@ -54,7 +54,7 @@ func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *h
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/writings",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -83,7 +83,7 @@ func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *h
 }
 
 func writingsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*CoreData
@@ -91,7 +91,7 @@ func writingsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/writings",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

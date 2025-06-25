@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -20,7 +21,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{UserID: 1})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{UserID: 1})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -52,8 +53,8 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 		WithArgs(int32(1)).WillReturnRows(rows)
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{UserID: 1})
-	ctx = context.WithValue(ctx, ContextValues("queries"), q)
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{UserID: 1})
+	ctx = context.WithValue(ctx, common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

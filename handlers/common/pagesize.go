@@ -10,7 +10,7 @@ import (
 // GetPageSize returns the preferred page size within configured bounds.
 func GetPageSize(r *http.Request) int {
 	size := runtimeconfig.AppRuntimeConfig.PageSizeDefault
-	if pref, _ := r.Context().Value(ContextValues("preference")).(*db.Preference); pref != nil && pref.PageSize != 0 {
+	if pref, _ := r.Context().Value(ContextKey("preference")).(*db.Preference); pref != nil && pref.PageSize != 0 {
 		size = int(pref.PageSize)
 	}
 	if size < runtimeconfig.AppRuntimeConfig.PageSizeMin {

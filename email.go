@@ -5,16 +5,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/smtp"
 	"os"
 	"strings"
 	"text/template"
 
 	"github.com/arran4/goa4web/config"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
 
 	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
@@ -72,93 +67,10 @@ func notifyChange(ctx context.Context, provider email.Provider, emailAddr string
 	return nil
 }
 
-func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
-	mode := strings.ToLower(cfg.EmailProvider)
-
-	switch mode {
-	case "smtp":
-		host := cfg.EmailSMTPHost
-		port := cfg.EmailSMTPPort
-		user := cfg.EmailSMTPUser
-		pass := cfg.EmailSMTPPass
-		if host == "" {
-			log.Printf("Email disabled: %s not set", config.EnvSMTPHost)
-			return nil
-		}
-		addr := host
-		if port != "" {
-			addr = host + ":" + port
-		}
-		var auth smtp.Auth
-		if user != "" {
-			auth = smtp.PlainAuth("", user, pass, host)
-		}
-		return email.SMTPProvider{Addr: addr, Auth: auth, From: email.SourceEmail}
-
-	case "ses":
-		// Attempt to create an AWS session using default credentials. If this
-		// fails, emails are effectively disabled.
-		awsCfg := aws.NewConfig()
-		if region := cfg.EmailAWSRegion; region != "" {
-			awsCfg = awsCfg.WithRegion(region)
-		}
-
-		sess, err := session.NewSession(awsCfg)
-		if err != nil {
-			log.Printf("Email disabled: cannot initialise AWS session: %v", err)
-			if mode == "ses" {
-				return nil
-			}
-			// if EMAIL_PROVIDER not specified default to ses but disabled
-			return nil
-		}
-
-		if _, err := sess.Config.Credentials.Get(); err != nil {
-			log.Printf("Email disabled: no AWS credentials: %v", err)
-			return nil
-		}
-
-		return email.SESProvider{Client: ses.New(sess)}
-
-	case "local":
-		return email.LocalProvider{}
-
-	case "jmap":
-		ep := cfg.EmailJMAPEndpoint
-		if ep == "" {
-			log.Printf("Email disabled: %s not set", config.EnvJMAPEndpoint)
-			return nil
-		}
-		acc := cfg.EmailJMAPAccount
-		id := cfg.EmailJMAPIdentity
-		if acc == "" || id == "" {
-			log.Printf("Email disabled: %s or %s not set", config.EnvJMAPAccount, config.EnvJMAPIdentity)
-			return nil
-		}
-		return email.JMAPProvider{
-			Endpoint:  ep,
-			Username:  cfg.EmailJMAPUser,
-			Password:  cfg.EmailJMAPPass,
-			AccountID: acc,
-			Identity:  id,
-		}
-
-	case "sendgrid":
-		return email.SendGridProviderFromConfig(cfg.EmailSendGridKey)
-
-	case "log":
-		return email.LogProvider{}
-
-	default:
-		log.Printf("Email disabled: unknown provider %q", mode)
-		return nil
-	}
-}
-
 // getEmailProvider returns the mail provider configured by environment variables.
-// Production code uses this, while tests can call providerFromConfig directly.
+// Production code uses this, while tests can call email.ProviderFromConfig directly.
 func getEmailProvider() email.Provider {
-	return providerFromConfig(runtimeconfig.AppRuntimeConfig)
+	return email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 }
 
 // loadEmailConfigFile reads EMAIL_* style configuration values from a simple

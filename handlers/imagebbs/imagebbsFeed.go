@@ -1,4 +1,4 @@
-package goa4web
+package imagebbs
 
 import (
 	"database/sql"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"log"
@@ -15,7 +16,7 @@ import (
 	"time"
 )
 
-func imagebbsFeed(r *http.Request, title string, boardID int, rows []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow) *feeds.Feed {
+func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -60,15 +61,15 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*GetAllImag
 	return feed
 }
 
-func imagebbsRssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func RssPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	boards, err := queries.GetAllImageBoards(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	var posts []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
+	var posts []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
 	for _, b := range boards {
 		rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), b.Idimageboard)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -86,15 +87,15 @@ func imagebbsRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func imagebbsAtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func AtomPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	boards, err := queries.GetAllImageBoards(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	var posts []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
+	var posts []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
 	for _, b := range boards {
 		rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), b.Idimageboard)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -112,10 +113,10 @@ func imagebbsAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func imagebbsBoardRssPage(w http.ResponseWriter, r *http.Request) {
+func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
@@ -142,10 +143,10 @@ func imagebbsBoardRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func imagebbsBoardAtomPage(w http.ResponseWriter, r *http.Request) {
+func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)

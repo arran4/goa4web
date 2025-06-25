@@ -1,9 +1,10 @@
-package goa4web
+package common
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -47,7 +48,7 @@ func TestIsAlphanumericOrPunctuationExtra(t *testing.T) {
 
 func TestBreakupTextToWords(t *testing.T) {
 	in := "Hello, world! It's-me"
-	words := breakupTextToWords(in)
+	words := BreakupTextToWords(in)
 	want := []string{"Hello", "world", "It's-me"}
 	if len(words) != len(want) {
 		t.Fatalf("len=%d want %d", len(words), len(want))
@@ -70,7 +71,7 @@ func TestBreakupTextToWordsEdge(t *testing.T) {
 		{"---abc", []string{"---abc"}},
 	}
 	for _, c := range cases {
-		got := breakupTextToWords(c.in)
+		got := BreakupTextToWords(c.in)
 		if len(got) != len(c.want) {
 			t.Errorf("%q len=%d want %d", c.in, len(got), len(c.want))
 			continue
@@ -110,7 +111,7 @@ func (stubResult) RowsAffected() (int64, error) { return 1, nil }
 
 func TestSearchWordIdsFromText(t *testing.T) {
 	db := &stubDB{}
-	q := New(db)
+	q := dbpkg.New(db)
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
 	ids, redirect := SearchWordIdsFromText(rr, req, "Hello world Hello", q)
@@ -127,7 +128,7 @@ func TestSearchWordIdsFromText(t *testing.T) {
 
 func TestSearchWordIdsFromTextError(t *testing.T) {
 	db := &stubDB{err: errors.New("bad")}
-	q := New(db)
+	q := dbpkg.New(db)
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
 	ids, redirect := SearchWordIdsFromText(rr, req, "bad", q)

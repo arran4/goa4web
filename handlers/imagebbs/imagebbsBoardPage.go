@@ -1,4 +1,4 @@
-package goa4web
+package imagebbs
 
 import (
 	"crypto/sha1"
@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"io"
 	"log"
 	"net/http"
@@ -24,25 +25,25 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
+func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Boards      []*Imageboard
+		*common.CoreData
+		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
-		Posts       []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
+		Posts       []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
 	}
 
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 
 	data := Data{
-		CoreData:    r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:    r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), int32(bid))
 	if err != nil {
@@ -79,7 +80,7 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
+func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 
 	vars := mux.Vars(r)
@@ -91,7 +92,7 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {
@@ -182,7 +183,7 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 
 	approved := !board.ApprovalRequired
 
-	pid, err := queries.CreateImagePost(r.Context(), CreateImagePostParams{
+	pid, err := queries.CreateImagePost(r.Context(), db.CreateImagePostParams{
 		ImageboardIdimageboard: int32(bid),
 		Thumbnail:              sql.NullString{Valid: true, String: relThumb},
 		Fullimage:              sql.NullString{Valid: true, String: relFull},
@@ -197,12 +198,12 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
+	if common.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
 		return
 	}
 

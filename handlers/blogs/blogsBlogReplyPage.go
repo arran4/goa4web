@@ -145,12 +145,12 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

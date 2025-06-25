@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -64,7 +64,7 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetWritingsByIdsForUserDescendingByPublishedDateRow, bool, bool, error) {
-	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 
 	if len(searchWords) == 0 {

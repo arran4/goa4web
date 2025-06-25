@@ -1,36 +1,47 @@
-package goa4web
+package news
 
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
-func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
+func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
+		*hcommon.CoreData
+		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
+		News               []*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
+		NoResults          bool
+		EmptyWords         bool
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if comments, emptyWords, noResults, err := ForumCommentSearchNotInRestrictedTopic(w, r, queries, uid); err != nil {
+	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: NewsTopicName})
+	if err != nil {
+		log.Printf("findForumTopicByTitle Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if comments, emptyWords, noResults, err := forumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbn.Idforumtopic}, uid); err != nil {
 		return
 	} else {
 		data.Comments = comments
@@ -38,16 +49,24 @@ func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 		data.CommentsEmptyWords = noResults
 	}
 
-	if err := templates.RenderTemplate(w, "resultForumActionPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if news, emptyWords, noResults, err := NewsSearch(w, r, queries, uid); err != nil {
+		return
+	} else {
+		data.News = news
+		data.NoResults = emptyWords
+		data.EmptyWords = noResults
+	}
+
+	if err := templates.RenderTemplate(w, "resultNewsActionPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
+func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
 	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
-	var commentIds []int32
+	var newsIds []int32
 
 	if len(searchWords) == 0 {
 		return nil, true, false, nil
@@ -55,7 +74,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.CommentsSearchFirstNotInRestrictedTopic(r.Context(), sql.NullString{
+			ids, err := queries.SiteNewsSearchFirst(r.Context(), sql.NullString{
 				String: word,
 				Valid:  true,
 			})
@@ -63,55 +82,52 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 				switch {
 				case errors.Is(err, sql.ErrNoRows):
 				default:
-					log.Printf("commentsSearchFirst Error: %s", err)
+					log.Printf("newsSearchFirst Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 					return nil, false, false, err
 				}
 			}
-			commentIds = ids
+			newsIds = ids
 		} else {
-			ids, err := queries.CommentsSearchNextNotInRestrictedTopic(r.Context(), CommentsSearchNextNotInRestrictedTopicParams{
+			ids, err := queries.SiteNewsSearchNext(r.Context(), db.SiteNewsSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
 				},
-				Ids: commentIds,
+				Ids: newsIds,
 			})
 			if err != nil {
 				switch {
 				case errors.Is(err, sql.ErrNoRows):
 				default:
-					log.Printf("commentsSearchNext Error: %s", err)
+					log.Printf("newsSearchNext Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 					return nil, false, false, err
 				}
 			}
-			commentIds = ids
+			newsIds = ids
 		}
-		if len(commentIds) == 0 {
+		if len(newsIds) == 0 {
 			return nil, false, true, nil
 		}
 	}
 
-	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), GetCommentsByIdsForUserWithThreadInfoParams{
-		UsersIdusers: uid,
-		Ids:          commentIds,
-	})
+	news, err := queries.GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(r.Context(), newsIds)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getCommentsByIds Error: %s", err)
+			log.Printf("getNews Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return nil, false, false, err
 		}
 	}
 
-	return comments, false, false, nil
+	return news, false, false, nil
 }
 
-func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, forumTopicId []int32, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
+func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
+	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
 	if len(searchWords) == 0 {
@@ -120,7 +136,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.CommentsSearchFirstInRestrictedTopic(r.Context(), CommentsSearchFirstInRestrictedTopicParams{
+			ids, err := queries.CommentsSearchFirstInRestrictedTopic(r.Context(), db.CommentsSearchFirstInRestrictedTopicParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -138,7 +154,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 			}
 			commentIds = ids
 		} else {
-			ids, err := queries.CommentsSearchNextInRestrictedTopic(r.Context(), CommentsSearchNextInRestrictedTopicParams{
+			ids, err := queries.CommentsSearchNextInRestrictedTopic(r.Context(), db.CommentsSearchNextInRestrictedTopicParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -150,7 +166,6 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 				switch {
 				case errors.Is(err, sql.ErrNoRows):
 				default:
-
 					log.Printf("commentsSearchNext Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 					return nil, false, false, err
@@ -163,7 +178,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), GetCommentsByIdsForUserWithThreadInfoParams{
+	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
 		UsersIdusers: uid,
 		Ids:          commentIds,
 	})

@@ -5,10 +5,16 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	blogs "github.com/arran4/goa4web/handlers/blogs"
+	bookmarks "github.com/arran4/goa4web/handlers/bookmarks"
 	"github.com/arran4/goa4web/handlers/common"
+	news "github.com/arran4/goa4web/handlers/news"
+	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
+	faq "github.com/arran4/goa4web/handlers/faq"
+	linker "github.com/arran4/goa4web/handlers/linker"
 	writings "github.com/arran4/goa4web/handlers/writings"
-	faq "github.com/arran4/goa4web/sections/faq"
 
+	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/pkg/handlers"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -26,7 +32,7 @@ func registerRoutes(r *mux.Router) {
 	registerSearchRoutes(r)
 	registerWritingsRoutes(r)
 	registerInformationRoutes(r)
-	registerUserRoutes(r)
+	userhandlers.RegisterRoutes(r)
 	registerRegisterRoutes(r)
 	registerLoginRoutes(r)
 	registerAdminRoutes(r)
@@ -42,50 +48,49 @@ func registerNewsRoutes(r *mux.Router) {
 	r.HandleFunc("/", common.TaskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(AddNewsIndex)
-	nr.HandleFunc(".rss", newsRssPage).Methods("GET")
+	nr.HandleFunc(".rss", news.NewsRssPage).Methods("GET")
 	nr.HandleFunc("", runTemplate("page.gohtml")).Methods("GET")
 	nr.HandleFunc("", common.TaskDoneAutoRefreshPage).Methods("POST")
-	//TODO nr.HandleFunc("/news/{id:[0-9]+}", newsPostPage).Methods("GET")
-	nr.HandleFunc("/news/{post}", newsPostPage).Methods("GET")
-	nr.HandleFunc("/news/{post}", newsPostReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
-	nr.HandleFunc("/news/{post}", newsPostEditActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskEdit))
-	nr.HandleFunc("/news/{post}", newsPostNewActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskNewPost))
-	nr.HandleFunc("/news/{post}/announcement", newsAnnouncementActivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAdd))
-	nr.HandleFunc("/news/{post}/announcement", newsAnnouncementDeactivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDelete))
+	nr.HandleFunc("/news/{post}", news.NewsPostPage).Methods("GET")
+	nr.HandleFunc("/news/{post}", news.NewsPostReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
+	nr.HandleFunc("/news/{post}", news.NewsPostEditActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskEdit))
+	nr.HandleFunc("/news/{post}", news.NewsPostNewActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskNewPost))
+	nr.HandleFunc("/news/{post}/announcement", news.NewsAnnouncementActivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAdd))
+	nr.HandleFunc("/news/{post}/announcement", news.NewsAnnouncementDeactivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDelete))
 	nr.HandleFunc("/news/{post}", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
 	nr.HandleFunc("/news/{post}", common.TaskDoneAutoRefreshPage).Methods("POST")
-	nr.HandleFunc("/user/permissions", newsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	nr.HandleFunc("/users/permissions", newsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
-	nr.HandleFunc("/users/permissions", newsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
+	nr.HandleFunc("/user/permissions", news.NewsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	nr.HandleFunc("/users/permissions", news.NewsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	nr.HandleFunc("/users/permissions", news.NewsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 }
 
 func registerBlogsRoutes(r *mux.Router) {
 	br := r.PathPrefix("/blogs").Subrouter()
-	br.HandleFunc("/rss", blogsRssPage).Methods("GET")
-	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
-	br.HandleFunc("", blogsPage).Methods("GET")
-	br.HandleFunc("/", blogsPage).Methods("GET")
-	br.HandleFunc("/add", blogsBlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
-	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskAdd))
-	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
-	br.HandleFunc("/blogger/{username}", blogsBloggerPage).Methods("GET")
-	br.HandleFunc("/blogger/{username}/", blogsBloggerPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET")
+	br.HandleFunc("/rss", blogs.RssPage).Methods("GET")
+	br.HandleFunc("/atom", blogs.AtomPage).Methods("GET")
+	br.HandleFunc("", blogs.Page).Methods("GET")
+	br.HandleFunc("/", blogs.Page).Methods("GET")
+	br.HandleFunc("/add", blogs.BlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
+	br.HandleFunc("/add", blogs.BlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskAdd))
+	br.HandleFunc("/bloggers", blogs.BloggersPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}", blogs.BloggerPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}/", blogs.BloggerPage).Methods("GET")
+	br.HandleFunc("/blog/{blog}", blogs.BlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", common.TaskDoneAutoRefreshPage).Methods("POST")
-	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET", "POST")
-	br.HandleFunc("/blog/{blog}/reply", blogsBlogReplyPostPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	br.HandleFunc("/blog/{blog}/comment/{comment}", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskEditReply))
-	br.HandleFunc("/blog/{blog}/comment/{comment}", blogsCommentEditPostCancelPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher(TaskEdit))
+	br.HandleFunc("/blog/{blog}/comments", blogs.CommentPage).Methods("GET", "POST")
+	br.HandleFunc("/blog/{blog}/reply", blogs.BlogReplyPostPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
+	br.HandleFunc("/blog/{blog}/comment/{comment}", blogs.CommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskEditReply))
+	br.HandleFunc("/blog/{blog}/comment/{comment}", blogs.CommentEditPostCancelPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
+	br.HandleFunc("/blog/{blog}/edit", blogs.BlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))
+	br.HandleFunc("/blog/{blog}/edit", blogs.BlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher(TaskEdit))
 	br.HandleFunc("/blog/{blog}/edit", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
 
 	// Admin endpoints for blogs
-	br.HandleFunc("/user/permissions", getPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersAllow))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersDisallow))
+	br.HandleFunc("/user/permissions", blogs.GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersAllow))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersDisallow))
 }
 
 func registerForumRoutes(r *mux.Router) {
@@ -108,64 +113,64 @@ func registerForumRoutes(r *mux.Router) {
 
 func registerLinkerRoutes(r *mux.Router) {
 	lr := r.PathPrefix("/linker").Subrouter()
-	lr.HandleFunc("/rss", linkerRssPage).Methods("GET")
-	lr.HandleFunc("/atom", linkerAtomPage).Methods("GET")
-	lr.HandleFunc("", linkerPage).Methods("GET")
-	lr.HandleFunc("/linker/{username}", linkerLinkerPage).Methods("GET")
-	lr.HandleFunc("/linker/{username}/", linkerLinkerPage).Methods("GET")
-	lr.HandleFunc("/categories", linkerCategoriesPage).Methods("GET")
-	lr.HandleFunc("/category/{category}", linkerCategoryPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", linkerCommentsPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", linkerCommentsReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	lr.HandleFunc("/show/{link}", linkerShowPage).Methods("GET")
-	lr.HandleFunc("/show/{link}", linkerShowReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	lr.HandleFunc("/suggest", linkerSuggestPage).Methods("GET")
-	lr.HandleFunc("/suggest", linkerSuggestActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSuggest))
+	lr.HandleFunc("/rss", linker.RssPage).Methods("GET")
+	lr.HandleFunc("/atom", linker.AtomPage).Methods("GET")
+	lr.HandleFunc("", linker.Page).Methods("GET")
+	lr.HandleFunc("/linker/{username}", linker.LinkerPage).Methods("GET")
+	lr.HandleFunc("/linker/{username}/", linker.LinkerPage).Methods("GET")
+	lr.HandleFunc("/categories", linker.CategoriesPage).Methods("GET")
+	lr.HandleFunc("/category/{category}", linker.CategoryPage).Methods("GET")
+	lr.HandleFunc("/comments/{link}", linker.CommentsPage).Methods("GET")
+	lr.HandleFunc("/comments/{link}", linker.CommentsReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
+	lr.HandleFunc("/show/{link}", linker.ShowPage).Methods("GET")
+	lr.HandleFunc("/show/{link}", linker.ShowReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
+	lr.HandleFunc("/suggest", linker.SuggestPage).Methods("GET")
+	lr.HandleFunc("/suggest", linker.SuggestActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSuggest))
 }
 
 func registerBookmarksRoutes(r *mux.Router) {
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
-	bmr.HandleFunc("", bookmarksPage).Methods("GET")
-	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	bmr.HandleFunc("/edit", bookmarksEditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSave))
-	bmr.HandleFunc("/edit", bookmarksEditCreateActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskCreate))
+	bmr.HandleFunc("", bookmarks.Page).Methods("GET")
+	bmr.HandleFunc("/mine", bookmarks.MinePage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/edit", bookmarks.EditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/edit", bookmarks.EditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSave))
+	bmr.HandleFunc("/edit", bookmarks.EditCreateActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskCreate))
 	bmr.HandleFunc("/edit", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiresAnAccount())
 }
 
 func registerImagebbsRoutes(r *mux.Router) {
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(runtimeconfig.AppRuntimeConfig.ImageUploadDir))))
-	ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", imagebbsBoardRssPage).Methods("GET")
-	ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", imagebbsBoardAtomPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPostImageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskUploadImage))
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
-	ibr.HandleFunc("", imagebbsPage).Methods("GET")
-	ibr.HandleFunc("/", imagebbsPage).Methods("GET")
-	ibr.HandleFunc("/poster/{username}", imagebbsPosterPage).Methods("GET")
-	ibr.HandleFunc("/poster/{username}/", imagebbsPosterPage).Methods("GET")
+	ibr.HandleFunc(".rss", imagebbs.RssPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", imagebbs.BoardRssPage).Methods("GET")
+	ibr.HandleFunc(".atom", imagebbs.AtomPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", imagebbs.BoardAtomPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}", imagebbs.BoardPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}", imagebbs.BoardPostImageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskUploadImage))
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbs.BoardThreadPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbs.BoardThreadReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
+	ibr.HandleFunc("", imagebbs.Page).Methods("GET")
+	ibr.HandleFunc("/", imagebbs.Page).Methods("GET")
+	ibr.HandleFunc("/poster/{username}", imagebbs.PosterPage).Methods("GET")
+	ibr.HandleFunc("/poster/{username}/", imagebbs.PosterPage).Methods("GET")
 
 	// Admin endpoints for image boards
-	ibr.HandleFunc("/admin", imagebbsAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/boards", imagebbsAdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin", imagebbs.AdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/boards", imagebbs.AdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	ibr.HandleFunc("/admin/boards", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskNewBoard))
+	ibr.HandleFunc("/admin/board", imagebbs.AdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board", imagebbs.AdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskNewBoard))
 	ibr.HandleFunc("/admin/board", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
-	ibr.HandleFunc("/admin/approve/{post}", imagebbsAdminApprovePostPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskApprove))
-	ibr.HandleFunc("/admin/files", imagebbsAdminFilesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board/{board}", imagebbs.AdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
+	ibr.HandleFunc("/admin/approve/{post}", imagebbs.AdminApprovePostPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskApprove))
+	ibr.HandleFunc("/admin/files", imagebbs.AdminFilesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 }
 
 func registerSearchRoutes(r *mux.Router) {
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", searchPage).Methods("GET")
 	sr.HandleFunc("", searchResultForumActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchForum))
-	sr.HandleFunc("", searchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchNews))
+	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchNews))
 	sr.HandleFunc("", searchResultLinkerActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchLinker))
 	sr.HandleFunc("", searchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchBlogs))
 	sr.HandleFunc("", searchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchWritings))
@@ -216,30 +221,6 @@ func registerWritingsAdminRoutes(ar *mux.Router) {
 func registerInformationRoutes(r *mux.Router) {
 	ir := r.PathPrefix("/information").Subrouter()
 	ir.HandleFunc("", informationPage).Methods("GET")
-}
-
-func registerUserRoutes(r *mux.Router) {
-	ur := r.PathPrefix("/usr").Subrouter()
-	ur.HandleFunc("", userPage).Methods("GET")
-	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
-	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguages))
-	ur.HandleFunc("/lang", userLangSaveLanguagePreferenceActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguage))
-	ur.HandleFunc("/lang", userLangSaveAllActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/email", userEmailPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/email", userEmailSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskTestMail))
-	ur.HandleFunc("/paging", userPagingPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/paging", userPagingSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/page-size", userPageSizePage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/page-size", userPageSizeSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/notifications", userNotificationsPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskDismiss))
-	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-
-	// legacy redirects
-	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))
-	r.HandleFunc("/user/email", handlers.RedirectPermanent("/usr/email"))
 }
 
 func registerRegisterRoutes(r *mux.Router) {
@@ -342,22 +323,22 @@ func registerAdminRoutes(r *mux.Router) {
 
 	// linker admin
 	lar := ar.PathPrefix("/linker").Subrouter()
-	lar.HandleFunc("/categories", linkerAdminCategoriesPage).Methods("GET")
-	lar.HandleFunc("/categories", linkerAdminCategoriesUpdatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
-	lar.HandleFunc("/categories", linkerAdminCategoriesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameCategory))
-	lar.HandleFunc("/categories", linkerAdminCategoriesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
-	lar.HandleFunc("/categories", linkerAdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateCategory))
-	lar.HandleFunc("/add", linkerAdminAddPage).Methods("GET")
-	lar.HandleFunc("/add", linkerAdminAddActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAdd))
-	lar.HandleFunc("/queue", linkerAdminQueuePage).Methods("GET")
-	lar.HandleFunc("/queue", linkerAdminQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
-	lar.HandleFunc("/queue", linkerAdminQueueApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskApprove))
-	lar.HandleFunc("/queue", linkerAdminQueueUpdateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
-	lar.HandleFunc("/queue", linkerAdminQueueBulkApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkApprove))
-	lar.HandleFunc("/queue", linkerAdminQueueBulkDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkDelete))
-	lar.HandleFunc("/users/levels", linkerAdminUserLevelsPage).Methods("GET")
-	lar.HandleFunc("/users/levels", linkerAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
-	lar.HandleFunc("/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
+	lar.HandleFunc("/categories", linker.AdminCategoriesPage).Methods("GET")
+	lar.HandleFunc("/categories", linker.AdminCategoriesUpdatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
+	lar.HandleFunc("/categories", linker.AdminCategoriesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameCategory))
+	lar.HandleFunc("/categories", linker.AdminCategoriesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
+	lar.HandleFunc("/categories", linker.AdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateCategory))
+	lar.HandleFunc("/add", linker.AdminAddPage).Methods("GET")
+	lar.HandleFunc("/add", linker.AdminAddActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAdd))
+	lar.HandleFunc("/queue", linker.AdminQueuePage).Methods("GET")
+	lar.HandleFunc("/queue", linker.AdminQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
+	lar.HandleFunc("/queue", linker.AdminQueueApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskApprove))
+	lar.HandleFunc("/queue", linker.AdminQueueUpdateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
+	lar.HandleFunc("/queue", linker.AdminQueueBulkApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkApprove))
+	lar.HandleFunc("/queue", linker.AdminQueueBulkDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkDelete))
+	lar.HandleFunc("/users/levels", linker.AdminUserLevelsPage).Methods("GET")
+	lar.HandleFunc("/users/levels", linker.AdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
+	lar.HandleFunc("/users/levels", linker.AdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
 
 	// faq admin
 	faq.RegisterAdminRoutes(ar)
@@ -371,9 +352,9 @@ func registerAdminRoutes(r *mux.Router) {
 
 	// news admin
 	nar := ar.PathPrefix("/news").Subrouter()
-	nar.HandleFunc("/users/levels", newsAdminUserLevelsPage).Methods("GET")
-	nar.HandleFunc("/users/levels", newsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAllow))
-	nar.HandleFunc("/users/levels", newsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveLower))
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsPage).Methods("GET")
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAllow))
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveLower))
 
 	// writings admin
 	registerWritingsAdminRoutes(ar)

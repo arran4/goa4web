@@ -16,14 +16,14 @@ import (
 
 func TestGetEmailProviderLog(t *testing.T) {
 	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "log"}
-	if p := providerFromConfig(cfg); reflect.TypeOf(p) != reflect.TypeOf(email.LogProvider{}) {
+	if p := email.ProviderFromConfig(cfg); reflect.TypeOf(p) != reflect.TypeOf(email.LogProvider{}) {
 		t.Errorf("expected LogProvider, got %#v", p)
 	}
 }
 
 func TestGetEmailProviderUnknown(t *testing.T) {
 	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "unknown"}
-	if p := providerFromConfig(cfg); p != nil {
+	if p := email.ProviderFromConfig(cfg); p != nil {
 		t.Errorf("expected nil for unknown provider, got %#v", p)
 	}
 }
@@ -145,7 +145,7 @@ func TestEmailQueueWorker(t *testing.T) {
 }
 
 func TestSendGridProviderFromConfig(t *testing.T) {
-	p := providerFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k"})
+	p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k"})
 	if email.SendgridBuilt {
 		if _, ok := p.(email.SendGridProvider); !ok {
 			t.Fatalf("expected SendGridProvider, got %#v", p)
@@ -158,7 +158,7 @@ func TestSendGridProviderFromConfig(t *testing.T) {
 }
 
 func TestGetEmailProviderSMTP(t *testing.T) {
-	p := providerFromConfig(runtimeconfig.RuntimeConfig{
+	p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{
 		EmailProvider: "smtp",
 		EmailSMTPHost: "localhost",
 		EmailSMTPPort: "25",
@@ -173,13 +173,13 @@ func TestGetEmailProviderSMTP(t *testing.T) {
 }
 
 func TestGetEmailProviderLocal(t *testing.T) {
-	if _, ok := providerFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "local"}).(email.LocalProvider); !ok {
+	if _, ok := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "local"}).(email.LocalProvider); !ok {
 		t.Fatalf("expected LocalProvider")
 	}
 }
 
 func TestGetEmailProviderJMAP(t *testing.T) {
-	p := providerFromConfig(runtimeconfig.RuntimeConfig{
+	p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{
 		EmailProvider:     "jmap",
 		EmailJMAPEndpoint: "http://example.com",
 		EmailJMAPAccount:  "acct",
@@ -195,7 +195,7 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 }
 
 func TestGetEmailProviderSESNoCreds(t *testing.T) {
-	if p := providerFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
+	if p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
 		t.Errorf("expected nil provider, got %#v", p)
 	}
 }

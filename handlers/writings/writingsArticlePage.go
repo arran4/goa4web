@@ -5,7 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
@@ -302,9 +302,21 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, done := SearchWordIdsFromText(w, r, text, queries); done {
+	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+		log.Printf("Error: postUpdate: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
+
+	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+	if done {
+		return
+	}
+
+	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+		return
+	}
+	//??? if _, done := SearchWordIdsFromText(w, r, text, queries); done {
 
 	common.TaskDoneAutoRefreshPage(w, r)
 }

@@ -1,4 +1,4 @@
-package goa4web
+package bookmarks
 
 import (
 	"github.com/google/go-cmp/cmp"

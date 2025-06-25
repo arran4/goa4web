@@ -1,16 +1,17 @@
-package goa4web
+package bookmarks
 
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 type BookmarkEntry struct {
@@ -70,13 +71,13 @@ func preprocessBookmarks(bookmarks string) []*BookmarkColumn {
 	return result
 }
 
-func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
+func MinePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Columns []*BookmarkColumn
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -95,7 +96,7 @@ func bookmarksMinePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
 	bookmarksCustomIndex(data.CoreData)

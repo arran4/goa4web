@@ -4,6 +4,7 @@ import (
 	"bytes"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"log"
 	"net/http"
 	"net/url"
@@ -67,7 +68,7 @@ func adminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 func adminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	provider := getEmailProvider()
 	if provider == nil {
-		q := url.QueryEscape(errMailNotConfigured)
+		q := url.QueryEscape(userhandlers.ErrMailNotConfigured)
 		http.Redirect(w, r, "/admin/email/template?error="+q, http.StatusTemporaryRedirect)
 		return
 	}

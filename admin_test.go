@@ -13,6 +13,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/handlers/common"
+	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -30,7 +31,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	want := url.QueryEscape(errMailNotConfigured)
+	want := url.QueryEscape(userhandlers.ErrMailNotConfigured)
 	if loc := rr.Header().Get("Location"); !strings.Contains(loc, want) {
 		t.Fatalf("location=%q", loc)
 	}

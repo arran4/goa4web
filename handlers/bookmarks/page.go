@@ -1,18 +1,18 @@
-package goa4web
+package bookmarks
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
-func bookmarksPage(w http.ResponseWriter, r *http.Request) {
+func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
@@ -22,7 +22,7 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	if uid == 0 {
@@ -43,12 +43,12 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func bookmarksCustomIndex(data *CoreData) {
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+func bookmarksCustomIndex(data *corecommon.CoreData) {
+	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Show",
 		Link: "/bookmarks/mine",
 	})
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Edit",
 		Link: "/bookmarks/edit",
 	})

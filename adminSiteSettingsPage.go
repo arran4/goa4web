@@ -1,7 +1,8 @@
 package goa4web
 
 import (
-	"github.com/arran4/goa4web/handlers/common"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -52,7 +53,7 @@ func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 		data.Languages = langs
 	}
 
-	if err := templates.RenderTemplate(w, "siteSettingsPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "siteSettingsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

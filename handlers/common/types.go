@@ -1,13 +1,13 @@
 package common
 
-import "github.com/arran4/goa4web/core"
+import common "github.com/arran4/goa4web/core/common"
 
 // ContextKey maps to core.ContextValues.
-type ContextKey = core.ContextValues
-type ContextValues = core.ContextValues
+type ContextKey = common.ContextValues
+type ContextValues = common.ContextValues
 
 // CoreData maps to core.CoreData for handler use.
-type CoreData = core.CoreData
+type CoreData = common.CoreData
 
 // Common context keys used across handlers.
 const (

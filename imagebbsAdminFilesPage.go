@@ -1,7 +1,8 @@
 package goa4web
 
 import (
-	"github.com/arran4/goa4web/handlers/common"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"os"
@@ -68,7 +69,7 @@ func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	if err := templates.RenderTemplate(w, "adminFilesPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminFilesPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

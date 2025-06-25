@@ -3,7 +3,8 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/handlers/common"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
@@ -26,7 +27,7 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	if err := templates.RenderTemplate(w, "iPBanPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "iPBanPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

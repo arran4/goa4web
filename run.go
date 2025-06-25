@@ -5,7 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"os"
@@ -108,7 +109,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 		}
 
 		data := Data{
-			CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+			CoreData: r.Context().Value(hcommon.KeyCoreData).(*CoreData),
 		}
 
 		CustomNewsIndex(data.CoreData, r)
@@ -125,7 +126,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 
 func AddNewsIndex(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+		cd := r.Context().Value(hcommon.KeyCoreData).(*CoreData)
 		CustomNewsIndex(cd, r)
 		handler.ServeHTTP(w, r)
 	})
@@ -163,7 +164,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 			return false
 		}
 
-		queries := r.Context().Value(common.KeyQueries).(*Queries)
+		queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 
 		targetUser, err := queries.GetUsersTopicLevelByUserIdAndThreadId(r.Context(), GetUsersTopicLevelByUserIdAndThreadIdParams{
 			ForumtopicIdforumtopic: int32(tid),
@@ -206,7 +207,7 @@ func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
 		if err != nil {
 			return false
 		}
-		queries := r.Context().Value(common.KeyQueries).(*Queries)
+		queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 
 		adminUser, err := queries.GetUsersTopicLevelByUserIdAndThreadId(r.Context(), GetUsersTopicLevelByUserIdAndThreadIdParams{
 			ForumtopicIdforumtopic: int32(tid),
@@ -241,7 +242,7 @@ func NewsPostAuthor() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		vars := mux.Vars(request)
 		newsPostId, _ := strconv.Atoi(vars["post"])
-		queries := request.Context().Value(common.KeyQueries).(*Queries)
+		queries := request.Context().Value(hcommon.KeyQueries).(*Queries)
 		session, err := core.GetSession(request)
 		if err != nil {
 			return false
@@ -262,7 +263,7 @@ func BlogAuthor() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		vars := mux.Vars(request)
 		blogId, _ := strconv.Atoi(vars["blog"])
-		queries := request.Context().Value(common.KeyQueries).(*Queries)
+		queries := request.Context().Value(hcommon.KeyQueries).(*Queries)
 		session, err := core.GetSession(request)
 		if err != nil {
 			return false
@@ -287,7 +288,7 @@ func WritingAuthor() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		vars := mux.Vars(request)
 		writingId, _ := strconv.Atoi(vars["writing"])
-		queries := request.Context().Value(common.KeyQueries).(*Queries)
+		queries := request.Context().Value(hcommon.KeyQueries).(*Queries)
 		session, err := core.GetSession(request)
 		if err != nil {
 			return false
@@ -311,7 +312,7 @@ func CommentAuthor() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		vars := mux.Vars(request)
 		commentId, _ := strconv.Atoi(vars["comment"])
-		queries := request.Context().Value(common.KeyQueries).(*Queries)
+		queries := request.Context().Value(hcommon.KeyQueries).(*Queries)
 		session, err := core.GetSession(request)
 		if err != nil {
 			return false
@@ -343,7 +344,7 @@ func GetThreadAndTopic() mux.MatcherFunc {
 			return false
 		}
 
-		queries := r.Context().Value(common.KeyQueries).(*Queries)
+		queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 
 		session, _ := core.GetSession(r)
 		var uid int32
@@ -373,8 +374,8 @@ func GetThreadAndTopic() mux.MatcherFunc {
 			return false
 		}
 
-		ctx := context.WithValue(r.Context(), common.KeyThread, threadRow)
-		ctx = context.WithValue(ctx, common.KeyTopic, topicRow)
+		ctx := context.WithValue(r.Context(), hcommon.KeyThread, threadRow)
+		ctx = context.WithValue(ctx, hcommon.KeyTopic, topicRow)
 		*r = *r.WithContext(ctx)
 		return true
 	}

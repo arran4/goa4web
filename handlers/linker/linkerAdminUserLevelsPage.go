@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -13,7 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type PermissionUser struct {
 		*Permission
 		Username sql.NullString
@@ -21,13 +21,13 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		UserLevels []*PermissionUser
 		Search     string
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Search:   r.URL.Query().Get("search"),
 	}
 
@@ -73,7 +73,7 @@ func linkerAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func linkerAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	usernames := r.PostFormValue("usernames")
 	where := r.PostFormValue("where")
@@ -101,7 +101,7 @@ func linkerAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	r.ParseForm()
 	ids := r.Form["permids"]

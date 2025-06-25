@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -13,9 +13,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
+func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Offset      int
 		CatId       int
 		CommentOnId int
@@ -24,7 +24,7 @@ func linkerCategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))

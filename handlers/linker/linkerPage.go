@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -15,9 +15,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func linkerPage(w http.ResponseWriter, r *http.Request) {
+func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Offset      int
 		CatId       int
 		CommentOnId int
@@ -27,7 +27,7 @@ func linkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
@@ -72,7 +72,7 @@ func linkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CustomLinkerIndex(data *CoreData, r *http.Request) {
+func CustomLinkerIndex(data *corecommon.CoreData, r *http.Request) {
 	if r.URL.Path == "/linker" || strings.HasPrefix(r.URL.Path, "/linker/category/") {
 		data.RSSFeedUrl = "/linker/rss"
 		data.AtomFeedUrl = "/linker/atom"

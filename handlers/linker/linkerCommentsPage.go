@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
+func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
 		*GetCommentsByThreadIdForUserRow
 		ShowReply          bool
@@ -28,7 +28,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Link               *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
 		CanReply           bool
 		Languages          []*Language
@@ -43,7 +43,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           cd,
@@ -146,7 +146,7 @@ func linkerCommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func linkerCommentsReplyPage(w http.ResponseWriter, r *http.Request) {
+func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

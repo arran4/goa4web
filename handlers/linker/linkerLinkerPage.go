@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -13,9 +13,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func linkerLinkerPage(w http.ResponseWriter, r *http.Request) {
+func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Links    []*GetLinkerItemsByUserDescendingRow
 		Username string
 		IsOffset bool
@@ -50,7 +50,7 @@ func linkerLinkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Links:    rows,
 		Username: username,
 		IsOffset: offset != 0,

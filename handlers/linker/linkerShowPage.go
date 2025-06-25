@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -16,16 +16,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func linkerShowPage(w http.ResponseWriter, r *http.Request) {
+func ShowPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Link               *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
 		CanReply           bool
 		Languages          []*Language
 		SelectedLanguageId int
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           cd,
@@ -59,7 +59,7 @@ func linkerShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func linkerShowReplyPage(w http.ResponseWriter, r *http.Request) {
+func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

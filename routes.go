@@ -9,6 +9,7 @@ import (
 	bookmarks "github.com/arran4/goa4web/handlers/bookmarks"
 	"github.com/arran4/goa4web/handlers/common"
 	faq "github.com/arran4/goa4web/handlers/faq"
+	linker "github.com/arran4/goa4web/handlers/linker"
 
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/pkg/handlers"
@@ -110,19 +111,19 @@ func registerForumRoutes(r *mux.Router) {
 
 func registerLinkerRoutes(r *mux.Router) {
 	lr := r.PathPrefix("/linker").Subrouter()
-	lr.HandleFunc("/rss", linkerRssPage).Methods("GET")
-	lr.HandleFunc("/atom", linkerAtomPage).Methods("GET")
-	lr.HandleFunc("", linkerPage).Methods("GET")
-	lr.HandleFunc("/linker/{username}", linkerLinkerPage).Methods("GET")
-	lr.HandleFunc("/linker/{username}/", linkerLinkerPage).Methods("GET")
-	lr.HandleFunc("/categories", linkerCategoriesPage).Methods("GET")
-	lr.HandleFunc("/category/{category}", linkerCategoryPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", linkerCommentsPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", linkerCommentsReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	lr.HandleFunc("/show/{link}", linkerShowPage).Methods("GET")
-	lr.HandleFunc("/show/{link}", linkerShowReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	lr.HandleFunc("/suggest", linkerSuggestPage).Methods("GET")
-	lr.HandleFunc("/suggest", linkerSuggestActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSuggest))
+	lr.HandleFunc("/rss", linker.RssPage).Methods("GET")
+	lr.HandleFunc("/atom", linker.AtomPage).Methods("GET")
+	lr.HandleFunc("", linker.Page).Methods("GET")
+	lr.HandleFunc("/linker/{username}", linker.LinkerPage).Methods("GET")
+	lr.HandleFunc("/linker/{username}/", linker.LinkerPage).Methods("GET")
+	lr.HandleFunc("/categories", linker.CategoriesPage).Methods("GET")
+	lr.HandleFunc("/category/{category}", linker.CategoryPage).Methods("GET")
+	lr.HandleFunc("/comments/{link}", linker.CommentsPage).Methods("GET")
+	lr.HandleFunc("/comments/{link}", linker.CommentsReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
+	lr.HandleFunc("/show/{link}", linker.ShowPage).Methods("GET")
+	lr.HandleFunc("/show/{link}", linker.ShowReplyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
+	lr.HandleFunc("/suggest", linker.SuggestPage).Methods("GET")
+	lr.HandleFunc("/suggest", linker.SuggestActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSuggest))
 }
 
 func registerBookmarksRoutes(r *mux.Router) {
@@ -300,22 +301,22 @@ func registerAdminRoutes(r *mux.Router) {
 
 	// linker admin
 	lar := ar.PathPrefix("/linker").Subrouter()
-	lar.HandleFunc("/categories", linkerAdminCategoriesPage).Methods("GET")
-	lar.HandleFunc("/categories", linkerAdminCategoriesUpdatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
-	lar.HandleFunc("/categories", linkerAdminCategoriesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameCategory))
-	lar.HandleFunc("/categories", linkerAdminCategoriesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
-	lar.HandleFunc("/categories", linkerAdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateCategory))
-	lar.HandleFunc("/add", linkerAdminAddPage).Methods("GET")
-	lar.HandleFunc("/add", linkerAdminAddActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAdd))
-	lar.HandleFunc("/queue", linkerAdminQueuePage).Methods("GET")
-	lar.HandleFunc("/queue", linkerAdminQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
-	lar.HandleFunc("/queue", linkerAdminQueueApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskApprove))
-	lar.HandleFunc("/queue", linkerAdminQueueUpdateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
-	lar.HandleFunc("/queue", linkerAdminQueueBulkApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkApprove))
-	lar.HandleFunc("/queue", linkerAdminQueueBulkDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkDelete))
-	lar.HandleFunc("/users/levels", linkerAdminUserLevelsPage).Methods("GET")
-	lar.HandleFunc("/users/levels", linkerAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
-	lar.HandleFunc("/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
+	lar.HandleFunc("/categories", linker.AdminCategoriesPage).Methods("GET")
+	lar.HandleFunc("/categories", linker.AdminCategoriesUpdatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
+	lar.HandleFunc("/categories", linker.AdminCategoriesRenamePage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameCategory))
+	lar.HandleFunc("/categories", linker.AdminCategoriesDeletePage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
+	lar.HandleFunc("/categories", linker.AdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateCategory))
+	lar.HandleFunc("/add", linker.AdminAddPage).Methods("GET")
+	lar.HandleFunc("/add", linker.AdminAddActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAdd))
+	lar.HandleFunc("/queue", linker.AdminQueuePage).Methods("GET")
+	lar.HandleFunc("/queue", linker.AdminQueueDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDelete))
+	lar.HandleFunc("/queue", linker.AdminQueueApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskApprove))
+	lar.HandleFunc("/queue", linker.AdminQueueUpdateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdate))
+	lar.HandleFunc("/queue", linker.AdminQueueBulkApproveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkApprove))
+	lar.HandleFunc("/queue", linker.AdminQueueBulkDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskBulkDelete))
+	lar.HandleFunc("/users/levels", linker.AdminUserLevelsPage).Methods("GET")
+	lar.HandleFunc("/users/levels", linker.AdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
+	lar.HandleFunc("/users/levels", linker.AdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
 
 	// faq admin
 	faq.RegisterAdminRoutes(ar)

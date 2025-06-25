@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -11,14 +11,14 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func linkerCategoriesPage(w http.ResponseWriter, r *http.Request) {
+func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Categories []*Linkercategory
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*Queries)

@@ -1,11 +1,10 @@
-package goa4web
+package runtimeconfig
 
 import (
 	"flag"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestHTTPConfigPrecedence(t *testing.T) {
@@ -22,7 +21,7 @@ func TestHTTPConfigPrecedence(t *testing.T) {
 		config.EnvHostname: "http://file",
 	}
 	_ = fs.Parse([]string{"--listen=:3", "--hostname=http://cli"})
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
 
 	if cfg.HTTPListen != ":3" || cfg.HTTPHostname != "http://cli" {
 		t.Fatalf("merged %#v", cfg)
@@ -34,7 +33,7 @@ func TestLoadHTTPConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvListen: ":9",
 	}
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.HTTPListen != ":9" {
 		t.Fatalf("want :9 got %q", cfg.HTTPListen)
 	}

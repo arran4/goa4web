@@ -1,4 +1,4 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,10 +16,10 @@ import (
 
 var writingsPermissionsPageEnabled = true
 
-func writingsPage(w http.ResponseWriter, r *http.Request) {
+func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Categories                       []*Writingcategory
+		*corecommon.CoreData
+		Categories                       []*db.Writingcategory
 		EditingCategoryId                int32
 		CategoryId                       int32
 		WritingcategoryIdwritingcategory int32
@@ -26,7 +27,7 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	data.IsAdmin = data.CoreData.HasRole("administrator")
@@ -35,7 +36,7 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 	data.CategoryId = 0
 	data.WritingcategoryIdwritingcategory = data.CategoryId
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	categoryRows, err := queries.GetAllWritingCategories(r.Context(), data.CategoryId)
 	if err != nil {
@@ -59,46 +60,46 @@ func writingsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CustomWritingsIndex(data *CoreData, r *http.Request) {
+func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
 	data.CustomIndexItems = append(data.CustomIndexItems,
-		IndexItem{Name: "Atom Feed", Link: "/writings/atom"},
-		IndexItem{Name: "RSS Feed", Link: "/writings/rss"},
+		corecommon.IndexItem{Name: "Atom Feed", Link: "/writings/atom"},
+		corecommon.IndexItem{Name: "RSS Feed", Link: "/writings/rss"},
 	)
 	data.RSSFeedUrl = "/writings/rss"
 	data.AtomFeedUrl = "/writings/atom"
 
 	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin && writingsPermissionsPageEnabled {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "User Permissions",
 			Link: "/writings/user/permissions",
 		})
 	}
 	userHasWriter := data.HasRole("writer")
 	if userHasWriter || userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Write writings",
 			Link: "/writings/add",
 		})
 	}
 
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Return to list",
 		Link: fmt.Sprintf("/writings?offset=%d", 0),
 	})
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	if offset != 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "The start",
 			Link: fmt.Sprintf("/writings?offset=%d", 0),
 		})
 	}
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Next 10",
 		Link: fmt.Sprintf("/writings?offset=%d", offset+10),
 	})
 	if offset > 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Previous 10",
 			Link: fmt.Sprintf("/writings?offset=%d", offset-10),
 		})

@@ -1,4 +1,4 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,17 +14,17 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
+func UserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Rows []*GetPermissionsByUserIdAndSectionWritingsRow
+		*corecommon.CoreData
+		Rows []*db.GetPermissionsByUserIdAndSectionWritingsRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetPermissionsByUserIdAndSectionWritings(r.Context())
 	if err != nil {
@@ -44,23 +45,23 @@ func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := "writing"
 	level := r.PostFormValue("level")
 	data := struct {
-		*CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/writings",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
-	} else if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+	} else if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
 		Section: sql.NullString{
 			String: where,
@@ -83,16 +84,16 @@ func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *h
 	}
 }
 
-func writingsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/writings",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

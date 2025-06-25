@@ -1,10 +1,11 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,17 +13,17 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		ApprovedUsers []*GetAllWritingApprovalsRow
+		*corecommon.CoreData
+		ApprovedUsers []*db.GetAllWritingApprovalsRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	approvedUserRows, err := queries.GetAllWritingApprovals(r.Context())
 	if err != nil {
@@ -46,8 +47,8 @@ func writingsAdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func AdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
@@ -58,7 +59,7 @@ func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+	if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
 		Section: sql.NullString{
 			String: where,
@@ -76,8 +77,8 @@ func writingsAdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Reque
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func AdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 	username := r.PostFormValue("username")
 	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
@@ -89,7 +90,7 @@ func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := queries.CreateWritingApproval(r.Context(), CreateWritingApprovalParams{
+	if err := queries.CreateWritingApproval(r.Context(), db.CreateWritingApprovalParams{
 		WritingIdwriting: int32(wid),
 		UsersIdusers:     int32(u.Idusers),
 		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
@@ -101,14 +102,14 @@ func writingsAdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request
 	}
 	common.TaskDoneAutoRefreshPage(w, r)
 }
-func writingsAdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func AdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid, _ := strconv.Atoi(r.PostFormValue("uid"))
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 	readdoc, _ := strconv.ParseBool(r.PostFormValue("readdoc"))
 	editdoc, _ := strconv.ParseBool(r.PostFormValue("editdoc"))
 
-	if err := queries.UpdateWritingApproval(r.Context(), UpdateWritingApprovalParams{
+	if err := queries.UpdateWritingApproval(r.Context(), db.UpdateWritingApprovalParams{
 		WritingIdwriting: int32(wid),
 		UsersIdusers:     int32(uid),
 		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
@@ -121,12 +122,12 @@ func writingsAdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Requ
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func writingsAdminUserAccessRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func AdminUserAccessRemoveActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid, _ := strconv.Atoi(r.PostFormValue("uid"))
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 
-	if err := queries.DeleteWritingApproval(r.Context(), DeleteWritingApprovalParams{
+	if err := queries.DeleteWritingApproval(r.Context(), db.DeleteWritingApprovalParams{
 		WritingIdwriting: int32(wid),
 		UsersIdusers:     int32(uid),
 	}); err != nil {

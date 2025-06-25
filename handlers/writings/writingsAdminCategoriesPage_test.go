@@ -1,4 +1,4 @@
-package goa4web
+package writings
 
 import (
 	"context"
@@ -8,17 +8,19 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func TestWritingsAdminCategoriesPage(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqlDB.Close()
 
-	queries := New(db)
+	queries := db.New(sqlDB)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writingcategory_idwritingcategory", "title", "description"}).
 		AddRow(1, 0, "a", "b")
@@ -26,11 +28,11 @@ func TestWritingsAdminCategoriesPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/writings/categories", nil)
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &corecommon.CoreData{})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	writingsAdminCategoriesPage(rr, req)
+	AdminCategoriesPage(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

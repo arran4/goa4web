@@ -12,6 +12,7 @@ import (
 	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
 	faq "github.com/arran4/goa4web/handlers/faq"
 	linker "github.com/arran4/goa4web/handlers/linker"
+	writings "github.com/arran4/goa4web/handlers/writings"
 
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/pkg/handlers"
@@ -177,24 +178,44 @@ func registerSearchRoutes(r *mux.Router) {
 
 func registerWritingsRoutes(r *mux.Router) {
 	wr := r.PathPrefix("/writings").Subrouter()
-	wr.HandleFunc("/rss", writingsRssPage).Methods("GET")
-	wr.HandleFunc("/atom", writingsAtomPage).Methods("GET")
-	wr.HandleFunc("", writingsPage).Methods("GET")
-	wr.HandleFunc("/", writingsPage).Methods("GET")
-	wr.HandleFunc("/writer/{username}", writingsWriterPage).Methods("GET")
-	wr.HandleFunc("/writer/{username}/", writingsWriterPage).Methods("GET")
-	wr.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	wr.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
-	wr.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
-	wr.HandleFunc("/article/{article}", writingsArticlePage).Methods("GET")
-	wr.HandleFunc("/article/{article}", writingsArticleReplyActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	wr.HandleFunc("/article/{article}/edit", writingsArticleEditPage).Methods("GET").MatcherFunc(Or(And(RequiredAccess("writer"), WritingAuthor()), RequiredAccess("administrator")))
-	wr.HandleFunc("/article/{article}/edit", writingsArticleEditActionPage).Methods("POST").MatcherFunc(Or(And(RequiredAccess("writer"), WritingAuthor()), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher(TaskUpdateWriting))
-	wr.HandleFunc("/categories", writingsCategoriesPage).Methods("GET")
-	wr.HandleFunc("/categories", writingsCategoriesPage).Methods("GET")
-	wr.HandleFunc("/category/{category}", writingsCategoryPage).Methods("GET")
-	wr.HandleFunc("/category/{category}/add", writingsArticleAddPage).Methods("GET").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator")))
-	wr.HandleFunc("/category/{category}/add", writingsArticleAddActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher(TaskSubmitWriting))
+	wr.HandleFunc("/rss", writings.RssPage).Methods("GET")
+	wr.HandleFunc("/atom", writings.AtomPage).Methods("GET")
+	wr.HandleFunc("", writings.Page).Methods("GET")
+	wr.HandleFunc("/", writings.Page).Methods("GET")
+	wr.HandleFunc("/writer/{username}", writings.WriterPage).Methods("GET")
+	wr.HandleFunc("/writer/{username}/", writings.WriterPage).Methods("GET")
+	wr.HandleFunc("/user/permissions", writings.UserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	wr.HandleFunc("/users/permissions", writings.UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
+	wr.HandleFunc("/users/permissions", writings.UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
+	wr.HandleFunc("/article/{article}", writings.ArticlePage).Methods("GET")
+	wr.HandleFunc("/article/{article}", writings.ArticleReplyActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
+	wr.HandleFunc("/article/{article}/edit", writings.ArticleEditPage).Methods("GET").MatcherFunc(Or(And(RequiredAccess("writer"), WritingAuthor()), RequiredAccess("administrator")))
+	wr.HandleFunc("/article/{article}/edit", writings.ArticleEditActionPage).Methods("POST").MatcherFunc(Or(And(RequiredAccess("writer"), WritingAuthor()), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher(TaskUpdateWriting))
+	wr.HandleFunc("/categories", writings.CategoriesPage).Methods("GET")
+	wr.HandleFunc("/categories", writings.CategoriesPage).Methods("GET")
+	wr.HandleFunc("/category/{category}", writings.CategoryPage).Methods("GET")
+	wr.HandleFunc("/category/{category}/add", writings.ArticleAddPage).Methods("GET").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator")))
+	wr.HandleFunc("/category/{category}/add", writings.ArticleAddActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("writer"), RequiredAccess("administrator"))).MatcherFunc(TaskMatcher(TaskSubmitWriting))
+}
+
+func registerWritingsAdminRoutes(ar *mux.Router) {
+	war := ar.PathPrefix("/writings").Subrouter()
+	war.HandleFunc("/user/permissions", writings.UserPermissionsPage).Methods("GET")
+	war.HandleFunc("/users/permissions", writings.UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
+	war.HandleFunc("/users/permissions", writings.UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
+	war.HandleFunc("/users/levels", writings.AdminUserLevelsPage).Methods("GET")
+	war.HandleFunc("/users/levels", writings.AdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
+	war.HandleFunc("/users/levels", writings.AdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
+	war.HandleFunc("/users/access", writings.AdminUserAccessPage).Methods("GET")
+	war.HandleFunc("/users/access", writings.AdminUserAccessAddActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAddApproval))
+	war.HandleFunc("/users/access", writings.AdminUserAccessUpdateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdateUserApproval))
+	war.HandleFunc("/users/access", writings.AdminUserAccessRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteUserApproval))
+	war.HandleFunc("/category/{category}/permissions", writings.CategoryPermissionsPage).Methods("GET")
+	war.HandleFunc("/category/{category}/permissions", writings.CategoryPermissionsAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
+	war.HandleFunc("/category/{category}/permissions/delete", writings.CategoryPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
+	war.HandleFunc("/categories", writings.AdminCategoriesPage).Methods("GET")
+	war.HandleFunc("/categories", writings.AdminCategoriesModifyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskWritingCategoryChange))
+	war.HandleFunc("/categories", writings.AdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskWritingCategoryCreate))
 }
 
 func registerInformationRoutes(r *mux.Router) {
@@ -336,23 +357,7 @@ func registerAdminRoutes(r *mux.Router) {
 	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveLower))
 
 	// writings admin
-	war := ar.PathPrefix("/writings").Subrouter()
-	war.HandleFunc("/user/permissions", writingsUserPermissionsPage).Methods("GET")
-	war.HandleFunc("/users/permissions", writingsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
-	war.HandleFunc("/users/permissions", writingsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
-	war.HandleFunc("/users/levels", writingsAdminUserLevelsPage).Methods("GET")
-	war.HandleFunc("/users/levels", writingsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
-	war.HandleFunc("/users/levels", writingsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
-	war.HandleFunc("/users/access", writingsAdminUserAccessPage).Methods("GET")
-	war.HandleFunc("/users/access", writingsAdminUserAccessAddActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAddApproval))
-	war.HandleFunc("/users/access", writingsAdminUserAccessUpdateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUpdateUserApproval))
-	war.HandleFunc("/users/access", writingsAdminUserAccessRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteUserApproval))
-	war.HandleFunc("/category/{category}/permissions", writingsCategoryPermissionsPage).Methods("GET")
-	war.HandleFunc("/category/{category}/permissions", writingsCategoryPermissionsAllowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserAllow))
-	war.HandleFunc("/category/{category}/permissions/delete", writingsCategoryPermissionsDisallowPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
-	war.HandleFunc("/categories", writingsAdminCategoriesPage).Methods("GET")
-	war.HandleFunc("/categories", writingsAdminCategoriesModifyPage).Methods("POST").MatcherFunc(TaskMatcher(TaskWritingCategoryChange))
-	war.HandleFunc("/categories", writingsAdminCategoriesCreatePage).Methods("POST").MatcherFunc(TaskMatcher(TaskWritingCategoryCreate))
+	registerWritingsAdminRoutes(ar)
 
 	ar.HandleFunc("/reload", adminReloadConfigPage).Methods("POST")
 	ar.HandleFunc("/shutdown", adminShutdownPage).Methods("POST")

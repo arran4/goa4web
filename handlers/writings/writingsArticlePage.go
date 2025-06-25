@@ -1,12 +1,12 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,38 +17,41 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
+const WritingTopicName = "A WRITING TOPIC"
+const WritingTopicDescription = "THIS IS A HIDDEN FORUM FOR A WRITING"
+
+func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*GetCommentsByThreadIdForUserRow
+		*db.GetCommentsByThreadIdForUserRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
 		Offset             int
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int32
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*CoreData
-		Writing             *GetWritingByIdForUserDescendingByPublishedDateRow
+		*corecommon.CoreData
+		Writing             *db.GetWritingByIdForUserDescendingByPublishedDateRow
 		CanEdit             bool
 		IsAuthor            bool
 		CanReply            bool
 		UserId              int32
-		Languages           []*Language
+		Languages           []*db.Language
 		SelectedLanguageId  int
-		Thread              *GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread              *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
 		Comments            []*CommentPlus
 		IsReplyable         bool
 		IsAdmin             bool
-		Categories          []*Writingcategory
+		Categories          []*db.Writingcategory
 		CategoryId          int32
 		Offset              int32
-		CategoryBreadcrumbs []*Writingcategory
+		CategoryBreadcrumbs []*db.Writingcategory
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -65,9 +68,9 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
-	queries = r.Context().Value(common.KeyQueries).(*Queries)
+	queries = r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
+	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(articleId),
 	})
@@ -90,7 +93,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
+	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: writing.ForumthreadIdforumthread,
 	})
@@ -104,7 +107,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: writing.ForumthreadIdforumthread,
 	})
@@ -129,7 +132,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryMap := map[int32]*Writingcategory{}
+	categoryMap := map[int32]*db.Writingcategory{}
 	for _, cat := range categoryRows {
 		categoryMap[cat.Idwritingcategory] = cat
 		if cat.WritingcategoryIdwritingcategory == data.CategoryId {
@@ -186,7 +189,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -205,10 +208,10 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
+	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(aid),
 	})
@@ -225,7 +228,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
+		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: WritingTopicName,
@@ -257,7 +260,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignWritingThisThreadId(r.Context(), AssignWritingThisThreadIdParams{
+		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idwriting:                int32(aid),
 		}); err != nil {
@@ -269,23 +272,6 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-
-	endUrl := fmt.Sprintf("/article/%d", aid)
-
-	provider := getEmailProvider()
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: pthid,
-		Idusers:                  uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
 
 	// TODO
 	//if rows, err := queries.SomethingNotifyArticle(r.Context(), SomethingNotifyArticlesParams{
@@ -302,7 +288,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	//	}
 	//}
 
-	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
+	if _, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -310,8 +296,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			String: text,
 			Valid:  true,
 		},
-	})
-	if err != nil {
+	}); err != nil {
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -331,6 +316,7 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
+	//??? if _, done := SearchWordIdsFromText(w, r, text, queries); done {
 
 	common.TaskDoneAutoRefreshPage(w, r)
 }

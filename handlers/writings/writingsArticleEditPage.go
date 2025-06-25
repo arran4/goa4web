@@ -1,10 +1,11 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,18 +15,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
+func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Languages          []*Language
+		*corecommon.CoreData
+		Languages          []*db.Language
 		SelectedLanguageId int
-		Writing            *GetWritingByIdForUserDescendingByPublishedDateRow
+		Writing            *db.GetWritingByIdForUserDescendingByPublishedDateRow
 		UserId             int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
 	}
 
@@ -39,9 +40,9 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(common.KeyQueries).(*Queries)
+	queries = r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
+	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(articleId),
 	})
@@ -69,7 +70,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
+func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 
@@ -79,9 +80,9 @@ func writingsArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	if err := queries.UpdateWriting(r.Context(), UpdateWritingParams{
+	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},
 		Abstract:           sql.NullString{Valid: true, String: abstract},
 		Writting:           sql.NullString{Valid: true, String: body},

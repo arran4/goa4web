@@ -19,13 +19,10 @@ func handleDie(w http.ResponseWriter, message string) {
 }
 
 // IndexItem struct.
-type IndexItem struct {
-	Name string // Name of URL displayed in <a href>
-	Link string // URL for link.
-}
+type IndexItem = core.IndexItem
 
 // indexItems.
-var indexItems = []IndexItem{
+var indexItems = []core.IndexItem{
 	{Name: "News", Link: "/"},
 	{Name: "FAQ", Link: "/faq"},
 	{Name: "Blogs", Link: "/blogs"},
@@ -62,17 +59,17 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		idx := make([]IndexItem, len(indexItems))
+		idx := make([]core.IndexItem, len(indexItems))
 		copy(idx, indexItems)
 		if uid != 0 {
-			idx = append(idx, IndexItem{Name: "Preferences", Link: "/usr"})
+			idx = append(idx, core.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
 		var count int32
 		if uid != 0 && notificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(request.Context(), uid)
 			if err == nil {
 				count = c
-				idx = append(idx, IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
+				idx = append(idx, core.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
 		var ann *GetActiveAnnouncementWithNewsRow
@@ -94,34 +91,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type CoreData struct {
-	IndexItems        []IndexItem
-	CustomIndexItems  []IndexItem
-	UserID            int32
-	SecurityLevel     string
-	Title             string
-	AutoRefresh       bool
-	FeedsEnabled      bool
-	RSSFeedUrl        string
-	AtomFeedUrl       string
-	NotificationCount int32
-	Announcement      *GetActiveAnnouncementWithNewsRow
-}
-
-func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {
-	return cd.SecurityLevel
-}
-
-var rolePriority = map[string]int{
-	"reader":        1,
-	"writer":        2,
-	"moderator":     3,
-	"administrator": 4,
-}
-
-func (cd *CoreData) HasRole(role string) bool {
-	return rolePriority[cd.SecurityLevel] >= rolePriority[role]
-}
+type CoreData = core.CoreData
 
 type Configuration struct {
 	data map[string]string

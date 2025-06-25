@@ -3,8 +3,10 @@ package blogs
 import (
 	"fmt"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -29,7 +31,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		Idblogs   int32
 	}
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Blog               *BlogRow
 		Comments           []*BlogComment
 		Offset             int
@@ -44,9 +46,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),

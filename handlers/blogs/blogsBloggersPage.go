@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,7 +19,7 @@ import (
 
 func BloggersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Rows     []*BloggerCountRow
 		Search   string
 		NextLink string
@@ -26,13 +28,13 @@ func BloggersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		PageSize: common.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	pageSize := common.GetPageSize(r)
 	var rows []*BloggerCountRow

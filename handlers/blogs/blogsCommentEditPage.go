@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -21,7 +22,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	commentId, _ := strconv.Atoi(vars["comment"])

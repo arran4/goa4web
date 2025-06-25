@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,7 +23,7 @@ func BloggerPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl string
 	}
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Rows     []*BlogRow
 		IsOffset bool
 		UID      string
@@ -36,7 +38,7 @@ func BloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -72,7 +74,7 @@ func BloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		IsOffset: offset != 0,
 		UID:      strconv.Itoa(int(buid)),
 	}

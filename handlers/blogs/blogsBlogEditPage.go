@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,20 +17,20 @@ import (
 )
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Languages          []*Language
 		Blog               *GetBlogEntryForUserByIdRow
 		SelectedLanguageId int
 		Mode               string
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
@@ -68,7 +70,7 @@ func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 

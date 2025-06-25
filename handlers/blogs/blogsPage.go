@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -24,7 +26,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		EditUrl string
 	}
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Rows     []*BlogRow
 		IsOffset bool
 		UID      string
@@ -39,7 +41,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  int32(userId),
 		ViewerIdusers: uid,
@@ -57,7 +59,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		IsOffset: offset != 0,
 		UID:      buid,
 	}
@@ -82,7 +84,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CustomBlogIndex(data *CoreData, r *http.Request) {
+func CustomBlogIndex(data *corecommon.CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
 	if data.FeedsEnabled {
 		if user == "" {
@@ -159,7 +161,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
@@ -184,7 +186,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
@@ -205,7 +207,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feeds.Feed, error) {
+func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*feeds.Feed, error) {
 
 	title := "Everyone's blog"
 	if uid > 0 {

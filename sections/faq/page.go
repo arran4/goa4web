@@ -1,17 +1,18 @@
-package goa4web
+package faq
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func faqPage(w http.ResponseWriter, r *http.Request) {
+func Page(w http.ResponseWriter, r *http.Request) {
 	type FAQ struct {
 		CategoryID int
 		Question   string
@@ -19,20 +20,20 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type CategoryFAQs struct {
-		Category *GetAllAnsweredFAQWithFAQCategoriesRow
+		Category *db.GetAllAnsweredFAQWithFAQCategoriesRow
 		FAQs     []*FAQ
 	}
 
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		FAQ []*CategoryFAQs
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	var currentCategoryFAQs CategoryFAQs
 
@@ -70,22 +71,22 @@ func faqPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CustomFAQIndex(data *CoreData) {
+func CustomFAQIndex(data *corecommon.CoreData) {
 	userHasAdmin := data.HasRole("administrator")
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Ask",
 		Link: "/faq/ask",
 	})
 	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Question Qontrols",
 			Link: "/admin/faq/questions",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Answer",
 			Link: "/admin/faq/answer",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Category Controls",
 			Link: "/admin/faq/categories",
 		})

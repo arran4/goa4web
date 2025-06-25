@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers/common"
+	faq "github.com/arran4/goa4web/sections/faq"
 
 	"github.com/arran4/goa4web/pkg/handlers"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -15,7 +16,7 @@ func registerRoutes(r *mux.Router) {
 	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
 
 	registerNewsRoutes(r)
-	registerFAQRoutes(r)
+	faq.RegisterRoutes(r)
 	registerBlogsRoutes(r)
 	registerForumRoutes(r)
 	registerLinkerRoutes(r)
@@ -55,13 +56,6 @@ func registerNewsRoutes(r *mux.Router) {
 	nr.HandleFunc("/user/permissions", newsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	nr.HandleFunc("/users/permissions", newsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
 	nr.HandleFunc("/users/permissions", newsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
-}
-
-func registerFAQRoutes(r *mux.Router) {
-	faqr := r.PathPrefix("/faq").Subrouter()
-	faqr.HandleFunc("", faqPage).Methods("GET", "POST")
-	faqr.HandleFunc("/ask", faqAskPage).Methods("GET")
-	faqr.HandleFunc("/ask", faqAskActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAsk))
 }
 
 func registerBlogsRoutes(r *mux.Router) {
@@ -345,18 +339,7 @@ func registerAdminRoutes(r *mux.Router) {
 	lar.HandleFunc("/users/levels", linkerAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskUserDisallow))
 
 	// faq admin
-	farq := ar.PathPrefix("/faq").Subrouter()
-	farq.HandleFunc("/answer", faqAdminAnswerPage).Methods("GET", "POST").MatcherFunc(NoTask())
-	farq.HandleFunc("/answer", faqAnswerAnswerActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAnswer))
-	farq.HandleFunc("/answer", faqAnswerRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveRemove))
-	farq.HandleFunc("/categories", faqAdminCategoriesPage).Methods("GET")
-	farq.HandleFunc("/categories", faqCategoriesRenameActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRenameCategory))
-	farq.HandleFunc("/categories", faqCategoriesDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskDeleteCategory))
-	farq.HandleFunc("/categories", faqCategoriesCreateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreateCategory))
-	farq.HandleFunc("/questions", faqAdminQuestionsPage).Methods("GET", "POST").MatcherFunc(NoTask())
-	farq.HandleFunc("/questions", faqQuestionsEditActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskEdit))
-	farq.HandleFunc("/questions", faqQuestionsDeleteActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveRemove))
-	farq.HandleFunc("/questions", faqQuestionsCreateActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCreate))
+	faq.RegisterAdminRoutes(ar)
 
 	// languages
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")

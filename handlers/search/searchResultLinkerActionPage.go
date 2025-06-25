@@ -1,10 +1,11 @@
-package goa4web
+package search
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -12,11 +13,11 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
+func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Comments                         []*GetCommentsByIdsForUserWithThreadInfoRow
-		Links                            []*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
+		*hcommon.CoreData
+		Comments                         []*db.GetCommentsByIdsForUserWithThreadInfoRow
+		Links                            []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 		CommentsNoResults                bool
 		CommentsEmptyWords               bool
 		NoResults                        bool
@@ -25,9 +26,9 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -64,8 +65,8 @@ func searchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {
-	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
+func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {
+	searchWords := BreakupTextToWords(r.PostFormValue("searchwords"))
 	var LinkerIds []int32
 
 	if len(searchWords) == 0 {
@@ -89,7 +90,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid 
 			}
 			LinkerIds = ids
 		} else {
-			ids, err := queries.LinkerSearchNext(r.Context(), LinkerSearchNextParams{
+			ids, err := queries.LinkerSearchNext(r.Context(), db.LinkerSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,

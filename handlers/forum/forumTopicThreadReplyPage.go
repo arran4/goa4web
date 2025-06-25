@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,10 +17,10 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(hcommon.KeyTopic).(*GetForumTopicByIdForUserRow)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
@@ -77,12 +78,12 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if search.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 
@@ -92,8 +93,8 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(hcommon.KeyTopic).(*GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

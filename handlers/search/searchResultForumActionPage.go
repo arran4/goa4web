@@ -1,10 +1,11 @@
-package goa4web
+package search
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -12,18 +13,18 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
+func SearchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
+		*hcommon.CoreData
+		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -45,8 +46,8 @@ func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
+func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
+	searchWords := BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
 	if len(searchWords) == 0 {
@@ -70,7 +71,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 			}
 			commentIds = ids
 		} else {
-			ids, err := queries.CommentsSearchNextNotInRestrictedTopic(r.Context(), CommentsSearchNextNotInRestrictedTopicParams{
+			ids, err := queries.CommentsSearchNextNotInRestrictedTopic(r.Context(), db.CommentsSearchNextNotInRestrictedTopicParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -93,7 +94,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), GetCommentsByIdsForUserWithThreadInfoParams{
+	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
 		UsersIdusers: uid,
 		Ids:          commentIds,
 	})
@@ -110,8 +111,8 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 	return comments, false, false, nil
 }
 
-func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, forumTopicId []int32, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
+func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
+	searchWords := BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
 	if len(searchWords) == 0 {
@@ -120,7 +121,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.CommentsSearchFirstInRestrictedTopic(r.Context(), CommentsSearchFirstInRestrictedTopicParams{
+			ids, err := queries.CommentsSearchFirstInRestrictedTopic(r.Context(), db.CommentsSearchFirstInRestrictedTopicParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -138,7 +139,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 			}
 			commentIds = ids
 		} else {
-			ids, err := queries.CommentsSearchNextInRestrictedTopic(r.Context(), CommentsSearchNextInRestrictedTopicParams{
+			ids, err := queries.CommentsSearchNextInRestrictedTopic(r.Context(), db.CommentsSearchNextInRestrictedTopicParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -163,7 +164,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), GetCommentsByIdsForUserWithThreadInfoParams{
+	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
 		UsersIdusers: uid,
 		Ids:          commentIds,
 	})

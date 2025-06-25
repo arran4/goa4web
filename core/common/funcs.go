@@ -60,7 +60,7 @@ func NewFuncs(r *http.Request) template.FuncMap {
 				IsAdmin      bool
 			}
 			var result []*Post
-			queries := r.Context().Value(ContextKey("queries")).(*db.Queries)
+			queries := r.Context().Value(ContextValues("queries")).(*db.Queries)
 
 			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
@@ -78,7 +78,7 @@ func NewFuncs(r *http.Request) template.FuncMap {
 
 			editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
 
-			cd := r.Context().Value(ContextKey("coreData")).(*CoreData)
+			cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 			for _, post := range posts {
 				ann, err := queries.GetLatestAnnouncementByNewsID(r.Context(), post.Idsitenews)
 				if err != nil && !errors.Is(err, sql.ErrNoRows) {

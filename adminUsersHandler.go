@@ -4,7 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/arran4/goa4web/handlers/common"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -103,7 +104,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	err = templates.RenderTemplate(w, "usersPage.gohtml", data, common.NewFuncs(r))
+	err = templates.RenderTemplate(w, "usersPage.gohtml", data, corecommon.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -127,7 +128,7 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	} else if _, err := r.Context().Value(common.KeyQueries).(*Queries).DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -150,7 +151,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		User:     user,
 	}
-	if err := templates.RenderTemplate(w, "userEditPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "userEditPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -176,7 +177,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET username=?, email=? WHERE idusers=?", username, email, uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
 	}
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -210,7 +211,7 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Password = newPass
 	}
-	if err := templates.RenderTemplate(w, "userResetPasswordPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "userResetPasswordPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

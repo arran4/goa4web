@@ -3,7 +3,8 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/handlers/common"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -37,7 +38,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Bool
 	}
 
-	if err := templates.RenderTemplate(w, "emailPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "emailPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("user email page: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

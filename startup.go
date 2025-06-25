@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -24,7 +25,7 @@ var (
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg runtimeconfig.RuntimeConfig) *UserError {
+func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
 	if cfg.DBUser == "" {
@@ -45,19 +46,19 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *UserError {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
 	mysqlCfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
-		return &UserError{Err: err, ErrorMessage: "failed to parse DSN"}
+		return &common.UserError{Err: err, ErrorMessage: "failed to parse DSN"}
 	}
 	baseConnector, err := mysql.NewConnector(mysqlCfg)
 	if err != nil {
-		return &UserError{Err: err, ErrorMessage: "failed to create connector"}
+		return &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
 	var connector driver.Connector = db.NewLoggingConnector(baseConnector)
 	dbPool = sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
-		return &UserError{Err: err, ErrorMessage: "failed to communicate with database"}
+		return &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
 	if err := ensureSchema(context.Background(), dbPool); err != nil {
-		return &UserError{Err: err, ErrorMessage: "failed to verify schema"}
+		return &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
 	if dbLogVerbosity > 0 {
 		log.Printf("db pool stats after init: %+v", dbPool.Stats())
@@ -66,7 +67,7 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *UserError {
 }
 
 // checkDatabase attempts to connect and ping the configured database.
-func checkDatabase(cfg runtimeconfig.RuntimeConfig) *UserError {
+func checkDatabase(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	return InitDB(cfg)
 }
 
@@ -80,9 +81,9 @@ func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
 	return nil
 }
 
-func checkUploadDir(cfg runtimeconfig.RuntimeConfig) *UserError {
+func checkUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	if cfg.ImageUploadDir == "" {
-		return &UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
+		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}
 	if strings.HasPrefix(cfg.ImageUploadDir, "s3://") {
 		// TODO: validate S3 upload targets
@@ -90,11 +91,11 @@ func checkUploadDir(cfg runtimeconfig.RuntimeConfig) *UserError {
 	}
 	info, err := os.Stat(cfg.ImageUploadDir)
 	if err != nil || !info.IsDir() {
-		return &UserError{Err: err, ErrorMessage: "image upload directory invalid"}
+		return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
 	}
 	test := filepath.Join(cfg.ImageUploadDir, ".check")
 	if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
-		return &UserError{Err: err, ErrorMessage: "image upload directory not writable"}
+		return &common.UserError{Err: err, ErrorMessage: "image upload directory not writable"}
 	}
 	os.Remove(test)
 	return nil

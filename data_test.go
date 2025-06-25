@@ -2,7 +2,7 @@ package goa4web
 
 import (
 	"embed"
-	"github.com/arran4/goa4web/handlers/common"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"html/template"
 	"io/fs"
 	"net/http/httptest"
@@ -16,7 +16,7 @@ var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	template.Must(template.New("").Funcs(common.NewFuncs(r)).ParseFS(testTemplates,
+	template.Must(template.New("").Funcs(corecommon.NewFuncs(r)).ParseFS(testTemplates,
 		"core/templates/templates/*.gohtml", "core/templates/templates/*/*.gohtml"))
 }
 
@@ -30,7 +30,7 @@ func TestParseEachTemplate(t *testing.T) {
 		}
 		t.Run(filepath.Base(path), func(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
-			if _, err := template.New("").Funcs(common.NewFuncs(r)).ParseFS(testTemplates, path); err != nil {
+			if _, err := template.New("").Funcs(corecommon.NewFuncs(r)).ParseFS(testTemplates, path); err != nil {
 				t.Errorf("failed to parse %s: %v", path, err)
 			}
 		})

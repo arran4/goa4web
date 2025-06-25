@@ -6,7 +6,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
@@ -20,10 +21,10 @@ func handleDie(w http.ResponseWriter, message string) {
 }
 
 // IndexItem struct.
-type IndexItem = core.IndexItem
+type IndexItem = common.IndexItem
 
 // indexItems.
-var indexItems = []core.IndexItem{
+var indexItems = []common.IndexItem{
 	{Name: "News", Link: "/"},
 	{Name: "FAQ", Link: "/faq"},
 	{Name: "Blogs", Link: "/blogs"},
@@ -47,7 +48,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if err == nil {
 			uid, _ = session.Values["UID"].(int32)
 		}
-		queries := request.Context().Value(common.KeyQueries).(*Queries)
+		queries := request.Context().Value(hcommon.KeyQueries).(*Queries)
 
 		level := "reader"
 		if uid != 0 {
@@ -60,17 +61,17 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		idx := make([]core.IndexItem, len(indexItems))
+		idx := make([]common.IndexItem, len(indexItems))
 		copy(idx, indexItems)
 		if uid != 0 {
-			idx = append(idx, core.IndexItem{Name: "Preferences", Link: "/usr"})
+			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
 		var count int32
-		if uid != 0 && common.NotificationsEnabled() {
+		if uid != 0 && hcommon.NotificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(request.Context(), uid)
 			if err == nil {
 				count = c
-				idx = append(idx, core.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
+				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
 		var ann *GetActiveAnnouncementWithNewsRow
@@ -79,7 +80,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 				ann = a
 			}
 		}
-		ctx := context.WithValue(request.Context(), common.KeyCoreData, &CoreData{
+		ctx := context.WithValue(request.Context(), hcommon.KeyCoreData, &CoreData{
 			SecurityLevel:     level,
 			IndexItems:        idx,
 			UserID:            uid,
@@ -92,7 +93,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type CoreData = core.CoreData
+type CoreData = common.CoreData
 
 type Configuration struct {
 	data map[string]string
@@ -144,7 +145,7 @@ func X2c(what string) byte {
 func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if dbPool == nil {
-			ue := UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
 			return
@@ -153,8 +154,8 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			log.Printf("db pool stats: %+v", dbPool.Stats())
 		}
 		ctx := request.Context()
-		ctx = context.WithValue(ctx, common.KeySQLDB, dbPool)
-		ctx = context.WithValue(ctx, common.KeyQueries, New(dbPool))
+		ctx = context.WithValue(ctx, hcommon.KeySQLDB, dbPool)
+		ctx = context.WithValue(ctx, hcommon.KeyQueries, New(dbPool))
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }

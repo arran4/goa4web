@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -36,7 +37,7 @@ func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	if err := templates.RenderTemplate(w, "notificationsPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "notificationsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -54,7 +55,7 @@ func adminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request
 			log.Printf("mark read: %v", err)
 		}
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func adminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +63,7 @@ func adminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func adminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
@@ -111,5 +112,5 @@ func adminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("insert notification: %v", err)
 		}
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }

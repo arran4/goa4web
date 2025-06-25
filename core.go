@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
@@ -65,7 +66,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			idx = append(idx, core.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
 		var count int32
-		if uid != 0 && notificationsEnabled() {
+		if uid != 0 && common.NotificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(request.Context(), uid)
 			if err == nil {
 				count = c
@@ -160,19 +161,4 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, ContextValues("queries"), New(dbPool))
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
-}
-
-// getPageSize returns the preferred page size within configured bounds.
-func getPageSize(r *http.Request) int {
-	size := runtimeconfig.AppRuntimeConfig.PageSizeDefault
-	if pref, _ := r.Context().Value(ContextValues("preference")).(*Preference); pref != nil && pref.PageSize != 0 {
-		size = int(pref.PageSize)
-	}
-	if size < runtimeconfig.AppRuntimeConfig.PageSizeMin {
-		size = runtimeconfig.AppRuntimeConfig.PageSizeMin
-	}
-	if size > runtimeconfig.AppRuntimeConfig.PageSizeMax {
-		size = runtimeconfig.AppRuntimeConfig.PageSizeMax
-	}
-	return size
 }

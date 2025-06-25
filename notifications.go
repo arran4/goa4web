@@ -4,27 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
-	config "github.com/arran4/goa4web/config"
 	"github.com/gorilla/feeds"
 )
-
-// notificationsEnabled reports if the internal notification system should run.
-func notificationsEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvNotificationsEnabled))
-	if v == "" {
-		return true
-	}
-	switch v {
-	case "0", "false", "off", "no":
-		return false
-	default:
-		return true
-	}
-}
 
 // notificationsFeed produces a feed from the notifications slice.
 func notificationsFeed(r *http.Request, notifications []*Notification) *feeds.Feed {

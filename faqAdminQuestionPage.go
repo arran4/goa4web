@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -48,7 +49,7 @@ func faqAdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomFAQIndex(data.CoreData)
 
-	if err := templates.RenderTemplate(w, "adminQuestionPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminQuestionPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -70,7 +71,7 @@ func faqQuestionsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func faqQuestionsEditActionPage(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +102,7 @@ func faqQuestionsEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func faqQuestionsCreateActionPage(w http.ResponseWriter, r *http.Request) {
@@ -131,5 +132,5 @@ func faqQuestionsCreateActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }

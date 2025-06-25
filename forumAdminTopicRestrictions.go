@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -41,7 +42,7 @@ func forumAdminTopicRestrictionLevelPage(w http.ResponseWriter, r *http.Request)
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminTopicRestrictionLevelPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminTopicRestrictionLevelPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -111,7 +112,7 @@ func forumAdminTopicRestrictionLevelChangePage(w http.ResponseWriter, r *http.Re
 
 	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func forumAdminTopicRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +128,7 @@ func forumAdminTopicRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Re
 
 	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func forumAdminTopicRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request) {
@@ -175,5 +176,5 @@ func forumAdminTopicRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Requ
 
 	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }

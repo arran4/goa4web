@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -35,7 +36,7 @@ func adminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		User:     r.URL.Query().Get("user"),
 		Action:   r.URL.Query().Get("action"),
-		PageSize: getPageSize(r),
+		PageSize: common.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -94,7 +95,7 @@ func adminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := templates.RenderTemplate(w, "auditLogPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "auditLogPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

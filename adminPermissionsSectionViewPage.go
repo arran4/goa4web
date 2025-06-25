@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -25,7 +26,7 @@ func adminPermissionsSectionViewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := Data{CoreData: cd, Section: section, Rows: rows}
-	if err := templates.RenderTemplate(w, "permissionsSectionViewPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "permissionsSectionViewPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"context"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"time"
@@ -28,7 +29,7 @@ func adminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -22,7 +23,7 @@ func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	if err := templates.RenderTemplate(w, "loginPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "loginPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -129,7 +130,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 			Method:   backMethod,
 			Values:   vals,
 		}
-		if err := templates.GetCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
+		if err := templates.GetCompiledTemplates(common.NewFuncs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}

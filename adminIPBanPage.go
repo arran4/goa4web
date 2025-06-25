@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
@@ -25,7 +26,7 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	if err := templates.RenderTemplate(w, "iPBanPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "iPBanPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -51,7 +52,7 @@ func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt: expires,
 		})
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func adminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
@@ -65,5 +66,5 @@ func adminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("cancel banned ip %s: %v", ipNet, err)
 		}
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }

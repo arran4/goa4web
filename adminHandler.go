@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	_ "embed"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -44,7 +45,7 @@ func adminPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)
 	count("SELECT COUNT(*) FROM writing", &data.Stats.Writings)
 
-	err := templates.RenderTemplate(w, "page.gohtml", data, NewFuncs(r))
+	err := templates.RenderTemplate(w, "page.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

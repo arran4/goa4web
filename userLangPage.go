@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -61,7 +62,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		LanguageOptions: opts,
 	}
 
-	if err := templates.RenderTemplate(w, "langPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "langPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -148,7 +149,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +172,7 @@ func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +195,7 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +224,7 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 // userLangSaveLanguageActionPage is kept for compatibility and forwards to

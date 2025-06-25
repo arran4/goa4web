@@ -1,6 +1,7 @@
 package goa4web
 
 import (
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -21,7 +22,7 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Attempts = items
-	if err := templates.RenderTemplate(w, "loginAttemptsPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "loginAttemptsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

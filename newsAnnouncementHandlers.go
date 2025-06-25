@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -30,7 +31,7 @@ func newsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 			log.Printf("activate announcement: %v", err)
 		}
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }
 
 func newsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +44,7 @@ func newsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("getLatestAnnouncementByNewsID: %v", err)
 		}
-		taskDoneAutoRefreshPage(w, r)
+		common.TaskDoneAutoRefreshPage(w, r)
 		return
 	}
 	if ann != nil && ann.Active {
@@ -51,5 +52,5 @@ func newsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 			log.Printf("deactivate announcement: %v", err)
 		}
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }

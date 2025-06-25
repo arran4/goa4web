@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -26,13 +27,13 @@ func blogsBloggersPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Search:   r.URL.Query().Get("search"),
-		PageSize: getPageSize(r),
+		PageSize: common.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	queries := r.Context().Value(ContextValues("queries")).(*Queries)
 
-	pageSize := getPageSize(r)
+	pageSize := common.GetPageSize(r)
 	var rows []*BloggerCountRow
 	var err error
 	if data.Search != "" {
@@ -91,7 +92,7 @@ func blogsBloggersPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "bloggersPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "bloggersPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

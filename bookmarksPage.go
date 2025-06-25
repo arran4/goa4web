@@ -1,6 +1,7 @@
 package goa4web
 
 import (
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -24,7 +25,7 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if uid == 0 {
-		if err := templates.RenderTemplate(w, "infoPage.gohtml", data, NewFuncs(r)); err != nil {
+		if err := templates.RenderTemplate(w, "infoPage.gohtml", data, common.NewFuncs(r)); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -34,7 +35,7 @@ func bookmarksPage(w http.ResponseWriter, r *http.Request) {
 
 	bookmarksCustomIndex(data.CoreData)
 
-	if err := templates.RenderTemplate(w, "page.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "page.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

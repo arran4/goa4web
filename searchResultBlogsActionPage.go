@@ -3,7 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -63,7 +63,7 @@ func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*Blog, bool, bool, error) {
-	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var blogIds []int32
 
 	if len(searchWords) == 0 {

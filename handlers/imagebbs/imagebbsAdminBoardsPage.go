@@ -1,33 +1,34 @@
-package goa4web
+package imagebbs
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func imagebbsAdminBoardsPage(w http.ResponseWriter, r *http.Request) {
+func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	type BoardRow struct {
-		*Imageboard
+		*db.Imageboard
 		Threads  int32
 		ModLevel int32
 		Visible  bool
 		Nsfw     bool
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Boards []*BoardRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	boardRows, err := queries.GetAllImageBoards(r.Context())
 	if err != nil {

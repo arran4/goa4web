@@ -1,14 +1,15 @@
-package goa4web
+package imagebbs
 
 import (
 	"database/sql"
+	db "github.com/arran4/goa4web/internal/db"
 	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestImagebbsFeed(t *testing.T) {
-	rows := []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow{
+	rows := []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow{
 		{
 			Idimagepost:              1,
 			ForumthreadIdforumthread: 2,

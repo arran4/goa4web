@@ -1,4 +1,4 @@
-package goa4web
+package user
 
 import (
 	"database/sql"
@@ -12,25 +12,26 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-const errMailNotConfigured = "mail isn't configured" // shown when Test mail has no provider
+const ErrMailNotConfigured = "mail isn't configured" // shown when Test mail has no provider
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		UserData        *User
+		*common.CoreData
+		UserData        *db.User
 		UserPreferences struct{ EmailUpdates bool }
 		Error           string
 	}
 
-	user, _ := r.Context().Value(common.KeyUser).(*User)
-	pref, _ := r.Context().Value(common.KeyPreference).(*Preference)
+	user, _ := r.Context().Value(common.KeyUser).(*db.User)
+	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		UserData: user,
 		Error:    r.URL.Query().Get("error"),
 	}
@@ -60,7 +61,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	updates := r.PostFormValue("emailupdates") != ""
 
 	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
@@ -72,13 +73,13 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			err = queries.InsertEmailPreference(r.Context(), InsertEmailPreferenceParams{
+			err = queries.InsertEmailPreference(r.Context(), db.InsertEmailPreferenceParams{
 				Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
 				UsersIdusers:      uid,
 			})
 		}
 	} else {
-		err = queries.UpdateEmailForumUpdatesByUserID(r.Context(), UpdateEmailForumUpdatesByUserIDParams{
+		err = queries.UpdateEmailForumUpdatesByUserID(r.Context(), db.UpdateEmailForumUpdatesByUserIDParams{
 			Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
 			UsersIdusers:      uid,
 		})
@@ -93,7 +94,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(common.KeyUser).(*User)
+	user, _ := r.Context().Value(common.KeyUser).(*db.User)
 	if user == nil || !user.Email.Valid {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
@@ -105,7 +106,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	pageURL := base + r.URL.Path
 	provider := getEmailProvider()
 	if provider == nil {
-		q := url.QueryEscape(errMailNotConfigured)
+		q := url.QueryEscape(ErrMailNotConfigured)
 		http.Redirect(w, r, "/usr/email?error="+q, http.StatusTemporaryRedirect)
 		return
 	}

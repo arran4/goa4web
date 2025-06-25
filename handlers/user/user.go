@@ -1,4 +1,4 @@
-package goa4web
+package user
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func UserAdderMiddleware(next http.Handler) http.Handler {
@@ -23,12 +24,12 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			core.SessionError(writer, request, err)
 		}
 
-		queries := request.Context().Value(common.KeyQueries).(*Queries)
+		queries := request.Context().Value(common.KeyQueries).(*db.Queries)
 		var (
-			user        *User
-			permissions []*Permission
-			preference  *Preference
-			languages   []*Userlang
+			user        *db.User
+			permissions []*db.Permission
+			preference  *db.Preference
+			languages   []*db.Userlang
 			uid         int32
 		)
 		if uidi, ok := session.Values["UID"]; ok {
@@ -74,7 +75,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 
 		if session.ID != "" {
 			if uid != 0 {
-				_ = queries.InsertSession(request.Context(), InsertSessionParams{SessionID: session.ID, UsersIdusers: uid})
+				_ = queries.InsertSession(request.Context(), db.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid})
 			} else {
 				_ = queries.DeleteSessionByID(request.Context(), session.ID)
 			}

@@ -1,4 +1,4 @@
-package goa4web
+package user
 
 import (
 	"database/sql"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -25,15 +26,15 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		LanguageOptions []LanguageOption
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	pref, _ := r.Context().Value(common.KeyPreference).(*Preference)
-	userLangs, _ := r.Context().Value(common.KeyLanguages).([]*Userlang)
+	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
+	userLangs, _ := r.Context().Value(common.KeyLanguages).([]*db.Userlang)
 
 	langs, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -69,7 +70,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
+func saveUserLanguages(r *http.Request, queries *db.Queries, uid int32) error {
 	// Clear existing language selections for the user.
 	if _, err := queries.DB().ExecContext(r.Context(), "DELETE FROM userlang WHERE users_idusers = ?", uid); err != nil {
 		return err
@@ -90,7 +91,7 @@ func saveUserLanguages(r *http.Request, queries *Queries, uid int32) error {
 	return nil
 }
 
-func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) error {
+func saveUserLanguagePreference(r *http.Request, queries *db.Queries, uid int32) error {
 	langID, err := strconv.Atoi(r.PostFormValue("defaultLanguage"))
 	if err != nil {
 		return err
@@ -99,7 +100,7 @@ func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) er
 	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return queries.InsertPreference(r.Context(), InsertPreferenceParams{
+			return queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
 				LanguageIdlanguage: int32(langID),
 				UsersIdusers:       uid,
 				PageSize:           int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault),
@@ -109,14 +110,14 @@ func saveUserLanguagePreference(r *http.Request, queries *Queries, uid int32) er
 	}
 
 	pref.LanguageIdlanguage = int32(langID)
-	return queries.UpdatePreference(r.Context(), UpdatePreferenceParams{
+	return queries.UpdatePreference(r.Context(), db.UpdatePreferenceParams{
 		LanguageIdlanguage: pref.LanguageIdlanguage,
 		UsersIdusers:       uid,
 		PageSize:           pref.PageSize,
 	})
 }
 
-func saveDefaultLanguage(r *http.Request, queries *Queries, uid int32) error {
+func saveDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) error {
 	langID, _ := strconv.Atoi(r.PostFormValue("defaultLanguage"))
 	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
 	if err != nil {
@@ -142,7 +143,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := saveUserLanguages(r, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)
@@ -165,7 +166,7 @@ func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Req
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
 		log.Printf("Save language Error: %s", err)
@@ -188,7 +189,7 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := saveDefaultLanguage(r, queries, uid); err != nil {
 		log.Printf("Save language Error: %s", err)
@@ -211,7 +212,7 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := saveUserLanguages(r, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)

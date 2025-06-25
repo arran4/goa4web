@@ -8,6 +8,7 @@ import (
 	"github.com/arran4/goa4web/handlers/common"
 	faq "github.com/arran4/goa4web/sections/faq"
 
+	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/pkg/handlers"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -25,7 +26,7 @@ func registerRoutes(r *mux.Router) {
 	registerSearchRoutes(r)
 	registerWritingsRoutes(r)
 	registerInformationRoutes(r)
-	registerUserRoutes(r)
+	userhandlers.RegisterRoutes(r)
 	registerRegisterRoutes(r)
 	registerLoginRoutes(r)
 	registerAdminRoutes(r)
@@ -195,30 +196,6 @@ func registerWritingsRoutes(r *mux.Router) {
 func registerInformationRoutes(r *mux.Router) {
 	ir := r.PathPrefix("/information").Subrouter()
 	ir.HandleFunc("", informationPage).Methods("GET")
-}
-
-func registerUserRoutes(r *mux.Router) {
-	ur := r.PathPrefix("/usr").Subrouter()
-	ur.HandleFunc("", userPage).Methods("GET")
-	ur.HandleFunc("/logout", userLogoutPage).Methods("GET")
-	ur.HandleFunc("/lang", userLangPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/lang", userLangSaveLanguagesActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguages))
-	ur.HandleFunc("/lang", userLangSaveLanguagePreferenceActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveLanguage))
-	ur.HandleFunc("/lang", userLangSaveAllActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/email", userEmailPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/email", userEmailSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/email", userEmailTestActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskTestMail))
-	ur.HandleFunc("/paging", userPagingPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/paging", userPagingSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/page-size", userPageSizePage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/page-size", userPageSizeSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSaveAll))
-	ur.HandleFunc("/notifications", userNotificationsPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskDismiss))
-	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-
-	// legacy redirects
-	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))
-	r.HandleFunc("/user/email", handlers.RedirectPermanent("/usr/email"))
 }
 
 func registerRegisterRoutes(r *mux.Router) {

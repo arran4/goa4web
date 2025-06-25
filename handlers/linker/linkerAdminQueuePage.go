@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	"log"
 	"net/http"
 	"net/url"
@@ -31,14 +32,14 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),
 		Offset:   offset,
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 
 	queue, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context())
 	if err != nil {
@@ -70,7 +71,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		filtered = append(filtered, &QueueRow{q, fetchPageTitle(r.Context(), q.Url.String)})
 	}
 
-	pageSize := common.GetPageSize(r)
+	pageSize := hcommon.GetPageSize(r)
 	if data.Offset < 0 {
 		data.Offset = 0
 	}
@@ -121,18 +122,18 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
 	URL := r.URL.Query().Get("URL")
@@ -149,11 +150,11 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
@@ -170,19 +171,19 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
-		if common.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+		if search.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 			return
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -192,11 +193,11 @@ func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("deleteLinkerQueuedItem Error: %s", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -213,14 +214,14 @@ func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+			wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 			if done {
 				return
 			}
-			if common.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+			if search.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 				return
 			}
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }

@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
 	"io"
 	"log"
@@ -27,7 +28,7 @@ import (
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*hcommon.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
@@ -38,12 +39,12 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(vars["boardno"])
 
 	data := Data{
-		CoreData:    r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:    r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), int32(bid))
 	if err != nil {
@@ -92,7 +93,7 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {
@@ -198,14 +199,14 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if common.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
+	if search.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }

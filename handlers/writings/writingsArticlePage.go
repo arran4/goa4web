@@ -5,7 +5,8 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
@@ -50,8 +51,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		CategoryBreadcrumbs []*db.Writingcategory
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -68,7 +69,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
-	queries = r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
@@ -208,7 +209,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
@@ -302,22 +303,22 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := common.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+	if err := hcommon.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
 	cid := int64(0)
-	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if search.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 	//??? if _, done := SearchWordIdsFromText(w, r, text, queries); done {
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	hcommon.TaskDoneAutoRefreshPage(w, r)
 }

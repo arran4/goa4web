@@ -1,9 +1,10 @@
-package goa4web
+package search
 
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -11,11 +12,11 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
+func SearchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
-		Blogs              []*Blog
+		*hcommon.CoreData
+		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
+		Blogs              []*db.Blog
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -23,9 +24,9 @@ func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -62,8 +63,8 @@ func searchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*Blog, bool, bool, error) {
-	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
+func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.Blog, bool, bool, error) {
+	searchWords := BreakupTextToWords(r.PostFormValue("searchwords"))
 	var blogIds []int32
 
 	if len(searchWords) == 0 {
@@ -83,7 +84,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid in
 			}
 			blogIds = ids
 		} else {
-			ids, err := queries.BlogsSearchNext(r.Context(), BlogsSearchNextParams{
+			ids, err := queries.BlogsSearchNext(r.Context(), db.BlogsSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,

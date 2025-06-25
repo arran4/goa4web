@@ -13,6 +13,7 @@ import (
 	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
 	linker "github.com/arran4/goa4web/handlers/linker"
 	news "github.com/arran4/goa4web/handlers/news"
+	search "github.com/arran4/goa4web/handlers/search"
 	writings "github.com/arran4/goa4web/handlers/writings"
 
 	userhandlers "github.com/arran4/goa4web/handlers/user"
@@ -169,12 +170,12 @@ func registerImagebbsRoutes(r *mux.Router) {
 
 func registerSearchRoutes(r *mux.Router) {
 	sr := r.PathPrefix("/search").Subrouter()
-	sr.HandleFunc("", searchPage).Methods("GET")
-	sr.HandleFunc("", searchResultForumActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchForum))
+	sr.HandleFunc("", search.Page).Methods("GET")
+	sr.HandleFunc("", search.SearchResultForumActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchForum))
 	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchNews))
-	sr.HandleFunc("", searchResultLinkerActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchLinker))
-	sr.HandleFunc("", searchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchBlogs))
-	sr.HandleFunc("", searchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchWritings))
+	sr.HandleFunc("", search.SearchResultLinkerActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchLinker))
+	sr.HandleFunc("", search.SearchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchBlogs))
+	sr.HandleFunc("", search.SearchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchWritings))
 }
 
 func registerWritingsRoutes(r *mux.Router) {

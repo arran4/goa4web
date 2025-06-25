@@ -1,0 +1,38 @@
+package core
+
+import "github.com/arran4/goa4web/internal/db"
+
+// IndexItem represents a navigation item linking to site sections.
+type IndexItem struct {
+	Name string
+	Link string
+}
+
+type CoreData struct {
+	IndexItems        []IndexItem
+	CustomIndexItems  []IndexItem
+	UserID            int32
+	SecurityLevel     string
+	Title             string
+	AutoRefresh       bool
+	FeedsEnabled      bool
+	RSSFeedUrl        string
+	AtomFeedUrl       string
+	NotificationCount int32
+	Announcement      *db.GetActiveAnnouncementWithNewsRow
+}
+
+func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {
+	return cd.SecurityLevel
+}
+
+var rolePriority = map[string]int{
+	"reader":        1,
+	"writer":        2,
+	"moderator":     3,
+	"administrator": 4,
+}
+
+func (cd *CoreData) HasRole(role string) bool {
+	return rolePriority[cd.SecurityLevel] >= rolePriority[role]
+}

@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code2html"
-	"github.com/arran4/goa4web/core"
-	"github.com/gorilla/feeds"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/core"
+	"github.com/gorilla/feeds"
+	"github.com/gorilla/mux"
 )
 
 func forumTopicFeed(r *http.Request, title string, topicID int, rows []*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {

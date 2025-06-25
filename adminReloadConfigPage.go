@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -27,7 +28,7 @@ func adminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -31,7 +32,7 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max:      runtimeconfig.AppRuntimeConfig.PageSizeMax,
 		Default:  runtimeconfig.AppRuntimeConfig.PageSizeDefault,
 	}
-	if err := templates.RenderTemplate(w, "pageSizePage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "pageSizePage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

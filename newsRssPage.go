@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code2html"
-	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/arran4/goa4web/a4code2html"
+	"github.com/gorilla/feeds"
 )
 
 func newsRssPage(w http.ResponseWriter, r *http.Request) {

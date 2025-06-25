@@ -161,18 +161,3 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }
-
-// getPageSize returns the preferred page size within configured bounds.
-func getPageSize(r *http.Request) int {
-	size := runtimeconfig.AppRuntimeConfig.PageSizeDefault
-	if pref, _ := r.Context().Value(ContextValues("preference")).(*Preference); pref != nil && pref.PageSize != 0 {
-		size = int(pref.PageSize)
-	}
-	if size < runtimeconfig.AppRuntimeConfig.PageSizeMin {
-		size = runtimeconfig.AppRuntimeConfig.PageSizeMin
-	}
-	if size > runtimeconfig.AppRuntimeConfig.PageSizeMax {
-		size = runtimeconfig.AppRuntimeConfig.PageSizeMax
-	}
-	return size
-}

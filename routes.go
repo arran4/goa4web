@@ -1,9 +1,10 @@
 package goa4web
 
 import (
+	"net/http"
+
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
-	"net/http"
 
 	"github.com/arran4/goa4web/runtimeconfig"
 )

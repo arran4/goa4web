@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
@@ -19,7 +20,7 @@ func adminForumPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
-	err := templates.RenderTemplate(w, "page.gohtml", data, NewFuncs(r))
+	err := templates.RenderTemplate(w, "page.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -49,7 +50,7 @@ func adminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Thread metadata rebuild complete.")
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -78,7 +79,7 @@ func adminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Topic metadata rebuild complete.")
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

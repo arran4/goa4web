@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -67,7 +68,7 @@ func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	if err := templates.RenderTemplate(w, "adminFilesPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminFilesPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

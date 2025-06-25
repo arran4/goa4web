@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 //go:embed core/templates/templates/*.gohtml core/templates/templates/*/*.gohtml
@@ -15,7 +17,7 @@ var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	template.Must(template.New("").Funcs(NewFuncs(r)).ParseFS(testTemplates,
+	template.Must(template.New("").Funcs(common.NewFuncs(r)).ParseFS(testTemplates,
 		"core/templates/templates/*.gohtml", "core/templates/templates/*/*.gohtml"))
 }
 
@@ -29,7 +31,7 @@ func TestParseEachTemplate(t *testing.T) {
 		}
 		t.Run(filepath.Base(path), func(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
-			if _, err := template.New("").Funcs(NewFuncs(r)).ParseFS(testTemplates, path); err != nil {
+			if _, err := template.New("").Funcs(common.NewFuncs(r)).ParseFS(testTemplates, path); err != nil {
 				t.Errorf("failed to parse %s: %v", path, err)
 			}
 		})

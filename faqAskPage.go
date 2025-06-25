@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func faqAskPage(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +33,7 @@ func faqAskPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomFAQIndex(data.CoreData)
 
-	if err := templates.RenderTemplate(w, "askPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "askPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

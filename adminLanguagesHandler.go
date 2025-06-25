@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
@@ -35,7 +36,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = templates.RenderTemplate(w, "languagesPage.gohtml", data, NewFuncs(r))
+	err = templates.RenderTemplate(w, "languagesPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -64,7 +65,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -88,7 +89,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -113,7 +114,7 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r))
+	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

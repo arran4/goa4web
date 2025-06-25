@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func adminServerStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,7 @@ func adminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err := templates.RenderTemplate(w, "serverStatsPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "serverStatsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

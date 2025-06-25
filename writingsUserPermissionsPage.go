@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func writingsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	data.Rows = rows
 
 	CustomWritingsIndex(data.CoreData, r)
-	if err := templates.RenderTemplate(w, "usersPermissionsPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "usersPermissionsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -74,7 +75,7 @@ func writingsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *h
 
 	CustomWritingsIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -99,7 +100,7 @@ func writingsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomWritingsIndex(data.CoreData, r)
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

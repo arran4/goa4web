@@ -9,6 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,7 @@ func blogsBlogAddPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "blogAddPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "blogAddPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

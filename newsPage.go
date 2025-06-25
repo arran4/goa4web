@@ -2,9 +2,10 @@ package goa4web
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func CustomNewsIndex(data *CoreData, r *http.Request) {

@@ -1,8 +1,9 @@
 package a4code2html
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestA4code2html_Process(t *testing.T) {

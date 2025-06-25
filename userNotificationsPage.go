@@ -7,6 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +34,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:      r.Context().Value(ContextValues("coreData")).(*CoreData),
 		Notifications: notifs,
 	}
-	if err := templates.RenderTemplate(w, "notifications.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "notifications.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

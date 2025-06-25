@@ -16,6 +16,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
 
@@ -70,7 +71,7 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomImageBBSIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "boardPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "boardPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

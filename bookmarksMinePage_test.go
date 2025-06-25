@@ -1,8 +1,9 @@
 package goa4web
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func Test_preprocessBookmarks(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func templatePage(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +17,7 @@ func templatePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
 	}
 
-	if err := templates.RenderTemplate(w, "templatePage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "templatePage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template page: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

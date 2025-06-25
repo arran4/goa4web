@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -51,7 +52,7 @@ func adminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.StartYear = runtimeconfig.AppRuntimeConfig.StatsStartYear
 
-	if err := templates.RenderTemplate(w, "usageStatsPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "usageStatsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

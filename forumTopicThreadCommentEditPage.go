@@ -3,10 +3,11 @@ package goa4web
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {

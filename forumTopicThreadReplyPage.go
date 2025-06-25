@@ -3,10 +3,11 @@ package goa4web
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func forumTopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {

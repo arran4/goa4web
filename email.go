@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -59,7 +60,7 @@ func notifyChange(ctx context.Context, provider email.Provider, emailAddr string
 		return fmt.Errorf("execute email template: %w", err)
 	}
 
-	if q, ok := ctx.Value(ContextValues("queries")).(*Queries); ok {
+	if q, ok := ctx.Value(common.KeyQueries).(*Queries); ok {
 		if err := q.InsertPendingEmail(ctx, InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: notification.String()}); err != nil {
 			return err
 		}

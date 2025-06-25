@@ -16,9 +16,9 @@ func adminPermissionsSectionViewPage(w http.ResponseWriter, r *http.Request) {
 		Section string
 		Rows    []*PermissionWithUser
 	}
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	section := r.URL.Query().Get("section")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.GetPermissionsBySectionWithUsers(r.Context(), section)
 	if err != nil && err != sql.ErrNoRows {
 		log.Printf("GetPermissionsBySectionWithUsers error: %v", err)

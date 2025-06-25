@@ -16,7 +16,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	session, err := core.GetSession(r)
@@ -26,7 +26,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if session.ID != "" {
 		_ = queries.DeleteSessionByID(r.Context(), session.ID)
 	}

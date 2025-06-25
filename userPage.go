@@ -15,7 +15,7 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	if data.CoreData.UserID == 0 {

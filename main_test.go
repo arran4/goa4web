@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 )
 
@@ -33,7 +34,7 @@ func TestGetThreadAndTopicTrue(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), q)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	if !GetThreadAndTopic()(req, &mux.RouteMatch{}) {
@@ -67,7 +68,7 @@ func TestGetThreadAndTopicFalse(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), q)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	if GetThreadAndTopic()(req, &mux.RouteMatch{}) {
@@ -93,7 +94,7 @@ func TestGetThreadAndTopicError(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), q)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	if GetThreadAndTopic()(req, &mux.RouteMatch{}) {

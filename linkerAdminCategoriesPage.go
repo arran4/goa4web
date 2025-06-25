@@ -18,10 +18,10 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	categoryRows, err := queries.GetLinkerCategoryLinkCounts(r.Context())
 	if err != nil {
@@ -46,7 +46,7 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -72,7 +72,7 @@ func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerAdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -89,7 +89,7 @@ func linkerAdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
 	for _, c := range rows {
@@ -117,7 +117,7 @@ func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func linkerAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	title := r.PostFormValue("title")
 	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
 	pos := len(rows) + 1

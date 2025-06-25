@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"log"
@@ -61,7 +62,7 @@ func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	topic, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
 		UsersIdusers: uid,
@@ -101,7 +102,7 @@ func forumTopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	topic, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
 		UsersIdusers: uid,

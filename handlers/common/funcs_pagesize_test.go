@@ -33,7 +33,7 @@ func TestGetPageSize(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 			ctx := r.Context()
 			if tt.pref != nil {
-				ctx = context.WithValue(ctx, ContextValues("preference"), tt.pref)
+				ctx = context.WithValue(ctx, ContextKey("preference"), tt.pref)
 			}
 			r = r.WithContext(ctx)
 

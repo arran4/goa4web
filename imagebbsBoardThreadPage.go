@@ -48,9 +48,9 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Replyable:          true,
 		BoardId:            bid,
 		ForumThreadId:      thid,
@@ -158,7 +158,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil {

@@ -14,7 +14,7 @@ func imagebbsAdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	CustomImageBBSIndex(data.CoreData, r)

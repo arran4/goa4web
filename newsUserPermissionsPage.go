@@ -13,7 +13,7 @@ import (
 )
 
 func newsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -27,7 +27,7 @@ func newsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	rows, err := queries.GetPermissionsByUserIdAndSectionNews(r.Context())
 	if err != nil {
@@ -49,7 +49,7 @@ func newsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func newsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	username := r.PostFormValue("username")
 	where := "news"
 	level := r.PostFormValue("level")
@@ -59,7 +59,7 @@ func newsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/news",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -88,7 +88,7 @@ func newsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 }
 
 func newsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*CoreData
@@ -96,7 +96,7 @@ func newsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/news",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

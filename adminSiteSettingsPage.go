@@ -12,7 +12,7 @@ import (
 )
 
 func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
@@ -44,7 +44,7 @@ func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		SelectedLanguageId: resolveDefaultLanguageID(r.Context(), queries),
 	}
 	data.CoreData.FeedsEnabled = runtimeconfig.AppRuntimeConfig.FeedsEnabled

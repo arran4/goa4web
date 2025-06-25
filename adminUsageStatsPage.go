@@ -22,8 +22,8 @@ func adminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		UserMonthly       []*UserMonthlyUsageRow
 		StartYear         int
 	}
-	data := Data{CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData)}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	var err error
 	if data.ForumTopics, err = queries.ForumTopicThreadCounts(r.Context()); err != nil {

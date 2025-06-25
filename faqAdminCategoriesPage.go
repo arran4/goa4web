@@ -18,10 +18,10 @@ func faqAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
 	if err != nil {
@@ -51,7 +51,7 @@ func faqCategoriesRenameActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.RenameFAQCategory(r.Context(), RenameFAQCategoryParams{
 		Name: sql.NullString{
@@ -75,7 +75,7 @@ func faqCategoriesDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.DeleteFAQCategory(r.Context(), int32(cid)); err != nil {
 		log.Printf("Error: %s", err)
@@ -88,7 +88,7 @@ func faqCategoriesDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 
 func faqCategoriesCreateActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("cname")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.CreateFAQCategory(r.Context(), sql.NullString{
 		String: text,

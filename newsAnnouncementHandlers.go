@@ -12,7 +12,7 @@ import (
 )
 
 func newsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -35,7 +35,7 @@ func newsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func newsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 

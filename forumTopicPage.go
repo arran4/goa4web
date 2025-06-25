@@ -26,7 +26,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -36,7 +36,7 @@ func forumTopicsPage(w http.ResponseWriter, r *http.Request) {
 	topicId, _ := strconv.Atoi(vars["topic"])
 
 	data := &Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Admin:    true,
 	}
 

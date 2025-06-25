@@ -27,7 +27,7 @@ func writingsCategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	data.IsAdmin = data.CoreData.HasRole("administrator")
@@ -40,7 +40,7 @@ func writingsCategoryPage(w http.ResponseWriter, r *http.Request) {
 	data.CategoryId = int32(categoryId)
 	data.WritingcategoryIdwritingcategory = data.CategoryId
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	categoryRows, err := queries.FetchAllCategories(r.Context())
 	if err != nil {

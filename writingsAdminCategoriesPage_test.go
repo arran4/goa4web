@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func TestWritingsAdminCategoriesPage(t *testing.T) {
@@ -24,8 +25,8 @@ func TestWritingsAdminCategoriesPage(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT wc.idwritingcategory, wc.writingcategory_idwritingcategory, wc.title, wc.description\nFROM writingCategory wc")).WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/admin/writings/categories", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

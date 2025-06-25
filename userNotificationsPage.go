@@ -20,7 +20,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err != nil {
 		log.Printf("get notifications: %v", err)
@@ -31,7 +31,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Notifications []*Notification
 	}{
-		CoreData:      r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:      r.Context().Value(common.KeyCoreData).(*CoreData),
 		Notifications: notifs,
 	}
 	if err := templates.RenderTemplate(w, "notifications.gohtml", data, common.NewFuncs(r)); err != nil {
@@ -56,7 +56,7 @@ func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	n, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err == nil {
 		for _, no := range n {
@@ -79,7 +79,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err != nil {
 		log.Printf("notify feed: %v", err)

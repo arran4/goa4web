@@ -19,9 +19,9 @@ func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Unread        int
 	}
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	items, err := queries.RecentNotifications(r.Context(), 50)
 	if err != nil {
 		log.Printf("recent notifications: %v", err)
@@ -45,7 +45,7 @@ func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -59,7 +59,7 @@ func adminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request
 }
 
 func adminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
@@ -67,7 +67,7 @@ func adminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")
 	role := r.PostFormValue("role")

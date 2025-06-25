@@ -13,8 +13,8 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Attempts []*LoginAttempt
 	}
-	data := Data{CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData)}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	items, err := queries.ListLoginAttempts(r.Context())
 	if err != nil {
 		log.Printf("list login attempts: %v", err)

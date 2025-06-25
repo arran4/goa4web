@@ -38,7 +38,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  int32(userId),
 		ViewerIdusers: uid,
@@ -56,7 +56,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		IsOffset: offset != 0,
 		UID:      buid,
 	}
@@ -158,7 +158,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 
 func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
@@ -183,7 +183,7 @@ func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 
 func blogsAtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,

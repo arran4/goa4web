@@ -36,12 +36,12 @@ func imagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(vars["boardno"])
 
 	data := Data{
-		CoreData:    r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:    r.Context().Value(common.KeyCoreData).(*CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), int32(bid))
 	if err != nil {
@@ -90,7 +90,7 @@ func imagebbsBoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {

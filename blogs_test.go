@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func TestBlogsBloggerPage(t *testing.T) {
@@ -43,9 +44,9 @@ func TestBlogsBloggerPage(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), q)
-	ctx = context.WithValue(ctx, ContextValues("session"), sess)
-	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx = context.WithValue(ctx, common.KeySession, sess)
+	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
@@ -93,7 +94,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -117,7 +118,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	blogsBlogAddPage(rr, req)
@@ -128,7 +129,7 @@ func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 
 func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	blogsBlogEditPage(rr, req)
@@ -139,7 +140,7 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 
 func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/blogs/user/permissions", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("coreData"), &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	getPermissionsByUserIdAndSectionBlogsPage(rr, req)

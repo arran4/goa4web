@@ -19,10 +19,10 @@ func faqAdminAnswerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	catrows, err := queries.GetAllFAQCategories(r.Context())
 	if err != nil {
@@ -70,7 +70,7 @@ func faqAnswerAnswerActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.UpdateFAQQuestionAnswer(r.Context(), UpdateFAQQuestionAnswerParams{
 		Answer:                       sql.NullString{Valid: true, String: answer},
@@ -93,7 +93,7 @@ func faqAnswerRemoveActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
 		log.Printf("Error: %s", err)

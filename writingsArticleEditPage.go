@@ -21,9 +21,9 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		UserId             int32
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
 	}
 
@@ -37,7 +37,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(ContextValues("queries")).(*Queries)
+	queries = r.Context().Value(common.KeyQueries).(*Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
@@ -77,7 +77,7 @@ func writingsArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := queries.UpdateWriting(r.Context(), UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},

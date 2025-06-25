@@ -13,8 +13,8 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Sessions []*ListSessionsRow
 	}
-	data := Data{CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData)}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	items, err := queries.ListSessions(r.Context())
 	if err != nil {
 		log.Printf("list sessions: %v", err)
@@ -37,13 +37,13 @@ func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/admin/sessions",
 	}
 	if sid == "" {
 		data.Errors = append(data.Errors, "missing sid")
 	} else {
-		if err := r.Context().Value(ContextValues("queries")).(*Queries).DeleteSessionByID(r.Context(), sid); err != nil {
+		if err := r.Context().Value(common.KeyQueries).(*Queries).DeleteSessionByID(r.Context(), sid); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}

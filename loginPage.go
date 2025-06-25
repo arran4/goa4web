@@ -20,7 +20,7 @@ func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "loginPage.gohtml", data, common.NewFuncs(r)); err != nil {
@@ -39,7 +39,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 	//
 	//hashedPassword := hex.EncodeToString(sum[:])
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	var (
 		uid    int32
@@ -125,7 +125,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 			Values  url.Values
 		}
 		data := Data{
-			CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+			CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 			BackURL:  backURL,
 			Method:   backMethod,
 			Values:   vals,

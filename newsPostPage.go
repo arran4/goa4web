@@ -53,9 +53,9 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		ReplyText          string
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
 		SelectedLanguageId: resolveDefaultLanguageID(r.Context(), queries),
@@ -195,7 +195,7 @@ func newsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
 	if err != nil {
@@ -330,7 +330,7 @@ func newsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
@@ -358,7 +358,7 @@ func newsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

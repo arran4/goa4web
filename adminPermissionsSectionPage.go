@@ -20,10 +20,10 @@ func adminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 		Sections []*CountPermissionSectionsRow
 	}
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.CountPermissionSections(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("CountPermissionSections error: %s", err)
@@ -42,7 +42,7 @@ func adminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 // adminPermissionsSectionRenamePage converts one permission section value to
 // another. This can be used to normalise "writing" vs "writings" values.
 func adminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	from := r.PostFormValue("from")
 	to := r.PostFormValue("to")
 	data := struct {
@@ -51,7 +51,7 @@ func adminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/admin/permissions/sections",
 	}
 

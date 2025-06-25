@@ -18,9 +18,9 @@ func faqAskPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int32
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		SelectedLanguageId: resolveDefaultLanguageID(r.Context(), queries),
 	}
 
@@ -47,7 +47,7 @@ func faqAskActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

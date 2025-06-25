@@ -15,7 +15,7 @@ func searchPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "searchPage.gohtml", data, common.NewFuncs(r)); err != nil {

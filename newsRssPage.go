@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 )
 
 func newsRssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
 		Limit:  15,
 		Offset: 0,

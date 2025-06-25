@@ -33,14 +33,14 @@ func adminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		User:     r.URL.Query().Get("user"),
 		Action:   r.URL.Query().Get("action"),
 		PageSize: common.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	usernameFilter := "%"
 	if strings.TrimSpace(data.User) != "" {

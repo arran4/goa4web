@@ -16,8 +16,8 @@ func adminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Announcements []*ListAnnouncementsWithNewsRow
 	}
-	data := Data{CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData)}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	rows, err := queries.ListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list announcements: %v", err)
@@ -33,7 +33,7 @@ func adminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
 		log.Printf("news id: %v", err)
@@ -47,7 +47,7 @@ func adminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

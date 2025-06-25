@@ -47,7 +47,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if err == nil {
 			uid, _ = session.Values["UID"].(int32)
 		}
-		queries := request.Context().Value(ContextValues("queries")).(*Queries)
+		queries := request.Context().Value(common.KeyQueries).(*Queries)
 
 		level := "reader"
 		if uid != 0 {
@@ -79,7 +79,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 				ann = a
 			}
 		}
-		ctx := context.WithValue(request.Context(), ContextValues("coreData"), &CoreData{
+		ctx := context.WithValue(request.Context(), common.KeyCoreData, &CoreData{
 			SecurityLevel:     level,
 			IndexItems:        idx,
 			UserID:            uid,
@@ -141,10 +141,6 @@ func X2c(what string) byte {
 	d2 := digit(what[1])
 	return d1*16 + d2
 }
-
-// ContextValues is an alias to core.ContextValues for backward compatibility.
-type ContextValues = core.ContextValues
-
 func DBAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if dbPool == nil {
@@ -157,8 +153,8 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			log.Printf("db pool stats: %+v", dbPool.Stats())
 		}
 		ctx := request.Context()
-		ctx = context.WithValue(ctx, ContextValues("sql.DB"), dbPool)
-		ctx = context.WithValue(ctx, ContextValues("queries"), New(dbPool))
+		ctx = context.WithValue(ctx, common.KeySQLDB, dbPool)
+		ctx = context.WithValue(ctx, common.KeyQueries, New(dbPool))
 		next.ServeHTTP(writer, request.WithContext(ctx))
 	})
 }

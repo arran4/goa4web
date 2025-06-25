@@ -16,10 +16,10 @@ func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Categories []*Writingcategory
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	data := Data{
-		CoreData: r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
 	categoryRows, err := queries.FetchAllCategories(r.Context())
@@ -52,7 +52,7 @@ func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	categoryId, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -87,7 +87,7 @@ func writingsAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := queries.InsertWritingCategory(r.Context(), InsertWritingCategoryParams{
 		WritingcategoryIdwritingcategory: int32(pcid),
 		Title: sql.NullString{

@@ -40,9 +40,9 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
-		CoreData:           r.Context().Value(ContextValues("coreData")).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
 		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
@@ -55,8 +55,8 @@ func forumThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	threadRow := r.Context().Value(ContextValues("thread")).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(ContextValues("topic")).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

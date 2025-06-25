@@ -28,11 +28,11 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		LanguageOptions []LanguageOption
 	}
 
-	cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
-	pref, _ := r.Context().Value(ContextValues("preference")).(*Preference)
-	userLangs, _ := r.Context().Value(ContextValues("languages")).([]*Userlang)
+	pref, _ := r.Context().Value(common.KeyPreference).(*Preference)
+	userLangs, _ := r.Context().Value(common.KeyLanguages).([]*Userlang)
 
 	langs, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -141,7 +141,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := saveUserLanguages(r, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)
@@ -164,7 +164,7 @@ func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Req
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := saveUserLanguagePreference(r, queries, uid); err != nil {
 		log.Printf("Save language Error: %s", err)
@@ -187,7 +187,7 @@ func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := saveDefaultLanguage(r, queries, uid); err != nil {
 		log.Printf("Save language Error: %s", err)
@@ -210,7 +210,7 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(ContextValues("queries")).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if err := saveUserLanguages(r, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)

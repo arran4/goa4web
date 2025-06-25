@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -24,7 +25,7 @@ func linkerSuggestPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
-		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
 	}
 
 	categoryRows, err := queries.GetAllLinkerCategories(r.Context())

@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -25,7 +26,7 @@ func writingsArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
-		SelectedLanguageId: int(resolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
 	}
 
 	vars := mux.Vars(r)

@@ -1,9 +1,11 @@
-package goa4web
+package faq
 
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,17 +14,17 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func faqAskPage(w http.ResponseWriter, r *http.Request) {
+func AskPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Languages          []*Language
+		*corecommon.CoreData
+		Languages          []*db.Language
 		SelectedLanguageId int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
-		SelectedLanguageId: resolveDefaultLanguageID(r.Context(), queries),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())
@@ -41,21 +43,21 @@ func faqAskPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func faqAskActionPage(w http.ResponseWriter, r *http.Request) {
+func AskActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.CreateFAQQuestion(r.Context(), CreateFAQQuestionParams{
+	if err := queries.CreateFAQQuestion(r.Context(), db.CreateFAQQuestionParams{
 		Question: sql.NullString{
 			String: text,
 			Valid:  true,

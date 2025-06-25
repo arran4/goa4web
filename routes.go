@@ -225,19 +225,19 @@ func registerWritingsAdminRoutes(ar *mux.Router) {
 
 func registerInformationRoutes(r *mux.Router) {
 	ir := r.PathPrefix("/information").Subrouter()
-	ir.HandleFunc("", informationPage).Methods("GET")
+	ir.HandleFunc("", common.InformationPage).Methods("GET")
 }
 
 func registerRegisterRoutes(r *mux.Router) {
 	rr := r.PathPrefix("/register").Subrouter()
-	rr.HandleFunc("", registerPage).Methods("GET").MatcherFunc(Not(auth.RequiresAnAccount()))
-	rr.HandleFunc("", registerActionPage).Methods("POST").MatcherFunc(Not(auth.RequiresAnAccount())).MatcherFunc(common.TaskMatcher(TaskRegister))
+	rr.HandleFunc("", common.RegisterPage).Methods("GET").MatcherFunc(Not(auth.RequiresAnAccount()))
+	rr.HandleFunc("", common.RegisterActionPage).Methods("POST").MatcherFunc(Not(auth.RequiresAnAccount())).MatcherFunc(common.TaskMatcher(TaskRegister))
 }
 
 func registerLoginRoutes(r *mux.Router) {
 	ulr := r.PathPrefix("/login").Subrouter()
-	ulr.HandleFunc("", loginUserPassPage).Methods("GET").MatcherFunc(Not(auth.RequiresAnAccount()))
-	ulr.HandleFunc("", loginActionPage).Methods("POST").MatcherFunc(Not(auth.RequiresAnAccount())).MatcherFunc(common.TaskMatcher(TaskLogin))
+	ulr.HandleFunc("", common.LoginUserPassPage).Methods("GET").MatcherFunc(Not(auth.RequiresAnAccount()))
+	ulr.HandleFunc("", common.LoginActionPage).Methods("POST").MatcherFunc(Not(auth.RequiresAnAccount())).MatcherFunc(common.TaskMatcher(TaskLogin))
 }
 
 func registerAdminRoutes(r *mux.Router) {

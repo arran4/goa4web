@@ -1,8 +1,7 @@
-package goa4web
+package common
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"time"
@@ -13,7 +12,7 @@ import (
 	"github.com/shirou/gopsutil/v3/load"
 )
 
-func informationPage(w http.ResponseWriter, r *http.Request) {
+func InformationPage(w http.ResponseWriter, r *http.Request) {
 
 	type SystemInformation struct {
 		Processors  []cpu.InfoStat
@@ -28,7 +27,7 @@ func informationPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(KeyCoreData).(*CoreData),
 	}
 	ld, err := load.Avg()
 	if err != nil {

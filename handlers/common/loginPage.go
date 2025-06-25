@@ -1,10 +1,10 @@
-package goa4web
+package common
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,13 +15,13 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
+func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(KeyCoreData).(*CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "loginPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
@@ -31,7 +31,7 @@ func loginUserPassPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loginActionPage(w http.ResponseWriter, r *http.Request) {
+func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("login attempt for %s", r.PostFormValue("username"))
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
@@ -40,7 +40,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 	//
 	//hashedPassword := hex.EncodeToString(sum[:])
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(KeyQueries).(*db.Queries)
 
 	var (
 		uid    int32
@@ -56,7 +56,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			log.Printf("No rows Error: %s", err)
-			_ = queries.InsertLoginAttempt(r.Context(), InsertLoginAttemptParams{
+			_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 				Username:  username,
 				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
 			})
@@ -70,7 +70,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !verifyPassword(password, hashed.String, alg.String) {
-		_ = queries.InsertLoginAttempt(r.Context(), InsertLoginAttemptParams{
+		_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 			Username:  username,
 			IpAddress: strings.Split(r.RemoteAddr, ":")[0],
 		})
@@ -88,7 +88,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	user := &User{Idusers: uid, Email: email}
+	user := &db.User{Idusers: uid, Email: email}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -126,7 +126,7 @@ func loginActionPage(w http.ResponseWriter, r *http.Request) {
 			Values  url.Values
 		}
 		data := Data{
-			CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+			CoreData: r.Context().Value(KeyCoreData).(*CoreData),
 			BackURL:  backURL,
 			Method:   backMethod,
 			Values:   vals,

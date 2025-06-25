@@ -1,4 +1,4 @@
-package goa4web
+package common
 
 import (
 	"crypto/md5"

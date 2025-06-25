@@ -1,4 +1,4 @@
-package goa4web
+package common
 
 import (
 	"net/http"
@@ -22,7 +22,7 @@ func TestRegisterActionPageValidation(t *testing.T) {
 		req := httptest.NewRequest("POST", "/register", strings.NewReader(c.form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		rr := httptest.NewRecorder()
-		registerActionPage(rr, req)
+		RegisterActionPage(rr, req)
 		if rr.Result().StatusCode != http.StatusBadRequest {
 			t.Errorf("%s: status=%d", c.name, rr.Result().StatusCode)
 		}

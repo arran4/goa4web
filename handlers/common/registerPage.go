@@ -1,10 +1,10 @@
-package goa4web
+package common
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strings"
@@ -14,13 +14,13 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func registerPage(w http.ResponseWriter, r *http.Request) {
+func RegisterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(KeyCoreData).(*CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "registerPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
@@ -29,7 +29,7 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func registerActionPage(w http.ResponseWriter, r *http.Request) {
+func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("registration attempt %s", r.PostFormValue("username"))
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
@@ -52,7 +52,7 @@ func registerActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(KeyQueries).(*db.Queries)
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,

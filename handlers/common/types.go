@@ -4,7 +4,6 @@ import common "github.com/arran4/goa4web/core/common"
 
 // ContextKey maps to core.ContextValues.
 type ContextKey = common.ContextValues
-type ContextValues = common.ContextValues
 
 // CoreData maps to core.CoreData for handler use.
 type CoreData = common.CoreData

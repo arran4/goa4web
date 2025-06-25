@@ -8,6 +8,8 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	news "github.com/arran4/goa4web/handlers/news"
+	email "github.com/arran4/goa4web/internal/email"
 	"log"
 	"net/http"
 	"os"
@@ -92,7 +94,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 
 	srv = server.New(handler, store, dbPool, cfg)
 
-	provider := providerFromConfig(cfg)
+	provider := email.ProviderFromConfig(cfg)
 
 	startWorkers(ctx, dbPool, provider)
 
@@ -113,7 +115,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 			CoreData: r.Context().Value(hcommon.KeyCoreData).(*CoreData),
 		}
 
-		CustomNewsIndex(data.CoreData, r)
+		news.CustomNewsIndex(data.CoreData, r)
 
 		log.Printf("rendering template %s", template)
 
@@ -128,7 +130,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 func AddNewsIndex(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd := r.Context().Value(hcommon.KeyCoreData).(*CoreData)
-		CustomNewsIndex(cd, r)
+		news.CustomNewsIndex(cd, r)
 		handler.ServeHTTP(w, r)
 	})
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers/common"
+	news "github.com/arran4/goa4web/handlers/news"
 	faq "github.com/arran4/goa4web/sections/faq"
 
 	"github.com/arran4/goa4web/pkg/handlers"
@@ -41,21 +42,20 @@ func registerNewsRoutes(r *mux.Router) {
 	r.HandleFunc("/", common.TaskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(AddNewsIndex)
-	nr.HandleFunc(".rss", newsRssPage).Methods("GET")
+	nr.HandleFunc(".rss", news.NewsRssPage).Methods("GET")
 	nr.HandleFunc("", runTemplate("page.gohtml")).Methods("GET")
 	nr.HandleFunc("", common.TaskDoneAutoRefreshPage).Methods("POST")
-	//TODO nr.HandleFunc("/news/{id:[0-9]+}", newsPostPage).Methods("GET")
-	nr.HandleFunc("/news/{post}", newsPostPage).Methods("GET")
-	nr.HandleFunc("/news/{post}", newsPostReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
-	nr.HandleFunc("/news/{post}", newsPostEditActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskEdit))
-	nr.HandleFunc("/news/{post}", newsPostNewActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskNewPost))
-	nr.HandleFunc("/news/{post}/announcement", newsAnnouncementActivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAdd))
-	nr.HandleFunc("/news/{post}/announcement", newsAnnouncementDeactivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDelete))
+	nr.HandleFunc("/news/{post}", news.NewsPostPage).Methods("GET")
+	nr.HandleFunc("/news/{post}", news.NewsPostReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
+	nr.HandleFunc("/news/{post}", news.NewsPostEditActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskEdit))
+	nr.HandleFunc("/news/{post}", news.NewsPostNewActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskNewPost))
+	nr.HandleFunc("/news/{post}/announcement", news.NewsAnnouncementActivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskAdd))
+	nr.HandleFunc("/news/{post}/announcement", news.NewsAnnouncementDeactivateActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskDelete))
 	nr.HandleFunc("/news/{post}", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
 	nr.HandleFunc("/news/{post}", common.TaskDoneAutoRefreshPage).Methods("POST")
-	nr.HandleFunc("/user/permissions", newsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	nr.HandleFunc("/users/permissions", newsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
-	nr.HandleFunc("/users/permissions", newsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
+	nr.HandleFunc("/user/permissions", news.NewsUserPermissionsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	nr.HandleFunc("/users/permissions", news.NewsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Allow"))
+	nr.HandleFunc("/users/permissions", news.NewsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher("User Disallow"))
 }
 
 func registerBlogsRoutes(r *mux.Router) {
@@ -164,7 +164,7 @@ func registerSearchRoutes(r *mux.Router) {
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", searchPage).Methods("GET")
 	sr.HandleFunc("", searchResultForumActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchForum))
-	sr.HandleFunc("", searchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchNews))
+	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchNews))
 	sr.HandleFunc("", searchResultLinkerActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchLinker))
 	sr.HandleFunc("", searchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchBlogs))
 	sr.HandleFunc("", searchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchWritings))
@@ -350,9 +350,9 @@ func registerAdminRoutes(r *mux.Router) {
 
 	// news admin
 	nar := ar.PathPrefix("/news").Subrouter()
-	nar.HandleFunc("/users/levels", newsAdminUserLevelsPage).Methods("GET")
-	nar.HandleFunc("/users/levels", newsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAllow))
-	nar.HandleFunc("/users/levels", newsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveLower))
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsPage).Methods("GET")
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskAllow))
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskRemoveLower))
 
 	// writings admin
 	war := ar.PathPrefix("/writings").Subrouter()

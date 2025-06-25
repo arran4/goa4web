@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
+func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -45,7 +45,7 @@ func forumTopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId), http.StatusTemporaryRedirect)
 }
 
-func forumTopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
+func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
 	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
 

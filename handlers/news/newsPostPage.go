@@ -134,9 +134,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		if int32(commentId) == row.Idcomments {
 			switch replyType {
 			case "full":
-				data.ReplyText = common.ProcessCommentFullQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = hcommon.ProcessCommentFullQuote(row.Posterusername.String, row.Text.String)
 			default:
-				data.ReplyText = common.ProcessCommentQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = hcommon.ProcessCommentQuote(row.Posterusername.String, row.Text.String)
 			}
 		}
 
@@ -316,12 +316,11 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := common.SearchWordIdsFromTextLocal(w, r, text, queries)
+	wordIds, done := SearchWordIdsFromTextLocal(w, r, text, queries)
 	if done {
 		return
 	}
-
-	if common.InsertWordsToForumSearchLocal(w, r, wordIds, queries, cid) {
+	if InsertWordsToForumSearchLocal(w, r, wordIds, queries, cid) {
 		return
 	}
 

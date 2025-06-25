@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -10,7 +10,7 @@ import (
 )
 
 // adminForumFlaggedPostsPage displays posts flagged for moderator review.
-func adminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
+func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

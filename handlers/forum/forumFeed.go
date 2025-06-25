@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func forumTopicFeed(r *http.Request, title string, topicID int, rows []*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
+func TopicFeed(r *http.Request, title string, topicID int, rows []*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -54,7 +54,7 @@ func forumTopicFeed(r *http.Request, title string, topicID int, rows []*GetForum
 	return feed
 }
 
-func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
+func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -86,7 +86,7 @@ func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feed := forumTopicFeed(r, topic.Title.String, topicID, rows)
+	feed := TopicFeed(r, topic.Title.String, topicID, rows)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -94,7 +94,7 @@ func forumTopicRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func forumTopicAtomPage(w http.ResponseWriter, r *http.Request) {
+func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -126,7 +126,7 @@ func forumTopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feed := forumTopicFeed(r, topic.Title.String, topicID, rows)
+	feed := TopicFeed(r, topic.Title.String, topicID, rows)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

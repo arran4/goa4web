@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -17,7 +17,7 @@ func TestForumTopicFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)
-	feed := forumTopicFeed(r, "Test", 1, rows)
+	feed := TopicFeed(r, "Test", 1, rows)
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))
 	}

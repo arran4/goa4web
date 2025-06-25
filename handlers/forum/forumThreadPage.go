@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func forumThreadPage(w http.ResponseWriter, r *http.Request) {
+func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
 		*GetCommentsByThreadIdForUserRow
 		ShowReply          bool

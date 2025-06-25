@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	"database/sql"
@@ -10,14 +10,13 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/gorilla/mux"
 )
 
-func forumAdminTopicRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
+func AdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*CoreData
-		Restrictions []*GetForumTopicRestrictionsByForumTopicIdRow
+		Restrictions []*GetAllForumTopicRestrictionsWithForumTopicTitleRow
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
@@ -25,10 +24,8 @@ func forumAdminTopicRestrictionLevelPage(w http.ResponseWriter, r *http.Request)
 	data := &Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	vars := mux.Vars(r)
-	topicId, _ := strconv.Atoi(vars["topic"])
 
-	restrictions, err := queries.GetForumTopicRestrictionsByForumTopicId(r.Context(), int32(topicId))
+	restrictions, err := queries.GetAllForumTopicRestrictionsWithForumTopicTitle(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -43,16 +40,19 @@ func forumAdminTopicRestrictionLevelPage(w http.ResponseWriter, r *http.Request)
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminTopicRestrictionLevelPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminTopicsRestrictionLevelPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func forumAdminTopicRestrictionLevelChangePage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	topicId, _ := strconv.Atoi(vars["topic"])
+func AdminTopicsRestrictionLevelChangePage(w http.ResponseWriter, r *http.Request) {
+	ftid, err := strconv.Atoi(r.PostFormValue("ftid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 	view, err := strconv.Atoi(r.PostFormValue("view"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -95,9 +95,8 @@ func forumAdminTopicRestrictionLevelChangePage(w http.ResponseWriter, r *http.Re
 	}
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
-	// TODO fix query / schema to overwrite existing value
 	if err := queries.UpsertForumTopicRestrictions(r.Context(), UpsertForumTopicRestrictionsParams{
-		ForumtopicIdforumtopic: int32(topicId),
+		ForumtopicIdforumtopic: int32(ftid),
 		Viewlevel:              sql.NullInt32{Valid: true, Int32: int32(view)},
 		Replylevel:             sql.NullInt32{Valid: true, Int32: int32(reply)},
 		Newthreadlevel:         sql.NullInt32{Valid: true, Int32: int32(newthread)},
@@ -116,13 +115,15 @@ func forumAdminTopicRestrictionLevelChangePage(w http.ResponseWriter, r *http.Re
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func forumAdminTopicRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	topicId, _ := strconv.Atoi(vars["topic"])
-
+func AdminTopicsRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Request) {
+	ftid, err := strconv.Atoi(r.PostFormValue("ftid"))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
-	if err := queries.DeleteTopicRestrictionsByForumTopicId(r.Context(), int32(topicId)); err != nil {
+	if err := queries.DeleteTopicRestrictionsByForumTopicId(r.Context(), int32(ftid)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -132,7 +133,7 @@ func forumAdminTopicRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Re
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func forumAdminTopicRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request) {
+func AdminTopicsRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request) {
 	fromID, err := strconv.Atoi(r.PostFormValue("fromTopic"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

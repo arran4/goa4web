@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -10,7 +10,7 @@ import (
 )
 
 // adminForumModeratorLogsPage displays recent moderator actions.
-func adminForumModeratorLogsPage(w http.ResponseWriter, r *http.Request) {
+func AdminForumModeratorLogsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 	}

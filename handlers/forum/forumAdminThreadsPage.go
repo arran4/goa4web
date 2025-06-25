@@ -1,4 +1,4 @@
-package goa4web
+package forum
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func forumAdminThreadsPage(w http.ResponseWriter, r *http.Request) {
+func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	type Group struct {
 		TopicTitle string
 		Threads    []*GetAllForumThreadsWithTopicRow
@@ -55,7 +55,7 @@ func forumAdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func forumAdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
+func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

@@ -13,6 +13,7 @@ import (
 	faq "github.com/arran4/goa4web/handlers/faq"
 	forum "github.com/arran4/goa4web/handlers/forum"
 	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
+	languages "github.com/arran4/goa4web/handlers/languages"
 	linker "github.com/arran4/goa4web/handlers/linker"
 	news "github.com/arran4/goa4web/handlers/news"
 	search "github.com/arran4/goa4web/handlers/search"
@@ -173,11 +174,11 @@ func registerImagebbsRoutes(r *mux.Router) {
 func registerSearchRoutes(r *mux.Router) {
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", search.Page).Methods("GET")
-	sr.HandleFunc("", search.SearchResultForumActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchForum))
-	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchNews))
-	sr.HandleFunc("", search.SearchResultLinkerActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchLinker))
-	sr.HandleFunc("", search.SearchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchBlogs))
-	sr.HandleFunc("", search.SearchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchWritings))
+	sr.HandleFunc("", search.SearchResultForumActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchForum))
+	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchNews))
+	sr.HandleFunc("", search.SearchResultLinkerActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchLinker))
+	sr.HandleFunc("", search.SearchResultBlogsActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchBlogs))
+	sr.HandleFunc("", search.SearchResultWritingsActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchWritings))
 }
 
 func registerWritingsRoutes(r *mux.Router) {
@@ -261,29 +262,15 @@ func registerAdminRoutes(r *mux.Router) {
 	ar.HandleFunc("/announcements", adminAnnouncementsPage).Methods("GET")
 	ar.HandleFunc("/announcements", adminAnnouncementsAddActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskAdd))
 	ar.HandleFunc("/announcements", adminAnnouncementsDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
-	ar.HandleFunc("/sessions", adminSessionsPage).Methods("GET")
-	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
-	ar.HandleFunc("/login/attempts", adminLoginAttemptsPage).Methods("GET")
 	ar.HandleFunc("/ipbans", adminIPBanPage).Methods("GET")
 	ar.HandleFunc("/ipbans", adminIPBanAddActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskAdd))
 	ar.HandleFunc("/ipbans", adminIPBanDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
-	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
-	ar.HandleFunc("/users/export", adminUsersExportPage).Methods("GET")
 	ar.HandleFunc("/audit", adminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/usage", adminUsageStatsPage).Methods("GET")
 
 	// search related
-	ar.HandleFunc("/search", adminSearchPage).Methods("GET")
-	ar.HandleFunc("/search", adminSearchRemakeCommentsSearchPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRemakeCommentsSearch))
-	ar.HandleFunc("/search", adminSearchRemakeNewsSearchPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRemakeNewsSearch))
-	ar.HandleFunc("/search", adminSearchRemakeBlogSearchPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRemakeBlogSearch))
-	ar.HandleFunc("/search", adminSearchRemakeLinkerSearchPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRemakeLinkerSearch))
-	ar.HandleFunc("/search", adminSearchRemakeWritingSearchPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRemakeWritingSearch))
-	ar.HandleFunc("/search", adminSearchRemakeImageSearchPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRemakeImageSearch))
-	ar.HandleFunc("/search/list", adminSearchWordListPage).Methods("GET")
-	ar.HandleFunc("/search/list.txt", adminSearchWordListDownloadPage).Methods("GET")
 
 	// forum admin routes
 	far := ar.PathPrefix("/forum").Subrouter()
@@ -346,13 +333,9 @@ func registerAdminRoutes(r *mux.Router) {
 
 	// faq admin
 	faq.RegisterAdminRoutes(ar)
-
-	// languages
-	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
-	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
-	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRenameLanguage))
-	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDeleteLanguage))
-	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskCreateLanguage))
+	search.RegisterAdminRoutes(ar)
+	userhandlers.RegisterAdminRoutes(ar)
+	languages.RegisterAdminRoutes(ar)
 
 	// news admin
 	nar := ar.PathPrefix("/news").Subrouter()

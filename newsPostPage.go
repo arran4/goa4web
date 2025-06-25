@@ -130,9 +130,9 @@ func newsPostPage(w http.ResponseWriter, r *http.Request) {
 		if int32(commentId) == row.Idcomments {
 			switch replyType {
 			case "full":
-				data.ReplyText = processCommentFullQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = common.ProcessCommentFullQuote(row.Posterusername.String, row.Text.String)
 			default:
-				data.ReplyText = processCommentQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = common.ProcessCommentQuote(row.Posterusername.String, row.Text.String)
 			}
 		}
 

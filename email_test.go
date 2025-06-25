@@ -3,7 +3,6 @@ package goa4web
 import (
 	"context"
 	"flag"
-	"os"
 	"reflect"
 	"testing"
 
@@ -29,10 +28,10 @@ func TestGetEmailProviderUnknown(t *testing.T) {
 }
 
 func TestEmailConfigPrecedence(t *testing.T) {
-	os.Setenv(config.EnvEmailProvider, "ses")
-	os.Setenv(config.EnvSMTPHost, "env")
-	defer os.Unsetenv(config.EnvEmailProvider)
-	defer os.Unsetenv(config.EnvSMTPHost)
+	env := map[string]string{
+		config.EnvEmailProvider: "ses",
+		config.EnvSMTPHost:      "env",
+	}
 
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	fs.String("email-provider", "smtp", "")
@@ -42,7 +41,7 @@ func TestEmailConfigPrecedence(t *testing.T) {
 		config.EnvSMTPHost:      "file",
 	}
 	_ = fs.Parse([]string{"--email-provider=smtp", "--smtp-port=25"})
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
 	if cfg.EmailProvider != "smtp" || cfg.EmailSMTPHost != "file" || cfg.EmailSMTPPort != "25" {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -53,7 +52,7 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvEmailProvider: "log",
 	}
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.EmailProvider != "log" {
 		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}

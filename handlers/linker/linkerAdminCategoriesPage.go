@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -12,14 +12,14 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Categories []*GetLinkerCategoryLinkCountsRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
@@ -46,7 +46,7 @@ func linkerAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
@@ -72,7 +72,7 @@ func linkerAdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
@@ -89,7 +89,7 @@ func linkerAdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
@@ -117,7 +117,7 @@ func linkerAdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	title := r.PostFormValue("title")
 	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())

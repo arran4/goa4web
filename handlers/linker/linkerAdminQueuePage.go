@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -15,13 +15,13 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
+func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	type QueueRow struct {
 		*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
 		Preview string
 	}
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Queue    []*QueueRow
 		Search   string
 		User     string
@@ -31,7 +31,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),
@@ -120,7 +120,7 @@ func linkerAdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func linkerAdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
@@ -131,7 +131,7 @@ func linkerAdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
@@ -152,7 +152,7 @@ func linkerAdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
@@ -181,7 +181,7 @@ func linkerAdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
@@ -195,7 +195,7 @@ func linkerAdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func linkerAdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)

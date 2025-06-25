@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"database/sql"
@@ -14,9 +14,9 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
+func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		Languages          []*Language
 		SelectedLanguageId int
 		Categories         []*Linkercategory
@@ -24,7 +24,7 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
 	}
 
@@ -56,7 +56,7 @@ func linkerAdminAddPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func linkerAdminAddActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)

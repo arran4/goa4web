@@ -1,4 +1,4 @@
-package goa4web
+package linker
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 )
 
@@ -59,10 +60,10 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &corecommon.CoreData{})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	linkerAdminQueueApproveActionPage(rr, req)
+	AdminQueueApproveActionPage(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

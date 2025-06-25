@@ -1,10 +1,11 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,15 +13,15 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Categories []*Writingcategory
+		*corecommon.CoreData
+		Categories []*db.Writingcategory
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	categoryRows, err := queries.FetchAllCategories(r.Context())
@@ -45,7 +46,7 @@ func writingsAdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	wcid, err := strconv.Atoi(r.PostFormValue("wcid"))
@@ -53,14 +54,14 @@ func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	categoryId, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	if err := queries.UpdateWritingCategory(r.Context(), UpdateWritingCategoryParams{
+	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -79,7 +80,7 @@ func writingsAdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func writingsAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
@@ -88,8 +89,8 @@ func writingsAdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	if err := queries.InsertWritingCategory(r.Context(), InsertWritingCategoryParams{
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	if err := queries.InsertWritingCategory(r.Context(), db.InsertWritingCategoryParams{
 		WritingcategoryIdwritingcategory: int32(pcid),
 		Title: sql.NullString{
 			Valid:  true,

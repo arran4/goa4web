@@ -1,10 +1,11 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,16 +14,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func writingsCategoryPermissionsPage(w http.ResponseWriter, r *http.Request) {
+func CategoryPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		CategoryID int32
-		UserLevels []*PermissionWithUser
+		UserLevels []*db.PermissionWithUser
 	}
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 	vars := mux.Vars(r)
 	cid, _ := strconv.Atoi(vars["category"])
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.GetPermissionsBySectionWithUsers(r.Context(), fmt.Sprintf("writing:%d", cid))
 	if err != nil && err != sql.ErrNoRows {
 		log.Printf("getPermissions Error: %s", err)
@@ -38,8 +39,8 @@ func writingsCategoryPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsCategoryPermissionsAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func CategoryPermissionsAllowPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	cid, _ := strconv.Atoi(vars["category"])
 	username := r.PostFormValue("username")
@@ -50,7 +51,7 @@ func writingsCategoryPermissionsAllowPage(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+	if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
 		Section:      sql.NullString{Valid: true, String: fmt.Sprintf("writing:%d", cid)},
 		Level:        sql.NullString{Valid: true, String: level},
@@ -62,8 +63,8 @@ func writingsCategoryPermissionsAllowPage(w http.ResponseWriter, r *http.Request
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func writingsCategoryPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func CategoryPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid, _ := strconv.Atoi(r.PostFormValue("permid"))
 	if err := queries.PermissionUserDisallow(r.Context(), int32(permid)); err != nil {
 		log.Printf("permissionUserDisallow Error: %s", err)

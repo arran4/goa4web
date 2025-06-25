@@ -1,10 +1,11 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,17 +13,17 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func writingsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		UserLevels []*Permission
+		*corecommon.CoreData
+		UserLevels []*db.Permission
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.GetUsersPermissions(r.Context())
 	if err != nil {
 		switch {
@@ -44,8 +45,8 @@ func writingsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := "writing"
 	level := r.PostFormValue("level")
@@ -56,7 +57,7 @@ func writingsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+	if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
 		Section: sql.NullString{
 			String: where,
@@ -74,8 +75,8 @@ func writingsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Reque
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func writingsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	permidi, err := strconv.Atoi(permid)
 	if err != nil {

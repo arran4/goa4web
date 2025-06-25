@@ -1,9 +1,10 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,17 +14,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
+func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Languages []*Language
+		*corecommon.CoreData
+		Languages []*db.Language
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -40,7 +41,7 @@ func writingsArticleAddPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func writingsArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
+func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 	session, ok := core.GetSessionOrFail(w, r)
@@ -55,9 +56,9 @@ func writingsArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	articleId, err := queries.InsertWriting(r.Context(), InsertWritingParams{
+	articleId, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
 		WritingcategoryIdwritingcategory: int32(categoryId),
 		Title:                            sql.NullString{Valid: true, String: title},
 		Abstract:                         sql.NullString{Valid: true, String: abstract},

@@ -1,4 +1,4 @@
-package goa4web
+package writings
 
 import (
 	"database/sql"
@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"log"
 	"net/http"
 	"time"
 )
 
-func writingsFeedGen(r *http.Request, queries *Queries) (*feeds.Feed, error) {
+func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
 	feed := &feeds.Feed{
 		Title:       "Latest writings",
 		Link:        &feeds.Link{Href: r.URL.String()},
@@ -20,7 +21,7 @@ func writingsFeedGen(r *http.Request, queries *Queries) (*feeds.Feed, error) {
 		Created:     time.Now(),
 	}
 
-	rows, err := queries.GetPublicWritings(r.Context(), GetPublicWritingsParams{Limit: 15, Offset: 0})
+	rows, err := queries.GetPublicWritings(r.Context(), db.GetPublicWritingsParams{Limit: 15, Offset: 0})
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -58,9 +59,9 @@ func writingsFeedGen(r *http.Request, queries *Queries) (*feeds.Feed, error) {
 	return feed, nil
 }
 
-func writingsRssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	feed, err := writingsFeedGen(r, queries)
+func RssPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	feed, err := feedGen(r, queries)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -73,9 +74,9 @@ func writingsRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writingsAtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	feed, err := writingsFeedGen(r, queries)
+func AtomPage(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	feed, err := feedGen(r, queries)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

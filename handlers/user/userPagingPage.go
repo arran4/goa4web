@@ -1,4 +1,4 @@
-package goa4web
+package user
 
 import (
 	"database/sql"
@@ -11,23 +11,24 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
-	pref, _ := r.Context().Value(common.KeyPreference).(*Preference)
+	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
 	size := runtimeconfig.AppRuntimeConfig.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
 	}
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Size int
 		Min  int
 		Max  int
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Size:     size,
 		Min:      runtimeconfig.AppRuntimeConfig.PageSizeMin,
 		Max:      runtimeconfig.AppRuntimeConfig.PageSizeMax,
@@ -56,11 +57,11 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	if size > runtimeconfig.AppRuntimeConfig.PageSizeMax {
 		size = runtimeconfig.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			err = queries.InsertPreference(r.Context(), InsertPreferenceParams{
+			err = queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
 				LanguageIdlanguage: 0,
 				UsersIdusers:       uid,
 				PageSize:           int32(size),
@@ -68,7 +69,7 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		pref.PageSize = int32(size)
-		err = queries.UpdatePreference(r.Context(), UpdatePreferenceParams{
+		err = queries.UpdatePreference(r.Context(), db.UpdatePreferenceParams{
 			LanguageIdlanguage: pref.LanguageIdlanguage,
 			UsersIdusers:       uid,
 			PageSize:           pref.PageSize,

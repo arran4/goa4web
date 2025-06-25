@@ -1,4 +1,4 @@
-package goa4web
+package user
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +22,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err != nil {
 		log.Printf("get notifications: %v", err)
@@ -29,10 +30,10 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*CoreData
-		Notifications []*Notification
+		*common.CoreData
+		Notifications []*db.Notification
 	}{
-		CoreData:      r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:      r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Notifications: notifs,
 	}
 	if err := templates.RenderTemplate(w, "notifications.gohtml", data, corecommon.NewFuncs(r)); err != nil {
@@ -57,7 +58,7 @@ func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	n, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err == nil {
 		for _, no := range n {
@@ -80,7 +81,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err != nil {
 		log.Printf("notify feed: %v", err)

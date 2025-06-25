@@ -1,4 +1,4 @@
-package goa4web
+package user
 
 import (
 	"context"
@@ -17,7 +17,13 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/runtimeconfig"
+)
+
+var (
+	store       *sessions.CookieStore
+	sessionName = "my-session"
 )
 
 // helper to setup session cookie
@@ -45,7 +51,7 @@ func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
 		"UID":        int32(1),
 		"ExpiryTime": time.Now().Add(-time.Hour).Unix(),
 	})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, New(nil))
+	ctx := context.WithValue(req.Context(), common.KeyQueries, dbpkg.New(nil))
 	req = req.WithContext(ctx)
 
 	called := false
@@ -78,7 +84,7 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 		"ExpiryTime": time.Now().Add(time.Hour).Unix(),
 	})
 
-	queries := New(db)
+	queries := dbpkg.New(db)
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 
@@ -96,14 +102,14 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"iduserlang", "users_idusers", "language_idlanguage"}).AddRow(1, 1, 2))
 
-	var gotPerms []*Permission
-	var gotPref *Preference
-	var gotLangs []*Userlang
+	var gotPerms []*dbpkg.Permission
+	var gotPref *dbpkg.Preference
+	var gotLangs []*dbpkg.Userlang
 
 	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPerms, _ = r.Context().Value(common.KeyPermissions).([]*Permission)
-		gotPref, _ = r.Context().Value(common.KeyPreference).(*Preference)
-		gotLangs, _ = r.Context().Value(common.KeyLanguages).([]*Userlang)
+		gotPerms, _ = r.Context().Value(common.KeyPermissions).([]*dbpkg.Permission)
+		gotPref, _ = r.Context().Value(common.KeyPreference).(*dbpkg.Preference)
+		gotLangs, _ = r.Context().Value(common.KeyLanguages).([]*dbpkg.Userlang)
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -131,8 +137,8 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	os.Unsetenv("EMAIL_PROVIDER")
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -141,7 +147,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	want := url.QueryEscape(errMailNotConfigured)
+	want := url.QueryEscape(ErrMailNotConfigured)
 	if loc := rr.Header().Get("Location"); !strings.Contains(loc, want) {
 		t.Fatalf("location=%q", loc)
 	}
@@ -153,8 +159,8 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	defer os.Unsetenv("EMAIL_PROVIDER")
 
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -170,8 +176,8 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 
 func TestUserEmailPage_ShowError(t *testing.T) {
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -192,7 +198,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := New(db)
+	queries := dbpkg.New(db)
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -218,7 +224,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	ctx = context.WithValue(ctx, common.KeySession, sess)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
 	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -245,7 +251,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := New(db)
+	queries := dbpkg.New(db)
 	store = sessions.NewCookieStore([]byte("test"))
 
 	form := url.Values{}
@@ -266,7 +272,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	ctx = context.WithValue(ctx, common.KeySession, sess)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
@@ -291,7 +297,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := New(db)
+	queries := dbpkg.New(db)
 	runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -315,7 +321,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	ctx = context.WithValue(ctx, common.KeySession, sess)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
+	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).

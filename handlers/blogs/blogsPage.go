@@ -1,10 +1,10 @@
-package goa4web
+package blogs
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
+
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-func blogsPage(w http.ResponseWriter, r *http.Request) {
+func Page(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*GetBlogEntriesForUserDescendingLanguagesRow
 		EditUrl string
@@ -75,7 +75,7 @@ func blogsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "page.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "page.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -157,7 +157,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 	}
 }
 
-func blogsRssPage(w http.ResponseWriter, r *http.Request) {
+func RssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
@@ -182,7 +182,7 @@ func blogsRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func blogsAtomPage(w http.ResponseWriter, r *http.Request) {
+func AtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{

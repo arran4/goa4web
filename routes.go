@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	blogs "github.com/arran4/goa4web/handlers/blogs"
 	"github.com/arran4/goa4web/handlers/common"
 	faq "github.com/arran4/goa4web/sections/faq"
 
@@ -60,31 +61,31 @@ func registerNewsRoutes(r *mux.Router) {
 
 func registerBlogsRoutes(r *mux.Router) {
 	br := r.PathPrefix("/blogs").Subrouter()
-	br.HandleFunc("/rss", blogsRssPage).Methods("GET")
-	br.HandleFunc("/atom", blogsAtomPage).Methods("GET")
-	br.HandleFunc("", blogsPage).Methods("GET")
-	br.HandleFunc("/", blogsPage).Methods("GET")
-	br.HandleFunc("/add", blogsBlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
-	br.HandleFunc("/add", blogsBlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskAdd))
-	br.HandleFunc("/bloggers", blogsBloggersPage).Methods("GET")
-	br.HandleFunc("/blogger/{username}", blogsBloggerPage).Methods("GET")
-	br.HandleFunc("/blogger/{username}/", blogsBloggerPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}", blogsBlogPage).Methods("GET")
+	br.HandleFunc("/rss", blogs.RssPage).Methods("GET")
+	br.HandleFunc("/atom", blogs.AtomPage).Methods("GET")
+	br.HandleFunc("", blogs.Page).Methods("GET")
+	br.HandleFunc("/", blogs.Page).Methods("GET")
+	br.HandleFunc("/add", blogs.BlogAddPage).Methods("GET").MatcherFunc(RequiredAccess("writer", "administrator"))
+	br.HandleFunc("/add", blogs.BlogAddActionPage).Methods("POST").MatcherFunc(RequiredAccess("writer", "administrator")).MatcherFunc(TaskMatcher(TaskAdd))
+	br.HandleFunc("/bloggers", blogs.BloggersPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}", blogs.BloggerPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}/", blogs.BloggerPage).Methods("GET")
+	br.HandleFunc("/blog/{blog}", blogs.BlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", common.TaskDoneAutoRefreshPage).Methods("POST")
-	br.HandleFunc("/blog/{blog}/comments", blogsCommentPage).Methods("GET", "POST")
-	br.HandleFunc("/blog/{blog}/reply", blogsBlogReplyPostPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
-	br.HandleFunc("/blog/{blog}/comment/{comment}", blogsCommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskEditReply))
-	br.HandleFunc("/blog/{blog}/comment/{comment}", blogsCommentEditPostCancelPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))
-	br.HandleFunc("/blog/{blog}/edit", blogsBlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher(TaskEdit))
+	br.HandleFunc("/blog/{blog}/comments", blogs.CommentPage).Methods("GET", "POST")
+	br.HandleFunc("/blog/{blog}/reply", blogs.BlogReplyPostPage).Methods("POST").MatcherFunc(TaskMatcher(TaskReply))
+	br.HandleFunc("/blog/{blog}/comment/{comment}", blogs.CommentEditPostPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskEditReply))
+	br.HandleFunc("/blog/{blog}/comment/{comment}", blogs.CommentEditPostCancelPage).MatcherFunc(Or(RequiredAccess("administrator"), CommentAuthor())).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
+	br.HandleFunc("/blog/{blog}/edit", blogs.BlogEditPage).Methods("GET").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor())))
+	br.HandleFunc("/blog/{blog}/edit", blogs.BlogEditActionPage).Methods("POST").MatcherFunc(Or(RequiredAccess("administrator"), And(RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(TaskMatcher(TaskEdit))
 	br.HandleFunc("/blog/{blog}/edit", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(TaskMatcher(TaskCancel))
 
 	// Admin endpoints for blogs
-	br.HandleFunc("/user/permissions", getPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersAllow))
-	br.HandleFunc("/users/permissions", blogsUsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersDisallow))
+	br.HandleFunc("/user/permissions", blogs.GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserAllow))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUserDisallow))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersAllow))
+	br.HandleFunc("/users/permissions", blogs.UsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskUsersDisallow))
 }
 
 func registerForumRoutes(r *mux.Router) {

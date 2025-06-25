@@ -1,7 +1,6 @@
-package goa4web
+package blogs
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -9,7 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func blogsBloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
+func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		//Rows []*GetCountOfBlogPostsByUserRow
@@ -34,7 +33,7 @@ func blogsBloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "bloggersBloggerPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "bloggersBloggerPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

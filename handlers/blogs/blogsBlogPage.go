@@ -1,8 +1,8 @@
-package goa4web
+package blogs
 
 import (
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
+
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
+func BlogPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*GetBlogEntryForUserByIdRow
 		EditUrl     string
@@ -86,7 +86,7 @@ func blogsBlogPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "blogPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "blogPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

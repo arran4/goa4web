@@ -3,7 +3,8 @@ package writings
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
@@ -21,10 +22,10 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -56,7 +57,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	articleId, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
 		WritingcategoryIdwritingcategory: int32(categoryId),
@@ -78,12 +79,12 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 		title,
 		body,
 	} {
-		wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
 
-		if common.InsertWordsToWritingSearch(w, r, wordIds, queries, articleId) {
+		if search.InsertWordsToWritingSearch(w, r, wordIds, queries, articleId) {
 			return
 		}
 	}

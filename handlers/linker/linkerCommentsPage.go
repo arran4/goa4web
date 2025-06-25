@@ -6,7 +6,8 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	"log"
 	"net/http"
 	"strconv"
@@ -43,8 +44,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -61,7 +62,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(common.KeyQueries).(*Queries)
+	queries = r.Context().Value(hcommon.KeyQueries).(*Queries)
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -165,7 +166,7 @@ func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
 	if err != nil {
@@ -279,12 +280,12 @@ func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if search.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

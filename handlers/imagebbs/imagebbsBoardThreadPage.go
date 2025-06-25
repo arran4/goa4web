@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
@@ -28,7 +29,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*common.CoreData
+		*hcommon.CoreData
 		Replyable          bool
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -50,9 +51,9 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:      r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:      r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 		Replyable:     true,
 		BoardId:       bid,
 		ForumThreadId: thid,
@@ -159,7 +160,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil {
@@ -252,18 +253,18 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := common.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+	if err := hcommon.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if search.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

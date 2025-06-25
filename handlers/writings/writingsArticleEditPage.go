@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
@@ -24,9 +25,9 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		UserId             int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
 	}
 
@@ -40,7 +41,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
@@ -80,7 +81,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},
@@ -106,12 +107,12 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		title,
 		body,
 	} {
-		wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
 
-		if common.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(articleId)) {
+		if search.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(articleId)) {
 			return
 		}
 	}

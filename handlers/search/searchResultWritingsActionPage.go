@@ -1,10 +1,11 @@
-package goa4web
+package search
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -12,11 +13,11 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
+func SearchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Comments           []*GetCommentsByIdsForUserWithThreadInfoRow
-		Writings           []*GetWritingsByIdsForUserDescendingByPublishedDateRow
+		*hcommon.CoreData
+		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
+		Writings           []*db.GetWritingsByIdsForUserDescendingByPublishedDateRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -24,9 +25,9 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -63,8 +64,8 @@ func searchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetWritingsByIdsForUserDescendingByPublishedDateRow, bool, bool, error) {
-	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
+func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetWritingsByIdsForUserDescendingByPublishedDateRow, bool, bool, error) {
+	searchWords := BreakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 
 	if len(searchWords) == 0 {
@@ -88,7 +89,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 			}
 			writingsIds = ids
 		} else {
-			ids, err := queries.WritingSearchNext(r.Context(), WritingSearchNextParams{
+			ids, err := queries.WritingSearchNext(r.Context(), db.WritingSearchNextParams{
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -111,7 +112,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid
 		}
 	}
 
-	writings, err := queries.GetWritingsByIdsForUserDescendingByPublishedDate(r.Context(), GetWritingsByIdsForUserDescendingByPublishedDateParams{
+	writings, err := queries.GetWritingsByIdsForUserDescendingByPublishedDate(r.Context(), db.GetWritingsByIdsForUserDescendingByPublishedDateParams{
 		Userid:     uid,
 		Writingids: writingsIds,
 	})

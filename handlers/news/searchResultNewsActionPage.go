@@ -10,6 +10,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -65,7 +66,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
-	searchWords := hcommon.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := search.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
 	if len(searchWords) == 0 {

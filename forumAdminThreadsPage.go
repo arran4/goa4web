@@ -1,6 +1,7 @@
 package goa4web
 
 import (
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -46,7 +47,7 @@ func forumAdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminThreadsPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminThreadsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

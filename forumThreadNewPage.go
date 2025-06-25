@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,7 +35,7 @@ func forumThreadNewPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "threadNewPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "threadNewPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

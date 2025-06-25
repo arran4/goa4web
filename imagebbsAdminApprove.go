@@ -1,6 +1,7 @@
 package goa4web
 
 import (
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -16,5 +17,5 @@ func imagebbsAdminApprovePostPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }

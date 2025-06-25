@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -176,7 +177,7 @@ func writingsArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	CustomWritingsIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "articlePage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "articlePage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -329,5 +330,5 @@ func writingsArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 }

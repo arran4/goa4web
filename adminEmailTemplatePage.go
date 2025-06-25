@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"bytes"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -42,7 +43,7 @@ func adminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		Error:    r.URL.Query().Get("error"),
 	}
 
-	if err := templates.RenderTemplate(w, "emailTemplatePage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "emailTemplatePage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

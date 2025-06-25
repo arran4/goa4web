@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"os"
@@ -53,6 +54,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
+	common.Version = version
 
 	var handler http.Handler
 
@@ -113,7 +115,7 @@ func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
 
 		log.Printf("rendering template %s", template)
 
-		if err := templates.RenderTemplate(w, template, data, NewFuncs(r)); err != nil {
+		if err := templates.RenderTemplate(w, template, data, common.NewFuncs(r)); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

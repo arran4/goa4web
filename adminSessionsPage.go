@@ -1,6 +1,7 @@
 package goa4web
 
 import (
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -21,7 +22,7 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Sessions = items
-	if err := templates.RenderTemplate(w, "sessionsPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "sessionsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -46,7 +47,7 @@ func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -70,7 +71,7 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 		users = filtered
 	}
 
-	pageSize := getPageSize(r)
+	pageSize := common.GetPageSize(r)
 	if offset < 0 {
 		offset = 0
 	}
@@ -119,7 +120,7 @@ func forumAdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminUserPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminUserPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

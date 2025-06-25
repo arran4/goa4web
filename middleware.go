@@ -2,6 +2,7 @@ package goa4web
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
@@ -86,7 +87,7 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !roleAllowed(r, roles...) {
-				err := templates.GetCompiledTemplates(NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(ContextValues("coreData")).(*CoreData))
+				err := templates.GetCompiledTemplates(common.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(ContextValues("coreData")).(*CoreData))
 				if err != nil {
 					log.Printf("Template Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)

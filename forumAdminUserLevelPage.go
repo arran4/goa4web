@@ -3,6 +3,7 @@ package goa4web
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -42,7 +43,7 @@ func forumAdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomForumIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminUserLevelPage.gohtml", data, NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminUserLevelPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -98,7 +99,7 @@ func forumAdminUserLevelUpdatePage(w http.ResponseWriter, r *http.Request) {
 
 	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 
 }
 
@@ -122,6 +123,6 @@ func forumAdminUserLevelDeletePage(w http.ResponseWriter, r *http.Request) {
 
 	notifyAdmins(r.Context(), getEmailProvider(), queries, r.URL.Path)
 
-	taskDoneAutoRefreshPage(w, r)
+	common.TaskDoneAutoRefreshPage(w, r)
 
 }

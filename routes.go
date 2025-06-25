@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	bookmarks "github.com/arran4/goa4web/handlers/bookmarks"
 	"github.com/arran4/goa4web/handlers/common"
 	faq "github.com/arran4/goa4web/sections/faq"
 
@@ -124,11 +125,11 @@ func registerLinkerRoutes(r *mux.Router) {
 
 func registerBookmarksRoutes(r *mux.Router) {
 	bmr := r.PathPrefix("/bookmarks").Subrouter()
-	bmr.HandleFunc("", bookmarksPage).Methods("GET")
-	bmr.HandleFunc("/mine", bookmarksMinePage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	bmr.HandleFunc("/edit", bookmarksEditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
-	bmr.HandleFunc("/edit", bookmarksEditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSave))
-	bmr.HandleFunc("/edit", bookmarksEditCreateActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskCreate))
+	bmr.HandleFunc("", bookmarks.Page).Methods("GET")
+	bmr.HandleFunc("/mine", bookmarks.MinePage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/edit", bookmarks.EditPage).Methods("GET").MatcherFunc(RequiresAnAccount())
+	bmr.HandleFunc("/edit", bookmarks.EditSaveActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskSave))
+	bmr.HandleFunc("/edit", bookmarks.EditCreateActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskCreate))
 	bmr.HandleFunc("/edit", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiresAnAccount())
 }
 

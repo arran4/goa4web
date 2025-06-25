@@ -49,7 +49,7 @@ func main() {
 		log.Fatalf("session secret: %v", err)
 	}
 
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, fileVals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

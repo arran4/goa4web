@@ -2,7 +2,6 @@ package goa4web
 
 import (
 	"flag"
-	"os"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -10,10 +9,10 @@ import (
 )
 
 func TestHTTPConfigPrecedence(t *testing.T) {
-	os.Setenv(config.EnvListen, ":1")
-	os.Setenv(config.EnvHostname, "http://env")
-	defer os.Unsetenv(config.EnvListen)
-	defer os.Unsetenv(config.EnvHostname)
+	env := map[string]string{
+		config.EnvListen:   ":1",
+		config.EnvHostname: "http://env",
+	}
 
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	fs.String("listen", ":3", "")
@@ -23,7 +22,7 @@ func TestHTTPConfigPrecedence(t *testing.T) {
 		config.EnvHostname: "http://file",
 	}
 	_ = fs.Parse([]string{"--listen=:3", "--hostname=http://cli"})
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
 
 	if cfg.HTTPListen != ":3" || cfg.HTTPHostname != "http://cli" {
 		t.Fatalf("merged %#v", cfg)
@@ -35,7 +34,7 @@ func TestLoadHTTPConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvListen: ":9",
 	}
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals)
+	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.HTTPListen != ":9" {
 		t.Fatalf("want :9 got %q", cfg.HTTPListen)
 	}

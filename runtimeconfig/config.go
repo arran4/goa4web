@@ -97,7 +97,14 @@ func NewRuntimeFlagSet(name string) *flag.FlagSet {
 // GenerateRuntimeConfig builds the runtime configuration from a FlagSet,
 // optional config file values and environment variables following the
 // precedence rules from AGENTS.md.
-func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) RuntimeConfig {
+// GenerateRuntimeConfig builds the runtime configuration from a FlagSet,
+// optional config file values and environment variables following the
+// precedence rules from AGENTS.md. The getenv function is used to
+// retrieve environment values and defaults to os.Getenv when nil.
+func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string) RuntimeConfig {
+	if getenv == nil {
+		getenv = os.Getenv
+	}
 	setFlags := map[string]bool{}
 	if fs != nil {
 		fs.Visit(func(f *flag.Flag) { setFlags[f.Name] = true })
@@ -143,7 +150,7 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) Runtime
 			*o.dst = v
 			continue
 		}
-		if v := os.Getenv(o.env); v != "" {
+		if v := getenv(o.env); v != "" {
 			*o.dst = v
 		}
 	}
@@ -167,7 +174,7 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) Runtime
 			}
 		} else if v := fileVals[o.env]; v != "" {
 			val = v
-		} else if v := os.Getenv(o.env); v != "" {
+		} else if v := getenv(o.env); v != "" {
 			val = v
 		}
 		if val != "" {
@@ -188,12 +195,12 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string) Runtime
 	cfg.FeedsEnabled = resolveFeedsEnabled(
 		cliFeeds,
 		fileVals[config.EnvFeedsEnabled],
-		os.Getenv(config.EnvFeedsEnabled),
+		getenv(config.EnvFeedsEnabled),
 	)
 	cfg.StatsStartYear = resolveStatsStartYear(
 		cliStats,
 		fileVals[config.EnvStatsStartYear],
-		os.Getenv(config.EnvStatsStartYear),
+		getenv(config.EnvStatsStartYear),
 	)
 
 	normalizeRuntimeConfig(&cfg)

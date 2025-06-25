@@ -1,31 +1,32 @@
-package goa4web
+package imagebbs
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func imagebbsPage(w http.ResponseWriter, r *http.Request) {
+func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Boards      []*Imageboard
+		*common.CoreData
+		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
 	}
 
 	data := Data{
-		CoreData:    r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:    r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		IsSubBoard:  false,
 		BoardNumber: 0,
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), 0)
 	if err != nil {
@@ -49,7 +50,7 @@ func imagebbsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CustomImageBBSIndex(data *CoreData, r *http.Request) {
+func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
 
 	if data.FeedsEnabled {
 		data.RSSFeedUrl = "/imagebbs/rss"
@@ -58,13 +59,13 @@ func CustomImageBBSIndex(data *CoreData, r *http.Request) {
 
 	userHasAdmin := data.HasRole("administrator")
 	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Admin",
 			Link: "/admin",
-		}, IndexItem{
+		}, corecommon.IndexItem{
 			Name: "Modify Boards",
 			Link: "/admin/imagebbs/boards",
-		}, IndexItem{
+		}, corecommon.IndexItem{
 			Name: "New Board",
 			Link: "/admin/imagebbs/board",
 		})

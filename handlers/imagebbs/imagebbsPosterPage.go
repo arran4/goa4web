@@ -1,10 +1,11 @@
-package goa4web
+package imagebbs
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,10 +14,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func imagebbsPosterPage(w http.ResponseWriter, r *http.Request) {
+func PosterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Posts    []*GetImagePostsByUserDescendingRow
+		*common.CoreData
+		Posts    []*db.GetImagePostsByUserDescendingRow
 		Username string
 		IsOffset bool
 	}
@@ -25,7 +26,7 @@ func imagebbsPosterPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -38,7 +39,7 @@ func imagebbsPosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetImagePostsByUserDescending(r.Context(), GetImagePostsByUserDescendingParams{
+	rows, err := queries.GetImagePostsByUserDescending(r.Context(), db.GetImagePostsByUserDescendingParams{
 		UsersIdusers: u.Idusers,
 		Limit:        15,
 		Offset:       int32(offset),
@@ -50,7 +51,7 @@ func imagebbsPosterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Posts:    rows,
 		Username: username,
 		IsOffset: offset != 0,

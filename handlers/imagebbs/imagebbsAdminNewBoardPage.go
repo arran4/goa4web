@@ -1,10 +1,11 @@
-package goa4web
+package imagebbs
 
 import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,16 +13,16 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
+func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
-		Boards []*Imageboard
+		*common.CoreData
+		Boards []*db.Imageboard
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	boardRows, err := queries.GetAllImageBoards(r.Context())
 	if err != nil {
@@ -45,14 +46,14 @@ func imagebbsAdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func imagebbsAdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
+func AdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	err := queries.CreateImageBoard(r.Context(), CreateImageBoardParams{
+	err := queries.CreateImageBoard(r.Context(), db.CreateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},

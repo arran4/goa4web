@@ -316,12 +316,12 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := SearchWordIdsFromTextLocal(w, r, text, queries)
+	wordIds, done := common.SearchWordIdsFromTextLocal(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if InsertWordsToForumSearchLocal(w, r, wordIds, queries, cid) {
+	if common.InsertWordsToForumSearchLocal(w, r, wordIds, queries, cid) {
 		return
 	}
 

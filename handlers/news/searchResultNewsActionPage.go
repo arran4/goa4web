@@ -65,7 +65,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
-	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
 	if len(searchWords) == 0 {

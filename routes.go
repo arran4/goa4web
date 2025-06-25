@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers/common"
-	faq "github.com/arran4/goa4web/sections/faq"
+	faq "github.com/arran4/goa4web/handlers/faq"
 
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/pkg/handlers"

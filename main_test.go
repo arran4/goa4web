@@ -8,6 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/handlers/common"
+	forum "github.com/arran4/goa4web/handlers/forum"
 	"github.com/gorilla/mux"
 )
 
@@ -37,7 +38,7 @@ func TestGetThreadAndTopicTrue(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
-	if !GetThreadAndTopic()(req, &mux.RouteMatch{}) {
+	if !forum.GetThreadAndTopic()(req, &mux.RouteMatch{}) {
 		t.Errorf("expected match")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -71,7 +72,7 @@ func TestGetThreadAndTopicFalse(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
-	if GetThreadAndTopic()(req, &mux.RouteMatch{}) {
+	if forum.GetThreadAndTopic()(req, &mux.RouteMatch{}) {
 		t.Errorf("expected no match")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -97,7 +98,7 @@ func TestGetThreadAndTopicError(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
-	if GetThreadAndTopic()(req, &mux.RouteMatch{}) {
+	if forum.GetThreadAndTopic()(req, &mux.RouteMatch{}) {
 		t.Errorf("expected no match on error")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

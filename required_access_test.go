@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	auth "github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 )
@@ -15,7 +16,7 @@ func TestRequiredAccessAllowed(t *testing.T) {
 	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{SecurityLevel: "writer"})
 	req = req.WithContext(ctx)
 
-	if !RequiredAccess("writer")(req, &mux.RouteMatch{}) {
+	if !auth.RequiredAccess("writer")(req, &mux.RouteMatch{}) {
 		t.Errorf("expected access allowed")
 	}
 }
@@ -26,7 +27,7 @@ func TestRequiredAccessDenied(t *testing.T) {
 	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 
-	if RequiredAccess("writer")(req, &mux.RouteMatch{}) {
+	if auth.RequiredAccess("writer")(req, &mux.RouteMatch{}) {
 		t.Errorf("expected access denied")
 	}
 }

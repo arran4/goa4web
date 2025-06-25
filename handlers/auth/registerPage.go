@@ -1,26 +1,27 @@
-package goa4web
+package auth
 
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
-func registerPage(w http.ResponseWriter, r *http.Request) {
+// RegisterPage renders the user registration form.
+func RegisterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "registerPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
@@ -29,7 +30,9 @@ func registerPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func registerActionPage(w http.ResponseWriter, r *http.Request) {
+
+// RegisterActionPage handles user creation from the registration form.
+func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("registration attempt %s", r.PostFormValue("username"))
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)

@@ -1,4 +1,4 @@
-package goa4web
+package auth
 
 import (
 	"crypto/md5"

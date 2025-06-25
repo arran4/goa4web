@@ -173,11 +173,11 @@ func registerImagebbsRoutes(r *mux.Router) {
 func registerSearchRoutes(r *mux.Router) {
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", search.Page).Methods("GET")
-	sr.HandleFunc("", search.SearchResultForumActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchForum))
-	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchNews))
-	sr.HandleFunc("", search.SearchResultLinkerActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchLinker))
-	sr.HandleFunc("", search.SearchResultBlogsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchBlogs))
-	sr.HandleFunc("", search.SearchResultWritingsActionPage).Methods("POST").MatcherFunc(TaskMatcher(TaskSearchWritings))
+	sr.HandleFunc("", search.SearchResultForumActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchForum))
+	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchNews))
+	sr.HandleFunc("", search.SearchResultLinkerActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchLinker))
+	sr.HandleFunc("", search.SearchResultBlogsActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchBlogs))
+	sr.HandleFunc("", search.SearchResultWritingsActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskSearchWritings))
 }
 
 func registerWritingsRoutes(r *mux.Router) {

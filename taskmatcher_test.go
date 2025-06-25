@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 )
 
@@ -14,10 +15,10 @@ func TestTaskMatcher(t *testing.T) {
 	if err := req.ParseForm(); err != nil {
 		t.Fatalf("parse form: %v", err)
 	}
-	if !TaskMatcher(TaskCreate)(req, &mux.RouteMatch{}) {
+	if !common.TaskMatcher(TaskCreate)(req, &mux.RouteMatch{}) {
 		t.Errorf("expected task matcher to pass")
 	}
-	if TaskMatcher(TaskEdit)(req, &mux.RouteMatch{}) {
+	if common.TaskMatcher(TaskEdit)(req, &mux.RouteMatch{}) {
 		t.Errorf("unexpected match")
 	}
 }
@@ -28,7 +29,7 @@ func TestNoTask(t *testing.T) {
 	if err := req.ParseForm(); err != nil {
 		t.Fatalf("parse form: %v", err)
 	}
-	if !NoTask()(req, &mux.RouteMatch{}) {
+	if !common.NoTask()(req, &mux.RouteMatch{}) {
 		t.Errorf("expected match when no task")
 	}
 
@@ -37,7 +38,7 @@ func TestNoTask(t *testing.T) {
 	if err := req.ParseForm(); err != nil {
 		t.Fatalf("parse form: %v", err)
 	}
-	if NoTask()(req, &mux.RouteMatch{}) {
+	if common.NoTask()(req, &mux.RouteMatch{}) {
 		t.Errorf("unexpected match when task provided")
 	}
 }

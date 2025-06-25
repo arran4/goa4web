@@ -1,8 +1,8 @@
-package goa4web
+package imagebbs
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
+func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	type Entry struct {
 		Name  string
 		Path  string
@@ -22,7 +22,7 @@ func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		IsDir bool
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Path    string
 		Parent  string
 		Entries []Entry
@@ -51,7 +51,7 @@ func imagebbsAdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Path:     cleaned,
 	}
 	if cleaned != "/" {

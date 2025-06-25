@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -170,11 +170,11 @@ func linkerAdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
-		if InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+		if common.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 			return
 		}
 	}
@@ -213,11 +213,11 @@ func linkerAdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Reques
 			continue
 		}
 		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+			wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
 			if done {
 				return
 			}
-			if InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+			if common.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 				return
 			}
 		}

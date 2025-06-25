@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -64,7 +64,7 @@ func searchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsSearch(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
-	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
 	if len(searchWords) == 0 {

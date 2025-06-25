@@ -1,12 +1,12 @@
-package goa4web
+package imagebbs
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,27 +16,27 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
+func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*GetCommentsByThreadIdForUserRow
+		*db.GetCommentsByThreadIdForUserRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
 		Offset             int
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int32
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Replyable          bool
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
 		ForumThreadId      int
 		Comments           []*CommentPlus
 		BoardId            int
-		ImagePost          *GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
-		Thread             *GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		ImagePost          *db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
+		Thread             *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
 		Offset             int
 		IsReplyable        bool
 	}
@@ -50,16 +50,15 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
-		Replyable:          true,
-		BoardId:            bid,
-		ForumThreadId:      thid,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		CoreData:      r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		Replyable:     true,
+		BoardId:       bid,
+		ForumThreadId: thid,
 	}
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
+	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(thid),
 	})
@@ -73,7 +72,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(thid),
 	})
@@ -141,7 +140,7 @@ func imagebbsBoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -160,7 +159,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
 	if err != nil {
@@ -176,7 +175,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
+		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: ImagebbsTopicName,
@@ -208,7 +207,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.UpdateImagePostByIdForumThreadId(r.Context(), UpdateImagePostByIdForumThreadIdParams{
+		if err := queries.UpdateImagePostByIdForumThreadId(r.Context(), db.UpdateImagePostByIdForumThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idimagepost:              int32(bid),
 		}); err != nil {
@@ -224,21 +223,6 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
 
-	provider := getEmailProvider()
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: pthid,
-		Idusers:                  uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
 	//if rows, err := queries.SomethingNotifyImagebbss(r.Context(), SomethingNotifyImagebbssParams{
 	//	Idusers: uid,
 	//	Idimagebbss: int32(bid),
@@ -253,7 +237,7 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 	//	}
 	//}
 
-	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,
@@ -268,18 +252,18 @@ func imagebbsBoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+	if err := common.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	wordIds, done := SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := common.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if common.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

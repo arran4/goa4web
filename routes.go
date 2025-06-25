@@ -8,6 +8,7 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	bookmarks "github.com/arran4/goa4web/handlers/bookmarks"
 	"github.com/arran4/goa4web/handlers/common"
+	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
 	faq "github.com/arran4/goa4web/handlers/faq"
 
 	userhandlers "github.com/arran4/goa4web/handlers/user"
@@ -138,29 +139,29 @@ func registerBookmarksRoutes(r *mux.Router) {
 func registerImagebbsRoutes(r *mux.Router) {
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(runtimeconfig.AppRuntimeConfig.ImageUploadDir))))
-	ibr.HandleFunc(".rss", imagebbsRssPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", imagebbsBoardRssPage).Methods("GET")
-	ibr.HandleFunc(".atom", imagebbsAtomPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", imagebbsBoardAtomPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", imagebbsBoardPostImageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskUploadImage))
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbsBoardThreadReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
-	ibr.HandleFunc("", imagebbsPage).Methods("GET")
-	ibr.HandleFunc("/", imagebbsPage).Methods("GET")
-	ibr.HandleFunc("/poster/{username}", imagebbsPosterPage).Methods("GET")
-	ibr.HandleFunc("/poster/{username}/", imagebbsPosterPage).Methods("GET")
+	ibr.HandleFunc(".rss", imagebbs.RssPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", imagebbs.BoardRssPage).Methods("GET")
+	ibr.HandleFunc(".atom", imagebbs.AtomPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", imagebbs.BoardAtomPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}", imagebbs.BoardPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}", imagebbs.BoardPostImageActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskUploadImage))
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbs.BoardThreadPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", imagebbs.BoardThreadReplyActionPage).Methods("POST").MatcherFunc(RequiresAnAccount()).MatcherFunc(TaskMatcher(TaskReply))
+	ibr.HandleFunc("", imagebbs.Page).Methods("GET")
+	ibr.HandleFunc("/", imagebbs.Page).Methods("GET")
+	ibr.HandleFunc("/poster/{username}", imagebbs.PosterPage).Methods("GET")
+	ibr.HandleFunc("/poster/{username}/", imagebbs.PosterPage).Methods("GET")
 
 	// Admin endpoints for image boards
-	ibr.HandleFunc("/admin", imagebbsAdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/boards", imagebbsAdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin", imagebbs.AdminPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/boards", imagebbs.AdminBoardsPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 	ibr.HandleFunc("/admin/boards", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board", imagebbsAdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskNewBoard))
+	ibr.HandleFunc("/admin/board", imagebbs.AdminNewBoardPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board", imagebbs.AdminNewBoardMakePage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskNewBoard))
 	ibr.HandleFunc("/admin/board", common.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(RequiredAccess("administrator"))
-	ibr.HandleFunc("/admin/board/{board}", imagebbsAdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
-	ibr.HandleFunc("/admin/approve/{post}", imagebbsAdminApprovePostPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskApprove))
-	ibr.HandleFunc("/admin/files", imagebbsAdminFilesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
+	ibr.HandleFunc("/admin/board/{board}", imagebbs.AdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskModifyBoard))
+	ibr.HandleFunc("/admin/approve/{post}", imagebbs.AdminApprovePostPage).Methods("POST").MatcherFunc(RequiredAccess("administrator")).MatcherFunc(TaskMatcher(TaskApprove))
+	ibr.HandleFunc("/admin/files", imagebbs.AdminFilesPage).Methods("GET").MatcherFunc(RequiredAccess("administrator"))
 }
 
 func registerSearchRoutes(r *mux.Router) {

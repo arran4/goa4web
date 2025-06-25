@@ -1,21 +1,21 @@
-package goa4web
+package imagebbs
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func imagebbsAdminPage(w http.ResponseWriter, r *http.Request) {
+func AdminPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	CustomImageBBSIndex(data.CoreData, r)

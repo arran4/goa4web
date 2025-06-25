@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
@@ -46,7 +46,7 @@ func searchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
 	if len(searchWords) == 0 {
@@ -111,7 +111,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 }
 
 func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *Queries, forumTopicId []int32, uid int32) ([]*GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := common.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
 	if len(searchWords) == 0 {

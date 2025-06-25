@@ -2,8 +2,11 @@ package goa4web
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -13,6 +16,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // helper to setup session cookie
@@ -119,5 +123,211 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	}
 	if len(gotLangs) != 1 || gotLangs[0].LanguageIdlanguage != 2 {
 		t.Errorf("languages missing")
+	}
+}
+
+func TestUserEmailTestAction_NoProvider(t *testing.T) {
+	os.Unsetenv("EMAIL_PROVIDER")
+	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
+	req := httptest.NewRequest("POST", "/email", nil)
+	ctx := context.WithValue(req.Context(), ContextValues("user"), &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	userEmailTestActionPage(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	want := url.QueryEscape(errMailNotConfigured)
+	if loc := rr.Header().Get("Location"); !strings.Contains(loc, want) {
+		t.Fatalf("location=%q", loc)
+	}
+}
+
+func TestUserEmailTestAction_WithProvider(t *testing.T) {
+	os.Setenv("EMAIL_PROVIDER", "log")
+	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
+	defer os.Unsetenv("EMAIL_PROVIDER")
+
+	req := httptest.NewRequest("POST", "/email", nil)
+	ctx := context.WithValue(req.Context(), ContextValues("user"), &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	userEmailTestActionPage(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if loc := rr.Header().Get("Location"); loc != "/usr/email" {
+		t.Fatalf("location=%q", loc)
+	}
+}
+
+func TestUserEmailPage_ShowError(t *testing.T) {
+	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
+	ctx := context.WithValue(req.Context(), ContextValues("user"), &User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	userEmailPage(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "missing") {
+		t.Fatalf("body=%q", rr.Body.String())
+	}
+}
+
+func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := New(db)
+	store = sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
+	core.Store = store
+	core.SessionName = sessionName
+
+	form := url.Values{}
+	form.Set("dothis", "Save all")
+	form.Set("language1", "on")
+	form.Set("defaultLanguage", "2")
+
+	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	sess, _ := store.Get(req, sessionName)
+	sess.Values["UID"] = int32(1)
+	w := httptest.NewRecorder()
+	sess.Save(req, w)
+	for _, c := range w.Result().Cookies() {
+		req.AddCookie(c)
+	}
+	rr := httptest.NewRecorder()
+
+	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
+	ctx = context.WithValue(ctx, ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	req = req.WithContext(ctx)
+	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
+	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
+	runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
+	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	userLangSaveAllActionPage(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Result().StatusCode != http.StatusOK {
+		t.Fatalf("status=%d", rr.Result().StatusCode)
+	}
+}
+
+func TestUserLangSaveLanguagesActionPage(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := New(db)
+	store = sessions.NewCookieStore([]byte("test"))
+
+	form := url.Values{}
+	form.Set("dothis", "Save languages")
+	form.Set("language1", "on")
+
+	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	sess, _ := store.Get(req, sessionName)
+	sess.Values["UID"] = int32(1)
+	w := httptest.NewRecorder()
+	sess.Save(req, w)
+	for _, c := range w.Result().Cookies() {
+		req.AddCookie(c)
+	}
+	rr := httptest.NewRecorder()
+
+	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
+	ctx = context.WithValue(ctx, ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	req = req.WithContext(ctx)
+
+	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
+	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	userLangSaveLanguagesActionPage(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Result().StatusCode != http.StatusOK {
+		t.Fatalf("status=%d", rr.Result().StatusCode)
+	}
+}
+
+func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := New(db)
+	runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
+	store = sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
+
+	form := url.Values{}
+	form.Set("dothis", "Save language")
+	form.Set("defaultLanguage", "2")
+
+	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	sess, _ := store.Get(req, sessionName)
+	sess.Values["UID"] = int32(1)
+	w := httptest.NewRecorder()
+	sess.Save(req, w)
+	for _, c := range w.Result().Cookies() {
+		req.AddCookie(c)
+	}
+	rr := httptest.NewRecorder()
+
+	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
+	ctx = context.WithValue(ctx, ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, ContextValues("coreData"), &CoreData{})
+	req = req.WithContext(ctx)
+
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).
+		AddRow(1, 1, 1, nil, runtimeconfig.AppRuntimeConfig.PageSizeDefault)
+	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
+	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	userLangSaveLanguagePreferenceActionPage(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Result().StatusCode != http.StatusOK {
+		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
 }

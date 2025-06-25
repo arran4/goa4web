@@ -10,6 +10,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	news "github.com/arran4/goa4web/handlers/news"
 	email "github.com/arran4/goa4web/internal/email"
+	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"log"
 	"net/http"
 	"os"
@@ -83,7 +84,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 
 	handler = newMiddlewareChain(
 		DBAdderMiddleware,
-		UserAdderMiddleware,
+		userhandlers.UserAdderMiddleware,
 		CoreAdderMiddleware,
 		RequestLoggerMiddleware,
 		SecurityHeadersMiddleware,

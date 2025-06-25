@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	corecommon "github.com/arran4/goa4web/core/common"
+	blogs "github.com/arran4/goa4web/handlers/blogs"
 	news "github.com/arran4/goa4web/handlers/news"
 )
 
@@ -40,7 +41,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
 	cd := &CoreData{SecurityLevel: "administrator"}
-	CustomBlogIndex(cd, req)
+	blogs.CustomBlogIndex(cd, req)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("admin should see user permissions")
 	}
@@ -49,7 +50,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	}
 
 	cd = &CoreData{SecurityLevel: "writer"}
-	CustomBlogIndex(cd, req)
+	blogs.CustomBlogIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("writer should not see user permissions")
 	}
@@ -58,7 +59,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	}
 
 	cd = &CoreData{SecurityLevel: "reader"}
-	CustomBlogIndex(cd, req)
+	blogs.CustomBlogIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") || corecommon.ContainsItem(cd.CustomIndexItems, "Write blog") {
 		t.Errorf("reader should not see writer/admin items")
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
+	blogs "github.com/arran4/goa4web/handlers/blogs"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
@@ -35,7 +36,7 @@ func forumThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	CustomBlogIndex(data.CoreData, r)
+	blogs.CustomBlogIndex(data.CoreData, r)
 
 	if err := templates.RenderTemplate(w, "threadNewPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

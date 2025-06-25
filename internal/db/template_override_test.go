@@ -1,4 +1,4 @@
-package goa4web
+package db
 
 import (
 	"context"

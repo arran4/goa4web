@@ -38,6 +38,8 @@ func TestIsAlphanumericOrPunctuationExtra(t *testing.T) {
 		{'?', false},
 		{'-', true},
 		{'é', true},
+		{'.', false},
+		{'世', true},
 	}
 	for _, tt := range tests {
 		if got := isAlphanumericOrPunctuation(tt.r); got != tt.want {
@@ -69,6 +71,9 @@ func TestBreakupTextToWordsEdge(t *testing.T) {
 		{"end.", []string{"end"}},
 		{"it's foo", []string{"it's", "foo"}},
 		{"---abc", []string{"---abc"}},
+		{"Hello...world!!", []string{"Hello", "world"}},
+		{"foo   bar", []string{"foo", "bar"}},
+		{"こんにちは 世界", []string{"こんにちは", "世界"}},
 	}
 	for _, c := range cases {
 		got := BreakupTextToWords(c.in)

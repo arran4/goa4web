@@ -42,8 +42,8 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	letters := make([]string, len(Alphabet))
-	for i, c := range Alphabet {
+	letters := make([]string, len(common.Alphabet))
+	for i, c := range common.Alphabet {
 		letters[i] = strings.ToUpper(string(c))
 	}
 	data.Letters = letters

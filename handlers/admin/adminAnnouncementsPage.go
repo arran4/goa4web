@@ -16,6 +16,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Announcements []*ListAnnouncementsWithNewsRow
+		NewsID        string
 	}
 	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
@@ -26,6 +27,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Announcements = rows
+	data.NewsID = r.FormValue("news_id")
 	if err := templates.RenderTemplate(w, "announcementsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

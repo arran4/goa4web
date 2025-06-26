@@ -2,7 +2,7 @@
 [<a href="/admin">Admin:</a> <a href="/admin/announcements">(This page/Refresh)</a>]<br />
 <form method="post">
     {{ csrfField }}
-    News ID: <input type="text" name="news_id">
+    News ID: <input type="text" name="news_id" value="{{ .NewsID }}">
     <input type="submit" name="task" value="Add">
 </form>
 <form method="post">

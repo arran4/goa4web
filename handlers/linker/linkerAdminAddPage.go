@@ -6,6 +6,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,12 +18,12 @@ import (
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
-		Categories         []*Linkercategory
+		Categories         []*db.Linkercategory
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
@@ -57,7 +58,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func AdminAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -71,7 +72,7 @@ func AdminAddActionPage(w http.ResponseWriter, r *http.Request) {
 	description := r.PostFormValue("description")
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
-	if err := queries.CreateLinkerItem(r.Context(), CreateLinkerItemParams{
+	if err := queries.CreateLinkerItem(r.Context(), db.CreateLinkerItemParams{
 		UsersIdusers:                   uid,
 		LinkercategoryIdlinkercategory: int32(category),
 		Title:                          sql.NullString{Valid: true, String: title},

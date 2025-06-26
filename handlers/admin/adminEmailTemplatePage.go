@@ -5,6 +5,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -58,7 +59,7 @@ func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := r.PostFormValue("body")
-	q := r.Context().Value(common.KeyQueries).(*Queries)
+	q := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := q.SetTemplateOverride(r.Context(), "updateEmail", body); err != nil {
 		log.Printf("db save template: %v", err)
 	}
@@ -73,7 +74,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	user, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {

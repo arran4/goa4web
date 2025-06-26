@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
@@ -18,17 +19,17 @@ import (
 
 func CommentPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*GetBlogEntryForUserByIdRow
+		*db.GetBlogEntryForUserByIdRow
 		EditUrl string
 	}
 	type BlogComment struct {
-		*GetCommentsByThreadIdForUserRow
+		*db.GetCommentsByThreadIdForUserRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
 		Offset             int
 		Idblogs            int32
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int32
 		EditSaveUrl        string
 	}
@@ -40,7 +41,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable        bool
 		Text               string
 		EditUrl            string
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
 	}
 
@@ -48,7 +49,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
@@ -93,7 +94,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	if blog.ForumthreadIdforumthread > 0 { // TODO make nullable.
 
 		if commentIdString != "" {
-			comment, err := queries.GetCommentByIdForUser(r.Context(), GetCommentByIdForUserParams{
+			comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
 				UsersIdusers: uid,
 				Idcomments:   int32(commentId),
 			})
@@ -110,7 +111,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		rows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
+		rows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 			UsersIdusers:             uid,
 			ForumthreadIdforumthread: blog.ForumthreadIdforumthread,
 		})

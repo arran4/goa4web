@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,7 +16,7 @@ import (
 
 func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type PermissionUser struct {
-		*Permission
+		*db.Permission
 		Username sql.NullString
 		Email    sql.NullString
 	}
@@ -31,7 +32,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 		Search:   r.URL.Query().Get("search"),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.GetUsersPermissions(r.Context())
 	if err != nil {
 		switch {
@@ -74,7 +75,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
 	where := r.PostFormValue("where")
 	level := r.PostFormValue("level")
@@ -90,7 +91,7 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("GetUserByUsername Error: %s", err)
 			continue
 		}
-		if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+		if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 			UsersIdusers: u.Idusers,
 			Section:      sql.NullString{String: where, Valid: true},
 			Level:        sql.NullString{String: level, Valid: true},
@@ -102,7 +103,7 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	r.ParseForm()
 	ids := r.Form["permids"]
 	if len(ids) == 0 {

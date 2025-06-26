@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,8 +23,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CatId       int
 		CommentOnId int
 		ReplyToId   int
-		Links       []*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
-		Categories  []*Linkercategory
+		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
+		Categories  []*db.Linkercategory
 	}
 
 	data := Data{
@@ -35,9 +36,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
 	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
+	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

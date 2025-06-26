@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -30,7 +31,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := struct {
 		*CoreData
 		Errors   []string
@@ -60,7 +61,7 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := struct {
 		*CoreData
 		Errors   []string
@@ -88,13 +89,13 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func countForumThreads(ctx context.Context, q *Queries) (int64, error) {
+func countForumThreads(ctx context.Context, q *db.Queries) (int64, error) {
 	var c int64
 	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
 	return c, err
 }
 
-func countForumTopics(ctx context.Context, q *Queries) (int64, error) {
+func countForumTopics(ctx context.Context, q *db.Queries) (int64, error) {
 	var c int64
 	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
 	return c, err

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,14 +16,14 @@ import (
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Notifications []*Notification
+		Notifications []*db.Notification
 		Total         int
 		Unread        int
 	}
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	items, err := queries.RecentNotifications(r.Context(), 50)
 	if err != nil {
 		log.Printf("recent notifications: %v", err)
@@ -46,7 +47,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -60,7 +61,7 @@ func AdminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request
 }
 
 func AdminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
@@ -68,7 +69,7 @@ func AdminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")
 	role := r.PostFormValue("role")
@@ -104,7 +105,7 @@ func AdminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	for _, id := range ids {
-		err := queries.InsertNotification(r.Context(), InsertNotificationParams{
+		err := queries.InsertNotification(r.Context(), db.InsertNotificationParams{
 			UsersIdusers: id,
 			Link:         sql.NullString{String: link, Valid: link != ""},
 			Message:      sql.NullString{String: message, Valid: message != ""},

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -23,7 +24,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 
 	type Data struct {
 		*CoreData
-		Rows   []*GetPermissionsByUserIdAndSectionBlogsRow
+		Rows   []*db.GetPermissionsByUserIdAndSectionBlogsRow
 		Filter string
 	}
 
@@ -32,7 +33,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 		Filter:   r.URL.Query().Get("level"),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetPermissionsByUserIdAndSectionBlogs(r.Context())
 	if err != nil {
@@ -66,7 +67,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 }
 
 func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := "blogs"
 	level := r.PostFormValue("level")
@@ -81,7 +82,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
-	} else if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+	} else if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
 		Section: sql.NullString{
 			String: where,
@@ -106,7 +107,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 }
 
 func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*CoreData
@@ -132,7 +133,7 @@ func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	names := strings.FieldsFunc(r.PostFormValue("usernames"), func(r rune) bool { return r == ',' || r == '\n' || r == ' ' || r == '\t' })
 	level := r.PostFormValue("level")
 	data := struct {
@@ -154,7 +155,7 @@ func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername %s: %w", n, err).Error())
 			continue
 		}
-		if err := queries.PermissionUserAllow(r.Context(), PermissionUserAllowParams{
+		if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 			UsersIdusers: u.Idusers,
 			Section:      sql.NullString{String: "blogs", Valid: true},
 			Level:        sql.NullString{String: level, Valid: true},
@@ -172,7 +173,7 @@ func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func UsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permids := r.PostForm["permid"]
 	data := struct {
 		*CoreData

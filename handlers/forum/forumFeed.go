@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"log"
@@ -15,7 +16,7 @@ import (
 	"time"
 )
 
-func TopicFeed(r *http.Request, title string, topicID int, rows []*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
+func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -62,9 +63,9 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	topic, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
+	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
 		UsersIdusers: uid,
 		Idforumtopic: int32(topicID),
 	})
@@ -76,7 +77,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
+	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
 		UsersIdusers:           uid,
 		ForumtopicIdforumtopic: int32(topicID),
 	})
@@ -102,9 +103,9 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	topic, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
+	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
 		UsersIdusers: uid,
 		Idforumtopic: int32(topicID),
 	})
@@ -116,7 +117,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
+	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
 		UsersIdusers:           uid,
 		ForumtopicIdforumtopic: int32(topicID),
 	})

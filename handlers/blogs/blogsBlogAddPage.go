@@ -3,6 +3,7 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
@@ -22,12 +23,12 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
 		Mode               string
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
@@ -57,14 +58,14 @@ func BlogAddActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	id, err := queries.CreateBlogEntry(r.Context(), CreateBlogEntryParams{
+	id, err := queries.CreateBlogEntry(r.Context(), db.CreateBlogEntryParams{
 		UsersIdusers:       uid,
 		LanguageIdlanguage: int32(languageId),
 		Blog: sql.NullString{

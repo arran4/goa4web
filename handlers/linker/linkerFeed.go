@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-func linkerFeed(r *http.Request, rows []*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow) *feeds.Feed {
+func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       "Latest links",
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -55,9 +56,9 @@ func linkerFeed(r *http.Request, rows []*GetAllLinkerItemsByCategoryIdWitherPost
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
+	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -70,9 +71,9 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
+	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

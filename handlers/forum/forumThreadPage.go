@@ -8,6 +8,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,12 +19,12 @@ import (
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
-		*GetCommentsByThreadIdForUserRow
+		*db.GetCommentsByThreadIdForUserRow
 		ShowReply          bool
 		EditUrl            string
 		Editing            bool
 		Offset             int
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int32
 		EditSaveUrl        string
 	}
@@ -31,19 +32,19 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
-		Thread              *GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread              *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
 		Comments            []*CommentPlus
 		Offset              int
 		IsReplyable         bool
 		Text                string
-		Languages           []*Language
+		Languages           []*db.Language
 		SelectedLanguageId  int
 		CategoryBreadcrumbs []*ForumcategoryPlus
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
@@ -58,8 +59,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	threadRow := r.Context().Value(common.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(common.KeyTopic).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -67,7 +68,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), GetCommentsByThreadIdForUserParams{
+	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: threadRow.Idforumthread,
 	})
@@ -155,7 +156,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	replyType := r.URL.Query().Get("type")
 	if commentIdString != "" {
-		comment, err := queries.GetCommentByIdForUser(r.Context(), GetCommentByIdForUserParams{
+		comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
 			UsersIdusers: uid,
 			Idcomments:   int32(commentId),
 		})

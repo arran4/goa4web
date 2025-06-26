@@ -7,6 +7,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
@@ -20,14 +21,14 @@ import (
 func ShowPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Link               *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
 		CanReply           bool
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
 	}
 
 	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -79,7 +80,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
 	if err != nil {
@@ -95,7 +96,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
+		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: LinkerTopicName,
@@ -127,7 +128,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignLinkerThisThreadId(r.Context(), AssignLinkerThisThreadIdParams{
+		if err := queries.AssignLinkerThisThreadId(r.Context(), db.AssignLinkerThisThreadIdParams{
 			ForumthreadIdforumthread: pthid,
 			Idlinker:                 int32(linkId),
 		}); err != nil {
@@ -145,7 +146,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	provider := getEmailProvider()
 
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
+	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
@@ -158,7 +159,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if rows, err := queries.ListUsersSubscribedToLinker(r.Context(), ListUsersSubscribedToLinkerParams{
+	if rows, err := queries.ListUsersSubscribedToLinker(r.Context(), db.ListUsersSubscribedToLinkerParams{
 		Idusers:  uid,
 		Idlinker: int32(linkId),
 	}); err != nil {
@@ -172,7 +173,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,

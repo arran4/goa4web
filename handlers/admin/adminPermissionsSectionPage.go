@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -18,13 +19,13 @@ import (
 func AdminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Sections []*CountPermissionSectionsRow
+		Sections []*db.CountPermissionSectionsRow
 	}
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.CountPermissionSections(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("CountPermissionSections error: %s", err)
@@ -43,7 +44,7 @@ func AdminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 // AdminPermissionsSectionRenamePage converts one permission section value to
 // another. This can be used to normalise "writing" vs "writings" values.
 func AdminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	from := r.PostFormValue("from")
 	to := r.PostFormValue("to")
 	data := struct {
@@ -58,7 +59,7 @@ func AdminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
 
 	if from == "" || to == "" {
 		data.Errors = append(data.Errors, "from and to values required")
-	} else if err := queries.RenamePermissionSection(r.Context(), RenamePermissionSectionParams{
+	} else if err := queries.RenamePermissionSection(r.Context(), db.RenamePermissionSectionParams{
 		Section:   sql.NullString{String: to, Valid: true},
 		Section_2: sql.NullString{String: from, Valid: true},
 	}); err != nil {

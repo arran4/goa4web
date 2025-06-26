@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"github.com/gorilla/mux"
 	"log"
@@ -32,7 +33,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(bid))
 	if err != nil {
@@ -48,7 +49,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
+		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: hcommon.BloggerTopicName,
@@ -80,7 +81,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignThreadIdToBlogEntry(r.Context(), AssignThreadIdToBlogEntryParams{
+		if err := queries.AssignThreadIdToBlogEntry(r.Context(), db.AssignThreadIdToBlogEntryParams{
 			ForumthreadIdforumthread: pthid,
 			Idblogs:                  int32(bid),
 		}); err != nil {
@@ -98,7 +99,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	provider := getEmailProvider()
 
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
+	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
 		Idusers:                  uid,
 	}); err != nil {
@@ -111,7 +112,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if rows, err := queries.ListUsersSubscribedToBlogs(r.Context(), ListUsersSubscribedToBlogsParams{
+	if rows, err := queries.ListUsersSubscribedToBlogs(r.Context(), db.ListUsersSubscribedToBlogsParams{
 		Idusers: uid,
 		Idblogs: int32(bid),
 	}); err != nil {
@@ -125,7 +126,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: pthid,

@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,10 +18,10 @@ func AdminTopicRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*CoreData
-		Restrictions []*GetForumTopicRestrictionsByForumTopicIdRow
+		Restrictions []*db.GetForumTopicRestrictionsByForumTopicIdRow
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	data := &Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
@@ -93,10 +94,10 @@ func AdminTopicRestrictionLevelChangePage(w http.ResponseWriter, r *http.Request
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	// TODO fix query / schema to overwrite existing value
-	if err := queries.UpsertForumTopicRestrictions(r.Context(), UpsertForumTopicRestrictionsParams{
+	if err := queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
 		ForumtopicIdforumtopic: int32(topicId),
 		Viewlevel:              sql.NullInt32{Valid: true, Int32: int32(view)},
 		Replylevel:             sql.NullInt32{Valid: true, Int32: int32(reply)},
@@ -120,7 +121,7 @@ func AdminTopicRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.DeleteTopicRestrictionsByForumTopicId(r.Context(), int32(topicId)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -144,7 +145,7 @@ func AdminTopicRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	src, err := queries.GetForumTopicRestrictionsByForumTopicId(r.Context(), int32(fromID))
 	if err != nil {
@@ -159,7 +160,7 @@ func AdminTopicRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request) 
 		}
 	} else {
 		row := src[0]
-		if err := queries.UpsertForumTopicRestrictions(r.Context(), UpsertForumTopicRestrictionsParams{
+		if err := queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
 			ForumtopicIdforumtopic: int32(toID),
 			Viewlevel:              row.Viewlevel,
 			Replylevel:             row.Replylevel,

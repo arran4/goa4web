@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -14,14 +15,14 @@ import (
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories []*Linkercategory
+		Categories []*db.Linkercategory
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	categories, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {

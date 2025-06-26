@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
@@ -17,10 +18,10 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadRow := r.Context().Value(hcommon.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(hcommon.KeyTopic).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
@@ -30,7 +31,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	provider := getEmailProvider()
 
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
+	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: threadRow.Idforumthread,
 		Idusers:                  uid,
 	}); err != nil {
@@ -43,7 +44,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
+	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		Idusers:                  uid,
 		ForumthreadIdforumthread: threadRow.Idforumthread,
 	}); err != nil {
@@ -57,7 +58,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: threadRow.Idforumthread,
@@ -93,8 +94,8 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(hcommon.KeyThread).(*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
-	topicRow := r.Context().Value(hcommon.KeyTopic).(*GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

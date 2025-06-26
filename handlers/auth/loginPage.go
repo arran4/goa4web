@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -42,7 +43,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	//
 	//hashedPassword := hex.EncodeToString(sum[:])
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	var (
 		uid    int32
@@ -58,7 +59,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			log.Printf("No rows Error: %s", err)
-			_ = queries.InsertLoginAttempt(r.Context(), InsertLoginAttemptParams{
+			_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 				Username:  username,
 				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
 			})
@@ -72,7 +73,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !verifyPassword(password, hashed.String, alg.String) {
-		_ = queries.InsertLoginAttempt(r.Context(), InsertLoginAttemptParams{
+		_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 			Username:  username,
 			IpAddress: strings.Split(r.RemoteAddr, ":")[0],
 		})
@@ -90,7 +91,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	user := &User{Idusers: uid, Email: email}
+	user := &db.User{Idusers: uid, Email: email}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

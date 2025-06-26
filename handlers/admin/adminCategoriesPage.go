@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -15,16 +16,16 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Section           string
-		ForumCategories   []*GetAllForumCategoriesWithSubcategoryCountRow
-		WritingCategories []*Writingcategory
-		LinkerCategories  []*GetLinkerCategoryLinkCountsRow
+		ForumCategories   []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		WritingCategories []*db.Writingcategory
+		LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Section:  r.URL.Query().Get("section"),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if data.Section == "" || data.Section == "forum" {
 		rows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -18,14 +19,14 @@ import (
 func AdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	type UserTopic struct {
-		User   *User
-		Topics []*GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
+		User   *db.User
+		Topics []*db.GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
 	}
 
 	type Data struct {
 		*CoreData
 		Rows       []*UserTopic
-		Categories map[int32]*Forumcategory
+		Categories map[int32]*db.Forumcategory
 		Search     string
 		NextLink   string
 		PrevLink   string
@@ -38,7 +39,7 @@ func AdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	users, err := queries.AllUsers(r.Context())
 	if err != nil {
@@ -55,14 +56,14 @@ func AdminUserPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	data.Categories = make(map[int32]*Forumcategory)
+	data.Categories = make(map[int32]*db.Forumcategory)
 	for _, c := range catRows {
 		data.Categories[c.Idforumcategory] = c
 	}
 
 	if data.Search != "" {
 		q := strings.ToLower(data.Search)
-		var filtered []*User
+		var filtered []*db.User
 		for _, u := range users {
 			if strings.Contains(strings.ToLower(u.Username.String), q) ||
 				strings.Contains(strings.ToLower(u.Email.String), q) {

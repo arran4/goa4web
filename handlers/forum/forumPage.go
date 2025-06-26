@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,7 +28,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		Back                    bool
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -85,7 +86,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	} else {
-		rows, err := queries.GetAllForumTopicsByCategoryIdForUserWithLastPosterName(r.Context(), GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams{
+		rows, err := queries.GetAllForumTopicsByCategoryIdForUserWithLastPosterName(r.Context(), db.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams{
 			UsersIdusers:                 uid,
 			ForumcategoryIdforumcategory: int32(categoryId),
 		})

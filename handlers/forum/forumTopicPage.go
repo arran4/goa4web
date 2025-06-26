@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,13 +22,13 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		Admin                   bool
 		Back                    bool
 		Topic                   *ForumtopicPlus
-		Threads                 []*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
+		Threads                 []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
 		Categories              []*ForumcategoryPlus
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -60,7 +61,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), GetForumTopicByIdForUserParams{
+	topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
 		UsersIdusers: uid,
 		Idforumtopic: int32(topicId),
 	})
@@ -95,7 +96,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
+	threadRows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
 		UsersIdusers:           uid,
 		ForumtopicIdforumtopic: int32(topicId),
 	})

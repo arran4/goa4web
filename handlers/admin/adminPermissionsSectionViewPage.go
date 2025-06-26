@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -15,11 +16,11 @@ func AdminPermissionsSectionViewPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Section string
-		Rows    []*PermissionWithUser
+		Rows    []*db.PermissionWithUser
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	section := r.URL.Query().Get("section")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.GetPermissionsBySectionWithUsers(r.Context(), section)
 	if err != nil && err != sql.ErrNoRows {
 		log.Printf("GetPermissionsBySectionWithUsers error: %v", err)

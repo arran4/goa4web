@@ -18,7 +18,7 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	//queries := r.Context().Name(common.KeyQueries).(*Queries)
+	//queries := r.Context().Name(common.KeyQueries).(*db.Queries)
 	//
 	//rows, err := queries.GetCountOfBlogPostsByUser(r.Context())
 	//if err != nil {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,14 +16,14 @@ import (
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories []*GetLinkerCategoryLinkCountsRow
+		Categories []*db.GetLinkerCategoryLinkCountsRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	categoryRows, err := queries.GetLinkerCategoryLinkCounts(r.Context())
 	if err != nil {
@@ -47,11 +48,11 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
-	if err := queries.RenameLinkerCategory(r.Context(), RenameLinkerCategoryParams{
+	if err := queries.RenameLinkerCategory(r.Context(), db.RenameLinkerCategoryParams{
 		Title:            sql.NullString{Valid: true, String: title},
 		Position:         int32(pos),
 		Idlinkercategory: int32(cid),
@@ -61,7 +62,7 @@ func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	order, _ := strconv.Atoi(r.PostFormValue("order"))
-	if err := queries.UpdateLinkerCategorySortOrder(r.Context(), UpdateLinkerCategorySortOrderParams{
+	if err := queries.UpdateLinkerCategorySortOrder(r.Context(), db.UpdateLinkerCategorySortOrderParams{
 		Sortorder:        int32(order),
 		Idlinkercategory: int32(cid),
 	}); err != nil {
@@ -73,11 +74,11 @@ func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
-	if err := queries.RenameLinkerCategory(r.Context(), RenameLinkerCategoryParams{
+	if err := queries.RenameLinkerCategory(r.Context(), db.RenameLinkerCategoryParams{
 		Title:            sql.NullString{Valid: true, String: title},
 		Position:         int32(pos),
 		Idlinkercategory: int32(cid),
@@ -90,7 +91,7 @@ func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
 	for _, c := range rows {
@@ -118,11 +119,11 @@ func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	title := r.PostFormValue("title")
 	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
 	pos := len(rows) + 1
-	if err := queries.CreateLinkerCategory(r.Context(), CreateLinkerCategoryParams{
+	if err := queries.CreateLinkerCategory(r.Context(), db.CreateLinkerCategoryParams{
 		Title:    sql.NullString{Valid: true, String: title},
 		Position: int32(pos),
 	}); err != nil {

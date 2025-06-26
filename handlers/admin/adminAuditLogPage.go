@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -25,7 +26,7 @@ func copyValues(v url.Values) url.Values {
 func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Rows     []*ListAuditLogsRow
+		Rows     []*db.ListAuditLogsRow
 		User     string
 		Action   string
 		NextLink string
@@ -41,7 +42,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	usernameFilter := "%"
 	if strings.TrimSpace(data.User) != "" {
@@ -52,7 +53,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		actionFilter = "%" + data.Action + "%"
 	}
 
-	rows, err := queries.ListAuditLogs(r.Context(), ListAuditLogsParams{
+	rows, err := queries.ListAuditLogs(r.Context(), db.ListAuditLogsParams{
 		Username: sql.NullString{String: usernameFilter, Valid: true},
 		Action:   actionFilter,
 		Limit:    int32(data.PageSize + 1),

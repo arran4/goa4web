@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/smtp"
 	"os"
@@ -110,7 +111,7 @@ func emailSendingEnabled() bool {
 }
 
 func getUpdateEmailText(ctx context.Context) string {
-	if q, ok := ctx.Value(common.KeyQueries).(*Queries); ok && q != nil {
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
 		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
 			return body
 		}
@@ -120,7 +121,7 @@ func getUpdateEmailText(ctx context.Context) string {
 
 var defaultUpdateEmailText = templates.UpdateEmailText
 
-func getAdminEmails(ctx context.Context, q *Queries) []string {
+func getAdminEmails(ctx context.Context, q *db.Queries) []string {
 	return emailutil.GetAdminEmails(ctx, q)
 }
 
@@ -128,6 +129,6 @@ func adminNotificationsEnabled() bool {
 	return emailutil.AdminNotificationsEnabled()
 }
 
-func notifyAdmins(ctx context.Context, provider email.Provider, q *Queries, page string) {
+func notifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
 	notif.Notifier{EmailProvider: provider, Queries: q}.NotifyAdmins(ctx, page)
 }

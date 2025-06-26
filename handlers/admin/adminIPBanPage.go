@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strings"
@@ -16,10 +17,10 @@ import (
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Bans []*BannedIp
+		Bans []*db.BannedIp
 	}
 	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)
@@ -35,7 +36,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = normalizeIPNet(ipNet)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
@@ -47,7 +48,7 @@ func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if ipNet != "" {
-		_ = queries.InsertBannedIp(r.Context(), InsertBannedIpParams{
+		_ = queries.InsertBannedIp(r.Context(), db.InsertBannedIpParams{
 			IpNet:     ipNet,
 			Reason:    sql.NullString{String: reason, Valid: reason != ""},
 			ExpiresAt: expires,
@@ -57,7 +58,7 @@ func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

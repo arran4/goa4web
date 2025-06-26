@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/smtp"
 	"os"
@@ -48,8 +49,8 @@ func notifyChange(ctx context.Context, provider email.Provider, emailAddr string
 	if err = tmpl.Execute(&notification, content); err != nil {
 		return fmt.Errorf("execute email template: %w", err)
 	}
-	if q, ok := ctx.Value(common.KeyQueries).(*Queries); ok {
-		if err := q.InsertPendingEmail(ctx, InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: notification.String()}); err != nil {
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok {
+		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: notification.String()}); err != nil {
 			return err
 		}
 	} else if provider != nil {
@@ -148,7 +149,7 @@ func emailSendingEnabled() bool {
 }
 
 func getUpdateEmailText(ctx context.Context) string {
-	if q, ok := ctx.Value(common.KeyQueries).(*Queries); ok && q != nil {
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
 		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
 			return body
 		}

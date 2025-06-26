@@ -2,6 +2,7 @@ package forum
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/internal/db"
 	"golang.org/x/exp/slices"
 )
 
@@ -21,7 +22,7 @@ type ForumtopicPlus struct {
 }
 
 type ForumcategoryPlus struct {
-	*Forumcategory
+	*db.Forumcategory
 	Categories []*ForumcategoryPlus
 	Topics     []*ForumtopicPlus
 	Edit       bool
@@ -35,7 +36,7 @@ type CategoryTree struct {
 	//TopicLookup         map[int32]*ForumtopicPlus
 }
 
-func NewCategoryTree(categoryRows []*Forumcategory, topicRows []*ForumtopicPlus) *CategoryTree {
+func NewCategoryTree(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPlus) *CategoryTree {
 	categoryTree := new(CategoryTree)
 	categoryTree.CategoryChildrenLookup = map[int32][]*ForumcategoryPlus{}
 	categoryTree.CategoryLookup = map[int32]*ForumcategoryPlus{}

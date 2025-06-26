@@ -3,6 +3,7 @@ package admin
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,12 +14,12 @@ import (
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Emails []*PendingEmail
+		Emails []*db.PendingEmail
 	}
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	items, err := queries.ListUnsentPendingEmails(r.Context())
 	if err != nil {
 		log.Printf("list pending emails: %v", err)
@@ -34,7 +35,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	provider := getEmailProvider()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -60,7 +61,7 @@ func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

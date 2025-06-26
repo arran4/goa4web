@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -20,7 +21,7 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*GetBlogEntriesForUserDescendingLanguagesRow
+		*db.GetBlogEntriesForUserDescendingLanguagesRow
 		EditUrl string
 	}
 	type Data struct {
@@ -39,8 +40,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), db.GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  int32(userId),
 		ViewerIdusers: uid,
 		Limit:         15,
@@ -159,7 +160,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
@@ -184,7 +185,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
@@ -205,7 +206,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feeds.Feed, error) {
+func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*feeds.Feed, error) {
 
 	title := "Everyone's blog"
 	if uid > 0 {
@@ -219,7 +220,7 @@ func FeedGen(r *http.Request, queries *Queries, uid int, username string) (*feed
 		Created:     time.Date(2005, 6, 25, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), db.GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  int32(uid),
 		ViewerIdusers: int32(uid),
 		Limit:         15,

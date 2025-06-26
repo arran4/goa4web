@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,14 +19,14 @@ func AdminUserLevelPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		MaxUserLevel    int32
-		UserTopicLevels []*GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
+		UserTopicLevels []*db.GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
@@ -77,11 +78,11 @@ func AdminUserLevelUpdatePage(w http.ResponseWriter, r *http.Request) {
 		}
 		expires = sql.NullTime{Time: t, Valid: true}
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
-	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), UpsertUsersForumTopicLevelPermissionParams{
+	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), db.UpsertUsersForumTopicLevelPermissionParams{
 		Level: sql.NullInt32{
 			Valid: true,
 			Int32: int32(level),
@@ -110,11 +111,11 @@ func AdminUserLevelDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	uid, _ := strconv.Atoi(vars["user"])
 
-	if err := queries.DeleteUsersForumTopicLevelPermission(r.Context(), DeleteUsersForumTopicLevelPermissionParams{
+	if err := queries.DeleteUsersForumTopicLevelPermission(r.Context(), db.DeleteUsersForumTopicLevelPermissionParams{
 		ForumtopicIdforumtopic: int32(tid),
 		UsersIdusers:           int32(uid),
 	}); err != nil {

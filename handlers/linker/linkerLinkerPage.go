@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,7 +17,7 @@ import (
 func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Links    []*GetLinkerItemsByUserDescendingRow
+		Links    []*db.GetLinkerItemsByUserDescendingRow
 		Username string
 		IsOffset bool
 	}
@@ -25,7 +26,7 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -38,7 +39,7 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetLinkerItemsByUserDescending(r.Context(), GetLinkerItemsByUserDescendingParams{
+	rows, err := queries.GetLinkerItemsByUserDescending(r.Context(), db.GetLinkerItemsByUserDescendingParams{
 		UsersIdusers: u.Idusers,
 		Limit:        15,
 		Offset:       int32(offset),

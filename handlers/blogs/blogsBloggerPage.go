@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -17,7 +18,7 @@ import (
 
 func BloggerPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*GetBlogEntriesForUserDescendingLanguagesRow
+		*db.GetBlogEntriesForUserDescendingLanguagesRow
 		EditUrl string
 	}
 	type Data struct {
@@ -36,7 +37,7 @@ func BloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -55,7 +56,7 @@ func BloggerPage(w http.ResponseWriter, r *http.Request) {
 
 	buid := bu.Idusers
 
-	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), GetBlogEntriesForUserDescendingLanguagesParams{
+	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), db.GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  buid,
 		ViewerIdusers: uid,
 		Limit:         15,

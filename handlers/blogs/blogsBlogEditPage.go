@@ -3,6 +3,7 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
@@ -22,13 +23,13 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Languages          []*Language
-		Blog               *GetBlogEntryForUserByIdRow
+		Languages          []*db.Language
+		Blog               *db.GetBlogEntryForUserByIdRow
 		SelectedLanguageId int
 		Mode               string
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
@@ -68,11 +69,11 @@ func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	err = queries.UpdateBlogEntry(r.Context(), UpdateBlogEntryParams{
+	err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
 		Idblogs:            int32(blogId),
 		LanguageIdlanguage: int32(languageId),
 		Blog: sql.NullString{

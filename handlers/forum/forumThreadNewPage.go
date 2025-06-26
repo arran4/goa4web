@@ -7,6 +7,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
@@ -20,11 +21,11 @@ import (
 func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
@@ -47,7 +48,7 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	session, ok := core.GetSessionOrFail(w, r)
@@ -72,7 +73,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 
 	provider := getEmailProvider()
 
-	cid, err := queries.CreateComment(r.Context(), CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage:       int32(languageId),
 		UsersIdusers:             uid,
 		ForumthreadIdforumthread: int32(threadId),

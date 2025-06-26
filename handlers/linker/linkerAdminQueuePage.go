@@ -6,6 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
@@ -18,7 +19,7 @@ import (
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	type QueueRow struct {
-		*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
+		*db.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
 		Preview string
 	}
 	type Data struct {
@@ -39,7 +40,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		Offset:   offset,
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	queue, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context())
 	if err != nil {
@@ -122,7 +123,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
@@ -133,13 +134,13 @@ func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
 	URL := r.URL.Query().Get("URL")
 	desc := r.URL.Query().Get("desc")
 	category, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	if err := queries.UpdateLinkerQueuedItem(r.Context(), UpdateLinkerQueuedItemParams{
+	if err := queries.UpdateLinkerQueuedItem(r.Context(), db.UpdateLinkerQueuedItemParams{
 		LinkercategoryIdlinkercategory: int32(category),
 		Title:                          sql.NullString{Valid: true, String: title},
 		Url:                            sql.NullString{Valid: true, String: URL},
@@ -154,7 +155,7 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
@@ -183,7 +184,7 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -197,7 +198,7 @@ func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}

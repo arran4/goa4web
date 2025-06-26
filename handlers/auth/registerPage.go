@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strings"
@@ -55,7 +56,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,

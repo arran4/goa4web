@@ -3,6 +3,7 @@ package admin
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
@@ -13,18 +14,18 @@ import (
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		ForumTopics       []*BoardPostCountRow
-		ForumCategories   []*CategoryCountRow
-		WritingCategories []*CategoryCountRow
-		LinkerCategories  []*GetLinkerCategoryLinkCountsRow
-		Imageboards       []*BoardPostCountRow
-		Users             []*UserPostCountRow
-		Monthly           []*MonthlyUsageRow
-		UserMonthly       []*UserMonthlyUsageRow
+		ForumTopics       []*db.BoardPostCountRow
+		ForumCategories   []*db.CategoryCountRow
+		WritingCategories []*db.CategoryCountRow
+		LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
+		Imageboards       []*db.BoardPostCountRow
+		Users             []*db.UserPostCountRow
+		Monthly           []*db.MonthlyUsageRow
+		UserMonthly       []*db.UserMonthlyUsageRow
 		StartYear         int
 	}
 	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	var err error
 	if data.ForumTopics, err = queries.ForumTopicThreadCounts(r.Context()); err != nil {

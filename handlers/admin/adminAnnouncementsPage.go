@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,11 +16,11 @@ import (
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		Announcements []*ListAnnouncementsWithNewsRow
+		Announcements []*db.ListAnnouncementsWithNewsRow
 		NewsID        string
 	}
 	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.ListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list announcements: %v", err)
@@ -36,7 +37,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
 		log.Printf("news id: %v", err)
@@ -50,7 +51,7 @@ func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

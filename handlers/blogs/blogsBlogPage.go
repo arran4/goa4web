@@ -2,6 +2,7 @@ package blogs
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
@@ -16,12 +17,12 @@ import (
 
 func BlogPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*GetBlogEntryForUserByIdRow
+		*db.GetBlogEntryForUserByIdRow
 		EditUrl     string
 		IsReplyable bool
 	}
 	type BlogComment struct {
-		*GetCommentsByThreadIdForUserRow
+		*db.GetCommentsByThreadIdForUserRow
 		ShowReply bool
 		EditUrl   string
 		Editing   bool
@@ -36,7 +37,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable        bool
 		Text               string
 		EditUrl            string
-		Languages          []*Language
+		Languages          []*db.Language
 		SelectedLanguageId int
 	}
 
@@ -44,7 +45,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,

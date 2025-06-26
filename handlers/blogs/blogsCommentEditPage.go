@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -21,7 +22,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(common.KeyQueries).(*Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -38,7 +39,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thread, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	thread, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: comment.ForumthreadIdforumthread,
 	})
@@ -52,7 +53,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err = queries.UpdateComment(r.Context(), UpdateCommentParams{
+	if err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{
 		Idcomments:         int32(commentId),
 		LanguageIdlanguage: int32(languageId),
 		Text: sql.NullString{

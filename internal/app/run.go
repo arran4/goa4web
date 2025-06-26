@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	goa4web "github.com/arran4/goa4web"
@@ -18,6 +16,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	email "github.com/arran4/goa4web/internal/email"
 	emailutil "github.com/arran4/goa4web/internal/emailutil"
 	middleware "github.com/arran4/goa4web/internal/middleware"
@@ -60,11 +59,11 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 	common.Version = version
 
-	if err := performStartupChecks(cfg); err != nil {
+	if err := dbstart.PerformStartupChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
-	dbPool := goa4web.GetDBPool()
+	dbPool := dbstart.GetDBPool()
 	if err := corelanguage.ValidateDefaultLanguage(context.Background(), goa4web.New(dbPool), cfg.DefaultLanguage); err != nil {
 		return fmt.Errorf("default language: %w", err)
 	}
@@ -84,7 +83,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		middleware.DBAdderMiddleware,
 		userhandlers.UserAdderMiddleware,
 		middleware.CoreAdderMiddleware,
-		goa4web.RequestLoggerMiddleware,
+		middleware.RequestLoggerMiddleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if csrfmw.CSRFEnabled() {
@@ -157,3 +156,21 @@ func checkUploadDir(cfg runtimeconfig.RuntimeConfig) error {
 	os.Remove(test)
 	return nil
 }
+
+func newMiddlewareChain(mw ...func(http.Handler) http.Handler) routerWrapper {
+	return routerWrapperFunc(func(h http.Handler) http.Handler {
+		for i := len(mw) - 1; i >= 0; i-- {
+			h = mw[i](h)
+		}
+		return h
+	})
+}
+
+type routerWrapper interface {
+	Wrap(http.Handler) http.Handler
+}
+
+type routerWrapperFunc func(http.Handler) http.Handler
+
+func (f routerWrapperFunc) Wrap(h http.Handler) http.Handler { return f(h) }
+

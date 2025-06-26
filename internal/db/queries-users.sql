@@ -67,3 +67,8 @@ SELECT u.email
 FROM users u
 JOIN permissions p ON p.users_idusers = u.idusers
 WHERE p.section = 'administrator';
+
+-- name: UpdateUserEmail :exec
+UPDATE users
+SET email = ?
+WHERE idusers = ?;

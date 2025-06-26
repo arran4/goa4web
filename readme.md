@@ -268,3 +268,58 @@ columns and records the schema version.
 The `/admin/permissions/sections` page lists all distinct values found in the `permissions.section` column. It provides buttons to convert existing rows between `writing` and `writings`. These once-off tools help normalise data if older migrations used inconsistent names.
 
 The linked counts now let you drill down to view all permissions for a section via `/admin/permissions/sections/view?section=<name>`.
+<<<<<<< codex/add-password-prompt-helper-in-goa4web-admin
+
+## goa4web-admin CLI
+
+The `goa4web-admin` binary provides command-line tools for managing users and permissions.
+When using `user add` or `user add-admin`, omit the `--password` flag to enter a password interactively.
+
+Example:
+```bash
+goa4web-admin user add --username alice --email alice@example.com
+```
+This command prompts for the password on stderr if `--password` is not supplied.
+
+=======
+## Command Line Interface
+
+Two binaries are produced by this repository:
+
+- `goa4web` starts the web server.
+- `goa4web-admin` provides administrative subcommands for user and permission management.
+
+Typical workflow:
+
+```bash
+# build the tools
+go build -o goa4web ./cmd/goa4web
+go build -o goa4web-admin ./cmd/goa4web-admin
+```
+
+### Creating users
+
+```bash
+# create a regular account
+./goa4web-admin user add --username alice --email alice@example.com --password secret
+
+# create an administrator
+./goa4web-admin user add-admin --username admin --email admin@example.com --password changeme
+
+# promote an existing user to administrator
+./goa4web-admin user make-admin --username alice
+```
+
+### Managing permissions
+
+```bash
+# grant a permission
+./goa4web-admin perm grant --user alice --section forum --level moderator
+
+# list all permissions
+./goa4web-admin perm list
+
+# revoke a permission by ID
+./goa4web-admin perm revoke --id 42
+```
+>>>>>>> main

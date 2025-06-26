@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 )
 
 // PermissionWithUser combines a permission with the associated user's info.
@@ -16,10 +17,22 @@ type PermissionWithUser struct {
 }
 
 // GetPermissionsWithUsers returns all permissions joined with user details.
-func (q *Queries) GetPermissionsWithUsers(ctx context.Context) ([]*PermissionWithUser, error) {
-	const query = `SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, u.email
-                    FROM permissions p JOIN users u ON u.idusers = p.users_idusers`
-	rows, err := q.db.QueryContext(ctx, query)
+func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user, section sql.NullString) ([]*PermissionWithUser, error) {
+	query := `SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, u.email FROM permissions p JOIN users u ON u.idusers = p.users_idusers`
+	var args []interface{}
+	var cond []string
+	if user.Valid {
+		cond = append(cond, "u.username = ?")
+		args = append(args, user.String)
+	}
+	if section.Valid {
+		cond = append(cond, "p.section = ?")
+		args = append(args, section.String)
+	}
+	if len(cond) > 0 {
+		query += " WHERE " + strings.Join(cond, " AND ")
+	}
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -14,15 +14,16 @@ import (
 )
 
 func main() {
-	root, err := parseRoot(os.Args)
-	if err != nil {
-		log.Printf("%v", err)
-		os.Exit(1)
-	}
-	if err := root.Run(); err != nil {
-		log.Printf("%v", err)
-		os.Exit(1)
-	}
+  root, err := parseRoot(os.Args)
+  if err != nil {
+      log.Printf("%v", err)
+      os.Exit(1)
+  }
+  defer root.Close()
+  if err := root.Run(); err != nil {
+      log.Printf("%v", err)
+      os.Exit(1)
+  }
 }
 
 // rootCmd is the top-level command state.
@@ -43,6 +44,14 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	}
 	r.db = dbstart.GetDBPool()
 	return r.db, nil
+}
+
+func (r *rootCmd) Close() {
+    if r.db != nil {
+        if err := r.db.Close(); err != nil {
+            log.Printf("close db: %v", err)
+        }
+    }
 }
 
 func parseRoot(args []string) (*rootCmd, error) {
@@ -67,6 +76,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 
 func (r *rootCmd) Run() error {
 	if len(r.args) == 0 {
+		r.fs.Usage()
 		return fmt.Errorf("no command provided")
 	}
 	switch r.args[0] {
@@ -91,4 +101,17 @@ func (r *rootCmd) Run() error {
 	default:
 		return fmt.Errorf("unknown command %q", r.args[0])
 	}
+}
+
+// Usage prints command usage information with examples.
+func (r *rootCmd) Usage() {
+	w := r.fs.Output()
+	fmt.Fprintf(w, "Usage:\n  %s [flags] <command> [<args>]\n", r.fs.Name())
+	fmt.Fprintln(w, "\nCommands:")
+	fmt.Fprintln(w, "  user\tmanage users")
+	fmt.Fprintln(w, "  perm\tmanage permissions")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n\n", r.fs.Name())
+	r.fs.PrintDefaults()
 }

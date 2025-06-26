@@ -1,4 +1,4 @@
-package goa4web
+package emailutil
 
 import (
 	"bytes"
@@ -12,11 +12,12 @@ import (
 	"github.com/arran4/goa4web/config"
 
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-func notifyChange(ctx context.Context, provider email.Provider, emailAddr string, page string) error {
+func NotifyChange(ctx context.Context, provider email.Provider, emailAddr string, page string) error {
 	if emailAddr == "" {
 		return fmt.Errorf("no email specified")
 	}
@@ -55,8 +56,8 @@ func notifyChange(ctx context.Context, provider email.Provider, emailAddr string
 		return fmt.Errorf("execute email template: %w", err)
 	}
 
-	if q, ok := ctx.Value(common.KeyQueries).(*Queries); ok {
-		if err := q.InsertPendingEmail(ctx, InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: notification.String()}); err != nil {
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok {
+		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: notification.String()}); err != nil {
 			return err
 		}
 	} else if provider != nil {
@@ -80,7 +81,7 @@ func getEmailProvider() email.Provider {
 // ADMIN_EMAILS environment variable is set, it takes precedence and is
 // interpreted as a comma-separated list. If not set and a Queries value is
 // provided, the database is queried for administrator accounts.
-func getAdminEmails(ctx context.Context, q *Queries) []string {
+func getAdminEmails(ctx context.Context, q *db.Queries) []string {
 	env := os.Getenv(config.EnvAdminEmails)
 	var emails []string
 	if env != "" {
@@ -134,23 +135,23 @@ func emailSendingEnabled() bool {
 	}
 }
 
-func notifyAdmins(ctx context.Context, provider email.Provider, q *Queries, page string) {
+func notifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
 	if provider == nil || !adminNotificationsEnabled() {
 		return
 	}
 	for _, email := range getAdminEmails(ctx, q) {
-		if err := notifyChange(ctx, provider, email, page); err != nil {
-			log.Printf("Error: notifyChange: %s", err)
+		if err := NotifyChange(ctx, provider, email, page); err != nil {
+			log.Printf("Error: NotifyChange: %s", err)
 		}
 	}
 }
 
 // notifyThreadSubscribers emails users subscribed to the forum thread.
-func notifyThreadSubscribers(ctx context.Context, provider email.Provider, q *Queries, threadID, excludeUser int32, page string) {
+func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db.Queries, threadID, excludeUser int32, page string) {
 	if provider == nil {
 		return
 	}
-	rows, err := q.ListUsersSubscribedToThread(ctx, ListUsersSubscribedToThreadParams{
+	rows, err := q.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: threadID,
 		Idusers:                  excludeUser,
 	})
@@ -159,8 +160,8 @@ func notifyThreadSubscribers(ctx context.Context, provider email.Provider, q *Qu
 		return
 	}
 	for _, row := range rows {
-		if err := notifyChange(ctx, provider, row.Username.String, page); err != nil {
-			log.Printf("Error: notifyChange: %s", err)
+		if err := NotifyChange(ctx, provider, row.Username.String, page); err != nil {
+			log.Printf("Error: NotifyChange: %s", err)
 		}
 	}
 }

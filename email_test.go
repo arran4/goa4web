@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -75,7 +76,7 @@ func TestNotifyChange(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("a@b.com", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
 	rec := &recordMail{}
-	if err := notifyChange(ctx, rec, "a@b.com", "http://host"); err != nil {
+	if err := emailutil.NotifyChange(ctx, rec, "a@b.com", "http://host"); err != nil {
 		t.Fatalf("notify error: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -85,7 +86,7 @@ func TestNotifyChange(t *testing.T) {
 
 func TestNotifyChangeErrors(t *testing.T) {
 	rec := &recordMail{}
-	if err := notifyChange(context.Background(), rec, "", "p"); err == nil {
+	if err := emailutil.NotifyChange(context.Background(), rec, "", "p"); err == nil {
 		t.Fatal("expected error for empty email")
 	}
 }
@@ -133,7 +134,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	mock.ExpectExec("UPDATE pending_emails SET sent_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &emailRecordProvider{}
-	processPendingEmail(context.Background(), q, rec)
+	emailutil.ProcessPendingEmail(context.Background(), q, rec)
 
 	if rec.to != "a@test" {
 		t.Fatalf("got %q", rec.to)

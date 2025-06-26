@@ -1,4 +1,4 @@
-package goa4web
+package notifications
 
 import (
 	"context"
@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 )
 
-// notificationsFeed produces a feed from the notifications slice.
-func notificationsFeed(r *http.Request, notifications []*Notification) *feeds.Feed {
+// NotificationsFeed produces a feed from the notifications slice.
+func NotificationsFeed(r *http.Request, notifications []*db.Notification) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       "Notifications",
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -39,7 +40,7 @@ func notificationsFeed(r *http.Request, notifications []*Notification) *feeds.Fe
 }
 
 // notificationPurgeWorker periodically removes old read notifications.
-func notificationPurgeWorker(ctx context.Context, q *Queries, interval time.Duration) {
+func NotificationPurgeWorker(ctx context.Context, q *db.Queries, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {

@@ -127,36 +127,6 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
 	safeGo(func() { notifications.NotificationPurgeWorker(ctx, goa4web.New(db), time.Hour) })
 }
 
-func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
-	if ue := goa4web.InitDB(cfg); ue != nil {
-		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
-	}
-	if err := checkUploadDir(cfg); err != nil {
-		return err
-	}
-	return nil
-}
-
-func checkUploadDir(cfg runtimeconfig.RuntimeConfig) error {
-	if cfg.ImageUploadDir == "" {
-		return fmt.Errorf("image upload directory not set")
-	}
-	if strings.HasPrefix(cfg.ImageUploadDir, "s3://") {
-		// TODO: validate S3 upload targets
-		return nil
-	}
-	info, err := os.Stat(cfg.ImageUploadDir)
-	if err != nil || !info.IsDir() {
-		return fmt.Errorf("image upload directory invalid: %w", err)
-	}
-	test := filepath.Join(cfg.ImageUploadDir, ".check")
-	if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
-		return fmt.Errorf("image upload directory not writable: %w", err)
-	}
-	os.Remove(test)
-	return nil
-}
-
 func newMiddlewareChain(mw ...func(http.Handler) http.Handler) routerWrapper {
 	return routerWrapperFunc(func(h http.Handler) http.Handler {
 		for i := len(mw) - 1; i >= 0; i-- {
@@ -173,4 +143,3 @@ type routerWrapper interface {
 type routerWrapperFunc func(http.Handler) http.Handler
 
 func (f routerWrapperFunc) Wrap(h http.Handler) http.Handler { return f(h) }
-

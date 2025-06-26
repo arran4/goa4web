@@ -39,6 +39,11 @@ VALUES (?, ?, ?);
 DELETE FROM permissions
 WHERE idpermissions = ?;
 
+-- name: GetAdministratorPermissionByUserId :one
+SELECT *
+FROM permissions
+WHERE users_idusers = ? AND section = 'administrator' AND level = 'administrator';
+
 -- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
 SELECT *
 FROM permissions

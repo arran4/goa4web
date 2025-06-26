@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 
@@ -77,7 +78,13 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		return fmt.Errorf("last insert id: %w", err)
 	}
 	if admin {
-		if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
+		if _, err := queries.GetAdministratorPermissionByUserId(ctx, int32(id)); err == nil {
+			if root.Verbosity > 0 {
+				fmt.Printf("%s already administrator\n", username)
+			}
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("check admin: %w", err)
+		} else if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
 			UsersIdusers: int32(id),
 			Section:      sql.NullString{String: "administrator", Valid: true},
 			Level:        sql.NullString{String: "administrator", Valid: true},

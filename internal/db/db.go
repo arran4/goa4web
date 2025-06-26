@@ -29,3 +29,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		db: tx,
 	}
 }
+
+// DB exposes the underlying *sql.DB if available.
+func (q *Queries) DB() *sql.DB {
+	db, _ := q.db.(*sql.DB)
+	return db
+}

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -50,7 +51,7 @@ func TestIsAlphanumericOrPunctuationExtra(t *testing.T) {
 
 func TestBreakupTextToWords(t *testing.T) {
 	in := "Hello, world! It's-me"
-	words := BreakupTextToWords(in)
+	words := searchutil.BreakupTextToWords(in)
 	want := []string{"Hello", "world", "It's-me"}
 	if len(words) != len(want) {
 		t.Fatalf("len=%d want %d", len(words), len(want))
@@ -76,7 +77,7 @@ func TestBreakupTextToWordsEdge(t *testing.T) {
 		{"こんにちは 世界", []string{"こんにちは", "世界"}},
 	}
 	for _, c := range cases {
-		got := BreakupTextToWords(c.in)
+		got := searchutil.BreakupTextToWords(c.in)
 		if len(got) != len(c.want) {
 			t.Errorf("%q len=%d want %d", c.in, len(got), len(c.want))
 			continue
@@ -119,7 +120,7 @@ func TestSearchWordIdsFromText(t *testing.T) {
 	q := dbpkg.New(db)
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
-	ids, redirect := SearchWordIdsFromText(rr, req, "Hello world Hello", q)
+	ids, redirect := searchutil.SearchWordIdsFromText(rr, req, "Hello world Hello", q)
 	if redirect {
 		t.Fatalf("unexpected redirect")
 	}
@@ -136,7 +137,7 @@ func TestSearchWordIdsFromTextError(t *testing.T) {
 	q := dbpkg.New(db)
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
-	ids, redirect := SearchWordIdsFromText(rr, req, "bad", q)
+	ids, redirect := searchutil.SearchWordIdsFromText(rr, req, "bad", q)
 	if ids != nil {
 		t.Fatal("expected nil ids")
 	}

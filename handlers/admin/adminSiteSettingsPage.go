@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
@@ -32,7 +33,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		runtimeconfig.AppRuntimeConfig.DefaultLanguage = name
-		if err := updateConfigKey(ConfigFile, config.EnvDefaultLanguage, name); err != nil {
+		if err := updateConfigKey(core.OSFS{}, ConfigFile, config.EnvDefaultLanguage, name); err != nil {
 			log.Printf("config write error: %v", err)
 		}
 		http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)

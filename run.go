@@ -95,6 +95,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv
 	adminhandlers.DBPool = dbPool
+	adminhandlers.UpdateConfigKeyFunc = UpdateConfigKey
 
 	provider := email.ProviderFromConfig(cfg)
 

@@ -79,7 +79,7 @@ requests.
 ├── data_embedded.go     – embed templates and CSS for production builds
 ├── data_live.go         – load templates from disk in development
 ├── models.go            – sqlc generated data models
-└── queries-*.sql        – SQL queries consumed by sqlc
+└── internal/db/queries-*.sql        – SQL queries consumed by sqlc
 ```
 
 ## Testing

@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/pkg/server"
@@ -95,7 +96,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv
 	adminhandlers.DBPool = dbPool
-	adminhandlers.UpdateConfigKeyFunc = UpdateConfigKey
+	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
 	provider := email.ProviderFromConfig(cfg)
 

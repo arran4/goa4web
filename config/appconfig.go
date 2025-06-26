@@ -1,18 +1,24 @@
-package goa4web
+package config
 
 import (
 	"bytes"
+	"io/fs"
 	"log"
 	"os"
 	"sort"
 	"strings"
-
-	"github.com/arran4/goa4web/core"
 )
+
+// FileSystem abstracts file operations. It matches the core.FileSystem
+// interface so core implementations can be passed in directly.
+type FileSystem interface {
+	ReadFile(name string) ([]byte, error)
+	WriteFile(name string, data []byte, perm fs.FileMode) error
+}
 
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
-func LoadAppConfigFile(fs core.FileSystem, path string) map[string]string {
+func LoadAppConfigFile(fs FileSystem, path string) map[string]string {
 	values := make(map[string]string)
 	if path == "" {
 		return values
@@ -36,7 +42,7 @@ func LoadAppConfigFile(fs core.FileSystem, path string) map[string]string {
 
 // UpdateConfigKey writes the given key/value pair to the config file.
 // Existing keys are replaced, new keys appended. Empty values remove the key.
-func UpdateConfigKey(fs core.FileSystem, path, key, value string) error {
+func UpdateConfigKey(fs FileSystem, path, key, value string) error {
 	if path == "" {
 		return nil
 	}

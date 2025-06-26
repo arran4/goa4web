@@ -68,7 +68,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 		}
-		filtered = append(filtered, &QueueRow{q, fetchPageTitle(r.Context(), q.Url.String)})
+		filtered = append(filtered, &QueueRow{q, FetchPageTitle(r.Context(), q.Url.String)})
 	}
 
 	pageSize := hcommon.GetPageSize(r)

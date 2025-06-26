@@ -17,6 +17,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -275,7 +276,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}

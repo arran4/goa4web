@@ -4,16 +4,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	search "github.com/arran4/goa4web/handlers/search"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/core/templates"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
+	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 )
 
@@ -143,7 +146,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/show/%d", linkId)
 
-	provider := getEmailProvider()
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
@@ -152,7 +155,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -165,7 +168,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

@@ -4,13 +4,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	search "github.com/arran4/goa4web/handlers/search"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/core"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	search "github.com/arran4/goa4web/handlers/search"
+	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +101,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/blogs/blog/%d/comments", bid)
 
-	provider := getEmailProvider()
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
@@ -105,7 +110,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -118,7 +123,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := notifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

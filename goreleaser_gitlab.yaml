@@ -8,6 +8,14 @@ builds:
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
     flags: ["-trimpath"]
+  - id: goa4web-admin
+    main: ./cmd/goa4web-admin
+    binary: goa4web-admin
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: ["-trimpath"]
 archives:
   - format_overrides:
       - goos: windows

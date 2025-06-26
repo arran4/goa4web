@@ -5,7 +5,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
-	"github.com/arran4/goa4web/internal/db"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"

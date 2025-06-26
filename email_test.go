@@ -9,6 +9,7 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -114,7 +115,7 @@ func TestInsertPendingEmail(t *testing.T) {
 	q := New(db)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("t@test", "sub", "body").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := q.InsertPendingEmail(context.Background(), InsertPendingEmailParams{ToEmail: "t@test", Subject: "sub", Body: "body"}); err != nil {
+	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToEmail: "t@test", Subject: "sub", Body: "body"}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

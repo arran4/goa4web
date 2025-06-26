@@ -2,7 +2,7 @@ package notifications
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -47,7 +47,7 @@ func NotificationPurgeWorker(ctx context.Context, q *db.Queries, interval time.D
 		select {
 		case <-ticker.C:
 			if err := q.PurgeReadNotifications(ctx); err != nil {
-				fmt.Println("purge notifications:", err)
+				log.Printf("purge notifications: %v", err)
 			}
 		case <-ctx.Done():
 			return

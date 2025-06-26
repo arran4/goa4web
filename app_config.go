@@ -34,9 +34,9 @@ func LoadAppConfigFile(fs core.FileSystem, path string) map[string]string {
 	return values
 }
 
-// updateConfigKey writes the given key/value pair to the config file.
+// UpdateConfigKey writes the given key/value pair to the config file.
 // Existing keys are replaced, new keys appended. Empty values remove the key.
-func updateConfigKey(fs core.FileSystem, path, key, value string) error {
+func UpdateConfigKey(fs core.FileSystem, path, key, value string) error {
 	if path == "" {
 		return nil
 	}

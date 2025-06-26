@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -10,7 +10,7 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-func adminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
+func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		ForumTopics       []*BoardPostCountRow

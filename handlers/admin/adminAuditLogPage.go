@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -21,8 +21,8 @@ func copyValues(v url.Values) url.Values {
 	return c
 }
 
-// adminAuditLogPage shows recent admin actions with basic filtering.
-func adminAuditLogPage(w http.ResponseWriter, r *http.Request) {
+// AdminAuditLogPage shows recent admin actions with basic filtering.
+func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Rows     []*ListAuditLogsRow

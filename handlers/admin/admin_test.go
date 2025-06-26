@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminEmailTemplateTestActionPage(rr, req)
+	AdminEmailTemplateTestActionPage(rr, req)
 
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
@@ -59,7 +59,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminEmailTemplateTestActionPage(rr, req)
+	AdminEmailTemplateTestActionPage(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)

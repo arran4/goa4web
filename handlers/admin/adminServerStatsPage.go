@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -10,7 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func adminServerStatsPage(w http.ResponseWriter, r *http.Request) {
+func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Stats struct {
 		Goroutines int
 		Alloc      uint64

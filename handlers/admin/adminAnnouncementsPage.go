@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func adminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
+func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Announcements []*ListAnnouncementsWithNewsRow
@@ -33,7 +33,7 @@ func adminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
@@ -47,7 +47,7 @@ func adminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func adminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

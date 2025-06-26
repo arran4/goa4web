@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -13,7 +13,7 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-func adminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
+func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 
 	if r.Method == http.MethodPost {

@@ -21,9 +21,16 @@ WHERE idlanguage = ?;
 INSERT INTO language (nameof)
 VALUES (?);
 
+-- name: InsertLanguage :execresult
+INSERT INTO language (nameof)
+VALUES (?);
+
 -- name: FetchLanguages :many
 SELECT *
 FROM language;
+
+-- name: AllLanguages :many
+SELECT * FROM language;
 
 -- name: GetLanguageIDByName :one
 SELECT idlanguage FROM language WHERE nameof = ?;

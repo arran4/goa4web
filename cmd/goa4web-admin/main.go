@@ -14,16 +14,16 @@ import (
 )
 
 func main() {
-  root, err := parseRoot(os.Args)
-  if err != nil {
-      log.Printf("%v", err)
-      os.Exit(1)
-  }
-  defer root.Close()
-  if err := root.Run(); err != nil {
-      log.Printf("%v", err)
-      os.Exit(1)
-  }
+	root, err := parseRoot(os.Args)
+	if err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
+	defer root.Close()
+	if err := root.Run(); err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
 }
 
 // rootCmd is the top-level command state.
@@ -47,11 +47,11 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 }
 
 func (r *rootCmd) Close() {
-    if r.db != nil {
-        if err := r.db.Close(); err != nil {
-            log.Printf("close db: %v", err)
-        }
-    }
+	if r.db != nil {
+		if err := r.db.Close(); err != nil {
+			log.Printf("close db: %v", err)
+		}
+	}
 }
 
 func parseRoot(args []string) (*rootCmd, error) {
@@ -98,6 +98,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
+	case "lang":
+		c, err := parseLangCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("lang: %w", err)
+		}
+		return c.Run()
 	default:
 		return fmt.Errorf("unknown command %q", r.args[0])
 	}
@@ -110,8 +116,10 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  user\tmanage users")
 	fmt.Fprintln(w, "  perm\tmanage permissions")
+	fmt.Fprintln(w, "  lang\tmanage languages")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s perm list\n\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s lang list\n\n", r.fs.Name())
 	r.fs.PrintDefaults()
 }

@@ -10,6 +10,33 @@ import (
 	"database/sql"
 )
 
+const allLanguages = `-- name: AllLanguages :many
+SELECT idlanguage, nameof FROM language
+`
+
+func (q *Queries) AllLanguages(ctx context.Context) ([]*Language, error) {
+	rows, err := q.db.QueryContext(ctx, allLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createLanguage = `-- name: CreateLanguage :exec
 INSERT INTO language (nameof)
 VALUES (?)
@@ -75,6 +102,15 @@ func (q *Queries) GetLanguageIDByName(ctx context.Context, nameof sql.NullString
 	var idlanguage int32
 	err := row.Scan(&idlanguage)
 	return idlanguage, err
+}
+
+const insertLanguage = `-- name: InsertLanguage :execresult
+INSERT INTO language (nameof)
+VALUES (?)
+`
+
+func (q *Queries) InsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error) {
+	return q.db.ExecContext(ctx, insertLanguage, nameof)
 }
 
 const renameLanguage = `-- name: RenameLanguage :exec

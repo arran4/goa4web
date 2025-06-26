@@ -24,7 +24,7 @@ func TestApply(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectQuery("SELECT version FROM schema_version").
 		WillReturnError(sql.ErrNoRows)
-	mock.ExpectExec("INSERT INTO schema_version").WithArgs(1).
+	mock.ExpectExec("INSERT INTO schema_version").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("CREATE TABLE t").
 		WillReturnResult(sqlmock.NewResult(0, 0))

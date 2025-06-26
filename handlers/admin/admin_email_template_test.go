@@ -12,13 +12,14 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
-	os.Unsetenv("EMAIL_PROVIDER")
+	os.Unsetenv(config.EnvEmailProvider)
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
@@ -38,9 +39,9 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 }
 
 func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
-	os.Setenv("EMAIL_PROVIDER", "log")
+	os.Setenv(config.EnvEmailProvider, "log")
 	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
-	defer os.Unsetenv("EMAIL_PROVIDER")
+	defer os.Unsetenv(config.EnvEmailProvider)
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -114,8 +115,8 @@ func (r *recordAdminMail) Send(ctx context.Context, to, subject, body string) er
 }
 
 func TestNotifyAdminsEnv(t *testing.T) {
-	os.Setenv("ADMIN_EMAILS", "a@test.com,b@test.com")
-	defer os.Unsetenv("ADMIN_EMAILS")
+	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
+	defer os.Unsetenv(config.EnvAdminEmails)
 	rec := &recordAdminMail{}
 	notifyAdmins(context.Background(), rec, nil, "page")
 	if len(rec.to) != 2 {
@@ -124,10 +125,10 @@ func TestNotifyAdminsEnv(t *testing.T) {
 }
 
 func TestNotifyAdminsDisabled(t *testing.T) {
-	os.Setenv("ADMIN_EMAILS", "a@test.com")
-	os.Setenv("ADMIN_NOTIFY", "false")
-	defer os.Unsetenv("ADMIN_EMAILS")
-	defer os.Unsetenv("ADMIN_NOTIFY")
+	os.Setenv(config.EnvAdminEmails, "a@test.com")
+	os.Setenv(config.EnvAdminNotify, "false")
+	defer os.Unsetenv(config.EnvAdminEmails)
+	defer os.Unsetenv(config.EnvAdminNotify)
 	rec := &recordAdminMail{}
 	notifyAdmins(context.Background(), rec, nil, "page")
 	if len(rec.to) != 0 {

@@ -32,8 +32,7 @@ func main() {
 type rootCmd struct {
 	fs         *flag.FlagSet
 	cfg        runtimeconfig.RuntimeConfig
-	Verbosity  int
-	configPath string
+	ConfigFile string
 	args       []string
 	db         *sql.DB
 }
@@ -79,7 +78,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	_ = fs.Parse(args[1:])
 	r.fs = fs
 	r.args = fs.Args()
-	r.configPath = cfgPath
+	r.ConfigFile = cfgPath
 	r.cfg = runtimeconfig.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
 	return r, nil
 }
@@ -152,6 +151,11 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  user\tmanage users")
 	fmt.Fprintln(w, "  perm\tmanage permissions")
+	fmt.Fprintln(w, "  config\treload or update configuration")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s config reload\n\n", r.fs.Name())
 	fmt.Fprintln(w, "  board\tmanage image boards")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())

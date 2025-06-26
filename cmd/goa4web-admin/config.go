@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// configCmd handles configuration management commands.
+// configCmd handles configuration utilities.
 type configCmd struct {
 	*rootCmd
 	fs   *flag.FlagSet
@@ -30,6 +30,10 @@ func (c *configCmd) Run() error {
 		return fmt.Errorf("missing config command")
 	}
 	switch c.args[0] {
+	case "reload":
+		cmd, err := parseConfigReloadCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("reload: %w", err)
 	case "show":
 		cmd, err := parseConfigShowCmd(c, c.args[1:])
 		if err != nil {
@@ -53,6 +57,9 @@ func (c *configCmd) Usage() {
 	w := c.fs.Output()
 	fmt.Fprintf(w, "Usage:\n  %s config <command> [<args>]\n", c.rootCmd.fs.Name())
 	fmt.Fprintln(w, "\nCommands:")
+	fmt.Fprintln(w, "  reload\treload configuration from file")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s config reload\n\n", c.rootCmd.fs.Name())
 	fmt.Fprintln(w, "  show\tdisplay runtime configuration")
 	fmt.Fprintln(w, "  set\tupdate configuration file")
 	fmt.Fprintln(w, "\nExamples:")

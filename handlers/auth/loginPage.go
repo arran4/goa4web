@@ -14,6 +14,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // LoginUserPassPage serves the username/password login form.
@@ -35,7 +36,9 @@ func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
 
 // LoginActionPage processes the submitted login form.
 func LoginActionPage(w http.ResponseWriter, r *http.Request) {
-	log.Printf("login attempt for %s", r.PostFormValue("username"))
+	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+		log.Printf("login attempt for %s", r.PostFormValue("username"))
+	}
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
@@ -114,7 +117,9 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("login success uid=%d", user.Idusers)
+	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+		log.Printf("login success uid=%d", user.Idusers)
+	}
 
 	if backURL != "" {
 		if backMethod == "" || backMethod == http.MethodGet {

@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	goa4web "github.com/arran4/goa4web"
@@ -128,7 +130,7 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
 }
 
 func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
-	if ue := goa4web.InitDB(cfg); ue != nil {
+	if ue := dbstart.InitDB(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if err := checkUploadDir(cfg); err != nil {
@@ -173,4 +175,3 @@ type routerWrapper interface {
 type routerWrapperFunc func(http.Handler) http.Handler
 
 func (f routerWrapperFunc) Wrap(h http.Handler) http.Handler { return f(h) }
-

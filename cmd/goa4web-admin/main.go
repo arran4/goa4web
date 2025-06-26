@@ -13,6 +13,8 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
+var version = "dev"
+
 func main() {
 	root, err := parseRoot(os.Args)
 	if err != nil {
@@ -31,7 +33,6 @@ type rootCmd struct {
 	fs         *flag.FlagSet
 	cfg        runtimeconfig.RuntimeConfig
 	ConfigFile string
-	Verbosity  int
 	args       []string
 	db         *sql.DB
 }
@@ -59,10 +60,16 @@ func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{}
 	early := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	var cfgPath string
+	var showVersion bool
 	early.StringVar(&cfgPath, "config-file", "", "path to config file")
+	early.BoolVar(&showVersion, "version", false, "print version and exit")
 	_ = early.Parse(args[1:])
 	if cfgPath == "" {
 		cfgPath = os.Getenv(config.EnvConfigFile)
+	}
+	if showVersion {
+		fmt.Println(version)
+		os.Exit(0)
 	}
 	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	fs := runtimeconfig.NewRuntimeFlagSet(args[0])
@@ -88,6 +95,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("user: %w", err)
 		}
 		return c.Run()
+	case "email":
+		c, err := parseEmailCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("email: %w", err)
+		}
+		return c.Run()
 	case "db":
 		c, err := parseDbCmd(r, r.args[1:])
 		if err != nil {
@@ -100,6 +113,26 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
+	case "board":
+		c, err := parseBoardCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("board: %w", err)
+	case "ipban":
+		c, err := parseIpBanCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("ipban: %w", err)
+	case "audit":
+		c, err := parseAuditCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("audit: %w", err)
+	case "lang":
+		c, err := parseLangCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("lang: %w", err)
+	case "server":
+		c, err := parseServerCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("server: %w", err)
 	case "config":
 		c, err := parseConfigCmd(r, r.args[1:])
 		if err != nil {
@@ -123,5 +156,34 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
 	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
 	fmt.Fprintf(w, "  %s config reload\n\n", r.fs.Name())
+	fmt.Fprintln(w, "  board\tmanage image boards")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s board list\n\n", r.fs.Name())
+	fmt.Fprintln(w, "  ipban\tmanage IP bans")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s ipban list\n\n", r.fs.Name())
+	fmt.Fprintln(w, "  audit\tshow recent audit log entries")
+	fmt.Fprintln(w, "  db\tmanage database")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s audit -limit 5\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s db migrate\n", r.fs.Name())
+	fmt.Fprintln(w, "  lang\tmanage languages")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s lang list\n\n", r.fs.Name())
+	fmt.Fprintln(w, "  server\tmanage the running server")
+	fmt.Fprintln(w, "  email\tmanage emails")
+	fmt.Fprintln(w, "  config\tmanage configuration")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s config show\n\n", r.fs.Name())
 	r.fs.PrintDefaults()
 }

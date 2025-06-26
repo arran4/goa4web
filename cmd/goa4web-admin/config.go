@@ -34,6 +34,16 @@ func (c *configCmd) Run() error {
 		cmd, err := parseConfigReloadCmd(c, c.args[1:])
 		if err != nil {
 			return fmt.Errorf("reload: %w", err)
+	case "show":
+		cmd, err := parseConfigShowCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("show: %w", err)
+		}
+		return cmd.Run()
+	case "set":
+		cmd, err := parseConfigSetCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("set: %w", err)
 		}
 		return cmd.Run()
 	default:
@@ -50,5 +60,10 @@ func (c *configCmd) Usage() {
 	fmt.Fprintln(w, "  reload\treload configuration from file")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s config reload\n\n", c.rootCmd.fs.Name())
+	fmt.Fprintln(w, "  show\tdisplay runtime configuration")
+	fmt.Fprintln(w, "  set\tupdate configuration file")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s config show\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s config set -key DB_HOST -value localhost\n\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

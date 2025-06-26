@@ -19,6 +19,7 @@ func main() {
         log.Printf("%v", err)
         os.Exit(1)
     }
+    defer root.Close()
     if err := root.Run(); err != nil {
         log.Printf("%v", err)
         os.Exit(1)
@@ -43,6 +44,14 @@ func (r *rootCmd) DB() (*sql.DB, error) {
     }
     r.db = dbstart.GetDBPool()
     return r.db, nil
+}
+
+func (r *rootCmd) Close() {
+    if r.db != nil {
+        if err := r.db.Close(); err != nil {
+            log.Printf("close db: %v", err)
+        }
+    }
 }
 
 func parseRoot(args []string) (*rootCmd, error) {

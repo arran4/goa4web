@@ -10,6 +10,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/emailutil"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -22,7 +23,7 @@ func TestNotificationsQueries(t *testing.T) {
 	defer db.Close()
 	q := New(db)
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.InsertNotification(context.Background(), InsertNotificationParams{UsersIdusers: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
+	if err := q.InsertNotification(context.Background(), dbpkg.InsertNotificationParams{UsersIdusers: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	rows := sqlmock.NewRows([]string{"cnt"}).AddRow(1)
@@ -49,7 +50,7 @@ func TestNotificationsQueries(t *testing.T) {
 
 func TestNotificationsFeed(t *testing.T) {
 	r := httptest.NewRequest("GET", "/notifications/rss", nil)
-	n := []*Notification{{ID: 1, Link: sql.NullString{String: "/l", Valid: true}, Message: sql.NullString{String: "m", Valid: true}}}
+	n := []*dbpkg.Notification{{ID: 1, Link: sql.NullString{String: "/l", Valid: true}, Message: sql.NullString{String: "m", Valid: true}}}
 	feed := notif.NotificationsFeed(r, n)
 	if len(feed.Items) != 1 || feed.Items[0].Link.Href != "/l" {
 		t.Fatalf("feed item incorrect")

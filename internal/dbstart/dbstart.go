@@ -112,7 +112,7 @@ func EnsureSchema(ctx context.Context, db *sql.DB) error {
 		return fmt.Errorf("count schema_version: %w", err)
 	}
 	if count == 0 {
-		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (1)"); err != nil {
+		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (?)", 1); err != nil {
 			return fmt.Errorf("insert schema_version: %w", err)
 		}
 	}

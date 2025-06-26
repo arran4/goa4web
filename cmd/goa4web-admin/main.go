@@ -114,6 +114,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
+<<<<<<< codex/add-audit.go-and---limit-flag
+	case "audit":
+		c, err := parseAuditCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("audit: %w", err)
+=======
 	case "lang":
 		c, err := parseLangCmd(r, r.args[1:])
 		if err != nil {
@@ -126,6 +132,7 @@ func (r *rootCmd) Run() error {
 		c, err := parseConfigCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("config: %w", err)
+>>>>>>> main
 		}
 		return c.Run()
 	default:
@@ -140,9 +147,14 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  user\tmanage users")
 	fmt.Fprintln(w, "  perm\tmanage permissions")
+<<<<<<< codex/add-audit.go-and---limit-flag
+	fmt.Fprintln(w, "  audit\tshow recent audit log entries")
+=======
 	fmt.Fprintln(w, "  db\tmanage database")
+>>>>>>> main
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s audit -limit 5\n", r.fs.Name())
 	fmt.Fprintf(w, "  %s perm list\n\n", r.fs.Name())
 	fmt.Fprintf(w, "  %s db migrate\n", r.fs.Name())
 	fmt.Fprintln(w, "  lang\tmanage languages")

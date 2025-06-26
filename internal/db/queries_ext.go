@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // GetPermissionsByUserID returns all permissions for the given user.
@@ -827,4 +828,33 @@ func (q *Queries) ListUserInfo(ctx context.Context) ([]*UserInfoRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+// RecentAuditLogRow represents an audit log entry with optional username.
+type RecentAuditLogRow struct {
+	ID           int32
+	UsersIdusers int32
+	Username     sql.NullString
+	Action       string
+	CreatedAt    time.Time
+}
+
+// GetRecentAuditLogs returns the newest audit log entries limited by the count.
+func (q *Queries) GetRecentAuditLogs(ctx context.Context, limit int32) ([]*RecentAuditLogRow, error) {
+	rows, err := q.db.QueryContext(ctx, `SELECT a.id, a.users_idusers, u.username, a.action, a.created_at
+        FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
+        ORDER BY a.id DESC LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*RecentAuditLogRow
+	for rows.Next() {
+		var r RecentAuditLogRow
+		if err := rows.Scan(&r.ID, &r.UsersIdusers, &r.Username, &r.Action, &r.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &r)
+	}
+	return items, rows.Err()
 }

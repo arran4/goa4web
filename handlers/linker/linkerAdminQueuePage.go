@@ -6,7 +6,7 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	search "github.com/arran4/goa4web/handlers/search"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -171,11 +171,11 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
-		if search.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+		if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 			return
 		}
 	}
@@ -214,11 +214,11 @@ func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
+			wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 			if done {
 				return
 			}
-			if search.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+			if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 				return
 			}
 		}

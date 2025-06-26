@@ -1,8 +1,6 @@
 package search
 
 import (
-	"database/sql"
-	"errors"
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
@@ -52,64 +50,4 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 		wordIds = append(wordIds, id)
 	}
 	return wordIds, false
-}
-
-func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, lid int64) bool {
-	for _, wid := range wordIds {
-		if err := queries.AddToLinkerSearch(r.Context(), db.AddToLinkerSearchParams{
-			LinkerIdlinker:                 int32(lid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		}); err != nil {
-			log.Printf("Error: addToLinkerSearch: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return true
-		}
-	}
-	return false
-}
-
-func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, pid int64) bool {
-	for _, wid := range wordIds {
-		if err := queries.AddToImagePostSearch(r.Context(), db.AddToImagePostSearchParams{
-			ImagepostIdimagepost:           int32(pid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		}); err != nil {
-			log.Printf("Error: addToImagePostSearch: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return true
-		}
-	}
-	return false
-}
-
-func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, wacid int64) bool {
-	for _, wid := range wordIds {
-		if err := queries.AddToForumWritingSearch(r.Context(), db.AddToForumWritingSearchParams{
-			WritingIdwriting:               int32(wacid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		}); err != nil {
-			log.Printf("Error: addToForumWritingSearch: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return true
-		}
-	}
-	return false
-}
-
-func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, cid int64) bool {
-	for _, wid := range wordIds {
-		if err := queries.AddToForumCommentSearch(r.Context(), db.AddToForumCommentSearchParams{
-			CommentsIdcomments:             int32(cid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		}); err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-			default:
-				log.Printf("Error: addToForumCommentSearch: %s", err)
-				http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-				return true
-			}
-		}
-	}
-	return false
 }

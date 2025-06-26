@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -79,12 +79,12 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 		title,
 		body,
 	} {
-		wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
 
-		if search.InsertWordsToWritingSearch(w, r, wordIds, queries, articleId) {
+		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, articleId) {
 			return
 		}
 	}

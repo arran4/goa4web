@@ -7,8 +7,8 @@ import (
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"io"
 	"log"
 	"net/http"
@@ -199,12 +199,12 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if search.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
+	if searchutil.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
 		return
 	}
 

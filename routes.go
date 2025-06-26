@@ -19,6 +19,7 @@ import (
 	linker "github.com/arran4/goa4web/handlers/linker"
 	news "github.com/arran4/goa4web/handlers/news"
 	search "github.com/arran4/goa4web/handlers/search"
+	templatehandlers "github.com/arran4/goa4web/handlers/templates"
 	writings "github.com/arran4/goa4web/handlers/writings"
 
 	userhandlers "github.com/arran4/goa4web/handlers/user"
@@ -39,6 +40,7 @@ func registerRoutes(r *mux.Router) {
 	registerSearchRoutes(r)
 	registerWritingsRoutes(r)
 	registerInformationRoutes(r)
+	registerTemplatesRoutes(r)
 	userhandlers.RegisterRoutes(r)
 	registerRegisterRoutes(r)
 	registerLoginRoutes(r)
@@ -228,6 +230,11 @@ func registerWritingsAdminRoutes(ar *mux.Router) {
 func registerInformationRoutes(r *mux.Router) {
 	ir := r.PathPrefix("/information").Subrouter()
 	ir.HandleFunc("", information.Page).Methods("GET")
+}
+
+func registerTemplatesRoutes(r *mux.Router) {
+	tr := r.PathPrefix("/template").Subrouter()
+	tr.HandleFunc("", templatehandlers.Page).Methods(http.MethodGet)
 }
 
 func registerRegisterRoutes(r *mux.Router) {

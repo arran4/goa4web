@@ -87,7 +87,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			SecurityLevel:     level,
 			IndexItems:        idx,
 			UserID:            uid,
-			Title:             "Arran4's Website",
+			Title:             "Arran's Site",
 			FeedsEnabled:      runtimeconfig.AppRuntimeConfig.FeedsEnabled,
 			NotificationCount: count,
 			Announcement:      ann,

@@ -15,14 +15,13 @@
                 [<a href="/news/news/{{ .Idsitenews }}/edit">EDIT</a>]
             {{ end }}
             {{ if .IsAdmin }}
-                <form method="post" action="/news/news/{{ .Idsitenews }}/announcement" style="display:inline">
-                {{ csrfField }}
-                {{ if and .Announcement (eq .Announcement.Active true) }}
-                    <input type="submit" name="task" value="Delete">
-                {{ else }}
-                    <input type="submit" name="task" value="Add">
-                {{ end }}
-                </form>
+                [<a href="/admin/announcements?news_id={{ .Idsitenews }}">
+                    {{ if and .Announcement (eq .Announcement.Active true) }}
+                        MANAGE ANNOUNCEMENT
+                    {{ else }}
+                        PROMOTE TO ANNOUNCEMENT
+                    {{ end }}
+                </a>]
             {{ end }}
         </tr>
     </table><br>

@@ -5,10 +5,12 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func TestForumTopicFeed(t *testing.T) {
-	rows := []*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
+	rows := []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
 		{
 			Idforumthread:     1,
 			Firstposttext:     sql.NullString{String: "hello world", Valid: true},

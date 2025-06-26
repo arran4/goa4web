@@ -5,16 +5,17 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func TestThreadDelete(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqldb.Close()
 
-	q := New(db)
+	q := db.New(sqldb)
 	mock.ExpectExec("DeleteForumThread").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))

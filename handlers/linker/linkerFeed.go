@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/db"
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"net/http"
 	"strconv"

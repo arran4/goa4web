@@ -1,21 +1,22 @@
-package goa4web
+package templates
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func templatePage(w http.ResponseWriter, r *http.Request) {
+// Page renders a simple template example.
+func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	if err := templates.RenderTemplate(w, "templatePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {

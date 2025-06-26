@@ -2,6 +2,8 @@ package core
 
 import (
 	"testing"
+
+	"github.com/arran4/goa4web/config"
 )
 
 func TestLoadSessionSecretCLI(t *testing.T) {
@@ -15,7 +17,7 @@ func TestLoadSessionSecretCLI(t *testing.T) {
 }
 
 func TestLoadSessionSecretEnv(t *testing.T) {
-	t.Setenv("SESSION_SECRET", "env")
+	t.Setenv(config.EnvSessionSecret, "env")
 	secret, err := LoadSessionSecret(OSFS{}, "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

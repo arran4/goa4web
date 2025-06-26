@@ -1,4 +1,4 @@
-package linker
+package searchutil
 
 import (
 	"database/sql"
@@ -7,16 +7,19 @@ import (
 	"net/http"
 	"strings"
 	"unicode"
+
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func isAlphanumericOrPunctuation(char rune) bool {
 	return unicode.IsLetter(char) || unicode.IsDigit(char) || strings.ContainsRune("'-", char)
 }
 
-func breakupTextToWords(input string) []string {
+// BreakupTextToWords splits input into tokens of alphanumeric or
+// punctuation characters used for search indexing.
+func BreakupTextToWords(input string) []string {
 	var tokens []string
 	startIndex := -1
-
 	for i, char := range input {
 		if isAlphanumericOrPunctuation(char) {
 			if startIndex == -1 {
@@ -27,17 +30,17 @@ func breakupTextToWords(input string) []string {
 			startIndex = -1
 		}
 	}
-
 	if startIndex != -1 {
 		tokens = append(tokens, input[startIndex:])
 	}
-
 	return tokens
 }
 
-func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, queries *Queries) ([]int64, bool) {
+// SearchWordIdsFromText inserts new search words and returns their ids.
+// It redirects on error and returns true when a redirect has been issued.
+func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, queries *db.Queries) ([]int64, bool) {
 	words := map[string]int32{}
-	for _, word := range breakupTextToWords(text) {
+	for _, word := range BreakupTextToWords(text) {
 		words[strings.ToLower(word)] = 0
 	}
 	wordIds := make([]int64, 0, len(words))
@@ -53,9 +56,10 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 	return wordIds, false
 }
 
-func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *Queries, lid int64) bool {
+// InsertWordsToLinkerSearch associates search words with a linker post.
+func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, lid int64) bool {
 	for _, wid := range wordIds {
-		if err := queries.AddToLinkerSearch(r.Context(), AddToLinkerSearchParams{
+		if err := queries.AddToLinkerSearch(r.Context(), db.AddToLinkerSearchParams{
 			LinkerIdlinker:                 int32(lid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		}); err != nil {
@@ -67,9 +71,10 @@ func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds [
 	return false
 }
 
-func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *Queries, pid int64) bool {
+// InsertWordsToImageSearch associates search words with an image post.
+func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, pid int64) bool {
 	for _, wid := range wordIds {
-		if err := queries.AddToImagePostSearch(r.Context(), AddToImagePostSearchParams{
+		if err := queries.AddToImagePostSearch(r.Context(), db.AddToImagePostSearchParams{
 			ImagepostIdimagepost:           int32(pid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		}); err != nil {
@@ -81,9 +86,10 @@ func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []
 	return false
 }
 
-func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *Queries, wacid int64) bool {
+// InsertWordsToWritingSearch associates search words with a writing post.
+func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, wacid int64) bool {
 	for _, wid := range wordIds {
-		if err := queries.AddToForumWritingSearch(r.Context(), AddToForumWritingSearchParams{
+		if err := queries.AddToForumWritingSearch(r.Context(), db.AddToForumWritingSearchParams{
 			WritingIdwriting:               int32(wacid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		}); err != nil {
@@ -95,9 +101,10 @@ func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds 
 	return false
 }
 
-func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *Queries, cid int64) bool {
+// InsertWordsToForumSearch associates search words with a forum comment.
+func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, cid int64) bool {
 	for _, wid := range wordIds {
-		if err := queries.AddToForumCommentSearch(r.Context(), AddToForumCommentSearchParams{
+		if err := queries.AddToForumCommentSearch(r.Context(), db.AddToForumCommentSearchParams{
 			CommentsIdcomments:             int32(cid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		}); err != nil {

@@ -14,6 +14,7 @@ import (
 	faq "github.com/arran4/goa4web/handlers/faq"
 	forum "github.com/arran4/goa4web/handlers/forum"
 	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
+	information "github.com/arran4/goa4web/handlers/information"
 	languages "github.com/arran4/goa4web/handlers/languages"
 	linker "github.com/arran4/goa4web/handlers/linker"
 	news "github.com/arran4/goa4web/handlers/news"
@@ -226,7 +227,7 @@ func registerWritingsAdminRoutes(ar *mux.Router) {
 
 func registerInformationRoutes(r *mux.Router) {
 	ir := r.PathPrefix("/information").Subrouter()
-	ir.HandleFunc("", informationPage).Methods("GET")
+	ir.HandleFunc("", information.Page).Methods("GET")
 }
 
 func registerRegisterRoutes(r *mux.Router) {

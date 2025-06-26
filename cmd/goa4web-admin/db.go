@@ -31,6 +31,18 @@ func (c *dbCmd) Run() error {
 			return fmt.Errorf("migrate: %w", err)
 		}
 		return cmd.Run()
+	case "backup":
+		cmd, err := parseDbBackupCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("backup: %w", err)
+		}
+		return cmd.Run()
+	case "restore":
+		cmd, err := parseDbRestoreCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("restore: %w", err)
+		}
+		return cmd.Run()
 	default:
 		return fmt.Errorf("unknown db command %q", c.args[0])
 	}

@@ -20,6 +20,7 @@ type RuntimeConfig struct {
 	DBPort         string
 	DBName         string
 	DBLogVerbosity int
+	LogFlags       int
 
 	HTTPListen   string
 	HTTPHostname string
@@ -64,6 +65,7 @@ func NewRuntimeFlagSet(name string) *flag.FlagSet {
 	fs.String("db-port", "", "database port")
 	fs.String("db-name", "", "database name")
 	fs.Int("db-log-verbosity", 0, "database logging verbosity")
+	fs.Int("log-flags", 0, "request logging flags")
 
 	fs.String("listen", ":8080", "server listen address")
 	fs.String("hostname", "", "server base URL")
@@ -161,6 +163,7 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		dst  *int
 	}{
 		{"db-log-verbosity", config.EnvDBLogVerbosity, &cfg.DBLogVerbosity},
+		{"log-flags", config.EnvLogFlags, &cfg.LogFlags},
 		{"page-size-min", config.EnvPageSizeMin, &cfg.PageSizeMin},
 		{"page-size-max", config.EnvPageSizeMax, &cfg.PageSizeMax},
 		{"page-size-default", config.EnvPageSizeDefault, &cfg.PageSizeDefault},

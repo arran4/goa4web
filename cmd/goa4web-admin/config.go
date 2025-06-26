@@ -34,6 +34,8 @@ func (c *configCmd) Run() error {
 		cmd, err := parseConfigReloadCmd(c, c.args[1:])
 		if err != nil {
 			return fmt.Errorf("reload: %w", err)
+		}
+		return cmd.Run()
 	case "show":
 		cmd, err := parseConfigShowCmd(c, c.args[1:])
 		if err != nil {

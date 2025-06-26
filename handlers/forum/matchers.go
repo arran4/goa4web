@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // GetThreadAndTopic retrieves thread and topic details for the request and stores them in the context.
@@ -39,7 +40,9 @@ func GetThreadAndTopic() mux.MatcherFunc {
 			Idforumthread: int32(threadID),
 		})
 		if err != nil {
-			log.Printf("GetThreadAndTopic thread: %v", err)
+			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
+				log.Printf("GetThreadAndTopic thread uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
+			}
 			return false
 		}
 
@@ -48,11 +51,16 @@ func GetThreadAndTopic() mux.MatcherFunc {
 			Idforumtopic: threadRow.ForumtopicIdforumtopic,
 		})
 		if err != nil {
-			log.Printf("GetThreadAndTopic topic: %v", err)
+			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
+				log.Printf("GetThreadAndTopic topic uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
+			}
 			return false
 		}
 
 		if int(topicRow.Idforumtopic) != topicID {
+			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
+				log.Printf("GetThreadAndTopic mismatch uid=%d urlTopic=%d threadTopic=%d", uid, topicID, topicRow.Idforumtopic)
+			}
 			return false
 		}
 

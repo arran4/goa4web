@@ -63,6 +63,7 @@ CREATE TABLE `commentsSearch` (
   KEY `searchwordlist_has_comments_FKIndex1` (`searchwordlist_idsearchwordlist`),
   KEY `searchwordlist_has_comments_FKIndex2` (`comments_idcomments`)
 );
+CREATE TABLE `deactivated_comments` LIKE `comments`;
 
 CREATE TABLE `faq` (
   `idfaq` int(10) NOT NULL AUTO_INCREMENT,
@@ -293,6 +294,7 @@ CREATE TABLE `users` (
   `username` tinytext DEFAULT NULL,
   PRIMARY KEY (`idusers`)
 );
+CREATE TABLE `deactivated_users` LIKE `users`;
 
 CREATE TABLE `userstopiclevel` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,

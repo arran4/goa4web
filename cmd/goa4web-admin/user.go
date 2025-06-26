@@ -30,6 +30,18 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("add: %w", err)
 		}
 		return cmd.Run()
+	case "deactivate":
+		cmd, err := parseUserDeactivateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("deactivate: %w", err)
+		}
+		return cmd.Run()
+	case "restore":
+		cmd, err := parseUserRestoreCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("restore: %w", err)
+		}
+		return cmd.Run()
 	case "add-admin":
 		cmd, err := parseUserAddAdminCmd(c, c.args[1:])
 		if err != nil {

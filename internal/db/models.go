@@ -59,6 +59,23 @@ type Commentssearch struct {
 	CommentsIdcomments             int32
 }
 
+type DeactivatedComment struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+}
+
+type DeactivatedUser struct {
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+}
+
 type Faq struct {
 	Idfaq                        int32
 	FaqcategoriesIdfaqcategories int32

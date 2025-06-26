@@ -10,10 +10,11 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 func TestLinkerFeed(t *testing.T) {
-	rows := []*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow{
+	rows := []*dbpkg.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow{
 		{
 			Idlinker:       1,
 			Title:          sql.NullString{String: "Example", Valid: true},
@@ -42,7 +43,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := New(db)
+	queries := dbpkg.New(db)
 
 	// Approve item from queue id 1
 	mock.ExpectExec("INSERT INTO linker").

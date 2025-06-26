@@ -8,6 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/handlers/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
@@ -18,7 +19,7 @@ func TestGetThreadAndTopicTrue(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := New(db)
+	q := dbpkg.New(db)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).
@@ -52,7 +53,7 @@ func TestGetThreadAndTopicFalse(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := New(db)
+	q := dbpkg.New(db)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).
@@ -86,7 +87,7 @@ func TestGetThreadAndTopicError(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := New(db)
+	q := dbpkg.New(db)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).

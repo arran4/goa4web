@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 var (
@@ -29,7 +30,7 @@ func TestBlogsBloggerPage(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := New(db)
+	q := dbpkg.New(db)
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -86,7 +87,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := New(db)
+	queries := dbpkg.New(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE username = ?")).
 		WithArgs("bob").

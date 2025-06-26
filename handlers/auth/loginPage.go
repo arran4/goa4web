@@ -59,6 +59,10 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			log.Printf("No rows Error: %s", err)
+			if _, derr := queries.GetDeactivatedUserByUsername(r.Context(), sql.NullString{String: username, Valid: true}); derr == nil {
+				http.Error(w, "account disabled", http.StatusForbidden)
+				return
+			}
 			_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 				Username:  username,
 				IpAddress: strings.Split(r.RemoteAddr, ":")[0],

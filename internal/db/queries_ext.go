@@ -789,3 +789,43 @@ func (q *Queries) SetTemplateOverride(ctx context.Context, name, body string) er
 	_, err := q.db.ExecContext(ctx, "INSERT INTO template_overrides (name, body) VALUES (?, ?) ON DUPLICATE KEY UPDATE body = VALUES(body)", name, body)
 	return err
 }
+
+// DeactivateUser moves the user and their comments to the deactivated tables and removes permissions and sessions.
+func (q *Queries) DeactivateUser(ctx context.Context, userID int32) error {
+	if err := q.CopyUserToDeactivated(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.AnonymizeUser(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.CopyCommentsToDeactivatedByUser(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.AnonymizeCommentsByUser(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.DeletePermissionsByUser(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.DeleteSessionsByUser(ctx, userID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// RestoreUser moves a previously deactivated user and their comments back to the active tables.
+func (q *Queries) RestoreUser(ctx context.Context, userID int32) error {
+	if err := q.CopyUserFromDeactivated(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.RemoveDeactivatedUserByID(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.CopyCommentsFromDeactivatedByUser(ctx, userID); err != nil {
+		return err
+	}
+	if err := q.RemoveDeactivatedCommentsByUser(ctx, userID); err != nil {
+		return err
+	}
+	return nil
+}

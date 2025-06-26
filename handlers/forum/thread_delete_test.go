@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 func TestThreadDelete(t *testing.T) {
@@ -14,7 +15,7 @@ func TestThreadDelete(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := New(db)
+	q := dbpkg.New(db)
 	mock.ExpectExec("DeleteForumThread").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))

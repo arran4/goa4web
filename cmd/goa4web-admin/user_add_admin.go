@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+
+	"fmt"
 )
 
 // userAddAdminCmd implements "user add-admin".
@@ -19,7 +21,7 @@ func parseUserAddAdminCmd(parent *userCmd, args []string) (*userAddAdminCmd, err
 	fs := flag.NewFlagSet("add-admin", flag.ContinueOnError)
 	fs.StringVar(&c.Username, "username", "", "username")
 	fs.StringVar(&c.Email, "email", "", "email address")
-	fs.StringVar(&c.Password, "password", "", "password")
+	fs.StringVar(&c.Password, "password", "", "password (leave empty to prompt)")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -29,5 +31,12 @@ func parseUserAddAdminCmd(parent *userCmd, args []string) (*userAddAdminCmd, err
 }
 
 func (c *userAddAdminCmd) Run() error {
-	return createUser(c.userCmd.rootCmd, c.Username, c.Email, c.Password, true)
+	pw := c.Password
+	if pw == "" {
+		var err error
+		if pw, err = promptPassword(); err != nil {
+			return fmt.Errorf("prompt password: %w", err)
+		}
+	}
+	return createUser(c.userCmd.rootCmd, c.Username, c.Email, pw, true)
 }

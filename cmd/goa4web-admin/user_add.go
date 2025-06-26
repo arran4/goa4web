@@ -30,7 +30,7 @@ func parseUserAddCmd(parent *userCmd, args []string) (*userAddCmd, error) {
 	fs := flag.NewFlagSet("add", flag.ContinueOnError)
 	fs.StringVar(&c.Username, "username", "", "username")
 	fs.StringVar(&c.Email, "email", "", "email address")
-	fs.StringVar(&c.Password, "password", "", "password")
+	fs.StringVar(&c.Password, "password", "", "password (leave empty to prompt)")
 	fs.BoolVar(&c.Admin, "admin", false, "grant administrator rights")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
@@ -41,7 +41,14 @@ func parseUserAddCmd(parent *userCmd, args []string) (*userAddCmd, error) {
 }
 
 func (c *userAddCmd) Run() error {
-	return createUser(c.userCmd.rootCmd, c.Username, c.Email, c.Password, c.Admin)
+	pw := c.Password
+	if pw == "" {
+		var err error
+		if pw, err = promptPassword(); err != nil {
+			return fmt.Errorf("prompt password: %w", err)
+		}
+	}
+	return createUser(c.userCmd.rootCmd, c.Username, c.Email, pw, c.Admin)
 }
 
 func createUser(root *rootCmd, username, email, password string, admin bool) error {

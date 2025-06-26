@@ -268,6 +268,20 @@ columns and records the schema version.
 The `/admin/permissions/sections` page lists all distinct values found in the `permissions.section` column. It provides buttons to convert existing rows between `writing` and `writings`. These once-off tools help normalise data if older migrations used inconsistent names.
 
 The linked counts now let you drill down to view all permissions for a section via `/admin/permissions/sections/view?section=<name>`.
+<<<<<<< codex/add-password-prompt-helper-in-goa4web-admin
+
+## goa4web-admin CLI
+
+The `goa4web-admin` binary provides command-line tools for managing users and permissions.
+When using `user add` or `user add-admin`, omit the `--password` flag to enter a password interactively.
+
+Example:
+```bash
+goa4web-admin user add --username alice --email alice@example.com
+```
+This command prompts for the password on stderr if `--password` is not supplied.
+
+=======
 ## Command Line Interface
 
 Two binaries are produced by this repository:
@@ -308,3 +322,4 @@ go build -o goa4web-admin ./cmd/goa4web-admin
 # revoke a permission by ID
 ./goa4web-admin perm revoke --id 42
 ```
+>>>>>>> main

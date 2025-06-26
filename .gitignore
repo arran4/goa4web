@@ -104,3 +104,4 @@ fabric.properties
 /goa4web.exe
 /.session_secret
 dbbackups
+/uploads/

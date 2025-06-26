@@ -1,4 +1,4 @@
-package goa4web
+package notifications
 
 import (
 	"context"
@@ -9,10 +9,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/emailutil"
-	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 func TestNotificationsQueries(t *testing.T) {
@@ -21,7 +19,7 @@ func TestNotificationsQueries(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := New(db)
+	q := dbpkg.New(db)
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	if err := q.InsertNotification(context.Background(), dbpkg.InsertNotificationParams{UsersIdusers: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
 		t.Fatalf("insert: %v", err)
@@ -51,7 +49,7 @@ func TestNotificationsQueries(t *testing.T) {
 func TestNotificationsFeed(t *testing.T) {
 	r := httptest.NewRequest("GET", "/notifications/rss", nil)
 	n := []*dbpkg.Notification{{ID: 1, Link: sql.NullString{String: "/l", Valid: true}, Message: sql.NullString{String: "m", Valid: true}}}
-	feed := notif.NotificationsFeed(r, n)
+	feed := NotificationsFeed(r, n)
 	if len(feed.Items) != 1 || feed.Items[0].Link.Href != "/l" {
 		t.Fatalf("feed item incorrect")
 	}
@@ -70,7 +68,7 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := New(db)
+	q := dbpkg.New(db)
 	rows := sqlmock.NewRows([]string{
 		"idcomments", "forumthread_idforumthread", "users_idusers", "language_idlanguage",
 		"written", "text", "idusers", "email", "passwd", "passwd_algorithm", "username",
@@ -96,7 +94,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := New(db)
+	q := dbpkg.New(db)
 	mock.ExpectQuery("SELECT u.email").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
 	mock.ExpectQuery("SELECT u.email").
@@ -106,7 +104,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).AddRow(1, "a@test", "", "", "a"))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
-	n := notif.Notifier{EmailProvider: rec, Queries: q}
+	n := Notifier{EmailProvider: rec, Queries: q}
 	n.NotifyAdmins(context.Background(), "/p")
 	if rec.to != "a@test" {
 		t.Fatalf("expected mail to a@test got %s", rec.to)

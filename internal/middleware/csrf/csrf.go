@@ -1,7 +1,8 @@
-package goa4web
+package csrf
 
 import (
 	"crypto/sha256"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -10,8 +11,8 @@ import (
 	"github.com/gorilla/csrf"
 )
 
-// csrfEnabled reports if CSRF protection should be active.
-func csrfEnabled() bool {
+// CSRFEnabled reports if CSRF protection should be active.
+func CSRFEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvCSRFEnabled))
 	if v == "" {
 		return true
@@ -24,13 +25,13 @@ func csrfEnabled() bool {
 	}
 }
 
-// newCSRFMiddleware returns a wrapper enforcing CSRF protection using the
+// NewCSRFMiddleware returns middleware enforcing CSRF protection using the
 // provided session secret and HTTP configuration.
-func newCSRFMiddleware(secret string, hostname string, version string) routerWrapper {
+func NewCSRFMiddleware(secret string, hostname string, version string) func(http.Handler) http.Handler {
 	key := sha256.Sum256([]byte(secret))
 	origins := []string{}
 	if u, err := url.Parse(hostname); err == nil && u.Host != "" {
 		origins = append(origins, u.Host)
 	}
-	return routerWrapperFunc(csrf.Protect(key[:], csrf.Secure(version != "dev"), csrf.TrustedOrigins(origins)))
+	return csrf.Protect(key[:], csrf.Secure(version != "dev"), csrf.TrustedOrigins(origins))
 }

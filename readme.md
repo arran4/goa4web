@@ -175,49 +175,62 @@ The allowed page size range and default value are resolved in the following orde
 3. Environment variables (`PAGE_SIZE_MIN`, `PAGE_SIZE_MAX`, `PAGE_SIZE_DEFAULT`)
 4. Built-in defaults (5, 50 and 15)
 
-## Environment Variables
+## Configuration Reference
 
-The following environment variables can be used to configure the application:
+All settings can be supplied on the command line, via a configuration file or
+through environment variables. Flags override values in the config file which in
+turn override environment variables. The file uses the same keys as the
+environment variables listed below.
+| Key | CLI Flag | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `DB_USER` | `--db-user` | No | `a4web` | Database username. |
+| `DB_PASS` | `--db-pass` | No | `a4web` | Database password. |
+| `DB_HOST` | `--db-host` | No | `localhost` | Database host. |
+| `DB_PORT` | `--db-port` | No | `3306` | Database port. |
+| `DB_NAME` | `--db-name` | No | `a4web` | Database name. |
+| `EMAIL_PROVIDER` | `--email-provider` | No | `ses` | Selects the mail sending backend. |
+| `SMTP_HOST` | `--smtp-host` | No | - | SMTP server hostname. |
+| `SMTP_PORT` | `--smtp-port` | No | - | SMTP server port. |
+| `SMTP_USER` | `--smtp-user` | No | - | SMTP username. |
+| `SMTP_PASS` | `--smtp-pass` | No | - | SMTP password. |
+| `AWS_REGION` | `--aws-region` | No | - | AWS region for the SES provider. |
+| `JMAP_ENDPOINT` | `--jmap-endpoint` | No | - | JMAP API endpoint. |
+| `JMAP_ACCOUNT` | `--jmap-account` | No | - | JMAP account identifier. |
+| `JMAP_IDENTITY` | `--jmap-identity` | No | - | JMAP identity identifier. |
+| `JMAP_USER` | `--jmap-user` | No | - | Username for the JMAP provider. |
+| `JMAP_PASS` | `--jmap-pass` | No | - | Password for the JMAP provider. |
+| `CONFIG_FILE` | `--config-file` | No | - | Path to the main configuration file. |
+| `EMAIL_ENABLED` | n/a | No | `true` | Toggles sending queued emails. |
+| `NOTIFICATIONS_ENABLED` | n/a | No | `true` | Toggles the internal notification system. |
+| `CSRF_ENABLED` | n/a | No | `true` | Enables or disables CSRF protection. |
+| `FEEDS_ENABLED` | `--feeds-enabled` | No | `true` | Toggles RSS and Atom feed generation. |
+| `PAGE_SIZE_MIN` | `--page-size-min` | No | `5` | Minimum allowed page size. |
+| `PAGE_SIZE_MAX` | `--page-size-max` | No | `50` | Maximum allowed page size. |
+| `PAGE_SIZE_DEFAULT` | `--page-size-default` | No | `15` | Default page size. |
+| `STATS_START_YEAR` | `--stats-start-year` | No | `2005` | First year displayed on the usage stats page. |
+| `DB_LOG_VERBOSITY` | `--db-log-verbosity` | No | `0` | Database logging verbosity. |
+| `LISTEN` | `--listen` | No | `:8080` | Network address the HTTP server listens on. |
+| `HOSTNAME` | `--hostname` | No | `http://localhost:8080` | Base URL advertised by the HTTP server. |
+| `SESSION_SECRET` | `--session-secret` | No | generated | Secret used to encrypt session cookies. |
+| `SESSION_SECRET_FILE` | `--session-secret-file` | No | `.session_secret` | File containing the session secret. |
+| `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
+| `ADMIN_EMAILS` | n/a | No | - | Comma-separated list of administrator email addresses. |
+| `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
+| `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored. |
+| `IMAGE_MAX_BYTES` | `--image-max-bytes` | No | `5242880` | Maximum allowed size of uploaded images. |
+| `DEFAULT_LANGUAGE` | `--default-language` | No | - | Site's default language name. |
+Example config file:
 
-| Variable | Description |
-| --- | --- |
-| `DB_USER` | Environment variable for the database username. |
-| `DB_PASS` | Environment variable for the database password. |
-| `DB_HOST` | Environment variable for the database host. |
-| `DB_PORT` | Environment variable for the database port. |
-| `DB_NAME` | Environment variable for the database name. |
-| `EMAIL_PROVIDER` | Selects the mail sending backend. |
-| `SMTP_HOST` | SMTP server hostname. |
-| `SMTP_PORT` | SMTP server port. |
-| `SMTP_USER` | SMTP username. |
-| `SMTP_PASS` | SMTP password. |
-| `AWS_REGION` | AWS region for the SES provider. |
-| `JMAP_ENDPOINT` | JMAP API endpoint. |
-| `JMAP_ACCOUNT` | JMAP account identifier. |
-| `JMAP_IDENTITY` | JMAP identity identifier. |
-| `JMAP_USER` | Username for the JMAP provider. |
-| `JMAP_PASS` | Password for the JMAP provider. |
-| `CONFIG_FILE` | Specifies the path to the main application configuration file. |
-| `EMAIL_ENABLED` | Toggles sending queued emails. |
-| `NOTIFICATIONS_ENABLED` | Toggles the internal notification system. |
-| `CSRF_ENABLED` | Enables or disables CSRF protection. |
-| `FEEDS_ENABLED` | Toggles RSS and Atom feed generation. |
-| `PAGE_SIZE_MIN` | Defines the minimum allowed page size. |
-| `PAGE_SIZE_MAX` | Defines the maximum allowed page size. |
-| `PAGE_SIZE_DEFAULT` | Defines the default page size. |
-| `STATS_START_YEAR` | First year displayed on the usage stats page. |
-| `DB_LOG_VERBOSITY` | Controls the verbosity level of database logging. |
-| `DB_CONFIG_FILE` | Path to the database configuration file. |
-| `HTTP_CONFIG_FILE` | Path to the HTTP configuration file. |
-| `LISTEN` | Network address the HTTP server listens on. |
-| `HOSTNAME` | Base URL advertised by the HTTP server. |
-| `PAGINATION_CONFIG_FILE` | Path to the pagination configuration file. |
-| `SESSION_SECRET` | Secret used to encrypt session cookies. |
-| `SESSION_SECRET_FILE` | File containing the session secret. |
-| `SENDGRID_KEY` | API key for the SendGrid email provider. |
-| `EMAIL_CONFIG_FILE` | Path to the email configuration file. |
-| `ADMIN_EMAILS` | Comma-separated list of administrator email addresses. |
-| `ADMIN_NOTIFY` | Toggles sending administrator notification emails. |
+```conf
+DB_USER=myuser
+DB_PASS=secret
+EMAIL_PROVIDER=smtp
+LISTEN=:8080
+HOSTNAME=http://example.com:8080
+```
+
+See the files under `examples/` for more sample configurations.
+
 
 ### Implementing Custom Providers
 

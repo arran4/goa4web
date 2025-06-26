@@ -1,4 +1,4 @@
-package goa4web
+package csrf
 
 import (
 	"crypto/sha256"
@@ -15,6 +15,11 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+)
+
+var (
+	sessionName = "my-session"
+	store       *sessions.CookieStore
 )
 
 func TestCSRFLoginFlow(t *testing.T) {
@@ -119,7 +124,7 @@ func TestCSRFDisabled(t *testing.T) {
 	defer os.Unsetenv(config.EnvCSRFEnabled)
 
 	var handler http.Handler = r
-	if csrfEnabled() {
+	if CSRFEnabled() {
 		key := sha256.Sum256([]byte("testsecret"))
 		handler = csrf.Protect(key[:], csrf.Secure(false))(handler)
 	}

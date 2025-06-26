@@ -9,6 +9,7 @@ import (
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	email "github.com/arran4/goa4web/internal/email"
 	middleware "github.com/arran4/goa4web/internal/middleware"
+	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	"log"
 	"net/http"
@@ -87,8 +88,8 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		RequestLoggerMiddleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
-	if csrfEnabled() {
-		handler = newCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version).Wrap(handler)
+	if csrfmw.CSRFEnabled() {
+		handler = csrfmw.NewCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
 	srv = server.New(handler, store, dbPool, cfg)

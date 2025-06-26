@@ -1,4 +1,4 @@
-package goa4web
+package htmlutil
 
 import (
 	"fmt"
@@ -7,15 +7,18 @@ import (
 	"github.com/arran4/goa4web/a4code2html"
 )
 
-func anchorLink(anchor, linkName string) string {
+// AnchorLink returns an anchor tag linking to the given section.
+func AnchorLink(anchor, linkName string) string {
 	return fmt.Sprintf("<a href=\"#%s\">%s</a><br>", anchor, linkName)
 }
 
-func pageLink(pagename, linkName string) string {
+// PageLink returns a link to the supplied page.
+func PageLink(pagename, linkName string) string {
 	return fmt.Sprintf("<a href=\"?page=%s\">%s</a><br>", pagename, linkName)
 }
 
-func categoryLevel(categoryName string, level int) string {
+// CategoryLevel formats a category heading at the given level.
+func CategoryLevel(categoryName string, level int) string {
 	span := ""
 	switch level {
 	case 0:
@@ -28,7 +31,8 @@ func categoryLevel(categoryName string, level int) string {
 	return fmt.Sprintf("<p><a name=\"%s\"><span style=\"%s\">%s</span></a><br>\n", categoryName, span, categoryName)
 }
 
-func externalLink(pagename, linkName string) string {
+// ExternalLink sanitizes pagename and returns a link that opens in a new window.
+func ExternalLink(pagename, linkName string) string {
 	safe, ok := a4code2html.SanitizeURL(pagename)
 	if ok {
 		return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">%s</a>", safe, linkName)
@@ -36,7 +40,8 @@ func externalLink(pagename, linkName string) string {
 	return safe
 }
 
-func formatCategories(input string) string {
+// FormatCategories converts the markup used for category listings into HTML.
+func FormatCategories(input string) string {
 	var (
 		formatter          strings.Builder
 		currentLevel       uint
@@ -84,7 +89,7 @@ func formatCategories(input string) string {
 				if input[i+level+2] != '=' {
 					break
 				}
-				formatter.WriteString(anchorLink(categoryname.String(), categoryname.String()))
+				formatter.WriteString(AnchorLink(categoryname.String(), categoryname.String()))
 				i = i + level + 2 + func() int {
 					if input[i+level+3] == '\n' {
 						return 1
@@ -105,7 +110,8 @@ func formatCategories(input string) string {
 	return formatter.String()
 }
 
-func formatBlob(input string) string {
+// FormatBlob converts forum markup into HTML.
+func FormatBlob(input string) string {
 	var (
 		formatter          strings.Builder
 		strongToggle       bool
@@ -261,7 +267,7 @@ func formatBlob(input string) string {
 					if i+1 < len(input) && input[i+2] == '|' {
 						i++
 					}
-					formatter.WriteString(externalLink(linkaddr.String(), linkname.String()))
+					formatter.WriteString(ExternalLink(linkaddr.String(), linkname.String()))
 					i++
 					break
 				}

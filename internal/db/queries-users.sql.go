@@ -456,6 +456,22 @@ func (q *Queries) Login(ctx context.Context, arg LoginParams) (*User, error) {
 	return &i, err
 }
 
+const updateUserEmail = `-- name: UpdateUserEmail :exec
+UPDATE users
+SET email = ?
+WHERE idusers = ?
+`
+
+type UpdateUserEmailParams struct {
+	Email   sql.NullString
+	Idusers int32
+}
+
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.Email, arg.Idusers)
+	return err
+}
+
 const userByEmail = `-- name: UserByEmail :one
 SELECT idusers, email, passwd, passwd_algorithm, username
 FROM users

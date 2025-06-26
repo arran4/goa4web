@@ -8,17 +8,18 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
 func TestGetThreadAndTopicTrue(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqldb.Close()
 
-	q := New(db)
+	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).
@@ -46,13 +47,13 @@ func TestGetThreadAndTopicTrue(t *testing.T) {
 }
 
 func TestGetThreadAndTopicFalse(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqldb.Close()
 
-	q := New(db)
+	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).
@@ -80,13 +81,13 @@ func TestGetThreadAndTopicFalse(t *testing.T) {
 }
 
 func TestGetThreadAndTopicError(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqldb.Close()
 
-	q := New(db)
+	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).

@@ -46,7 +46,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)
 	count("SELECT COUNT(*) FROM writing", &data.Stats.Writings)
 
-	err := templates.RenderTemplate(w, "page.gohtml", data, corecommon.NewFuncs(r))
+	err := templates.RenderTemplate(w, "adminPage", data, corecommon.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

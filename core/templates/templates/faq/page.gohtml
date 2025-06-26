@@ -1,4 +1,5 @@
-{{ template "head" $ }}
+{{ define "faqPage" }}
+    {{ template "head" $ }}
     {{ range $index, $categoryFAQs := .FAQ }}
         <font size="5">Section: {{ $categoryFAQs.Category.Name.String }}</font><br>
         <table width="100%">
@@ -12,4 +13,5 @@
         {{ end }}
         </table>
     {{ end }}
-{{ template "tail" $ }}
+    {{ template "tail" $ }}
+{{ end }}

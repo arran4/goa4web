@@ -19,7 +19,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 	}
 
-	if err := templates.RenderTemplate(w, "searchPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "searchPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

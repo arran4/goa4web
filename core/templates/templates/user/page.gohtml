@@ -1,7 +1,9 @@
-{{ template "head" $ }}
-    User preferences:<br><br>
-    Modify <a href="/usr/lang">Language settings</a><br>
-    Modify <a href="/usr/email">Email and notification settings</a><br>
-    Modify <a href="/usr/paging">Pagination settings</a><br>
-    Modify <a href="/usr/page-size">Page size config</a><br>
-{{ template "tail" $ }}
+{{ define "userPage" }}
+    {{ template "head" $ }}
+        User preferences:<br><br>
+        Modify <a href="/usr/lang">Language settings</a><br>
+        Modify <a href="/usr/email">Email and notification settings</a><br>
+        Modify <a href="/usr/paging">Pagination settings</a><br>
+        Modify <a href="/usr/page-size">Page size config</a><br>
+    {{ template "tail" $ }}
+{{ end }}

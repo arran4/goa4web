@@ -20,7 +20,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomImageBBSIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "adminPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "imagebbsAdminPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

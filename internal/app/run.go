@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	goa4web "github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
@@ -23,10 +22,13 @@ import (
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	dbalias "github.com/arran4/goa4web/pkg/dbalias"
 	"github.com/arran4/goa4web/pkg/server"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"path/filepath"
+	"strings"
 )
 
 // ConfigFile stores the path to the configuration file if provided on the
@@ -64,7 +66,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 
 	dbPool := dbstart.GetDBPool()
-	if err := corelanguage.ValidateDefaultLanguage(context.Background(), goa4web.New(dbPool), cfg.DefaultLanguage); err != nil {
+	if err := corelanguage.ValidateDefaultLanguage(context.Background(), dbalias.New(dbPool), cfg.DefaultLanguage); err != nil {
 		return fmt.Errorf("default language: %w", err)
 	}
 
@@ -122,13 +124,13 @@ func safeGo(fn func()) {
 
 func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
 	log.Printf("Starting email worker")
-	safeGo(func() { emailutil.EmailQueueWorker(ctx, goa4web.New(db), provider, time.Minute) })
+	safeGo(func() { emailutil.EmailQueueWorker(ctx, dbalias.New(db), provider, time.Minute) })
 	log.Printf("Starting notification purger worker")
-	safeGo(func() { notifications.NotificationPurgeWorker(ctx, goa4web.New(db), time.Hour) })
+	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbalias.New(db), time.Hour) })
 }
 
 func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
-	if ue := goa4web.InitDB(cfg); ue != nil {
+	if ue := dbstart.InitDB(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if err := checkUploadDir(cfg); err != nil {
@@ -173,4 +175,3 @@ type routerWrapper interface {
 type routerWrapperFunc func(http.Handler) http.Handler
 
 func (f routerWrapperFunc) Wrap(h http.Handler) http.Handler { return f(h) }
-

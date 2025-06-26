@@ -2,17 +2,19 @@ package goa4web
 
 import (
 	"context"
-	"github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/middleware"
-	routerpkg "github.com/arran4/goa4web/internal/router"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/middleware"
+	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/pkg/coredata"
 )
 
 func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "administrator"})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &coredata.CoreData{SecurityLevel: "administrator"})
 	req = req.WithContext(ctx)
 
 	called := false
@@ -35,7 +37,7 @@ func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 
 func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &coredata.CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 
 	called := false

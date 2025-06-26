@@ -65,11 +65,10 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	fs := runtimeconfig.NewRuntimeFlagSet(args[0])
-	r.fs = fs
-	fs.Usage = r.Usage
 	fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
 	fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
 	_ = fs.Parse(args[1:])
+	r.fs = fs
 	r.args = fs.Args()
 	r.cfg = runtimeconfig.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
 	return r, nil
@@ -87,6 +86,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("user: %w", err)
 		}
 		return c.Run()
+	case "db":
+		c, err := parseDbCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("db: %w", err)
+		}
+		return c.Run()
 	case "perm":
 		c, err := parsePermCmd(r, r.args[1:])
 		if err != nil {
@@ -94,7 +99,6 @@ func (r *rootCmd) Run() error {
 		}
 		return c.Run()
 	default:
-		r.fs.Usage()
 		return fmt.Errorf("unknown command %q", r.args[0])
 	}
 }

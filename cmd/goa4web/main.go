@@ -23,7 +23,7 @@ func main() {
 		cfgPath = os.Getenv(config.EnvConfigFile)
 	}
 
-	fileVals := goa4web.LoadAppConfigFile(core.OSFS{}, cfgPath)
+	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 
 	fs := runtimeconfig.NewRuntimeFlagSet(os.Args[0])
 	var (

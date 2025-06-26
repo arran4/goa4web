@@ -113,8 +113,8 @@ func (c *Configuration) get(key string) string {
 	return c.data[key]
 }
 
-func (c *Configuration) readConfiguration(filename string) {
-	b, err := readFile(filename)
+func (c *Configuration) readConfiguration(filename string, fs core.FileSystem) {
+	b, err := fs.ReadFile(filename)
 	if err != nil {
 		return
 	}

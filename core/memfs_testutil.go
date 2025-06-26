@@ -1,4 +1,4 @@
-package goa4web
+package core
 
 import (
 	"io/fs"
@@ -30,14 +30,8 @@ func (m *memFS) WriteFile(name string, data []byte, perm fs.FileMode) error {
 	return nil
 }
 
-func useMemFS(t *testing.T) *memFS {
-	m := newMemFS()
-	origRead, origWrite := readFile, writeFile
-	readFile = m.ReadFile
-	writeFile = m.WriteFile
-	t.Cleanup(func() {
-		readFile = origRead
-		writeFile = origWrite
-	})
-	return m
+// UseMemFS returns a memory-backed filesystem for tests.
+func UseMemFS(t *testing.T) *memFS {
+	t.Helper()
+	return newMemFS()
 }

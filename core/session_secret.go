@@ -17,7 +17,7 @@ import (
 //     or a default file named ".session_secret" in the working directory.
 //
 // If the file does not exist, a new random secret is generated and saved.
-func LoadSessionSecret(cliSecret, path string) (string, error) {
+func LoadSessionSecret(cliSecret, path string, fs FileSystem) (string, error) {
 	if cliSecret != "" {
 		return cliSecret, nil
 	}
@@ -33,7 +33,7 @@ func LoadSessionSecret(cliSecret, path string) (string, error) {
 		}
 	}
 
-	b, err := readFile(path)
+	b, err := fs.ReadFile(path)
 	if err == nil {
 		secret := strings.TrimSpace(string(b))
 		if secret != "" {
@@ -49,7 +49,7 @@ func LoadSessionSecret(cliSecret, path string) (string, error) {
 		return "", err
 	}
 	secret := hex.EncodeToString(buf)
-	if err := writeFile(path, []byte(secret), 0600); err != nil {
+	if err := fs.WriteFile(path, []byte(secret), 0600); err != nil {
 		return "", err
 	}
 	return secret, nil

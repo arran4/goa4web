@@ -1,4 +1,4 @@
-package goa4web
+package core
 
 import (
 	"context"
@@ -9,20 +9,29 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
-func TestCoreAdderMiddlewareBadSession(t *testing.T) {
+var (
+	store       *sessions.CookieStore
+	sessionName = "test-session"
+)
+
+func TestSessionMiddlewareBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = sessionName
-	h := CoreAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	Store = store
+	SessionName = sessionName
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := GetSession(r); err != nil {
+			SessionErrorRedirect(w, r, err)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
-	}))
+	})
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, New(nil))
+	ctx := context.WithValue(req.Context(), common.KeyQueries, dbpkg.New(nil))
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
@@ -37,12 +46,12 @@ func TestCoreAdderMiddlewareBadSession(t *testing.T) {
 
 func TestGetSessionOrFailBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = sessionName
+	Store = store
+	SessionName = sessionName
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
 	rr := httptest.NewRecorder()
-	sess, ok := core.GetSessionOrFail(rr, req)
+	sess, ok := GetSessionOrFail(rr, req)
 	if ok {
 		t.Fatalf("expected failure, got session %v", sess)
 	}

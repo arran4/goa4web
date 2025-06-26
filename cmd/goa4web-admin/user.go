@@ -47,6 +47,12 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("make-admin: %w", err)
 		}
 		return cmd.Run()
+	case "update":
+		cmd, err := parseUserUpdateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("update: %w", err)
+		}
+		return cmd.Run()
 	case "list":
 		cmd, err := parseUserListCmd(c, c.args[1:])
 		if err != nil {

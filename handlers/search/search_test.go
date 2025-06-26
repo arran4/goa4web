@@ -11,6 +11,44 @@ import (
 	"testing"
 )
 
+func TestIsAlphanumericOrPunctuation(t *testing.T) {
+	cases := []struct {
+		r    rune
+		want bool
+	}{
+		{'a', true},
+		{'Z', true},
+		{'0', true},
+		{'-', true},
+		{'\'', true},
+		{'!', false},
+	}
+	for _, c := range cases {
+		if got := isAlphanumericOrPunctuation(c.r); got != c.want {
+			t.Errorf("%q got %v want %v", string(c.r), got, c.want)
+		}
+	}
+}
+
+func TestIsAlphanumericOrPunctuationExtra(t *testing.T) {
+	tests := []struct {
+		r    rune
+		want bool
+	}{
+		{'ñ', true},
+		{'?', false},
+		{'-', true},
+		{'é', true},
+		{'.', false},
+		{'世', true},
+	}
+	for _, tt := range tests {
+		if got := isAlphanumericOrPunctuation(tt.r); got != tt.want {
+			t.Errorf("%q got %v want %v", string(tt.r), got, tt.want)
+		}
+	}
+}
+
 func TestBreakupTextToWords(t *testing.T) {
 	in := "Hello, world! It's-me"
 	words := searchutil.BreakupTextToWords(in)
@@ -34,6 +72,9 @@ func TestBreakupTextToWordsEdge(t *testing.T) {
 		{"end.", []string{"end"}},
 		{"it's foo", []string{"it's", "foo"}},
 		{"---abc", []string{"---abc"}},
+		{"Hello...world!!", []string{"Hello", "world"}},
+		{"foo   bar", []string{"foo", "bar"}},
+		{"こんにちは 世界", []string{"こんにちは", "世界"}},
 	}
 	for _, c := range cases {
 		got := searchutil.BreakupTextToWords(c.in)

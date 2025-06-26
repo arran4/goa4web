@@ -43,7 +43,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	var pthid int32 = blog.ForumthreadIdforumthread
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
-		String: BloggerTopicName,
+		String: hcommon.BloggerTopicName,
 		Valid:  true,
 	})
 	var ptid int32
@@ -51,11 +51,11 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		ptidi, err := queries.CreateForumTopic(r.Context(), CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
-				String: BloggerTopicName,
+				String: hcommon.BloggerTopicName,
 				Valid:  true,
 			},
 			Description: sql.NullString{
-				String: BloggerTopicDescription,
+				String: hcommon.BloggerTopicDescription,
 				Valid:  true,
 			},
 		})

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -18,33 +17,25 @@ import (
 var version = "dev"
 
 func main() {
-	early := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	var cfgPath string
-	var showVersion bool
-	early.StringVar(&cfgPath, "config-file", "", "path to application configuration file")
-	early.BoolVar(&showVersion, "version", false, "print version and exit")
-	_ = early.Parse(os.Args[1:])
-	if cfgPath == "" {
-		cfgPath = os.Getenv(config.EnvConfigFile)
-	}
+	fs := runtimeconfig.NewRuntimeFlagSet(os.Args[0])
+	var (
+		cfgPath           string
+		showVersion       bool
+		sessionSecret     string
+		sessionSecretFile string
+	)
+	fs.StringVar(&cfgPath, "config-file", os.Getenv(config.EnvConfigFile), "path to application configuration file")
+	fs.BoolVar(&showVersion, "version", false, "print version and exit")
+	fs.StringVar(&sessionSecret, "session-secret", "", "session secret key")
+	fs.StringVar(&sessionSecretFile, "session-secret-file", "", "path to session secret file")
 
+	_ = fs.Parse(os.Args[1:])
 	if showVersion {
 		fmt.Println(version)
 		return
 	}
 
 	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
-
-	fs := runtimeconfig.NewRuntimeFlagSet(os.Args[0])
-	var (
-		sessionSecret     string
-		sessionSecretFile string
-	)
-	fs.StringVar(&sessionSecret, "session-secret", "", "session secret key")
-	fs.StringVar(&sessionSecretFile, "session-secret-file", "", "path to session secret file")
-	fs.StringVar(&cfgPath, "config-file", cfgPath, "path to application configuration file")
-
-	_ = fs.Parse(os.Args[1:])
 
 	app.ConfigFile = cfgPath
 

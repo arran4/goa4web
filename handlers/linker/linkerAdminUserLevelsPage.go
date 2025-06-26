@@ -46,12 +46,12 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 
 	var perms []*PermissionUser
 	for _, p := range rows {
-		u, err := queries.GetUserById(r.Context(), p.UsersIdusers)
+		row, err := queries.GetUserById(r.Context(), p.UsersIdusers)
 		if err != nil {
 			log.Printf("GetUserById Error: %s", err)
 			continue
 		}
-		perms = append(perms, &PermissionUser{Permission: p, Username: u.Username, Email: u.Email})
+		perms = append(perms, &PermissionUser{Permission: p, Username: row.Username, Email: row.Email})
 	}
 
 	if data.Search != "" {

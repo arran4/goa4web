@@ -35,6 +35,7 @@ type rootCmd struct {
 	ConfigFile string
 	args       []string
 	db         *sql.DB
+	Verbosity  int
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
@@ -117,22 +118,32 @@ func (r *rootCmd) Run() error {
 		c, err := parseBoardCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("board: %w", err)
+		}
+		return c.Run()
 	case "ipban":
 		c, err := parseIpBanCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("ipban: %w", err)
+		}
+		return c.Run()
 	case "audit":
 		c, err := parseAuditCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("audit: %w", err)
+		}
+		return c.Run()
 	case "lang":
 		c, err := parseLangCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("lang: %w", err)
+		}
+		return c.Run()
 	case "server":
 		c, err := parseServerCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("server: %w", err)
+		}
+		return c.Run()
 	case "config":
 		c, err := parseConfigCmd(r, r.args[1:])
 		if err != nil {

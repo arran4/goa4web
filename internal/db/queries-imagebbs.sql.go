@@ -159,7 +159,7 @@ func (q *Queries) GetAllImageBoards(ctx context.Context) ([]*Imageboard, error) 
 }
 
 const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
@@ -177,6 +177,7 @@ type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow struct 
 	Fullimage                sql.NullString
 	FileSize                 int32
 	Approved                 bool
+	DeletedAt                sql.NullTime
 	Username                 sql.NullString
 	Comments                 sql.NullInt32
 }
@@ -201,6 +202,7 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 			&i.Fullimage,
 			&i.FileSize,
 			&i.Approved,
+			&i.DeletedAt,
 			&i.Username,
 			&i.Comments,
 		); err != nil {
@@ -218,7 +220,7 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 }
 
 const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
@@ -236,6 +238,7 @@ type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow struct {
 	Fullimage                sql.NullString
 	FileSize                 int32
 	Approved                 bool
+	DeletedAt                sql.NullTime
 	Username                 sql.NullString
 	Comments                 sql.NullInt32
 }
@@ -254,6 +257,7 @@ func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ct
 		&i.Fullimage,
 		&i.FileSize,
 		&i.Approved,
+		&i.DeletedAt,
 		&i.Username,
 		&i.Comments,
 	)
@@ -278,7 +282,7 @@ func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*I
 }
 
 const getImagePostsByUserDescending = `-- name: GetImagePostsByUserDescending :many
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
@@ -304,6 +308,7 @@ type GetImagePostsByUserDescendingRow struct {
 	Fullimage                sql.NullString
 	FileSize                 int32
 	Approved                 bool
+	DeletedAt                sql.NullTime
 	Username                 sql.NullString
 	Comments                 sql.NullInt32
 }
@@ -328,6 +333,7 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 			&i.Fullimage,
 			&i.FileSize,
 			&i.Approved,
+			&i.DeletedAt,
 			&i.Username,
 			&i.Comments,
 		); err != nil {

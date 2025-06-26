@@ -35,5 +35,5 @@ const (
 	Alphabet = "abcdefghijklmnopqrstuvwxyz"
 
 	// ExpectedSchemaVersion defines the required database schema version.
-	ExpectedSchemaVersion = 7
+	ExpectedSchemaVersion = 9
 )

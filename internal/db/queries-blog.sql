@@ -13,7 +13,7 @@ SET forumthread_idforumthread = ?
 WHERE idblogs = ?;
 
 -- name: GetBlogEntriesForUserDescending :many
-SELECT b.*, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
@@ -23,7 +23,7 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetBlogEntriesForUserDescendingLanguages :many
-SELECT b.*, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
@@ -38,7 +38,7 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetBlogEntriesByIdsDescending :many
-SELECT b.*
+SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
@@ -47,7 +47,7 @@ ORDER BY b.written DESC
 ;
 
 -- name: GetBlogEntryForUserById :one
-SELECT b.*, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
@@ -77,7 +77,7 @@ AND cs.blogs_idblogs IN (sqlc.slice('ids'))
 
 
 -- name: GetAllBlogEntriesByUser :many
-SELECT b.*, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread

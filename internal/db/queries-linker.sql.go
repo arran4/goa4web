@@ -192,7 +192,7 @@ func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*L
 }
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
@@ -397,7 +397,7 @@ func (q *Queries) GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinker
 }
 
 const getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending = `-- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
@@ -438,7 +438,7 @@ func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(
 }
 
 const getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending = `-- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending :many
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
@@ -505,7 +505,7 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 }
 
 const getLinkerItemsByUserDescending = `-- name: GetLinkerItemsByUserDescending :many
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkercategory_idlinkercategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.comments, lc.title as Category_Title, u.username as PosterUsername
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.comments, lc.title as Category_Title, u.username as PosterUsername
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory

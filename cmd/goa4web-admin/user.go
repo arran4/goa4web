@@ -59,6 +59,18 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("list: %w", err)
 		}
 		return cmd.Run()
+	case "deactivate":
+		cmd, err := parseUserDeactivateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("deactivate: %w", err)
+		}
+		return cmd.Run()
+	case "activate":
+		cmd, err := parseUserActivateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("activate: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown user command %q", c.args[0])
@@ -74,8 +86,11 @@ func (c *userCmd) Usage() {
 	fmt.Fprintln(w, "  add-admin\tadd a user with administrator rights")
 	fmt.Fprintln(w, "  make-admin\tgrant administrator rights to a user")
 	fmt.Fprintln(w, "  list\tlist users")
+	fmt.Fprintln(w, "  deactivate\tdeactivate a user")
+	fmt.Fprintln(w, "  activate\trestore a deactivated user")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username bob -password secret\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s user deactivate -username bob\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s user list\n\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

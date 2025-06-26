@@ -34,7 +34,7 @@ func (c *configSetCmd) Run() error {
 	if c.Key == "" {
 		return fmt.Errorf("key required")
 	}
-	path := c.rootCmd.configPath
+	path := c.rootCmd.ConfigFile
 	if err := config.UpdateConfigKey(core.OSFS{}, path, c.Key, c.Value); err != nil {
 		return fmt.Errorf("update config: %w", err)
 	}

@@ -114,17 +114,18 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
-<<<<<<< codex/create-server_shutdown.go-with-timeout
+	case "lang":
+		c, err := parseLangCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("lang: %w", err)
 	case "server":
 		c, err := parseServerCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("server: %w", err)
-=======
 	case "config":
 		c, err := parseConfigCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("config: %w", err)
->>>>>>> main
 		}
 		return c.Run()
 	default:
@@ -139,12 +140,14 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  user\tmanage users")
 	fmt.Fprintln(w, "  perm\tmanage permissions")
-<<<<<<< codex/create-server_shutdown.go-with-timeout
+	fmt.Fprintln(w, "  lang\tmanage languages")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s lang list\n\n", r.fs.Name())
 	fmt.Fprintln(w, "  server\tmanage the running server")
-=======
 	fmt.Fprintln(w, "  email\tmanage emails")
 	fmt.Fprintln(w, "  config\tmanage configuration")
->>>>>>> main
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
 	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())

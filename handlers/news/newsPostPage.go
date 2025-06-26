@@ -17,6 +17,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -316,11 +317,11 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := SearchWordIdsFromTextLocal(w, r, text, queries)
+	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
-	if InsertWordsToForumSearchLocal(w, r, wordIds, queries, cid) {
+	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

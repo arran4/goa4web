@@ -12,6 +12,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 )
 
 func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +129,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 }
 
 func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := breakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
 	if len(searchWords) == 0 {

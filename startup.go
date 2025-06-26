@@ -5,27 +5,25 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	common "github.com/arran4/goa4web/core/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/middleware"
+	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/go-sql-driver/mysql"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
-
-	common "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/internal/middleware"
-	"github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/runtimeconfig"
-	"github.com/go-sql-driver/mysql"
 )
 
 var (
 	dbPool         *sql.DB
 	dbLogVerbosity int
 )
+
+// GetDBPool returns the active database connection pool.
+func GetDBPool() *sql.DB { return dbPool }
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
@@ -128,12 +126,4 @@ func ensureSchema(ctx context.Context, db *sql.DB) error {
 		return fmt.Errorf("database schema version %d does not match expected %d", version, hcommon.ExpectedSchemaVersion)
 	}
 	return nil
-}
-
-// startWorkers launches goroutines for email processing and notification cleanup.
-func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
-	log.Printf("Starting email worker")
-	safeGo(func() { emailutil.EmailQueueWorker(ctx, New(db), provider, time.Minute) })
-	log.Printf("Starting notification purger worker")
-	safeGo(func() { notifications.NotificationPurgeWorker(ctx, New(db), time.Hour) })
 }

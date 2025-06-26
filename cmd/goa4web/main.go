@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/app"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -36,7 +36,7 @@ func main() {
 
 	_ = fs.Parse(os.Args[1:])
 
-	goa4web.ConfigFile = cfgPath
+	app.ConfigFile = cfgPath
 
 	secretPath := sessionSecretFile
 	if secretPath == "" {
@@ -54,7 +54,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := goa4web.RunWithConfig(ctx, cfg, secret); err != nil {
+	if err := app.RunWithConfig(ctx, cfg, secret); err != nil {
 		log.Printf("%v", err)
 		os.Exit(1)
 	}

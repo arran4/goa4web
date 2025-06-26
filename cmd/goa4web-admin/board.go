@@ -48,6 +48,12 @@ func (c *boardCmd) Run() error {
 			return fmt.Errorf("delete: %w", err)
 		}
 		return cmd.Run()
+	case "update":
+		cmd, err := parseBoardUpdateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("update: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown board command %q", c.args[0])
@@ -62,9 +68,11 @@ func (c *boardCmd) Usage() {
 	fmt.Fprintln(w, "  list\tlist boards")
 	fmt.Fprintln(w, "  create\tcreate a board")
 	fmt.Fprintln(w, "  delete\tdelete a board")
+	fmt.Fprintln(w, "  update\tupdate a board")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s board list\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s board create -name foo -description 'bar'\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s board delete -id 1\n\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s board delete -id 1\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s board update -id 1 -name new\n\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

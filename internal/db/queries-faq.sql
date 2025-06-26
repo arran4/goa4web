@@ -13,7 +13,7 @@ SET name = ?
 WHERE idfaqCategories = ?;
 
 -- name: DeleteFAQCategory :exec
-DELETE FROM faqCategories
+UPDATE faqCategories SET deleted_at = NOW()
 WHERE idfaqCategories = ?;
 
 -- name: CreateFAQCategory :exec
@@ -30,7 +30,7 @@ SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
 WHERE idfaq = ?;
 
 -- name: DeleteFAQ :exec
-DELETE FROM faq
+UPDATE faq SET deleted_at = NOW()
 WHERE idfaq = ?;
 
 -- name: GetAllFAQCategories :many

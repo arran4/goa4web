@@ -120,3 +120,18 @@ func (q *Queries) ListBannedIps(ctx context.Context) ([]*BannedIp, error) {
 	}
 	return items, nil
 }
+
+const updateBannedIp = `-- name: UpdateBannedIp :exec
+UPDATE banned_ips SET reason = ?, expires_at = ? WHERE id = ?
+`
+
+type UpdateBannedIpParams struct {
+	Reason    sql.NullString
+	ExpiresAt sql.NullTime
+	ID        int32
+}
+
+func (q *Queries) UpdateBannedIp(ctx context.Context, arg UpdateBannedIpParams) error {
+	_, err := q.db.ExecContext(ctx, updateBannedIp, arg.Reason, arg.ExpiresAt, arg.ID)
+	return err
+}

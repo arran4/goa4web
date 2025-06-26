@@ -81,7 +81,7 @@ func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams
 }
 
 const deleteImageBoard = `-- name: DeleteImageBoard :exec
-DELETE FROM imageboard WHERE idimageboard = ?
+UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?
 `
 
 func (q *Queries) DeleteImageBoard(ctx context.Context, idimageboard int32) error {

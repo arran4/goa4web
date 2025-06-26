@@ -37,7 +37,7 @@ func (q *Queries) CreateFAQQuestion(ctx context.Context, arg CreateFAQQuestionPa
 }
 
 const deleteFAQ = `-- name: DeleteFAQ :exec
-DELETE FROM faq
+UPDATE faq SET deleted_at = NOW()
 WHERE idfaq = ?
 `
 
@@ -47,7 +47,7 @@ func (q *Queries) DeleteFAQ(ctx context.Context, idfaq int32) error {
 }
 
 const deleteFAQCategory = `-- name: DeleteFAQCategory :exec
-DELETE FROM faqCategories
+UPDATE faqCategories SET deleted_at = NOW()
 WHERE idfaqCategories = ?
 `
 

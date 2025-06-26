@@ -75,7 +75,7 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 		"idpreferences", "language_idlanguage_2", "users_idusers_2", "emailforumupdates",
 		"page_size",
 	}).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "p", "", "bob", 1, 1, 2, 1, 10)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idcomments, forumthread_idforumthread, c.users_idusers, c.language_idlanguage, written, text, idusers, email, passwd, passwd_algorithm, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size\nFROM comments c, users u, preferences p\nWHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?\nGROUP BY u.idusers")).
+	mock.ExpectQuery(regexp.QuoteMeta("-- name: ListUsersSubscribedToThread :many\nSELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage,\n    c.written, c.text, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username,\n    p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size\nFROM comments c, users u, preferences p\nWHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?\nGROUP BY u.idusers")).
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)
 	rec := &dummyProvider{}

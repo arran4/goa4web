@@ -41,6 +41,15 @@ func (q *Queries) CreateNewsPost(ctx context.Context, arg CreateNewsPostParams) 
 	return err
 }
 
+const deactivateNewsPost = `-- name: DeactivateNewsPost :exec
+UPDATE siteNews SET deleted_at = NOW() WHERE idsiteNews = ?
+`
+
+func (q *Queries) DeactivateNewsPost(ctx context.Context, idsitenews int32) error {
+	_, err := q.db.ExecContext(ctx, deactivateNewsPost, idsitenews)
+	return err
+}
+
 const getForumThreadIdByNewsPostId = `-- name: GetForumThreadIdByNewsPostId :one
 SELECT s.forumthread_idforumthread, u.idusers
 FROM siteNews s

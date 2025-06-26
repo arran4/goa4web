@@ -13,6 +13,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // RegisterPage renders the user registration form.
@@ -34,7 +35,9 @@ func RegisterPage(w http.ResponseWriter, r *http.Request) {
 
 // RegisterActionPage handles user creation from the registration form.
 func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
-	log.Printf("registration attempt %s", r.PostFormValue("username"))
+	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+		log.Printf("registration attempt %s", r.PostFormValue("username"))
+	}
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -124,7 +127,9 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("registration success uid=%d", lastInsertID)
+	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+		log.Printf("registration success uid=%d", lastInsertID)
+	}
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 

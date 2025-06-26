@@ -213,6 +213,7 @@ environment variables listed below.
 | `PAGE_SIZE_DEFAULT` | `--page-size-default` | No | `15` | Default page size. |
 | `STATS_START_YEAR` | `--stats-start-year` | No | `2005` | First year displayed on the usage stats page. |
 | `DB_LOG_VERBOSITY` | `--db-log-verbosity` | No | `0` | Database logging verbosity. |
+| `LOG_FLAGS` | `--log-flags` | No | `0` | Bit mask selecting HTTP request logs. |
 | `LISTEN` | `--listen` | No | `:8080` | Network address the HTTP server listens on. |
 | `HOSTNAME` | `--hostname` | No | `http://localhost:8080` | Base URL advertised by the HTTP server. |
 | `SESSION_SECRET` | `--session-secret` | No | generated | Secret used to encrypt session cookies. |

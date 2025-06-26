@@ -1,21 +1,22 @@
-package goa4web
+package router
 
 import (
 	"context"
-	"github.com/arran4/goa4web/handlers/common"
-	routerpkg "github.com/arran4/goa4web/internal/router"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	corecommon "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers/common"
 )
 
 func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "administrator"})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{SecurityLevel: "administrator"})
 	req = req.WithContext(ctx)
 
 	called := false
-	h := routerpkg.RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -32,11 +33,11 @@ func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 
 func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{SecurityLevel: "reader"})
 	req = req.WithContext(ctx)
 
 	called := false
-	h := routerpkg.RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 	}))
 

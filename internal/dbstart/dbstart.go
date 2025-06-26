@@ -1,20 +1,21 @@
-package goa4web
+package dbstart
 
 import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/go-sql-driver/mysql"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 var (
@@ -59,7 +60,7 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	if err := dbPool.Ping(); err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
-	if err := ensureSchema(context.Background(), dbPool); err != nil {
+	if err := EnsureSchema(context.Background(), dbPool); err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
 	middleware.SetDBPool(dbPool, dbLogVerbosity)
@@ -69,22 +70,19 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	return nil
 }
 
-// checkDatabase attempts to connect and ping the configured database.
-func checkDatabase(cfg runtimeconfig.RuntimeConfig) *common.UserError {
-	return InitDB(cfg)
-}
-
-func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
-	if ue := checkDatabase(cfg); ue != nil {
+// PerformStartupChecks checks the database and upload directory configuration.
+func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
+	if ue := InitDB(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
-	if ue := checkUploadDir(cfg); ue != nil {
+	if ue := CheckUploadDir(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	return nil
 }
 
-func checkUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
+// CheckUploadDir verifies that the upload directory is accessible.
+func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	if cfg.ImageUploadDir == "" {
 		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}
@@ -104,8 +102,8 @@ func checkUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	return nil
 }
 
-// ensureSchema creates core tables if they do not exist and inserts a version row.
-func ensureSchema(ctx context.Context, db *sql.DB) error {
+// EnsureSchema creates core tables if they do not exist and inserts a version row.
+func EnsureSchema(ctx context.Context, db *sql.DB) error {
 	if _, err := db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)"); err != nil {
 		return fmt.Errorf("create schema_version: %w", err)
 	}

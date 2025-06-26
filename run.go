@@ -10,6 +10,7 @@ import (
 	news "github.com/arran4/goa4web/handlers/news"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	email "github.com/arran4/goa4web/internal/email"
+	middleware "github.com/arran4/goa4web/internal/middleware"
 	"log"
 	"net/http"
 	"os"
@@ -85,7 +86,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		userhandlers.UserAdderMiddleware,
 		CoreAdderMiddleware,
 		RequestLoggerMiddleware,
-		SecurityHeadersMiddleware,
+		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if csrfEnabled() {
 		handler = newCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version).Wrap(handler)

@@ -1,13 +1,15 @@
-package goa4web
+package middleware
 
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/handlers/common"
 	"net"
 	"net/http"
 	"net/netip"
 	"strings"
+
+	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func normalizeIP(ip string) string {
@@ -50,10 +52,11 @@ func requestIP(r *http.Request) string {
 	return normalizeIP(host)
 }
 
+// SecurityHeadersMiddleware enforces IP bans and sets common security headers.
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
-		if queries, ok := r.Context().Value(common.KeyQueries).(*Queries); ok {
+		if queries, ok := r.Context().Value(common.KeyQueries).(*db.Queries); ok {
 			bans, err := queries.ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

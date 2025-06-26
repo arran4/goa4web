@@ -3,7 +3,6 @@ package admin
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"fmt"
 	"log"
 	"net/smtp"
@@ -16,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -138,8 +138,7 @@ func getUpdateEmailText(ctx context.Context) string {
 	return defaultUpdateEmailText
 }
 
-//go:embed updateEmail.txt
-var defaultUpdateEmailText string
+var defaultUpdateEmailText = templates.UpdateEmailText
 
 func getAdminEmails(ctx context.Context, q *Queries) []string {
 	env := os.Getenv(config.EnvAdminEmails)

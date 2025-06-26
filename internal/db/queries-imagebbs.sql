@@ -57,7 +57,7 @@ FROM imageboard b
 SELECT * FROM imageboard WHERE idimageboard = ?;
 
 -- name: DeleteImageBoard :exec
-DELETE FROM imageboard WHERE idimageboard = ?;
+UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;
 
 -- name: ApproveImagePost :exec
 UPDATE imagepost SET approved = 1 WHERE idimagepost = ?;

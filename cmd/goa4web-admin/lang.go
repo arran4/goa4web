@@ -41,6 +41,12 @@ func (c *langCmd) Run() error {
 			return fmt.Errorf("list: %w", err)
 		}
 		return cmd.Run()
+	case "update":
+		cmd, err := parseLangUpdateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("update: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown lang command %q", c.args[0])
@@ -53,8 +59,10 @@ func (c *langCmd) Usage() {
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  list\tlist languages")
 	fmt.Fprintln(w, "  add\tadd a language")
+	fmt.Fprintln(w, "  update\tupdate a language")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s lang list\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s lang add --code en --name English\n\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s lang add --code en --name English\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s lang update -id 1 -name New\n\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

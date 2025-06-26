@@ -5,6 +5,9 @@ VALUES (?, ?, NOW(), ?);
 -- name: UpdateNewsPost :exec
 UPDATE siteNews SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?;
 
+-- name: DeactivateNewsPost :exec
+UPDATE siteNews SET deleted_at = NOW() WHERE idsiteNews = ?;
+
 -- name: GetForumThreadIdByNewsPostId :one
 SELECT s.forumthread_idforumthread, u.idusers
 FROM siteNews s

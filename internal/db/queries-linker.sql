@@ -61,6 +61,10 @@ WHERE l.idlinkerQueue = ?
 INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
 VALUES (?, ?, ?, ?, ?, NOW());
 
+-- name: UpdateLinkerItem :exec
+UPDATE linker SET title = ?, url = ?, description = ?, linkerCategory_idlinkerCategory = ?, language_idlanguage = ?
+WHERE idlinker = ?;
+
 -- name: AssignLinkerThisThreadId :exec
 UPDATE linker SET forumthread_idforumthread = ? WHERE idlinker = ?;
 

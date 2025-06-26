@@ -1,0 +1,60 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"flag"
+	"fmt"
+
+	dbpkg "github.com/arran4/goa4web/internal/db"
+)
+
+// blogDeactivateCmd implements "blog deactivate".
+type blogDeactivateCmd struct {
+	*blogCmd
+	fs   *flag.FlagSet
+	ID   int
+	args []string
+}
+
+func parseBlogDeactivateCmd(parent *blogCmd, args []string) (*blogDeactivateCmd, error) {
+	c := &blogDeactivateCmd{blogCmd: parent}
+	fs := flag.NewFlagSet("deactivate", flag.ContinueOnError)
+	fs.IntVar(&c.ID, "id", 0, "blog id")
+	if err := fs.Parse(args); err != nil {
+		return nil, err
+	}
+	c.fs = fs
+	c.args = fs.Args()
+	return c, nil
+}
+
+func (c *blogDeactivateCmd) Run() error {
+	if c.ID == 0 {
+		return fmt.Errorf("id required")
+	}
+	db, err := c.rootCmd.DB()
+	if err != nil {
+		return fmt.Errorf("database: %w", err)
+	}
+	ctx := context.Background()
+	queries := dbpkg.New(db)
+	b, err := queries.GetBlogEntryForUserById(ctx, int32(c.ID))
+	if err != nil {
+		return fmt.Errorf("fetch blog: %w", err)
+	}
+	if err := queries.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
+		Idblogs:                  b.Idblogs,
+		ForumthreadIdforumthread: b.ForumthreadIdforumthread,
+		UsersIdusers:             b.UsersIdusers,
+		LanguageIdlanguage:       b.LanguageIdlanguage,
+		Blog:                     b.Blog,
+		Written:                  sql.NullTime{Time: b.Written, Valid: true},
+	}); err != nil {
+		return fmt.Errorf("archive blog: %w", err)
+	}
+	if err := queries.ScrubBlog(ctx, dbpkg.ScrubBlogParams{Blog: sql.NullString{String: "", Valid: true}, Idblogs: b.Idblogs}); err != nil {
+		return fmt.Errorf("scrub blog: %w", err)
+	}
+	return nil
+}

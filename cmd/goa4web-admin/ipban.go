@@ -48,6 +48,12 @@ func (c *ipBanCmd) Run() error {
 			return fmt.Errorf("delete: %w", err)
 		}
 		return cmd.Run()
+	case "update":
+		cmd, err := parseIpBanUpdateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("update: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown ipban command %q", c.args[0])
@@ -62,8 +68,10 @@ func (c *ipBanCmd) Usage() {
 	fmt.Fprintln(w, "  add\tadd an IP ban")
 	fmt.Fprintln(w, "  list\tlist banned IPs")
 	fmt.Fprintln(w, "  delete\tremove an IP ban")
+	fmt.Fprintln(w, "  update\tupdate an IP ban")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s ipban add -ip 192.168.1.1 -reason spam\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s ipban list\n\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s ipban list\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s ipban update -id 1 -reason updated\n\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

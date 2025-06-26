@@ -67,7 +67,7 @@ INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
 
 -- name: DeleteForumThread :exec
-DELETE FROM forumthread WHERE idforumthread = ?;
+UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?;
 
 
 -- name: GetThreadsStartedByUser :many

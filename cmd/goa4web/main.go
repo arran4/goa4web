@@ -23,7 +23,7 @@ func main() {
 		cfgPath = os.Getenv(config.EnvConfigFile)
 	}
 
-	fileVals := goa4web.LoadAppConfigFile(cfgPath)
+	fileVals := goa4web.LoadAppConfigFile(core.OSFS{}, cfgPath)
 
 	fs := runtimeconfig.NewRuntimeFlagSet(os.Args[0])
 	var (
@@ -44,7 +44,7 @@ func main() {
 			secretPath = v
 		}
 	}
-	secret, err := core.LoadSessionSecret(sessionSecret, secretPath)
+	secret, err := core.LoadSessionSecret(core.OSFS{}, sessionSecret, secretPath)
 	if err != nil {
 		log.Fatalf("session secret: %v", err)
 	}

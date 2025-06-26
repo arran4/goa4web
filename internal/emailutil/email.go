@@ -17,6 +17,10 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
+// NotifyChange sends a simple page update email to emailAddr. If
+// EMAIL_ENABLED is set to a false value the notification is skipped. When the
+// context contains a *db.Queries value the message is queued instead of sent
+// immediately. If neither a queue nor provider is available the call is a no-op.
 func NotifyChange(ctx context.Context, provider email.Provider, emailAddr string, page string) error {
 	if emailAddr == "" {
 		return fmt.Errorf("no email specified")
@@ -107,8 +111,9 @@ func getAdminEmails(ctx context.Context, q *db.Queries) []string {
 	return emails
 }
 
-// notifyAdmins sends a change notification email to all administrator
-// addresses returned by getAdminEmails.
+// adminNotificationsEnabled reports whether administrator notifications should
+// be delivered. Setting ADMIN_NOTIFY to "0", "false", "off" or "no" disables
+// these messages.
 func adminNotificationsEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
 	if v == "" {
@@ -122,6 +127,9 @@ func adminNotificationsEnabled() bool {
 	}
 }
 
+// emailSendingEnabled reports whether the application should attempt to send
+// queued emails. A false value for EMAIL_ENABLED ("0", "false", "off" or "no")
+// disables sending entirely.
 func emailSendingEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvEmailEnabled))
 	if v == "" {
@@ -135,6 +143,9 @@ func emailSendingEnabled() bool {
 	}
 }
 
+// notifyAdmins emails a page update to all administrator addresses returned by
+// getAdminEmails. The notification is skipped when no provider is configured or
+// ADMIN_NOTIFY disables administrator messages.
 func notifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
 	if provider == nil || !adminNotificationsEnabled() {
 		return
@@ -146,7 +157,9 @@ func notifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, p
 	}
 }
 
-// notifyThreadSubscribers emails users subscribed to the forum thread.
+// NotifyThreadSubscribers emails users subscribed to the forum thread. If the
+// provider is nil or the query fails, no notifications are sent. Each call to
+// NotifyChange respects EMAIL_ENABLED when delivering the message.
 func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db.Queries, threadID, excludeUser int32, page string) {
 	if provider == nil {
 		return

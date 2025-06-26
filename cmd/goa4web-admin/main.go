@@ -13,17 +13,19 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
+var version = "dev"
+
 func main() {
-  root, err := parseRoot(os.Args)
-  if err != nil {
-      log.Printf("%v", err)
-      os.Exit(1)
-  }
-  defer root.Close()
-  if err := root.Run(); err != nil {
-      log.Printf("%v", err)
-      os.Exit(1)
-  }
+	root, err := parseRoot(os.Args)
+	if err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
+	defer root.Close()
+	if err := root.Run(); err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
 }
 
 // rootCmd is the top-level command state.
@@ -47,21 +49,27 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 }
 
 func (r *rootCmd) Close() {
-    if r.db != nil {
-        if err := r.db.Close(); err != nil {
-            log.Printf("close db: %v", err)
-        }
-    }
+	if r.db != nil {
+		if err := r.db.Close(); err != nil {
+			log.Printf("close db: %v", err)
+		}
+	}
 }
 
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{}
 	early := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	var cfgPath string
+	var showVersion bool
 	early.StringVar(&cfgPath, "config-file", "", "path to config file")
+	early.BoolVar(&showVersion, "version", false, "print version and exit")
 	_ = early.Parse(args[1:])
 	if cfgPath == "" {
 		cfgPath = os.Getenv(config.EnvConfigFile)
+	}
+	if showVersion {
+		fmt.Println(version)
+		os.Exit(0)
 	}
 	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	fs := runtimeconfig.NewRuntimeFlagSet(args[0])

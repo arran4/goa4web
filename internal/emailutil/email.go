@@ -17,10 +17,6 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-// NotifyChange sends a simple page update email to emailAddr. If
-// EMAIL_ENABLED is set to a false value the notification is skipped. When the
-// context contains a *db.Queries value the message is queued instead of sent
-// immediately. If neither a queue nor provider is available the call is a no-op.
 func NotifyChange(ctx context.Context, provider email.Provider, emailAddr string, page string) error {
 	if emailAddr == "" {
 		return fmt.Errorf("no email specified")
@@ -131,9 +127,6 @@ func AdminNotificationsEnabled() bool {
 	}
 }
 
-// emailSendingEnabled reports whether the application should attempt to send
-// queued emails. A false value for EMAIL_ENABLED ("0", "false", "off" or "no")
-// disables sending entirely.
 func emailSendingEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvEmailEnabled))
 	if v == "" {
@@ -160,9 +153,7 @@ func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, p
 	}
 }
 
-// NotifyThreadSubscribers emails users subscribed to the forum thread. If the
-// provider is nil or the query fails, no notifications are sent. Each call to
-// NotifyChange respects EMAIL_ENABLED when delivering the message.
+// notifyThreadSubscribers emails users subscribed to the forum thread.
 func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db.Queries, threadID, excludeUser int32, page string) {
 	if provider == nil {
 		return

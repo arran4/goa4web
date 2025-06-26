@@ -84,7 +84,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		middleware.DBAdderMiddleware,
 		userhandlers.UserAdderMiddleware,
 		middleware.CoreAdderMiddleware,
-		goa4web.RequestLoggerMiddleware,
+		middleware.RequestLoggerMiddleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if csrfmw.CSRFEnabled() {

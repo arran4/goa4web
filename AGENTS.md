@@ -19,8 +19,10 @@ Tests must not interact with the real file system. Use in-memory file systems
 provided by the `io/fs` package or mocks when file access is required.
 
 SQL query files are compiled using `sqlc`. Do not manually edit the generated
-`*.sql.go` files; instead update the corresponding `.sql` file and run `sqlc generate`.
-The `.sql` files live at the repository root with names such as `queries-users.sql`.
+`*.sql.go` files; instead update the corresponding `.sql` file and run
+`sqlc generate`.
+The `.sql` files live under `internal/db/` with names such as
+`queries-users.sql`.
 
 All database schema changes must include a migration script in the `migrations/`
 directory so existing installations can be upgraded. Example migration files are

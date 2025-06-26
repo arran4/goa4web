@@ -1,4 +1,4 @@
-package goa4web
+package templates
 
 import (
 	"embed"
@@ -11,17 +11,17 @@ import (
 	"testing"
 )
 
-//go:embed core/templates/templates/*.gohtml core/templates/templates/*/*.gohtml
+//go:embed templates/*.gohtml templates/*/*.gohtml
 var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	template.Must(template.New("").Funcs(corecommon.NewFuncs(r)).ParseFS(testTemplates,
-		"core/templates/templates/*.gohtml", "core/templates/templates/*/*.gohtml"))
+		"templates/*.gohtml", "templates/*/*.gohtml"))
 }
 
 func TestParseEachTemplate(t *testing.T) {
-	err := fs.WalkDir(testTemplates, "core/templates/templates", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(testTemplates, "templates", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

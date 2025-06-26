@@ -3,7 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/internal/db"
+	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"

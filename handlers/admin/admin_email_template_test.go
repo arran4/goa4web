@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -43,12 +44,12 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
 	defer os.Unsetenv(config.EnvEmailProvider)
 
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := New(db)
+	defer sqldb.Close()
+	q := db.New(sqldb)
 	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "u@example.com", "", "", "u")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE idusers = ?")).
@@ -74,12 +75,12 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 }
 
 func TestListUnsentPendingEmails(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := New(db)
+	defer sqldb.Close()
+	q := db.New(sqldb)
 	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "created_at"}).AddRow(1, "a@test", "s", "b", time.Now())
 	mock.ExpectQuery("SELECT id, to_email, subject, body, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id").WillReturnRows(rows)
 	if _, err := q.ListUnsentPendingEmails(context.Background()); err != nil {
@@ -91,12 +92,12 @@ func TestListUnsentPendingEmails(t *testing.T) {
 }
 
 func TestRecentNotifications(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := New(db)
+	defer sqldb.Close()
+	q := db.New(sqldb)
 	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/l", "m", time.Now(), nil)
 	mock.ExpectQuery("SELECT id, users_idusers, link, message, created_at, read_at FROM notifications ORDER BY id DESC LIMIT ?").WithArgs(int32(5)).WillReturnRows(rows)
 	if _, err := q.RecentNotifications(context.Background(), 5); err != nil {

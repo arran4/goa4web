@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 var (
@@ -23,13 +24,13 @@ var (
 )
 
 func TestBlogsBloggerPage(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqldb.Close()
 
-	q := New(db)
+	q := db.New(sqldb)
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -80,13 +81,13 @@ func TestBlogsBloggerPage(t *testing.T) {
 }
 
 func TestBlogsRssPageWritesRSS(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqldb.Close()
 
-	queries := New(db)
+	queries := db.New(sqldb)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE username = ?")).
 		WithArgs("bob").

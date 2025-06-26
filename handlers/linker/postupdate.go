@@ -3,7 +3,7 @@ package linker
 import (
 	"context"
 	"fmt"
-	"github.com/arran4/goa4web/internal/db"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 // PostUpdate refreshes thread and topic metadata.

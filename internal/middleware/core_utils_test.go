@@ -1,4 +1,4 @@
-package goa4web
+package middleware
 
 import (
 	"net/http"

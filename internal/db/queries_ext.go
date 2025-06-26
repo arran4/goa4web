@@ -789,3 +789,42 @@ func (q *Queries) SetTemplateOverride(ctx context.Context, name, body string) er
 	_, err := q.db.ExecContext(ctx, "INSERT INTO template_overrides (name, body) VALUES (?, ?) ON DUPLICATE KEY UPDATE body = VALUES(body)", name, body)
 	return err
 }
+
+// UserInfoRow represents basic user details with optional admin status and
+// account creation time.
+type UserInfoRow struct {
+	ID        int32
+	Username  sql.NullString
+	Email     sql.NullString
+	Admin     bool
+	CreatedAt sql.NullTime
+}
+
+// ListUserInfo returns all users along with administrator flag and the earliest
+// session creation time if available.
+func (q *Queries) ListUserInfo(ctx context.Context) ([]*UserInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, `SELECT u.idusers, u.username, u.email,
+                IF(p.idpermissions IS NULL, 0, 1) AS admin,
+                MIN(s.created_at) AS created_at
+                FROM users u
+                LEFT JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'administrator'
+                LEFT JOIN sessions s ON s.users_idusers = u.idusers
+                GROUP BY u.idusers
+                ORDER BY u.idusers`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserInfoRow
+	for rows.Next() {
+		var u UserInfoRow
+		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.Admin, &u.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

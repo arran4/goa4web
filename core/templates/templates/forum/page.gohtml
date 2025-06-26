@@ -1,3 +1,5 @@
-{{ template "head" $ }}
-    {{ template "getAllForumCategories" . }}
-{{ template "tail" $ }}
+{{ define "forumPage" }}
+    {{ template "head" $ }}
+        {{ template "getAllForumCategories" . }}
+    {{ template "tail" $ }}
+{{ end }}

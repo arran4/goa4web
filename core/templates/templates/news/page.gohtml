@@ -1,5 +1,7 @@
-{{ template "head" $ }}
-    {{ range LatestNews }}
-        {{ template "newsPost" . }}
-    {{ end }}
-{{ template "tail" $ }}
+{{ define "newsPage" }}
+    {{ template "head" $ }}
+        {{ range LatestNews }}
+            {{ template "newsPost" . }}
+        {{ end }}
+    {{ template "tail" $ }}
+{{ end }}

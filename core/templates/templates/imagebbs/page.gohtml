@@ -1,3 +1,5 @@
-{{ template "head" $ }}
-    {{ template "subBoards" $ }}
-{{ template "tail" $ }}
+{{ define "imagebbsPage" }}
+    {{ template "head" $ }}
+        {{ template "subBoards" $ }}
+    {{ template "tail" $ }}
+{{ end }}

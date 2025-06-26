@@ -45,12 +45,12 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router) {
-	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("page.gohtml")))).Methods("GET")
+	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("newsPage")))).Methods("GET")
 	r.HandleFunc("/", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(AddNewsIndex)
 	nr.HandleFunc(".rss", NewsRssPage).Methods("GET")
-	nr.HandleFunc("", runTemplate("page.gohtml")).Methods("GET")
+	nr.HandleFunc("", runTemplate("newsPage")).Methods("GET")
 	nr.HandleFunc("", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", NewsPostReplyActionPage).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))

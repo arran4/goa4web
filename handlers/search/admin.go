@@ -51,7 +51,7 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writings)
 	count("SELECT COUNT(*) FROM imagepostSearch", &data.Stats.Images)
 
-	if err := templates.RenderTemplate(w, "searchPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "adminSearchPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

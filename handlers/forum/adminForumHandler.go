@@ -21,7 +21,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	err := templates.RenderTemplate(w, "page.gohtml", data, corecommon.NewFuncs(r))
+	err := templates.RenderTemplate(w, "forumPage", data, corecommon.NewFuncs(r))
 	if err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

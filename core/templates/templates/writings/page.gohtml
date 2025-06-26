@@ -1,3 +1,5 @@
-{{ template "head" $ }}
-    {{ template "listWritingCategories" $ }}
-{{ template "tail" $ }}
+{{ define "writingsPage" }}
+    {{ template "head" $ }}
+        {{ template "listWritingCategories" $ }}
+    {{ template "tail" $ }}
+{{ end }}

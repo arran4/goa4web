@@ -10,7 +10,9 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-func isAlphanumericOrPunctuation(char rune) bool {
+// IsAlphanumericOrPunctuation reports whether the rune is a letter, digit or
+// one of the punctuation characters '-' or '\”. It is used by BreakupTextToWords.
+func IsAlphanumericOrPunctuation(char rune) bool {
 	return unicode.IsLetter(char) || unicode.IsDigit(char) || strings.ContainsRune("'-", char)
 }
 
@@ -20,7 +22,7 @@ func BreakupTextToWords(input string) []string {
 	var tokens []string
 	startIndex := -1
 	for i, char := range input {
-		if isAlphanumericOrPunctuation(char) {
+		if IsAlphanumericOrPunctuation(char) {
 			if startIndex == -1 {
 				startIndex = i
 			}

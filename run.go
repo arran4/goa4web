@@ -10,9 +10,9 @@ import (
 	news "github.com/arran4/goa4web/handlers/news"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	email "github.com/arran4/goa4web/internal/email"
+	startup "github.com/arran4/goa4web/internal/startup"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -61,7 +61,10 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 
 	var handler http.Handler
 
-	if err := performStartupChecks(cfg); err != nil {
+	dbLogVerbosity = cfg.DBLogVerbosity
+	var err error
+	dbPool, err = startup.PerformStartupChecks(cfg)
+	if err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
@@ -99,7 +102,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 
 	provider := email.ProviderFromConfig(cfg)
 
-	startWorkers(ctx, dbPool, provider)
+	startup.StartWorkers(ctx, dbPool, provider)
 
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
@@ -139,18 +142,6 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 }
 
 // safeGo runs fn in a goroutine and terminates the program if a panic occurs.
-func safeGo(fn func()) {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("goroutine panic: %v", r)
-				os.Exit(1)
-			}
-		}()
-		fn()
-	}()
-}
-
 // TODO we could do better
 
 //func oauthHomeHandler(w http.ResponseWriter, r *http.Request) {

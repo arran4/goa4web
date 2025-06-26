@@ -1,4 +1,4 @@
-package goa4web
+package startup
 
 import (
 	"context"
@@ -20,15 +20,12 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-var (
-	dbPool         *sql.DB
-	dbLogVerbosity int
-)
+// expectedSchemaVersion defines the required database schema version.
+const expectedSchemaVersion = 7
 
 // InitDB opens the database connection using the provided configuration
-// and ensures the schema exists.
-func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
-	dbLogVerbosity = cfg.DBLogVerbosity
+// and ensures the schema exists. The opened database is returned on success.
+func InitDB(cfg runtimeconfig.RuntimeConfig) (*sql.DB, *common.UserError) {
 	db.LogVerbosity = cfg.DBLogVerbosity
 	if cfg.DBUser == "" {
 		cfg.DBUser = "a4web"
@@ -48,39 +45,42 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
 	mysqlCfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to parse DSN"}
+		return nil, &common.UserError{Err: err, ErrorMessage: "failed to parse DSN"}
 	}
 	baseConnector, err := mysql.NewConnector(mysqlCfg)
 	if err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
+		return nil, &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
 	var connector driver.Connector = db.NewLoggingConnector(baseConnector)
-	dbPool = sql.OpenDB(connector)
-	if err := dbPool.Ping(); err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
+	pool := sql.OpenDB(connector)
+	if err := pool.Ping(); err != nil {
+		return nil, &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
-	if err := ensureSchema(context.Background(), dbPool); err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
+	if err := ensureSchema(context.Background(), pool); err != nil {
+		return nil, &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
-	if dbLogVerbosity > 0 {
-		log.Printf("db pool stats after init: %+v", dbPool.Stats())
+	if cfg.DBLogVerbosity > 0 {
+		log.Printf("db pool stats after init: %+v", pool.Stats())
 	}
-	return nil
+	return pool, nil
 }
 
 // checkDatabase attempts to connect and ping the configured database.
-func checkDatabase(cfg runtimeconfig.RuntimeConfig) *common.UserError {
+func checkDatabase(cfg runtimeconfig.RuntimeConfig) (*sql.DB, *common.UserError) {
 	return InitDB(cfg)
 }
 
-func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
-	if ue := checkDatabase(cfg); ue != nil {
-		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+// PerformStartupChecks verifies database connectivity and upload directory
+// access. It returns the database handle when successful.
+func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) (*sql.DB, error) {
+	pool, ue := checkDatabase(cfg)
+	if ue != nil {
+		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := checkUploadDir(cfg); ue != nil {
-		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
-	return nil
+	return pool, nil
 }
 
 func checkUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
@@ -121,16 +121,28 @@ func ensureSchema(ctx context.Context, db *sql.DB) error {
 	if err := db.QueryRowContext(ctx, "SELECT version FROM schema_version").Scan(&version); err != nil {
 		return fmt.Errorf("select schema_version: %w", err)
 	}
-	if version != ExpectedSchemaVersion {
-		return fmt.Errorf("database schema version %d does not match expected %d", version, ExpectedSchemaVersion)
+	if version != expectedSchemaVersion {
+		return fmt.Errorf("database schema version %d does not match expected %d", version, expectedSchemaVersion)
 	}
 	return nil
 }
 
-// startWorkers launches goroutines for email processing and notification cleanup.
-func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
+// StartWorkers launches goroutines for email processing and notification cleanup.
+func StartWorkers(ctx context.Context, dbConn *sql.DB, provider email.Provider) {
 	log.Printf("Starting email worker")
-	safeGo(func() { emailutil.EmailQueueWorker(ctx, New(db), provider, time.Minute) })
+	safeGo(func() { emailutil.EmailQueueWorker(ctx, db.New(dbConn), provider, time.Minute) })
 	log.Printf("Starting notification purger worker")
-	safeGo(func() { notifications.NotificationPurgeWorker(ctx, New(db), time.Hour) })
+	safeGo(func() { notifications.NotificationPurgeWorker(ctx, db.New(dbConn), time.Hour) })
+}
+
+func safeGo(fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("goroutine panic: %v", r)
+				os.Exit(1)
+			}
+		}()
+		fn()
+	}()
 }

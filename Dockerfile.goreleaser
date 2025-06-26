@@ -1,8 +1,11 @@
 # This Dockerfile is used by GoReleaser to build container images.
 # GoReleaser builds the binary first and then copies it into the image,
 # so no build step is required here.
+# This image contains both the main server and the admin CLI binaries.
 FROM scratch
-COPY goa4web /goa4web
+ENV PATH=/usr/local/bin
+COPY goa4web /usr/local/bin/goa4web
+COPY goa4web-admin /usr/local/bin/goa4web-admin
 # Image uploads are stored under /data/imagebbs inside the container.
 VOLUME ["/data/imagebbs"]
-ENTRYPOINT ["/goa4web"]
+ENTRYPOINT ["/usr/local/bin/goa4web"]

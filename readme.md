@@ -102,6 +102,10 @@ When reusing snippets from other projects be sure to update the image name or
 use the `$CI_REGISTRY_IMAGE` variable which already points to the correct
 registry path for this repository.
 
+The resulting container image also includes the `goa4web-admin` CLI installed at
+`/usr/local/bin/goa4web-admin`. Both `goa4web` and `goa4web-admin` are placed in
+`/usr/local/bin`, which is added to `PATH` inside the container.
+
 ## Application Configuration File
 
 The path to a general configuration file can be specified with the `--config-file`

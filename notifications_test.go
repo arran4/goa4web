@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+
+	"github.com/arran4/goa4web/internal/emailutil"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 func TestNotificationsQueries(t *testing.T) {
@@ -47,7 +50,7 @@ func TestNotificationsQueries(t *testing.T) {
 func TestNotificationsFeed(t *testing.T) {
 	r := httptest.NewRequest("GET", "/notifications/rss", nil)
 	n := []*Notification{{ID: 1, Link: sql.NullString{String: "/l", Valid: true}, Message: sql.NullString{String: "m", Valid: true}}}
-	feed := notificationsFeed(r, n)
+	feed := notif.NotificationsFeed(r, n)
 	if len(feed.Items) != 1 || feed.Items[0].Link.Href != "/l" {
 		t.Fatalf("feed item incorrect")
 	}
@@ -77,7 +80,7 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)
 	rec := &dummyProvider{}
-	notifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
+	emailutil.NotifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
 	if rec.to != "bob" {
 		t.Fatalf("expected mail to bob got %s", rec.to)
 	}

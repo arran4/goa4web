@@ -1,8 +1,10 @@
-package goa4web
+package forumutil
 
 import (
 	"context"
 	"fmt"
+
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 // PostUpdate refreshes metadata on the given forum thread and topic.
@@ -22,7 +24,7 @@ import (
 //
 // The same effect is achieved by calling RecalculateForumThreadByIdMetaData
 // and RebuildForumTopicByIdMetaColumns generated via sqlc.
-func PostUpdate(ctx context.Context, q *Queries, threadID, topicID int32) error {
+func PostUpdate(ctx context.Context, q *db.Queries, threadID, topicID int32) error {
 	if err := q.RecalculateForumThreadByIdMetaData(ctx, threadID); err != nil {
 		return fmt.Errorf("recalc thread metadata: %w", err)
 	}

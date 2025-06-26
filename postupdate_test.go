@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/internal/forumutil"
 )
 
 func TestPostUpdate(t *testing.T) {
@@ -22,7 +23,7 @@ func TestPostUpdate(t *testing.T) {
 		WithArgs(int32(2)).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
-	if err := PostUpdate(context.Background(), q, 1, 2); err != nil {
+	if err := forumutil.PostUpdate(context.Background(), q, 1, 2); err != nil {
 		t.Fatalf("PostUpdate: %v", err)
 	}
 

@@ -14,6 +14,8 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/go-sql-driver/mysql"
 )
@@ -128,7 +130,7 @@ func ensureSchema(ctx context.Context, db *sql.DB) error {
 // startWorkers launches goroutines for email processing and notification cleanup.
 func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
 	log.Printf("Starting email worker")
-	safeGo(func() { emailQueueWorker(ctx, New(db), provider, time.Minute) })
+	safeGo(func() { emailutil.EmailQueueWorker(ctx, New(db), provider, time.Minute) })
 	log.Printf("Starting notification purger worker")
-	safeGo(func() { notificationPurgeWorker(ctx, New(db), time.Hour) })
+	safeGo(func() { notifications.NotificationPurgeWorker(ctx, New(db), time.Hour) })
 }

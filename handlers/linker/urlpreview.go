@@ -9,10 +9,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-// fetchPageTitle returns the <title> contents of the page at the given URL.
+// FetchPageTitle returns the <title> contents of the page at the given URL.
 // An empty string is returned if the title cannot be retrieved within the
 // timeout.
-func fetchPageTitle(ctx context.Context, targetURL string) string {
+func FetchPageTitle(ctx context.Context, targetURL string) string {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)

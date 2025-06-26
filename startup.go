@@ -12,6 +12,7 @@ import (
 	"time"
 
 	common "github.com/arran4/goa4web/core/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
@@ -123,8 +124,8 @@ func ensureSchema(ctx context.Context, db *sql.DB) error {
 	if err := db.QueryRowContext(ctx, "SELECT version FROM schema_version").Scan(&version); err != nil {
 		return fmt.Errorf("select schema_version: %w", err)
 	}
-	if version != ExpectedSchemaVersion {
-		return fmt.Errorf("database schema version %d does not match expected %d", version, ExpectedSchemaVersion)
+	if version != hcommon.ExpectedSchemaVersion {
+		return fmt.Errorf("database schema version %d does not match expected %d", version, hcommon.ExpectedSchemaVersion)
 	}
 	return nil
 }

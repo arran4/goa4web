@@ -85,7 +85,11 @@ func getEmailProvider() email.Provider {
 // ADMIN_EMAILS environment variable is set, it takes precedence and is
 // interpreted as a comma-separated list. If not set and a Queries value is
 // provided, the database is queried for administrator accounts.
-func getAdminEmails(ctx context.Context, q *db.Queries) []string {
+// GetAdminEmails returns a slice of administrator email addresses. If the
+// ADMIN_EMAILS environment variable is set, it takes precedence and is
+// interpreted as a comma-separated list. If not set and a Queries value is
+// provided, the database is queried for administrator accounts.
+func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 	env := os.Getenv(config.EnvAdminEmails)
 	var emails []string
 	if env != "" {
@@ -111,10 +115,17 @@ func getAdminEmails(ctx context.Context, q *db.Queries) []string {
 	return emails
 }
 
+<<<<<<< i3595l-codex/refactor-duplicated-functions-in-email_helpers
+// AdminNotificationsEnabled reports whether administrator notification emails
+// should be sent. The ADMIN_NOTIFY environment variable can be set to any of
+// "0", "false", "off" or "no" to disable notifications.
+func AdminNotificationsEnabled() bool {
+=======
 // adminNotificationsEnabled reports whether administrator notifications should
 // be delivered. Setting ADMIN_NOTIFY to "0", "false", "off" or "no" disables
 // these messages.
 func adminNotificationsEnabled() bool {
+>>>>>>> main
 	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
 	if v == "" {
 		return true
@@ -143,14 +154,21 @@ func emailSendingEnabled() bool {
 	}
 }
 
+<<<<<<< i3595l-codex/refactor-duplicated-functions-in-email_helpers
+// NotifyAdmins sends a change notification email to all administrator addresses
+// returned by GetAdminEmails.
+func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
+	if provider == nil || !AdminNotificationsEnabled() {
+=======
 // notifyAdmins emails a page update to all administrator addresses returned by
 // getAdminEmails. The notification is skipped when no provider is configured or
 // ADMIN_NOTIFY disables administrator messages.
 func notifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
 	if provider == nil || !adminNotificationsEnabled() {
+>>>>>>> main
 		return
 	}
-	for _, email := range getAdminEmails(ctx, q) {
+	for _, email := range GetAdminEmails(ctx, q) {
 		if err := NotifyChange(ctx, provider, email, page); err != nil {
 			log.Printf("Error: NotifyChange: %s", err)
 		}

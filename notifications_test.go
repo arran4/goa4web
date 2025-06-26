@@ -89,3 +89,29 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestNotifierNotifyAdmins(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := New(db)
+	mock.ExpectQuery("SELECT u.email").
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
+	mock.ExpectQuery("SELECT u.email").
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
+	mock.ExpectQuery("UserByEmail").
+		WithArgs(sql.NullString{String: "a@test", Valid: true}).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).AddRow(1, "a@test", "", "", "a"))
+	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	rec := &dummyProvider{}
+	n := notif.Notifier{EmailProvider: rec, Queries: q}
+	n.NotifyAdmins(context.Background(), "/p")
+	if rec.to != "a@test" {
+		t.Fatalf("expected mail to a@test got %s", rec.to)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

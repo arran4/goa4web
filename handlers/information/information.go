@@ -1,4 +1,4 @@
-package goa4web
+package information
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -13,8 +13,7 @@ import (
 	"github.com/shirou/gopsutil/v3/load"
 )
 
-func informationPage(w http.ResponseWriter, r *http.Request) {
-
+func Page(w http.ResponseWriter, r *http.Request) {
 	type SystemInformation struct {
 		Processors  []cpu.InfoStat
 		Uptime      time.Duration
@@ -23,12 +22,12 @@ func informationPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*CoreData
+		*corecommon.CoreData
 		System *SystemInformation
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 	ld, err := load.Avg()
 	if err != nil {

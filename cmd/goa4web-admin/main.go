@@ -30,11 +30,12 @@ func main() {
 
 // rootCmd is the top-level command state.
 type rootCmd struct {
-	fs        *flag.FlagSet
-	cfg       runtimeconfig.RuntimeConfig
-	Verbosity int
-	args      []string
-	db        *sql.DB
+	fs         *flag.FlagSet
+	cfg        runtimeconfig.RuntimeConfig
+	Verbosity  int
+	configPath string
+	args       []string
+	db         *sql.DB
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
@@ -78,6 +79,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	_ = fs.Parse(args[1:])
 	r.fs = fs
 	r.args = fs.Args()
+	r.configPath = cfgPath
 	r.cfg = runtimeconfig.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
 	return r, nil
 }
@@ -106,6 +108,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
+	case "config":
+		c, err := parseConfigCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("config: %w", err)
+		}
+		return c.Run()
 	default:
 		return fmt.Errorf("unknown command %q", r.args[0])
 	}
@@ -118,8 +126,10 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  user\tmanage users")
 	fmt.Fprintln(w, "  perm\tmanage permissions")
+	fmt.Fprintln(w, "  config\tmanage configuration")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s perm list\n\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s config show\n\n", r.fs.Name())
 	r.fs.PrintDefaults()
 }

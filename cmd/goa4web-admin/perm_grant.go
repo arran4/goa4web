@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 
@@ -46,6 +47,16 @@ func (c *permGrantCmd) Run() error {
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.User, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
+	}
+	if c.Section == "administrator" && c.Level == "administrator" {
+		if _, err := queries.GetAdministratorPermissionByUserId(ctx, u.Idusers); err == nil {
+			if c.rootCmd.Verbosity > 0 {
+				fmt.Printf("%s already administrator\n", c.User)
+			}
+			return nil
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("check admin: %w", err)
+		}
 	}
 	if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,

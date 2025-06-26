@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 
@@ -58,7 +59,13 @@ func (c *userUpdateCmd) Run() error {
 		}
 	}
 	if c.MakeAdmin {
-		if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
+		if _, err := queries.GetAdministratorPermissionByUserId(ctx, u.Idusers); err == nil {
+			if c.rootCmd.Verbosity > 0 {
+				fmt.Printf("%s already administrator\n", c.Username)
+			}
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("check admin: %w", err)
+		} else if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
 			UsersIdusers: u.Idusers,
 			Section:      sql.NullString{String: "administrator", Valid: true},
 			Level:        sql.NullString{String: "administrator", Valid: true},

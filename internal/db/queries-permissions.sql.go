@@ -53,6 +53,24 @@ func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, for
 	return err
 }
 
+const getAdministratorPermissionByUserId = `-- name: GetAdministratorPermissionByUserId :one
+SELECT idpermissions, users_idusers, section, level
+FROM permissions
+WHERE users_idusers = ? AND section = 'administrator' AND level = 'administrator'
+`
+
+func (q *Queries) GetAdministratorPermissionByUserId(ctx context.Context, usersIdusers int32) (*Permission, error) {
+	row := q.db.QueryRowContext(ctx, getAdministratorPermissionByUserId, usersIdusers)
+	var i Permission
+	err := row.Scan(
+		&i.Idpermissions,
+		&i.UsersIdusers,
+		&i.Section,
+		&i.Level,
+	)
+	return &i, err
+}
+
 const getAllForumTopicRestrictionsWithForumTopicTitle = `-- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
 SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t

@@ -616,6 +616,32 @@ func (q *Queries) UpdateLinkerCategorySortOrder(ctx context.Context, arg UpdateL
 	return err
 }
 
+const updateLinkerItem = `-- name: UpdateLinkerItem :exec
+UPDATE linker SET title = ?, url = ?, description = ?, linkerCategory_idlinkerCategory = ?, language_idlanguage = ?
+WHERE idlinker = ?
+`
+
+type UpdateLinkerItemParams struct {
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	LinkercategoryIdlinkercategory int32
+	LanguageIdlanguage             int32
+	Idlinker                       int32
+}
+
+func (q *Queries) UpdateLinkerItem(ctx context.Context, arg UpdateLinkerItemParams) error {
+	_, err := q.db.ExecContext(ctx, updateLinkerItem,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+		arg.LinkercategoryIdlinkercategory,
+		arg.LanguageIdlanguage,
+		arg.Idlinker,
+	)
+	return err
+}
+
 const updateLinkerQueuedItem = `-- name: UpdateLinkerQueuedItem :exec
 UPDATE linkerQueue SET linkerCategory_idlinkerCategory = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?
 `

@@ -44,7 +44,7 @@ func (q *Queries) CreateForumTopic(ctx context.Context, arg CreateForumTopicPara
 }
 
 const deleteForumCategory = `-- name: DeleteForumCategory :exec
-DELETE FROM forumcategory WHERE idforumcategory = ?
+UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?
 `
 
 func (q *Queries) DeleteForumCategory(ctx context.Context, idforumcategory int32) error {
@@ -53,7 +53,7 @@ func (q *Queries) DeleteForumCategory(ctx context.Context, idforumcategory int32
 }
 
 const deleteForumTopic = `-- name: DeleteForumTopic :exec
-DELETE FROM forumtopic WHERE idforumtopic = ?
+UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
 `
 
 // Removes a forum topic by ID.

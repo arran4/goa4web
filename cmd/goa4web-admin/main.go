@@ -120,6 +120,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("board: %w", err)
 		}
 		return c.Run()
+	case "blog":
+		c, err := parseBlogCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("blog: %w", err)
+		}
+		return c.Run()
 	case "ipban":
 		c, err := parseIpBanCmd(r, r.args[1:])
 		if err != nil {
@@ -168,6 +174,7 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
 	fmt.Fprintf(w, "  %s config reload\n\n", r.fs.Name())
 	fmt.Fprintln(w, "  board\tmanage image boards")
+	fmt.Fprintln(w, "  blog\tmanage blog entries")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
 	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())

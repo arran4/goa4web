@@ -6,11 +6,10 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	news "github.com/arran4/goa4web/handlers/news"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	email "github.com/arran4/goa4web/internal/email"
 	middleware "github.com/arran4/goa4web/internal/middleware"
+	routerpkg "github.com/arran4/goa4web/internal/router"
 	"log"
 	"net/http"
 	"os"
@@ -20,7 +19,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/pkg/server"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -80,7 +78,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 
 	r := mux.NewRouter()
-	registerRoutes(r)
+	routerpkg.RegisterRoutes(r)
 
 	handler = newMiddlewareChain(
 		middleware.DBAdderMiddleware,
@@ -108,36 +106,6 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 
 	return nil
-}
-
-func runTemplate(template string) func(http.ResponseWriter, *http.Request) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		type Data struct {
-			*CoreData
-		}
-
-		data := Data{
-			CoreData: r.Context().Value(hcommon.KeyCoreData).(*CoreData),
-		}
-
-		news.CustomNewsIndex(data.CoreData, r)
-
-		log.Printf("rendering template %s", template)
-
-		if err := templates.RenderTemplate(w, template, data, common.NewFuncs(r)); err != nil {
-			log.Printf("Template Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	})
-}
-
-func AddNewsIndex(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd := r.Context().Value(hcommon.KeyCoreData).(*CoreData)
-		news.CustomNewsIndex(cd, r)
-		handler.ServeHTTP(w, r)
-	})
 }
 
 // safeGo runs fn in a goroutine and terminates the program if a panic occurs.

@@ -115,17 +115,10 @@ func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 	return emails
 }
 
-<<<<<<< i3595l-codex/refactor-duplicated-functions-in-email_helpers
 // AdminNotificationsEnabled reports whether administrator notification emails
 // should be sent. The ADMIN_NOTIFY environment variable can be set to any of
 // "0", "false", "off" or "no" to disable notifications.
 func AdminNotificationsEnabled() bool {
-=======
-// adminNotificationsEnabled reports whether administrator notifications should
-// be delivered. Setting ADMIN_NOTIFY to "0", "false", "off" or "no" disables
-// these messages.
-func adminNotificationsEnabled() bool {
->>>>>>> main
 	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
 	if v == "" {
 		return true
@@ -154,18 +147,10 @@ func emailSendingEnabled() bool {
 	}
 }
 
-<<<<<<< i3595l-codex/refactor-duplicated-functions-in-email_helpers
 // NotifyAdmins sends a change notification email to all administrator addresses
 // returned by GetAdminEmails.
 func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
 	if provider == nil || !AdminNotificationsEnabled() {
-=======
-// notifyAdmins emails a page update to all administrator addresses returned by
-// getAdminEmails. The notification is skipped when no provider is configured or
-// ADMIN_NOTIFY disables administrator messages.
-func notifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
-	if provider == nil || !adminNotificationsEnabled() {
->>>>>>> main
 		return
 	}
 	for _, email := range GetAdminEmails(ctx, q) {

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func TestHandleDie(t *testing.T) {
@@ -29,14 +31,14 @@ func TestConfigurationSetGet(t *testing.T) {
 }
 
 func TestConfigurationRead(t *testing.T) {
-	useMemFS(t)
+	fs := core.UseMemFS(t)
 	fname := "conf.txt"
 	content := "k1=v1\nk2=v=2\ninvalid\n spaced = value with spaces\n"
-	if err := writeFile(fname, []byte(content), 0644); err != nil {
+	if err := fs.WriteFile(fname, []byte(content), 0644); err != nil {
 		t.Fatalf("write temp file: %v", err)
 	}
 	c := NewConfiguration()
-	c.readConfiguration(fname)
+	c.readConfiguration(fs, fname)
 	if got := c.get("k1"); got != "v1" {
 		t.Errorf("k1=%q want v1", got)
 	}

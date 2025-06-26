@@ -114,6 +114,11 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
+	case "board":
+		c, err := parseBoardCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("board: %w", err)
+	case "ipban":
 		c, err := parseIpBanCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("ipban: %w", err)
@@ -147,6 +152,11 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  user\tmanage users")
 	fmt.Fprintln(w, "  perm\tmanage permissions")
+	fmt.Fprintln(w, "  board\tmanage image boards")
+	fmt.Fprintln(w, "\nExamples:")
+	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s board list\n\n", r.fs.Name())
 	fmt.Fprintln(w, "  ipban\tmanage IP bans")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())

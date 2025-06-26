@@ -80,6 +80,15 @@ func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams
 	return result.LastInsertId()
 }
 
+const deleteImageBoard = `-- name: DeleteImageBoard :exec
+DELETE FROM imageboard WHERE idimageboard = ?
+`
+
+func (q *Queries) DeleteImageBoard(ctx context.Context, idimageboard int32) error {
+	_, err := q.db.ExecContext(ctx, deleteImageBoard, idimageboard)
+	return err
+}
+
 const getAllBoardsByParentBoardId = `-- name: GetAllBoardsByParentBoardId :many
 SELECT idimageboard, imageboard_idimageboard, title, description, approval_required
 FROM imageboard

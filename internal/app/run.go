@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
-	goa4web "github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	email "github.com/arran4/goa4web/internal/email"
 	emailutil "github.com/arran4/goa4web/internal/emailutil"
@@ -66,7 +66,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 
 	dbPool := dbstart.GetDBPool()
-	if err := corelanguage.ValidateDefaultLanguage(context.Background(), goa4web.New(dbPool), cfg.DefaultLanguage); err != nil {
+	if err := corelanguage.ValidateDefaultLanguage(context.Background(), dbpkg.New(dbPool), cfg.DefaultLanguage); err != nil {
 		return fmt.Errorf("default language: %w", err)
 	}
 
@@ -124,9 +124,9 @@ func safeGo(fn func()) {
 
 func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
 	log.Printf("Starting email worker")
-	safeGo(func() { emailutil.EmailQueueWorker(ctx, goa4web.New(db), provider, time.Minute) })
+	safeGo(func() { emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, time.Minute) })
 	log.Printf("Starting notification purger worker")
-	safeGo(func() { notifications.NotificationPurgeWorker(ctx, goa4web.New(db), time.Hour) })
+	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
 }
 
 func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {

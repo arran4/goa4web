@@ -14,6 +14,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/handlers/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -117,7 +118,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	os.Setenv("ADMIN_EMAILS", "a@test.com,b@test.com")
 	defer os.Unsetenv("ADMIN_EMAILS")
 	rec := &recordAdminMail{}
-	notifyAdmins(context.Background(), rec, nil, "page")
+	emailutil.NotifyAdmins(context.Background(), rec, nil, "page")
 	if len(rec.to) != 2 {
 		t.Fatalf("expected 2 mails, got %d", len(rec.to))
 	}
@@ -129,7 +130,7 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 	defer os.Unsetenv("ADMIN_EMAILS")
 	defer os.Unsetenv("ADMIN_NOTIFY")
 	rec := &recordAdminMail{}
-	notifyAdmins(context.Background(), rec, nil, "page")
+	emailutil.NotifyAdmins(context.Background(), rec, nil, "page")
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))
 	}

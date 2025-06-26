@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/emailutil"
 )
 
 func adminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func adminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 
 func adminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
-	provider := getEmailProvider()
+	provider := emailutil.GetEmailProvider()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

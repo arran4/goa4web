@@ -3,7 +3,6 @@ package blogs
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"fmt"
 	"log"
 	"net/smtp"
@@ -12,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -157,6 +157,4 @@ func getUpdateEmailText(ctx context.Context) string {
 }
 
 // defaultUpdateEmailText is the compiled-in notification template.
-//
-//go:embed updateEmail.txt
-var defaultUpdateEmailText string
+var defaultUpdateEmailText = templates.UpdateEmailText

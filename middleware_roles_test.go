@@ -3,6 +3,7 @@ package goa4web
 import (
 	"context"
 	"github.com/arran4/goa4web/handlers/common"
+	routerpkg "github.com/arran4/goa4web/internal/router"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,7 +15,7 @@ func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	called := false
-	h := RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := routerpkg.RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -35,7 +36,7 @@ func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	called := false
-	h := RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := routerpkg.RoleCheckerMiddleware("administrator")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 	}))
 

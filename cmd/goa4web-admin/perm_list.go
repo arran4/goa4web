@@ -1,0 +1,41 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+
+	dbpkg "github.com/arran4/goa4web/internal/db"
+)
+
+// permListCmd implements "perm list".
+type permListCmd struct {
+	*permCmd
+	fs   *flag.FlagSet
+	args []string
+}
+
+func parsePermListCmd(parent *permCmd, args []string) (*permListCmd, error) {
+	fs := flag.NewFlagSet("list", flag.ContinueOnError)
+	if err := fs.Parse(args); err != nil {
+		return nil, err
+	}
+	return &permListCmd{permCmd: parent, fs: fs, args: fs.Args()}, nil
+}
+
+func (c *permListCmd) Run() error {
+	db, err := c.rootCmd.DB()
+	if err != nil {
+		return fmt.Errorf("database: %w", err)
+	}
+	ctx := context.Background()
+	queries := dbpkg.New(db)
+	rows, err := queries.GetPermissionsWithUsers(ctx)
+	if err != nil {
+		return fmt.Errorf("list permissions: %w", err)
+	}
+	for _, p := range rows {
+		fmt.Printf("%d\t%s\t%s\t%s\n", p.Idpermissions, p.Username.String, p.Section.String, p.Level.String)
+	}
+	return nil
+}

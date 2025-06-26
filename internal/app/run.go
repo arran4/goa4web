@@ -80,7 +80,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r)
 
-	handler := newMiddlewareChain(
+	handler := middleware.NewMiddlewareChain(
 		middleware.DBAdderMiddleware,
 		userhandlers.UserAdderMiddleware,
 		middleware.CoreAdderMiddleware,
@@ -127,23 +127,6 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
 	log.Printf("Starting notification purger worker")
 	safeGo(func() { notifications.NotificationPurgeWorker(ctx, goa4web.New(db), time.Hour) })
 }
-
-func newMiddlewareChain(mw ...func(http.Handler) http.Handler) routerWrapper {
-	return routerWrapperFunc(func(h http.Handler) http.Handler {
-		for i := len(mw) - 1; i >= 0; i-- {
-			h = mw[i](h)
-		}
-		return h
-	})
-}
-
-type routerWrapper interface {
-	Wrap(http.Handler) http.Handler
-}
-
-type routerWrapperFunc func(http.Handler) http.Handler
-
-func (f routerWrapperFunc) Wrap(h http.Handler) http.Handler { return f(h) }
 
 func performStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
 	if ue := goa4web.InitDB(cfg); ue != nil {

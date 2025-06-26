@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	search "github.com/arran4/goa4web/handlers/search"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -78,12 +78,12 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if search.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

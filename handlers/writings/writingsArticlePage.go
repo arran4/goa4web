@@ -6,8 +6,8 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	search "github.com/arran4/goa4web/handlers/search"
 	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -310,12 +310,12 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cid := int64(0)
-	wordIds, done := search.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if search.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 	//??? if _, done := SearchWordIdsFromText(w, r, text, queries); done {

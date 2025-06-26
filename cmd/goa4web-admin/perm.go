@@ -36,6 +36,12 @@ func (c *permCmd) Run() error {
 			return fmt.Errorf("revoke: %w", err)
 		}
 		return cmd.Run()
+	case "update":
+		cmd, err := parsePermUpdateCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("update: %w", err)
+		}
+		return cmd.Run()
 	case "list":
 		cmd, err := parsePermListCmd(c, c.args[1:])
 		if err != nil {

@@ -81,7 +81,11 @@ func getEmailProvider() email.Provider {
 // ADMIN_EMAILS environment variable is set, it takes precedence and is
 // interpreted as a comma-separated list. If not set and a Queries value is
 // provided, the database is queried for administrator accounts.
-func getAdminEmails(ctx context.Context, q *db.Queries) []string {
+// GetAdminEmails returns a slice of administrator email addresses. If the
+// ADMIN_EMAILS environment variable is set, it takes precedence and is
+// interpreted as a comma-separated list. If not set and a Queries value is
+// provided, the database is queried for administrator accounts.
+func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 	env := os.Getenv(config.EnvAdminEmails)
 	var emails []string
 	if env != "" {
@@ -107,9 +111,10 @@ func getAdminEmails(ctx context.Context, q *db.Queries) []string {
 	return emails
 }
 
-// notifyAdmins sends a change notification email to all administrator
-// addresses returned by getAdminEmails.
-func adminNotificationsEnabled() bool {
+// AdminNotificationsEnabled reports whether administrator notification emails
+// should be sent. The ADMIN_NOTIFY environment variable can be set to any of
+// "0", "false", "off" or "no" to disable notifications.
+func AdminNotificationsEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
 	if v == "" {
 		return true
@@ -135,11 +140,13 @@ func emailSendingEnabled() bool {
 	}
 }
 
-func notifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
-	if provider == nil || !adminNotificationsEnabled() {
+// NotifyAdmins sends a change notification email to all administrator addresses
+// returned by GetAdminEmails.
+func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
+	if provider == nil || !AdminNotificationsEnabled() {
 		return
 	}
-	for _, email := range getAdminEmails(ctx, q) {
+	for _, email := range GetAdminEmails(ctx, q) {
 		if err := NotifyChange(ctx, provider, email, page); err != nil {
 			log.Printf("Error: NotifyChange: %s", err)
 		}

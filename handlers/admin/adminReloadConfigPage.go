@@ -1,17 +1,18 @@
-package goa4web
+package admin
 
 import (
-	"context"
 	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
-	"time"
+	"os"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-func adminShutdownPage(w http.ResponseWriter, r *http.Request) {
+func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*CoreData
 		Errors   []string
@@ -22,13 +23,13 @@ func adminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		Back:     "/admin",
 	}
 
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
-			log.Printf("shutdown error: %v", err)
-		}
-	}()
+	cfgMap := LoadAppConfigFile(ConfigFile)
+	Srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
+	if err := corelanguage.ValidateDefaultLanguage(r.Context(), New(DBPool), Srv.Config.DefaultLanguage); err != nil {
+		data.Errors = append(data.Errors, err.Error())
+	}
+
+	data.Messages = append(data.Messages, "Configuration reloaded")
 
 	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

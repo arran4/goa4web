@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -10,7 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func adminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
+func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Emails []*PendingEmail
@@ -33,7 +33,7 @@ func adminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	provider := getEmailProvider()
 	if err := r.ParseForm(); err != nil {
@@ -59,7 +59,7 @@ func adminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func adminEmailQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminEmailQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

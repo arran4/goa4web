@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
 )
 
-func adminPage(w http.ResponseWriter, r *http.Request) {
+func AdminPage(w http.ResponseWriter, r *http.Request) {
 	type Stats struct {
 		Users        int64
 		Languages    int64

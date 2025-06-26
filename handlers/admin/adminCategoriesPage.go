@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func adminCategoriesPage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Section           string

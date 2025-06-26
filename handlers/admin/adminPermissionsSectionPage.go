@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -12,10 +12,10 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-// adminPermissionsSectionPage displays the current distinct permission sections
+// AdminPermissionsSectionPage displays the current distinct permission sections
 // in the database so administrators can verify whether "writing" or "writings"
 // is in use.
-func adminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
+func AdminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Sections []*CountPermissionSectionsRow
@@ -40,9 +40,9 @@ func adminPermissionsSectionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// adminPermissionsSectionRenamePage converts one permission section value to
+// AdminPermissionsSectionRenamePage converts one permission section value to
 // another. This can be used to normalise "writing" vs "writings" values.
-func adminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
+func AdminPermissionsSectionRenamePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	from := r.PostFormValue("from")
 	to := r.PostFormValue("to")

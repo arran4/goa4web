@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	auth "github.com/arran4/goa4web/handlers/auth"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	bookmarks "github.com/arran4/goa4web/handlers/bookmarks"
@@ -243,32 +244,32 @@ func registerLoginRoutes(r *mux.Router) {
 func registerAdminRoutes(r *mux.Router) {
 	ar := r.PathPrefix("/admin").Subrouter()
 	ar.Use(AdminCheckerMiddleware)
-	ar.HandleFunc("", adminPage).Methods("GET")
-	ar.HandleFunc("/", adminPage).Methods("GET")
-	ar.HandleFunc("/categories", adminCategoriesPage).Methods("GET")
-	ar.HandleFunc("/permissions/sections", adminPermissionsSectionPage).Methods("GET")
-	ar.HandleFunc("/permissions/sections/view", adminPermissionsSectionViewPage).Methods("GET")
-	ar.HandleFunc("/permissions/sections", adminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRenameSection))
-	ar.HandleFunc("/email/queue", adminEmailQueuePage).Methods("GET")
-	ar.HandleFunc("/email/queue", adminEmailQueueResendActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskResend))
-	ar.HandleFunc("/email/queue", adminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
-	ar.HandleFunc("/email/template", adminEmailTemplatePage).Methods("GET")
-	ar.HandleFunc("/email/template", adminEmailTemplateSaveActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskUpdate))
-	ar.HandleFunc("/email/template", adminEmailTemplateTestActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskTestMail))
-	ar.HandleFunc("/notifications", adminNotificationsPage).Methods("GET")
-	ar.HandleFunc("/notifications", adminNotificationsMarkReadActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDismiss))
-	ar.HandleFunc("/notifications", adminNotificationsPurgeActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskPurge))
-	ar.HandleFunc("/notifications", adminNotificationsSendActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskNotify))
-	ar.HandleFunc("/announcements", adminAnnouncementsPage).Methods("GET")
-	ar.HandleFunc("/announcements", adminAnnouncementsAddActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskAdd))
-	ar.HandleFunc("/announcements", adminAnnouncementsDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
-	ar.HandleFunc("/ipbans", adminIPBanPage).Methods("GET")
-	ar.HandleFunc("/ipbans", adminIPBanAddActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskAdd))
-	ar.HandleFunc("/ipbans", adminIPBanDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
-	ar.HandleFunc("/audit", adminAuditLogPage).Methods("GET")
-	ar.HandleFunc("/settings", adminSiteSettingsPage).Methods("GET", "POST")
-	ar.HandleFunc("/stats", adminServerStatsPage).Methods("GET")
-	ar.HandleFunc("/usage", adminUsageStatsPage).Methods("GET")
+	ar.HandleFunc("", adminhandlers.AdminPage).Methods("GET")
+	ar.HandleFunc("/", adminhandlers.AdminPage).Methods("GET")
+	ar.HandleFunc("/categories", adminhandlers.AdminCategoriesPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections", adminhandlers.AdminPermissionsSectionPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections/view", adminhandlers.AdminPermissionsSectionViewPage).Methods("GET")
+	ar.HandleFunc("/permissions/sections", adminhandlers.AdminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskRenameSection))
+	ar.HandleFunc("/email/queue", adminhandlers.AdminEmailQueuePage).Methods("GET")
+	ar.HandleFunc("/email/queue", adminhandlers.AdminEmailQueueResendActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskResend))
+	ar.HandleFunc("/email/queue", adminhandlers.AdminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
+	ar.HandleFunc("/email/template", adminhandlers.AdminEmailTemplatePage).Methods("GET")
+	ar.HandleFunc("/email/template", adminhandlers.AdminEmailTemplateSaveActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskUpdate))
+	ar.HandleFunc("/email/template", adminhandlers.AdminEmailTemplateTestActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskTestMail))
+	ar.HandleFunc("/notifications", adminhandlers.AdminNotificationsPage).Methods("GET")
+	ar.HandleFunc("/notifications", adminhandlers.AdminNotificationsMarkReadActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDismiss))
+	ar.HandleFunc("/notifications", adminhandlers.AdminNotificationsPurgeActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskPurge))
+	ar.HandleFunc("/notifications", adminhandlers.AdminNotificationsSendActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskNotify))
+	ar.HandleFunc("/announcements", adminhandlers.AdminAnnouncementsPage).Methods("GET")
+	ar.HandleFunc("/announcements", adminhandlers.AdminAnnouncementsAddActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskAdd))
+	ar.HandleFunc("/announcements", adminhandlers.AdminAnnouncementsDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
+	ar.HandleFunc("/ipbans", adminhandlers.AdminIPBanPage).Methods("GET")
+	ar.HandleFunc("/ipbans", adminhandlers.AdminIPBanAddActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskAdd))
+	ar.HandleFunc("/ipbans", adminhandlers.AdminIPBanDeleteActionPage).Methods("POST").MatcherFunc(common.TaskMatcher(TaskDelete))
+	ar.HandleFunc("/audit", adminhandlers.AdminAuditLogPage).Methods("GET")
+	ar.HandleFunc("/settings", adminhandlers.AdminSiteSettingsPage).Methods("GET", "POST")
+	ar.HandleFunc("/stats", adminhandlers.AdminServerStatsPage).Methods("GET")
+	ar.HandleFunc("/usage", adminhandlers.AdminUsageStatsPage).Methods("GET")
 
 	// search related
 
@@ -346,6 +347,6 @@ func registerAdminRoutes(r *mux.Router) {
 	// writings admin
 	registerWritingsAdminRoutes(ar)
 
-	ar.HandleFunc("/reload", adminReloadConfigPage).Methods("POST")
-	ar.HandleFunc("/shutdown", adminShutdownPage).Methods("POST")
+	ar.HandleFunc("/reload", adminhandlers.AdminReloadConfigPage).Methods("POST")
+	ar.HandleFunc("/shutdown", adminhandlers.AdminShutdownPage).Methods("POST")
 }

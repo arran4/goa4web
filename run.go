@@ -5,6 +5,7 @@ import (
 	"fmt"
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
+	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	news "github.com/arran4/goa4web/handlers/news"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
@@ -91,6 +92,9 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 
 	srv = server.New(handler, store, dbPool, cfg)
+	adminhandlers.ConfigFile = ConfigFile
+	adminhandlers.Srv = srv
+	adminhandlers.DBPool = dbPool
 
 	provider := email.ProviderFromConfig(cfg)
 

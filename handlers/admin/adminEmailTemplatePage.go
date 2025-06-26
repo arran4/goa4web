@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"bytes"
@@ -16,8 +16,8 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-// adminEmailTemplatePage allows administrators to edit the update email template.
-func adminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
+// AdminEmailTemplatePage allows administrators to edit the update email template.
+func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	b := getUpdateEmailText(r.Context())
 
 	var preview string
@@ -52,7 +52,7 @@ func adminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -65,7 +65,7 @@ func adminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
 }
 
-func adminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	provider := getEmailProvider()
 	if provider == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured)

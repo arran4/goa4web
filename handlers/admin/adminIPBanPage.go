@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -13,7 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
+func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Bans []*BannedIp
@@ -34,7 +34,7 @@ func adminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = normalizeIPNet(ipNet)
@@ -56,7 +56,7 @@ func adminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func adminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

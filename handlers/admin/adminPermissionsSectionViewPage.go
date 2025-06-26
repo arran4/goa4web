@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -10,8 +10,8 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-// adminPermissionsSectionViewPage lists all permissions for a specific section.
-func adminPermissionsSectionViewPage(w http.ResponseWriter, r *http.Request) {
+// AdminPermissionsSectionViewPage lists all permissions for a specific section.
+func AdminPermissionsSectionViewPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Section string

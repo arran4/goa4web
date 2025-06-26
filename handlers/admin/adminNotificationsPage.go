@@ -1,4 +1,4 @@
-package goa4web
+package admin
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
+func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Notifications []*Notification
@@ -45,7 +45,7 @@ func adminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func adminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -59,7 +59,7 @@ func adminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func adminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
@@ -67,7 +67,7 @@ func adminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func adminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
+func AdminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*Queries)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")

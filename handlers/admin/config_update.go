@@ -2,17 +2,18 @@ package admin
 
 import (
 	"bytes"
-	"os"
 	"sort"
+
+	"github.com/arran4/goa4web/core"
 )
 
 // updateConfigKey writes the given key/value pair to the config file.
 // Existing keys are replaced, new keys appended. Empty values remove the key.
-func updateConfigKey(path, key, value string) error {
+func updateConfigKey(fs core.FileSystem, path, key, value string) error {
 	if path == "" {
 		return nil
 	}
-	cfg := LoadAppConfigFile(path)
+	cfg := LoadAppConfigFile(fs, path)
 	if value == "" {
 		delete(cfg, key)
 	} else {
@@ -27,5 +28,5 @@ func updateConfigKey(path, key, value string) error {
 	for _, k := range keys {
 		buf.WriteString(k + "=" + cfg[k] + "\n")
 	}
-	return os.WriteFile(path, buf.Bytes(), 0644)
+	return fs.WriteFile(path, buf.Bytes(), 0644)
 }

@@ -82,9 +82,9 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	registerRoutes(r)
 
 	handler = newMiddlewareChain(
-		DBAdderMiddleware,
+		middleware.DBAdderMiddleware,
 		userhandlers.UserAdderMiddleware,
-		CoreAdderMiddleware,
+		middleware.CoreAdderMiddleware,
 		RequestLoggerMiddleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)

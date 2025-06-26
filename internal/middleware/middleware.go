@@ -1,4 +1,4 @@
-package goa4web
+package middleware
 
 import (
 	"bufio"
@@ -6,24 +6,26 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	common "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
+// handleDie responds with an internal server error.
 func handleDie(w http.ResponseWriter, message string) {
 	http.Error(w, message, http.StatusInternalServerError)
 }
 
-// IndexItem struct.
+// IndexItem exposes the core/common navigation item type.
 type IndexItem = common.IndexItem
 
-// indexItems.
+// indexItems are always present navigation links.
 var indexItems = []common.IndexItem{
 	{Name: "News", Link: "/"},
 	{Name: "FAQ", Link: "/faq"},
@@ -37,22 +39,23 @@ var indexItems = []common.IndexItem{
 	{Name: "Information", Link: "/information"},
 }
 
+// CoreAdderMiddleware populates request context with CoreData for templates.
 func CoreAdderMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session, err := core.GetSession(request)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := core.GetSession(r)
 		if err != nil {
-			core.SessionErrorRedirect(writer, request, err)
+			core.SessionErrorRedirect(w, r, err)
 			return
 		}
 		var uid int32
 		if err == nil {
 			uid, _ = session.Values["UID"].(int32)
 		}
-		queries := request.Context().Value(hcommon.KeyQueries).(*Queries)
+		queries := r.Context().Value(hcommon.KeyQueries).(*dbpkg.Queries)
 
 		level := "reader"
 		if uid != 0 {
-			perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(request.Context(), GetPermissionsByUserIdAndSectionAndSectionAllParams{
+			perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(r.Context(), dbpkg.GetPermissionsByUserIdAndSectionAndSectionAllParams{
 				UsersIdusers: uid,
 				Section:      sql.NullString{String: "all", Valid: true},
 			})
@@ -68,19 +71,19 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		}
 		var count int32
 		if uid != 0 && hcommon.NotificationsEnabled() {
-			c, err := queries.CountUnreadNotifications(request.Context(), uid)
+			c, err := queries.CountUnreadNotifications(r.Context(), uid)
 			if err == nil {
 				count = c
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
-		var ann *GetActiveAnnouncementWithNewsRow
+		var ann *dbpkg.GetActiveAnnouncementWithNewsRow
 		if queries.DB() != nil {
-			if a, err := queries.GetActiveAnnouncementWithNews(request.Context()); err == nil {
+			if a, err := queries.GetActiveAnnouncementWithNews(r.Context()); err == nil {
 				ann = a
 			}
 		}
-		ctx := context.WithValue(request.Context(), hcommon.KeyCoreData, &CoreData{
+		cd := &common.CoreData{
 			SecurityLevel:     level,
 			IndexItems:        idx,
 			UserID:            uid,
@@ -88,21 +91,52 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			FeedsEnabled:      runtimeconfig.AppRuntimeConfig.FeedsEnabled,
 			NotificationCount: count,
 			Announcement:      ann,
-		})
-		next.ServeHTTP(writer, request.WithContext(ctx))
+		}
+		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-type CoreData = common.CoreData
+// DBPool should be assigned by the parent package to supply the database.
+var DBPool *sql.DB
 
+// DBAdderMiddleware injects the database and queries into the request context.
+func DBAdderMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if DBPool == nil {
+			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+			http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
+			return
+		}
+		if dbLogVerbosity > 0 {
+			log.Printf("db pool stats: %+v", DBPool.Stats())
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, hcommon.KeySQLDB, DBPool)
+		ctx = context.WithValue(ctx, hcommon.KeyQueries, dbpkg.New(DBPool))
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// SetDBPool configures the database handle and logging verbosity used by
+// DBAdderMiddleware.
+func SetDBPool(db *sql.DB, verbosity int) {
+	DBPool = db
+	dbLogVerbosity = verbosity
+}
+
+// dbLogVerbosity controls optional logging of database pool stats.
+var dbLogVerbosity int
+
+// Configuration stores simple key/value pairs loaded from a file.
 type Configuration struct {
 	data map[string]string
 }
 
+// NewConfiguration creates an empty Configuration.
 func NewConfiguration() *Configuration {
-	return &Configuration{
-		data: make(map[string]string),
-	}
+	return &Configuration{data: make(map[string]string)}
 }
 
 func (c *Configuration) set(key, value string) {
@@ -113,6 +147,7 @@ func (c *Configuration) get(key string) string {
 	return c.data[key]
 }
 
+// readConfiguration populates Configuration from a file on the provided fs.
 func (c *Configuration) readConfiguration(fs core.FileSystem, filename string) {
 	b, err := fs.ReadFile(filename)
 	if err != nil {
@@ -130,6 +165,7 @@ func (c *Configuration) readConfiguration(fs core.FileSystem, filename string) {
 	}
 }
 
+// X2c converts a two character hex string into a byte.
 func X2c(what string) byte {
 	digit := func(c byte) byte {
 		if c >= 'A' {
@@ -141,21 +177,4 @@ func X2c(what string) byte {
 	d1 := digit(what[0])
 	d2 := digit(what[1])
 	return d1*16 + d2
-}
-func DBAdderMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if dbPool == nil {
-			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			http.Error(writer, ue.ErrorMessage, http.StatusInternalServerError)
-			return
-		}
-		if dbLogVerbosity > 0 {
-			log.Printf("db pool stats: %+v", dbPool.Stats())
-		}
-		ctx := request.Context()
-		ctx = context.WithValue(ctx, hcommon.KeySQLDB, dbPool)
-		ctx = context.WithValue(ctx, hcommon.KeyQueries, New(dbPool))
-		next.ServeHTTP(writer, request.WithContext(ctx))
-	})
 }

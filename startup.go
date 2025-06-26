@@ -16,6 +16,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/go-sql-driver/mysql"
@@ -63,6 +64,7 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	if err := ensureSchema(context.Background(), dbPool); err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
+	middleware.SetDBPool(dbPool, dbLogVerbosity)
 	if dbLogVerbosity > 0 {
 		log.Printf("db pool stats after init: %+v", dbPool.Stats())
 	}

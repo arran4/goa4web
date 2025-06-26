@@ -1,14 +1,11 @@
 package admin
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"log"
 	"net/smtp"
 	"os"
 	"strings"
-	"text/template"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -18,31 +15,12 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func notifyChange(ctx context.Context, provider email.Provider, emailAddr, page string) error {
-	if emailAddr == "" {
-		return fmt.Errorf("no email specified")
-	}
-	if !emailSendingEnabled() {
-		return nil
-	}
-	var body bytes.Buffer
-	tmpl, err := template.New("email").Parse(getUpdateEmailText(ctx))
-	if err != nil {
-		return fmt.Errorf("parse template: %w", err)
-	}
-	data := map[string]string{"Page": page}
-	if err := tmpl.Execute(&body, data); err != nil {
-		return fmt.Errorf("render template: %w", err)
-	}
-	if provider != nil {
-		if err := provider.Send(ctx, emailAddr, "Notification", body.String()); err != nil {
-			return fmt.Errorf("send: %w", err)
-		}
-	}
-	return nil
+	return emailutil.NotifyChange(ctx, provider, emailAddr, page)
 }
 
 func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
@@ -141,51 +119,13 @@ func getUpdateEmailText(ctx context.Context) string {
 var defaultUpdateEmailText = templates.UpdateEmailText
 
 func getAdminEmails(ctx context.Context, q *Queries) []string {
-	env := os.Getenv(config.EnvAdminEmails)
-	var emails []string
-	if env != "" {
-		for _, e := range strings.Split(env, ",") {
-			if addr := strings.TrimSpace(e); addr != "" {
-				emails = append(emails, addr)
-			}
-		}
-		return emails
-	}
-	if q != nil {
-		rows, err := q.ListAdministratorEmails(ctx)
-		if err != nil {
-			log.Printf("list admin emails: %v", err)
-			return emails
-		}
-		for _, email := range rows {
-			if email.Valid {
-				emails = append(emails, email.String)
-			}
-		}
-	}
-	return emails
+	return emailutil.GetAdminEmails(ctx, q)
 }
 
 func adminNotificationsEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
-	if v == "" {
-		return true
-	}
-	switch v {
-	case "0", "false", "off", "no":
-		return false
-	default:
-		return true
-	}
+	return emailutil.AdminNotificationsEnabled()
 }
 
 func notifyAdmins(ctx context.Context, provider email.Provider, q *Queries, page string) {
-	if provider == nil || !adminNotificationsEnabled() {
-		return
-	}
-	for _, email := range getAdminEmails(ctx, q) {
-		if err := notifyChange(ctx, provider, email, page); err != nil {
-			log.Printf("Error: notifyChange: %s", err)
-		}
-	}
+	emailutil.NotifyAdmins(ctx, provider, q, page)
 }

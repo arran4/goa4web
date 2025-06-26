@@ -76,12 +76,13 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
-	user, err := queries.GetUserById(r.Context(), cd.UserID)
+	urow, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {
 		log.Printf("get user: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Passwd: urow.Passwd, PasswdAlgorithm: urow.PasswdAlgorithm, Username: urow.Username}
 	if !user.Email.Valid {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return

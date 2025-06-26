@@ -24,6 +24,7 @@ sql:
         - "internal/db/queries-login_attempts.sql"
         - "internal/db/queries-banned_ips.sql"
         - "internal/db/queries-auditlog.sql"
+        - "internal/db/queries-deactivation.sql"
       gen:
           go:
               package: "db"

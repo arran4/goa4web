@@ -57,7 +57,8 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			}
 
 			if uid != 0 {
-				if user, err = queries.GetUserById(request.Context(), uid); err != nil {
+				var row *db.GetUserByIdRow
+				if row, err = queries.GetUserById(request.Context(), uid); err != nil {
 					switch {
 					case errors.Is(err, sql.ErrNoRows):
 					default:
@@ -66,6 +67,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 						return
 					}
 				} else {
+					user = &db.User{Idusers: row.Idusers, Email: row.Email, Passwd: row.Passwd, PasswdAlgorithm: row.PasswdAlgorithm, Username: row.Username}
 					permissions, _ = queries.GetPermissionsByUserID(request.Context(), uid)
 					preference, _ = queries.GetPreferenceByUserID(request.Context(), uid)
 					languages, _ = queries.GetUserLanguages(request.Context(), uid)

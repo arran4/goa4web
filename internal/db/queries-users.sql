@@ -8,27 +8,27 @@ SELECT u.*
 FROM users u;
 
 -- name: GetUserByUsername :one
-SELECT *
+SELECT idusers, email, passwd, passwd_algorithm, username
 FROM users
 WHERE username = ?;
 
 -- name: Login :one
-SELECT *
+SELECT idusers, email, passwd, passwd_algorithm, username
 FROM users
 WHERE username = ? AND passwd = md5(?);
 
 -- name: GetUserById :one
-SELECT *
+SELECT idusers, email, passwd, passwd_algorithm, username
 FROM users
 WHERE idusers = ?;
 
 -- name: UserByUsername :one
-SELECT *
+SELECT idusers, email, passwd, passwd_algorithm, username
 FROM users
 WHERE username = ?;
 
 -- name: UserByEmail :one
-SELECT *
+SELECT idusers, email, passwd, passwd_algorithm, username
 FROM users
 WHERE email = ?;
 
@@ -56,7 +56,9 @@ WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND 
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToThread :many
-SELECT *
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage,
+    c.written, c.text, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username,
+    p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size
 FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;

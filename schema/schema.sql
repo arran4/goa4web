@@ -21,6 +21,7 @@ CREATE TABLE `blogs` (
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `blog` longtext DEFAULT NULL,
   `written` DATETIME NOT NULL DEFAULT NOW(),
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idblogs`),
   KEY `blogs_FKIndex1` (`language_idlanguage`),
   KEY `blogs_FKIndex2` (`users_idusers`),
@@ -50,6 +51,7 @@ CREATE TABLE `comments` (
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `written` datetime DEFAULT NULL,
   `text` longtext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idcomments`),
   KEY `comments_FKIndex1` (`language_idlanguage`),
   KEY `comments_FKIndex2` (`users_idusers`),
@@ -141,6 +143,7 @@ CREATE TABLE `imagepost` (
   `fullimage` tinytext DEFAULT NULL,
   `file_size` int(10) NOT NULL DEFAULT 0,
   `approved` tinyint(1) NOT NULL DEFAULT 0,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idimagepost`),
   KEY `imagepost_FKIndex1` (`imageboard_idimageboard`),
   KEY `imagepost_FKIndex2` (`users_idusers`),
@@ -171,6 +174,7 @@ CREATE TABLE `linker` (
   `url` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `listed` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idlinker`),
   KEY `linker_FKIndex1` (`forumthread_idforumthread`),
   KEY `linker_FKIndex2` (`linkerCategory_idlinkerCategory`),
@@ -291,6 +295,7 @@ CREATE TABLE `users` (
   `passwd` tinytext DEFAULT NULL,
   `passwd_algorithm` tinytext DEFAULT NULL,
   `username` tinytext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idusers`)
 );
 
@@ -316,6 +321,7 @@ CREATE TABLE `writing` (
   `writting` longtext DEFAULT NULL,
   `abstract` mediumtext DEFAULT NULL,
   `private` tinyint(1) DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idwriting`),
   KEY `writing_FKIndex1` (`writingCategory_idwritingCategory`),
   KEY `writing_FKIndex2` (`language_idlanguage`),
@@ -443,5 +449,87 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `audit_log_user_idx` (`users_idusers`)
+);
+
+CREATE TABLE IF NOT EXISTS `deactivated_users` (
+  `idusers` int NOT NULL,
+  `email` tinytext,
+  `passwd` tinytext,
+  `passwd_algorithm` tinytext,
+  `username` tinytext,
+  `deleted_at` datetime DEFAULT NULL,
+  `restored_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`idusers`)
+);
+
+CREATE TABLE IF NOT EXISTS `deactivated_comments` (
+  `idcomments` int NOT NULL,
+  `forumthread_idforumthread` int NOT NULL,
+  `users_idusers` int NOT NULL,
+  `language_idlanguage` int NOT NULL,
+  `written` datetime,
+  `text` longtext,
+  `deleted_at` datetime DEFAULT NULL,
+  `restored_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`idcomments`)
+);
+
+CREATE TABLE IF NOT EXISTS `deactivated_writings` (
+  `idwriting` int NOT NULL,
+  `users_idusers` int NOT NULL,
+  `forumthread_idforumthread` int NOT NULL,
+  `language_idlanguage` int NOT NULL,
+  `writingCategory_idwritingCategory` int NOT NULL,
+  `title` tinytext,
+  `published` datetime,
+  `writting` longtext,
+  `abstract` mediumtext,
+  `private` tinyint(1) DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `restored_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`idwriting`)
+);
+
+CREATE TABLE IF NOT EXISTS `deactivated_blogs` (
+  `idblogs` int NOT NULL,
+  `forumthread_idforumthread` int NOT NULL,
+  `users_idusers` int NOT NULL,
+  `language_idlanguage` int NOT NULL,
+  `blog` longtext,
+  `written` datetime,
+  `deleted_at` datetime DEFAULT NULL,
+  `restored_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`idblogs`)
+);
+
+CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
+  `idimagepost` int NOT NULL,
+  `forumthread_idforumthread` int NOT NULL,
+  `users_idusers` int NOT NULL,
+  `imageboard_idimageboard` int NOT NULL,
+  `posted` datetime,
+  `description` tinytext,
+  `thumbnail` tinytext,
+  `fullimage` tinytext,
+  `file_size` int NOT NULL,
+  `approved` tinyint(1) DEFAULT 0,
+  `deleted_at` datetime DEFAULT NULL,
+  `restored_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`idimagepost`)
+);
+
+CREATE TABLE IF NOT EXISTS `deactivated_linker` (
+  `idlinker` int NOT NULL,
+  `language_idlanguage` int NOT NULL,
+  `users_idusers` int NOT NULL,
+  `linkerCategory_idlinkerCategory` int NOT NULL,
+  `forumthread_idforumthread` int NOT NULL,
+  `title` tinytext,
+  `url` tinytext,
+  `description` tinytext,
+  `listed` datetime,
+  `deleted_at` datetime DEFAULT NULL,
+  `restored_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`idlinker`)
 );
 

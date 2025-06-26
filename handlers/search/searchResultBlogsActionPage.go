@@ -104,11 +104,22 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 		}
 	}
 
-	blogs, err := queries.GetBlogEntriesByIdsDescending(r.Context(), blogIds)
+	rows, err := queries.GetBlogEntriesByIdsDescending(r.Context(), blogIds)
 	if err != nil {
 		log.Printf("getBlogEntriesByIdsDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return nil, false, false, err
+	}
+	blogs := make([]*db.Blog, 0, len(rows))
+	for _, r := range rows {
+		blogs = append(blogs, &db.Blog{
+			Idblogs:                  r.Idblogs,
+			ForumthreadIdforumthread: r.ForumthreadIdforumthread,
+			UsersIdusers:             r.UsersIdusers,
+			LanguageIdlanguage:       r.LanguageIdlanguage,
+			Blog:                     r.Blog,
+			Written:                  r.Written,
+		})
 	}
 
 	return blogs, false, false, nil

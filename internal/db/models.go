@@ -32,6 +32,7 @@ type Blog struct {
 	LanguageIdlanguage       int32
 	Blog                     sql.NullString
 	Written                  time.Time
+	DeletedAt                sql.NullTime
 }
 
 type Blogssearch struct {
@@ -52,11 +53,88 @@ type Comment struct {
 	LanguageIdlanguage       int32
 	Written                  sql.NullTime
 	Text                     sql.NullString
+	DeletedAt                sql.NullTime
 }
 
 type Commentssearch struct {
 	SearchwordlistIdsearchwordlist int32
 	CommentsIdcomments             int32
+}
+
+type DeactivatedBlog struct {
+	Idblogs                  int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Blog                     sql.NullString
+	Written                  sql.NullTime
+	DeletedAt                sql.NullTime
+	RestoredAt               sql.NullTime
+}
+
+type DeactivatedComment struct {
+	Idcomments               int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Written                  sql.NullTime
+	Text                     sql.NullString
+	DeletedAt                sql.NullTime
+	RestoredAt               sql.NullTime
+}
+
+type DeactivatedImagepost struct {
+	Idimagepost              int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	ImageboardIdimageboard   int32
+	Posted                   sql.NullTime
+	Description              sql.NullString
+	Thumbnail                sql.NullString
+	Fullimage                sql.NullString
+	FileSize                 int32
+	Approved                 sql.NullBool
+	DeletedAt                sql.NullTime
+	RestoredAt               sql.NullTime
+}
+
+type DeactivatedLinker struct {
+	Idlinker                       int32
+	LanguageIdlanguage             int32
+	UsersIdusers                   int32
+	LinkercategoryIdlinkercategory int32
+	ForumthreadIdforumthread       int32
+	Title                          sql.NullString
+	Url                            sql.NullString
+	Description                    sql.NullString
+	Listed                         sql.NullTime
+	DeletedAt                      sql.NullTime
+	RestoredAt                     sql.NullTime
+}
+
+type DeactivatedUser struct {
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+	DeletedAt       sql.NullTime
+	RestoredAt      sql.NullTime
+}
+
+type DeactivatedWriting struct {
+	Idwriting                        int32
+	UsersIdusers                     int32
+	ForumthreadIdforumthread         int32
+	LanguageIdlanguage               int32
+	WritingcategoryIdwritingcategory int32
+	Title                            sql.NullString
+	Published                        sql.NullTime
+	Writting                         sql.NullString
+	Abstract                         sql.NullString
+	Private                          sql.NullBool
+	DeletedAt                        sql.NullTime
+	RestoredAt                       sql.NullTime
 }
 
 type Faq struct {
@@ -120,6 +198,7 @@ type Imagepost struct {
 	Fullimage                sql.NullString
 	FileSize                 int32
 	Approved                 bool
+	DeletedAt                sql.NullTime
 }
 
 type Imagepostsearch struct {
@@ -142,6 +221,7 @@ type Linker struct {
 	Url                            sql.NullString
 	Description                    sql.NullString
 	Listed                         sql.NullTime
+	DeletedAt                      sql.NullTime
 }
 
 type Linkercategory struct {
@@ -279,6 +359,7 @@ type User struct {
 	Passwd          sql.NullString
 	PasswdAlgorithm sql.NullString
 	Username        sql.NullString
+	DeletedAt       sql.NullTime
 }
 
 type Userlang struct {
@@ -306,6 +387,7 @@ type Writing struct {
 	Writting                         sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
+	DeletedAt                        sql.NullTime
 }
 
 type Writingcategory struct {

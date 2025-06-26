@@ -140,11 +140,12 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
-	user, err := queries.GetUserById(r.Context(), int32(uid))
+	urow, err := queries.GetUserById(r.Context(), int32(uid))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Passwd: urow.Passwd, PasswdAlgorithm: urow.PasswdAlgorithm, Username: urow.Username}
 	data := struct {
 		*common.CoreData
 		User *db.User

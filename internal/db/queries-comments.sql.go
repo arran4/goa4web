@@ -37,7 +37,7 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (i
 }
 
 const getAllCommentsByUser = `-- name: GetAllCommentsByUser :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, th.forumtopic_idforumtopic
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, th.forumtopic_idforumtopic
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread = th.idforumthread
 WHERE c.users_idusers = ?
@@ -51,6 +51,7 @@ type GetAllCommentsByUserRow struct {
 	LanguageIdlanguage       int32
 	Written                  sql.NullTime
 	Text                     sql.NullString
+	DeletedAt                sql.NullTime
 	ForumtopicIdforumtopic   sql.NullInt32
 }
 
@@ -70,6 +71,7 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 			&i.LanguageIdlanguage,
 			&i.Written,
 			&i.Text,
+			&i.DeletedAt,
 			&i.ForumtopicIdforumtopic,
 		); err != nil {
 			return nil, err
@@ -86,7 +88,7 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 }
 
 const getCommentById = `-- name: GetCommentById :one
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
 FROM comments c
 WHERE c.Idcomments=?
 `
@@ -101,12 +103,13 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 		&i.LanguageIdlanguage,
 		&i.Written,
 		&i.Text,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
 
 const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.Username
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.Username
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -129,6 +132,7 @@ type GetCommentByIdForUserRow struct {
 	LanguageIdlanguage       int32
 	Written                  sql.NullTime
 	Text                     sql.NullString
+	DeletedAt                sql.NullTime
 	Username                 sql.NullString
 }
 
@@ -142,13 +146,14 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		&i.LanguageIdlanguage,
 		&i.Written,
 		&i.Text,
+		&i.DeletedAt,
 		&i.Username,
 	)
 	return &i, err
 }
 
 const getCommentsByIds = `-- name: GetCommentsByIds :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
 FROM comments c
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
 `
@@ -179,6 +184,7 @@ func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment
 			&i.LanguageIdlanguage,
 			&i.Written,
 			&i.Text,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -194,7 +200,7 @@ func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment
 }
 
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -218,6 +224,7 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	LanguageIdlanguage       int32
 	Written                  sql.NullTime
 	Text                     sql.NullString
+	DeletedAt                sql.NullTime
 	Posterusername           sql.NullString
 	Idforumthread            sql.NullInt32
 	Idforumtopic             sql.NullInt32
@@ -253,6 +260,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 			&i.LanguageIdlanguage,
 			&i.Written,
 			&i.Text,
+			&i.DeletedAt,
 			&i.Posterusername,
 			&i.Idforumthread,
 			&i.Idforumtopic,
@@ -274,7 +282,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 }
 
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, pu.username AS posterusername
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -297,6 +305,7 @@ type GetCommentsByThreadIdForUserRow struct {
 	LanguageIdlanguage       int32
 	Written                  sql.NullTime
 	Text                     sql.NullString
+	DeletedAt                sql.NullTime
 	Posterusername           sql.NullString
 }
 
@@ -316,6 +325,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.LanguageIdlanguage,
 			&i.Written,
 			&i.Text,
+			&i.DeletedAt,
 			&i.Posterusername,
 		); err != nil {
 			return nil, err

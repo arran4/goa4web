@@ -185,7 +185,16 @@ WHERE b.idblogs IN (/*SLICE:blogids*/?)
 ORDER BY b.written DESC
 `
 
-func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []int32) ([]*Blog, error) {
+type GetBlogEntriesByIdsDescendingRow struct {
+	Idblogs                  int32
+	ForumthreadIdforumthread int32
+	UsersIdusers             int32
+	LanguageIdlanguage       int32
+	Blog                     sql.NullString
+	Written                  time.Time
+}
+
+func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []int32) ([]*GetBlogEntriesByIdsDescendingRow, error) {
 	query := getBlogEntriesByIdsDescending
 	var queryParams []interface{}
 	if len(blogids) > 0 {
@@ -201,9 +210,9 @@ func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []i
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Blog
+	var items []*GetBlogEntriesByIdsDescendingRow
 	for rows.Next() {
-		var i Blog
+		var i GetBlogEntriesByIdsDescendingRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadIdforumthread,

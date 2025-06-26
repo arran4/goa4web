@@ -12,7 +12,7 @@ import (
 )
 
 const allUsers = `-- name: AllUsers :many
-SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username
+SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, u.deleted_at
 FROM users u
 `
 
@@ -37,6 +37,7 @@ func (q *Queries) AllUsers(ctx context.Context) ([]*User, error) {
 			&i.Passwd,
 			&i.PasswdAlgorithm,
 			&i.Username,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -57,9 +58,17 @@ FROM users
 WHERE idusers = ?
 `
 
-func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*User, error) {
+type GetUserByIdRow struct {
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+}
+
+func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*GetUserByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserById, idusers)
-	var i User
+	var i GetUserByIdRow
 	err := row.Scan(
 		&i.Idusers,
 		&i.Email,
@@ -76,9 +85,17 @@ FROM users
 WHERE username = ?
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString) (*User, error) {
+type GetUserByUsernameRow struct {
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+}
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString) (*GetUserByUsernameRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i User
+	var i GetUserByUsernameRow
 	err := row.Scan(
 		&i.Idusers,
 		&i.Email,
@@ -135,7 +152,7 @@ func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]sql.NullString
 }
 
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
-SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, idusers, email, passwd, passwd_algorithm, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
+SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
 FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -153,11 +170,13 @@ type ListUsersSubscribedToBlogsRow struct {
 	LanguageIdlanguage       int32
 	Blog                     sql.NullString
 	Written                  time.Time
+	DeletedAt                sql.NullTime
 	Idusers                  int32
 	Email                    sql.NullString
 	Passwd                   sql.NullString
 	PasswdAlgorithm          sql.NullString
 	Username                 sql.NullString
+	DeletedAt_2              sql.NullTime
 	Idpreferences            int32
 	LanguageIdlanguage_2     int32
 	UsersIdusers_2           int32
@@ -181,11 +200,13 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 			&i.LanguageIdlanguage,
 			&i.Blog,
 			&i.Written,
+			&i.DeletedAt,
 			&i.Idusers,
 			&i.Email,
 			&i.Passwd,
 			&i.PasswdAlgorithm,
 			&i.Username,
+			&i.DeletedAt_2,
 			&i.Idpreferences,
 			&i.LanguageIdlanguage_2,
 			&i.UsersIdusers_2,
@@ -206,7 +227,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 }
 
 const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
-SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, idusers, email, passwd, passwd_algorithm, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
+SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
 FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -227,11 +248,13 @@ type ListUsersSubscribedToLinkerRow struct {
 	Url                            sql.NullString
 	Description                    sql.NullString
 	Listed                         sql.NullTime
+	DeletedAt                      sql.NullTime
 	Idusers                        int32
 	Email                          sql.NullString
 	Passwd                         sql.NullString
 	PasswdAlgorithm                sql.NullString
 	Username                       sql.NullString
+	DeletedAt_2                    sql.NullTime
 	Idpreferences                  int32
 	LanguageIdlanguage_2           int32
 	UsersIdusers_2                 int32
@@ -258,11 +281,13 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 			&i.Url,
 			&i.Description,
 			&i.Listed,
+			&i.DeletedAt,
 			&i.Idusers,
 			&i.Email,
 			&i.Passwd,
 			&i.PasswdAlgorithm,
 			&i.Username,
+			&i.DeletedAt_2,
 			&i.Idpreferences,
 			&i.LanguageIdlanguage_2,
 			&i.UsersIdusers_2,
@@ -283,7 +308,9 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
-SELECT idcomments, forumthread_idforumthread, c.users_idusers, c.language_idlanguage, written, text, idusers, email, passwd, passwd_algorithm, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
+SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage,
+    c.written, c.text, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username,
+    p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size
 FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -354,7 +381,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, idusers, email, passwd, passwd_algorithm, username, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
+SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -376,11 +403,13 @@ type ListUsersSubscribedToWritingRow struct {
 	Writting                         sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
+	DeletedAt                        sql.NullTime
 	Idusers                          int32
 	Email                            sql.NullString
 	Passwd                           sql.NullString
 	PasswdAlgorithm                  sql.NullString
 	Username                         sql.NullString
+	DeletedAt_2                      sql.NullTime
 	Idpreferences                    int32
 	LanguageIdlanguage_2             int32
 	UsersIdusers_2                   int32
@@ -408,11 +437,13 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.Writting,
 			&i.Abstract,
 			&i.Private,
+			&i.DeletedAt,
 			&i.Idusers,
 			&i.Email,
 			&i.Passwd,
 			&i.PasswdAlgorithm,
 			&i.Username,
+			&i.DeletedAt_2,
 			&i.Idpreferences,
 			&i.LanguageIdlanguage_2,
 			&i.UsersIdusers_2,
@@ -443,9 +474,17 @@ type LoginParams struct {
 	MD5      string
 }
 
-func (q *Queries) Login(ctx context.Context, arg LoginParams) (*User, error) {
+type LoginRow struct {
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+}
+
+func (q *Queries) Login(ctx context.Context, arg LoginParams) (*LoginRow, error) {
 	row := q.db.QueryRowContext(ctx, login, arg.Username, arg.MD5)
-	var i User
+	var i LoginRow
 	err := row.Scan(
 		&i.Idusers,
 		&i.Email,
@@ -478,9 +517,17 @@ FROM users
 WHERE email = ?
 `
 
-func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*User, error) {
+type UserByEmailRow struct {
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+}
+
+func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*UserByEmailRow, error) {
 	row := q.db.QueryRowContext(ctx, userByEmail, email)
-	var i User
+	var i UserByEmailRow
 	err := row.Scan(
 		&i.Idusers,
 		&i.Email,
@@ -497,9 +544,17 @@ FROM users
 WHERE username = ?
 `
 
-func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (*User, error) {
+type UserByUsernameRow struct {
+	Idusers         int32
+	Email           sql.NullString
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+}
+
+func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (*UserByUsernameRow, error) {
 	row := q.db.QueryRowContext(ctx, userByUsername, username)
-	var i User
+	var i UserByUsernameRow
 	err := row.Scan(
 		&i.Idusers,
 		&i.Email,

@@ -24,7 +24,7 @@ func TestIsAlphanumericOrPunctuation(t *testing.T) {
 		{'!', false},
 	}
 	for _, c := range cases {
-		if got := isAlphanumericOrPunctuation(c.r); got != c.want {
+		if got := searchutil.IsAlphanumericOrPunctuation(c.r); got != c.want {
 			t.Errorf("%q got %v want %v", string(c.r), got, c.want)
 		}
 	}
@@ -43,7 +43,7 @@ func TestIsAlphanumericOrPunctuationExtra(t *testing.T) {
 		{'世', true},
 	}
 	for _, tt := range tests {
-		if got := isAlphanumericOrPunctuation(tt.r); got != tt.want {
+		if got := searchutil.IsAlphanumericOrPunctuation(tt.r); got != tt.want {
 			t.Errorf("%q got %v want %v", string(tt.r), got, tt.want)
 		}
 	}

@@ -14,6 +14,11 @@ func isAlphanumericOrPunctuation(char rune) bool {
 	return unicode.IsLetter(char) || unicode.IsDigit(char) || strings.ContainsRune("'-", char)
 }
 
+// IsAlphanumericOrPunctuation is exported for testing.
+func IsAlphanumericOrPunctuation(char rune) bool {
+	return isAlphanumericOrPunctuation(char)
+}
+
 // BreakupTextToWords splits input into tokens of alphanumeric or
 // punctuation characters used for search indexing.
 func BreakupTextToWords(input string) []string {

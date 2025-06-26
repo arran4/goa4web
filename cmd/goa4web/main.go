@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -14,13 +15,22 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
+var version = "dev"
+
 func main() {
 	early := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	var cfgPath string
+	var showVersion bool
 	early.StringVar(&cfgPath, "config-file", "", "path to application configuration file")
+	early.BoolVar(&showVersion, "version", false, "print version and exit")
 	_ = early.Parse(os.Args[1:])
 	if cfgPath == "" {
 		cfgPath = os.Getenv(config.EnvConfigFile)
+	}
+
+	if showVersion {
+		fmt.Println(version)
+		return
 	}
 
 	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)

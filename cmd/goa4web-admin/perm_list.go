@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 
@@ -11,16 +12,23 @@ import (
 // permListCmd implements "perm list".
 type permListCmd struct {
 	*permCmd
-	fs   *flag.FlagSet
-	args []string
+	fs      *flag.FlagSet
+	User    string
+	Section string
+	args    []string
 }
 
 func parsePermListCmd(parent *permCmd, args []string) (*permListCmd, error) {
+	c := &permListCmd{permCmd: parent}
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
+	fs.StringVar(&c.User, "user", "", "username filter")
+	fs.StringVar(&c.Section, "section", "", "section filter")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	return &permListCmd{permCmd: parent, fs: fs, args: fs.Args()}, nil
+	c.fs = fs
+	c.args = fs.Args()
+	return c, nil
 }
 
 func (c *permListCmd) Run() error {
@@ -30,7 +38,10 @@ func (c *permListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetPermissionsWithUsers(ctx)
+	rows, err := queries.GetPermissionsWithUsers(ctx,
+		sql.NullString{String: c.User, Valid: c.User != ""},
+		sql.NullString{String: c.Section, Valid: c.Section != ""},
+	)
 	if err != nil {
 		return fmt.Errorf("list permissions: %w", err)
 	}

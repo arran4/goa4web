@@ -31,7 +31,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	rows, err := queries.GetPermissionsWithUsers(r.Context())
+	rows, err := queries.GetPermissionsWithUsers(r.Context(), sql.NullString{}, sql.NullString{})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

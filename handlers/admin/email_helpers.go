@@ -16,11 +16,13 @@ import (
 	"github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func notifyChange(ctx context.Context, provider email.Provider, emailAddr, page string) error {
-	return emailutil.NotifyChange(ctx, provider, emailAddr, page)
+	n := notif.Notifier{Provider: provider}
+	return n.NotifyChange(ctx, 0, emailAddr, page)
 }
 
 func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
@@ -127,5 +129,5 @@ func adminNotificationsEnabled() bool {
 }
 
 func notifyAdmins(ctx context.Context, provider email.Provider, q *Queries, page string) {
-	emailutil.NotifyAdmins(ctx, provider, q, page)
+	notif.Notifier{Provider: provider, Queries: q}.NotifyAdmins(ctx, page)
 }

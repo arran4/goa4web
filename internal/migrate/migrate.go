@@ -22,7 +22,7 @@ func Apply(ctx context.Context, db *sql.DB, f fs.FS) error {
 	var version int
 	err := db.QueryRowContext(ctx, "SELECT version FROM schema_version").Scan(&version)
 	if err == sql.ErrNoRows {
-		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (1)"); err != nil {
+		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (?)", 1); err != nil {
 			return fmt.Errorf("init schema_version: %w", err)
 		}
 		version = 1

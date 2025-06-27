@@ -75,6 +75,25 @@ func TestPageTemplatesRender(t *testing.T) {
 			CategoryId                       int32
 			IsAdmin                          bool
 		}{&corecommon.CoreData{}, nil, 0, 0, false}},
+		{"linkerCategoryPage", struct {
+			*corecommon.CoreData
+			Offset      int
+			CatId       int
+			CommentOnId int
+			ReplyToId   int
+			Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
+		}{&corecommon.CoreData{}, 0, 0, 0, 0, nil}},
+		{"writingsCategoryPage", struct {
+			*corecommon.CoreData
+			Categories                       []*db.Writingcategory
+			CategoryBreadcrumbs              []*db.Writingcategory
+			EditingCategoryId                int32
+			CategoryId                       int32
+			WritingcategoryIdwritingcategory int32
+			IsAdmin                          bool
+			IsWriter                         bool
+			Abstracts                        []*db.GetPublicWritingsInCategoryRow
+		}{&corecommon.CoreData{}, nil, nil, 0, 0, 0, false, false, nil}},
 		{"searchPage", struct {
 			*corecommon.CoreData
 			SearchWords string

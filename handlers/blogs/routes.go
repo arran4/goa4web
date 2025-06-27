@@ -7,10 +7,14 @@ import (
 	auth "github.com/arran4/goa4web/handlers/auth"
 	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 // RegisterRoutes attaches the public blog endpoints to r.
 func RegisterRoutes(r *mux.Router) {
+	sections.RegisterIndexLink("Blogs", "/blogs", SectionWeight)
+	sections.RegisterAdminControlCenter("Blogs", "/admin/blogs/user/permissions", SectionWeight)
 	br := r.PathPrefix("/blogs").Subrouter()
 	br.HandleFunc("/rss", RssPage).Methods("GET")
 	br.HandleFunc("/atom", AtomPage).Methods("GET")

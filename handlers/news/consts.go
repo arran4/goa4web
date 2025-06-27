@@ -6,4 +6,7 @@ const (
 
 	// NewsTopicDescription describes the hidden news forum.
 	NewsTopicDescription = "THIS IS A HIDDEN FORUM FOR A NEWS TOPIC"
+
+	// SectionWeight controls the order of news in navigation menus.
+	SectionWeight = 10
 )

@@ -12,11 +12,21 @@ import (
 	search "github.com/arran4/goa4web/handlers/search"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	writings "github.com/arran4/goa4web/handlers/writings"
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
 func RegisterRoutes(ar *mux.Router) {
+	sections.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
+	sections.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
+	sections.RegisterAdminControlCenter("Permission Sections", "/admin/permissions/sections", 100)
+	sections.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
+	sections.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
+	sections.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
+	sections.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
+	sections.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
+
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")

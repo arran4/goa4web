@@ -14,6 +14,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/sections"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -24,20 +25,6 @@ func handleDie(w http.ResponseWriter, message string) {
 
 // IndexItem exposes the core/common navigation item type.
 type IndexItem = common.IndexItem
-
-// indexItems are always present navigation links.
-var indexItems = []common.IndexItem{
-	{Name: "News", Link: "/"},
-	{Name: "FAQ", Link: "/faq"},
-	{Name: "Blogs", Link: "/blogs"},
-	{Name: "Forum", Link: "/forum"},
-	{Name: "Linker", Link: "/linker"},
-	{Name: "Bookmarks", Link: "/bookmarks"},
-	{Name: "ImageBBS", Link: "/imagebbs"},
-	{Name: "Search", Link: "/search"},
-	{Name: "Writings", Link: "/writings"},
-	{Name: "Information", Link: "/information"},
-}
 
 // CoreAdderMiddleware populates request context with CoreData for templates.
 func CoreAdderMiddleware(next http.Handler) http.Handler {
@@ -64,8 +51,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		idx := make([]common.IndexItem, len(indexItems))
-		copy(idx, indexItems)
+		idx := sections.IndexItems()
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}

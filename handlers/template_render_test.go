@@ -104,8 +104,9 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&corecommon.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
 		{"adminPage", struct {
 			*corecommon.CoreData
-			Stats adminStats
-		}{&corecommon.CoreData{}, adminStats{}}},
+			AdminLinks []corecommon.IndexItem
+			Stats      adminStats
+		}{&corecommon.CoreData{}, nil, adminStats{}}},
 		{"forumAdminPage", struct {
 			*corecommon.CoreData
 			Stats struct{ Categories, Topics, Threads int64 }

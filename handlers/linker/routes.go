@@ -3,10 +3,14 @@ package linker
 import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 // RegisterRoutes attaches the public linker endpoints to r.
 func RegisterRoutes(r *mux.Router) {
+	sections.RegisterIndexLink("Linker", "/linker", SectionWeight)
+	sections.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
 	lr.HandleFunc("/atom", AtomPage).Methods("GET")

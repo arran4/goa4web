@@ -47,9 +47,9 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 func RegisterRoutes(r *mux.Router) {
 	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("newsPage")))).Methods("GET")
 	r.HandleFunc("/", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
+	r.HandleFunc("/news.rss", NewsRssPage).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(AddNewsIndex)
-	nr.HandleFunc(".rss", NewsRssPage).Methods("GET")
 	nr.HandleFunc("", runTemplate("newsPage")).Methods("GET")
 	nr.HandleFunc("", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")

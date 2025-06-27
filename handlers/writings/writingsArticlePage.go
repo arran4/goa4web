@@ -18,9 +18,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const WritingTopicName = "A WRITING TOPIC"
-const WritingTopicDescription = "THIS IS A HIDDEN FORUM FOR A WRITING"
-
 func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
 		*db.GetCommentsByThreadIdForUserRow

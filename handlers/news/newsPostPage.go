@@ -164,7 +164,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ShowEdit:     data.CoreData.HasRole("writer"),
 		Editing:      editingId == int(post.Idsitenews),
 		Announcement: ann,
-		IsAdmin:      data.CoreData.HasRole("administrator"),
+		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())

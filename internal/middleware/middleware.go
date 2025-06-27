@@ -75,6 +75,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			UserID:            uid,
 			Title:             "Arran's Site",
 			FeedsEnabled:      runtimeconfig.AppRuntimeConfig.FeedsEnabled,
+			AdminMode:         r.URL.Query().Get("mode") == "admin",
 			NotificationCount: count,
 			Announcement:      ann,
 		}

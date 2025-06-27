@@ -57,7 +57,7 @@ func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
 		data.AtomFeedUrl = "/imagebbs/atom"
 	}
 
-	userHasAdmin := data.HasRole("administrator")
+	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Admin",

@@ -17,7 +17,7 @@ func CustomNewsIndex(data *hcommon.CoreData, r *http.Request) {
 		Name: "RSS Feed",
 		Link: "/news.rss",
 	})
-	userHasAdmin := data.HasRole("administrator")
+	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "User Permissions",

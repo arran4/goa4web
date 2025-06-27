@@ -1,3 +1,5 @@
-{{ template "head" $ }}
-    {{ template "getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks" $ }}
-{{ template "tail" $ }}
+{{ define "linkerCategoryPage" }}
+    {{ template "head" $ }}
+        {{ template "getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks" $ }}
+    {{ template "tail" $ }}
+{{ end }}

@@ -3,6 +3,7 @@ package search
 import (
 	"database/sql"
 	corecommon "github.com/arran4/goa4web/core/common"
+	hblogs "github.com/arran4/goa4web/handlers/blogs"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
@@ -34,7 +35,7 @@ func SearchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hcommon.BloggerTopicName})
+	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hblogs.BloggerTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	hwritings "github.com/arran4/goa4web/handlers/writings"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
@@ -35,7 +36,7 @@ func SearchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hcommon.WritingTopicName})
+	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hwritings.WritingTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

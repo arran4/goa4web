@@ -4,11 +4,8 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
-	auth "github.com/arran4/goa4web/handlers/auth"
 	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	. "github.com/arran4/gorillamuxlogic"
-	"github.com/gorilla/mux"
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.

@@ -153,8 +153,9 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	if req.URL.RawQuery != "error="+want {
 		t.Fatalf("query=%q", req.URL.RawQuery)
 	}
-	if !strings.Contains(rr.Body.String(), "meta http-equiv=\"refresh\"") {
-		t.Fatalf("body=%q", rr.Body.String())
+	body := rr.Body.String()
+	if !strings.Contains(body, "history.back()") {
+		t.Fatalf("body=%q", body)
 	}
 }
 

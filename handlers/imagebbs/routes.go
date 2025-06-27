@@ -12,11 +12,11 @@ import (
 
 // RegisterRoutes attaches the public image board endpoints to r.
 func RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(runtimeconfig.AppRuntimeConfig.ImageUploadDir))))
-	ibr.HandleFunc(".rss", RssPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
-	ibr.HandleFunc(".atom", AtomPage).Methods("GET")
+	r.HandleFunc("/imagebbs.atom", AtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", BoardPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", BoardPostImageActionPage).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUploadImage))

@@ -70,7 +70,8 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	provider := getEmailProvider()
 	if provider == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured)
-		http.Redirect(w, r, "/admin/email/template?error="+q, http.StatusTemporaryRedirect)
+		r.URL.RawQuery = "error=" + q
+		common.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 

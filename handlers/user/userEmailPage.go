@@ -107,11 +107,9 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	provider := getEmailProvider()
 	if provider == nil {
 		q := url.QueryEscape(ErrMailNotConfigured)
-		// TaskDoneAutoRefreshPage triggers a client-side refresh to the
-		// same URL. By adjusting the query string we can show the error
-		// without an HTTP redirect that would repeat the POST.
+		// Display the error without redirecting so the POST isn't repeated.
 		r.URL.RawQuery = "error=" + q
-		common.TaskDoneAutoRefreshPage(w, r)
+		common.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	if err := notifyChange(r.Context(), provider, user.Email.String, pageURL); err != nil {

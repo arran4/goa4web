@@ -1,0 +1,6 @@
+{{ template "head" $ }}
+{{- if $.Error }}
+<p style="color:red;">{{ $.Error }}</p>
+{{- end }}
+<button type="button" onclick="history.back()">Go Back</button>
+{{ template "tail" $ }}

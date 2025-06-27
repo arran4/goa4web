@@ -1,8 +1,8 @@
 package blogs
 
 import (
-	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
+	"net/http"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	comments "github.com/arran4/goa4web/handlers/comments"
@@ -25,10 +25,10 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("/blog/{blog}", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	br.HandleFunc("/blog/{blog}/comments", CommentPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/reply", BlogReplyPostPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
-	br.HandleFunc("/blog/{blog}/comment/{comment}", CommentEditPostPage).MatcherFunc(Or(auth.RequiredAccess("administrator"), comments.Author())).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply))
-	br.HandleFunc("/blog/{blog}/comment/{comment}", CommentEditPostCancelPage).MatcherFunc(Or(auth.RequiredAccess("administrator"), comments.Author())).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
-	br.HandleFunc("/blog/{blog}/edit", BlogEditPage).Methods("GET").MatcherFunc(Or(auth.RequiredAccess("administrator"), And(auth.RequiredAccess("writer"), BlogAuthor())))
-	br.HandleFunc("/blog/{blog}/edit", BlogEditActionPage).Methods("POST").MatcherFunc(Or(auth.RequiredAccess("administrator"), And(auth.RequiredAccess("writer"), BlogAuthor()))).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEdit))
+	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply))
+	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostCancelPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
+	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(BlogEditPage))).Methods("GET").MatcherFunc(auth.RequiredAccess("writer", "administrator"))
+	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(BlogEditActionPage))).Methods("POST").MatcherFunc(auth.RequiredAccess("writer", "administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEdit))
 	br.HandleFunc("/blog/{blog}/edit", hcommon.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
 
 	// Admin endpoints for blogs

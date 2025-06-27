@@ -6,13 +6,11 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
+	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/arran4/goa4web/core/templates"
-	"github.com/gorilla/mux"
 )
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
@@ -43,14 +41,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	vars := mux.Vars(r)
-	blogId, _ := strconv.Atoi(vars["blog"])
-
-	row, err := queries.GetBlogEntryForUserById(r.Context(), int32(blogId))
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	row := r.Context().Value(common.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 	data.Blog = row
 
 	CustomBlogIndex(data.CoreData, r)
@@ -70,11 +61,10 @@ func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	vars := mux.Vars(r)
-	blogId, _ := strconv.Atoi(vars["blog"])
+	row := r.Context().Value(common.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 
 	err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
-		Idblogs:            int32(blogId),
+		Idblogs:            row.Idblogs,
 		LanguageIdlanguage: int32(languageId),
 		Blog: sql.NullString{
 			String: text,
@@ -86,5 +76,5 @@ func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d", blogId), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d", row.Idblogs), http.StatusTemporaryRedirect)
 }

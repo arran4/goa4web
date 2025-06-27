@@ -1,6 +1,7 @@
 package blogs
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -14,15 +15,20 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-// BlogAuthor ensures the requester authored the blog entry referenced in the URL.
-func BlogAuthor() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
+// RequireBlogAuthor ensures the requester authored the blog entry referenced in the URL.
+func RequireBlogAuthor(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		blogID, _ := strconv.Atoi(vars["blog"])
+		blogID, err := strconv.Atoi(vars["blog"])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
 		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 		session, err := core.GetSession(r)
 		if err != nil {
-			return false
+			http.NotFound(w, r)
+			return
 		}
 		uid, _ := session.Values["UID"].(int32)
 
@@ -30,12 +36,24 @@ func BlogAuthor() mux.MatcherFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
+				http.NotFound(w, r)
 			default:
 				log.Printf("Error: %s", err)
-				return false
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
+			return
 		}
-
-		return row.UsersIdusers == uid
-	}
+		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+		if cd != nil && cd.HasRole("administrator") {
+			ctx := context.WithValue(r.Context(), hcommon.KeyBlogEntry, row)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+		if cd == nil || !cd.HasRole("writer") || row.UsersIdusers != uid {
+			http.NotFound(w, r)
+			return
+		}
+		ctx := context.WithValue(r.Context(), hcommon.KeyBlogEntry, row)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

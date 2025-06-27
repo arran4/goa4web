@@ -13,7 +13,6 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/gorilla/mux"
 )
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
@@ -31,8 +30,8 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
 	}
 
-	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
+	// article ID is validated by the RequireWritingAuthor middleware, so we
+	// no longer need to parse it here.
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -41,18 +40,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-
-	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    uid,
-		Idwriting: int32(articleId),
-	})
-	if err != nil {
-		log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
+	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 	data.Writing = writing
 
 	languageRows, err := queries.FetchLanguages(r.Context())
@@ -72,8 +60,8 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
+	// RequireWritingAuthor middleware loads the writing and validates access.
+	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
@@ -89,14 +77,14 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		Writting:           sql.NullString{Valid: true, String: body},
 		Private:            sql.NullBool{Valid: true, Bool: private},
 		LanguageIdlanguage: int32(languageId),
-		Idwriting:          int32(articleId),
+		Idwriting:          writing.Idwriting,
 	}); err != nil {
 		log.Printf("updateWriting Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := queries.WritingSearchDelete(r.Context(), int32(articleId)); err != nil {
+	if err := queries.WritingSearchDelete(r.Context(), writing.Idwriting); err != nil {
 		log.Printf("writingSearchDelete Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -112,7 +100,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(articleId)) {
+		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(writing.Idwriting)) {
 			return
 		}
 	}

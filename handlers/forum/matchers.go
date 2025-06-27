@@ -14,17 +14,21 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-// GetThreadAndTopic retrieves thread and topic details for the request and stores them in the context.
-func GetThreadAndTopic() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
+// RequireThreadAndTopic loads the thread and topic specified in the URL and
+// verifies that they belong together before passing control to the next
+// handler. The loaded rows are stored on the request context.
+func RequireThreadAndTopic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		topicID, err := strconv.Atoi(vars["topic"])
 		if err != nil {
-			return false
+			http.NotFound(w, r)
+			return
 		}
 		threadID, err := strconv.Atoi(vars["thread"])
 		if err != nil {
-			return false
+			http.NotFound(w, r)
+			return
 		}
 
 		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
@@ -41,9 +45,10 @@ func GetThreadAndTopic() mux.MatcherFunc {
 		})
 		if err != nil {
 			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
-				log.Printf("GetThreadAndTopic thread uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
+				log.Printf("RequireThreadAndTopic thread uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
 			}
-			return false
+			http.NotFound(w, r)
+			return
 		}
 
 		topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
@@ -52,23 +57,24 @@ func GetThreadAndTopic() mux.MatcherFunc {
 		})
 		if err != nil {
 			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
-				log.Printf("GetThreadAndTopic topic uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
+				log.Printf("RequireThreadAndTopic topic uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
 			}
-			return false
+			http.NotFound(w, r)
+			return
 		}
 
 		if int(topicRow.Idforumtopic) != topicID {
 			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
-				log.Printf("GetThreadAndTopic mismatch uid=%d urlTopic=%d threadTopic=%d", uid, topicID, topicRow.Idforumtopic)
+				log.Printf("RequireThreadAndTopic mismatch uid=%d urlTopic=%d threadTopic=%d", uid, topicID, topicRow.Idforumtopic)
 			}
-			return false
+			http.NotFound(w, r)
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), hcommon.KeyThread, threadRow)
 		ctx = context.WithValue(ctx, hcommon.KeyTopic, topicRow)
-		*r = *r.WithContext(ctx)
-		return true
-	}
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // TargetUsersLevelNotHigherThanAdminsMax verifies the target user's level does not exceed the admin's maximum.

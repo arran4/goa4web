@@ -1,6 +1,7 @@
 package news
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,24 +13,35 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-// NewsPostAuthor ensures the requester authored the news post referenced in the URL.
-func NewsPostAuthor() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
-		vars := mux.Vars(r)
-		postID, _ := strconv.Atoi(vars["post"])
+// RequireNewsPostAuthor ensures the requester authored the news post referenced in the URL.
+func RequireNewsPostAuthor(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		postID, err := strconv.Atoi(mux.Vars(r)["post"])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
 		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 		session, err := core.GetSession(r)
 		if err != nil {
-			return false
+			http.NotFound(w, r)
+			return
 		}
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetForumThreadIdByNewsPostId(r.Context(), int32(postID))
 		if err != nil {
 			log.Printf("Error: %s", err)
-			return false
+			http.NotFound(w, r)
+			return
 		}
 
-		return row.Idusers.Int32 == uid
-	}
+		if row.Idusers.Int32 != uid {
+			http.NotFound(w, r)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), hcommon.KeyNewsPost, row)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

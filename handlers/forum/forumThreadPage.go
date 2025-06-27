@@ -82,7 +82,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// threadRow and topicRow are provided by the GetThreadAndTopic matcher
+	// threadRow and topicRow are provided by the RequireThreadAndTopic
+	// middleware.
 
 	data.Topic = &ForumtopicPlus{
 		Idforumtopic:                 topicRow.Idforumtopic,

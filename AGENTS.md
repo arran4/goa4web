@@ -26,4 +26,6 @@ All database schema changes must include a migration script in the `migrations/`
 
 Errors in critical functions like `main()` or `run()` must be logged or wrapped using `fmt.Errorf` with context. Prefer doing both when errors propagate.
 
+When tackling bugs or missing features, check if the behaviour can be verified with tests. If so, write a test that fails before changing the implementation. Iterate on your fix until the new test passes.
+
 Before committing, run `go vet ./...` and `golangci-lint` to match the CI checks.

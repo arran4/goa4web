@@ -1,9 +1,9 @@
 {{ template "head" $ }}
 {{ range .Notifications }}
-    <div>
+    <div class="notification">
         {{ if .Link.Valid }}<a href="{{ .Link.String }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
-        <form method="post" action="/usr/notifications/dismiss">
-        {{ csrfField }}
+        <form method="post" action="/usr/notifications/dismiss" style="display:inline">
+            {{ csrfField }}
             <input type="hidden" name="id" value="{{ .ID }}">
             <input type="submit" name="task" value="Dismiss">
         </form>

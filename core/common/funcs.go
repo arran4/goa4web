@@ -47,6 +47,16 @@ func NewFuncs(r *http.Request) template.FuncMap {
 			}
 			return s[:l]
 		},
+		"addmode": func(u string) string {
+			cd, _ := r.Context().Value(ContextValues("coreData")).(*CoreData)
+			if cd == nil || !cd.AdminMode {
+				return u
+			}
+			if strings.Contains(u, "?") {
+				return u + "&mode=admin"
+			}
+			return u + "?mode=admin"
+		},
 		"LatestNews": func() (any, error) {
 			if LatestNews != nil {
 				return LatestNews, nil
@@ -90,7 +100,7 @@ func NewFuncs(r *http.Request) template.FuncMap {
 					ShowEdit:     cd.HasRole("writer"),
 					Editing:      editingId == int(post.Idsitenews),
 					Announcement: ann,
-					IsAdmin:      cd.HasRole("administrator"),
+					IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,
 				})
 			}
 			LatestNews = result

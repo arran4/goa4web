@@ -32,7 +32,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	data.IsAdmin = data.CoreData.HasRole("administrator")
+	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
 	data.IsWriter = data.CoreData.HasRole("writer") || data.IsAdmin
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)

@@ -7,7 +7,7 @@ import (
 )
 
 func TestCustomFAQIndexRoles(t *testing.T) {
-	cd := &corecommon.CoreData{SecurityLevel: "administrator"}
+	cd := &corecommon.CoreData{SecurityLevel: "administrator", AdminMode: true}
 	CustomFAQIndex(cd)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("admin should see question controls")

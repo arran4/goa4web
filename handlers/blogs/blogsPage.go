@@ -113,7 +113,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 		data.AtomFeedUrl = "/blogs/atom"
 	}
 
-	userHasAdmin := data.HasRole("administrator")
+	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "User Permissions",

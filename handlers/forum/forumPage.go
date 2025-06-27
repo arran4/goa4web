@@ -146,7 +146,7 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 			IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
 		)
 	}
-	userHasAdmin := data.HasRole("administrator")
+	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			IndexItem{

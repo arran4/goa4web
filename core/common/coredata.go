@@ -12,15 +12,17 @@ type IndexItem struct {
 }
 
 type CoreData struct {
-	IndexItems        []IndexItem
-	CustomIndexItems  []IndexItem
-	UserID            int32
-	SecurityLevel     string
-	Title             string
-	AutoRefresh       bool
-	FeedsEnabled      bool
-	RSSFeedUrl        string
-	AtomFeedUrl       string
+	IndexItems       []IndexItem
+	CustomIndexItems []IndexItem
+	UserID           int32
+	SecurityLevel    string
+	Title            string
+	AutoRefresh      bool
+	FeedsEnabled     bool
+	RSSFeedUrl       string
+	AtomFeedUrl      string
+	// AdminMode indicates whether admin-only UI elements should be displayed.
+	AdminMode         bool
 	NotificationCount int32
 	Announcement      *db.GetActiveAnnouncementWithNewsRow
 }

@@ -11,7 +11,7 @@ import (
 func TestCustomNewsIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 
-	cd := &hcommon.CoreData{SecurityLevel: "administrator"}
+	cd := &hcommon.CoreData{SecurityLevel: "administrator", AdminMode: true}
 	CustomNewsIndex(cd, req)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("admin should see user permissions")

@@ -1,5 +1,5 @@
 {{- define "indexItems"}}
     {{ range $i := $.IndexItems }}
-        <a href="{{ $i.Link }}">{{ $i.Name }}</a><br>
+        <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}
 {{- end}}

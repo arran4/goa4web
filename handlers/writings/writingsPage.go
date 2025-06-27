@@ -30,7 +30,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	data.IsAdmin = data.CoreData.HasRole("administrator")
+	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
 	data.CategoryId = 0
@@ -68,7 +68,7 @@ func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
 	data.RSSFeedUrl = "/writings/rss"
 	data.AtomFeedUrl = "/writings/atom"
 
-	userHasAdmin := data.HasRole("administrator")
+	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin && writingsPermissionsPageEnabled {
 		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "User Permissions",

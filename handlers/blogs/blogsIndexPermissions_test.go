@@ -10,7 +10,7 @@ import (
 func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
-	cd := &CoreData{SecurityLevel: "administrator"}
+	cd := &CoreData{SecurityLevel: "administrator", AdminMode: true}
 	CustomBlogIndex(cd, req)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("admin should see user permissions")

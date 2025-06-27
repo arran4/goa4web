@@ -37,7 +37,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	if req.URL.RawQuery != "error="+want {
 		t.Fatalf("query=%q", req.URL.RawQuery)
 	}
-	if !strings.Contains(rr.Body.String(), "history.back()") {
+	if !strings.Contains(rr.Body.String(), "<a href=") {
 		t.Fatalf("body=%q", rr.Body.String())
 	}
 }

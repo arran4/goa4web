@@ -2,5 +2,7 @@
 {{- if $.Error }}
 <p style="color:red;">{{ $.Error }}</p>
 {{- end }}
-<button type="button" onclick="history.back()">Go Back</button>
+{{- if $.BackURL }}
+<a href="{{ $.BackURL }}">Go Back</a>
+{{- end }}
 {{ template "tail" $ }}

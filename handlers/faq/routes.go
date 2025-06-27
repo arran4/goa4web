@@ -3,6 +3,8 @@ package faq
 import (
 	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 // Task constants mirror the values used by the main package.
@@ -39,6 +41,8 @@ func noTask() mux.MatcherFunc {
 
 // RegisterRoutes attaches the public FAQ endpoints to the router.
 func RegisterRoutes(r *mux.Router) {
+	sections.RegisterIndexLink("FAQ", "/faq", SectionWeight)
+	sections.RegisterAdminControlCenter("FAQ", "/admin/faq/categories", SectionWeight)
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.HandleFunc("", Page).Methods("GET", "POST")
 	faqr.HandleFunc("/ask", AskPage).Methods("GET")

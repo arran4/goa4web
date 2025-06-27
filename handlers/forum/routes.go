@@ -6,10 +6,14 @@ import (
 
 	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
 func RegisterRoutes(r *mux.Router) {
+	sections.RegisterIndexLink("Forum", "/forum", SectionWeight)
+	sections.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.HandleFunc("/topic/{topic}.rss", TopicRssPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.atom", TopicAtomPage).Methods("GET")

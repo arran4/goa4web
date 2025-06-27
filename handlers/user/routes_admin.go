@@ -4,10 +4,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 // RegisterAdminRoutes attaches user admin endpoints to the router.
 func RegisterAdminRoutes(ar *mux.Router) {
+	sections.RegisterAdminControlCenter("User Permissions", "/admin/users/permissions", SectionWeight-10)
+	sections.RegisterAdminControlCenter("Users", "/admin/users", SectionWeight)
 	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
 	ar.HandleFunc("/users/export", adminUsersExportPage).Methods("GET")
 	ar.HandleFunc("/sessions", adminSessionsPage).Methods("GET")

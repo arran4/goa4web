@@ -82,6 +82,28 @@ requests.
 └── internal/db/queries-*.sql        – SQL queries consumed by sqlc
 ```
 
+### Section registration
+
+Site sections register their navigation items with the `sections` package so
+menus can be assembled dynamically. Use `sections.RegisterIndexLink` for public
+links and `sections.RegisterAdminControlCenter` for admin navigation. Each call
+accepts a weight value; lower numbers appear first.
+
+Example weights:
+
+```
+News        10
+FAQ         20
+Blogs       30
+Forum       40
+Linker      50
+Bookmarks   60
+ImageBBS    70
+Search      80
+Writings    90
+Information 100
+```
+
 ## Testing
 
 Unit tests focus mainly on utility packages and template compilation. Execute all tests with:

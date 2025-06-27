@@ -5,10 +5,13 @@ import (
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 // RegisterRoutes attaches the bookmarks endpoints to r.
 func RegisterRoutes(r *mux.Router) {
+	sections.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(auth.RequiresAnAccount())

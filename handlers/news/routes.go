@@ -11,6 +11,7 @@ import (
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/sections"
 )
 
 func runTemplate(tmpl string) func(http.ResponseWriter, *http.Request) {
@@ -45,6 +46,8 @@ func AddNewsIndex(handler http.Handler) http.Handler {
 
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router) {
+	sections.RegisterIndexLink("News", "/", SectionWeight)
+	sections.RegisterAdminControlCenter("News", "/admin/news/users/levels", SectionWeight)
 	r.Handle("/", AddNewsIndex(http.HandlerFunc(runTemplate("newsPage")))).Methods("GET")
 	r.HandleFunc("/", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	r.HandleFunc("/news.rss", NewsRssPage).Methods("GET")

@@ -32,12 +32,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment, err := queries.GetCommentById(r.Context(), int32(commentId))
-	if err != nil {
-		log.Printf("Error: getComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
+	comment := r.Context().Value(common.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
 		UsersIdusers:  uid,

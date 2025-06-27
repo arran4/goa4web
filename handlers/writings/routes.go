@@ -3,6 +3,7 @@ package writings
 import (
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
+	"net/http"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -22,8 +23,8 @@ func RegisterRoutes(r *mux.Router) {
 	wr.HandleFunc("/users/permissions", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUserDisallow))
 	wr.HandleFunc("/article/{article}", ArticlePage).Methods("GET")
 	wr.HandleFunc("/article/{article}", ArticleReplyActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
-	wr.HandleFunc("/article/{article}/edit", ArticleEditPage).Methods("GET").MatcherFunc(Or(And(auth.RequiredAccess("writer"), WritingAuthor()), auth.RequiredAccess("administrator")))
-	wr.HandleFunc("/article/{article}/edit", ArticleEditActionPage).Methods("POST").MatcherFunc(Or(And(auth.RequiredAccess("writer"), WritingAuthor()), auth.RequiredAccess("administrator"))).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUpdateWriting))
+	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(ArticleEditPage))).Methods("GET").MatcherFunc(auth.RequiredAccess("writer", "administrator"))
+	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(ArticleEditActionPage))).Methods("POST").MatcherFunc(auth.RequiredAccess("writer", "administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUpdateWriting))
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")

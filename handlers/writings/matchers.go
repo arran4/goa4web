@@ -1,6 +1,7 @@
 package writings
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,15 +13,19 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-// WritingAuthor ensures the requester authored the writing referenced in the URL.
-func WritingAuthor() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
-		vars := mux.Vars(r)
-		writingID, _ := strconv.Atoi(vars["writing"])
+// RequireWritingAuthor ensures the requester authored the writing referenced in the URL.
+func RequireWritingAuthor(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writingID, err := strconv.Atoi(mux.Vars(r)["writing"])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
 		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 		session, err := core.GetSession(r)
 		if err != nil {
-			return false
+			http.NotFound(w, r)
+			return
 		}
 		uid, _ := session.Values["UID"].(int32)
 
@@ -30,9 +35,21 @@ func WritingAuthor() mux.MatcherFunc {
 		})
 		if err != nil {
 			log.Printf("Error: %s", err)
-			return false
+			http.NotFound(w, r)
+			return
 		}
 
-		return row.UsersIdusers == uid
-	}
+		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+		if cd != nil && cd.HasRole("administrator") {
+			ctx := context.WithValue(r.Context(), hcommon.KeyWriting, row)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+		if cd == nil || !cd.HasRole("writer") || row.UsersIdusers != uid {
+			http.NotFound(w, r)
+			return
+		}
+		ctx := context.WithValue(r.Context(), hcommon.KeyWriting, row)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

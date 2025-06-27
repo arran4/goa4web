@@ -3,6 +3,7 @@ package forum
 import (
 	"context"
 	"database/sql"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func TestGetThreadAndTopicTrue(t *testing.T) {
+func TestRequireThreadAndTopicTrue(t *testing.T) {
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -38,15 +39,29 @@ func TestGetThreadAndTopicTrue(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
-	if !GetThreadAndTopic()(req, &mux.RouteMatch{}) {
-		t.Errorf("expected match")
+	called := false
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		if r.Context().Value(common.KeyThread) == nil || r.Context().Value(common.KeyTopic) == nil {
+			t.Errorf("context values missing")
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	RequireThreadAndTopic(handler).ServeHTTP(rr, req)
+	if !called {
+		t.Errorf("expected handler call")
+	}
+	if rr.Code != http.StatusOK {
+		t.Errorf("unexpected status %d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
 }
 
-func TestGetThreadAndTopicFalse(t *testing.T) {
+func TestRequireThreadAndTopicFalse(t *testing.T) {
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -72,15 +87,26 @@ func TestGetThreadAndTopicFalse(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
-	if GetThreadAndTopic()(req, &mux.RouteMatch{}) {
-		t.Errorf("expected no match")
+	called := false
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	RequireThreadAndTopic(handler).ServeHTTP(rr, req)
+	if called {
+		t.Errorf("expected handler not called")
+	}
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("expected 404 got %d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
 }
 
-func TestGetThreadAndTopicError(t *testing.T) {
+func TestRequireThreadAndTopicError(t *testing.T) {
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -98,8 +124,18 @@ func TestGetThreadAndTopicError(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
-	if GetThreadAndTopic()(req, &mux.RouteMatch{}) {
-		t.Errorf("expected no match on error")
+	called := false
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	})
+
+	RequireThreadAndTopic(handler).ServeHTTP(rr, req)
+	if called {
+		t.Errorf("expected handler not called")
+	}
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("expected 404 got %d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

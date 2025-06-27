@@ -30,4 +30,12 @@ const (
 	KeyTopic ContextKey = "topic"
 	// KeyUser references the authenticated user.
 	KeyUser ContextKey = "user"
+	// KeyBlogEntry holds a fetched blog entry row.
+	KeyBlogEntry ContextKey = "blogEntry"
+	// KeyComment stores the current comment row.
+	KeyComment ContextKey = "comment"
+	// KeyNewsPost holds the news post row.
+	KeyNewsPost ContextKey = "newsPost"
+	// KeyWriting contains the writing row.
+	KeyWriting ContextKey = "writing"
 )

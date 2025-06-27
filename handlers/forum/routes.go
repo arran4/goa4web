@@ -1,10 +1,9 @@
 package forum
 
 import (
-	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
+	"net/http"
 
-	auth "github.com/arran4/goa4web/handlers/auth"
 	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 )
@@ -20,10 +19,10 @@ func RegisterRoutes(r *mux.Router) {
 	fr.HandleFunc("/topic/{topic}/thread", ThreadNewPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread", ThreadNewActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCreateThread))
 	fr.HandleFunc("/topic/{topic}/thread", ThreadNewCancelPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}", ThreadPage).Methods("GET").MatcherFunc(GetThreadAndTopic())
-	fr.HandleFunc("/topic/{topic}/thread/{thread}", hcommon.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(GetThreadAndTopic())
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", TopicThreadReplyPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/reply", TopicThreadReplyCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", TopicThreadCommentEditActionPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply)).MatcherFunc(Or(auth.RequiredAccess("administrator"), comments.Author()))
-	fr.HandleFunc("/topic/{topic}/thread/{thread}/comment/{comment}", TopicThreadCommentEditActionCancelPage).Methods("POST").MatcherFunc(GetThreadAndTopic()).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
+	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
+	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(hcommon.TaskDoneAutoRefreshPage))).Methods("POST")
+	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(TopicThreadReplyPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
+	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(TopicThreadReplyCancelPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
+	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(TopicThreadCommentEditActionPage)))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply))
+	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(http.HandlerFunc(TopicThreadCommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
 }

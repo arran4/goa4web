@@ -154,7 +154,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 		t.Fatalf("query=%q", req.URL.RawQuery)
 	}
 	body := rr.Body.String()
-	if !strings.Contains(body, "history.back()") {
+	if !strings.Contains(body, "<a href=") {
 		t.Fatalf("body=%q", body)
 	}
 }

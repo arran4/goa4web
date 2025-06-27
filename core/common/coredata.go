@@ -25,10 +25,6 @@ type CoreData struct {
 	Announcement      *db.GetActiveAnnouncementWithNewsRow
 }
 
-func (cd *CoreData) GetPermissionsByUserIdAndSectionAndSectionAll() string {
-	return cd.SecurityLevel
-}
-
 var rolePriority = map[string]int{
 	"reader":        1,
 	"writer":        2,

@@ -146,12 +146,15 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	rr := httptest.NewRecorder()
 	userEmailTestActionPage(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	want := url.QueryEscape(ErrMailNotConfigured)
-	if loc := rr.Header().Get("Location"); !strings.Contains(loc, want) {
-		t.Fatalf("location=%q", loc)
+	if req.URL.RawQuery != "error="+want {
+		t.Fatalf("query=%q", req.URL.RawQuery)
+	}
+	if !strings.Contains(rr.Body.String(), "meta http-equiv=\"refresh\"") {
+		t.Fatalf("body=%q", rr.Body.String())
 	}
 }
 

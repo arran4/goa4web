@@ -46,8 +46,13 @@ func TestEnsureSchemaVersionMismatch(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
 		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(hcommon.ExpectedSchemaVersion - 1))
 
-	if err := dbstart.EnsureSchema(context.Background(), db); err == nil {
+	err = dbstart.EnsureSchema(context.Background(), db)
+	if err == nil {
 		t.Fatalf("expected error")
+	}
+	expected := dbstart.RenderSchemaMismatch(hcommon.ExpectedSchemaVersion-1, hcommon.ExpectedSchemaVersion)
+	if err.Error() != expected {
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

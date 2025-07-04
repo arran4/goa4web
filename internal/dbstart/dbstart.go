@@ -121,7 +121,8 @@ func EnsureSchema(ctx context.Context, db *sql.DB) error {
 		return fmt.Errorf("select schema_version: %w", err)
 	}
 	if version != hcommon.ExpectedSchemaVersion {
-		return fmt.Errorf("database schema version %d does not match expected %d", version, hcommon.ExpectedSchemaVersion)
+		msg := RenderSchemaMismatch(version, hcommon.ExpectedSchemaVersion)
+		return fmt.Errorf(msg)
 	}
 	return nil
 }

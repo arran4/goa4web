@@ -100,7 +100,9 @@ func renderMessage(ctx context.Context, q *dbpkg.Queries, action, path string, i
 		Path   string
 		Item   interface{}
 	}{Action: action, Path: path, Item: item})
-	return buf.String()
+	msg := buf.String()
+	msg = strings.TrimSuffix(msg, "\n")
+	return msg
 }
 
 // parseEvent identifies a subscription target from the request path.

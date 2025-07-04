@@ -8,6 +8,8 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
@@ -64,6 +66,17 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: makeThread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
+	}
+
+	var topicTitle, author string
+	if trow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{UsersIdusers: uid, Idforumtopic: int32(topicId)}); err == nil {
+		topicTitle = trow.Title.String
+	}
+	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+		author = u.Username.String
+	}
+	if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
+		evt.Item = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
 	}
 
 	text := r.PostFormValue("replytext")

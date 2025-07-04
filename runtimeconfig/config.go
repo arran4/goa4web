@@ -48,6 +48,9 @@ type RuntimeConfig struct {
 
 	ImageUploadDir string
 	ImageMaxBytes  int
+
+	DLQProvider string
+	DLQFile     string
 }
 
 // AppRuntimeConfig stores the current application configuration.
@@ -92,6 +95,8 @@ func NewRuntimeFlagSet(name string) *flag.FlagSet {
 	fs.String("default-language", "", "default language name")
 	fs.String("image-upload-dir", "", "directory to store uploaded images")
 	fs.Int("image-max-bytes", 0, "maximum allowed upload size in bytes")
+	fs.String("dlq-provider", "", "dead letter queue provider")
+	fs.String("dlq-file", "", "dead letter queue file path")
 
 	return fs
 }
@@ -140,6 +145,8 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		{"sendgrid-key", config.EnvSendGridKey, &cfg.EmailSendGridKey},
 		{"default-language", config.EnvDefaultLanguage, &cfg.DefaultLanguage},
 		{"image-upload-dir", config.EnvImageUploadDir, &cfg.ImageUploadDir},
+		{"dlq-provider", config.EnvDLQProvider, &cfg.DLQProvider},
+		{"dlq-file", config.EnvDLQFile, &cfg.DLQFile},
 	}
 	for _, o := range strOpts {
 		if fs != nil && setFlags[o.name] {

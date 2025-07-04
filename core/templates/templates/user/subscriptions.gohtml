@@ -1,0 +1,39 @@
+{{ template "head" $ }}
+<h2>Your Subscriptions</h2>
+{{ if .Subs }}
+<table>
+<tr><th>Pattern</th><th>Method</th><th></th></tr>
+{{ range .Subs }}
+<tr>
+<td>{{ .Pattern }}</td>
+<td>{{ .Method }}</td>
+<td>
+<form method="post" action="/usr/subscriptions/delete" style="display:inline">
+    {{ csrfField }}
+    <input type="hidden" name="id" value="{{ .ID }}">
+    <input type="submit" name="task" value="Delete">
+</form>
+</td>
+</tr>
+{{ end }}
+</table>
+{{ else }}
+<p>No subscriptions</p>
+{{ end }}
+
+<h3>Add Subscription</h3>
+{{ range .Options }}
+<div>
+    <form method="post" action="/usr/subscriptions/add/{{ .Path }}" style="display:inline">
+        {{ csrfField }}
+        Method:
+        <select name="method">
+            <option value="internal">Internal</option>
+            <option value="email">Email</option>
+        </select>
+        <input type="submit" name="task" value="{{ .Task }}">
+        {{ .Name }}
+    </form>
+</div>
+{{ end }}
+{{ template "tail" $ }}

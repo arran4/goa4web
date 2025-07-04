@@ -84,8 +84,8 @@ func TestListUnsentPendingEmails(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := db.New(sqldb)
-	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "created_at"}).AddRow(1, "a@test", "s", "b", time.Now())
-	mock.ExpectQuery("SELECT id, to_email, subject, body, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "html_body", "created_at"}).AddRow(1, "a@test", "s", "b", "h", time.Now())
+	mock.ExpectQuery("SELECT id, to_email, subject, body, html_body, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id").WillReturnRows(rows)
 	if _, err := q.ListUnsentPendingEmails(context.Background()); err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -113,7 +113,7 @@ func TestRecentNotifications(t *testing.T) {
 
 type recordAdminMail struct{ to []string }
 
-func (r *recordAdminMail) Send(ctx context.Context, to, subject, body string) error {
+func (r *recordAdminMail) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
 	r.to = append(r.to, to)
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
@@ -102,18 +103,21 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	content := struct{ To, From, Subject, URL string }{
+	content := struct{ To, From, Subject, URL, Action, Path, Time string }{
 		To:      user.Email.String,
 		From:    email.SourceEmail,
 		Subject: "Website Update Notification",
 		URL:     pageURL,
+		Action:  common.TaskTestMail,
+		Path:    r.URL.Path,
+		Time:    time.Now().Format(time.RFC822),
 	}
 	if err := tmpl.Execute(&buf, content); err != nil {
 		log.Printf("execute template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := provider.Send(r.Context(), user.Email.String, content.Subject, buf.String()); err != nil {
+	if err := provider.Send(r.Context(), user.Email.String, content.Subject, buf.String(), ""); err != nil {
 		log.Printf("send email: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)

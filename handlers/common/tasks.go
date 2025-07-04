@@ -257,4 +257,16 @@ const (
 
 	// TaskPurge removes old records.
 	TaskPurge = "Purge"
+
+	// TaskSubscribeBlogs subscribes a user to all blog posts.
+	TaskSubscribeBlogs = "Subscribe blogs"
+
+	// TaskSubscribeWritings subscribes a user to all writing posts.
+	TaskSubscribeWritings = "Subscribe writings"
+
+	// TaskSubscribeNews subscribes a user to all news posts.
+	TaskSubscribeNews = "Subscribe news"
+
+	// TaskSubscribeImages subscribes a user to all image board posts.
+	TaskSubscribeImages = "Subscribe images"
 )

@@ -1,0 +1,15 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [A4] {{.Subject}}
+
+Hello,
+
+A new blog post was published by {{.Item.Author}}.
+
+Read it here:
+{{.URL}}
+
+You can manage your subscriptions in your settings.
+
+Cheers,
+The A4Web Team

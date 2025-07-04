@@ -1,0 +1,1 @@
+New user signup: {{if .Item}}{{.Item.Username}}{{end}}

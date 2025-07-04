@@ -1,0 +1,15 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [A4] {{.Subject}}
+
+Hello,
+
+A new writing "{{.Item.Title}}" was submitted.
+
+Read it here:
+{{.URL}}
+
+You can manage your subscriptions in your settings.
+
+Cheers,
+The A4Web Team

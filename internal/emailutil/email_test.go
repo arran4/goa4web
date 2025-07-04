@@ -60,10 +60,10 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	}
 }
 
-type recordMail struct{ to, sub, body string }
+type recordMail struct{ to, sub, text, html string }
 
-func (r *recordMail) Send(ctx context.Context, to, subject, body string) error {
-	r.to, r.sub, r.body = to, subject, body
+func (r *recordMail) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+	r.to, r.sub, r.text, r.html = to, subject, textBody, htmlBody
 	return nil
 }
 
@@ -74,10 +74,10 @@ func TestNotifyChange(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("a@b.com", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("a@b.com", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
 	rec := &recordMail{}
-	if err := emailutil.NotifyChange(ctx, rec, "a@b.com", "http://host"); err != nil {
+	if err := emailutil.NotifyChange(ctx, rec, "a@b.com", "http://host", "update", nil); err != nil {
 		t.Fatalf("notify error: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -87,7 +87,7 @@ func TestNotifyChange(t *testing.T) {
 
 func TestNotifyChangeErrors(t *testing.T) {
 	rec := &recordMail{}
-	if err := emailutil.NotifyChange(context.Background(), rec, "", "p"); err == nil {
+	if err := emailutil.NotifyChange(context.Background(), rec, "", "p", "update", nil); err == nil {
 		t.Fatal("expected error for empty email")
 	}
 }
@@ -96,12 +96,14 @@ type emailRecordProvider struct {
 	to   string
 	subj string
 	body string
+	html string
 }
 
-func (r *emailRecordProvider) Send(ctx context.Context, to, sub, body string) error {
+func (r *emailRecordProvider) Send(ctx context.Context, to, sub, body, html string) error {
 	r.to = to
 	r.subj = sub
 	r.body = body
+	r.html = html
 	return nil
 }
 
@@ -113,9 +115,9 @@ func TestInsertPendingEmail(t *testing.T) {
 	defer db.Close()
 
 	q := dbpkg.New(db)
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("t@test", "sub", "body").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("t@test", "sub", "body", "html").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToEmail: "t@test", Subject: "sub", Body: "body"}); err != nil {
+	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToEmail: "t@test", Subject: "sub", Body: "body", HtmlBody: "html"}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -130,7 +132,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body"}).AddRow(1, "a@test", "s", "b")
+	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "html_body"}).AddRow(1, "a@test", "s", "b", "h")
 	mock.ExpectQuery("SELECT id, to_email").WillReturnRows(rows)
 	mock.ExpectExec("UPDATE pending_emails SET sent_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 

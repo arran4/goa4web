@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<body>
+<p>Hello,</p>
+<p>{{.Action}} occurred at {{.Path}} on {{.Time}}.</p>
+{{if .URL}}
+<p>View details <a href="{{.URL}}">here</a>.</p>
+{{end}}
+<p>If you no longer wish to receive these emails you can update your notification settings.</p>
+<p>Cheers,<br>The A4Web Team</p>
+</body>
+</html>

@@ -92,8 +92,6 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 		},
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
-	} else {
-		logAudit(r, "Permission allow")
 	}
 	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
 	if err != nil {
@@ -119,8 +117,6 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else if err := queries.PermissionUserDisallow(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
-	} else {
-		logAudit(r, "Permission disallow")
 	}
 	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
 	if err != nil {
@@ -154,8 +150,6 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 		Level:   sql.NullString{String: level, Valid: true},
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
-	} else {
-		logAudit(r, "Permission update")
 	}
 
 	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {

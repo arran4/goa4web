@@ -267,6 +267,7 @@ type PendingEmail struct {
 	ToEmail   string
 	Subject   string
 	Body      string
+	HtmlBody  sql.NullString
 	CreatedAt time.Time
 	SentAt    sql.NullTime
 }
@@ -332,6 +333,8 @@ type Subscription struct {
 	UsersIdusers int32
 	ItemType     string
 	TargetID     int32
+	Method       string
+	Pattern      string
 	CreatedAt    time.Time
 }
 
@@ -374,6 +377,12 @@ type Userstopiclevel struct {
 	Level                  sql.NullInt32
 	Invitemax              sql.NullInt32
 	ExpiresAt              sql.NullTime
+}
+
+type WorkerError struct {
+	ID        int32
+	Message   string
+	CreatedAt time.Time
 }
 
 type Writing struct {

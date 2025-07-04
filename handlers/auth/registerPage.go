@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
+
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
@@ -125,6 +128,10 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("session.Save Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	if evt, ok := r.Context().Value(common.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
+		evt.Item = notif.SignupInfo{Username: username}
 	}
 
 	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {

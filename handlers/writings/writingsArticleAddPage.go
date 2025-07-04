@@ -5,6 +5,8 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
 	"net/http"
@@ -72,6 +74,14 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("insertWriting Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	var author string
+	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+		author = u.Username.String
+	}
+	if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
+		evt.Item = notif.WritingInfo{Title: title, Author: author}
 	}
 
 	for _, text := range []string{

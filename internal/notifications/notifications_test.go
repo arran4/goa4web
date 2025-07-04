@@ -57,7 +57,7 @@ func TestNotificationsFeed(t *testing.T) {
 
 type dummyProvider struct{ to string }
 
-func (r *dummyProvider) Send(ctx context.Context, to, subj, body string) error {
+func (r *dummyProvider) Send(ctx context.Context, to, subj, textBody, htmlBody string) error {
 	r.to = to
 	return nil
 }

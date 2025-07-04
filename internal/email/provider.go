@@ -10,6 +10,7 @@ import (
 	"net/smtp"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ses"
@@ -24,17 +25,21 @@ const (
 // Provider defines a simple interface that all mail backends must implement.
 // Only the fields necessary for sending basic notification emails are included.
 type Provider interface {
-	Send(ctx context.Context, to, subject, body string) error
+	Send(ctx context.Context, to, subject, textBody, htmlBody string) error
 }
 
 // SESProvider wraps the AWS SES client.
 type SESProvider struct{ Client sesiface.SESAPI }
 
-func (s SESProvider) Send(ctx context.Context, to, subject, body string) error {
+func (s SESProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
 	dest := &ses.Destination{ToAddresses: []*string{aws.String(to)}}
 	msg := &ses.Message{
 		Subject: &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(subject)},
-		Body:    &ses.Body{Text: &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(body)}},
+		Body:    &ses.Body{},
+	}
+	msg.Body.Text = &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(textBody)}
+	if htmlBody != "" {
+		msg.Body.Html = &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(htmlBody)}
 	}
 	input := &ses.SendEmailInput{Destination: dest, Message: msg, Source: aws.String(SourceEmail)}
 	_, err := s.Client.SendEmailWithContext(ctx, input)
@@ -48,17 +53,38 @@ type SMTPProvider struct {
 	From string
 }
 
-func (s SMTPProvider) Send(ctx context.Context, to, subject, body string) error {
-	msg := []byte("To: " + to + "\r\nSubject: " + subject + "\r\n\r\n" + body)
+func (s SMTPProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+	var msg []byte
+	if htmlBody != "" {
+		boundary := "a4web" + strings.ReplaceAll(fmt.Sprint(time.Now().UnixNano()), "-", "")
+		buf := bytes.NewBuffer(nil)
+		fmt.Fprintf(buf, "To: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=%s\r\n\r\n", to, subject, boundary)
+		fmt.Fprintf(buf, "--%s\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", boundary, textBody)
+		fmt.Fprintf(buf, "--%s\r\nContent-Type: text/html; charset=utf-8\r\n\r\n%s\r\n--%s--", boundary, htmlBody, boundary)
+		msg = buf.Bytes()
+	} else {
+		msg = []byte("To: " + to + "\r\nSubject: " + subject + "\r\n\r\n" + textBody)
+	}
 	return smtp.SendMail(s.Addr, s.Auth, s.From, []string{to}, msg)
 }
 
 // LocalProvider relies on the local sendmail binary.
 type LocalProvider struct{}
 
-func (LocalProvider) Send(ctx context.Context, to, subject, body string) error {
+func (LocalProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
 	cmd := exec.CommandContext(ctx, "sendmail", to)
-	cmd.Stdin = strings.NewReader("Subject: " + subject + "\n\n" + body)
+	body := textBody
+	if htmlBody != "" {
+		boundary := "a4web" + strings.ReplaceAll(fmt.Sprint(time.Now().UnixNano()), "-", "")
+		buf := bytes.NewBuffer(nil)
+		fmt.Fprintf(buf, "Subject: %s\nMIME-Version: 1.0\nContent-Type: multipart/alternative; boundary=%s\n\n", subject, boundary)
+		fmt.Fprintf(buf, "--%s\nContent-Type: text/plain; charset=utf-8\n\n%s\n", boundary, textBody)
+		fmt.Fprintf(buf, "--%s\nContent-Type: text/html; charset=utf-8\n\n%s\n--%s--", boundary, htmlBody, boundary)
+		body = buf.String()
+		cmd.Stdin = strings.NewReader(body)
+	} else {
+		cmd.Stdin = strings.NewReader("Subject: " + subject + "\n\n" + body)
+	}
 	return cmd.Run()
 }
 
@@ -74,13 +100,19 @@ type JMAPProvider struct {
 // Send delivers a message using the JMAP EmailSubmission API. The provider uploads
 // the RFC822 message to the JMAP server and then creates an EmailSubmission referencing
 // the uploaded blob.
-func (j JMAPProvider) Send(ctx context.Context, to, subject, body string) error {
+func (j JMAPProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
 	var msg bytes.Buffer
+	boundary := "a4web" + strings.ReplaceAll(fmt.Sprint(time.Now().UnixNano()), "-", "")
 	fmt.Fprintf(&msg, "From: %s\r\n", SourceEmail)
 	fmt.Fprintf(&msg, "To: %s\r\n", to)
-	fmt.Fprintf(&msg, "Subject: %s\r\n", subject)
-	msg.WriteString("\r\n")
-	msg.WriteString(body)
+	if htmlBody != "" {
+		fmt.Fprintf(&msg, "Subject: %s\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=%s\r\n\r\n", subject, boundary)
+		fmt.Fprintf(&msg, "--%s\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", boundary, textBody)
+		fmt.Fprintf(&msg, "--%s\r\nContent-Type: text/html; charset=utf-8\r\n\r\n%s\r\n--%s--", boundary, htmlBody, boundary)
+	} else {
+		fmt.Fprintf(&msg, "Subject: %s\r\n\r\n", subject)
+		msg.WriteString(textBody)
+	}
 
 	uploadURL := fmt.Sprintf("%s/upload/%s", strings.TrimRight(j.Endpoint, "/"), j.AccountID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, bytes.NewReader(msg.Bytes()))
@@ -161,7 +193,11 @@ func (j JMAPProvider) Send(ctx context.Context, to, subject, body string) error 
 // LogProvider just logs emails for development purposes.
 type LogProvider struct{}
 
-func (LogProvider) Send(ctx context.Context, to, subject, body string) error {
-	log.Printf("sending mail to %s subject %q\n%s", to, subject, body)
+func (LogProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+	if htmlBody != "" {
+		log.Printf("sending mail to %s subject %q\nTEXT:\n%s\nHTML:\n%s", to, subject, textBody, htmlBody)
+	} else {
+		log.Printf("sending mail to %s subject %q\n%s", to, subject, textBody)
+	}
 	return nil
 }

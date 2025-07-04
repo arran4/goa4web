@@ -1,10 +1,15 @@
 To: {{.To}}
-From: {{.To}}
+From: {{.From}}
 Subject: [A4] {{.Subject}}
 
-There has been an update on my site on some page you either requested to be notified
-or were directly involved with. Please visit the URL to find out in relation to what:
-{{.URL}}
+Hello,
 
-- Arran4
-.
+{{.Action}} occurred at {{.Path}} on {{.Time}}.
+
+{{if .URL}}View details here:
+{{.URL}}
+{{end}}
+If you no longer wish to receive these emails you can update your notification settings.
+
+Cheers,
+The A4Web Team

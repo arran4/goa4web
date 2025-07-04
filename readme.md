@@ -124,9 +124,9 @@ When reusing snippets from other projects be sure to update the image name or
 use the `$CI_REGISTRY_IMAGE` variable which already points to the correct
 registry path for this repository.
 
-The resulting container image also includes the `goa4web-admin` CLI installed at
-`/usr/local/bin/goa4web-admin`. Both `goa4web` and `goa4web-admin` are placed in
-`/usr/local/bin`, which is added to `PATH` inside the container.
+The resulting container image contains the `goa4web` binary at
+`/usr/local/bin/goa4web`. The directory is included in `PATH` inside the
+container.
 
 ## Application Configuration File
 
@@ -296,64 +296,57 @@ The `/admin/permissions/sections` page lists all distinct values found in the `p
 
 The linked counts now let you drill down to view all permissions for a section via `/admin/permissions/sections/view?section=<name>`.
 
-## goa4web-admin CLI
+## Command Line Interface
 
-The `goa4web-admin` binary provides command-line tools for managing users and permissions.
-When using `user add` or `user add-admin`, omit the `--password` flag to enter a password interactively.
+The `goa4web` binary exposes administrative subcommands in addition to `serve`
+which starts the web server. When using `user add` or `user add-admin`, omit the
+`--password` flag to enter a password interactively.
 
 Example:
 ```bash
-goa4web-admin user add --username alice --email alice@example.com
+goa4web user add --username alice --email alice@example.com
 ```
 This command prompts for the password on stderr if `--password` is not supplied.
-
-## Command Line Interface
-
-Two binaries are produced by this repository:
-
-- `goa4web` starts the web server.
-- `goa4web-admin` provides administrative subcommands for user and permission management.
 
 Typical workflow:
 
 ```bash
-# build the tools
+# build the tool
 go build -o goa4web ./cmd/goa4web
-go build -o goa4web-admin ./cmd/goa4web-admin
 ```
 
 ### Creating users
 
 ```bash
 # create a regular account
-./goa4web-admin user add --username alice --email alice@example.com --password secret
+./goa4web user add --username alice --email alice@example.com --password secret
 
 # create an administrator
-./goa4web-admin user add-admin --username admin --email admin@example.com --password changeme
+./goa4web user add-admin --username admin --email admin@example.com --password changeme
 
 # promote an existing user to administrator
-./goa4web-admin user make-admin --username alice
+./goa4web user make-admin --username alice
 ```
 
 ### Managing permissions
 
 ```bash
 # grant a permission
-./goa4web-admin perm grant --user alice --section forum --level moderator
+./goa4web perm grant --user alice --section forum --level moderator
 
 # list all permissions
-./goa4web-admin perm list
+./goa4web perm list
 
 # revoke a permission by ID
-./goa4web-admin perm revoke --id 42
+./goa4web perm revoke --id 42
 ```
 
 ### Database operations
 
 ```bash
 # create a backup
-./goa4web-admin db backup --file backup.sql
+./goa4web db backup --file backup.sql
 
 # restore from a backup
-./goa4web-admin db restore --file backup.sql
+./goa4web db restore --file backup.sql
 ```

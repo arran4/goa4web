@@ -26,12 +26,13 @@
 <div>
     <form method="post" action="/usr/subscriptions/add/{{ .Path }}" style="display:inline">
         {{ csrfField }}
+        <input type="hidden" name="task" value="{{ .Task }}">
         Method:
         <select name="method">
             <option value="internal">Internal</option>
             <option value="email">Email</option>
         </select>
-        <input type="submit" name="task" value="{{ .Task }}">
+        <input type="submit" value="Subscribe">
         {{ .Name }}
     </form>
 </div>

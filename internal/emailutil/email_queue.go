@@ -48,7 +48,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		return
 	}
 	e := emails[0]
-	if err := provider.Send(ctx, e.ToEmail, e.Subject, e.Body); err != nil {
+	if err := provider.Send(ctx, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String); err != nil {
 		log.Printf("send queued mail: %v", err)
 		return
 	}

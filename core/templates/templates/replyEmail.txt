@@ -1,0 +1,16 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [A4] {{.Subject}}
+
+Hi {{.Item.Thread.Lastposterusername.String}},
+
+A new reply was posted in "{{.Item.TopicTitle}}" (thread #{{.Item.ThreadID}}) on {{.Time}}.
+There are now {{.Item.Thread.Comments.Int32}} comments in the discussion.
+
+View it here:
+{{.URL}}
+
+To update your notification preferences, visit your settings.
+
+Cheers,
+The A4Web Team

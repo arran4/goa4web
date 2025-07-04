@@ -41,20 +41,20 @@ func notifyChange(ctx context.Context, provider email.Provider, emailAddr string
 		Subject: "Website Update Notification",
 		URL:     page,
 	}
-	var notification bytes.Buffer
+	var buf bytes.Buffer
 	tmpl, err := template.New("email").Parse(getUpdateEmailText(ctx))
 	if err != nil {
 		return fmt.Errorf("parse email template: %w", err)
 	}
-	if err = tmpl.Execute(&notification, content); err != nil {
+	if err = tmpl.Execute(&buf, content); err != nil {
 		return fmt.Errorf("execute email template: %w", err)
 	}
 	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok {
-		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: notification.String()}); err != nil {
+		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: buf.String()}); err != nil {
 			return err
 		}
 	} else if provider != nil {
-		if err := provider.Send(ctx, emailAddr, content.Subject, notification.String()); err != nil {
+		if err := provider.Send(ctx, emailAddr, content.Subject, buf.String(), ""); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}

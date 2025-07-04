@@ -87,4 +87,9 @@ const (
 
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"
+
+	// EnvDLQProvider selects the dead letter queue backend.
+	EnvDLQProvider = "DLQ_PROVIDER"
+	// EnvDLQFile is the file path used by the file DLQ provider.
+	EnvDLQFile = "DLQ_FILE"
 )

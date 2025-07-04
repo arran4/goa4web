@@ -17,8 +17,10 @@ import (
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
+	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	emailutil "github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/eventbus"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
@@ -84,6 +86,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		userhandlers.UserAdderMiddleware,
 		middleware.CoreAdderMiddleware,
 		middleware.RequestLoggerMiddleware,
+		middleware.TaskEventMiddleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if csrfmw.CSRFEnabled() {
@@ -98,7 +101,8 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 
 	provider := email.ProviderFromConfig(cfg)
 
-	startWorkers(ctx, dbPool, provider)
+	dlqProvider := dlq.ProviderFromConfig(cfg, dbpkg.New(dbPool))
+	startWorkers(ctx, dbPool, provider, dlqProvider)
 
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
@@ -120,11 +124,22 @@ func safeGo(fn func()) {
 	}()
 }
 
-func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider) {
+func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ) {
 	log.Printf("Starting email worker")
 	safeGo(func() { emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, time.Minute) })
 	log.Printf("Starting notification purger worker")
 	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
+	log.Printf("Starting event bus logger worker")
+	safeGo(func() { eventbus.LogWorker(ctx, eventbus.DefaultBus) })
+	log.Printf("Starting audit worker")
+	safeGo(func() { eventbus.AuditWorker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
+	log.Printf("Starting notification bus worker")
+	safeGo(func() {
+		notifications.BusWorker(ctx, eventbus.DefaultBus, notifications.Notifier{
+			EmailProvider: provider,
+			Queries:       dbpkg.New(db),
+		}, dlqProvider)
+	})
 }
 
 func newMiddlewareChain(mw ...func(http.Handler) http.Handler) routerWrapper {

@@ -11,6 +11,8 @@ const SendgridBuilt = false
 // SendGridProvider is a stub implementation used when SendGrid support is disabled.
 type SendGridProvider struct{}
 
-func (SendGridProvider) Send(ctx context.Context, to, subject, body string) error { return nil }
+func (SendGridProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+	return nil
+}
 
 func SendGridProviderFromConfig(key string) Provider { return nil }

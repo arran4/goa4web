@@ -12,7 +12,7 @@ import (
 
 func notifyChange(ctx context.Context, provider email.Provider, emailAddr, page string) error {
 	n := notif.Notifier{EmailProvider: provider}
-	return n.NotifyChange(ctx, 0, emailAddr, page)
+	return n.NotifyChange(ctx, 0, emailAddr, page, "update", nil)
 }
 
 func getEmailProvider() email.Provider {

@@ -48,7 +48,7 @@ func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if provider != nil {
-			if err := provider.Send(r.Context(), e.ToEmail, e.Subject, e.Body); err != nil {
+			if err := provider.Send(r.Context(), e.ToEmail, e.Subject, e.Body, e.HtmlBody.String); err != nil {
 				log.Printf("send email: %v", err)
 				continue
 			}

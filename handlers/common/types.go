@@ -38,4 +38,6 @@ const (
 	KeyNewsPost ContextKey = "newsPost"
 	// KeyWriting contains the writing row.
 	KeyWriting ContextKey = "writing"
+	// KeyBusEvent stores the pointer to the event being built by middleware.
+	KeyBusEvent ContextKey = "busEvent"
 )

@@ -28,6 +28,12 @@ func RegisterRoutes(r *mux.Router) {
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
 	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(common.TaskMatcher(TaskDismiss))
 	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
+	ur.HandleFunc("/subscriptions", userSubscriptionsPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
+	ur.HandleFunc("/subscriptions/add/blogs", userSubscriptionsAddBlogsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(common.TaskMatcher(common.TaskSubscribeBlogs))
+	ur.HandleFunc("/subscriptions/add/writings", userSubscriptionsAddWritingsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(common.TaskMatcher(common.TaskSubscribeWritings))
+	ur.HandleFunc("/subscriptions/add/news", userSubscriptionsAddNewsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(common.TaskMatcher(common.TaskSubscribeNews))
+	ur.HandleFunc("/subscriptions/add/images", userSubscriptionsAddImagesAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(common.TaskMatcher(common.TaskSubscribeImages))
+	ur.HandleFunc("/subscriptions/delete", userSubscriptionsDeleteAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(common.TaskMatcher(common.TaskDelete))
 
 	// legacy redirects
 	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))

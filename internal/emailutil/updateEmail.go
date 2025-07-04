@@ -10,7 +10,19 @@ import (
 
 // defaultUpdateEmailText contains the compiled-in notification email template.
 // Administrators may override it by saving a new body in the template_overrides table.
-var defaultUpdateEmailText = templates.UpdateEmailText
+var (
+	defaultUpdateEmailText = templates.UpdateEmailText
+	defaultUpdateEmailHTML = templates.UpdateEmailHTML
+
+	defaultThreadEmailText  = templates.ThreadEmailText
+	defaultThreadEmailHTML  = templates.ThreadEmailHTML
+	defaultBlogEmailText    = templates.BlogEmailText
+	defaultBlogEmailHTML    = templates.BlogEmailHTML
+	defaultWritingEmailText = templates.WritingEmailText
+	defaultWritingEmailHTML = templates.WritingEmailHTML
+	defaultSignupEmailText  = templates.SignupEmailText
+	defaultSignupEmailHTML  = templates.SignupEmailHTML
+)
 
 // getUpdateEmailText returns the update email template body, preferring a database
 // override when available.
@@ -22,3 +34,10 @@ func getUpdateEmailText(ctx context.Context) string {
 	}
 	return defaultUpdateEmailText
 }
+
+// defaultReplyEmail* contain the compiled-in forum reply notification
+// templates. Administrators may override them in the template_overrides table.
+var (
+	defaultReplyEmailText = templates.ReplyEmailText
+	defaultReplyEmailHTML = templates.ReplyEmailHTML
+)

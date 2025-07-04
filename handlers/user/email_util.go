@@ -22,5 +22,5 @@ func notifyChange(ctx context.Context, provider email.Provider, to, page string)
 		return nil
 	}
 	subject := "Website Update Notification"
-	return provider.Send(ctx, to, subject, page)
+	return provider.Send(ctx, to, subject, page, "")
 }

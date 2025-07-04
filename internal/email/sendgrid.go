@@ -18,10 +18,10 @@ const SendgridBuilt = true
 // SendGridProvider sends mail using the SendGrid API.
 type SendGridProvider struct{ APIKey string }
 
-func (s SendGridProvider) Send(ctx context.Context, to, subject, body string) error {
+func (s SendGridProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
 	from := mail.NewEmail("", SourceEmail)
 	toAddr := mail.NewEmail("", to)
-	msg := mail.NewSingleEmail(from, subject, toAddr, body, body)
+	msg := mail.NewSingleEmail(from, subject, toAddr, textBody, htmlBody)
 	client := sendgrid.NewSendClient(s.APIKey)
 	resp, err := client.SendWithContext(ctx, msg)
 	if err != nil {

@@ -1,0 +1,20 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]<br />
+<form method="post">
+    {{ csrfField }}
+<table border="1">
+<tr><th>Select</th><th>ID</th><th>Message</th><th>Created</th></tr>
+{{- range .Errors }}
+<tr>
+    <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
+    <td>{{ .ID }}</td>
+    <td>{{ .Message }}</td>
+    <td>{{ .CreatedAt }}</td>
+</tr>
+{{- end }}
+</table>
+Before: <input type="date" name="before">
+<input type="submit" name="task" value="Delete">
+<input type="submit" name="task" value="Purge">
+</form>
+{{ template "tail" $ }}

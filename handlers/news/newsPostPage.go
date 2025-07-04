@@ -17,6 +17,8 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -382,6 +384,12 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
+	}
+
+	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+		if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
+			evt.Item = notif.BlogPostInfo{Author: u.Username.String}
+		}
 	}
 
 	hcommon.TaskDoneAutoRefreshPage(w, r)

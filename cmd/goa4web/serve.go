@@ -42,7 +42,10 @@ func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 }
 
 func (c *serveCmd) Run() error {
-	fileVals := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("load config file: %w", err)
+	}
 	app.ConfigFile = c.rootCmd.ConfigFile
 	secretPath := c.sessionSecretFile
 	if secretPath == "" {

@@ -3,10 +3,13 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // FileSystem abstracts file operations. It matches the core.FileSystem
@@ -16,26 +19,40 @@ type FileSystem interface {
 	WriteFile(name string, data []byte, perm fs.FileMode) error
 }
 
+// LoadAppConfigFile reads CONFIG_FILE style key=value pairs or JSON objects and
+// returns them as a map. Missing files return an empty map.
+// Supported extensions are ".env" and ".json". An error is returned for any
+// other extension.
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
-func LoadAppConfigFile(fs FileSystem, path string) map[string]string {
-        values := make(map[string]string)
-        if path == "" {
-                log.Printf("config file not specified")
-                return values
-        }
-        log.Printf("reading config file %s", path)
-        b, err := fs.ReadFile(path)
-        if err != nil {
-                if os.IsNotExist(err) {
-                        log.Printf("config file not found: %s", path)
-                } else {
-                        log.Printf("app config file error: %v", err)
-                }
-                return values
-        }
-        log.Printf("loaded config file %s", path)
-        return ParseEnvBytes(b)
+  func LoadAppConfigFile(fs FileSystem, path string) (map[string]string, error) {
+    values := make(map[string]string)
+    if path == "" {
+            log.Printf("config file not specified")
+            return values, nil
+    }
+    log.Printf("reading config file %s", path)
+    b, err := fs.ReadFile(path)
+    if err != nil {
+      if os.IsNotExist(err) {
+              log.Printf("config file not found: %s", path)
+        return values, nil
+      } 
+      return nil, fmt.Eprintf("app config file error: %v", err)
+  }
+  log.Printf("loaded config file %s", path)
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".json":
+		if err := json.Unmarshal(b, &values); err != nil {
+			log.Printf("app config file parse error: %v", err)
+			return nil, fmt.Errorf("parse json: %w", err)
+		}
+		return values, nil
+	case ".env":
+		return ParseEnvBytes(b), nil
+	default:
+		return nil, fmt.Errorf("unsupported config extension %q: use .env or .json", filepath.Ext(path))
+	}
 }
 
 // UpdateConfigKey writes the given key/value pair to the config file.
@@ -44,7 +61,10 @@ func UpdateConfigKey(fs FileSystem, path, key, value string) error {
 	if path == "" {
 		return nil
 	}
-	cfg := LoadAppConfigFile(fs, path)
+	cfg, err := LoadAppConfigFile(fs, path)
+	if err != nil {
+		return err
+	}
 	if value == "" {
 		delete(cfg, key)
 	} else {

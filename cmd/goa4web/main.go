@@ -72,7 +72,10 @@ func parseRoot(args []string) (*rootCmd, error) {
 		fmt.Println(version)
 		os.Exit(0)
 	}
-	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
+	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("load config file: %w", err)
+	}
 	fs := runtimeconfig.NewRuntimeFlagSet(args[0])
 	fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
 	fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")

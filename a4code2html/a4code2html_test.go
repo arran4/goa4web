@@ -168,7 +168,7 @@ func TestSpoiler(t *testing.T) {
 	c := NewA4Code2HTML()
 	c.input = "[Spoiler secret]"
 	c.Process()
-	want := "<span onmouseover=\"this.style.color='#FFFFFF';\" onmouseout=\"this.style.color='#000000';\" style=\"color:#000000;background:#000000;\">secret</span>"
+	want := "<span class=\"spoiler\">secret</span>"
 	if got := c.Output(); got != want {
 		t.Errorf("got %q want %q", got, want)
 	}

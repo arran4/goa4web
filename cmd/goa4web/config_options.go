@@ -7,6 +7,8 @@ import (
 	"os"
 	"sort"
 	"text/template"
+
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 //go:embed templates/config_options.txt
@@ -17,6 +19,7 @@ type configOptionsCmd struct {
 	*configCmd
 	fs       *flag.FlagSet
 	template string
+	extended bool
 	args     []string
 }
 
@@ -24,6 +27,7 @@ func parseConfigOptionsCmd(parent *configCmd, args []string) (*configOptionsCmd,
 	c := &configOptionsCmd{configCmd: parent}
 	fs := flag.NewFlagSet("options", flag.ContinueOnError)
 	fs.StringVar(&c.template, "template", "", "template file")
+	fs.BoolVar(&c.extended, "extended", false, "include extended usage")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -33,15 +37,17 @@ func parseConfigOptionsCmd(parent *configCmd, args []string) (*configOptionsCmd,
 }
 
 type option struct {
-	Env     string
-	Flag    string
-	Default string
-	Usage   string
+	Env      string
+	Flag     string
+	Default  string
+	Usage    string
+	Extended string
 }
 
 func (c *configOptionsCmd) Run() error {
 	def := defaultMap()
 	usage := usageMap()
+	ext := optionsExtendedUsageMap()
 	names := nameMap()
 	keys := make([]string, 0, len(def))
 	for k := range def {
@@ -50,11 +56,16 @@ func (c *configOptionsCmd) Run() error {
 	sort.Strings(keys)
 	opts := make([]option, 0, len(keys))
 	for _, k := range keys {
+		e := ""
+		if c.extended {
+			e = ext[k]
+		}
 		opts = append(opts, option{
-			Env:     k,
-			Flag:    names[k],
-			Default: def[k],
-			Usage:   usage[k],
+			Env:      k,
+			Flag:     names[k],
+			Default:  def[k],
+			Usage:    usage[k],
+			Extended: e,
 		})
 	}
 	tmplText := configOptionsDefaultTemplate
@@ -70,4 +81,23 @@ func (c *configOptionsCmd) Run() error {
 		return fmt.Errorf("parse template: %w", err)
 	}
 	return t.Execute(os.Stdout, opts)
+}
+
+func optionsExtendedUsageMap() map[string]string {
+	m := make(map[string]string)
+	for _, o := range runtimeconfig.StringOptions {
+		if o.ExtendedUsage != "" {
+			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
+				m[o.Env] = txt
+			}
+		}
+	}
+	for _, o := range runtimeconfig.IntOptions {
+		if o.ExtendedUsage != "" {
+			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
+				m[o.Env] = txt
+			}
+		}
+	}
+	return m
 }

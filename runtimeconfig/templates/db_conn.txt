@@ -1,0 +1,8 @@
+The format of DB_CONN depends on the driver.
+{{range .}}
+{{.Name}} examples:
+{{- range .Examples}}
+  - {{.}}
+{{- end}}
+
+{{end}}

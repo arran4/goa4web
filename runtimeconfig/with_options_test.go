@@ -12,8 +12,8 @@ func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 		config.EnvDBLogVerbosity: "2",
 	}
 
-	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Field: "DBConn", Usage: ""}
-	intOpt := IntOption{Name: "db-verb-alt", Env: config.EnvDBLogVerbosity, Field: "DBLogVerbosity", Usage: ""}
+	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Field: "DBConn", Usage: "", ExtendedUsage: ""}
+	intOpt := IntOption{Name: "db-verb-alt", Env: config.EnvDBLogVerbosity, Field: "DBLogVerbosity", Usage: "", ExtendedUsage: ""}
 	fs := NewRuntimeFlagSetWithOptions("test", []StringOption{strOpt}, []IntOption{intOpt})
 	_ = fs.Parse([]string{"--db-conn-alt=cli", "--db-verb-alt=5"})
 
@@ -30,7 +30,7 @@ func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 }
 
 func TestGenerateRuntimeConfigWithInjectedFileValue(t *testing.T) {
-	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Field: "DBConn", Usage: ""}
+	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Field: "DBConn", Usage: "", ExtendedUsage: ""}
 	fs := NewRuntimeFlagSetWithOptions("test", []StringOption{strOpt}, nil)
 	_ = fs.Parse(nil)
 

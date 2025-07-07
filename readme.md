@@ -6,7 +6,7 @@ Goa4Web is a monolithic web application written in Go. It powers the original `a
 
 Project URL: <https://github.com/arran4/goa4web>
 
-The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in MySQL. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
+The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in a SQL database. MySQL, PostgreSQL and SQLite are supported. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
 
 ## Features
 
@@ -28,15 +28,18 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
 ## Getting Started
 
 1. Install Go 1.20 or newer and ensure `go` is available in your `PATH`.
-2. Create a MySQL database named `a4web`. The schema is defined in `schema/schema.sql` and can be loaded with:
+2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.sql` and can be loaded with `mysql` or `psql`.
    ```bash
    mysql -u a4web -p a4web < schema/schema.sql
    ```
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. All table changes should be shipped with a migration script under
    this directory.
-3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. For MySQL the go-sql-driver expects a DSN like `user:password@tcp(127.0.0.1:3306)/a4web`. Example:
-`db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/a4web")`. No defaults are supplied for any credentials.
+3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. Examples:
+   * MySQL TCP: `user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true`
+   * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
+   * PostgreSQL: `postgres://user:pass@localhost/a4web?sslmode=disable`
+   * SQLite: `file:./a4web.sqlite?_fk=1`
 4. Download dependencies and build the application:
    ```bash
    go mod download
@@ -55,7 +58,7 @@ Run the compiled binary and open <http://localhost:8080> in your browser:
 ```bash
 ./goa4web
 ```
-The server relies on the MySQL instance and (optionally) AWS credentials for sending email notifications. Most features require users to be logged in; sessions are stored in signed cookies via `gorilla/sessions`.
+The server relies on the configured database and (optionally) AWS credentials for sending email notifications. Most features require users to be logged in; sessions are stored in signed cookies via `gorilla/sessions`.
 The secret used to sign these cookies is resolved in the following order:
 1. `--session-secret` flag
 2. `SESSION_SECRET` environment variable
@@ -152,6 +155,8 @@ Generate example settings with:
 ```bash
 go run ./cmd/goa4web config as-env-file > examples/config.env
 ```
+Run `goa4web config options --extended` to see detailed descriptions of all
+configuration keys.
 
 ## Email Provider Configuration
 

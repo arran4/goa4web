@@ -118,6 +118,7 @@ func (c *configCmd) Usage() {
 	fmt.Fprintf(w, "  %s config as-env-file > config.env\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config as-cli\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config add-json -file cfg.json\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s config options --extended\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config test email\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

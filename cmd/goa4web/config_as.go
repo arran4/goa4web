@@ -90,7 +90,6 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 	m[config.EnvNotificationsEnabled] = boolVal(fileVals[config.EnvNotificationsEnabled], os.Getenv(config.EnvNotificationsEnabled), true)
 	m[config.EnvCSRFEnabled] = boolVal(fileVals[config.EnvCSRFEnabled], os.Getenv(config.EnvCSRFEnabled), true)
 	m[config.EnvAdminNotify] = boolVal(fileVals[config.EnvAdminNotify], os.Getenv(config.EnvAdminNotify), true)
-	m[config.EnvAdminEmails] = first(fileVals[config.EnvAdminEmails], os.Getenv(config.EnvAdminEmails))
 	m[config.EnvSessionSecret] = first("", os.Getenv(config.EnvSessionSecret))
 	sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
 	if sessionFile == "" {

@@ -39,6 +39,10 @@ type RuntimeConfig struct {
 	EmailJMAPPass     string
 	EmailSendGridKey  string
 
+	// AdminEmails holds a comma-separated list of administrator email
+	// addresses.
+	AdminEmails string
+
 	// EmailWorkerInterval sets how often the email worker runs in seconds.
 	EmailWorkerInterval int
 

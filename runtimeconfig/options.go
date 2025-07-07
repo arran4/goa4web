@@ -52,4 +52,5 @@ var IntOptions = []IntOption{
 	{"page-size-max", config.EnvPageSizeMax, "PageSizeMax", "maximum allowed page size", 0},
 	{"page-size-default", config.EnvPageSizeDefault, "PageSizeDefault", "default page size", 0},
 	{"image-max-bytes", config.EnvImageMaxBytes, "ImageMaxBytes", "maximum allowed upload size in bytes", 0},
+	{"email-worker-interval", config.EnvEmailWorkerInterval, "EmailWorkerInterval", "interval in seconds between email worker runs", 0},
 }

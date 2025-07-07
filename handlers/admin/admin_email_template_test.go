@@ -33,7 +33,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	want := url.QueryEscape(userhandlers.ErrMailNotConfigured)
+	want := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 	if req.URL.RawQuery != "error="+want {
 		t.Fatalf("query=%q", req.URL.RawQuery)
 	}

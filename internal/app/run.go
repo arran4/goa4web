@@ -99,10 +99,10 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	adminhandlers.DBPool = dbPool
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
-	provider := email.ProviderFromConfig(cfg)
+	emailProvider := email.ProviderFromConfig(cfg)
 
 	dlqProvider := dlq.ProviderFromConfig(cfg, dbpkg.New(dbPool))
-	startWorkers(ctx, dbPool, provider, dlqProvider)
+	startWorkers(ctx, dbPool, emailProvider, dlqProvider)
 
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)

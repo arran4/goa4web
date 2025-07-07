@@ -55,8 +55,7 @@ func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 
 func (c *dbMigrateCmd) Run() error {
 	if c.rootCmd.Verbosity >= 0 {
-		fmt.Printf("connecting to database at %s:%s\n", c.rootCmd.cfg.DBHost,
-			c.rootCmd.cfg.DBPort)
+		fmt.Printf("connecting to database using %s\n", c.rootCmd.cfg.DBConn)
 	}
 	db, err := openDB(c.rootCmd.cfg)
 	if err != nil {

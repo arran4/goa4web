@@ -5,9 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
 )
 
 func processCommentFullQuote(username, text string) string {

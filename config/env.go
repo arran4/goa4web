@@ -67,6 +67,9 @@ const (
 	// EnvSessionSecretFile specifies the file containing the session secret.
 	EnvSessionSecretFile = "SESSION_SECRET_FILE"
 
+	// EnvDocker indicates the application is running inside a Docker container.
+	EnvDocker = "GOA4WEB_DOCKER"
+
 	// EnvSendGridKey is the API key for the SendGrid email provider.
 	EnvSendGridKey = "SENDGRID_KEY"
 	// EnvAdminEmails is a comma-separated list of administrator email addresses.

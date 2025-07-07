@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"log"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )

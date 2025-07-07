@@ -92,7 +92,7 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 	m[config.EnvSessionSecret] = first("", os.Getenv(config.EnvSessionSecret))
 	sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
 	if sessionFile == "" {
-		sessionFile = ".session_secret"
+		sessionFile = runtimeconfig.DefaultSessionSecretPath()
 	}
 	m[config.EnvSessionSecretFile] = sessionFile
 

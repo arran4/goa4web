@@ -18,13 +18,15 @@ import (
 // configAsCmd implements "config as-*" commands.
 type configAsCmd struct {
 	*configCmd
-	fs   *flag.FlagSet
-	args []string
+	fs       *flag.FlagSet
+	extended bool
+	args     []string
 }
 
 func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsCmd, error) {
 	c := &configAsCmd{configCmd: parent}
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	fs.BoolVar(&c.extended, "extended", false, "include extended usage")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -118,6 +120,7 @@ func (c *configAsCmd) asEnvFile() error {
 	}
 	sort.Strings(keys)
 	usage := usageMap()
+	ext := extendedUsageMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -125,6 +128,13 @@ func (c *configAsCmd) asEnvFile() error {
 			fmt.Printf("# %s (default: %s)\n", u, d)
 		} else {
 			fmt.Printf("# default: %s\n", d)
+		}
+		if c.extended {
+			if e := ext[k]; e != "" {
+				for _, line := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
+					fmt.Printf("# %s\n", line)
+				}
+			}
 		}
 		fmt.Printf("%s=%s\n", k, current[k])
 	}
@@ -143,6 +153,7 @@ func (c *configAsCmd) asEnv() error {
 	}
 	sort.Strings(keys)
 	usage := usageMap()
+	ext := extendedUsageMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -150,6 +161,13 @@ func (c *configAsCmd) asEnv() error {
 			fmt.Printf("# %s (default: %s)\n", u, d)
 		} else {
 			fmt.Printf("# default: %s\n", d)
+		}
+		if c.extended {
+			if e := ext[k]; e != "" {
+				for _, line := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
+					fmt.Printf("# %s\n", line)
+				}
+			}
 		}
 		fmt.Printf("export %s=%s\n", k, current[k])
 	}
@@ -190,6 +208,25 @@ func (c *configAsCmd) asCLI() error {
 	sort.Strings(parts)
 	fmt.Println(strings.Join(parts, " "))
 	return nil
+}
+
+func extendedUsageMap() map[string]string {
+	m := make(map[string]string)
+	for _, o := range runtimeconfig.StringOptions {
+		if o.ExtendedUsage != "" {
+			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
+				m[o.Env] = txt
+			}
+		}
+	}
+	for _, o := range runtimeconfig.IntOptions {
+		if o.ExtendedUsage != "" {
+			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
+				m[o.Env] = txt
+			}
+		}
+	}
+	return m
 }
 
 func usageMap() map[string]string {

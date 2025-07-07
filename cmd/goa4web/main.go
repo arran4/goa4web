@@ -135,10 +135,28 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("board: %w", err)
 		}
 		return c.Run()
-	case "blog":
+	case "blog", "blogs":
 		c, err := parseBlogCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("blog: %w", err)
+		}
+		return c.Run()
+	case "writing", "writings":
+		c, err := parseWritingCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("writing: %w", err)
+		}
+		return c.Run()
+	case "news":
+		c, err := parseNewsCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("news: %w", err)
+		}
+		return c.Run()
+	case "faq":
+		c, err := parseFaqCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("faq: %w", err)
 		}
 		return c.Run()
 	case "ipban":
@@ -192,8 +210,15 @@ func (r *rootCmd) Usage() {
 	fmt.Fprintf(w, "  %s config reload\n\n", r.fs.Name())
 	fmt.Fprintln(w, "  board\tmanage image boards")
 	fmt.Fprintln(w, "  blog\tmanage blog entries")
+	fmt.Fprintln(w, "  news\tmanage news posts")
+	fmt.Fprintln(w, "  faq\tmanage frequently asked questions")
+	fmt.Fprintln(w, "  writing\tmanage writings")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s board list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s blog read 1\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s news list\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s writing tree\n", r.fs.Name())
+	fmt.Fprintf(w, "  %s faq tree\n", r.fs.Name())
 	fmt.Fprintln(w, "  ipban\tmanage IP bans")
 	fmt.Fprintf(w, "  %s ipban list\n\n", r.fs.Name())
 	fmt.Fprintln(w, "  audit\tshow recent audit log entries")

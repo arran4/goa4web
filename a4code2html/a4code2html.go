@@ -266,7 +266,7 @@ func (a *A4code2html) acomm() int {
 		case CTTableOfContents:
 		case CTTagStrip, CTWordsOnly:
 		default:
-			a.output.WriteString("<span onmouseover=\"this.style.color='#FFFFFF';\" onmouseout=\"this.style.color='#000000';\" style=\"color:#000000;background:#000000;\">")
+			a.output.WriteString("<span class=\"spoiler\">")
 			a.stack = append(a.stack, "</span>")
 		}
 	case "indent":
@@ -540,7 +540,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<span onmouseover=\"this.style.color='#FFFFFF';\" onmouseout=\"this.style.color='#000000';\" style=\"color:#000000;background:#000000;\">"); err != nil {
+			if _, err := io.WriteString(w, "<span class=\"spoiler\">"); err != nil {
 				return err
 			}
 			a.stack = append(a.stack, "</span>")

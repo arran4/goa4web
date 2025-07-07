@@ -157,7 +157,7 @@ go run ./cmd/goa4web config as-env-file > examples/config.env
 Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
 
 - `ses` (default): Amazon SES. Requires valid AWS credentials and `AWS_REGION`.
-- `smtp`: Standard SMTP server using `SMTP_HOST`, optional `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASS`.
+- `smtp`: Standard SMTP server using `SMTP_HOST`, optional `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_AUTH`, and `SMTP_STARTTLS`.
 - `local`: Uses the local `sendmail` binary.
 - `jmap`: Sends mail using JMAP. Requires `JMAP_ENDPOINT`, `JMAP_USER`, `JMAP_PASS`,
   `JMAP_ACCOUNT`, and `JMAP_IDENTITY`.
@@ -216,10 +216,13 @@ environment variables listed below.
 | `DB_CONN` | `--db-conn` | Yes | - | Database connection string. |
 | `DB_DRIVER` | `--db-driver` | Yes | `mysql` | Database driver name. |
 | `EMAIL_PROVIDER` | `--email-provider` | No | `ses` | Selects the mail sending backend. |
+| `EMAIL_FROM` | `--email-from` | No | - | Default From address for outgoing mail. |
 | `SMTP_HOST` | `--smtp-host` | No | - | SMTP server hostname. |
 | `SMTP_PORT` | `--smtp-port` | No | - | SMTP server port. |
 | `SMTP_USER` | `--smtp-user` | No | - | SMTP username. |
 | `SMTP_PASS` | `--smtp-pass` | No | - | SMTP password. |
+| `SMTP_AUTH` | `--smtp-auth` | No | `plain` | SMTP authentication method (plain, login, cram-md5). |
+| `SMTP_STARTTLS` | `--smtp-starttls` | No | `true` | Enable or disable STARTTLS. |
 | `AWS_REGION` | `--aws-region` | No | - | AWS region for the SES provider. |
 | `JMAP_ENDPOINT` | `--jmap-endpoint` | No | - | JMAP API endpoint. |
 | `JMAP_ACCOUNT` | `--jmap-account` | No | - | JMAP account identifier. |

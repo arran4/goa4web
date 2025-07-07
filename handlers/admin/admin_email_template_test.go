@@ -16,8 +16,11 @@ import (
 	"github.com/arran4/goa4web/handlers/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	db "github.com/arran4/goa4web/internal/db"
+	logProv "github.com/arran4/goa4web/internal/email/log"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
+
+func init() { logProv.Register() }
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	os.Unsetenv(config.EnvEmailProvider)

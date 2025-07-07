@@ -29,7 +29,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		var buf bytes.Buffer
 		tmpl.Execute(&buf, struct{ To, From, Subject, URL string }{
 			To:      "test@example.com",
-			From:    email.SourceEmail,
+			From:    runtimeconfig.AppRuntimeConfig.EmailFrom,
 			Subject: "Website Update Notification",
 			URL:     "http://example.com/page",
 		})
@@ -106,7 +106,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	content := struct{ To, From, Subject, URL, Action, Path, Time string }{
 		To:      user.Email.String,
-		From:    email.SourceEmail,
+		From:    runtimeconfig.AppRuntimeConfig.EmailFrom,
 		Subject: "Website Update Notification",
 		URL:     pageURL,
 		Action:  common.TaskTestMail,

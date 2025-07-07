@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -26,12 +27,9 @@ func TestLoadAppConfigFile(t *testing.T) {
 func TestLoadAppConfigFileMissing(t *testing.T) {
 	fs := core.UseMemFS(t)
 	file := "none.env"
-	m, err := config.LoadAppConfigFile(fs, file)
-	if err != nil {
-		t.Fatalf("load: %v", err)
-	}
-	if len(m) != 0 {
-		t.Fatalf("expected empty map, got %#v", m)
+	_, err := config.LoadAppConfigFile(fs, file)
+	if !errors.Is(err, config.ErrConfigFileNotFound) {
+		t.Fatalf("expected ErrConfigFileNotFound, got %v", err)
 	}
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -80,6 +81,9 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	if err != nil {
+		if errors.Is(err, config.ErrConfigFileNotFound) {
+			return nil, fmt.Errorf("config file not found: %s", cfgPath)
+		}
 		return nil, fmt.Errorf("load config file: %w", err)
 	}
 	fs := runtimeconfig.NewRuntimeFlagSet(args[0])

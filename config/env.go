@@ -1,16 +1,10 @@
 package config
 
 const (
-	// EnvDBUser is the environment variable for the database username.
-	EnvDBUser = "DB_USER"
-	// EnvDBPass is the environment variable for the database password.
-	EnvDBPass = "DB_PASS"
-	// EnvDBHost is the environment variable for the database host.
-	EnvDBHost = "DB_HOST"
-	// EnvDBPort is the environment variable for the database port.
-	EnvDBPort = "DB_PORT"
-	// EnvDBName is the environment variable for the database name.
-	EnvDBName = "DB_NAME"
+	// EnvDBConn is the environment variable for the database connection string.
+	EnvDBConn = "DB_CONN"
+	// EnvDBDriver selects the database driver.
+	EnvDBDriver = "DB_DRIVER"
 
 	// EnvEmailProvider selects the mail sending backend.
 	EnvEmailProvider = "EMAIL_PROVIDER"

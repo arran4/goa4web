@@ -25,7 +25,10 @@ func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 		Back:     "/admin",
 	}
 
-	cfgMap := LoadAppConfigFile(core.OSFS{}, ConfigFile)
+	cfgMap, err := LoadAppConfigFile(core.OSFS{}, ConfigFile)
+	if err != nil {
+		data.Errors = append(data.Errors, err.Error())
+	}
 	Srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
 	if err := corelanguage.ValidateDefaultLanguage(r.Context(), db.New(DBPool), Srv.Config.DefaultLanguage); err != nil {
 		data.Errors = append(data.Errors, err.Error())

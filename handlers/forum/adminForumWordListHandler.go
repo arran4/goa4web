@@ -11,7 +11,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
-	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver.
+	_ "github.com/arran4/goa4web/internal/dbdrivers" // Register SQL drivers.
 )
 
 func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {

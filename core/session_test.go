@@ -1,4 +1,4 @@
-package core
+package core_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
@@ -20,11 +21,11 @@ var (
 
 func TestSessionMiddlewareBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
-	Store = store
-	SessionName = sessionName
+	core.Store = store
+	core.SessionName = sessionName
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := GetSession(r); err != nil {
-			SessionErrorRedirect(w, r, err)
+		if _, err := core.GetSession(r); err != nil {
+			core.SessionErrorRedirect(w, r, err)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -46,12 +47,12 @@ func TestSessionMiddlewareBadSession(t *testing.T) {
 
 func TestGetSessionOrFailBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
-	Store = store
-	SessionName = sessionName
+	core.Store = store
+	core.SessionName = sessionName
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
 	rr := httptest.NewRecorder()
-	sess, ok := GetSessionOrFail(rr, req)
+	sess, ok := core.GetSessionOrFail(rr, req)
 	if ok {
 		t.Fatalf("expected failure, got session %v", sess)
 	}

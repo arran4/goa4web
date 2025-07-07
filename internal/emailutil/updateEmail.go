@@ -26,7 +26,9 @@ var (
 
 // getUpdateEmailText returns the update email template body, preferring a database
 // override when available.
-func getUpdateEmailText(ctx context.Context) string {
+// GetUpdateEmailText returns the update email template body, preferring a database
+// override when available.
+func GetUpdateEmailText(ctx context.Context) string {
 	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
 		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
 			return body

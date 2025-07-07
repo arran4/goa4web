@@ -29,7 +29,10 @@ func parseConfigReloadCmd(parent *configCmd, args []string) (*configReloadCmd, e
 }
 
 func (c *configReloadCmd) Run() error {
-	cfgMap := admin.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	cfgMap, err := admin.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
 	admin.Srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
 	if c.rootCmd.Verbosity > 0 {
 		fmt.Println("configuration reloaded")

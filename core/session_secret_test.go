@@ -1,13 +1,14 @@
-package core
+package core_test
 
 import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 )
 
 func TestLoadSessionSecretCLI(t *testing.T) {
-	secret, err := LoadSessionSecret(OSFS{}, "cli", "")
+	secret, err := core.LoadSessionSecret(core.OSFS{}, "cli", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -18,7 +19,7 @@ func TestLoadSessionSecretCLI(t *testing.T) {
 
 func TestLoadSessionSecretEnv(t *testing.T) {
 	t.Setenv(config.EnvSessionSecret, "env")
-	secret, err := LoadSessionSecret(OSFS{}, "", "")
+	secret, err := core.LoadSessionSecret(core.OSFS{}, "", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -28,12 +29,12 @@ func TestLoadSessionSecretEnv(t *testing.T) {
 }
 
 func TestLoadSessionSecretFile(t *testing.T) {
-	fs := UseMemFS(t)
+	fs := core.UseMemFS(t)
 	file := "sec"
 	if err := fs.WriteFile(file, []byte("fromfile"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
-	secret, err := LoadSessionSecret(fs, "", file)
+	secret, err := core.LoadSessionSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -43,9 +44,9 @@ func TestLoadSessionSecretFile(t *testing.T) {
 }
 
 func TestLoadSessionSecretGenerate(t *testing.T) {
-	fs := UseMemFS(t)
+	fs := core.UseMemFS(t)
 	file := "new"
-	secret, err := LoadSessionSecret(fs, "", file)
+	secret, err := core.LoadSessionSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -22,11 +22,8 @@ type IntOption struct {
 
 // StringOptions lists the string runtime options shared by flag parsing and configuration generation.
 var StringOptions = []StringOption{
-	{"db-user", config.EnvDBUser, "DBUser", "database user", ""},
-	{"db-pass", config.EnvDBPass, "DBPass", "database password", ""},
-	{"db-host", config.EnvDBHost, "DBHost", "database host", ""},
-	{"db-port", config.EnvDBPort, "DBPort", "database port", ""},
-	{"db-name", config.EnvDBName, "DBName", "database name", ""},
+	{"db-conn", config.EnvDBConn, "DBConn", "database connection string", ""},
+	{"db-driver", config.EnvDBDriver, "DBDriver", "database driver", "mysql"},
 	{"listen", config.EnvListen, "HTTPListen", "server listen address", ":8080"},
 	{"hostname", config.EnvHostname, "HTTPHostname", "server base URL", ""},
 	{"email-provider", config.EnvEmailProvider, "EmailProvider", "email provider", ""},

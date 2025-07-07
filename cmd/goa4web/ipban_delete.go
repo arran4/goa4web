@@ -18,13 +18,14 @@ type ipBanDeleteCmd struct {
 
 func parseIpBanDeleteCmd(parent *ipBanCmd, args []string) (*ipBanDeleteCmd, error) {
 	c := &ipBanDeleteCmd{ipBanCmd: parent}
-	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
-	fs.StringVar(&c.IP, "ip", "", "ip or cidr")
-	if err := fs.Parse(args); err != nil {
+	fs, rest, err := parseFlags("delete", args, func(fs *flag.FlagSet) {
+		fs.StringVar(&c.IP, "ip", "", "ip or cidr")
+	})
+	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = fs.Args()
+	c.args = rest
 	return c, nil
 }
 

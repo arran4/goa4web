@@ -106,7 +106,7 @@ const listAdministratorEmails = `-- name: ListAdministratorEmails :many
 SELECT u.email
 FROM users u
 JOIN permissions p ON p.users_idusers = u.idusers
-WHERE p.section = 'administrator'
+WHERE p.section = 'all' and p.level = 'administrator'
 `
 
 func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]sql.NullString, error) {

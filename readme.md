@@ -89,9 +89,9 @@ requests.
 
 ### Section registration
 
-Site sections register their navigation items with the `sections` package so
-menus can be assembled dynamically. Use `sections.RegisterIndexLink` for public
-links and `sections.RegisterAdminControlCenter` for admin navigation. Each call
+Site sections register their navigation items with the `navigation` package so
+menus can be assembled dynamically. Use `navigation.RegisterIndexLink` for public
+links and `navigation.RegisterAdminControlCenter` for admin navigation. Each call
 accepts a weight value; lower numbers appear first.
 
 Example weights:
@@ -163,12 +163,15 @@ configuration keys.
 Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
 
 - `ses` (default): Amazon SES. Requires valid AWS credentials and `AWS_REGION`.
-- `smtp`: Standard SMTP server using `SMTP_HOST`, optional `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_AUTH`, and `SMTP_STARTTLS`.
+- `smtp`: Standard SMTP server using `SMTP_HOST`, optional `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_AUTH`, `SMTP_STARTTLS` and `SMTP_TLS`.
 - `local`: Uses the local `sendmail` binary.
 - `jmap`: Sends mail using JMAP. Requires `JMAP_ENDPOINT`, `JMAP_USER`, `JMAP_PASS`,
   `JMAP_ACCOUNT`, and `JMAP_IDENTITY`.
 - `sendgrid`: Uses the SendGrid API. Requires the `sendgrid` build tag and a `SENDGRID_KEY`.
 - `log`: Writes emails to the application log.
+
+When connecting to port `465` you usually need to set `SMTP_TLS=true` and
+`SMTP_STARTTLS=false`. Only one of these options should normally be enabled.
 
 If configuration or credentials are missing, email is disabled and a log message is printed.
 

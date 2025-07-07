@@ -6,7 +6,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sections"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	"log"
 	"net/http"
 
@@ -32,7 +32,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		CoreData:   r.Context().Value(common.KeyCoreData).(*CoreData),
-		AdminLinks: sections.AdminLinks(),
+		AdminLinks: nav.AdminLinks(),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ctx := r.Context()

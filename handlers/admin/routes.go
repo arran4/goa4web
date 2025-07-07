@@ -12,22 +12,22 @@ import (
 	search "github.com/arran4/goa4web/handlers/search"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	writings "github.com/arran4/goa4web/handlers/writings"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/sections"
 )
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
 func RegisterRoutes(ar *mux.Router) {
-	sections.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
-	sections.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
-	sections.RegisterAdminControlCenter("Permission Sections", "/admin/permissions/sections", 100)
-	sections.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
-	sections.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
-	sections.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
-	sections.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
-	sections.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
-	sections.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
+	nav.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
+	nav.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
+	nav.RegisterAdminControlCenter("Permission Sections", "/admin/permissions/sections", 100)
+	nav.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
+	nav.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
+	nav.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
+	nav.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
+	nav.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
+	nav.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")

@@ -70,6 +70,11 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		return fmt.Errorf("default language: %w", err)
 	}
 
+	if err := runtimeconfig.ApplySMTPFallbacks(&cfg); err != nil {
+		return fmt.Errorf("smtp fallback: %w", err)
+	}
+	runtimeconfig.AppRuntimeConfig = cfg
+
 	if dbPool != nil {
 		defer func() {
 			if err := dbPool.Close(); err != nil {

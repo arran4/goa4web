@@ -30,6 +30,7 @@ import (
 // RegisterRoutes sets up all application routes on r.
 func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
+	r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
 
 	news.RegisterRoutes(r)
 	faq.RegisterRoutes(r)

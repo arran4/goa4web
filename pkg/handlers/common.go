@@ -14,6 +14,12 @@ func MainCSS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(templates.GetMainCSSData()))
 }
 
+// Favicon serves the site's favicon image.
+func Favicon(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
+	http.ServeContent(w, r, "favicon.svg", time.Time{}, bytes.NewReader(templates.GetFaviconData()))
+}
+
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

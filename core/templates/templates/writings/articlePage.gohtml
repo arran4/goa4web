@@ -20,7 +20,7 @@
                 <form method="post">
         {{ csrfField }}
                     <input type="hidden" name="replyTo" value="{{ .Writing.ForumthreadIdforumthread }}">
-                    <textarea name="replytext" cols="40" rows="20"></textarea><br>
+                    <textarea name="replytext" cols="40" rows="20">{{ .ReplyText }}</textarea><br>
                     {{ template "languageCombobox" $ }}
                     <input type="submit" name="task" value="Reply">
                 </form>

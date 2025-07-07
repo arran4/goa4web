@@ -3,12 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/url"
-	"os"
-	"os/exec"
-	"strings"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/arran4/goa4web/cmd/goa4web/dbhandlers"
 )
 
 // dbRestoreCmd implements "db restore".
@@ -36,57 +32,12 @@ func (c *dbRestoreCmd) Run() error {
 		return fmt.Errorf("file required")
 	}
 	cfg := c.rootCmd.cfg
-	inFile, err := os.Open(c.File)
-	if err != nil {
-		return fmt.Errorf("open file: %w", err)
-	}
-	defer inFile.Close()
-	var cmd *exec.Cmd
-	switch cfg.DBDriver {
-	case "mysql":
-		if cfg.DBConn == "" {
-			return fmt.Errorf("connection string required")
-		}
-		mcfg, err := mysql.ParseDSN(cfg.DBConn)
-		if err != nil {
-			return fmt.Errorf("parse DSN: %w", err)
-		}
-		host, port, _ := strings.Cut(mcfg.Addr, ":")
-		args := []string{
-			"-h", host,
-			"-P", port,
-			"-u", mcfg.User,
-			fmt.Sprintf("-p%s", mcfg.Passwd),
-			mcfg.DBName,
-		}
-		cmd = exec.Command("mysql", args...)
-	case "postgres":
-		if cfg.DBConn == "" {
-			return fmt.Errorf("connection string required")
-		}
-		cmd = exec.Command("psql", cfg.DBConn)
-	case "sqlite3":
-		path := cfg.DBConn
-		if strings.HasPrefix(path, "file:") {
-			if u, err := url.Parse(path); err == nil {
-				path = u.Path
-			}
-		}
-		cmd = exec.Command("sqlite3", path)
-		cmd.Stdin = inFile
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("sqlite restore: %w", err)
-		}
-		if c.rootCmd.Verbosity > 0 {
-			fmt.Printf("database restored from %s\n", c.File)
-		}
-		return nil
-	default:
+	h := dbhandlers.RestoreFor(cfg.DBDriver)
+	if h == nil {
 		return fmt.Errorf("restore not supported for driver %s", cfg.DBDriver)
 	}
-	cmd.Stdin = inFile
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("restore: %w", err)
+	if err := h.Restore(cfg, c.File); err != nil {
+		return err
 	}
 	if c.rootCmd.Verbosity > 0 {
 		fmt.Printf("database restored from %s\n", c.File)

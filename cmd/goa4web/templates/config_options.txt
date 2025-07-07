@@ -1,0 +1,3 @@
+{{printf "%s\t%s\t%s\t%s\n" "ENV" "FLAG" "DEFAULT" "DESCRIPTION"}}
+{{range .}}{{.Env}}\t{{.Flag}}\t{{.Default}}\t{{.Usage}}
+{{end}}

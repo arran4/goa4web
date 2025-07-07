@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
 	"net/smtp"
 	"strings"
 	"time"
@@ -56,28 +57,59 @@ func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody stri
 	} else {
 		msg = []byte("To: " + to + "\r\nSubject: " + subject + "\r\n\r\n" + textBody)
 	}
-	if !s.StartTLS {
-		return smtp.SendMail(s.Addr, s.Auth, s.From, []string{to}, msg)
-	}
-	c, err := smtp.Dial(s.Addr)
+	host, port, err := net.SplitHostPort(s.Addr)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid addr %q: %w", s.Addr, err)
 	}
-	defer func(c *smtp.Client) {
-		err := c.Close()
+
+	var c *smtp.Client
+
+	switch port {
+	case "25", "587":
+		// Plain TCP then upgrade to TLS
+		conn, err := net.Dial("tcp", s.Addr)
 		if err != nil {
-			log.Printf("smtp.Close: %v", err)
+			return fmt.Errorf("smtp dial (plain): %w", err)
 		}
-	}(c)
+		c, err = smtp.NewClient(conn, host)
+		if err != nil {
+			return fmt.Errorf("smtp client: %w", err)
+		}
+
+		// STARTTLS
+		if ok, _ := c.Extension("STARTTLS"); !ok {
+			return fmt.Errorf("smtp: server does not support STARTTLS")
+		}
+		if err = c.StartTLS(&tls.Config{ServerName: host}); err != nil {
+			return fmt.Errorf("starttls: %w", err)
+		}
+
+	case "465":
+		// Immediate TLS connection
+		tlsConn, err := tls.Dial("tcp", s.Addr, &tls.Config{ServerName: host})
+		if err != nil {
+			return fmt.Errorf("smtp dial (tls): %w", err)
+		}
+		c, err = smtp.NewClient(tlsConn, host)
+		if err != nil {
+			return fmt.Errorf("smtp client (tls): %w", err)
+		}
+
+	default:
+		return fmt.Errorf("unsupported SMTP port: %s", port)
+	}
+
+	defer func() {
+		if err := c.Quit(); err != nil {
+			log.Printf("smtp.Quit: %v", err)
+		}
+	}()
+
+	// Optional (can skip if HELO already done inside .NewClient)
 	if err = c.Hello("localhost"); err != nil {
-		return err
+		return fmt.Errorf("smtp hello: %w", err)
 	}
-	if ok, _ := c.Extension("STARTTLS"); !ok {
-		return fmt.Errorf("smtp: server does not support STARTTLS")
-	}
-	if err = c.StartTLS(&tls.Config{ServerName: strings.Split(s.Addr, ":")[0]}); err != nil {
-		return err
-	}
+
 	if s.Auth != nil {
 		if ok, _ := c.Extension("AUTH"); !ok {
 			return fmt.Errorf("smtp: server doesn't support AUTH")

@@ -4,8 +4,8 @@ import (
 	"errors"
 	iofs "io/fs"
 	"log"
-	"strings"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
 
@@ -23,12 +23,5 @@ func LoadAppConfigFile(fs core.FileSystem, path string) map[string]string {
 		}
 		return values
 	}
-	for _, line := range strings.Split(string(b), "\n") {
-		if i := strings.IndexByte(line, '='); i > 0 {
-			key := strings.TrimSpace(line[:i])
-			val := strings.TrimSpace(line[i+1:])
-			values[key] = val
-		}
-	}
-	return values
+	return config.ParseEnvBytes(b)
 }

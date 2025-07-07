@@ -1,4 +1,4 @@
-package admin
+package netutil
 
 import (
 	"net"
@@ -6,8 +6,10 @@ import (
 	"strings"
 )
 
-// normalizeIPNet trims and normalizes an IP or CIDR string.
-func normalizeIPNet(ip string) string {
+// NormalizeIPNet trims and normalizes an IP or CIDR string.
+// IPv4 addresses are canonicalized to dotted decimal form.
+// Prefixes are parsed and returned in standard notation when valid.
+func NormalizeIPNet(ip string) string {
 	ip = strings.TrimSpace(ip)
 	if strings.Contains(ip, "/") {
 		if p, err := netip.ParsePrefix(ip); err == nil {

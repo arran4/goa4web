@@ -25,22 +25,22 @@ type FileSystem interface {
 // other extension.
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
-  func LoadAppConfigFile(fs FileSystem, path string) (map[string]string, error) {
-    values := make(map[string]string)
-    if path == "" {
-            log.Printf("config file not specified")
-            return values, nil
-    }
-    log.Printf("reading config file %s", path)
-    b, err := fs.ReadFile(path)
-    if err != nil {
-      if os.IsNotExist(err) {
-              log.Printf("config file not found: %s", path)
-        return values, nil
-      } 
-      return nil, fmt.Eprintf("app config file error: %v", err)
-  }
-  log.Printf("loaded config file %s", path)
+func LoadAppConfigFile(fs FileSystem, path string) (map[string]string, error) {
+	values := make(map[string]string)
+	if path == "" {
+		log.Printf("config file not specified")
+		return values, nil
+	}
+	log.Printf("reading config file %s", path)
+	b, err := fs.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("config file not found: %s", path)
+			return values, nil
+		}
+		return nil, fmt.Errorf("app config file error: %v", err)
+	}
+	log.Printf("loaded config file %s", path)
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".json":
 		if err := json.Unmarshal(b, &values); err != nil {

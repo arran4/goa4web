@@ -6,6 +6,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/netutil"
 	"log"
 	"net/http"
 	"strings"
@@ -38,7 +39,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
-	ipNet = normalizeIPNet(ipNet)
+	ipNet = netutil.NormalizeIPNet(ipNet)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
 	expiresStr := strings.TrimSpace(r.PostFormValue("expires"))
 	var expires sql.NullTime
@@ -63,7 +64,7 @@ func AdminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ParseForm: %v", err)
 	}
 	for _, ip := range r.Form["ip"] {
-		ipNet := normalizeIPNet(ip)
+		ipNet := netutil.NormalizeIPNet(ip)
 		if err := queries.CancelBannedIp(r.Context(), ipNet); err != nil {
 			log.Printf("cancel banned ip %s: %v", ipNet, err)
 		}

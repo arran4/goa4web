@@ -83,7 +83,7 @@ func TestRenderMessage(t *testing.T) {
 
 type errProvider struct{}
 
-func (errProvider) Send(ctx context.Context, to, sub, textBody, htmlBody string) error {
+func (errProvider) Send(ctx context.Context, to, sub string, rawEmailMessage []byte) error {
 	return fmt.Errorf("send error")
 }
 

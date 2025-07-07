@@ -121,7 +121,11 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 			return err
 		}
 	} else if provider != nil {
-		if err := provider.Send(ctx, emailAddr, content.Subject, textBody, htmlBody); err != nil {
+		msg, err := email.BuildMessage(from, emailAddr, content.Subject, textBody, htmlBody)
+		if err != nil {
+			return fmt.Errorf("build message: %w", err)
+		}
+		if err := provider.Send(ctx, emailAddr, content.Subject, msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}
@@ -141,6 +145,9 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 // addresses using this logic.
 func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 	env := runtimeconfig.AppRuntimeConfig.AdminEmails
+	if env == "" {
+		env = os.Getenv(config.EnvAdminEmails)
+	}
 	var emails []string
 	if env != "" {
 		for _, e := range strings.Split(env, ",") {

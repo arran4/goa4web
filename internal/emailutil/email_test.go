@@ -73,10 +73,13 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	}
 }
 
-type recordMail struct{ to, sub, text, html string }
+type recordMail struct {
+	to, sub string
+	raw     []byte
+}
 
-func (r *recordMail) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
-	r.to, r.sub, r.text, r.html = to, subject, textBody, htmlBody
+func (r *recordMail) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
+	r.to, r.sub, r.raw = to, subject, rawEmailMessage
 	return nil
 }
 
@@ -108,15 +111,13 @@ func TestNotifyChangeErrors(t *testing.T) {
 type emailRecordProvider struct {
 	to   string
 	subj string
-	body string
-	html string
+	raw  []byte
 }
 
-func (r *emailRecordProvider) Send(ctx context.Context, to, sub, body, html string) error {
+func (r *emailRecordProvider) Send(ctx context.Context, to, sub string, rawEmailMessage []byte) error {
 	r.to = to
 	r.subj = sub
-	r.body = body
-	r.html = html
+	r.raw = rawEmailMessage
 	return nil
 }
 

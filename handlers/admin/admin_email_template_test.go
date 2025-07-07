@@ -116,7 +116,7 @@ func TestRecentNotifications(t *testing.T) {
 
 type recordAdminMail struct{ to []string }
 
-func (r *recordAdminMail) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+func (r *recordAdminMail) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
 	r.to = append(r.to, to)
 	return nil
 }

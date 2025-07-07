@@ -290,7 +290,7 @@ defined in `internal/email/provider.go`:
 
 ```go
 type Provider interface {
-    Send(ctx context.Context, to, subject, body string) error
+    Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error
 }
 ```
 

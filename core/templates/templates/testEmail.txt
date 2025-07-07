@@ -1,0 +1,6 @@
+Hello,
+
+This is a test email confirming your Goa4Web configuration.
+
+Cheers,
+The A4Web Team

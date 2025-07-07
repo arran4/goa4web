@@ -1,7 +1,6 @@
 package smtp
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"net"
 	"net/smtp"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
@@ -45,18 +43,7 @@ func (a loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 	return nil, nil
 }
 
-func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
-	var msg []byte
-	if htmlBody != "" {
-		boundary := "a4web" + strings.ReplaceAll(fmt.Sprint(time.Now().UnixNano()), "-", "")
-		buf := bytes.NewBuffer(nil)
-		fmt.Fprintf(buf, "To: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=%s\r\n\r\n", to, subject, boundary)
-		fmt.Fprintf(buf, "--%s\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", boundary, textBody)
-		fmt.Fprintf(buf, "--%s\r\nContent-Type: text/html; charset=utf-8\r\n\r\n%s\r\n--%s--", boundary, htmlBody, boundary)
-		msg = buf.Bytes()
-	} else {
-		msg = []byte("To: " + to + "\r\nSubject: " + subject + "\r\n\r\n" + textBody)
-	}
+func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
 	host, port, err := net.SplitHostPort(s.Addr)
 	if err != nil {
 		return fmt.Errorf("invalid addr %q: %w", s.Addr, err)
@@ -128,7 +115,7 @@ func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody stri
 	if err != nil {
 		return fmt.Errorf("smtp write: %w", err)
 	}
-	if _, err = w.Write(msg); err != nil {
+	if _, err = w.Write(rawEmailMessage); err != nil {
 		return fmt.Errorf("smtp write: %w", err)
 	}
 	if err = w.Close(); err != nil {

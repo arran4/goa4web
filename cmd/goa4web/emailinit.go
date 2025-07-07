@@ -1,5 +1,5 @@
 package main
 
-import "github.com/arran4/goa4web/internal/email/builtin"
+import emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 
-func init() { builtin.Register() }
+func init() { emaildefaults.Register() }

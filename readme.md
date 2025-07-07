@@ -72,7 +72,7 @@ requests.
 .
 ├── cmd/goa4web/         – HTTP router and entry point
 ├── config/              – environment variable helpers
-├── examples/            – sample configuration files
+├── examples/            – generated configuration examples
 ├── migrations/          – database schema migrations
 ├── templates/           – HTML templates for all pages
 ├── schema/schema.sql  – initial database schema
@@ -146,7 +146,10 @@ Values are resolved in the following order:
 3. Environment variables such as `DB_CONN`
 
 The config file uses the same `key=value` format as the email configuration file.
-See `examples/db.env` for a complete list of supported keys.
+Generate example settings with:
+```bash
+go run ./cmd/goa4web config as-env-file > examples/config.env
+```
 
 ## Email Provider Configuration
 
@@ -176,7 +179,7 @@ variable names.
 Administrator change notifications are enabled by default when a valid mail
 provider is configured. Set `ADMIN_NOTIFY=false` to disable these messages.
 
-See `examples/email.env` for an example file containing all keys.
+Run `goa4web config as-env-file` to generate a file with all email settings.
 
 ## HTTP Server Configuration
 
@@ -188,7 +191,7 @@ can be configured the same way as other settings:
 3. Environment variables `LISTEN` and `HOSTNAME`
 4. Built-in defaults (`:8080` and `http://localhost:8080`)
 
-See `examples/http.env` for the file format.
+See `examples/config.env` for an auto-generated configuration file.
 
 `HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
 
@@ -265,7 +268,7 @@ LISTEN=:8080
 HOSTNAME=http://example.com:8080
 ```
 
-See the files under `examples/` for more sample configurations.
+Example files under `examples/` are generated automatically.
 
 
 ### Implementing Custom Providers

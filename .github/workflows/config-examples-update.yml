@@ -1,0 +1,38 @@
+name: Update Config Examples
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Generate examples
+        run: |
+          go run ./cmd/goa4web config as-env-file > examples/config.env
+          go run ./cmd/goa4web config as-json > examples/config.json
+      - name: Check for changes
+        id: diff
+        run: |
+          if [[ -n $(git status --porcelain examples/config.env examples/config.json) ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(config): update generated examples'
+          branch: config-examples-${{ github.run_id }}
+          base: ${{ github.ref_name }}
+          title: 'Update generated config examples'
+          body: |
+            This PR updates example configuration files generated from the CLI.

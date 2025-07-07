@@ -25,14 +25,18 @@ type serveCmd struct {
 
 func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 	c := &serveCmd{rootCmd: parent}
-	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
-	fs.StringVar(&c.sessionSecret, "session-secret", "", "session secret key")
-	fs.StringVar(&c.sessionSecretFile, "session-secret-file", "", "path to session secret file")
+	sopts := []runtimeconfig.StringOption{
+		{Name: "session-secret", Env: config.EnvSessionSecret, Usage: "session secret key"},
+		{Name: "session-secret-file", Env: config.EnvSessionSecretFile, Usage: "path to session secret file"},
+	}
+	fs := runtimeconfig.NewRuntimeFlagSetWithOptions("serve", sopts, nil)
 	fs.Usage = c.Usage
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
 	c.fs = fs
+	c.sessionSecret = fs.Lookup("session-secret").Value.String()
+	c.sessionSecretFile = fs.Lookup("session-secret-file").Value.String()
 	c.args = fs.Args()
 	return c, nil
 }

@@ -4,20 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-)
 
-// FileSystem abstracts file operations. It matches the core.FileSystem
-// interface so core implementations can be passed in directly.
-type FileSystem interface {
-	ReadFile(name string) ([]byte, error)
-	WriteFile(name string, data []byte, perm fs.FileMode) error
-}
+	"github.com/arran4/goa4web/core"
+)
 
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs or JSON objects and
 // returns them as a map. Missing files return an empty map.
@@ -25,22 +19,22 @@ type FileSystem interface {
 // other extension.
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
-  func LoadAppConfigFile(fs FileSystem, path string) (map[string]string, error) {
-    values := make(map[string]string)
-    if path == "" {
-            log.Printf("config file not specified")
-            return values, nil
-    }
-    log.Printf("reading config file %s", path)
-    b, err := fs.ReadFile(path)
-    if err != nil {
-      if os.IsNotExist(err) {
-              log.Printf("config file not found: %s", path)
-        return values, nil
-      } 
-      return nil, fmt.Eprintf("app config file error: %v", err)
-  }
-  log.Printf("loaded config file %s", path)
+func LoadAppConfigFile(fs core.FileSystem, path string) (map[string]string, error) {
+	values := make(map[string]string)
+	if path == "" {
+		log.Printf("config file not specified")
+		return values, nil
+	}
+	log.Printf("reading config file %s", path)
+	b, err := fs.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("config file not found: %s", path)
+			return values, nil
+		}
+		return nil, fmt.Errorf("app config file error: %v", err)
+	}
+	log.Printf("loaded config file %s", path)
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".json":
 		if err := json.Unmarshal(b, &values); err != nil {
@@ -57,7 +51,7 @@ type FileSystem interface {
 
 // UpdateConfigKey writes the given key/value pair to the config file.
 // Existing keys are replaced, new keys appended. Empty values remove the key.
-func UpdateConfigKey(fs FileSystem, path, key, value string) error {
+func UpdateConfigKey(fs core.FileSystem, path, key, value string) error {
 	if path == "" {
 		return nil
 	}
@@ -85,7 +79,7 @@ func UpdateConfigKey(fs FileSystem, path, key, value string) error {
 // AddMissingJSONOptions ensures all keys from values exist in the JSON file at
 // path. Missing keys are added with their values. The file is created when it
 // does not exist.
-func AddMissingJSONOptions(fs FileSystem, path string, values map[string]string) error {
+func AddMissingJSONOptions(fs core.FileSystem, path string, values map[string]string) error {
 	if path == "" {
 		return nil
 	}

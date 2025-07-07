@@ -6,28 +6,26 @@ import (
 	"errors"
 	"os"
 	"strings"
-
-	"github.com/arran4/goa4web/config"
 )
 
 // LoadSessionSecret returns the session secret using the following priority:
 //  1. cliSecret if non-empty
-//  2. SESSION_SECRET environment variable
-//  3. contents of the file at path. If path is empty it uses SESSION_SECRET_FILE
+//  2. the environment variable named envSecret
+//  3. contents of the file at path. If path is empty it uses envSecretFile
 //     or a default file named ".session_secret" in the working directory.
 //
 // If the file does not exist, a new random secret is generated and saved.
-func LoadSessionSecret(fs FileSystem, cliSecret, path string) (string, error) {
+func LoadSessionSecret(fs FileSystem, cliSecret, path, envSecret, envSecretFile string) (string, error) {
 	if cliSecret != "" {
 		return cliSecret, nil
 	}
 
-	if env := os.Getenv(config.EnvSessionSecret); env != "" {
+	if env := os.Getenv(envSecret); env != "" {
 		return env, nil
 	}
 
 	if path == "" {
-		path = os.Getenv(config.EnvSessionSecretFile)
+		path = os.Getenv(envSecretFile)
 		if path == "" {
 			path = ".session_secret"
 		}

@@ -19,18 +19,13 @@ type Provider struct {
 	From   string
 }
 
-func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
-	dest := &ses.Destination{ToAddresses: []*string{aws.String(to)}}
-	msg := &ses.Message{
-		Subject: &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(subject)},
-		Body:    &ses.Body{},
+func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
+	input := &ses.SendRawEmailInput{
+		Destinations: []*string{aws.String(to)},
+		Source:       aws.String(s.From),
+		RawMessage:   &ses.RawMessage{Data: rawEmailMessage},
 	}
-	msg.Body.Text = &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(textBody)}
-	if htmlBody != "" {
-		msg.Body.Html = &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(htmlBody)}
-	}
-	input := &ses.SendEmailInput{Destination: dest, Message: msg, Source: aws.String(s.From)}
-	_, err := s.Client.SendEmailWithContext(ctx, input)
+	_, err := s.Client.SendRawEmailWithContext(ctx, input)
 	return err
 }
 

@@ -11,12 +11,8 @@ import (
 // Provider just logs emails for development purposes.
 type Provider struct{}
 
-func (Provider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
-	if htmlBody != "" {
-		log.Printf("sending mail to %s subject %q\nTEXT:\n%s\nHTML:\n%s", to, subject, textBody, htmlBody)
-	} else {
-		log.Printf("sending mail to %s subject %q\n%s", to, subject, textBody)
-	}
+func (Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
+	log.Printf("sending mail to %s subject %q\n%s", to, subject, rawEmailMessage)
 	return nil
 }
 

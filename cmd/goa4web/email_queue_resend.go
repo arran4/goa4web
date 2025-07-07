@@ -45,7 +45,11 @@ func (c *emailQueueResendCmd) Run() error {
 	}
 	provider := email.ProviderFromConfig(c.rootCmd.cfg)
 	if provider != nil {
-		if err := provider.Send(ctx, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String); err != nil {
+		msg, err := email.BuildMessage(c.rootCmd.cfg.EmailFrom, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String)
+		if err != nil {
+			return fmt.Errorf("build message: %w", err)
+		}
+		if err := provider.Send(ctx, e.ToEmail, e.Subject, msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}

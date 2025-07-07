@@ -7,6 +7,7 @@ import (
 
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // emailQueueWorker periodically sends pending emails using the provided provider.
@@ -48,7 +49,12 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		return
 	}
 	e := emails[0]
-	if err := provider.Send(ctx, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String); err != nil {
+	msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String)
+	if err != nil {
+		log.Printf("build message: %v", err)
+		return
+	}
+	if err := provider.Send(ctx, e.ToEmail, e.Subject, msg); err != nil {
 		log.Printf("send queued mail: %v", err)
 		return
 	}

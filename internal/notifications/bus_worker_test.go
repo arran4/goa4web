@@ -98,14 +98,76 @@ func TestProcessEventDLQ(t *testing.T) {
 	prov := &errProvider{}
 	n := Notifier{EmailProvider: prov, Queries: q}
 	dlqRec := &recordDLQ{}
-	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(3))
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
+		AddRow(1, 1, 1, true, 15, true)
+	mock.ExpectQuery("preferences").WithArgs(int32(1)).WillReturnRows(prefRows)
+
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectExec("INSERT INTO subscriptions").WithArgs(int32(1), "reply:/p", "internal").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(3))
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(3))
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(1))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, dlqRec)
 	if dlqRec.msg == "" {
 		t.Fatal("expected dlq message")
 	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
+func TestProcessEventSubscribeSelf(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	n := Notifier{Queries: q}
+
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
+		AddRow(1, 1, 1, true, 15, true)
+	mock.ExpectQuery("preferences").WithArgs(int32(1)).WillReturnRows(prefRows)
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectExec("INSERT INTO subscriptions").WithArgs(int32(1), "reply:/p", "internal").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectExec("INSERT INTO subscriptions").WithArgs(int32(1), "reply:/p", "email").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(1))
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(1))
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+
+	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, nil)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
+func TestProcessEventNoAutoSubscribe(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	n := Notifier{Queries: q}
+
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
+		AddRow(1, 1, 1, true, 15, false)
+	mock.ExpectQuery("preferences").WithArgs(int32(1)).WillReturnRows(prefRows)
+
+	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, nil)
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)
 	}

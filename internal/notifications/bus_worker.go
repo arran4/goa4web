@@ -147,6 +147,24 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 		return
 	}
 
+	if evt.Task == hcommon.TaskReply && n.Queries != nil {
+		auto := true
+		email := false
+		if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
+			auto = pref.AutoSubscribeReplies
+			if pref.Emailforumupdates.Valid {
+				email = pref.Emailforumupdates.Bool
+			}
+		}
+		if auto {
+			pattern := buildPatterns(evt.Task, evt.Path)[0]
+			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
+			if email {
+				ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
+			}
+		}
+	}
+
 	if evt.Task == hcommon.TaskTestMail {
 		user, err := n.Queries.GetUserById(ctx, evt.UserID)
 		if err == nil && user.Email.Valid {
@@ -213,5 +231,22 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 				recordAndNotify(ctx, q, n, fmt.Sprintf("deliver %s to %d: %v", typ, id, err))
 			}
 		}
+	}
+}
+
+func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pattern, method string) {
+	if q == nil || userID == 0 {
+		return
+	}
+	ids, err := q.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: pattern, Method: method})
+	if err == nil {
+		for _, id := range ids {
+			if id == userID {
+				return
+			}
+		}
+	}
+	if err := q.InsertSubscription(ctx, dbpkg.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {
+		log.Printf("insert subscription: %v", err)
 	}
 }

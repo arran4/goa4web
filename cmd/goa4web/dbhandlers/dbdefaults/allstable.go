@@ -1,4 +1,4 @@
-package allstable
+package dbdefaults
 
 import (
 	"github.com/arran4/goa4web/cmd/goa4web/dbhandlers/mysql"

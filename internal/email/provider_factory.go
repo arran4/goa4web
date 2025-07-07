@@ -5,10 +5,6 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -38,23 +34,7 @@ func ProviderFromConfig(cfg runtimeconfig.RuntimeConfig) Provider {
 		return SMTPProvider{Addr: addr, Auth: auth, From: SourceEmail}
 
 	case "ses":
-		awsCfg := aws.NewConfig()
-		if region := cfg.EmailAWSRegion; region != "" {
-			awsCfg = awsCfg.WithRegion(region)
-		}
-		sess, err := session.NewSession(awsCfg)
-		if err != nil {
-			log.Printf("Email disabled: cannot initialise AWS session: %v", err)
-			if mode == "ses" {
-				return nil
-			}
-			return nil
-		}
-		if _, err := sess.Config.Credentials.Get(); err != nil {
-			log.Printf("Email disabled: no AWS credentials: %v", err)
-			return nil
-		}
-		return SESProvider{Client: ses.New(sess)}
+		return SESProviderFromConfig(cfg)
 
 	case "local":
 		return LocalProvider{}

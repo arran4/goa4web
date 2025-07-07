@@ -11,10 +11,6 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ses"
-	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 )
 
 const (
@@ -26,24 +22,6 @@ const (
 // Only the fields necessary for sending basic notification emails are included.
 type Provider interface {
 	Send(ctx context.Context, to, subject, textBody, htmlBody string) error
-}
-
-// SESProvider wraps the AWS SES client.
-type SESProvider struct{ Client sesiface.SESAPI }
-
-func (s SESProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
-	dest := &ses.Destination{ToAddresses: []*string{aws.String(to)}}
-	msg := &ses.Message{
-		Subject: &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(subject)},
-		Body:    &ses.Body{},
-	}
-	msg.Body.Text = &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(textBody)}
-	if htmlBody != "" {
-		msg.Body.Html = &ses.Content{Charset: aws.String("UTF-8"), Data: aws.String(htmlBody)}
-	}
-	input := &ses.SendEmailInput{Destination: dest, Message: msg, Source: aws.String(SourceEmail)}
-	_, err := s.Client.SendEmailWithContext(ctx, input)
-	return err
 }
 
 // SMTPProvider uses the standard net/smtp package.

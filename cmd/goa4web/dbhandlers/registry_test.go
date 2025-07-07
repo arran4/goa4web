@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/cmd/goa4web/dbhandlers"
-	_ "github.com/arran4/goa4web/cmd/goa4web/dbhandlers/allstable"
+	_ "github.com/arran4/goa4web/cmd/goa4web/dbhandlers/dbdefaults"
 )
 
 func TestDefaultRegistrations(t *testing.T) {

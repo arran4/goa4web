@@ -31,6 +31,8 @@ var StringOptions = []StringOption{
 	{"smtp-port", config.EnvSMTPPort, "EmailSMTPPort", "SMTP port", ""},
 	{"smtp-user", config.EnvSMTPUser, "EmailSMTPUser", "SMTP user", ""},
 	{"smtp-pass", config.EnvSMTPPass, "EmailSMTPPass", "SMTP pass", ""},
+	{"smtp-auth", config.EnvSMTPAuth, "EmailSMTPAuth", "SMTP auth method", ""},
+	{"email-from", config.EnvEmailFrom, "EmailFrom", "default From address", ""},
 	{"aws-region", config.EnvAWSRegion, "EmailAWSRegion", "AWS region", ""},
 	{"jmap-endpoint", config.EnvJMAPEndpoint, "EmailJMAPEndpoint", "JMAP endpoint", ""},
 	{"jmap-account", config.EnvJMAPAccount, "EmailJMAPAccount", "JMAP account", ""},

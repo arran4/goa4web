@@ -12,6 +12,3 @@ type Provider = internalemail.Provider
 func ProviderFromConfig(cfg runtimeconfig.RuntimeConfig) Provider {
 	return internalemail.ProviderFromConfig(cfg)
 }
-
-// SourceEmail is the From address for notification emails.
-const SourceEmail = internalemail.SourceEmail

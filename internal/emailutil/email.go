@@ -15,6 +15,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 type emailTemplate struct {
@@ -58,10 +59,10 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	if emailAddr == "" {
 		return fmt.Errorf("no email specified")
 	}
-	if !emailSendingEnabled() {
+	if !EmailSendingEnabled() {
 		return nil
 	}
-	from := email.SourceEmail
+	from := runtimeconfig.AppRuntimeConfig.EmailFrom
 
 	type EmailContent struct {
 		To      string
@@ -183,7 +184,7 @@ func AdminNotificationsEnabled() bool {
 	}
 }
 
-func emailSendingEnabled() bool {
+func EmailSendingEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvEmailEnabled))
 	if v == "" {
 		return true

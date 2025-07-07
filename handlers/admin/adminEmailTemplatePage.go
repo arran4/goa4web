@@ -15,12 +15,13 @@ import (
 
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
-	b := getUpdateEmailText(r.Context())
+	b := emailutil.GetUpdateEmailText(r.Context())
 
 	var preview string
 	tmpl, err := template.New("email").Parse(b)
@@ -97,7 +98,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	pageURL := base + r.URL.Path
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("email").Parse(getUpdateEmailText(r.Context()))
+	tmpl, err := template.New("email").Parse(emailutil.GetUpdateEmailText(r.Context()))
 	if err != nil {
 		log.Printf("parse template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

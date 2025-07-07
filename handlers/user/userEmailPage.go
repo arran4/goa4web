@@ -15,6 +15,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/emailutil"
 
 	"github.com/arran4/goa4web/runtimeconfig"
 )
@@ -131,7 +132,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		common.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	if err := notifyChange(r.Context(), provider, user.Email.String, pageURL); err != nil {
+	if err := emailutil.NotifyChange(r.Context(), provider, user.Email.String, pageURL, "update", nil); err != nil {
 		log.Printf("notifyChange Error: %s", err)
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

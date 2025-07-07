@@ -89,7 +89,7 @@ func (c *A4code2html) Escape(ch byte) string {
 	}
 }
 
-func (c *A4code2html) getNext(endAtEqual bool) string {
+func (c *A4code2html) getNext(endAtEqual bool, keepClose bool) string {
 	result := new(bytes.Buffer)
 	var ch byte
 	loop := true
@@ -99,8 +99,13 @@ func (c *A4code2html) getNext(endAtEqual bool) string {
 		c.input = c.input[1:]
 
 		switch ch {
-		case '\n', ']', '[', ' ', '\r':
+		case '\n', '[', ' ', '\r':
 			loop = false
+		case ']':
+			loop = false
+			if keepClose {
+				c.input = string(ch) + c.input
+			}
 		case '=':
 			if endAtEqual {
 				loop = false
@@ -160,7 +165,10 @@ func (c *A4code2html) directOutput(terminators ...string) {
 }
 
 func (a *A4code2html) acomm() int {
-	command := strings.ToLower(a.getNext(true))
+	command := strings.ToLower(a.getNext(true, true))
+	if command == "code" && len(a.input) > 0 && a.input[0] == ']' {
+		a.input = a.input[1:]
+	}
 	switch command {
 	case "*", "b", "bold":
 		switch a.CodeType {
@@ -214,9 +222,9 @@ func (a *A4code2html) acomm() int {
 		switch a.CodeType {
 		case CTTableOfContents:
 		case CTTagStrip, CTWordsOnly:
-			a.getNext(false)
+			a.getNext(false, false)
 		default:
-			raw := a.getNext(false)
+			raw := a.getNext(false, false)
 			safe, ok := SanitizeURL(raw)
 			if ok {
 				a.output.WriteString("<a href=\"" + safe + "\" target=\"_BLANK\">")
@@ -240,7 +248,7 @@ func (a *A4code2html) acomm() int {
 		case CTTableOfContents:
 		case CTTagStrip, CTWordsOnly:
 		default:
-			a.output.WriteString(fmt.Sprintf("<table width=90%% align=center bgcolor=lightgreen><tr><th>Quote of %s: <tr><td>", a.getNext(false)))
+			a.output.WriteString(fmt.Sprintf("<table width=90%% align=center bgcolor=lightgreen><tr><th>Quote of %s: <tr><td>", a.getNext(false, false)))
 			a.stack = append(a.stack, "</table>")
 		}
 	case "quote", "q":
@@ -272,8 +280,8 @@ func (a *A4code2html) acomm() int {
 		case CTTableOfContents:
 		case CTTagStrip, CTWordsOnly:
 		default:
-			a.output.WriteString("<hr>")
-			a.stack = append(a.stack, "/>")
+			a.output.WriteString("<hr")
+			a.stack = append(a.stack, " />")
 		}
 	default:
 		a.stack = append(a.stack, "")

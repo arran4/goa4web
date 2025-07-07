@@ -57,7 +57,7 @@ func TestA4code2htmlEscape(t *testing.T) {
 func TestGetNext(t *testing.T) {
 	c := NewA4Code2HTML()
 	c.input = "abc]"
-	got := c.getNext(false)
+	got := c.getNext(false, false)
 	if got != "abc" {
 		t.Fatalf("got %q", got)
 	}
@@ -92,13 +92,13 @@ func TestGetNextSpecialChars(t *testing.T) {
 	for _, ch := range specials {
 		c := NewA4Code2HTML()
 		c.input = string(ch) + "]"
-		if got := c.getNext(true); got != string(ch) || c.input != "" {
+		if got := c.getNext(true, true); got != string(ch) || c.input != "]" {
 			t.Fatalf("char %q got %q remaining %q", ch, got, c.input)
 		}
 
 		c = NewA4Code2HTML()
 		c.input = "\\" + string(ch) + "]"
-		if got := c.getNext(false); got != string(ch) || c.input != "" {
+		if got := c.getNext(false, false); got != string(ch) || c.input != "" {
 			t.Fatalf("escape %q got %q remaining %q", ch, got, c.input)
 		}
 	}
@@ -177,6 +177,16 @@ func TestCodeSlashClose(t *testing.T) {
 	c.input = "[code]foo[/code]"
 	c.Process()
 	want := "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>foo</pre></table>"
+	if got := c.Output(); got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func TestHrTagClosing(t *testing.T) {
+	c := NewA4Code2HTML()
+	c.input = "[hr]\n"
+	c.Process()
+	want := "<hr /><br />\n"
 	if got := c.Output(); got != want {
 		t.Errorf("got %q want %q", got, want)
 	}

@@ -7,6 +7,7 @@ import (
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	router "github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/internal/sections"
 )
@@ -34,4 +35,9 @@ func RegisterRoutes(r *mux.Router) {
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
 	wr.HandleFunc("/category/{category}/add", ArticleAddPage).Methods("GET").MatcherFunc(Or(auth.RequiredAccess("writer"), auth.RequiredAccess("administrator")))
 	wr.HandleFunc("/category/{category}/add", ArticleAddActionPage).Methods("POST").MatcherFunc(Or(auth.RequiredAccess("writer"), auth.RequiredAccess("administrator"))).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSubmitWriting))
+}
+
+// Register registers the writings router module.
+func Register() {
+	router.RegisterModule("writings", nil, RegisterRoutes)
 }

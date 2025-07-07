@@ -8,6 +8,7 @@ import (
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	router "github.com/arran4/goa4web/internal/router"
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
@@ -66,4 +67,9 @@ func RegisterRoutes(r *mux.Router) {
 	nr.HandleFunc("/user/permissions", NewsUserPermissionsPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))
 	nr.HandleFunc("/users/permissions", NewsUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher("User Allow"))
 	nr.HandleFunc("/users/permissions", NewsUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher("User Disallow"))
+}
+
+// Register registers the news router module.
+func Register() {
+	router.RegisterModule("news", nil, RegisterRoutes)
 }

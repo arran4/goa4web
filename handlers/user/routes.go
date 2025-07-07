@@ -6,6 +6,7 @@ import (
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/handlers/common"
+	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/pkg/handlers"
 )
 
@@ -38,4 +39,9 @@ func RegisterRoutes(r *mux.Router) {
 	// legacy redirects
 	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))
 	r.HandleFunc("/user/email", handlers.RedirectPermanent("/usr/email"))
+}
+
+// Register registers the user router module.
+func Register() {
+	router.RegisterModule("user", nil, RegisterRoutes)
 }

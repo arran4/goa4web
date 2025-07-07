@@ -12,6 +12,7 @@ import (
 	search "github.com/arran4/goa4web/handlers/search"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	writings "github.com/arran4/goa4web/handlers/writings"
+	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/sections"
 )
 
@@ -80,4 +81,13 @@ func RegisterRoutes(ar *mux.Router) {
 
 	ar.HandleFunc("/reload", AdminReloadConfigPage).Methods("POST")
 	ar.HandleFunc("/shutdown", AdminShutdownPage).Methods("POST")
+}
+
+// Register registers the admin router module.
+func Register() {
+	router.RegisterModule("admin", []string{"faq", "forum", "languages", "linker", "news", "search", "user", "writings"}, func(r *mux.Router) {
+		ar := r.PathPrefix("/admin").Subrouter()
+		ar.Use(router.AdminCheckerMiddleware)
+		RegisterRoutes(ar)
+	})
 }

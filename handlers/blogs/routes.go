@@ -7,6 +7,7 @@ import (
 	auth "github.com/arran4/goa4web/handlers/auth"
 	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	router "github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/internal/sections"
 )
@@ -41,4 +42,9 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("/users/permissions", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUserDisallow))
 	br.HandleFunc("/users/permissions", UsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUsersAllow))
 	br.HandleFunc("/users/permissions", UsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUsersDisallow))
+}
+
+// Register registers the blogs router module.
+func Register() {
+	router.RegisterModule("blogs", nil, RegisterRoutes)
 }

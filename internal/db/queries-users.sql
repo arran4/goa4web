@@ -70,7 +70,7 @@ GROUP BY u.idusers;
 SELECT u.email
 FROM users u
 JOIN permissions p ON p.users_idusers = u.idusers
-WHERE p.section = 'administrator';
+WHERE p.section = 'all' and p.level = 'administrator';
 
 -- name: UpdateUserEmail :exec
 UPDATE users

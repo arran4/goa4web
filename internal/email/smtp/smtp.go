@@ -63,7 +63,12 @@ func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody stri
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+	defer func(c *smtp.Client) {
+		err := c.Close()
+		if err != nil {
+			log.Printf("smtp.Close: %v", err)
+		}
+	}(c)
 	if err = c.Hello("localhost"); err != nil {
 		return err
 	}

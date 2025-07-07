@@ -17,12 +17,12 @@ type ipBanListCmd struct {
 
 func parseIpBanListCmd(parent *ipBanCmd, args []string) (*ipBanListCmd, error) {
 	c := &ipBanListCmd{ipBanCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	fs, rest, err := parseFlags("list", args, nil)
+	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = fs.Args()
+	c.args = rest
 	return c, nil
 }
 

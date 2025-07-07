@@ -22,15 +22,16 @@ type userListCmd struct {
 
 func parseUserListCmd(parent *userCmd, args []string) (*userListCmd, error) {
 	c := &userListCmd{userCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	fs.BoolVar(&c.showAdmin, "admin", false, "include admin status")
-	fs.BoolVar(&c.showCreated, "created", false, "include creation date")
-	fs.BoolVar(&c.jsonOut, "json", false, "machine-readable JSON output")
-	if err := fs.Parse(args); err != nil {
+	fs, rest, err := parseFlags("list", args, func(fs *flag.FlagSet) {
+		fs.BoolVar(&c.showAdmin, "admin", false, "include admin status")
+		fs.BoolVar(&c.showCreated, "created", false, "include creation date")
+		fs.BoolVar(&c.jsonOut, "json", false, "machine-readable JSON output")
+	})
+	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = fs.Args()
+	c.args = rest
 	return c, nil
 }
 

@@ -26,8 +26,11 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		UserData        *db.User
-		UserPreferences struct{ EmailUpdates bool }
-		Error           string
+		UserPreferences struct {
+			EmailUpdates         bool
+			AutoSubscribeReplies bool
+		}
+		Error string
 	}
 
 	user, _ := r.Context().Value(common.KeyUser).(*db.User)
@@ -38,8 +41,13 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		UserData: user,
 		Error:    r.URL.Query().Get("error"),
 	}
-	if pref != nil && pref.Emailforumupdates.Valid {
-		data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Bool
+	if pref != nil {
+		if pref.Emailforumupdates.Valid {
+			data.UserPreferences.EmailUpdates = pref.Emailforumupdates.Bool
+		}
+		data.UserPreferences.AutoSubscribeReplies = pref.AutoSubscribeReplies
+	} else {
+		data.UserPreferences.AutoSubscribeReplies = true
 	}
 
 	if err := templates.RenderTemplate(w, "emailPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
@@ -66,6 +74,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	updates := r.PostFormValue("emailupdates") != ""
+	auto := r.PostFormValue("autosubscribe") != ""
 
 	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -77,8 +86,9 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = queries.InsertEmailPreference(r.Context(), db.InsertEmailPreferenceParams{
-				Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
-				UsersIdusers:      uid,
+				Emailforumupdates:    sql.NullBool{Bool: updates, Valid: true},
+				AutoSubscribeReplies: auto,
+				UsersIdusers:         uid,
 			})
 		}
 	} else {
@@ -86,6 +96,12 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 			Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
 			UsersIdusers:      uid,
 		})
+		if err == nil {
+			err = queries.UpdateAutoSubscribeRepliesByUserID(r.Context(), db.UpdateAutoSubscribeRepliesByUserIDParams{
+				AutoSubscribeReplies: auto,
+				UsersIdusers:         uid,
+			})
+		}
 	}
 	if err != nil {
 		log.Printf("save email pref: %v", err)

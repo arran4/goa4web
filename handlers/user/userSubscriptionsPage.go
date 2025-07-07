@@ -50,7 +50,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		Options:  userSubscriptionOptions,
 		Error:    r.URL.Query().Get("error"),
 	}
-	if err := templates.RenderTemplate(w, "user/subscriptions.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "subscriptions.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

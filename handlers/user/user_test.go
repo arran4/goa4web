@@ -97,9 +97,9 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	mock.ExpectQuery("SELECT idpermissions, users_idusers, section, level FROM permissions WHERE users_idusers = ?").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idpermissions", "users_idusers", "section", "level"}).AddRow(1, 1, "all", "admin"))
-	mock.ExpectQuery("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size FROM preferences WHERE users_idusers = ?").
+	mock.ExpectQuery("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies FROM preferences WHERE users_idusers = ?").
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).AddRow(1, 2, 1, false, 15))
+		WillReturnRows(sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).AddRow(1, 2, 1, false, 15, true))
 	mock.ExpectQuery("SELECT iduserlang, users_idusers, language_idlanguage FROM userlang WHERE users_idusers = ?").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"iduserlang", "users_idusers", "language_idlanguage"}).AddRow(1, 1, 2))
@@ -330,8 +330,8 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 
-	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size"}).
-		AddRow(1, 1, 1, nil, runtimeconfig.AppRuntimeConfig.PageSizeDefault)
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
+		AddRow(1, 1, 1, nil, runtimeconfig.AppRuntimeConfig.PageSizeDefault, true)
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 

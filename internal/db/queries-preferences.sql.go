@@ -11,17 +11,34 @@ import (
 )
 
 const insertEmailPreference = `-- name: InsertEmailPreference :exec
-INSERT INTO preferences (emailforumupdates, users_idusers)
-VALUES (?, ?)
+INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers)
+VALUES (?, ?, ?)
 `
 
 type InsertEmailPreferenceParams struct {
-	Emailforumupdates sql.NullBool
-	UsersIdusers      int32
+	Emailforumupdates    sql.NullBool
+	AutoSubscribeReplies bool
+	UsersIdusers         int32
 }
 
 func (q *Queries) InsertEmailPreference(ctx context.Context, arg InsertEmailPreferenceParams) error {
-	_, err := q.db.ExecContext(ctx, insertEmailPreference, arg.Emailforumupdates, arg.UsersIdusers)
+	_, err := q.db.ExecContext(ctx, insertEmailPreference, arg.Emailforumupdates, arg.AutoSubscribeReplies, arg.UsersIdusers)
+	return err
+}
+
+const updateAutoSubscribeRepliesByUserID = `-- name: UpdateAutoSubscribeRepliesByUserID :exec
+UPDATE preferences
+SET auto_subscribe_replies = ?
+WHERE users_idusers = ?
+`
+
+type UpdateAutoSubscribeRepliesByUserIDParams struct {
+	AutoSubscribeReplies bool
+	UsersIdusers         int32
+}
+
+func (q *Queries) UpdateAutoSubscribeRepliesByUserID(ctx context.Context, arg UpdateAutoSubscribeRepliesByUserIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateAutoSubscribeRepliesByUserID, arg.AutoSubscribeReplies, arg.UsersIdusers)
 	return err
 }
 

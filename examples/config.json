@@ -32,7 +32,6 @@
   "PAGE_SIZE_MIN": "5",
   "SENDGRID_KEY": "",
   "SESSION_SECRET": "",
-  "SESSION_SECRET_FILE": ".session_secret",
   "SMTP_HOST": "",
   "SMTP_PASS": "",
   "SMTP_PORT": "",

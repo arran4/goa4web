@@ -1,10 +1,13 @@
 package core_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestLoadSessionSecretCLI(t *testing.T) {
@@ -59,5 +62,35 @@ func TestLoadSessionSecretGenerate(t *testing.T) {
 	}
 	if string(b) != secret {
 		t.Fatalf("file secret mismatch: %s vs %s", b, secret)
+	}
+}
+
+func TestDefaultSessionSecretPathDev(t *testing.T) {
+	common.Version = "dev"
+	t.Setenv(config.EnvDocker, "")
+	got := runtimeconfig.DefaultSessionSecretPath()
+	if got != ".session_secret" {
+		t.Fatalf("want .session_secret got %s", got)
+	}
+}
+
+func TestDefaultSessionSecretPathDocker(t *testing.T) {
+	common.Version = "1"
+	t.Setenv(config.EnvDocker, "1")
+	t.Setenv("HOME", "/home/test")
+	got := runtimeconfig.DefaultSessionSecretPath()
+	if got != "/var/lib/goa4web/session_secret" {
+		t.Fatalf("want /var/lib/goa4web/session_secret got %s", got)
+	}
+}
+
+func TestDefaultSessionSecretPathUser(t *testing.T) {
+	common.Version = "1"
+	t.Setenv(config.EnvDocker, "")
+	t.Setenv("XDG_CONFIG_HOME", "/cfg")
+	got := runtimeconfig.DefaultSessionSecretPath()
+	want := filepath.Join("/cfg", "goa4web", "session_secret")
+	if got != want {
+		t.Fatalf("want %s got %s", want, got)
 	}
 }

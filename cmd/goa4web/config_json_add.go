@@ -32,10 +32,13 @@ func (c *configJSONAddCmd) Run() error {
 	if c.File == "" {
 		return fmt.Errorf("file required")
 	}
-	values := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
-	if err := config.AddMissingJSONOptions(core.OSFS{}, c.File, values); err != nil {
-		return fmt.Errorf("update json: %w", err)
-	}
+       values, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+       if err != nil {
+               return fmt.Errorf("load config: %w", err)
+       }
+       if err := config.AddMissingJSONOptions(core.OSFS{}, c.File, values); err != nil {
+               return fmt.Errorf("update json: %w", err)
+       }
 	if c.rootCmd.Verbosity > 0 {
 		fmt.Printf("updated %s\n", c.File)
 	}

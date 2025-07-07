@@ -57,16 +57,18 @@ type RuntimeConfig struct {
 // AppRuntimeConfig stores the current application configuration.
 var AppRuntimeConfig RuntimeConfig
 
-// NewRuntimeFlagSet returns a FlagSet containing all runtime configuration
-// options. The returned FlagSet uses ContinueOnError to allow tests to supply
-// their own arguments without triggering os.Exit.
-func NewRuntimeFlagSet(name string) *flag.FlagSet {
+// newRuntimeFlagSet returns a FlagSet containing the provided options merged
+// with the built-in ones.
+func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 
-	for _, o := range StringOptions {
+	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
+	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
+
+	for _, o := range strings {
 		fs.String(o.Name, o.Default, o.Usage)
 	}
-	for _, o := range IntOptions {
+	for _, o := range ints {
 		fs.Int(o.Name, o.Default, o.Usage)
 	}
 
@@ -76,14 +78,23 @@ func NewRuntimeFlagSet(name string) *flag.FlagSet {
 	return fs
 }
 
-// GenerateRuntimeConfig builds the runtime configuration from a FlagSet,
-// optional config file values and environment variables following the
-// precedence rules from AGENTS.md.
-// GenerateRuntimeConfig builds the runtime configuration from a FlagSet,
-// optional config file values and environment variables following the
-// precedence rules from AGENTS.md. The getenv function is used to
-// retrieve environment values and defaults to os.Getenv when nil.
-func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string) RuntimeConfig {
+// NewRuntimeFlagSet returns a FlagSet containing all runtime configuration
+// options. The returned FlagSet uses ContinueOnError to allow tests to supply
+// their own arguments without triggering os.Exit.
+func NewRuntimeFlagSet(name string) *flag.FlagSet {
+	return newRuntimeFlagSet(name, nil, nil)
+}
+
+// NewRuntimeFlagSetWithOptions returns a FlagSet containing the built-in options
+// merged with the provided slices.
+func NewRuntimeFlagSetWithOptions(name string, sopts []StringOption, iopts []IntOption) *flag.FlagSet {
+	return newRuntimeFlagSet(name, sopts, iopts)
+}
+
+// generateRuntimeConfig constructs the RuntimeConfig from the provided option
+// slices applying the standard precedence order of command line flags,
+// configuration file values and environment variables.
+func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption) RuntimeConfig {
 	if getenv == nil {
 		getenv = os.Getenv
 	}
@@ -94,7 +105,10 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 
 	cfg := RuntimeConfig{}
 
-	for _, o := range StringOptions {
+	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
+	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
+
+	for _, o := range strings {
 		dst := reflect.ValueOf(&cfg).Elem().FieldByName(o.Field)
 		if !dst.IsValid() || dst.Kind() != reflect.String {
 			continue
@@ -114,7 +128,7 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		}
 	}
 
-	for _, o := range IntOptions {
+	for _, o := range ints {
 		dst := reflect.ValueOf(&cfg).Elem().FieldByName(o.Field)
 		if !dst.IsValid() || dst.Kind() != reflect.Int {
 			continue
@@ -158,6 +172,23 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 	normalizeRuntimeConfig(&cfg)
 	AppRuntimeConfig = cfg
 	return cfg
+}
+
+// GenerateRuntimeConfig builds the runtime configuration from a FlagSet,
+// optional config file values and environment variables following the
+// precedence rules from AGENTS.md.
+// GenerateRuntimeConfig builds the runtime configuration from a FlagSet,
+// optional config file values and environment variables following the
+// precedence rules from AGENTS.md. The getenv function is used to
+// retrieve environment values and defaults to os.Getenv when nil.
+func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string) RuntimeConfig {
+	return generateRuntimeConfig(fs, fileVals, getenv, nil, nil)
+}
+
+// GenerateRuntimeConfigWithOptions is like GenerateRuntimeConfig but also considers
+// the supplied option slices.
+func GenerateRuntimeConfigWithOptions(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption) RuntimeConfig {
+	return generateRuntimeConfig(fs, fileVals, getenv, sopts, iopts)
 }
 
 // normalizeRuntimeConfig applies default values and ensures pagination limits are valid.

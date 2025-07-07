@@ -9,11 +9,6 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func notifyChange(ctx context.Context, provider email.Provider, emailAddr, page string) error {
-	n := notif.Notifier{EmailProvider: provider}
-	return n.NotifyChange(ctx, 0, emailAddr, page, "update", nil)
-}
-
 // getAdminEmails returns a slice of administrator email addresses. Environment
 // variable ADMIN_EMAILS takes precedence over the database.
 func getAdminEmails(ctx context.Context, q *db.Queries) []string {

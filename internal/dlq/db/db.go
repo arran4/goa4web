@@ -12,12 +12,12 @@ import (
 // DLQ stores messages in the database.
 type DLQ struct{ Queries *dbpkg.Queries }
 
-// Record inserts the message into the worker error table.
+// Record inserts the message into the dead letter table.
 func (d DLQ) Record(ctx context.Context, message string) error {
 	if d.Queries == nil {
 		return fmt.Errorf("no db")
 	}
-	return d.Queries.InsertWorkerError(ctx, message)
+	return d.Queries.InsertDeadLetter(ctx, message)
 }
 
 // Register registers the database provider.

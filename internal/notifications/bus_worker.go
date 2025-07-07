@@ -22,7 +22,7 @@ func recordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) {
 	if q != nil {
 		_ = q.Record(ctx, msg)
 		if dbq, ok := q.(dbdlq.DLQ); ok {
-			if count, err := dbq.Queries.CountWorkerErrors(ctx); err == nil {
+			if count, err := dbq.Queries.CountDeadLetters(ctx); err == nil {
 				if isPow10(count) {
 					n.NotifyAdmins(ctx, "/admin/dlq")
 				}

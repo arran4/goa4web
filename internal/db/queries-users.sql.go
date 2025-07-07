@@ -152,7 +152,7 @@ func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]sql.NullString
 }
 
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
-SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
+SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -182,6 +182,7 @@ type ListUsersSubscribedToBlogsRow struct {
 	UsersIdusers_2           int32
 	Emailforumupdates        sql.NullBool
 	PageSize                 int32
+	AutoSubscribeReplies     bool
 }
 
 func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]*ListUsersSubscribedToBlogsRow, error) {
@@ -212,6 +213,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
 			&i.PageSize,
+			&i.AutoSubscribeReplies,
 		); err != nil {
 			return nil, err
 		}
@@ -227,7 +229,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 }
 
 const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
-SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
+SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -260,6 +262,7 @@ type ListUsersSubscribedToLinkerRow struct {
 	UsersIdusers_2                 int32
 	Emailforumupdates              sql.NullBool
 	PageSize                       int32
+	AutoSubscribeReplies           bool
 }
 
 func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]*ListUsersSubscribedToLinkerRow, error) {
@@ -293,6 +296,7 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
 			&i.PageSize,
+			&i.AutoSubscribeReplies,
 		); err != nil {
 			return nil, err
 		}
@@ -310,7 +314,7 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage,
     c.written, c.text, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username,
-    p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size
+    p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies
 FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -338,6 +342,7 @@ type ListUsersSubscribedToThreadRow struct {
 	UsersIdusers_2           int32
 	Emailforumupdates        sql.NullBool
 	PageSize                 int32
+	AutoSubscribeReplies     bool
 }
 
 func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsersSubscribedToThreadParams) ([]*ListUsersSubscribedToThreadRow, error) {
@@ -366,6 +371,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
 			&i.PageSize,
+			&i.AutoSubscribeReplies,
 		); err != nil {
 			return nil, err
 		}
@@ -381,7 +387,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size
+SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, t.deleted_at, idusers, email, passwd, passwd_algorithm, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -415,6 +421,7 @@ type ListUsersSubscribedToWritingRow struct {
 	UsersIdusers_2                   int32
 	Emailforumupdates                sql.NullBool
 	PageSize                         int32
+	AutoSubscribeReplies             bool
 }
 
 func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]*ListUsersSubscribedToWritingRow, error) {
@@ -449,6 +456,7 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.UsersIdusers_2,
 			&i.Emailforumupdates,
 			&i.PageSize,
+			&i.AutoSubscribeReplies,
 		); err != nil {
 			return nil, err
 		}

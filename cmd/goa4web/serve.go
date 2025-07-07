@@ -53,7 +53,7 @@ func (c *serveCmd) Run() error {
 			secretPath = v
 		}
 	}
-	secret, err := core.LoadSessionSecret(core.OSFS{}, c.sessionSecret, secretPath)
+	secret, err := core.LoadSessionSecret(core.OSFS{}, c.sessionSecret, secretPath, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}

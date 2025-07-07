@@ -1,7 +1,9 @@
 package a4code2html
 
 import (
+	"bytes"
 	"github.com/google/go-cmp/cmp"
+	"io"
 	"testing"
 )
 
@@ -179,6 +181,44 @@ func TestCodeSlashClose(t *testing.T) {
 	want := "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>foo</pre></table>"
 	if got := c.Output(); got != want {
 		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func TestProcessReader(t *testing.T) {
+	in := bytes.NewBufferString("[*]")
+	out := new(bytes.Buffer)
+	c := NewA4Code2HTML()
+	if err := c.ProcessReader(in, out); err != nil {
+		t.Fatalf("ProcessReader error: %v", err)
+	}
+	if got := out.String(); got != "<strong></strong>" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+type slowReader struct {
+	data string
+	i    int
+}
+
+func (s *slowReader) Read(p []byte) (int, error) {
+	if s.i >= len(s.data) {
+		return 0, io.EOF
+	}
+	p[0] = s.data[s.i]
+	s.i++
+	return 1, nil
+}
+
+func TestProcessReaderStreaming(t *testing.T) {
+	sr := &slowReader{data: "[*]"}
+	out := new(bytes.Buffer)
+	c := NewA4Code2HTML()
+	if err := c.ProcessReader(sr, out); err != nil {
+		t.Fatalf("ProcessReader error: %v", err)
+	}
+	if got := out.String(); got != "<strong></strong>" {
+		t.Fatalf("got %q", got)
 	}
 }
 

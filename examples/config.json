@@ -11,8 +11,8 @@
   "DLQ_FILE": "",
   "DLQ_PROVIDER": "",
   "EMAIL_ENABLED": "true",
-  "EMAIL_PROVIDER": "",
   "EMAIL_FROM": "",
+  "EMAIL_PROVIDER": "",
   "EMAIL_WORKER_INTERVAL": "60",
   "FEEDS_ENABLED": "true",
   "HOSTNAME": "bbd711bce6ea",
@@ -32,11 +32,11 @@
   "SENDGRID_KEY": "",
   "SESSION_SECRET": "",
   "SESSION_SECRET_FILE": ".session_secret",
+  "SMTP_AUTH": "plain",
   "SMTP_HOST": "",
   "SMTP_PASS": "",
-  "SMTP_AUTH": "",
-  "SMTP_STARTTLS": "true",
   "SMTP_PORT": "",
+  "SMTP_STARTTLS": "true",
   "SMTP_USER": "",
   "STATS_START_YEAR": "2005"
 }

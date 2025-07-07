@@ -1,10 +1,10 @@
 package main
 
 import (
-        "encoding/json"
-        "flag"
-        "fmt"
-        "os"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"os"
 	"reflect"
 	"sort"
 	"strconv"
@@ -48,7 +48,7 @@ func parseBool(v string) (bool, bool) {
 }
 
 func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[string]string, error) {
-       m := make(map[string]string)
+	m := make(map[string]string)
 	v := reflect.ValueOf(cfg)
 	for _, o := range runtimeconfig.StringOptions {
 		m[o.Env] = v.FieldByName(o.Field).String()
@@ -59,10 +59,10 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 	m[config.EnvFeedsEnabled] = strconv.FormatBool(cfg.FeedsEnabled)
 	m[config.EnvStatsStartYear] = strconv.Itoa(cfg.StatsStartYear)
 
-       fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
-       if err != nil {
-               return nil, fmt.Errorf("load config file: %w", err)
-       }
+	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("load config file: %w", err)
+	}
 
 	boolVal := func(file, env string, def bool) string {
 		if b, ok := parseBool(file); ok {
@@ -94,23 +94,23 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 	if sessionFile == "" {
 		sessionFile = ".session_secret"
 	}
-       m[config.EnvSessionSecretFile] = sessionFile
+	m[config.EnvSessionSecretFile] = sessionFile
 
-       return m, nil
+	return m, nil
 }
 
 func defaultMap() map[string]string {
-       def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-       m, _ := envMapFromConfig(def, "")
-       return m
+	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	m, _ := envMapFromConfig(def, "")
+	return m
 }
 
 func (c *configAsCmd) asEnvFile() error {
-  current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
-  if err != nil {
-    return fmt.Errorf("env map: %w", err)
-  }
-  def := defaultMap()
+	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
+	def := defaultMap()
 	keys := make([]string, 0, len(current))
 	for k := range current {
 		keys = append(keys, k)
@@ -131,7 +131,10 @@ func (c *configAsCmd) asEnvFile() error {
 }
 
 func (c *configAsCmd) asEnv() error {
-	current := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
 	def := defaultMap()
 	keys := make([]string, 0, len(current))
 	for k := range current {
@@ -153,11 +156,11 @@ func (c *configAsCmd) asEnv() error {
 }
 
 func (c *configAsCmd) asJSON() error {
-       m, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
-       if err != nil {
-               return fmt.Errorf("env map: %w", err)
-       }
-       b, err := json.MarshalIndent(m, "", "  ")
+	m, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
+	b, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
@@ -166,11 +169,11 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-       current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
-       if err != nil {
-               return fmt.Errorf("env map: %w", err)
-       }
-       def := defaultMap()
+	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
+	def := defaultMap()
 	var parts []string
 	nameMap := nameMap()
 	for env, val := range current {

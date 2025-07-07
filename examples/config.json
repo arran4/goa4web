@@ -12,6 +12,7 @@
   "DLQ_PROVIDER": "",
   "EMAIL_ENABLED": "true",
   "EMAIL_PROVIDER": "",
+  "EMAIL_WORKER_INTERVAL": "60",
   "FEEDS_ENABLED": "true",
   "HOSTNAME": "bbd711bce6ea",
   "IMAGE_MAX_BYTES": "5242880",

@@ -13,6 +13,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
@@ -144,7 +147,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/show/%d", linkId)
 
-	provider := getEmailProvider()
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,

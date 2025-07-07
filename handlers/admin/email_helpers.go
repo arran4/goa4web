@@ -93,10 +93,6 @@ func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
 	}
 }
 
-func getEmailProvider() email.Provider {
-	return providerFromConfig(runtimeconfig.AppRuntimeConfig)
-}
-
 func emailSendingEnabled() bool {
 	v := strings.ToLower(os.Getenv(config.EnvEmailEnabled))
 	if v == "" {

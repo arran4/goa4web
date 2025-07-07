@@ -14,6 +14,8 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	db "github.com/arran4/goa4web/internal/db"
 
+	"github.com/arran4/goa4web/internal/email"
+
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -105,7 +107,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
 	}
 	pageURL := base + r.URL.Path
-	provider := getEmailProvider()
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 	if provider == nil {
 		q := url.QueryEscape(ErrMailNotConfigured.Error())
 		// Display the error without redirecting so the POST isn't repeated.

@@ -15,7 +15,6 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 type emailTemplate struct {
@@ -130,9 +129,6 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 
 // getEmailProvider returns the mail provider configured by environment variables.
 // Production code uses this, while tests can call email.ProviderFromConfig directly.
-func getEmailProvider() email.Provider {
-	return email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
-}
 
 // loadEmailConfigFile reads EMAIL_* style configuration values from a simple
 // key=value file. Missing files return an empty configuration.

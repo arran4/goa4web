@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/sections"
 )
 
@@ -63,4 +64,9 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	farq.HandleFunc("/questions", QuestionsEditActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskEdit))
 	farq.HandleFunc("/questions", QuestionsDeleteActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskRemoveRemove))
 	farq.HandleFunc("/questions", QuestionsCreateActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskCreate))
+}
+
+// Register registers the faq router module.
+func Register() {
+	router.RegisterModule("faq", nil, RegisterRoutes)
 }

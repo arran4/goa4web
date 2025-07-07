@@ -5,6 +5,7 @@ import (
 
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	news "github.com/arran4/goa4web/handlers/news"
+	router "github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/internal/sections"
 )
@@ -20,4 +21,9 @@ func RegisterRoutes(r *mux.Router) {
 	sr.HandleFunc("", SearchResultLinkerActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchLinker))
 	sr.HandleFunc("", SearchResultBlogsActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchBlogs))
 	sr.HandleFunc("", SearchResultWritingsActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchWritings))
+}
+
+// Register registers the search router module.
+func Register() {
+	router.RegisterModule("search", []string{"news"}, RegisterRoutes)
 }

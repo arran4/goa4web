@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/runtimeconfig"
+
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -36,7 +39,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-	provider := getEmailProvider()
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: threadRow.Idforumthread,

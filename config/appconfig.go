@@ -32,7 +32,7 @@ func LoadAppConfigFile(fs core.FileSystem, path string) (map[string]string, erro
 			log.Printf("config file not found: %s", path)
 			return values, nil
 		}
-		return nil, fmt.Errorf("app config file error: %v", err)
+		return nil, fmt.Errorf("app config file error: %w", err)
 	}
 	log.Printf("loaded config file %s", path)
 	switch strings.ToLower(filepath.Ext(path)) {

@@ -30,4 +30,4 @@ All default HTML or text templates must exist as standalone files and be embedde
 
 When tackling bugs or missing features, check if the behaviour can be verified with tests. If so, write a test that fails before changing the implementation. Iterate on your fix until the new test passes.
 
-Before committing, run `go vet ./...` and `golangci-lint` to match the CI checks.
+Before committing, run `go fmt ./...`, `go vet ./...`, and `golangci-lint` to match the CI checks.

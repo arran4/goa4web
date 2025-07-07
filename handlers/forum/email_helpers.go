@@ -7,16 +7,11 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func notifyChange(ctx context.Context, provider email.Provider, emailAddr, page string) error {
 	n := notif.Notifier{EmailProvider: provider}
 	return n.NotifyChange(ctx, 0, emailAddr, page, "update", nil)
-}
-
-func getEmailProvider() email.Provider {
-	return email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 }
 
 // getAdminEmails returns a slice of administrator email addresses. Environment

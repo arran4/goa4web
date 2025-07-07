@@ -68,7 +68,7 @@ func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
-	provider := getEmailProvider()
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 	if provider == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q

@@ -105,3 +105,4 @@ fabric.properties
 /.session_secret
 dbbackups
 /uploads/
+/dev-config.json

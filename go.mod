@@ -13,6 +13,8 @@ require (
 	github.com/gorilla/feeds v1.2.0
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.4.0
+	github.com/lib/pq v1.10.9
+	github.com/mattn/go-sqlite3 v1.14.21
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	github.com/shirou/gopsutil/v3 v3.24.5
@@ -27,7 +29,6 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect

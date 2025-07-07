@@ -35,7 +35,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. All table changes should be shipped with a migration script under
    this directory.
-3. Provide your database credentials via command line flags, a configuration file, or environment variables. Defaults assume `a4web:a4web@tcp(localhost:3306)/a4web`.
+3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. No defaults are supplied for any credentials.
 4. Download dependencies and build the application:
    ```bash
    go mod download
@@ -138,12 +138,12 @@ of the flags are parsed.
 
 ## Database Configuration
 
-Database connection details can be supplied in several ways. Values are resolved in the following order:
+Database connection details are provided via a connection string and driver name.
+Values are resolved in the following order:
 
-1. Command line flags (`--db-user` etc.)
+1. Command line flags (`--db-conn` and `--db-driver`)
 2. Values from a config file specified with `--config-file` or `CONFIG_FILE`
-3. Environment variables such as `DB_USER`
-4. Built-in defaults
+3. Environment variables such as `DB_CONN`
 
 The config file uses the same `key=value` format as the email configuration file.
 See `examples/db.env` for a complete list of supported keys.
@@ -209,11 +209,8 @@ turn override environment variables. The file uses the same keys as the
 environment variables listed below.
 | Key | CLI Flag | Required | Default | Description |
 | --- | --- | --- | --- | --- |
-| `DB_USER` | `--db-user` | No | `a4web` | Database username. |
-| `DB_PASS` | `--db-pass` | No | `a4web` | Database password. |
-| `DB_HOST` | `--db-host` | No | `localhost` | Database host. |
-| `DB_PORT` | `--db-port` | No | `3306` | Database port. |
-| `DB_NAME` | `--db-name` | No | `a4web` | Database name. |
+| `DB_CONN` | `--db-conn` | Yes | - | Database connection string. |
+| `DB_DRIVER` | `--db-driver` | Yes | `mysql` | Database driver name. |
 | `EMAIL_PROVIDER` | `--email-provider` | No | `ses` | Selects the mail sending backend. |
 | `SMTP_HOST` | `--smtp-host` | No | - | SMTP server hostname. |
 | `SMTP_PORT` | `--smtp-port` | No | - | SMTP server port. |
@@ -261,8 +258,8 @@ The `DLQ_PROVIDER` setting selects how failed messages are recorded:
 Example config file:
 
 ```conf
-DB_USER=myuser
-DB_PASS=secret
+DB_CONN=mysql://myuser:secret@localhost:3306/a4web?parseTime=true
+DB_DRIVER=mysql
 EMAIL_PROVIDER=smtp
 LISTEN=:8080
 HOSTNAME=http://example.com:8080

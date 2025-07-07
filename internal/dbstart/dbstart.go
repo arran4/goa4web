@@ -13,9 +13,9 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/runtimeconfig"
-	"github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -31,31 +31,15 @@ func GetDBPool() *sql.DB { return dbPool }
 func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
-	if cfg.DBUser == "" {
-		cfg.DBUser = "a4web"
+	conn := cfg.DBConn
+	if conn == "" {
+		return &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
 	}
-	if cfg.DBPass == "" {
-		cfg.DBPass = "a4web"
-	}
-	if cfg.DBHost == "" {
-		cfg.DBHost = "localhost"
-	}
-	if cfg.DBPort == "" {
-		cfg.DBPort = "3306"
-	}
-	if cfg.DBName == "" {
-		cfg.DBName = "a4web"
-	}
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
-	mysqlCfg, err := mysql.ParseDSN(dsn)
-	if err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to parse DSN"}
-	}
-	baseConnector, err := mysql.NewConnector(mysqlCfg)
+	c, err := dbdrivers.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
-	var connector driver.Connector = db.NewLoggingConnector(baseConnector)
+	var connector driver.Connector = db.NewLoggingConnector(c)
 	dbPool = sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}

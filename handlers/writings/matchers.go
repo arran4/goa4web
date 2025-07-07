@@ -16,8 +16,14 @@ import (
 // RequireWritingAuthor ensures the requester authored the writing referenced in the URL.
 func RequireWritingAuthor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		writingID, err := strconv.Atoi(mux.Vars(r)["writing"])
+		vars := mux.Vars(r)
+		writingIDStr := vars["article"]
+		if writingIDStr == "" {
+			writingIDStr = vars["writing"]
+		}
+		writingID, err := strconv.Atoi(writingIDStr)
 		if err != nil {
+			log.Printf("RequireWritingAuthor invalid writing ID %q: %v", writingIDStr, err)
 			http.NotFound(w, r)
 			return
 		}

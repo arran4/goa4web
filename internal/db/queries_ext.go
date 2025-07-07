@@ -35,9 +35,9 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, userID int32) ([]*
 
 // GetPreferenceByUserID returns the preference row for the user.
 func (q *Queries) GetPreferenceByUserID(ctx context.Context, userID int32) (*Preference, error) {
-	row := q.db.QueryRowContext(ctx, "SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size FROM preferences WHERE users_idusers = ?", userID)
+	row := q.db.QueryRowContext(ctx, "SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies FROM preferences WHERE users_idusers = ?", userID)
 	var p Preference
-	err := row.Scan(&p.Idpreferences, &p.LanguageIdlanguage, &p.UsersIdusers, &p.Emailforumupdates, &p.PageSize)
+	err := row.Scan(&p.Idpreferences, &p.LanguageIdlanguage, &p.UsersIdusers, &p.Emailforumupdates, &p.PageSize, &p.AutoSubscribeReplies)
 	return &p, err
 }
 

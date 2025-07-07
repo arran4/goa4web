@@ -280,11 +280,12 @@ type Permission struct {
 }
 
 type Preference struct {
-	Idpreferences      int32
-	LanguageIdlanguage int32
-	UsersIdusers       int32
-	Emailforumupdates  sql.NullBool
-	PageSize           int32
+	Idpreferences        int32
+	LanguageIdlanguage   int32
+	UsersIdusers         int32
+	Emailforumupdates    sql.NullBool
+	PageSize             int32
+	AutoSubscribeReplies bool
 }
 
 type SchemaVersion struct {

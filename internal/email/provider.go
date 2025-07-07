@@ -54,6 +54,9 @@ type SMTPProvider struct {
 }
 
 func (s SMTPProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+	if LogVerbosity >= LogLevelSummary {
+		log.Printf("smtp send to %s subject %q", to, subject)
+	}
 	var msg []byte
 	if htmlBody != "" {
 		boundary := "a4web" + strings.ReplaceAll(fmt.Sprint(time.Now().UnixNano()), "-", "")
@@ -65,7 +68,24 @@ func (s SMTPProvider) Send(ctx context.Context, to, subject, textBody, htmlBody 
 	} else {
 		msg = []byte("To: " + to + "\r\nSubject: " + subject + "\r\n\r\n" + textBody)
 	}
-	return smtp.SendMail(s.Addr, s.Auth, s.From, []string{to}, msg)
+	err := smtp.SendMail(s.Addr, s.Auth, s.From, []string{to}, msg)
+	if err != nil {
+		if LogVerbosity >= LogLevelSummary {
+			log.Printf("smtp send error: %v", err)
+		}
+	} else {
+		if LogVerbosity >= LogLevelSummary {
+			log.Printf("smtp send succeeded")
+		}
+		if LogVerbosity >= LogLevelBody {
+			if htmlBody != "" {
+				log.Printf("smtp body text:\n%s\nhtml:\n%s", textBody, htmlBody)
+			} else {
+				log.Printf("smtp body:\n%s", textBody)
+			}
+		}
+	}
+	return err
 }
 
 // LocalProvider relies on the local sendmail binary.
@@ -101,6 +121,9 @@ type JMAPProvider struct {
 // the RFC822 message to the JMAP server and then creates an EmailSubmission referencing
 // the uploaded blob.
 func (j JMAPProvider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+	if LogVerbosity >= LogLevelSummary {
+		log.Printf("jmap send to %s subject %q", to, subject)
+	}
 	var msg bytes.Buffer
 	boundary := "a4web" + strings.ReplaceAll(fmt.Sprint(time.Now().UnixNano()), "-", "")
 	fmt.Fprintf(&msg, "From: %s\r\n", SourceEmail)
@@ -123,16 +146,25 @@ func (j JMAPProvider) Send(ctx context.Context, to, subject, textBody, htmlBody 
 	req.Header.Set("Content-Type", "message/rfc822")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		if LogVerbosity >= LogLevelSummary {
+			log.Printf("jmap upload error: %v", err)
+		}
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
+		if LogVerbosity >= LogLevelSummary {
+			log.Printf("jmap upload failed: %s", resp.Status)
+		}
 		return fmt.Errorf("upload failed: %s", resp.Status)
 	}
 	var up struct {
 		BlobID string `json:"blobId"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&up); err != nil {
+		if LogVerbosity >= LogLevelSummary {
+			log.Printf("jmap decode error: %v", err)
+		}
 		return err
 	}
 
@@ -181,11 +213,27 @@ func (j JMAPProvider) Send(ctx context.Context, to, subject, textBody, htmlBody 
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
+		if LogVerbosity >= LogLevelSummary {
+			log.Printf("jmap send error: %v", err)
+		}
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
+		if LogVerbosity >= LogLevelSummary {
+			log.Printf("jmap send failed: %s", resp.Status)
+		}
 		return fmt.Errorf("jmap send failed: %s", resp.Status)
+	}
+	if LogVerbosity >= LogLevelSummary {
+		log.Printf("jmap send succeeded")
+	}
+	if LogVerbosity >= LogLevelBody {
+		if htmlBody != "" {
+			log.Printf("jmap body text:\n%s\nhtml:\n%s", textBody, htmlBody)
+		} else {
+			log.Printf("jmap body:\n%s", textBody)
+		}
 	}
 	return nil
 }

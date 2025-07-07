@@ -17,7 +17,8 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-const ErrMailNotConfigured = "mail isn't configured" // shown when Test mail has no provider
+// ErrMailNotConfigured is returned when test mail has no provider configured.
+var ErrMailNotConfigured = errors.New("mail isn't configured")
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -106,7 +107,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	pageURL := base + r.URL.Path
 	provider := getEmailProvider()
 	if provider == nil {
-		q := url.QueryEscape(ErrMailNotConfigured)
+		q := url.QueryEscape(ErrMailNotConfigured.Error())
 		// Display the error without redirecting so the POST isn't repeated.
 		r.URL.RawQuery = "error=" + q
 		common.TaskErrorAcknowledgementPage(w, r)

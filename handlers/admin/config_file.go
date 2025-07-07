@@ -10,9 +10,5 @@ import (
 // LoadAppConfigFile reads key=value pairs from the given path.
 // Missing files return an empty map and unknown keys are ignored.
 func LoadAppConfigFile(fs core.FileSystem, path string) map[string]string {
-	m, err := config.LoadAppConfigFile(fs, path)
-	if err != nil {
-		log.Printf("app config file error: %v", err)
-	}
-	return m
+	return config.LoadAppConfigFile(fs, path)
 }

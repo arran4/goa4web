@@ -105,12 +105,12 @@ func defaultMap() map[string]string {
        return m
 }
 
-func (c *configAsCmd) asEnv() error {
-       current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
-       if err != nil {
-               return fmt.Errorf("env map: %w", err)
-       }
-       def := defaultMap()
+func (c *configAsCmd) asEnvFile() error {
+  current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+  if err != nil {
+    return fmt.Errorf("env map: %w", err)
+  }
+  def := defaultMap()
 	keys := make([]string, 0, len(current))
 	for k := range current {
 		keys = append(keys, k)
@@ -126,6 +126,28 @@ func (c *configAsCmd) asEnv() error {
 			fmt.Printf("# default: %s\n", d)
 		}
 		fmt.Printf("%s=%s\n", k, current[k])
+	}
+	return nil
+}
+
+func (c *configAsCmd) asEnv() error {
+	current := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	def := defaultMap()
+	keys := make([]string, 0, len(current))
+	for k := range current {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	usage := usageMap()
+	for _, k := range keys {
+		u := usage[k]
+		d := def[k]
+		if u != "" {
+			fmt.Printf("# %s (default: %s)\n", u, d)
+		} else {
+			fmt.Printf("# default: %s\n", d)
+		}
+		fmt.Printf("export %s=%s\n", k, current[k])
 	}
 	return nil
 }

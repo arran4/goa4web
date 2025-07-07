@@ -55,7 +55,7 @@ func (c *userMakeAdminCmd) Run() error {
 	}
 	if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
-		Section:      sql.NullString{String: "administrator", Valid: true},
+		Section:      sql.NullString{String: "all", Valid: true},
 		Level:        sql.NullString{String: "administrator", Valid: true},
 	}); err != nil {
 		return fmt.Errorf("grant admin: %w", err)

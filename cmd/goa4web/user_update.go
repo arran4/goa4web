@@ -68,7 +68,7 @@ func (c *userUpdateCmd) Run() error {
 			return fmt.Errorf("check admin: %w", err)
 		} else if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
 			UsersIdusers: u.Idusers,
-			Section:      sql.NullString{String: "administrator", Valid: true},
+			Section:      sql.NullString{String: "all", Valid: true},
 			Level:        sql.NullString{String: "administrator", Valid: true},
 		}); err != nil {
 			return fmt.Errorf("make admin: %w", err)
@@ -77,7 +77,7 @@ func (c *userUpdateCmd) Run() error {
 	if c.RemoveAdmin {
 		perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(ctx, dbpkg.GetPermissionsByUserIdAndSectionAndSectionAllParams{
 			UsersIdusers: u.Idusers,
-			Section:      sql.NullString{String: "administrator", Valid: true},
+			Section:      sql.NullString{String: "all", Valid: true},
 		})
 		if err == nil && perm != nil {
 			if err := queries.PermissionUserDisallow(ctx, perm.Idpermissions); err != nil {

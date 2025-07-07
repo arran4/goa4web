@@ -809,7 +809,7 @@ func (q *Queries) ListUserInfo(ctx context.Context) ([]*UserInfoRow, error) {
                 IF(p.idpermissions IS NULL, 0, 1) AS admin,
                 MIN(s.created_at) AS created_at
                 FROM users u
-                LEFT JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'administrator'
+               LEFT JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all' AND p.level = 'administrator'
                 LEFT JOIN sessions s ON s.users_idusers = u.idusers
                 GROUP BY u.idusers
                 ORDER BY u.idusers`)

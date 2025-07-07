@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/blog_comments_usage.txt
+var blogCommentsUsageTemplate string
 
 // blogCommentsCmd handles "blog comments".
 type blogCommentsCmd struct {
@@ -49,14 +53,5 @@ func (c *blogCommentsCmd) Run() error {
 }
 
 func (c *blogCommentsCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s blog comments <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  list\tlist comments for a blog")
-	fmt.Fprintln(w, "  read\tread a comment or all comments")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s blog comments list 3\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s blog comments read 3 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s blog comments read 3 all\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), blogCommentsUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

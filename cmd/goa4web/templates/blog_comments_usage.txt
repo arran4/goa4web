@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} blog comments <command> [<args>]
+
+Commands:
+  list        list comments for a blog
+  read        read a comment or all comments
+
+Examples:
+  {{.Prog}} blog comments list 3
+  {{.Prog}} blog comments read 3 1
+  {{.Prog}} blog comments read 3 all
+
+Flags:
+{{template "flags" .Flags}}

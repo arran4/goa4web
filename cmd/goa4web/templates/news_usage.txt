@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} news <command> [<args>]
+
+Commands:
+  list      list news posts
+  read      read a news post
+  comments  manage news comments
+
+Examples:
+  {{.Prog}} news list
+  {{.Prog}} news read 1
+  {{.Prog}} news comments list 1
+
+Flags:
+{{template "flags" .Flags}}

@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/writing_usage.txt
+var writingUsageTemplate string
 
 // writingCmd handles writing management subcommands.
 type writingCmd struct {
@@ -62,17 +66,5 @@ func (c *writingCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *writingCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s writing <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  tree\tshow writing categories")
-	fmt.Fprintln(w, "  list\tlist writings")
-	fmt.Fprintln(w, "  read\tread a writing")
-	fmt.Fprintln(w, "  comments\tmanage comments for a writing")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s writing tree\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s writing list\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s writing read 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s writing comments list 1\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), writingUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

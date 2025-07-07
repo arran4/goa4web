@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/faq_usage.txt
+var faqUsageTemplate string
 
 // faqCmd handles FAQ management subcommands.
 type faqCmd struct {
@@ -49,13 +53,5 @@ func (c *faqCmd) Run() error {
 }
 
 func (c *faqCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s faq <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  tree\tshow FAQ categories and questions")
-	fmt.Fprintln(w, "  read\tread a FAQ question")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s faq tree\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s faq read 1\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), faqUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

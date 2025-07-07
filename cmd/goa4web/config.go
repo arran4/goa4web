@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/config_usage.txt
+var configUsageTemplate string
 
 // configCmd handles configuration utilities.
 type configCmd struct {
@@ -98,27 +102,5 @@ func (c *configCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *configCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s config <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  reload\treload configuration from file")
-	fmt.Fprintln(w, "  as-env\toutput configuration as export statements")
-	fmt.Fprintln(w, "  as-env-file\toutput configuration as env file")
-	fmt.Fprintln(w, "  as-json\toutput configuration as JSON")
-	fmt.Fprintln(w, "  as-cli\toutput configuration as CLI flags")
-	fmt.Fprintln(w, "  add-json\tadd missing options to JSON file")
-	fmt.Fprintln(w, "  options\tlist available configuration options")
-	fmt.Fprintln(w, "  test\tverify configured services")
-	fmt.Fprintln(w, "  show\tdisplay runtime configuration")
-	fmt.Fprintln(w, "  set\tupdate configuration file")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s config reload\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config show\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config set -key DB_HOST -value localhost\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config as-env-file > config.env\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config as-cli\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config add-json -file cfg.json\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config options --extended\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config test email\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), configUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

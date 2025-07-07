@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/email_queue_usage.txt
+var emailQueueUsageTemplate string
 
 // emailQueueCmd handles email queue operations.
 type emailQueueCmd struct {
@@ -56,15 +60,5 @@ func (c *emailQueueCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *emailQueueCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s email queue <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  list\tlist queued emails")
-	fmt.Fprintln(w, "  resend\tresend a queued email")
-	fmt.Fprintln(w, "  delete\tdelete a queued email")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s email queue list\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s email queue resend -id 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s email queue delete -id 1\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), emailQueueUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

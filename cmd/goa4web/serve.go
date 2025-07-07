@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"flag"
 	"fmt"
 	"os"
@@ -13,6 +14,9 @@ import (
 	"github.com/arran4/goa4web/internal/app"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
+
+//go:embed templates/serve_usage.txt
+var serveUsageTemplate string
 
 // serveCmd starts the web server.
 type serveCmd struct {
@@ -68,7 +72,5 @@ func (c *serveCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *serveCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s serve [flags]\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), serveUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

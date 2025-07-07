@@ -1,0 +1,39 @@
+Usage:
+  {{.Prog}} [flags] <command> [<args>]
+
+Commands:
+  help    show help for a command
+  serve   run the web server
+  user    manage users
+  perm    manage permissions
+  board   manage image boards
+  blog    manage blog entries
+  news    manage news posts
+  faq     manage frequently asked questions
+  writing manage writings
+  ipban   manage IP bans
+  audit   show recent audit log entries
+  db      manage database
+  lang    manage languages
+  server  manage the running server
+  email   manage emails
+  config  manage configuration
+
+Examples:
+  {{.Prog}} serve
+  {{.Prog}} user add -username alice -password secret
+  {{.Prog}} perm list
+  {{.Prog}} config reload
+  {{.Prog}} help config
+  {{.Prog}} board list
+  {{.Prog}} blog read 1
+  {{.Prog}} news list
+  {{.Prog}} writing tree
+  {{.Prog}} faq tree
+  {{.Prog}} ipban list
+  {{.Prog}} db migrate
+  {{.Prog}} lang list
+  {{.Prog}} config show
+
+Flags:
+{{template "flags" .Flags}}

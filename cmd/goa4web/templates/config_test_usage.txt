@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} config test <command> [<args>]
+
+Commands:
+  email   send a test email to administrators
+  db      test database connectivity
+  dlq     test dead letter queue
+
+Examples:
+  {{.Prog}} config test email
+  {{.Prog}} config test db
+  {{.Prog}} config test dlq
+
+Flags:
+{{template "flags" .Flags}}

@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} board <command> [<args>]
+
+Commands:
+  list        list boards
+  create      create a board
+  delete      delete a board
+  update      update a board
+
+Examples:
+  {{.Prog}} board list
+  {{.Prog}} board create -name foo -description 'bar'
+  {{.Prog}} board delete -id 1
+  {{.Prog}} board update -id 1 -name new
+
+Flags:
+{{template "flags" .Flags}}

@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/ipban_usage.txt
+var ipBanUsageTemplate string
 
 // ipBanCmd implements IP ban management commands.
 type ipBanCmd struct {
@@ -62,16 +66,5 @@ func (c *ipBanCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *ipBanCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s ipban <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  add\tadd an IP ban")
-	fmt.Fprintln(w, "  list\tlist banned IPs")
-	fmt.Fprintln(w, "  delete\tremove an IP ban")
-	fmt.Fprintln(w, "  update\tupdate an IP ban")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s ipban add -ip 192.168.1.1 -reason spam\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s ipban list\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s ipban update -id 1 -reason updated\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), ipBanUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

@@ -1,0 +1,21 @@
+Usage:
+  {{.Prog}} blog <command> [<args>]
+
+Commands:
+  create      create a blog entry
+  list        list blog entries
+  read        read a blog entry
+  comments    manage blog comments
+  update      update a blog entry
+  deactivate  deactivate a blog entry
+
+Examples:
+  {{.Prog}} blog create -user 1 -lang 1 -text 'hi'
+  {{.Prog}} blog list -user 1
+  {{.Prog}} blog read 1
+  {{.Prog}} blog comments list 1
+  {{.Prog}} blog update -id 1 -text 'changed'
+  {{.Prog}} blog deactivate -id 1
+
+Flags:
+{{template "flags" .Flags}}

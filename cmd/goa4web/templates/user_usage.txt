@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} user <command> [<args>]
+
+Commands:
+  add         add a user
+  add-admin   add a user with administrator rights
+  make-admin  grant administrator rights to a user
+  list        list users
+  deactivate  deactivate a user
+  activate    restore a deactivated user
+
+Examples:
+  {{.Prog}} user add -username bob -password secret
+  {{.Prog}} user deactivate -username bob
+  {{.Prog}} user list
+
+Flags:
+{{template "flags" .Flags}}

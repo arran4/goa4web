@@ -1,0 +1,16 @@
+Usage:
+  {{.Prog}} ipban <command> [<args>]
+
+Commands:
+  add       add an IP ban
+  list      list banned IPs
+  delete    remove an IP ban
+  update    update an IP ban
+
+Examples:
+  {{.Prog}} ipban add -ip 192.168.1.1 -reason spam
+  {{.Prog}} ipban list
+  {{.Prog}} ipban update -id 1 -reason updated
+
+Flags:
+{{template "flags" .Flags}}

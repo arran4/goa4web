@@ -1,0 +1,5 @@
+Usage:
+  {{.Prog}} serve [flags]
+
+Flags:
+{{template "flags" .Flags}}

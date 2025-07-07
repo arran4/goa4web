@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/blog_usage.txt
+var blogUsageTemplate string
 
 // blogCmd handles blog management subcommands.
 type blogCmd struct {
@@ -73,21 +77,5 @@ func (c *blogCmd) Run() error {
 }
 
 func (c *blogCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s blog <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  create\tcreate a blog entry")
-	fmt.Fprintln(w, "  list\tlist blog entries")
-	fmt.Fprintln(w, "  read\tread a blog entry")
-	fmt.Fprintln(w, "  comments\tmanage blog comments")
-	fmt.Fprintln(w, "  update\tupdate a blog entry")
-	fmt.Fprintln(w, "  deactivate\tdeactivate a blog entry")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s blog create -user 1 -lang 1 -text 'hi'\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s blog list -user 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s blog read 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s blog comments list 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s blog update -id 1 -text 'changed'\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s blog deactivate -id 1\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), blogUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

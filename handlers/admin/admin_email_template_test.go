@@ -122,8 +122,9 @@ func (r *recordAdminMail) Send(ctx context.Context, to, subject, textBody, htmlB
 }
 
 func TestNotifyAdminsEnv(t *testing.T) {
-	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
-	defer os.Unsetenv(config.EnvAdminEmails)
+	orig := runtimeconfig.AppRuntimeConfig
+	defer func() { runtimeconfig.AppRuntimeConfig = orig }()
+	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	rec := &recordAdminMail{}
 	notifyAdmins(context.Background(), rec, nil, "page")
 	if len(rec.to) != 2 {
@@ -132,9 +133,10 @@ func TestNotifyAdminsEnv(t *testing.T) {
 }
 
 func TestNotifyAdminsDisabled(t *testing.T) {
-	os.Setenv(config.EnvAdminEmails, "a@test.com")
+	orig := runtimeconfig.AppRuntimeConfig
+	defer func() { runtimeconfig.AppRuntimeConfig = orig }()
+	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com"
 	os.Setenv(config.EnvAdminNotify, "false")
-	defer os.Unsetenv(config.EnvAdminEmails)
 	defer os.Unsetenv(config.EnvAdminNotify)
 	rec := &recordAdminMail{}
 	notifyAdmins(context.Background(), rec, nil, "page")

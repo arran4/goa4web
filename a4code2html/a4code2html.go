@@ -158,7 +158,7 @@ func (c *A4code2html) directOutput(terminator string) {
 }
 
 func (a *A4code2html) acomm() int {
-	command := a.getNext(true)
+	command := strings.ToLower(a.getNext(true))
 	switch command {
 	case "*", "b", "bold":
 		switch a.CodeType {
@@ -254,7 +254,7 @@ func (a *A4code2html) acomm() int {
 		case CTTableOfContents:
 		case CTTagStrip, CTWordsOnly:
 		default:
-			a.output.WriteString("<span onmouseover=\"this.style.color='#FFFFFF';\" onmouseout=\"this.style.color=this.style.backgroundColor='#000000'\" style=\"color: rgb(0, 0, 0); background: rgb(0, 0, 0);\">")
+			a.output.WriteString("<span onmouseover=\"this.style.color='#FFFFFF';\" onmouseout=\"this.style.color='#000000';\" style=\"color:#000000;background:#000000;\">")
 			a.stack = append(a.stack, "</span>")
 		}
 	case "indent":

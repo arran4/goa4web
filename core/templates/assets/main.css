@@ -106,3 +106,12 @@ div.title {
         margin-bottom: 0.5em;
         background-color: #FFF6E0;
 }
+
+/* spoiler text hidden until hovered */
+.spoiler {
+        color: #000000;
+        background-color: #000000;
+}
+.spoiler:hover {
+        color: #FFFFFF;
+}

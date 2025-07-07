@@ -240,7 +240,7 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.EmailSMTPAuth == "" {
 		cfg.EmailSMTPAuth = "plain"
-  }
+	}
 	if cfg.EmailWorkerInterval == 0 {
 		cfg.EmailWorkerInterval = 60
 	}

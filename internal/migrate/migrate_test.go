@@ -31,7 +31,7 @@ func TestApply(t *testing.T) {
 	mock.ExpectExec("UPDATE schema_version SET version = ?").WithArgs(2).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := Apply(context.Background(), db, mfs); err != nil {
+	if err := Apply(context.Background(), db, mfs, false); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

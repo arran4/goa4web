@@ -68,8 +68,8 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		return fmt.Errorf("hash password: %w", err)
 	}
 	res, err := queries.DB().ExecContext(ctx,
-		"INSERT INTO users (username, passwd, passwd_algorithm, email) VALUES (?, ?, ?, ?)",
-		username, hash, alg, email,
+		"INSERT INTO users (username, email) VALUES (?, ?)",
+		username, email,
 	)
 	if err != nil {
 		return fmt.Errorf("insert user: %w", err)
@@ -77,6 +77,9 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 	id, err := res.LastInsertId()
 	if err != nil {
 		return fmt.Errorf("last insert id: %w", err)
+	}
+	if err := queries.InsertPassword(ctx, dbpkg.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
+		return fmt.Errorf("insert password: %w", err)
 	}
 	if admin {
 		if _, err := queries.GetAdministratorPermissionByUserId(ctx, int32(id)); err == nil {

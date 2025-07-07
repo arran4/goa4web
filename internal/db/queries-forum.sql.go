@@ -391,7 +391,7 @@ func (q *Queries) GetAllForumTopicsForUser(ctx context.Context, usersIdusers int
 }
 
 const getAllForumTopicsForUserWithPermissionsRestrictionsAndTopic = `-- name: GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic :many
-SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, u.deleted_at, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
+SELECT u.idusers, u.email, u.username, u.deleted_at, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
 JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
@@ -402,8 +402,6 @@ WHERE u.idusers = ?
 type GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
-	Passwd                       sql.NullString
-	PasswdAlgorithm              sql.NullString
 	Username                     sql.NullString
 	DeletedAt                    sql.NullTime
 	Idforumtopic                 int32
@@ -442,8 +440,6 @@ func (q *Queries) GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(ct
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Email,
-			&i.Passwd,
-			&i.PasswdAlgorithm,
 			&i.Username,
 			&i.DeletedAt,
 			&i.Idforumtopic,
@@ -483,7 +479,7 @@ func (q *Queries) GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic(ct
 }
 
 const getAllForumTopicsWithPermissionsAndTopic = `-- name: GetAllForumTopicsWithPermissionsAndTopic :many
-SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, u.deleted_at, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
+SELECT u.idusers, u.email, u.username, u.deleted_at, t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at, tr.forumtopic_idforumtopic, tr.viewlevel, tr.replylevel, tr.newthreadlevel, tr.seelevel, tr.invitelevel, tr.readlevel, tr.modlevel, tr.adminlevel
 FROM users u
 JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
 JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
@@ -493,8 +489,6 @@ LEFT JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
 type GetAllForumTopicsWithPermissionsAndTopicRow struct {
 	Idusers                      int32
 	Email                        sql.NullString
-	Passwd                       sql.NullString
-	PasswdAlgorithm              sql.NullString
 	Username                     sql.NullString
 	DeletedAt                    sql.NullTime
 	Idforumtopic                 int32
@@ -533,8 +527,6 @@ func (q *Queries) GetAllForumTopicsWithPermissionsAndTopic(ctx context.Context) 
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Email,
-			&i.Passwd,
-			&i.PasswdAlgorithm,
 			&i.Username,
 			&i.DeletedAt,
 			&i.Idforumtopic,

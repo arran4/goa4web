@@ -8,33 +8,35 @@ SELECT u.*
 FROM users u;
 
 -- name: GetUserByUsername :one
-SELECT idusers, email, passwd, passwd_algorithm, username
+SELECT idusers, email, username
 FROM users
 WHERE username = ?;
 
 -- name: Login :one
-SELECT idusers, email, passwd, passwd_algorithm, username
-FROM users
-WHERE username = ? AND passwd = md5(?);
+SELECT u.idusers, u.email, p.passwd, p.passwd_algorithm, u.username
+FROM users u LEFT JOIN passwords p ON p.users_idusers = u.idusers
+WHERE u.username = ?
+ORDER BY p.created_at DESC
+LIMIT 1;
 
 -- name: GetUserById :one
-SELECT idusers, email, passwd, passwd_algorithm, username
+SELECT idusers, email, username
 FROM users
 WHERE idusers = ?;
 
 -- name: UserByUsername :one
-SELECT idusers, email, passwd, passwd_algorithm, username
+SELECT idusers, email, username
 FROM users
 WHERE username = ?;
 
 -- name: UserByEmail :one
-SELECT idusers, email, passwd, passwd_algorithm, username
+SELECT idusers, email, username
 FROM users
 WHERE email = ?;
 
 -- name: InsertUser :execresult
-INSERT INTO users (username, passwd, email)
-VALUES (?, MD5(?), ?)
+INSERT INTO users (username, email)
+VALUES (?, ?)
 ;
 
 -- name: ListUsersSubscribedToBlogs :many
@@ -57,7 +59,7 @@ GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToThread :many
 SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage,
-    c.written, c.text, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username,
+    c.written, c.text, u.idusers, u.email, u.username,
     p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies
 FROM comments c, users u, preferences p
 WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?

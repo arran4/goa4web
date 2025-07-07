@@ -106,3 +106,4 @@ fabric.properties
 dbbackups
 /uploads/
 /dev-config.json
+/dev-config.env

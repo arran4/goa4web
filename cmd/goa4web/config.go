@@ -54,6 +54,12 @@ func (c *configCmd) Run() error {
 			return fmt.Errorf("as-cli: %w", err)
 		}
 		return cmd.asCLI()
+	case "options":
+		cmd, err := parseConfigOptionsCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("options: %w", err)
+		}
+		return cmd.Run()
 	case "show":
 		cmd, err := parseConfigShowCmd(c, c.args[1:])
 		if err != nil {
@@ -81,6 +87,7 @@ func (c *configCmd) Usage() {
 	fmt.Fprintln(w, "  as-env\toutput configuration as env file")
 	fmt.Fprintln(w, "  as-json\toutput configuration as JSON")
 	fmt.Fprintln(w, "  as-cli\toutput configuration as CLI flags")
+	fmt.Fprintln(w, "  options\tlist available configuration options")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s config reload\n\n", c.rootCmd.fs.Name())
 	fmt.Fprintln(w, "  show\tdisplay runtime configuration")
@@ -90,5 +97,6 @@ func (c *configCmd) Usage() {
 	fmt.Fprintf(w, "  %s config set -key DB_HOST -value localhost\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config as-env > config.env\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config as-cli\n\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s config options\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

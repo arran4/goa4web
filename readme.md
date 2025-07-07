@@ -246,6 +246,18 @@ environment variables listed below.
 | `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored. |
 | `IMAGE_MAX_BYTES` | `--image-max-bytes` | No | `5242880` | Maximum allowed size of uploaded images. |
 | `DEFAULT_LANGUAGE` | `--default-language` | No | - | Site's default language name. |
+| `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
+| `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
+
+### Dead Letter Queue Providers
+
+The `DLQ_PROVIDER` setting selects how failed messages are recorded:
+
+* `log` – writes messages to the application log (default)
+* `file` – appends messages to a file in mbox/JSON lines format at `DLQ_FILE`
+* `dir` – creates one file per message under the directory `DLQ_FILE` using a KSUID name
+* `db` – stores messages in the database
+* `email` – sends messages to administrator addresses using the configured mail provider
 Example config file:
 
 ```conf

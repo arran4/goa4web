@@ -24,9 +24,8 @@ var Registry = []DBDriver{
 	sqlite.Driver{},
 }
 
-// connectors holds factories for creating driver connectors by name.
-
-// Connector returns a driver.Connector for the provided driver name and DSN.
+// Connector returns a driver.Connector for the driver with the given name and
+// DSN. It searches the Registry for a matching driver.
 func Connector(name, dsn string) (driver.Connector, error) {
 	for _, d := range Registry {
 		if d.Name() == name {

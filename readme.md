@@ -89,9 +89,9 @@ requests.
 
 ### Section registration
 
-Site sections register their navigation items with the `sections` package so
-menus can be assembled dynamically. Use `sections.RegisterIndexLink` for public
-links and `sections.RegisterAdminControlCenter` for admin navigation. Each call
+Site sections register their navigation items with the `navigation` package so
+menus can be assembled dynamically. Use `navigation.RegisterIndexLink` for public
+links and `navigation.RegisterAdminControlCenter` for admin navigation. Each call
 accepts a weight value; lower numbers appear first.
 
 Example weights:

@@ -14,7 +14,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sections"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -51,7 +51,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		idx := sections.IndexItems()
+		idx := nav.IndexItems()
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}

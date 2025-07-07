@@ -117,6 +117,7 @@ func (c *configAsCmd) asEnvFile() error {
 	}
 	sort.Strings(keys)
 	usage := usageMap()
+	extended := extendedUsageMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -124,6 +125,9 @@ func (c *configAsCmd) asEnvFile() error {
 			fmt.Printf("# %s (default: %s)\n", u, d)
 		} else {
 			fmt.Printf("# default: %s\n", d)
+		}
+		if e := extended[k]; e != "" {
+			fmt.Printf("# %s\n", e)
 		}
 		fmt.Printf("%s=%s\n", k, current[k])
 	}
@@ -142,6 +146,7 @@ func (c *configAsCmd) asEnv() error {
 	}
 	sort.Strings(keys)
 	usage := usageMap()
+	extended := extendedUsageMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -149,6 +154,9 @@ func (c *configAsCmd) asEnv() error {
 			fmt.Printf("# %s (default: %s)\n", u, d)
 		} else {
 			fmt.Printf("# default: %s\n", d)
+		}
+		if e := extended[k]; e != "" {
+			fmt.Printf("# %s\n", e)
 		}
 		fmt.Printf("export %s=%s\n", k, current[k])
 	}
@@ -209,6 +217,17 @@ func usageMap() map[string]string {
 	m[config.EnvSessionSecretFile] = "path to session secret file"
 	m[config.EnvAdminEmails] = "administrator email addresses"
 	m[config.EnvAdminNotify] = "enable admin notification emails"
+	return m
+}
+
+func extendedUsageMap() map[string]string {
+	m := make(map[string]string)
+	for _, o := range runtimeconfig.StringOptions {
+		m[o.Env] = runtimeconfig.ExtendedUsage(o.ExtendedUsage)
+	}
+	for _, o := range runtimeconfig.IntOptions {
+		m[o.Env] = runtimeconfig.ExtendedUsage(o.ExtendedUsage)
+	}
 	return m
 }
 

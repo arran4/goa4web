@@ -1,0 +1,4 @@
+Connection string DSN.
+{{- range .Drivers }}
+- {{ .Name }}: {{ index .Examples 0 }}{{- range $i, $ex := .Examples }}{{ if $i }}, {{$ex}}{{ end }}{{- end }}
+{{- end }}

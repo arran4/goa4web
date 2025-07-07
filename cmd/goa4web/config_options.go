@@ -33,10 +33,11 @@ func parseConfigOptionsCmd(parent *configCmd, args []string) (*configOptionsCmd,
 }
 
 type option struct {
-	Env     string
-	Flag    string
-	Default string
-	Usage   string
+	Env      string
+	Flag     string
+	Default  string
+	Usage    string
+	Extended string
 }
 
 func (c *configOptionsCmd) Run() error {
@@ -48,13 +49,15 @@ func (c *configOptionsCmd) Run() error {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+	extended := extendedUsageMap()
 	opts := make([]option, 0, len(keys))
 	for _, k := range keys {
 		opts = append(opts, option{
-			Env:     k,
-			Flag:    names[k],
-			Default: def[k],
-			Usage:   usage[k],
+			Env:      k,
+			Flag:     names[k],
+			Default:  def[k],
+			Usage:    usage[k],
+			Extended: extended[k],
 		})
 	}
 	tmplText := configOptionsDefaultTemplate

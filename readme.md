@@ -6,7 +6,7 @@ Goa4Web is a monolithic web application written in Go. It powers the original `a
 
 Project URL: <https://github.com/arran4/goa4web>
 
-The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in MySQL. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
+The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in a relational database. MySQL, PostgreSQL and SQLite are supported via the `DB_DRIVER` setting. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
 
 ## Features
 
@@ -28,13 +28,11 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
 ## Getting Started
 
 1. Install Go 1.20 or newer and ensure `go` is available in your `PATH`.
-2. Create a MySQL database named `a4web`. The schema is defined in `schema/schema.sql` and can be loaded with:
+2. Create a database named `a4web`. For MySQL and PostgreSQL load `schema/schema.sql` using the respective tools:
    ```bash
    mysql -u a4web -p a4web < schema/schema.sql
    ```
-   Apply any SQL scripts from the `migrations/` directory to bring the database
-   up to date. All table changes should be shipped with a migration script under
-   this directory.
+   Apply any SQL scripts from the `migrations/` directory to bring the database up to date. SQLite only requires providing a file path for `DB_CONN` and the migrations will create tables automatically.
 3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. No defaults are supplied for any credentials.
 4. Download dependencies and build the application:
    ```bash
@@ -54,7 +52,7 @@ Run the compiled binary and open <http://localhost:8080> in your browser:
 ```bash
 ./goa4web
 ```
-The server relies on the MySQL instance and (optionally) AWS credentials for sending email notifications. Most features require users to be logged in; sessions are stored in signed cookies via `gorilla/sessions`.
+The server relies on the configured database (MySQL, PostgreSQL or SQLite) and (optionally) AWS credentials for sending email notifications. Most features require users to be logged in; sessions are stored in signed cookies via `gorilla/sessions`.
 The secret used to sign these cookies is resolved in the following order:
 1. `--session-secret` flag
 2. `SESSION_SECRET` environment variable
@@ -152,6 +150,13 @@ Generate example settings with:
 go run ./cmd/goa4web config as-env-file > examples/config.env
 ```
 
+List all available options:
+```bash
+go run ./cmd/goa4web config options > examples/config_options.txt
+```
+Provide a custom template with `--template` to change the columns. The template
+can reference an `Extended` field containing extra help text for each option.
+
 ## Email Provider Configuration
 
 Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
@@ -213,8 +218,9 @@ turn override environment variables. The file uses the same keys as the
 environment variables listed below.
 | Key | CLI Flag | Required | Default | Description |
 | --- | --- | --- | --- | --- |
-| `DB_CONN` | `--db-conn` | Yes | - | Database connection string. |
-| `DB_DRIVER` | `--db-driver` | Yes | `mysql` | Database driver name. |
+| `DB_CONN` | `--db-conn` | Yes | - | Database connection string (DSN). |
+| `DB_DRIVER` | `--db-driver` | Yes | `mysql` | Database driver name (`mysql`, `postgres` or `sqlite3`). |
+| | | | | DSN examples: `file:./a4web.db` for SQLite or `user:pass@unix(/var/run/mysqld/mysqld.sock)/a4web` for MySQL sockets. |
 | `EMAIL_PROVIDER` | `--email-provider` | No | `ses` | Selects the mail sending backend. |
 | `SMTP_HOST` | `--smtp-host` | No | - | SMTP server hostname. |
 | `SMTP_PORT` | `--smtp-port` | No | - | SMTP server port. |

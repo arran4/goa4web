@@ -6,23 +6,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	auth "github.com/arran4/goa4web/handlers/auth"
-	blogs "github.com/arran4/goa4web/handlers/blogs"
-	bookmarks "github.com/arran4/goa4web/handlers/bookmarks"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	faq "github.com/arran4/goa4web/handlers/faq"
-	forum "github.com/arran4/goa4web/handlers/forum"
-	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
-	information "github.com/arran4/goa4web/handlers/information"
-	linker "github.com/arran4/goa4web/handlers/linker"
-	news "github.com/arran4/goa4web/handlers/news"
-	search "github.com/arran4/goa4web/handlers/search"
-	writings "github.com/arran4/goa4web/handlers/writings"
-
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	userhandlers "github.com/arran4/goa4web/handlers/user"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/permissions"
 	handlers "github.com/arran4/goa4web/pkg/handlers"
 )
@@ -32,19 +18,7 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
 	r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
 
-	news.RegisterRoutes(r)
-	faq.RegisterRoutes(r)
-	blogs.RegisterRoutes(r)
-	forum.RegisterRoutes(r)
-	linker.RegisterRoutes(r)
-	bookmarks.RegisterRoutes(r)
-	imagebbs.RegisterRoutes(r)
-	search.RegisterRoutes(r)
-	writings.RegisterRoutes(r)
-	information.RegisterRoutes(r)
-	userhandlers.RegisterRoutes(r)
-	auth.RegisterRoutes(r)
-	registerAdminRoutes(r)
+	InitModules(r)
 
 	// legacy redirects
 	r.PathPrefix("/writing").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
@@ -71,10 +45,4 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 // AdminCheckerMiddleware ensures the requester has administrator rights.
 func AdminCheckerMiddleware(next http.Handler) http.Handler {
 	return RoleCheckerMiddleware("administrator")(next)
-}
-
-func registerAdminRoutes(r *mux.Router) {
-	ar := r.PathPrefix("/admin").Subrouter()
-	ar.Use(AdminCheckerMiddleware)
-	adminhandlers.RegisterRoutes(ar)
 }

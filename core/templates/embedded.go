@@ -13,6 +13,8 @@ var (
 	templateFS embed.FS
 	//go:embed "assets/main.css"
 	mainCSSData []byte
+	//go:embed "assets/favicon.svg"
+	faviconData []byte
 )
 
 func GetCompiledTemplates(funcs template.FuncMap) *template.Template {
@@ -22,4 +24,9 @@ func GetCompiledTemplates(funcs template.FuncMap) *template.Template {
 
 func GetMainCSSData() []byte {
 	return mainCSSData
+}
+
+// GetFaviconData returns the site's favicon image data.
+func GetFaviconData() []byte {
+	return faviconData
 }

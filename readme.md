@@ -35,7 +35,8 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. All table changes should be shipped with a migration script under
    this directory.
-3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. No defaults are supplied for any credentials.
+3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. For MySQL the go-sql-driver expects a DSN like `user:password@tcp(127.0.0.1:3306)/a4web`. Example:
+`db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/a4web")`. No defaults are supplied for any credentials.
 4. Download dependencies and build the application:
    ```bash
    go mod download
@@ -263,7 +264,7 @@ The `DLQ_PROVIDER` setting selects how failed messages are recorded:
 Example config file:
 
 ```conf
-DB_CONN=mysql://myuser:secret@localhost:3306/a4web?parseTime=true
+DB_CONN=myuser:secret@tcp(localhost:3306)/a4web?parseTime=true
 DB_DRIVER=mysql
 EMAIL_PROVIDER=smtp
 LISTEN=:8080

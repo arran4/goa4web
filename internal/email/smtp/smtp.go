@@ -115,24 +115,24 @@ func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody stri
 			return fmt.Errorf("smtp: server doesn't support AUTH")
 		}
 		if err = c.Auth(s.Auth); err != nil {
-			return err
+			return fmt.Errorf("smtp auth: %w", err)
 		}
 	}
 	if err = c.Mail(s.From); err != nil {
-		return err
+		return fmt.Errorf("smtp from: %w", err)
 	}
 	if err = c.Rcpt(to); err != nil {
-		return err
+		return fmt.Errorf("smtp rcpt: %w", err)
 	}
 	w, err := c.Data()
 	if err != nil {
-		return err
+		return fmt.Errorf("smtp write: %w", err)
 	}
 	if _, err = w.Write(msg); err != nil {
-		return err
+		return fmt.Errorf("smtp write: %w", err)
 	}
 	if err = w.Close(); err != nil {
-		return err
+		return fmt.Errorf("smtp write: %w", err)
 	}
 	return c.Quit()
 }

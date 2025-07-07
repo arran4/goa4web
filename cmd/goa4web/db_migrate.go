@@ -9,38 +9,22 @@ import (
 	"os"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/migrate"
 	"github.com/arran4/goa4web/runtimeconfig"
-	"github.com/go-sql-driver/mysql"
 )
 
 // openDB establishes a database connection without verifying the schema version.
 func openDB(cfg runtimeconfig.RuntimeConfig) (*sql.DB, error) {
-	if cfg.DBUser == "" {
-		cfg.DBUser = "a4web"
+	conn := cfg.DBConn
+	if conn == "" {
+		return nil, fmt.Errorf("connection string required")
 	}
-	if cfg.DBPass == "" {
-		cfg.DBPass = "a4web"
-	}
-	if cfg.DBHost == "" {
-		cfg.DBHost = "localhost"
-	}
-	if cfg.DBPort == "" {
-		cfg.DBPort = "3306"
-	}
-	if cfg.DBName == "" {
-		cfg.DBName = "a4web"
-	}
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
-	mysqlCfg, err := mysql.ParseDSN(dsn)
+	c, err := dbdrivers.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return nil, err
 	}
-	baseConnector, err := mysql.NewConnector(mysqlCfg)
-	if err != nil {
-		return nil, err
-	}
-	var connector driver.Connector = dbpkg.NewLoggingConnector(baseConnector)
+	var connector driver.Connector = dbpkg.NewLoggingConnector(c)
 	db := sql.OpenDB(connector)
 	if err := db.Ping(); err != nil {
 		db.Close()

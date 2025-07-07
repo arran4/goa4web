@@ -19,18 +19,23 @@ type FileSystem interface {
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
 func LoadAppConfigFile(fs FileSystem, path string) map[string]string {
-	values := make(map[string]string)
-	if path == "" {
-		return values
-	}
-	b, err := fs.ReadFile(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			log.Printf("app config file error: %v", err)
-		}
-		return values
-	}
-	return ParseEnvBytes(b)
+        values := make(map[string]string)
+        if path == "" {
+                log.Printf("config file not specified")
+                return values
+        }
+        log.Printf("reading config file %s", path)
+        b, err := fs.ReadFile(path)
+        if err != nil {
+                if os.IsNotExist(err) {
+                        log.Printf("config file not found: %s", path)
+                } else {
+                        log.Printf("app config file error: %v", err)
+                }
+                return values
+        }
+        log.Printf("loaded config file %s", path)
+        return ParseEnvBytes(b)
 }
 
 // UpdateConfigKey writes the given key/value pair to the config file.

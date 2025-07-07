@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,9 @@ import (
 	"sort"
 	"strings"
 )
+
+// ErrConfigFileNotFound is returned when the requested configuration file is missing.
+var ErrConfigFileNotFound = errors.New("config file not found")
 
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs or JSON objects and
 // returns them as a map. Missing files return an empty map.
@@ -28,7 +32,7 @@ func LoadAppConfigFile(fs FileSystem, path string) (map[string]string, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Printf("config file not found: %s", path)
-			return values, nil
+			return values, ErrConfigFileNotFound
 		}
 		return nil, fmt.Errorf("app config file error: %w", err)
 	}
@@ -54,7 +58,7 @@ func UpdateConfigKey(fs FileSystem, path, key, value string) error {
 		return nil
 	}
 	cfg, err := LoadAppConfigFile(fs, path)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrConfigFileNotFound) {
 		return err
 	}
 	if value == "" {

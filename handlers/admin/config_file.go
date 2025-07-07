@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"errors"
 	"log"
 
 	"github.com/arran4/goa4web/config"
@@ -11,7 +12,7 @@ import (
 // Missing files return an empty map and unknown keys are ignored.
 func LoadAppConfigFile(fs core.FileSystem, path string) map[string]string {
 	m, err := config.LoadAppConfigFile(fs, path)
-	if err != nil {
+	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		log.Printf("load config file: %v", err)
 	}
 	return m

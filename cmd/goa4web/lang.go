@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/lang_usage.txt
+var langUsageTemplate string
 
 type langCmd struct {
 	*rootCmd
@@ -54,15 +58,5 @@ func (c *langCmd) Run() error {
 }
 
 func (c *langCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s lang <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  list\tlist languages")
-	fmt.Fprintln(w, "  add\tadd a language")
-	fmt.Fprintln(w, "  update\tupdate a language")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s lang list\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s lang add --code en --name English\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s lang update -id 1 -name New\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), langUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

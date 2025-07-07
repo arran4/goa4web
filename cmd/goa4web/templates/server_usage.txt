@@ -1,0 +1,11 @@
+Usage:
+  {{.Prog}} server <command> [<args>]
+
+Commands:
+  shutdown  gracefully stop the running server
+
+Examples:
+  {{.Prog}} server shutdown --timeout 5s
+
+Flags:
+{{template "flags" .Flags}}

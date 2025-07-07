@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/user_usage.txt
+var userUsageTemplate string
 
 type userCmd struct {
 	*rootCmd
@@ -79,18 +83,5 @@ func (c *userCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *userCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s user <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  add\tadd a user")
-	fmt.Fprintln(w, "  add-admin\tadd a user with administrator rights")
-	fmt.Fprintln(w, "  make-admin\tgrant administrator rights to a user")
-	fmt.Fprintln(w, "  list\tlist users")
-	fmt.Fprintln(w, "  deactivate\tdeactivate a user")
-	fmt.Fprintln(w, "  activate\trestore a deactivated user")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s user add -username bob -password secret\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s user deactivate -username bob\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s user list\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), userUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

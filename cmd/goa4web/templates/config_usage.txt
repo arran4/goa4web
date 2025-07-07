@@ -1,0 +1,27 @@
+Usage:
+  {{.Prog}} config <command> [<args>]
+
+Commands:
+  reload       reload configuration from file
+  as-env       output configuration as export statements
+  as-env-file  output configuration as env file
+  as-json      output configuration as JSON
+  as-cli       output configuration as CLI flags
+  add-json     add missing options to JSON file
+  options      list available configuration options
+  test         verify configured services
+  show         display runtime configuration
+  set          update configuration file
+
+Examples:
+  {{.Prog}} config reload
+  {{.Prog}} config show
+  {{.Prog}} config set -key DB_HOST -value localhost
+  {{.Prog}} config as-env-file > config.env
+  {{.Prog}} config as-cli
+  {{.Prog}} config add-json -file cfg.json
+  {{.Prog}} config options --extended
+  {{.Prog}} config test email
+
+Flags:
+{{template "flags" .Flags}}

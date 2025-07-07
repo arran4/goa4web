@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} writing <command> [<args>]
+
+Commands:
+  tree      show writing categories
+  list      list writings
+  read      read a writing
+  comments  manage comments for a writing
+
+Examples:
+  {{.Prog}} writing tree
+  {{.Prog}} writing list
+  {{.Prog}} writing read 1
+  {{.Prog}} writing comments list 1
+
+Flags:
+{{template "flags" .Flags}}

@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/board_usage.txt
+var boardUsageTemplate string
 
 // boardCmd handles board management subcommands.
 type boardCmd struct {
@@ -62,17 +66,5 @@ func (c *boardCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *boardCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s board <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  list\tlist boards")
-	fmt.Fprintln(w, "  create\tcreate a board")
-	fmt.Fprintln(w, "  delete\tdelete a board")
-	fmt.Fprintln(w, "  update\tupdate a board")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s board list\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s board create -name foo -description 'bar'\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s board delete -id 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s board update -id 1 -name new\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), boardUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

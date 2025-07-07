@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"flag"
 	"fmt"
 
@@ -10,6 +11,9 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
 )
+
+//go:embed templates/config_test_usage.txt
+var configTestUsageTemplate string
 
 // configTestCmd implements "config test".
 type configTestCmd struct {
@@ -62,17 +66,7 @@ func (c *configTestCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *configTestCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s config test <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  email\tsend a test email to administrators")
-	fmt.Fprintln(w, "  db\ttest database connectivity")
-	fmt.Fprintln(w, "  dlq\ttest dead letter queue")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s config test email\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config test db\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config test dlq\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), configTestUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }
 
 type configTestEmailCmd struct {

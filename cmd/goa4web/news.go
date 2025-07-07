@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/news_usage.txt
+var newsUsageTemplate string
 
 // newsCmd handles news management subcommands.
 type newsCmd struct {
@@ -56,15 +60,5 @@ func (c *newsCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *newsCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s news <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  list\tlist news posts")
-	fmt.Fprintln(w, "  read\tread a news post")
-	fmt.Fprintln(w, "  comments\tmanage news comments")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s news list\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s news read 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s news comments list 1\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), newsUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

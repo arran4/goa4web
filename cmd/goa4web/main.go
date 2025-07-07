@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"errors"
 	"flag"
 	"fmt"
@@ -15,6 +16,9 @@ import (
 	dlqreg "github.com/arran4/goa4web/internal/dlq/register/defaults"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
+
+//go:embed templates/root_usage.txt
+var rootUsageTemplate string
 
 var version = "dev"
 
@@ -103,6 +107,12 @@ func (r *rootCmd) Run() error {
 		return fmt.Errorf("no command provided")
 	}
 	switch r.args[0] {
+	case "help", "usage":
+		c, err := parseHelpCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("help: %w", err)
+		}
+		return c.Run()
 	case "serve":
 		c, err := parseServeCmd(r, r.args[1:])
 		if err != nil {
@@ -200,39 +210,5 @@ func (r *rootCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (r *rootCmd) Usage() {
-	w := r.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s [flags] <command> [<args>]\n", r.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  serve\trun the web server")
-	fmt.Fprintln(w, "  user\tmanage users")
-	fmt.Fprintln(w, "  perm\tmanage permissions")
-	fmt.Fprintln(w, "  config\treload or update configuration")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s serve\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s user add -username alice -password secret\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s perm list\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s config reload\n\n", r.fs.Name())
-	fmt.Fprintln(w, "  board\tmanage image boards")
-	fmt.Fprintln(w, "  blog\tmanage blog entries")
-	fmt.Fprintln(w, "  news\tmanage news posts")
-	fmt.Fprintln(w, "  faq\tmanage frequently asked questions")
-	fmt.Fprintln(w, "  writing\tmanage writings")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s board list\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s blog read 1\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s news list\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s writing tree\n", r.fs.Name())
-	fmt.Fprintf(w, "  %s faq tree\n", r.fs.Name())
-	fmt.Fprintln(w, "  ipban\tmanage IP bans")
-	fmt.Fprintf(w, "  %s ipban list\n\n", r.fs.Name())
-	fmt.Fprintln(w, "  audit\tshow recent audit log entries")
-	fmt.Fprintln(w, "  db\tmanage database")
-	fmt.Fprintf(w, "  %s db migrate\n", r.fs.Name())
-	fmt.Fprintln(w, "  lang\tmanage languages")
-	fmt.Fprintf(w, "  %s lang list\n\n", r.fs.Name())
-	fmt.Fprintln(w, "  server\tmanage the running server")
-	fmt.Fprintln(w, "  email\tmanage emails")
-	fmt.Fprintln(w, "  config\tmanage configuration")
-	fmt.Fprintf(w, "  %s config show\n\n", r.fs.Name())
-	r.fs.PrintDefaults()
+	executeUsage(r.fs.Output(), rootUsageTemplate, r.fs, r.fs.Name())
 }

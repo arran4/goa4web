@@ -1,0 +1,9 @@
+Usage:
+  {{.Prog}} help <command> [<args>]
+
+Examples:
+  {{.Prog}} help serve
+  {{.Prog}} help config set
+
+Flags:
+{{template "flags" .Flags}}

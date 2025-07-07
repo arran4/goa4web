@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/writing_comments_usage.txt
+var writingCommentsUsageTemplate string
 
 // writingCommentsCmd handles "writing comments".
 type writingCommentsCmd struct {
@@ -49,14 +53,5 @@ func (c *writingCommentsCmd) Run() error {
 }
 
 func (c *writingCommentsCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s writing comments <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  list\tlist comments for a writing")
-	fmt.Fprintln(w, "  read\tread a comment or all comments")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s writing comments list 3\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s writing comments read 3 1\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s writing comments read 3 all\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), writingCommentsUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

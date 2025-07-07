@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} perm <command> [<args>]
+
+Commands:
+  grant    grant a permission
+  revoke   revoke a permission
+  list     list permissions
+
+Examples:
+  {{.Prog}} perm grant -user bob -section forum -level read
+  {{.Prog}} perm list
+
+Flags:
+{{template "flags" .Flags}}

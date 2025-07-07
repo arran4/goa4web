@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} email queue <command> [<args>]
+
+Commands:
+  list     list queued emails
+  resend   resend a queued email
+  delete   delete a queued email
+
+Examples:
+  {{.Prog}} email queue list
+  {{.Prog}} email queue resend -id 1
+  {{.Prog}} email queue delete -id 1
+
+Flags:
+{{template "flags" .Flags}}

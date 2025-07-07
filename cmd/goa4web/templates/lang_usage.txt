@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} lang <command> [<args>]
+
+Commands:
+  list     list languages
+  add      add a language
+  update   update a language
+
+Examples:
+  {{.Prog}} lang list
+  {{.Prog}} lang add --code en --name English
+  {{.Prog}} lang update -id 1 -name New
+
+Flags:
+{{template "flags" .Flags}}

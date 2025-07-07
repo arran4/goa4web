@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/email_usage.txt
+var emailUsageTemplate string
 
 // emailCmd handles email-related subcommands.
 type emailCmd struct {
@@ -44,11 +48,5 @@ func (c *emailCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *emailCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s email <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  queue\tmanage queued emails")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s email queue list\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), emailUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

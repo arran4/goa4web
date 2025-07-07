@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} news comments <command> [<args>]
+
+Commands:
+  list     list comments for a news post
+  read     read a comment or all comments
+
+Examples:
+  {{.Prog}} news comments list 3
+  {{.Prog}} news comments read 3 1
+  {{.Prog}} news comments read 3 all
+
+Flags:
+{{template "flags" .Flags}}

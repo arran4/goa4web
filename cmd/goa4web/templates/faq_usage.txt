@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} faq <command> [<args>]
+
+Commands:
+  tree   show FAQ categories and questions
+  read   read a FAQ question
+
+Examples:
+  {{.Prog}} faq tree
+  {{.Prog}} faq read 1
+
+Flags:
+{{template "flags" .Flags}}

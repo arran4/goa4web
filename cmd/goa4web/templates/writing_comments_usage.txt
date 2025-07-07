@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} writing comments <command> [<args>]
+
+Commands:
+  list     list comments for a writing
+  read     read a comment or all comments
+
+Examples:
+  {{.Prog}} writing comments list 3
+  {{.Prog}} writing comments read 3 1
+  {{.Prog}} writing comments read 3 all
+
+Flags:
+{{template "flags" .Flags}}

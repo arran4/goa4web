@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/perm_usage.txt
+var permUsageTemplate string
 
 type permCmd struct {
 	*rootCmd
@@ -61,14 +65,5 @@ func (c *permCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *permCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s perm <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  grant\tgrant a permission")
-	fmt.Fprintln(w, "  revoke\trevoke a permission")
-	fmt.Fprintln(w, "  list\tlist permissions")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s perm grant -user bob -section forum -level read\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s perm list\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), permUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

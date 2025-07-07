@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/server_usage.txt
+var serverUsageTemplate string
 
 // serverCmd handles server management commands.
 type serverCmd struct {
@@ -44,11 +48,5 @@ func (c *serverCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *serverCmd) Usage() {
-	w := c.fs.Output()
-	fmt.Fprintf(w, "Usage:\n  %s server <command> [<args>]\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(w, "\nCommands:")
-	fmt.Fprintln(w, "  shutdown\tgracefully stop the running server")
-	fmt.Fprintln(w, "\nExamples:")
-	fmt.Fprintf(w, "  %s server shutdown --timeout 5s\n\n", c.rootCmd.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), serverUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

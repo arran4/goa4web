@@ -134,16 +134,13 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 // loadEmailConfigFile reads EMAIL_* style configuration values from a simple
 // key=value file. Missing files return an empty configuration.
 
-// getAdminEmails returns a slice of administrator email addresses. If the
-// ADMIN_EMAILS environment variable is set, it takes precedence and is
-// interpreted as a comma-separated list. If not set and a Queries value is
-// provided, the database is queried for administrator accounts.
-// GetAdminEmails returns a slice of administrator email addresses. If the
-// ADMIN_EMAILS environment variable is set, it takes precedence and is
-// interpreted as a comma-separated list. If not set and a Queries value is
-// provided, the database is queried for administrator accounts.
+// getAdminEmails returns a slice of administrator email addresses. The
+// configuration option ADMIN_EMAILS may provide a comma-separated list. When
+// empty and a Queries value is supplied, the database is queried for
+// administrator accounts. GetAdminEmails returns a slice of administrator
+// addresses using this logic.
 func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
-	env := os.Getenv(config.EnvAdminEmails)
+	env := runtimeconfig.AppRuntimeConfig.AdminEmails
 	var emails []string
 	if env != "" {
 		for _, e := range strings.Split(env, ",") {

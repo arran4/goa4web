@@ -253,7 +253,7 @@ environment variables listed below.
 | `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Interval in seconds between email worker runs. |
-| `ADMIN_EMAILS` | n/a | No | - | Comma-separated list of administrator email addresses. |
+| `ADMIN_EMAILS` | `--admin-emails` | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
 | `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored. |
 | `IMAGE_MAX_BYTES` | `--image-max-bytes` | No | `5242880` | Maximum allowed size of uploaded images. |

@@ -46,6 +46,7 @@ var StringOptions = []StringOption{
 	{"image-upload-dir", config.EnvImageUploadDir, "ImageUploadDir", "directory to store uploaded images", "", ""},
 	{"dlq-provider", config.EnvDLQProvider, "DLQProvider", "dead letter queue provider", "", ""},
 	{"dlq-file", config.EnvDLQFile, "DLQFile", "dead letter queue file path", "", ""},
+	{"admin-emails", config.EnvAdminEmails, "AdminEmails", "administrator email addresses", "", ""},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.

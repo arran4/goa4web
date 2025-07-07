@@ -71,11 +71,11 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	q := dbpkg.New(db)
 	rows := sqlmock.NewRows([]string{
 		"idcomments", "forumthread_idforumthread", "users_idusers", "language_idlanguage",
-		"written", "text", "idusers", "email", "passwd", "passwd_algorithm", "username",
+		"written", "text", "idusers", "email", "username",
 		"idpreferences", "language_idlanguage_2", "users_idusers_2", "emailforumupdates",
 		"page_size", "auto_subscribe_replies",
-	}).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "p", "", "bob", 1, 1, 2, 1, 10, true)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies\nFROM comments c, users u, preferences p\nWHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?\nGROUP BY u.idusers")).
+	}).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "bob", 1, 1, 2, 1, 10, true)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, u.idusers, u.email, u.username, p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies\nFROM comments c, users u, preferences p\nWHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?\nGROUP BY u.idusers")).
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)
 	rec := &dummyProvider{}
@@ -101,7 +101,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
 	mock.ExpectQuery("UserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).AddRow(1, "a@test", "", "", "a"))
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
 	n := Notifier{EmailProvider: rec, Queries: q}

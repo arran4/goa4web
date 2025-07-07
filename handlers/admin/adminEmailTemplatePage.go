@@ -85,7 +85,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Passwd: urow.Passwd, PasswdAlgorithm: urow.PasswdAlgorithm, Username: urow.Username}
+	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Username: urow.Username}
 	if !user.Email.Valid {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return

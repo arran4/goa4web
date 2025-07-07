@@ -100,8 +100,8 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := queries.DB().ExecContext(r.Context(),
-		"INSERT INTO users (username, passwd, passwd_algorithm, email) VALUES (?, ?, ?, ?)",
-		username, hash, alg, email,
+		"INSERT INTO users (username, email) VALUES (?, ?)",
+		username, email,
 	)
 	if err != nil {
 		log.Printf("InsertUser Error: %s", err)
@@ -113,6 +113,11 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("LastInsertId Error: %s", err)
 		http.Error(w, "Session error", http.StatusForbidden)
+		return
+	}
+	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(lastInsertID), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
+		log.Printf("InsertPassword Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 

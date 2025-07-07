@@ -2,6 +2,7 @@ package user
 
 import (
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -145,7 +146,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Passwd: urow.Passwd, PasswdAlgorithm: urow.PasswdAlgorithm, Username: urow.Username}
+	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Username: urow.Username}
 	data := struct {
 		*common.CoreData
 		User *db.User
@@ -208,7 +209,7 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("hashPassword: %w", err).Error())
 	} else if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET passwd=?, passwd_algorithm=? WHERE idusers=?", hash, alg, uidi); err != nil {
+	} else if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(uidi), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("reset password: %w", err).Error())
 	} else {
 		data.Password = newPass

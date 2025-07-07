@@ -262,6 +262,14 @@ type Notification struct {
 	ReadAt       sql.NullTime
 }
 
+type Password struct {
+	ID              int32
+	UsersIdusers    int32
+	Passwd          string
+	PasswdAlgorithm sql.NullString
+	CreatedAt       time.Time
+}
+
 type PendingEmail struct {
 	ID        int32
 	ToEmail   string
@@ -358,12 +366,10 @@ type Topicrestriction struct {
 }
 
 type User struct {
-	Idusers         int32
-	Email           sql.NullString
-	Passwd          sql.NullString
-	PasswdAlgorithm sql.NullString
-	Username        sql.NullString
-	DeletedAt       sql.NullTime
+	Idusers   int32
+	Email     sql.NullString
+	Username  sql.NullString
+	DeletedAt sql.NullTime
 }
 
 type Userlang struct {

@@ -55,9 +55,9 @@ func TestBlogsBloggerPage(t *testing.T) {
 	ctx = context.WithValue(ctx, common.KeyCoreData, &CoreData{})
 	req = req.WithContext(ctx)
 
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-		AddRow(1, "e", "p", "", "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE username = ?")).
+	userRows := sqlmock.NewRows([]string{"idusers", "email", "username"}).
+		AddRow(1, "e", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, username\nFROM users\nWHERE username = ?")).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(userRows)
 
@@ -89,10 +89,10 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 	queries := db.New(sqldb)
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, passwd, passwd_algorithm, username\nFROM users\nWHERE username = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, username\nFROM users\nWHERE username = ?")).
 		WithArgs("bob").
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-			AddRow(1, "e", "p", "", "bob"))
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
+			AddRow(1, "e", "bob"))
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
 		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).

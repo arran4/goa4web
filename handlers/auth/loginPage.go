@@ -48,16 +48,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	var (
-		uid    int32
-		email  sql.NullString
-		hashed sql.NullString
-		alg    sql.NullString
-	)
-	err := queries.DB().QueryRowContext(r.Context(),
-		"SELECT idusers, email, passwd, IFNULL(passwd_algorithm,''), username FROM users WHERE username = ?",
-		username,
-	).Scan(&uid, &email, &hashed, &alg, new(string))
+	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -75,7 +66,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !verifyPassword(password, hashed.String, alg.String) {
+	if !verifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
 		_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 			Username:  username,
 			IpAddress: strings.Split(r.RemoteAddr, ":")[0],
@@ -84,17 +75,14 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if alg.String == "" || alg.String == "md5" {
+	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
 		newHash, newAlg, err := hashPassword(password)
 		if err == nil {
-			_, _ = queries.DB().ExecContext(r.Context(),
-				"UPDATE users SET passwd=?, passwd_algorithm=? WHERE idusers=?",
-				newHash, newAlg, uid,
-			)
+			_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: row.Idusers, Passwd: newHash, PasswdAlgorithm: sql.NullString{String: newAlg, Valid: true}})
 		}
 	}
 
-	user := &db.User{Idusers: uid, Email: email}
+	user := &db.User{Idusers: row.Idusers, Email: row.Email}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

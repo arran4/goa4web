@@ -171,3 +171,13 @@ func TestSpoiler(t *testing.T) {
 		t.Errorf("got %q want %q", got, want)
 	}
 }
+
+func TestCodeSlashClose(t *testing.T) {
+	c := NewA4Code2HTML()
+	c.input = "[code]foo[/code]"
+	c.Process()
+	want := "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>foo</pre></table>"
+	if got := c.Output(); got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}

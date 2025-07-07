@@ -129,10 +129,11 @@ func (c *A4code2html) getNext(endAtEqual bool) string {
 	return result.String()
 }
 
-func (c *A4code2html) directOutput(terminator string) {
-	lensomething := len(terminator)
-	var last string
-
+func (c *A4code2html) directOutput(terminators ...string) {
+	lens := make([]int, len(terminators))
+	for i, t := range terminators {
+		lens[i] = len(t)
+	}
 	for len(c.input) > 0 {
 		ch := c.input[0]
 		c.input = c.input[1:]
@@ -146,11 +147,12 @@ func (c *A4code2html) directOutput(terminator string) {
 			c.output.WriteString(c.Escape(ch))
 		default:
 			c.output.WriteByte(ch)
-			if i := len(c.output.Bytes()) - lensomething; i >= 0 {
-				last = c.output.String()[i:]
-				if strings.EqualFold(terminator, last) {
-					c.output.Truncate(i)
-					return
+			for idx, term := range terminators {
+				if i := len(c.output.Bytes()) - lens[idx]; i >= 0 {
+					if strings.EqualFold(term, c.output.String()[i:]) {
+						c.output.Truncate(i)
+						return
+					}
 				}
 			}
 		}
@@ -230,7 +232,7 @@ func (a *A4code2html) acomm() int {
 		case CTTagStrip, CTWordsOnly:
 		default:
 			a.output.WriteString("<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>")
-			a.directOutput("code]")
+			a.directOutput("[/code]", "code]")
 			a.output.WriteString("</pre></table>")
 		}
 	case "quoteof":

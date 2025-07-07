@@ -7,6 +7,7 @@
     <form method="post">
         {{ csrfField }}
         <input type="checkbox" name="emailupdates" {{ if .UserPreferences.EmailUpdates }}checked{{ end }}>Receive replies notifications via email<br>
+        <input type="checkbox" name="autosubscribe" {{ if .UserPreferences.AutoSubscribeReplies }}checked{{ end }}>Automatically subscribe to threads I reply to<br>
         <input type="submit" name="task" value="Save all"><br>
         <input type="submit" name="task" value="Test mail"><br>
     </form>

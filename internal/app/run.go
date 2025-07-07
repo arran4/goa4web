@@ -141,20 +141,3 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqP
 		}, dlqProvider)
 	})
 }
-
-func newMiddlewareChain(mw ...func(http.Handler) http.Handler) routerWrapper {
-	return routerWrapperFunc(func(h http.Handler) http.Handler {
-		for i := len(mw) - 1; i >= 0; i-- {
-			h = mw[i](h)
-		}
-		return h
-	})
-}
-
-type routerWrapper interface {
-	Wrap(http.Handler) http.Handler
-}
-
-type routerWrapperFunc func(http.Handler) http.Handler
-
-func (f routerWrapperFunc) Wrap(h http.Handler) http.Handler { return f(h) }

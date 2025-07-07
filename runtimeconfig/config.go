@@ -3,6 +3,7 @@ package runtimeconfig
 import (
 	"flag"
 	"os"
+	"reflect"
 	"strconv"
 
 	"github.com/arran4/goa4web/config"
@@ -62,41 +63,15 @@ var AppRuntimeConfig RuntimeConfig
 func NewRuntimeFlagSet(name string) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 
-	fs.String("db-user", "", "database user")
-	fs.String("db-pass", "", "database password")
-	fs.String("db-host", "", "database host")
-	fs.String("db-port", "", "database port")
-	fs.String("db-name", "", "database name")
-	fs.Int("db-log-verbosity", 0, "database logging verbosity")
-	fs.Int("log-flags", 0, "request logging flags")
-
-	fs.String("listen", ":8080", "server listen address")
-	fs.String("hostname", "", "server base URL")
-
-	fs.String("email-provider", "", "email provider")
-	fs.String("smtp-host", "", "SMTP host")
-	fs.String("smtp-port", "", "SMTP port")
-	fs.String("smtp-user", "", "SMTP user")
-	fs.String("smtp-pass", "", "SMTP pass")
-	fs.String("aws-region", "", "AWS region")
-	fs.String("jmap-endpoint", "", "JMAP endpoint")
-	fs.String("jmap-account", "", "JMAP account")
-	fs.String("jmap-identity", "", "JMAP identity")
-	fs.String("jmap-user", "", "JMAP user")
-	fs.String("jmap-pass", "", "JMAP pass")
-	fs.String("sendgrid-key", "", "SendGrid API key")
-
-	fs.Int("page-size-min", 0, "minimum allowed page size")
-	fs.Int("page-size-max", 0, "maximum allowed page size")
-	fs.Int("page-size-default", 0, "default page size")
+	for _, o := range StringOptions {
+		fs.String(o.Name, o.Default, o.Usage)
+	}
+	for _, o := range IntOptions {
+		fs.Int(o.Name, o.Default, o.Usage)
+	}
 
 	fs.String("feeds-enabled", "", "enable or disable feeds")
 	fs.String("stats-start-year", "", "start year for usage stats")
-	fs.String("default-language", "", "default language name")
-	fs.String("image-upload-dir", "", "directory to store uploaded images")
-	fs.Int("image-max-bytes", 0, "maximum allowed upload size in bytes")
-	fs.String("dlq-provider", "", "dead letter queue provider")
-	fs.String("dlq-file", "", "dead letter queue file path")
 
 	return fs
 }
@@ -119,77 +94,44 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 
 	cfg := RuntimeConfig{}
 
-	strOpts := []struct {
-		name string
-		env  string
-		dst  *string
-	}{
-		{"db-user", config.EnvDBUser, &cfg.DBUser},
-		{"db-pass", config.EnvDBPass, &cfg.DBPass},
-		{"db-host", config.EnvDBHost, &cfg.DBHost},
-		{"db-port", config.EnvDBPort, &cfg.DBPort},
-		{"db-name", config.EnvDBName, &cfg.DBName},
-		{"listen", config.EnvListen, &cfg.HTTPListen},
-		{"hostname", config.EnvHostname, &cfg.HTTPHostname},
-		{"email-provider", config.EnvEmailProvider, &cfg.EmailProvider},
-		{"smtp-host", config.EnvSMTPHost, &cfg.EmailSMTPHost},
-		{"smtp-port", config.EnvSMTPPort, &cfg.EmailSMTPPort},
-		{"smtp-user", config.EnvSMTPUser, &cfg.EmailSMTPUser},
-		{"smtp-pass", config.EnvSMTPPass, &cfg.EmailSMTPPass},
-		{"aws-region", config.EnvAWSRegion, &cfg.EmailAWSRegion},
-		{"jmap-endpoint", config.EnvJMAPEndpoint, &cfg.EmailJMAPEndpoint},
-		{"jmap-account", config.EnvJMAPAccount, &cfg.EmailJMAPAccount},
-		{"jmap-identity", config.EnvJMAPIdentity, &cfg.EmailJMAPIdentity},
-		{"jmap-user", config.EnvJMAPUser, &cfg.EmailJMAPUser},
-		{"jmap-pass", config.EnvJMAPPass, &cfg.EmailJMAPPass},
-		{"sendgrid-key", config.EnvSendGridKey, &cfg.EmailSendGridKey},
-		{"default-language", config.EnvDefaultLanguage, &cfg.DefaultLanguage},
-		{"image-upload-dir", config.EnvImageUploadDir, &cfg.ImageUploadDir},
-		{"dlq-provider", config.EnvDLQProvider, &cfg.DLQProvider},
-		{"dlq-file", config.EnvDLQFile, &cfg.DLQFile},
-	}
-	for _, o := range strOpts {
-		if fs != nil && setFlags[o.name] {
-			if f := fs.Lookup(o.name); f != nil {
-				*o.dst = f.Value.String()
+	for _, o := range StringOptions {
+		dst := reflect.ValueOf(&cfg).Elem().FieldByName(o.Field)
+		if !dst.IsValid() || dst.Kind() != reflect.String {
+			continue
+		}
+		if fs != nil && setFlags[o.Name] {
+			if f := fs.Lookup(o.Name); f != nil {
+				dst.SetString(f.Value.String())
 				continue
 			}
 		}
-		if v := fileVals[o.env]; v != "" {
-			*o.dst = v
+		if v := fileVals[o.Env]; v != "" {
+			dst.SetString(v)
 			continue
 		}
-		if v := getenv(o.env); v != "" {
-			*o.dst = v
+		if v := getenv(o.Env); v != "" {
+			dst.SetString(v)
 		}
 	}
 
-	intOpts := []struct {
-		name string
-		env  string
-		dst  *int
-	}{
-		{"db-log-verbosity", config.EnvDBLogVerbosity, &cfg.DBLogVerbosity},
-		{"log-flags", config.EnvLogFlags, &cfg.LogFlags},
-		{"page-size-min", config.EnvPageSizeMin, &cfg.PageSizeMin},
-		{"page-size-max", config.EnvPageSizeMax, &cfg.PageSizeMax},
-		{"page-size-default", config.EnvPageSizeDefault, &cfg.PageSizeDefault},
-		{"image-max-bytes", config.EnvImageMaxBytes, &cfg.ImageMaxBytes},
-	}
-	for _, o := range intOpts {
+	for _, o := range IntOptions {
+		dst := reflect.ValueOf(&cfg).Elem().FieldByName(o.Field)
+		if !dst.IsValid() || dst.Kind() != reflect.Int {
+			continue
+		}
 		var val string
-		if fs != nil && setFlags[o.name] {
-			if f := fs.Lookup(o.name); f != nil {
+		if fs != nil && setFlags[o.Name] {
+			if f := fs.Lookup(o.Name); f != nil {
 				val = f.Value.String()
 			}
-		} else if v := fileVals[o.env]; v != "" {
+		} else if v := fileVals[o.Env]; v != "" {
 			val = v
-		} else if v := getenv(o.env); v != "" {
+		} else if v := getenv(o.Env); v != "" {
 			val = v
 		}
 		if val != "" {
 			if n, err := strconv.Atoi(val); err == nil {
-				*o.dst = n
+				dst.SetInt(int64(n))
 			}
 		}
 	}

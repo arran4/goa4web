@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"sort"
-	"strings"
 )
 
 // FileSystem abstracts file operations. It matches the core.FileSystem
@@ -30,14 +29,7 @@ func LoadAppConfigFile(fs FileSystem, path string) map[string]string {
 		}
 		return values
 	}
-	for _, line := range strings.Split(string(b), "\n") {
-		if i := strings.IndexByte(line, '='); i > 0 {
-			key := strings.TrimSpace(line[:i])
-			val := strings.TrimSpace(line[i+1:])
-			values[key] = val
-		}
-	}
-	return values
+	return ParseEnvBytes(b)
 }
 
 // UpdateConfigKey writes the given key/value pair to the config file.

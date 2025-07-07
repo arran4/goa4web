@@ -56,7 +56,7 @@ func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, for
 const getAdministratorPermissionByUserId = `-- name: GetAdministratorPermissionByUserId :one
 SELECT idpermissions, users_idusers, section, level
 FROM permissions
-WHERE users_idusers = ? AND section = 'administrator' AND level = 'administrator'
+WHERE users_idusers = ? AND section = 'all' AND level = 'administrator'
 `
 
 func (q *Queries) GetAdministratorPermissionByUserId(ctx context.Context, usersIdusers int32) (*Permission, error) {

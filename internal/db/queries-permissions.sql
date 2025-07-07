@@ -42,7 +42,7 @@ WHERE idpermissions = ?;
 -- name: GetAdministratorPermissionByUserId :one
 SELECT *
 FROM permissions
-WHERE users_idusers = ? AND section = 'administrator' AND level = 'administrator';
+WHERE users_idusers = ? AND section = 'all' AND level = 'administrator';
 
 -- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
 SELECT *

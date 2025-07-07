@@ -90,7 +90,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 			return fmt.Errorf("check admin: %w", err)
 		} else if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
 			UsersIdusers: int32(id),
-			Section:      sql.NullString{String: "administrator", Valid: true},
+			Section:      sql.NullString{String: "all", Valid: true},
 			Level:        sql.NullString{String: "administrator", Valid: true},
 		}); err != nil {
 			return fmt.Errorf("grant admin: %w", err)

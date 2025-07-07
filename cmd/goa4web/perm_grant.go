@@ -48,7 +48,7 @@ func (c *permGrantCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
-	if c.Section == "administrator" && c.Level == "administrator" {
+	if c.Section == "all" && c.Level == "administrator" {
 		if _, err := queries.GetAdministratorPermissionByUserId(ctx, u.Idusers); err == nil {
 			if c.rootCmd.Verbosity > 0 {
 				fmt.Printf("%s already administrator\n", c.User)

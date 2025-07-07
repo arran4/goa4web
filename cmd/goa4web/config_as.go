@@ -95,6 +95,7 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 		sessionFile = runtimeconfig.DefaultSessionSecretPath()
 	}
 	m[config.EnvSessionSecretFile] = sessionFile
+	m[config.EnvSMTPStartTLS] = boolVal(fileVals[config.EnvSMTPStartTLS], os.Getenv(config.EnvSMTPStartTLS), true)
 
 	return m, nil
 }
@@ -209,6 +210,7 @@ func usageMap() map[string]string {
 	m[config.EnvSessionSecretFile] = "path to session secret file"
 	m[config.EnvAdminEmails] = "administrator email addresses"
 	m[config.EnvAdminNotify] = "enable admin notification emails"
+	m[config.EnvSMTPStartTLS] = "enable or disable STARTTLS"
 	return m
 }
 
@@ -226,5 +228,6 @@ func nameMap() map[string]string {
 	m[config.EnvConfigFile] = "config-file"
 	m[config.EnvSessionSecret] = "session-secret"
 	m[config.EnvSessionSecretFile] = "session-secret-file"
+	m[config.EnvSMTPStartTLS] = "smtp-starttls"
 	return m
 }

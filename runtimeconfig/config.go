@@ -28,6 +28,9 @@ type RuntimeConfig struct {
 	EmailSMTPPort     string
 	EmailSMTPUser     string
 	EmailSMTPPass     string
+	EmailSMTPAuth     string
+	EmailSMTPStartTLS bool
+	EmailFrom         string
 	EmailAWSRegion    string
 	EmailJMAPEndpoint string
 	EmailJMAPAccount  string
@@ -74,6 +77,7 @@ func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption) *fl
 
 	fs.String("feeds-enabled", "", "enable or disable feeds")
 	fs.String("stats-start-year", "", "start year for usage stats")
+	fs.String("smtp-starttls", "", "enable or disable STARTTLS")
 
 	return fs
 }
@@ -150,12 +154,15 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		}
 	}
 
-	var cliFeeds, cliStats string
+	var cliFeeds, cliStats, cliStartTLS string
 	if fs != nil && setFlags["feeds-enabled"] {
 		cliFeeds = fs.Lookup("feeds-enabled").Value.String()
 	}
 	if fs != nil && setFlags["stats-start-year"] {
 		cliStats = fs.Lookup("stats-start-year").Value.String()
+	}
+	if fs != nil && setFlags["smtp-starttls"] {
+		cliStartTLS = fs.Lookup("smtp-starttls").Value.String()
 	}
 
 	cfg.FeedsEnabled = resolveFeedsEnabled(
@@ -167,6 +174,11 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		cliStats,
 		fileVals[config.EnvStatsStartYear],
 		getenv(config.EnvStatsStartYear),
+	)
+	cfg.EmailSMTPStartTLS = resolveSMTPStartTLS(
+		cliStartTLS,
+		fileVals[config.EnvSMTPStartTLS],
+		getenv(config.EnvSMTPStartTLS),
 	)
 
 	normalizeRuntimeConfig(&cfg)
@@ -226,6 +238,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.ImageMaxBytes == 0 {
 		cfg.ImageMaxBytes = 5 * 1024 * 1024
 	}
+	if cfg.EmailSMTPAuth == "" {
+		cfg.EmailSMTPAuth = "plain"
+  }
 	if cfg.EmailWorkerInterval == 0 {
 		cfg.EmailWorkerInterval = 60
 	}

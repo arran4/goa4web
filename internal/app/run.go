@@ -100,6 +100,9 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
 	emailProvider := email.ProviderFromConfig(cfg)
+	if emailutil.EmailSendingEnabled() && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
+		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
+	}
 
 	dlqProvider := dlq.ProviderFromConfig(cfg, dbpkg.New(dbPool))
 	startWorkers(ctx, dbPool, emailProvider, dlqProvider, cfg)

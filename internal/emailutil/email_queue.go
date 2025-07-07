@@ -32,7 +32,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 	if q == nil || provider == nil {
 		return
 	}
-	if !emailSendingEnabled() {
+	if !EmailSendingEnabled() {
 		return
 	}
 	if provider == nil {

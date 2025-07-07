@@ -2,14 +2,8 @@ package email
 
 import (
 	"log"
-	"net/smtp"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
-
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -17,76 +11,12 @@ import (
 func ProviderFromConfig(cfg runtimeconfig.RuntimeConfig) Provider {
 	mode := strings.ToLower(cfg.EmailProvider)
 
-	switch mode {
-	case "smtp":
-		host := cfg.EmailSMTPHost
-		port := cfg.EmailSMTPPort
-		user := cfg.EmailSMTPUser
-		pass := cfg.EmailSMTPPass
-		if host == "" {
-			log.Printf("Email disabled: %s not set", config.EnvSMTPHost)
-			return nil
-		}
-		addr := host
-		if port != "" {
-			addr = host + ":" + port
-		}
-		var auth smtp.Auth
-		if user != "" {
-			auth = smtp.PlainAuth("", user, pass, host)
-		}
-		return SMTPProvider{Addr: addr, Auth: auth, From: SourceEmail}
-
-	case "ses":
-		awsCfg := aws.NewConfig()
-		if region := cfg.EmailAWSRegion; region != "" {
-			awsCfg = awsCfg.WithRegion(region)
-		}
-		sess, err := session.NewSession(awsCfg)
-		if err != nil {
-			log.Printf("Email disabled: cannot initialise AWS session: %v", err)
-			if mode == "ses" {
-				return nil
-			}
-			return nil
-		}
-		if _, err := sess.Config.Credentials.Get(); err != nil {
-			log.Printf("Email disabled: no AWS credentials: %v", err)
-			return nil
-		}
-		return SESProvider{Client: ses.New(sess)}
-
-	case "local":
-		return LocalProvider{}
-
-	case "jmap":
-		ep := cfg.EmailJMAPEndpoint
-		if ep == "" {
-			log.Printf("Email disabled: %s not set", config.EnvJMAPEndpoint)
-			return nil
-		}
-		acc := cfg.EmailJMAPAccount
-		id := cfg.EmailJMAPIdentity
-		if acc == "" || id == "" {
-			log.Printf("Email disabled: %s or %s not set", config.EnvJMAPAccount, config.EnvJMAPIdentity)
-			return nil
-		}
-		return JMAPProvider{
-			Endpoint:  ep,
-			Username:  cfg.EmailJMAPUser,
-			Password:  cfg.EmailJMAPPass,
-			AccountID: acc,
-			Identity:  id,
-		}
-
-	case "sendgrid":
-		return SendGridProviderFromConfig(cfg.EmailSendGridKey)
-
-	case "log":
-		return LogProvider{}
-
-	default:
-		log.Printf("Email disabled: unknown provider %q", mode)
-		return nil
+	if f := providerFactory(mode); f != nil {
+		return f(cfg)
 	}
+
+	if mode != "" {
+		log.Printf("Email disabled: unknown provider %q", mode)
+	}
+	return nil
 }

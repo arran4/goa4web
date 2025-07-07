@@ -16,6 +16,12 @@ const (
 	EnvSMTPUser = "SMTP_USER"
 	// EnvSMTPPass is the SMTP password.
 	EnvSMTPPass = "SMTP_PASS"
+	// EnvSMTPAuth selects the SMTP authentication method.
+	EnvSMTPAuth = "SMTP_AUTH"
+	// EnvSMTPStartTLS enables STARTTLS when sending SMTP mail.
+	EnvSMTPStartTLS = "SMTP_STARTTLS"
+	// EnvEmailFrom sets the default From address for outgoing mail.
+	EnvEmailFrom = "EMAIL_FROM"
 	// EnvAWSRegion is the AWS region for the SES provider.
 	EnvAWSRegion = "AWS_REGION"
 	// EnvJMAPEndpoint is the JMAP API endpoint.

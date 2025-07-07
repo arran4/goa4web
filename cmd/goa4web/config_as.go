@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -31,7 +33,21 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 	return c, nil
 }
 
-func envMapFromConfig(cfg runtimeconfig.RuntimeConfig) map[string]string {
+func parseBool(v string) (bool, bool) {
+	if v == "" {
+		return false, false
+	}
+	switch strings.ToLower(v) {
+	case "0", "false", "off", "no":
+		return false, true
+	case "1", "true", "on", "yes":
+		return true, true
+	default:
+		return false, false
+	}
+}
+
+func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) map[string]string {
 	m := make(map[string]string)
 	v := reflect.ValueOf(cfg)
 	for _, o := range runtimeconfig.StringOptions {
@@ -42,16 +58,51 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig) map[string]string {
 	}
 	m[config.EnvFeedsEnabled] = strconv.FormatBool(cfg.FeedsEnabled)
 	m[config.EnvStatsStartYear] = strconv.Itoa(cfg.StatsStartYear)
+
+	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
+
+	boolVal := func(file, env string, def bool) string {
+		if b, ok := parseBool(file); ok {
+			return strconv.FormatBool(b)
+		}
+		if b, ok := parseBool(env); ok {
+			return strconv.FormatBool(b)
+		}
+		return strconv.FormatBool(def)
+	}
+
+	first := func(vals ...string) string {
+		for _, v := range vals {
+			if v != "" {
+				return v
+			}
+		}
+		return ""
+	}
+
+	m[config.EnvConfigFile] = cfgPath
+	m[config.EnvEmailEnabled] = boolVal(fileVals[config.EnvEmailEnabled], os.Getenv(config.EnvEmailEnabled), true)
+	m[config.EnvNotificationsEnabled] = boolVal(fileVals[config.EnvNotificationsEnabled], os.Getenv(config.EnvNotificationsEnabled), true)
+	m[config.EnvCSRFEnabled] = boolVal(fileVals[config.EnvCSRFEnabled], os.Getenv(config.EnvCSRFEnabled), true)
+	m[config.EnvAdminNotify] = boolVal(fileVals[config.EnvAdminNotify], os.Getenv(config.EnvAdminNotify), true)
+	m[config.EnvAdminEmails] = first(fileVals[config.EnvAdminEmails], os.Getenv(config.EnvAdminEmails))
+	m[config.EnvSessionSecret] = first("", os.Getenv(config.EnvSessionSecret))
+	sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
+	if sessionFile == "" {
+		sessionFile = ".session_secret"
+	}
+	m[config.EnvSessionSecretFile] = sessionFile
+
 	return m
 }
 
 func defaultMap() map[string]string {
 	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	return envMapFromConfig(def)
+	return envMapFromConfig(def, "")
 }
 
 func (c *configAsCmd) asEnv() error {
-	current := envMapFromConfig(c.rootCmd.cfg)
+	current := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	def := defaultMap()
 	keys := make([]string, 0, len(current))
 	for k := range current {
@@ -73,7 +124,7 @@ func (c *configAsCmd) asEnv() error {
 }
 
 func (c *configAsCmd) asJSON() error {
-	m := envMapFromConfig(c.rootCmd.cfg)
+	m := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	b, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
@@ -83,7 +134,7 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-	current := envMapFromConfig(c.rootCmd.cfg)
+	current := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	def := defaultMap()
 	var parts []string
 	nameMap := nameMap()
@@ -112,6 +163,14 @@ func usageMap() map[string]string {
 	}
 	m[config.EnvFeedsEnabled] = "enable or disable feeds"
 	m[config.EnvStatsStartYear] = "start year for usage stats"
+	m[config.EnvConfigFile] = "path to config file"
+	m[config.EnvEmailEnabled] = "enable sending queued emails"
+	m[config.EnvNotificationsEnabled] = "enable internal notifications"
+	m[config.EnvCSRFEnabled] = "enable or disable CSRF protection"
+	m[config.EnvSessionSecret] = "session secret key"
+	m[config.EnvSessionSecretFile] = "path to session secret file"
+	m[config.EnvAdminEmails] = "administrator email addresses"
+	m[config.EnvAdminNotify] = "enable admin notification emails"
 	return m
 }
 
@@ -126,5 +185,8 @@ func nameMap() map[string]string {
 	// feeds-enabled and stats-start-year only used for CLI
 	m[config.EnvFeedsEnabled] = "feeds-enabled"
 	m[config.EnvStatsStartYear] = "stats-start-year"
+	m[config.EnvConfigFile] = "config-file"
+	m[config.EnvSessionSecret] = "session-secret"
+	m[config.EnvSessionSecretFile] = "session-secret-file"
 	return m
 }

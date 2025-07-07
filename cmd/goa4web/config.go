@@ -42,6 +42,12 @@ func (c *configCmd) Run() error {
 			return fmt.Errorf("as-env: %w", err)
 		}
 		return cmd.asEnv()
+	case "as-env-file":
+		cmd, err := parseConfigAsCmd(c, "as-env-file", c.args[1:])
+		if err != nil {
+			return fmt.Errorf("as-env-file: %w", err)
+		}
+		return cmd.asEnvFile()
 	case "as-json":
 		cmd, err := parseConfigAsCmd(c, "as-json", c.args[1:])
 		if err != nil {
@@ -90,7 +96,8 @@ func (c *configCmd) Usage() {
 	fmt.Fprintf(w, "Usage:\n  %s config <command> [<args>]\n", c.rootCmd.fs.Name())
 	fmt.Fprintln(w, "\nCommands:")
 	fmt.Fprintln(w, "  reload\treload configuration from file")
-	fmt.Fprintln(w, "  as-env\toutput configuration as env file")
+	fmt.Fprintln(w, "  as-env\toutput configuration as export statements")
+	fmt.Fprintln(w, "  as-env-file\toutput configuration as env file")
 	fmt.Fprintln(w, "  as-json\toutput configuration as JSON")
 	fmt.Fprintln(w, "  as-cli\toutput configuration as CLI flags")
 	fmt.Fprintln(w, "  add-json\tadd missing options to JSON file")
@@ -102,7 +109,7 @@ func (c *configCmd) Usage() {
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s config show\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config set -key DB_HOST -value localhost\n", c.rootCmd.fs.Name())
-	fmt.Fprintf(w, "  %s config as-env > config.env\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s config as-env-file > config.env\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config as-cli\n\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config options\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config add-json -file cfg.json\n", c.rootCmd.fs.Name())

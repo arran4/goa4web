@@ -19,6 +19,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
+          cache: ${{ !contains(runner.labels, 'self-hosted') }}
       - name: Install sqlc
         run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
       - name: Generate code

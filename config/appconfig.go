@@ -3,43 +3,62 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	"io/fs"
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
+
+	"github.com/arran4/goa4web/core"
 )
 
-// FileSystem abstracts file operations. It matches the core.FileSystem
-// interface so core implementations can be passed in directly.
-type FileSystem interface {
-	ReadFile(name string) ([]byte, error)
-	WriteFile(name string, data []byte, perm fs.FileMode) error
-}
-
+// LoadAppConfigFile reads CONFIG_FILE style key=value pairs or JSON objects and
+// returns them as a map. Missing files return an empty map.
+// Supported extensions are ".env" and ".json". An error is returned for any
+// other extension.
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
-func LoadAppConfigFile(fs FileSystem, path string) map[string]string {
+func LoadAppConfigFile(fs core.FileSystem, path string) (map[string]string, error) {
 	values := make(map[string]string)
 	if path == "" {
-		return values
+		log.Printf("config file not specified")
+		return values, nil
 	}
+	log.Printf("reading config file %s", path)
 	b, err := fs.ReadFile(path)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			log.Printf("app config file error: %v", err)
+		if os.IsNotExist(err) {
+			log.Printf("config file not found: %s", path)
+			return values, nil
 		}
-		return values
+		return nil, fmt.Errorf("app config file error: %w", err)
 	}
-	return ParseEnvBytes(b)
+	log.Printf("loaded config file %s", path)
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".json":
+		if err := json.Unmarshal(b, &values); err != nil {
+			log.Printf("app config file parse error: %v", err)
+			return nil, fmt.Errorf("parse json: %w", err)
+		}
+		return values, nil
+	case ".env":
+		return ParseEnvBytes(b), nil
+	default:
+		return nil, fmt.Errorf("unsupported config extension %q: use .env or .json", filepath.Ext(path))
+	}
 }
 
 // UpdateConfigKey writes the given key/value pair to the config file.
 // Existing keys are replaced, new keys appended. Empty values remove the key.
-func UpdateConfigKey(fs FileSystem, path, key, value string) error {
+func UpdateConfigKey(fs core.FileSystem, path, key, value string) error {
 	if path == "" {
 		return nil
 	}
-	cfg := LoadAppConfigFile(fs, path)
+	cfg, err := LoadAppConfigFile(fs, path)
+	if err != nil {
+		return err
+	}
 	if value == "" {
 		delete(cfg, key)
 	} else {
@@ -60,7 +79,7 @@ func UpdateConfigKey(fs FileSystem, path, key, value string) error {
 // AddMissingJSONOptions ensures all keys from values exist in the JSON file at
 // path. Missing keys are added with their values. The file is created when it
 // does not exist.
-func AddMissingJSONOptions(fs FileSystem, path string, values map[string]string) error {
+func AddMissingJSONOptions(fs core.FileSystem, path string, values map[string]string) error {
 	if path == "" {
 		return nil
 	}

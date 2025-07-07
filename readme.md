@@ -146,7 +146,7 @@ Values are resolved in the following order:
 3. Environment variables such as `DB_CONN`
 
 The config file uses the same `key=value` format as the email configuration file.
-See `examples/db.conf` for a complete list of supported keys.
+See `examples/db.env` for a complete list of supported keys.
 
 ## Email Provider Configuration
 
@@ -176,7 +176,7 @@ variable names.
 Administrator change notifications are enabled by default when a valid mail
 provider is configured. Set `ADMIN_NOTIFY=false` to disable these messages.
 
-See `examples/email.conf` for an example file containing all keys.
+See `examples/email.env` for an example file containing all keys.
 
 ## HTTP Server Configuration
 
@@ -188,7 +188,7 @@ can be configured the same way as other settings:
 3. Environment variables `LISTEN` and `HOSTNAME`
 4. Built-in defaults (`:8080` and `http://localhost:8080`)
 
-See `examples/http.conf` for the file format.
+See `examples/http.env` for the file format.
 
 `HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
 

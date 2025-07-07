@@ -23,16 +23,17 @@ type userUpdateCmd struct {
 
 func parseUserUpdateCmd(parent *userCmd, args []string) (*userUpdateCmd, error) {
 	c := &userUpdateCmd{userCmd: parent}
-	fs := flag.NewFlagSet("update", flag.ContinueOnError)
-	fs.StringVar(&c.Username, "username", "", "username")
-	fs.StringVar(&c.Email, "email", "", "email address")
-	fs.BoolVar(&c.MakeAdmin, "make-admin", false, "grant administrator rights")
-	fs.BoolVar(&c.RemoveAdmin, "remove-admin", false, "revoke administrator rights")
-	if err := fs.Parse(args); err != nil {
+	fs, rest, err := parseFlags("update", args, func(fs *flag.FlagSet) {
+		fs.StringVar(&c.Username, "username", "", "username")
+		fs.StringVar(&c.Email, "email", "", "email address")
+		fs.BoolVar(&c.MakeAdmin, "make-admin", false, "grant administrator rights")
+		fs.BoolVar(&c.RemoveAdmin, "remove-admin", false, "revoke administrator rights")
+	})
+	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = fs.Args()
+	c.args = rest
 	return c, nil
 }
 

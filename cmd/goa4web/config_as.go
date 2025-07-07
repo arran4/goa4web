@@ -47,7 +47,7 @@ func parseBool(v string) (bool, bool) {
 	}
 }
 
-func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) map[string]string {
+func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[string]string, error) {
 	m := make(map[string]string)
 	v := reflect.ValueOf(cfg)
 	for _, o := range runtimeconfig.StringOptions {
@@ -59,7 +59,10 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) map[strin
 	m[config.EnvFeedsEnabled] = strconv.FormatBool(cfg.FeedsEnabled)
 	m[config.EnvStatsStartYear] = strconv.Itoa(cfg.StatsStartYear)
 
-	fileVals := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
+	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("load config file: %w", err)
+	}
 
 	boolVal := func(file, env string, def bool) string {
 		if b, ok := parseBool(file); ok {
@@ -93,16 +96,20 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) map[strin
 	}
 	m[config.EnvSessionSecretFile] = sessionFile
 
-	return m
+	return m, nil
 }
 
 func defaultMap() map[string]string {
 	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	return envMapFromConfig(def, "")
+	m, _ := envMapFromConfig(def, "")
+	return m
 }
 
-func (c *configAsCmd) asEnv() error {
-	current := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+func (c *configAsCmd) asEnvFile() error {
+	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
 	def := defaultMap()
 	keys := make([]string, 0, len(current))
 	for k := range current {
@@ -123,8 +130,36 @@ func (c *configAsCmd) asEnv() error {
 	return nil
 }
 
+func (c *configAsCmd) asEnv() error {
+	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
+	def := defaultMap()
+	keys := make([]string, 0, len(current))
+	for k := range current {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	usage := usageMap()
+	for _, k := range keys {
+		u := usage[k]
+		d := def[k]
+		if u != "" {
+			fmt.Printf("# %s (default: %s)\n", u, d)
+		} else {
+			fmt.Printf("# default: %s\n", d)
+		}
+		fmt.Printf("export %s=%s\n", k, current[k])
+	}
+	return nil
+}
+
 func (c *configAsCmd) asJSON() error {
-	m := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	m, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
 	b, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
@@ -134,7 +169,10 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-	current := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("env map: %w", err)
+	}
 	def := defaultMap()
 	var parts []string
 	nameMap := nameMap()

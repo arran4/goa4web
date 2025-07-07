@@ -20,14 +20,15 @@ type userActivateCmd struct {
 
 func parseUserActivateCmd(parent *userCmd, args []string) (*userActivateCmd, error) {
 	c := &userActivateCmd{userCmd: parent}
-	fs := flag.NewFlagSet("activate", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "user id")
-	fs.StringVar(&c.Username, "username", "", "username")
-	if err := fs.Parse(args); err != nil {
+	fs, rest, err := parseFlags("activate", args, func(fs *flag.FlagSet) {
+		fs.IntVar(&c.ID, "id", 0, "user id")
+		fs.StringVar(&c.Username, "username", "", "username")
+	})
+	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = fs.Args()
+	c.args = rest
 	return c, nil
 }
 

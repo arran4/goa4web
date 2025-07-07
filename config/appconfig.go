@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/fs"
 	"log"
 	"os"
@@ -54,4 +55,48 @@ func UpdateConfigKey(fs FileSystem, path, key, value string) error {
 		buf.WriteString(k + "=" + cfg[k] + "\n")
 	}
 	return fs.WriteFile(path, buf.Bytes(), 0644)
+}
+
+// AddMissingJSONOptions ensures all keys from values exist in the JSON file at
+// path. Missing keys are added with their values. The file is created when it
+// does not exist.
+func AddMissingJSONOptions(fs FileSystem, path string, values map[string]string) error {
+	if path == "" {
+		return nil
+	}
+	existing := make(map[string]string)
+	if b, err := fs.ReadFile(path); err == nil {
+		if len(b) > 0 {
+			if err := json.Unmarshal(b, &existing); err != nil {
+				return err
+			}
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	changed := false
+	for k, v := range values {
+		if _, ok := existing[k]; !ok {
+			existing[k] = v
+			changed = true
+		}
+	}
+	if !changed {
+		return nil
+	}
+	keys := make([]string, 0, len(existing))
+	for k := range existing {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	ordered := make(map[string]string, len(existing))
+	for _, k := range keys {
+		ordered[k] = existing[k]
+	}
+	b, err := json.MarshalIndent(ordered, "", "  ")
+	if err != nil {
+		return err
+	}
+	b = append(b, '\n')
+	return fs.WriteFile(path, b, 0644)
 }

@@ -54,6 +54,12 @@ func (c *configCmd) Run() error {
 			return fmt.Errorf("as-cli: %w", err)
 		}
 		return cmd.asCLI()
+	case "add-json":
+		cmd, err := parseConfigJSONAddCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("add-json: %w", err)
+		}
+		return cmd.Run()
 	case "options":
 		cmd, err := parseConfigOptionsCmd(c, c.args[1:])
 		if err != nil {
@@ -87,6 +93,7 @@ func (c *configCmd) Usage() {
 	fmt.Fprintln(w, "  as-env\toutput configuration as env file")
 	fmt.Fprintln(w, "  as-json\toutput configuration as JSON")
 	fmt.Fprintln(w, "  as-cli\toutput configuration as CLI flags")
+	fmt.Fprintln(w, "  add-json\tadd missing options to JSON file")
 	fmt.Fprintln(w, "  options\tlist available configuration options")
 	fmt.Fprintln(w, "\nExamples:")
 	fmt.Fprintf(w, "  %s config reload\n\n", c.rootCmd.fs.Name())
@@ -98,5 +105,6 @@ func (c *configCmd) Usage() {
 	fmt.Fprintf(w, "  %s config as-env > config.env\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config as-cli\n\n", c.rootCmd.fs.Name())
 	fmt.Fprintf(w, "  %s config options\n", c.rootCmd.fs.Name())
+	fmt.Fprintf(w, "  %s config add-json -file cfg.json\n", c.rootCmd.fs.Name())
 	c.fs.PrintDefaults()
 }

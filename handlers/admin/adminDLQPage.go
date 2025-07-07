@@ -15,14 +15,14 @@ import (
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*CoreData
-		Errors []*db.WorkerError
+		Errors []*db.DeadLetter
 	}{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	rows, err := queries.ListWorkerErrors(r.Context(), 100)
+	rows, err := queries.ListDeadLetters(r.Context(), 100)
 	if err != nil {
-		log.Printf("list worker errors: %v", err)
+		log.Printf("list dead letters: %v", err)
 	} else {
 		data.Errors = rows
 	}
@@ -45,7 +45,7 @@ func AdminDLQAction(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			id, _ := strconv.Atoi(idStr)
-			if err := queries.DeleteWorkerError(r.Context(), int32(id)); err != nil {
+			if err := queries.DeleteDeadLetter(r.Context(), int32(id)); err != nil {
 				log.Printf("delete error: %v", err)
 			}
 		}
@@ -57,7 +57,7 @@ func AdminDLQAction(w http.ResponseWriter, r *http.Request) {
 				t = tt
 			}
 		}
-		if err := queries.PurgeWorkerErrorsBefore(r.Context(), t); err != nil {
+		if err := queries.PurgeDeadLettersBefore(r.Context(), t); err != nil {
 			log.Printf("purge errors: %v", err)
 		}
 	}

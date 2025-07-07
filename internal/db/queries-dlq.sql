@@ -1,16 +1,16 @@
--- name: InsertWorkerError :exec
-INSERT INTO worker_errors (message) VALUES (?);
+-- name: InsertDeadLetter :exec
+INSERT INTO dead_letters (message) VALUES (?);
 
--- name: ListWorkerErrors :many
-SELECT id, message, created_at FROM worker_errors
+-- name: ListDeadLetters :many
+SELECT id, message, created_at FROM dead_letters
 ORDER BY id DESC
 LIMIT ?;
 
--- name: DeleteWorkerError :exec
-DELETE FROM worker_errors WHERE id = ?;
+-- name: DeleteDeadLetter :exec
+DELETE FROM dead_letters WHERE id = ?;
 
--- name: PurgeWorkerErrorsBefore :exec
-DELETE FROM worker_errors WHERE created_at < ?;
+-- name: PurgeDeadLettersBefore :exec
+DELETE FROM dead_letters WHERE created_at < ?;
 
--- name: CountWorkerErrors :one
-SELECT COUNT(*) FROM worker_errors;
+-- name: CountDeadLetters :one
+SELECT COUNT(*) FROM dead_letters;

@@ -121,7 +121,7 @@ func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmail
 
 // FetchPendingEmails returns unsent queued emails up to the provided limit.
 func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*PendingEmail, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, html_body FROM pending_emails WHERE sent_at IS NULL ORDER BY id LIMIT ?", limit)
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, html_body, error_count FROM pending_emails WHERE sent_at IS NULL ORDER BY id LIMIT ?", limit)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Pendi
 	var items []*PendingEmail
 	for rows.Next() {
 		var p PendingEmail
-		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody); err != nil {
+		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody, &p.ErrorCount); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -145,7 +145,7 @@ func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
 
 // ListUnsentPendingEmails returns all queued emails that have not been sent yet.
 func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, html_body, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, html_body, error_count, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 	var items []*PendingEmail
 	for rows.Next() {
 		var p PendingEmail
-		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody, &p.ErrorCount, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -163,9 +163,9 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 
 // GetPendingEmailByID returns a single pending email.
 func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*PendingEmail, error) {
-	row := q.db.QueryRowContext(ctx, "SELECT id, to_email, subject, body, html_body FROM pending_emails WHERE id = ?", id)
+	row := q.db.QueryRowContext(ctx, "SELECT id, to_email, subject, body, html_body, error_count FROM pending_emails WHERE id = ?", id)
 	var p PendingEmail
-	err := row.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody)
+	err := row.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody, &p.ErrorCount)
 	if err != nil {
 		return nil, err
 	}
@@ -176,6 +176,19 @@ func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*PendingEm
 func (q *Queries) DeletePendingEmail(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, "DELETE FROM pending_emails WHERE id = ?", id)
 	return err
+}
+
+// IncrementEmailError increases the error count for a queued email and returns the updated value.
+func (q *Queries) IncrementEmailError(ctx context.Context, id int32) (int32, error) {
+	if _, err := q.db.ExecContext(ctx, "UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?", id); err != nil {
+		return 0, err
+	}
+	var count int32
+	err := q.db.QueryRowContext(ctx, "SELECT error_count FROM pending_emails WHERE id = ?", id).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 // ListUsers returns a limited set of users ordered by ID.

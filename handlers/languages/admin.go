@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	_ "github.com/arran4/goa4web/internal/dbdrivers" // Register SQL drivers.
 )
 
 func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {

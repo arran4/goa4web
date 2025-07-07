@@ -11,7 +11,6 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/templates"
-	_ "github.com/arran4/goa4web/internal/dbdrivers" // Register SQL drivers.
 )
 
 func AdminPage(w http.ResponseWriter, r *http.Request) {

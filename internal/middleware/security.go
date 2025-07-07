@@ -23,17 +23,6 @@ func normalizeIP(ip string) string {
 	return parsed.String()
 }
 
-func normalizeIPNet(ip string) string {
-	ip = strings.TrimSpace(ip)
-	if strings.Contains(ip, "/") {
-		if p, err := netip.ParsePrefix(ip); err == nil {
-			return p.String()
-		}
-		return ip
-	}
-	return normalizeIP(ip)
-}
-
 func requestIP(r *http.Request) string {
 	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
 		if comma := strings.IndexByte(ip, ','); comma >= 0 {

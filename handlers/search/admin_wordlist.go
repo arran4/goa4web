@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	_ "github.com/arran4/goa4web/internal/dbdrivers" // Register SQL drivers.
 )
 
 type PageLink struct {

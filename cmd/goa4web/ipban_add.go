@@ -22,15 +22,16 @@ type ipBanAddCmd struct {
 
 func parseIpBanAddCmd(parent *ipBanCmd, args []string) (*ipBanAddCmd, error) {
 	c := &ipBanAddCmd{ipBanCmd: parent}
-	fs := flag.NewFlagSet("add", flag.ContinueOnError)
-	fs.StringVar(&c.IP, "ip", "", "ip or cidr")
-	fs.StringVar(&c.Reason, "reason", "", "ban reason")
-	fs.StringVar(&c.Expires, "expires", "", "expiry date YYYY-MM-DD")
-	if err := fs.Parse(args); err != nil {
+	fs, rest, err := parseFlags("add", args, func(fs *flag.FlagSet) {
+		fs.StringVar(&c.IP, "ip", "", "ip or cidr")
+		fs.StringVar(&c.Reason, "reason", "", "ban reason")
+		fs.StringVar(&c.Expires, "expires", "", "expiry date YYYY-MM-DD")
+	})
+	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = fs.Args()
+	c.args = rest
 	return c, nil
 }
 

@@ -7,13 +7,19 @@ import (
 	"log"
 	"os"
 
+	_ "github.com/arran4/goa4web/cmd/goa4web/dbhandlers/allstable"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
+	dlqreg "github.com/arran4/goa4web/internal/dlq/register/defaults"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 var version = "dev"
+
+func init() {
+	dlqreg.Register()
+}
 
 func main() {
 	root, err := parseRoot(os.Args)

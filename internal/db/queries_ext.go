@@ -185,7 +185,7 @@ type ListUsersParams struct {
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT idusers, email, passwd, username FROM users ORDER BY idusers LIMIT ? OFFSET ?", arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, "SELECT idusers, email, username FROM users ORDER BY idusers LIMIT ? OFFSET ?", arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -210,7 +210,7 @@ type SearchUsersParams struct {
 
 func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*User, error) {
 	like := "%" + arg.Query + "%"
-	rows, err := q.db.QueryContext(ctx, "SELECT idusers, email, passwd, username FROM users WHERE LOWER(username) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?) ORDER BY idusers LIMIT ? OFFSET ?", like, like, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, "SELECT idusers, email, username FROM users WHERE LOWER(username) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?) ORDER BY idusers LIMIT ? OFFSET ?", like, like, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*Us
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -235,7 +235,7 @@ type ListUsersFilteredParams struct {
 }
 
 func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]*User, error) {
-	query := "SELECT u.idusers, u.email, u.passwd, u.username FROM users u"
+	query := "SELECT u.idusers, u.email, u.username FROM users u"
 	var args []interface{}
 	var cond []string
 	if arg.Role != "" {
@@ -260,7 +260,7 @@ func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredPa
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -279,7 +279,7 @@ type SearchUsersFilteredParams struct {
 
 func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilteredParams) ([]*User, error) {
 	like := "%" + arg.Query + "%"
-	query := "SELECT u.idusers, u.email, u.passwd, u.username FROM users u"
+	query := "SELECT u.idusers, u.email, u.username FROM users u"
 	var args []interface{}
 	var cond []string
 	if arg.Role != "" {
@@ -304,7 +304,7 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Passwd, &u.Username); err != nil {
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)

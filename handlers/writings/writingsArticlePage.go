@@ -46,6 +46,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		CategoryId          int32
 		Offset              int32
 		CategoryBreadcrumbs []*db.Writingcategory
+		ReplyText           string
 	}
 
 	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
@@ -55,6 +56,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		IsReplyable:        true,
 	}
 
 	vars := mux.Vars(r)
@@ -152,6 +154,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	commentIdString := r.URL.Query().Get("comment")
 	commentId, _ := strconv.Atoi(commentIdString)
+	editCommentIdString := r.URL.Query().Get("editComment")
+	editCommentId, _ := strconv.Atoi(editCommentIdString)
+	replyType := r.URL.Query().Get("type")
 	for i, row := range commentRows {
 		editUrl := ""
 		editSaveUrl := ""
@@ -159,17 +164,26 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			// TODO
 			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
 			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
-			if commentId != 0 && int32(commentId) == row.Idcomments {
+			if editCommentId != 0 && int32(editCommentId) == row.Idcomments {
 				data.IsReplyable = false
+			}
+		}
+
+		if int32(commentId) == row.Idcomments {
+			switch replyType {
+			case "full":
+				data.ReplyText = hcommon.ProcessCommentFullQuote(row.Posterusername.String, row.Text.String)
+			default:
+				data.ReplyText = hcommon.ProcessCommentQuote(row.Posterusername.String, row.Text.String)
 			}
 		}
 
 		data.Comments = append(data.Comments, &CommentPlus{
 			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       true,
+			ShowReply:                       data.CoreData.UserID != 0,
 			EditUrl:                         editUrl,
 			EditSaveUrl:                     editSaveUrl,
-			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
+			Editing:                         editCommentId != 0 && uid == row.UsersIdusers && int32(editCommentId) == row.Idcomments,
 			Offset:                          i + offset,
 			Languages:                       nil,
 			SelectedLanguageId:              0,

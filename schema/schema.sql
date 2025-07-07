@@ -293,11 +293,19 @@ CREATE TABLE `userlang` (
 CREATE TABLE `users` (
   `idusers` int(10) NOT NULL AUTO_INCREMENT,
   `email` tinytext DEFAULT NULL,
-  `passwd` tinytext DEFAULT NULL,
-  `passwd_algorithm` tinytext DEFAULT NULL,
   `username` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idusers`)
+);
+
+CREATE TABLE `passwords` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `passwd` tinytext NOT NULL,
+  `passwd_algorithm` tinytext,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `passwords_user_idx` (`users_idusers`)
 );
 
 CREATE TABLE `userstopiclevel` (

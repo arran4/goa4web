@@ -78,6 +78,9 @@ const (
 
 	// EnvSendGridKey is the API key for the SendGrid email provider.
 	EnvSendGridKey = "SENDGRID_KEY"
+	// EnvEmailWorkerInterval controls how often the email worker processes
+	// pending messages in seconds.
+	EnvEmailWorkerInterval = "EMAIL_WORKER_INTERVAL"
 	// EnvAdminEmails is a comma-separated list of administrator email addresses.
 	EnvAdminEmails = "ADMIN_EMAILS"
 	// EnvAdminNotify toggles sending administrator notification emails.

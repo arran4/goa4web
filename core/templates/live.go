@@ -21,3 +21,11 @@ func GetMainCSSData() []byte {
 	}
 	return b
 }
+
+func GetFaviconData() []byte {
+	b, err := os.ReadFile("core/templates/assets/favicon.svg")
+	if err != nil {
+		panic(err)
+	}
+	return b
+}

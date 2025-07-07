@@ -67,7 +67,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 						return
 					}
 				} else {
-					user = &db.User{Idusers: row.Idusers, Email: row.Email, Passwd: row.Passwd, PasswdAlgorithm: row.PasswdAlgorithm, Username: row.Username}
+					user = &db.User{Idusers: row.Idusers, Email: row.Email, Username: row.Username}
 					permissions, _ = queries.GetPermissionsByUserID(request.Context(), uid)
 					preference, _ = queries.GetPreferenceByUserID(request.Context(), uid)
 					languages, _ = queries.GetUserLanguages(request.Context(), uid)

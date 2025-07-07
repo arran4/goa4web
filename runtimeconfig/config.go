@@ -39,6 +39,9 @@ type RuntimeConfig struct {
 	EmailJMAPPass     string
 	EmailSendGridKey  string
 
+	// EmailWorkerInterval sets how often the email worker runs in seconds.
+	EmailWorkerInterval int
+
 	PageSizeMin     int
 	PageSizeMax     int
 	PageSizeDefault int
@@ -237,6 +240,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.EmailSMTPAuth == "" {
 		cfg.EmailSMTPAuth = "plain"
+  }
+	if cfg.EmailWorkerInterval == 0 {
+		cfg.EmailWorkerInterval = 60
 	}
 }
 

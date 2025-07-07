@@ -105,7 +105,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 
 	dlqProvider := dlq.ProviderFromConfig(cfg, dbpkg.New(dbPool))
-	startWorkers(ctx, dbPool, emailProvider, dlqProvider)
+	startWorkers(ctx, dbPool, emailProvider, dlqProvider, cfg)
 
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
@@ -127,9 +127,11 @@ func safeGo(fn func()) {
 	}()
 }
 
-func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ) {
+func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg runtimeconfig.RuntimeConfig) {
 	log.Printf("Starting email worker")
-	safeGo(func() { emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, time.Minute) })
+	safeGo(func() {
+		emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
+	})
 	log.Printf("Starting notification purger worker")
 	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
 	log.Printf("Starting event bus logger worker")

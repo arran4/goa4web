@@ -203,23 +203,21 @@ func (q *Queries) GetPermissionsByUserIdAndSectionAndSectionAll(ctx context.Cont
 }
 
 const getPermissionsByUserIdAndSectionBlogs = `-- name: GetPermissionsByUserIdAndSectionBlogs :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, u.deleted_at
+SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.username, u.deleted_at
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
 ORDER BY p.level
 `
 
 type GetPermissionsByUserIdAndSectionBlogsRow struct {
-	Idpermissions   int32
-	UsersIdusers    int32
-	Section         sql.NullString
-	Level           sql.NullString
-	Idusers         int32
-	Email           sql.NullString
-	Passwd          sql.NullString
-	PasswdAlgorithm sql.NullString
-	Username        sql.NullString
-	DeletedAt       sql.NullTime
+	Idpermissions int32
+	UsersIdusers  int32
+	Section       sql.NullString
+	Level         sql.NullString
+	Idusers       int32
+	Email         sql.NullString
+	Username      sql.NullString
+	DeletedAt     sql.NullTime
 }
 
 func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionBlogsRow, error) {
@@ -238,8 +236,6 @@ func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]
 			&i.Level,
 			&i.Idusers,
 			&i.Email,
-			&i.Passwd,
-			&i.PasswdAlgorithm,
 			&i.Username,
 			&i.DeletedAt,
 		); err != nil {
@@ -257,23 +253,21 @@ func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]
 }
 
 const getPermissionsByUserIdAndSectionNews = `-- name: GetPermissionsByUserIdAndSectionNews :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, u.deleted_at
+SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.username, u.deleted_at
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "news"
 ORDER BY p.level
 `
 
 type GetPermissionsByUserIdAndSectionNewsRow struct {
-	Idpermissions   int32
-	UsersIdusers    int32
-	Section         sql.NullString
-	Level           sql.NullString
-	Idusers         int32
-	Email           sql.NullString
-	Passwd          sql.NullString
-	PasswdAlgorithm sql.NullString
-	Username        sql.NullString
-	DeletedAt       sql.NullTime
+	Idpermissions int32
+	UsersIdusers  int32
+	Section       sql.NullString
+	Level         sql.NullString
+	Idusers       int32
+	Email         sql.NullString
+	Username      sql.NullString
+	DeletedAt     sql.NullTime
 }
 
 func (q *Queries) GetPermissionsByUserIdAndSectionNews(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionNewsRow, error) {
@@ -292,8 +286,6 @@ func (q *Queries) GetPermissionsByUserIdAndSectionNews(ctx context.Context) ([]*
 			&i.Level,
 			&i.Idusers,
 			&i.Email,
-			&i.Passwd,
-			&i.PasswdAlgorithm,
 			&i.Username,
 			&i.DeletedAt,
 		); err != nil {
@@ -311,23 +303,21 @@ func (q *Queries) GetPermissionsByUserIdAndSectionNews(ctx context.Context) ([]*
 }
 
 const getPermissionsByUserIdAndSectionWritings = `-- name: GetPermissionsByUserIdAndSectionWritings :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, u.deleted_at
+SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.idusers, u.email, u.username, u.deleted_at
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
 ORDER BY p.level
 `
 
 type GetPermissionsByUserIdAndSectionWritingsRow struct {
-	Idpermissions   int32
-	UsersIdusers    int32
-	Section         sql.NullString
-	Level           sql.NullString
-	Idusers         int32
-	Email           sql.NullString
-	Passwd          sql.NullString
-	PasswdAlgorithm sql.NullString
-	Username        sql.NullString
-	DeletedAt       sql.NullTime
+	Idpermissions int32
+	UsersIdusers  int32
+	Section       sql.NullString
+	Level         sql.NullString
+	Idusers       int32
+	Email         sql.NullString
+	Username      sql.NullString
+	DeletedAt     sql.NullTime
 }
 
 func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionWritingsRow, error) {
@@ -346,8 +336,6 @@ func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) 
 			&i.Level,
 			&i.Idusers,
 			&i.Email,
-			&i.Passwd,
-			&i.PasswdAlgorithm,
 			&i.Username,
 			&i.DeletedAt,
 		); err != nil {

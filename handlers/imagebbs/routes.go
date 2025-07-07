@@ -7,6 +7,7 @@ import (
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/runtimeconfig"
 
 	"github.com/arran4/goa4web/internal/sections"
@@ -30,4 +31,9 @@ func RegisterRoutes(r *mux.Router) {
 	ibr.HandleFunc("/", Page).Methods("GET")
 	ibr.HandleFunc("/poster/{username}", PosterPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}/", PosterPage).Methods("GET")
+}
+
+// Register registers the imagebbs router module.
+func Register() {
+	router.RegisterModule("imagebbs", nil, RegisterRoutes)
 }

@@ -35,7 +35,8 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. All table changes should be shipped with a migration script under
    this directory.
-3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. No defaults are supplied for any credentials.
+3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. For MySQL the go-sql-driver expects a DSN like `user:password@tcp(127.0.0.1:3306)/a4web`. Example:
+`db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/a4web")`. No defaults are supplied for any credentials.
 4. Download dependencies and build the application:
    ```bash
    go mod download
@@ -246,6 +247,7 @@ environment variables listed below.
 | `SESSION_SECRET_FILE` | `--session-secret-file` | No | auto | File containing the session secret. |
 | `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
+| `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Interval in seconds between email worker runs. |
 | `ADMIN_EMAILS` | n/a | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
 | `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored. |
@@ -266,7 +268,7 @@ The `DLQ_PROVIDER` setting selects how failed messages are recorded:
 Example config file:
 
 ```conf
-DB_CONN=mysql://myuser:secret@localhost:3306/a4web?parseTime=true
+DB_CONN=myuser:secret@tcp(localhost:3306)/a4web?parseTime=true
 DB_DRIVER=mysql
 EMAIL_PROVIDER=smtp
 LISTEN=:8080

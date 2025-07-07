@@ -4,6 +4,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 
+	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/sections"
 )
 
@@ -25,4 +26,9 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/show/{link}", ShowReplyPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
 	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")
 	lr.HandleFunc("/suggest", SuggestActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSuggest))
+}
+
+// Register registers the linker router module.
+func Register() {
+	router.RegisterModule("linker", nil, RegisterRoutes)
 }

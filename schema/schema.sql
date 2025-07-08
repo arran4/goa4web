@@ -253,7 +253,7 @@ CREATE TABLE `siteNews` (
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
-  `occured` datetime DEFAULT NULL,
+  `occurred` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
   KEY `siteNews_FKIndex2` (`language_idlanguage`),
@@ -383,8 +383,7 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
 -- Queue outbound emails.
 CREATE TABLE IF NOT EXISTS `pending_emails` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `to_email` text NOT NULL,
-  `subject` text NOT NULL,
+  `to_user_id` int NOT NULL,
   `body` text NOT NULL,
   `error_count` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	admin "github.com/arran4/goa4web/handlers/admin"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -29,7 +31,10 @@ func parseConfigReloadCmd(parent *configCmd, args []string) (*configReloadCmd, e
 }
 
 func (c *configReloadCmd) Run() error {
-	cfgMap := admin.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	cfgMap, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
+		return fmt.Errorf("load config file: %w", err)
+	}
 	admin.Srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
 	if c.rootCmd.Verbosity > 0 {
 		fmt.Println("configuration reloaded")

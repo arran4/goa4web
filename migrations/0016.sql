@@ -1,3 +1,9 @@
+-- Replace to_email with to_user_id referencing users
+ALTER TABLE pending_emails
+    DROP COLUMN to_email,
+    ADD COLUMN to_user_id INT NOT NULL DEFAULT 0;
+
+-- Update schema version
 -- Remove obsolete columns from subscriptions table
 -- Remove obsolete item_type and target_id columns from subscriptions
 ALTER TABLE subscriptions

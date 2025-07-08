@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"log"
+	"net/mail"
 
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -11,8 +12,8 @@ import (
 // Provider just logs emails for development purposes.
 type Provider struct{}
 
-func (Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
-	log.Printf("sending mail to %s subject %q\n%s", to, subject, rawEmailMessage)
+func (Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
+	log.Printf("sending mail to %s\n%s", to.String(), rawEmailMessage)
 	return nil
 }
 

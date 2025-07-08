@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/mail"
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -84,10 +86,10 @@ func TestNotifyChange(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("a@b.com", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
 	rec := &mockemail.Provider{}
-	if err := emailutil.NotifyChange(ctx, rec, "a@b.com", "http://host", "update", nil); err != nil {
+	if err := emailutil.NotifyChange(ctx, rec, 2, "a@b.com", "http://host", "update", nil); err != nil {
 		t.Fatalf("notify error: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -97,7 +99,7 @@ func TestNotifyChange(t *testing.T) {
 
 func TestNotifyChangeErrors(t *testing.T) {
 	rec := &mockemail.Provider{}
-	if err := emailutil.NotifyChange(context.Background(), rec, "", "p", "update", nil); err == nil {
+	if err := emailutil.NotifyChange(context.Background(), rec, 0, "", "p", "update", nil); err == nil {
 		t.Fatal("expected error for empty email")
 	}
 }
@@ -110,9 +112,9 @@ func TestInsertPendingEmail(t *testing.T) {
 	defer db.Close()
 
 	q := dbpkg.New(db)
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("t@test", "sub", "body").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), "body").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToEmail: "t@test", Subject: "sub", Body: "body"}); err != nil {
+	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToUserID: 1, Body: "body"}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -127,14 +129,16 @@ func TestEmailQueueWorker(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "error_count"}).AddRow(1, "a@test", "s", "b", 0)
-	mock.ExpectQuery("SELECT id, to_email").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count"}).AddRow(1, 2, "b", 0)
+	mock.ExpectQuery("SELECT id, to_user_id").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT idusers, email, username FROM users WHERE idusers = ?").WithArgs(int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "e", "bob"))
 	mock.ExpectExec("UPDATE pending_emails SET sent_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &mockemail.Provider{}
 	emailutil.ProcessPendingEmail(context.Background(), q, rec, nil)
 
-	if len(rec.Messages) != 1 || rec.Messages[0].To != "a@test" {
+	if len(rec.Messages) != 1 || rec.Messages[0].To.Address != "e" {
 		t.Fatalf("got %#v", rec.Messages)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -144,7 +148,7 @@ func TestEmailQueueWorker(t *testing.T) {
 
 type errProvider struct{}
 
-func (errProvider) Send(context.Context, string, string, []byte) error {
+func (errProvider) Send(context.Context, mail.Address, []byte) error {
 	return fmt.Errorf("fail")
 }
 
@@ -155,8 +159,10 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "error_count"}).AddRow(1, "a@test", "s", "b", 4)
-	mock.ExpectQuery("SELECT id, to_email").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count"}).AddRow(1, 2, "b", 4)
+	mock.ExpectQuery("SELECT id, to_user_id").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT idusers, email, username FROM users WHERE idusers = ?").WithArgs(int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "a@test", "a"))
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT error_count FROM pending_emails WHERE id = ?").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"error_count"}).AddRow(5))
 	mock.ExpectExec("DELETE FROM pending_emails WHERE id = ?").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))

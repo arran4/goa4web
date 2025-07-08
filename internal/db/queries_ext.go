@@ -108,19 +108,18 @@ func (q *Queries) UpdatePreference(ctx context.Context, arg UpdatePreferencePara
 
 // InsertPendingEmail adds an email to the sending queue.
 type InsertPendingEmailParams struct {
-	ToEmail string
-	Subject string
-	Body    string
+	ToUserID int32
+	Body     string
 }
 
 func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
-	_, err := q.db.ExecContext(ctx, "INSERT INTO pending_emails (to_email, subject, body) VALUES (?, ?, ?)", arg.ToEmail, arg.Subject, arg.Body)
+	_, err := q.db.ExecContext(ctx, "INSERT INTO pending_emails (to_user_id, body) VALUES (?, ?)", arg.ToUserID, arg.Body)
 	return err
 }
 
 // FetchPendingEmails returns unsent queued emails up to the provided limit.
 func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*PendingEmail, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, error_count FROM pending_emails WHERE sent_at IS NULL ORDER BY id LIMIT ?", limit)
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_user_id, body, error_count FROM pending_emails WHERE sent_at IS NULL ORDER BY id LIMIT ?", limit)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +127,7 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Pendi
 	var items []*PendingEmail
 	for rows.Next() {
 		var p PendingEmail
-		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.ErrorCount); err != nil {
+		if err := rows.Scan(&p.ID, &p.ToUserID, &p.Body, &p.ErrorCount); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -144,7 +143,7 @@ func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
 
 // ListUnsentPendingEmails returns all queued emails that have not been sent yet.
 func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, error_count, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_user_id, body, error_count, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +151,7 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 	var items []*PendingEmail
 	for rows.Next() {
 		var p PendingEmail
-		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.ErrorCount, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.ToUserID, &p.Body, &p.ErrorCount, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -162,9 +161,9 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 
 // GetPendingEmailByID returns a single pending email.
 func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*PendingEmail, error) {
-	row := q.db.QueryRowContext(ctx, "SELECT id, to_email, subject, body, error_count FROM pending_emails WHERE id = ?", id)
+	row := q.db.QueryRowContext(ctx, "SELECT id, to_user_id, body, error_count FROM pending_emails WHERE id = ?", id)
 	var p PendingEmail
-	err := row.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.ErrorCount)
+	err := row.Scan(&p.ID, &p.ToUserID, &p.Body, &p.ErrorCount)
 	if err != nil {
 		return nil, err
 	}
@@ -361,6 +360,34 @@ func (q *Queries) AllUserIDs(ctx context.Context) ([]int32, error) {
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+// UsersByID returns a map of user ID to User for the provided IDs.
+func (q *Queries) UsersByID(ctx context.Context, ids []int32) (map[int32]*User, error) {
+	if len(ids) == 0 {
+		return map[int32]*User{}, nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	query := fmt.Sprintf("SELECT idusers, email, username FROM users WHERE idusers IN (%s)", strings.Join(placeholders, ","))
+	rows, err := q.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	users := make(map[int32]*User)
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
+			return nil, err
+		}
+		users[u.Idusers] = &u
+	}
+	return users, rows.Err()
 }
 
 // BloggerCountRow includes a username with their blog post count.
@@ -679,7 +706,7 @@ func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*M
 		set    func(*MonthlyUsageRow, int64)
 	}{
 		{"blogs", "written", func(r *MonthlyUsageRow, n int64) { r.Blogs = n }},
-		{"siteNews", "occured", func(r *MonthlyUsageRow, n int64) { r.News = n }},
+		{"siteNews", "occurred", func(r *MonthlyUsageRow, n int64) { r.News = n }},
 		{"comments", "written", func(r *MonthlyUsageRow, n int64) { r.Comments = n }},
 		{"imagepost", "posted", func(r *MonthlyUsageRow, n int64) { r.Images = n }},
 		{"linker", "listed", func(r *MonthlyUsageRow, n int64) { r.Links = n }},
@@ -727,7 +754,7 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 		set    func(*UserMonthlyUsageRow, int64)
 	}{
 		{"blogs", "written", func(r *UserMonthlyUsageRow, n int64) { r.Blogs = n }},
-		{"siteNews", "occured", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
+		{"siteNews", "occurred", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
 		{"comments", "written", func(r *UserMonthlyUsageRow, n int64) { r.Comments = n }},
 		{"imagepost", "posted", func(r *UserMonthlyUsageRow, n int64) { r.Images = n }},
 		{"linker", "listed", func(r *UserMonthlyUsageRow, n int64) { r.Links = n }},

@@ -34,7 +34,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 
 	comment := r.Context().Value(common.KeyComment).(*db.GetCommentByIdForUserRow)
 
-	thread, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	thread, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: comment.ForumthreadIdforumthread,
 	})
@@ -42,7 +42,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

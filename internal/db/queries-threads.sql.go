@@ -30,7 +30,7 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 	return forumtopic_idforumtopic, err
 }
 
-const getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions = `-- name: GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions :one
+const getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions = `-- name: GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions :one
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -41,12 +41,12 @@ WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.le
 ORDER BY t.lastaddition DESC
 `
 
-type GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams struct {
+type GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams struct {
 	UsersIdusers  int32
 	Idforumthread int32
 }
 
-type GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow struct {
+type GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow struct {
 	Idforumthread          int32
 	Firstpost              int32
 	Lastposter             int32
@@ -59,9 +59,9 @@ type GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow struct {
 	Level                  sql.NullInt32
 }
 
-func (q *Queries) GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(ctx context.Context, arg GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams) (*GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow, error) {
-	row := q.db.QueryRowContext(ctx, getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions, arg.UsersIdusers, arg.Idforumthread)
-	var i GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+func (q *Queries) GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(ctx context.Context, arg GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams) (*GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow, error) {
+	row := q.db.QueryRowContext(ctx, getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions, arg.UsersIdusers, arg.Idforumthread)
+	var i GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
 	err := row.Scan(
 		&i.Idforumthread,
 		&i.Firstpost,

@@ -253,7 +253,7 @@ CREATE TABLE `siteNews` (
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
-  `occured` datetime DEFAULT NULL,
+  `occurred` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
   KEY `siteNews_FKIndex2` (`language_idlanguage`),

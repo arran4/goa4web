@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      full_history:
+        description: 'Scan entire git history'
+        required: false
+        default: 'false'
 
 jobs:
   gitleaks:
@@ -14,6 +20,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run gitleaks
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.full_history != 'true'
         uses: gitleaks/gitleaks-action@v2
         with:
           args: "--no-git --redact"
+      - name: Run gitleaks on full history
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.full_history == 'true'
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: "--redact"

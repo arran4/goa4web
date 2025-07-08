@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/mail"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
@@ -23,7 +24,7 @@ type Provider struct {
 	From      string
 }
 
-func (j Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
+func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	var msg bytes.Buffer
 	msg.Write(rawEmailMessage)
 

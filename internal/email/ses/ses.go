@@ -3,6 +3,7 @@ package ses
 import (
 	"context"
 	"log"
+	"net/mail"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -19,9 +20,9 @@ type Provider struct {
 	From   string
 }
 
-func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
+func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	input := &ses.SendRawEmailInput{
-		Destinations: []*string{aws.String(to)},
+		Destinations: []*string{aws.String(to.Address)},
 		Source:       aws.String(s.From),
 		RawMessage:   &ses.RawMessage{Data: rawEmailMessage},
 	}

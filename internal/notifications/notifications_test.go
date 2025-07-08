@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http/httptest"
+	"net/mail"
 	"regexp"
 	"testing"
 	"time"
@@ -58,8 +59,8 @@ func TestNotificationsFeed(t *testing.T) {
 
 type dummyProvider struct{ to string }
 
-func (r *dummyProvider) Send(ctx context.Context, to, subj string, rawEmailMessage []byte) error {
-	r.to = to
+func (r *dummyProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
+	r.to = to.Address
 	return nil
 }
 
@@ -86,8 +87,8 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 		WillReturnRows(rows)
 	rec := &dummyProvider{}
 	emailutil.NotifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
-	if rec.to != "bob" {
-		t.Fatalf("expected mail to bob got %s", rec.to)
+	if rec.to != "e" {
+		t.Fatalf("expected mail to e got %s", rec.to)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

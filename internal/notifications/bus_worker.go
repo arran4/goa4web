@@ -16,6 +16,7 @@ import (
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
 	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"time"
 )
 
 func recordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) {
@@ -169,7 +170,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	if evt.Task == hcommon.TaskTestMail {
 		user, err := n.Queries.GetUserById(ctx, evt.UserID)
 		if err == nil && user.Email.Valid {
-			if err := emailutil.NotifyChange(ctx, n.EmailProvider, user.Email.String, evt.Path, evt.Task, evt.Item); err != nil {
+			if err := emailutil.NotifyChange(ctx, n.EmailProvider, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Item); err != nil {
 				recordAndNotify(ctx, q, n, fmt.Sprintf("notify change: %v", err))
 			}
 			_ = n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
@@ -208,9 +209,10 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 					subs[id][method] = func(c context.Context) error {
 						user, err := n.Queries.GetUserById(c, uid)
 						if err != nil || !user.Email.Valid {
+							notifyMissingEmail(c, n.Queries, uid)
 							return err
 						}
-						return emailutil.NotifyChange(c, n.EmailProvider, user.Email.String, evt.Path, evt.Task, evt.Item)
+						return emailutil.NotifyChange(c, n.EmailProvider, uid, user.Email.String, evt.Path, evt.Task, evt.Item)
 					}
 				} else if method == "internal" && msg != "" {
 					uid := id
@@ -250,4 +252,15 @@ func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pat
 	if err := q.InsertSubscription(ctx, dbpkg.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {
 		log.Printf("insert subscription: %v", err)
 	}
+}
+
+func notifyMissingEmail(ctx context.Context, q *dbpkg.Queries, userID int32) {
+	if q == nil || userID == 0 {
+		return
+	}
+	last, err := q.LastNotificationByMessage(ctx, dbpkg.LastNotificationByMessageParams{UsersIdusers: userID, Message: "missing email address"})
+	if err == nil && time.Since(last.CreatedAt) < 7*24*time.Hour {
+		return
+	}
+	_ = q.InsertNotification(ctx, dbpkg.InsertNotificationParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}})
 }

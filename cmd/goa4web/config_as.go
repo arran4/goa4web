@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -34,51 +31,14 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 	return c, nil
 }
 
-func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[string]string, error) {
-	m := make(map[string]string)
-	for _, o := range runtimeconfig.StringOptions {
-		m[o.Env] = *o.Target(&cfg)
-	}
-	for _, o := range runtimeconfig.IntOptions {
-		m[o.Env] = strconv.Itoa(*o.Target(&cfg))
-	}
-	for _, o := range runtimeconfig.BoolOptions {
-		m[o.Env] = strconv.FormatBool(*o.Target(&cfg))
-	}
-
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
-	if err != nil {
-		return nil, fmt.Errorf("load config file: %w", err)
-	}
-
-	first := func(vals ...string) string {
-		for _, v := range vals {
-			if v != "" {
-				return v
-			}
-		}
-		return ""
-	}
-
-	m[config.EnvConfigFile] = cfgPath
-	m[config.EnvSessionSecret] = first("", os.Getenv(config.EnvSessionSecret))
-	sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
-	if sessionFile == "" {
-		sessionFile = runtimeconfig.DefaultSessionSecretPath()
-	}
-	m[config.EnvSessionSecretFile] = sessionFile
-
-	return m, nil
-}
-
 func defaultMap() map[string]string {
 	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	m, _ := envMapFromConfig(def, "")
+	m, _ := runtimeconfig.ToEnvMap(def, "")
 	return m
 }
 
 func (c *configAsCmd) asEnvFile() error {
-	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -111,7 +71,7 @@ func (c *configAsCmd) asEnvFile() error {
 }
 
 func (c *configAsCmd) asEnv() error {
-	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -144,7 +104,7 @@ func (c *configAsCmd) asEnv() error {
 }
 
 func (c *configAsCmd) asJSON() error {
-	m, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	m, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -157,7 +117,7 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}

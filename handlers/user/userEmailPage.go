@@ -132,7 +132,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		common.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	if err := emailutil.NotifyChange(r.Context(), provider, user.Email.String, pageURL, "update", nil); err != nil {
+	if err := emailutil.NotifyChange(r.Context(), provider, user.Idusers, user.Email.String, pageURL, "update", nil); err != nil {
 		log.Printf("notifyChange Error: %s", err)
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

@@ -65,6 +65,11 @@ type RuntimeConfig struct {
 
 	DLQProvider string
 	DLQFile     string
+
+	// SessionSecret holds the session secret used to encrypt cookies.
+	SessionSecret string
+	// SessionSecretFile specifies the path to the session secret file.
+	SessionSecretFile string
 }
 
 // AppRuntimeConfig stores the current application configuration.

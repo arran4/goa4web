@@ -11,13 +11,15 @@ on:
 
 jobs:
   generate:
-    runs-on: self-hosted
-    container:
-      image: ghcr.io/openai/codex-universal:latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
       - name: Install sqlc
         run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
       - name: Generate code

@@ -110,7 +110,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -123,7 +123,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

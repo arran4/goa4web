@@ -55,3 +55,20 @@ func (q *Queries) PurgeReadNotifications(ctx context.Context) error {
 		"DELETE FROM notifications WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR)")
 	return err
 }
+
+type LastNotificationByMessageParams struct {
+	UsersIdusers int32
+	Message      string
+}
+
+func (q *Queries) LastNotificationByMessage(ctx context.Context, arg LastNotificationByMessageParams) (*Notification, error) {
+	row := q.db.QueryRowContext(ctx,
+		"SELECT id, users_idusers, link, message, created_at, read_at FROM notifications WHERE users_idusers = ? AND message = ? ORDER BY id DESC LIMIT 1",
+		arg.UsersIdusers, arg.Message)
+	var n Notification
+	err := row.Scan(&n.ID, &n.UsersIdusers, &n.Link, &n.Message, &n.CreatedAt, &n.ReadAt)
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
+}

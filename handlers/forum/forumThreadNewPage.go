@@ -32,7 +32,7 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*CoreData),
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())

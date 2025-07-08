@@ -130,7 +130,7 @@ type DeactivatedWriting struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -278,8 +278,7 @@ type Password struct {
 
 type PendingEmail struct {
 	ID         int32
-	ToEmail    string
-	Subject    string
+	ToUserID   int32
 	Body       string
 	ErrorCount int32
 	CreatedAt  time.Time
@@ -335,7 +334,7 @@ type Sitenews struct {
 	LanguageIdlanguage       int32
 	UsersIdusers             int32
 	News                     sql.NullString
-	Occured                  sql.NullTime
+	Occurred                 sql.NullTime
 }
 
 type Sitenewssearch struct {
@@ -376,8 +375,8 @@ type User struct {
 	DeletedAt sql.NullTime
 }
 
-type Userlang struct {
-	Iduserlang         int32
+type UserLanguage struct {
+	IduserLanguage     int32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 }
@@ -398,10 +397,17 @@ type Writing struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
+}
+
+type Writingapproveduser struct {
+	WritingIdwriting int32
+	UsersIdusers     int32
+	Readdoc          sql.NullBool
+	Editdoc          sql.NullBool
 }
 
 type Writingcategory struct {
@@ -414,13 +420,6 @@ type Writingcategory struct {
 type Writingsearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingIdwriting               int32
-}
-
-type Writtingapproveduser struct {
-	WritingIdwriting int32
-	UsersIdusers     int32
-	Readdoc          sql.NullBool
-	Editdoc          sql.NullBool
 }
 
 type _1OldForumthread struct {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 )
 
@@ -54,7 +55,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 		EditUrl:            fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 	}
 

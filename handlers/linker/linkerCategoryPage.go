@@ -18,6 +18,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
 		Offset      int
+		HasOffset   bool
 		CatId       int
 		CommentOnId int
 		ReplyToId   int
@@ -29,6 +30,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	data.HasOffset = data.Offset != 0
 	vars := mux.Vars(r)
 	data.CatId, _ = strconv.Atoi(vars["category"])
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))

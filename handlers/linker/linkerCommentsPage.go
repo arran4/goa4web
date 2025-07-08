@@ -45,7 +45,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		Text               string
 		CanEdit            bool
 		UserId             int32
-		Thread             *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread             *db.GetThreadLastPosterAndPermsRow
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -56,7 +56,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
 		Offset:             offset,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
@@ -100,7 +100,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
 		Idforumthread: link.ForumthreadIdforumthread,
 	})
@@ -108,7 +108,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
@@ -244,7 +244,7 @@ func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -257,7 +257,7 @@ func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

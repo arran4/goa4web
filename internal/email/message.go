@@ -21,13 +21,6 @@ func SetDefaultFromName(addr string) {
 	}
 }
 
-func formatAddress(a mail.Address) string {
-	if a.Name != "" {
-		return mime.QEncoding.Encode("utf-8", a.Name) + " <" + a.Address + ">"
-	}
-	return a.Address
-}
-
 // BuildMessage constructs a MIME email message with optional HTML content.
 func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]byte, error) {
 	if from.Name == "" {
@@ -35,8 +28,8 @@ func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]
 	}
 	var msg bytes.Buffer
 	hdr := textproto.MIMEHeader{}
-	hdr.Set("From", formatAddress(from))
-	hdr.Set("To", formatAddress(to))
+	hdr.Set("From", from.String())
+	hdr.Set("To", to.String())
 	hdr.Set("Subject", mime.QEncoding.Encode("utf-8", subject))
 	hdr.Set("MIME-Version", "1.0")
 

@@ -36,7 +36,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
@@ -157,7 +157,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -170,7 +170,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}

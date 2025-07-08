@@ -82,7 +82,7 @@ func (c *userActivateCmd) Run() error {
 	for _, w := range rowsW {
 		if err := qtx.RestoreWriting(ctx, dbpkg.RestoreWritingParams{
 			Title:     w.Title,
-			Writting:  w.Writting,
+			Writing:   w.Writing,
 			Abstract:  w.Abstract,
 			Private:   w.Private,
 			Idwriting: w.Idwriting,

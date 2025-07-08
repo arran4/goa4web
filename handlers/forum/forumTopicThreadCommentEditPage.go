@@ -20,7 +20,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("replytext")
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
@@ -47,7 +47,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)

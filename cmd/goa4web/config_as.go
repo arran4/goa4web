@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -69,8 +67,14 @@ func defaultMap() map[string]string {
 	return m
 }
 
+func defaultMap() map[string]string {
+	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	m, _ := runtimeconfig.ToEnvMap(def, "")
+	return m
+}
+
 func (c *configAsCmd) asEnvFile() error {
-	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -103,7 +107,7 @@ func (c *configAsCmd) asEnvFile() error {
 }
 
 func (c *configAsCmd) asEnv() error {
-	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -136,7 +140,7 @@ func (c *configAsCmd) asEnv() error {
 }
 
 func (c *configAsCmd) asJSON() error {
-	m, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	m, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -149,7 +153,7 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-	current, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}

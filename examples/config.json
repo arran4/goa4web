@@ -15,7 +15,7 @@
   "EMAIL_PROVIDER": "",
   "EMAIL_WORKER_INTERVAL": "60",
   "FEEDS_ENABLED": "true",
-  "HOSTNAME": "bbd711bce6ea",
+  "HOSTNAME": "http://localhost:8080",
   "IMAGE_MAX_BYTES": "5242880",
   "IMAGE_UPLOAD_DIR": "uploads/images",
   "JMAP_ACCOUNT": "",

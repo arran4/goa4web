@@ -253,7 +253,7 @@ CREATE TABLE `siteNews` (
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
-  `occured` datetime DEFAULT NULL,
+  `occurred` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
   KEY `siteNews_FKIndex2` (`language_idlanguage`),
@@ -281,11 +281,11 @@ CREATE TABLE `topicrestrictions` (
   KEY `threadrestrictions_FKIndex1` (`forumtopic_idforumtopic`)
 );
 
-CREATE TABLE `userlang` (
-  `iduserlang` int(10) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `user_language` (
+  `iduser_language` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`iduserlang`),
+  PRIMARY KEY (`iduser_language`),
   KEY `userpref_FKIndex1` (`language_idlanguage`),
   KEY `userpref_FKIndex2` (`users_idusers`)
 );
@@ -327,7 +327,7 @@ CREATE TABLE `writing` (
   `writingCategory_idwritingCategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `published` datetime DEFAULT NULL,
-  `writting` longtext DEFAULT NULL,
+  `writing` longtext DEFAULT NULL,
   `abstract` mediumtext DEFAULT NULL,
   `private` tinyint(1) DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
@@ -355,7 +355,7 @@ CREATE TABLE `writingSearch` (
   KEY `searchwordlist_has_writing_FKIndex2` (`writing_idwriting`)
 );
 
-CREATE TABLE `writtingApprovedUsers` (
+CREATE TABLE `writingApprovedUsers` (
   `writing_idwriting` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `readdoc` tinyint(1) DEFAULT NULL,
@@ -383,8 +383,7 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
 -- Queue outbound emails.
 CREATE TABLE IF NOT EXISTS `pending_emails` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `to_email` text NOT NULL,
-  `subject` text NOT NULL,
+  `to_user_id` int NOT NULL,
   `body` text NOT NULL,
   `error_count` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -500,7 +499,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_writings` (
   `writingCategory_idwritingCategory` int NOT NULL,
   `title` tinytext,
   `published` datetime,
-  `writting` longtext,
+  `writing` longtext,
   `abstract` mediumtext,
   `private` tinyint(1) DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,

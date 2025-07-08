@@ -31,7 +31,7 @@ func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
 	for _, row := range rows {
 		desc := row.Abstract.String
 		if desc == "" {
-			desc = row.Writting.String
+			desc = row.Writing.String
 		}
 		conv := a4code2html.NewA4Code2HTML()
 		conv.CodeType = a4code2html.CTTagStrip

@@ -49,7 +49,7 @@ SET lastaddition = (
 )
 WHERE idforumthread = ?;
 
--- name: GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions :one
+-- name: GetThreadLastPosterAndPerms :one
 SELECT th.*, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic

@@ -10,14 +10,16 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: self-hosted
-    container:
-      image: ghcr.io/openai/codex-universal:latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:

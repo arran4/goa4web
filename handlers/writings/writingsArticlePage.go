@@ -14,6 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
 )
@@ -38,7 +39,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		UserId              int32
 		Languages           []*db.Language
 		SelectedLanguageId  int
-		Thread              *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread              *db.GetThreadLastPosterAndPermsRow
 		Comments            []*CommentPlus
 		IsReplyable         bool
 		IsAdmin             bool
@@ -55,7 +56,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 		IsReplyable:        true,
 	}
 
@@ -151,7 +152,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
 		Idforumthread: writing.ForumthreadIdforumthread,
 	})
@@ -159,7 +160,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

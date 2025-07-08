@@ -26,7 +26,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
@@ -50,7 +50,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -63,7 +63,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Username.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}
@@ -106,7 +106,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)

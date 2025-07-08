@@ -37,7 +37,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		Comments           []*CommentPlus
 		BoardId            int
 		ImagePost          *db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
-		Thread             *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread             *db.GetThreadLastPosterAndPermsRow
 		Offset             int
 		IsReplyable        bool
 	}
@@ -73,7 +73,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(thid),
 	})
@@ -81,7 +81,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
@@ -171,7 +171,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	var pthid int32 = post.ForumthreadIdforumthread
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
-		String: ImagebbsTopicName,
+		String: ImageBBSTopicName,
 		Valid:  true,
 	})
 	var ptid int32
@@ -179,11 +179,11 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
-				String: ImagebbsTopicName,
+				String: ImageBBSTopicName,
 				Valid:  true,
 			},
 			Description: sql.NullString{
-				String: ImagebbsTopicDescription,
+				String: ImageBBSTopicDescription,
 				Valid:  true,
 			},
 		})

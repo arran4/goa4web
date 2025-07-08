@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
+	"net/mail"
 	"strings"
 	"text/template"
 
@@ -104,7 +105,8 @@ func (c *configTestEmailCmd) Run() error {
 	if len(emails) == 0 {
 		return fmt.Errorf("no administrator emails configured")
 	}
-	for _, addr := range emails {
+	for _, addrStr := range emails {
+		toAddr := mail.Address{Address: addrStr}
 		var buf strings.Builder
 		t, err := template.New("txt").Parse(coretemplates.TestEmailText)
 		if err != nil {
@@ -122,13 +124,17 @@ func (c *configTestEmailCmd) Run() error {
 		if err := ht.Execute(&buf, nil); err != nil {
 			return fmt.Errorf("exec html template: %w", err)
 		}
-		from := email.ParseAddress(c.rootCmd.cfg.EmailFrom)
-		to := email.ParseAddress(addr)
-		msg, err := email.BuildMessage(from, to, "Goa4Web Test Email", textBody, buf.String())
+		var fromAddr mail.Address
+		if f, err := mail.ParseAddress(c.rootCmd.cfg.EmailFrom); err == nil {
+			fromAddr = *f
+		} else {
+			fromAddr = mail.Address{Address: c.rootCmd.cfg.EmailFrom}
+		}
+		msg, err := email.BuildMessage(fromAddr, toAddr, "Goa4Web Test Email", textBody, buf.String())
 		if err != nil {
 			return fmt.Errorf("build message: %w", err)
 		}
-		if err := provider.Send(ctx, to.Address, "Goa4Web Test Email", msg); err != nil {
+		if err := provider.Send(ctx, toAddr, msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}

@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +33,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
-		Thread              *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread              *db.GetThreadLastPosterAndPermsRow
 		Comments            []*CommentPlus
 		Offset              int
 		IsReplyable         bool
@@ -49,7 +50,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())
@@ -59,7 +60,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	session, ok := core.GetSessionOrFail(w, r)

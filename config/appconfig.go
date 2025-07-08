@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/arran4/goa4web/core"
 )
 
 // ErrConfigFileNotFound is returned when the requested configuration file is missing.
@@ -21,7 +23,7 @@ var ErrConfigFileNotFound = errors.New("config file not found")
 // other extension.
 // LoadAppConfigFile reads CONFIG_FILE style key=value pairs and returns them as a map.
 // Missing files return an empty map. Unknown keys are ignored.
-func LoadAppConfigFile(fs FileSystem, path string) (map[string]string, error) {
+func LoadAppConfigFile(fs core.FileSystem, path string) (map[string]string, error) {
 	values := make(map[string]string)
 	if path == "" {
 		log.Printf("config file not specified")
@@ -53,7 +55,7 @@ func LoadAppConfigFile(fs FileSystem, path string) (map[string]string, error) {
 
 // UpdateConfigKey writes the given key/value pair to the config file.
 // Existing keys are replaced, new keys appended. Empty values remove the key.
-func UpdateConfigKey(fs FileSystem, path, key, value string) error {
+func UpdateConfigKey(fs core.FileSystem, path, key, value string) error {
 	if path == "" {
 		return nil
 	}
@@ -81,7 +83,7 @@ func UpdateConfigKey(fs FileSystem, path, key, value string) error {
 // AddMissingJSONOptions ensures all keys from values exist in the JSON file at
 // path. Missing keys are added with their values. The file is created when it
 // does not exist.
-func AddMissingJSONOptions(fs FileSystem, path string, values map[string]string) error {
+func AddMissingJSONOptions(fs core.FileSystem, path string, values map[string]string) error {
 	if path == "" {
 		return nil
 	}

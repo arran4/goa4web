@@ -142,7 +142,7 @@ func (q *Queries) ArchiveUser(ctx context.Context, idusers int32) error {
 }
 
 const archiveWriting = `-- name: ArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writting, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
@@ -154,7 +154,7 @@ type ArchiveWritingParams struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 }
@@ -168,7 +168,7 @@ func (q *Queries) ArchiveWriting(ctx context.Context, arg ArchiveWritingParams) 
 		arg.WritingcategoryIdwritingcategory,
 		arg.Title,
 		arg.Published,
-		arg.Writting,
+		arg.Writing,
 		arg.Abstract,
 		arg.Private,
 	)
@@ -364,14 +364,14 @@ func (q *Queries) PendingDeactivatedLinks(ctx context.Context, usersIdusers int3
 }
 
 const pendingDeactivatedWritings = `-- name: PendingDeactivatedWritings :many
-SELECT idwriting, title, writting, abstract, private FROM deactivated_writings
+SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
 WHERE users_idusers = ? AND restored_at IS NULL
 `
 
 type PendingDeactivatedWritingsRow struct {
 	Idwriting int32
 	Title     sql.NullString
-	Writting  sql.NullString
+	Writing   sql.NullString
 	Abstract  sql.NullString
 	Private   sql.NullBool
 }
@@ -388,7 +388,7 @@ func (q *Queries) PendingDeactivatedWritings(ctx context.Context, usersIdusers i
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.Title,
-			&i.Writting,
+			&i.Writing,
 			&i.Abstract,
 			&i.Private,
 		); err != nil {
@@ -487,12 +487,12 @@ func (q *Queries) RestoreUser(ctx context.Context, idusers int32) error {
 }
 
 const restoreWriting = `-- name: RestoreWriting :exec
-UPDATE writing SET title = ?, writting = ?, abstract = ?, private = ?, deleted_at = NULL WHERE idwriting = ?
+UPDATE writing SET title = ?, writing = ?, abstract = ?, private = ?, deleted_at = NULL WHERE idwriting = ?
 `
 
 type RestoreWritingParams struct {
 	Title     sql.NullString
-	Writting  sql.NullString
+	Writing   sql.NullString
 	Abstract  sql.NullString
 	Private   sql.NullBool
 	Idwriting int32
@@ -501,7 +501,7 @@ type RestoreWritingParams struct {
 func (q *Queries) RestoreWriting(ctx context.Context, arg RestoreWritingParams) error {
 	_, err := q.db.ExecContext(ctx, restoreWriting,
 		arg.Title,
-		arg.Writting,
+		arg.Writing,
 		arg.Abstract,
 		arg.Private,
 		arg.Idwriting,
@@ -576,12 +576,12 @@ func (q *Queries) ScrubUser(ctx context.Context, arg ScrubUserParams) error {
 }
 
 const scrubWriting = `-- name: ScrubWriting :exec
-UPDATE writing SET title = ?, writting = ?, abstract = ?, deleted_at = NOW() WHERE idwriting = ?
+UPDATE writing SET title = ?, writing = ?, abstract = ?, deleted_at = NOW() WHERE idwriting = ?
 `
 
 type ScrubWritingParams struct {
 	Title     sql.NullString
-	Writting  sql.NullString
+	Writing   sql.NullString
 	Abstract  sql.NullString
 	Idwriting int32
 }
@@ -589,7 +589,7 @@ type ScrubWritingParams struct {
 func (q *Queries) ScrubWriting(ctx context.Context, arg ScrubWritingParams) error {
 	_, err := q.db.ExecContext(ctx, scrubWriting,
 		arg.Title,
-		arg.Writting,
+		arg.Writing,
 		arg.Abstract,
 		arg.Idwriting,
 	)

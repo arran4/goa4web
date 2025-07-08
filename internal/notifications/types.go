@@ -6,7 +6,7 @@ import "github.com/arran4/goa4web/internal/db"
 type ForumReplyInfo struct {
 	TopicTitle string
 	ThreadID   int32
-	Thread     *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+	Thread     *db.GetThreadLastPosterAndPermsRow
 }
 
 // ThreadInfo represents a newly created forum thread.

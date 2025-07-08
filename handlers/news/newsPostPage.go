@@ -60,7 +60,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		Offset             int
 		IsReplying         bool
 		IsReplyable        bool
-		Thread             *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread             *db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
 		ReplyText          string
 	}
 
@@ -103,7 +103,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(post.ForumthreadIdforumthread),
 	})
@@ -111,7 +111,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

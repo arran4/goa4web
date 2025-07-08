@@ -33,7 +33,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
-		Thread              *db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
+		Thread              *db.GetThreadLastPosterAndPermsRow
 		Comments            []*CommentPlus
 		Offset              int
 		IsReplyable         bool
@@ -60,7 +60,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	session, ok := core.GetSessionOrFail(w, r)

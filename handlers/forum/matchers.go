@@ -39,7 +39,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			uid, _ = session.Values["UID"].(int32)
 		}
 
-		threadRow, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
+		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 			UsersIdusers:  uid,
 			Idforumthread: int32(threadID),
 		})

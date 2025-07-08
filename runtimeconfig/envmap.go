@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 )
 
 // ToEnvMap converts cfg into a map keyed by environment variable name.
@@ -24,7 +25,7 @@ func ToEnvMap(cfg RuntimeConfig, cfgPath string) (map[string]string, error) {
 		m[o.Env] = strconv.FormatBool(*o.Target(&cfg))
 	}
 
-	fileVals, err := config.LoadAppConfigFile(config.OSFS{}, cfgPath)
+	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("load config file: %w", err)
 	}

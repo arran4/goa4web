@@ -24,7 +24,7 @@ func TestProvider(t *testing.T) {
 		t.Fatalf("messages len=%d", len(p.Messages))
 	}
 	rec := p.Messages[0]
-	if rec.To != to.Address || rec.Subject != "sub" {
+	if rec.To != to.String() || rec.Subject != "sub" {
 		t.Fatalf("unexpected message: %#v", rec)
 	}
 	if rec.Text != "body" || rec.HTML != "html" {

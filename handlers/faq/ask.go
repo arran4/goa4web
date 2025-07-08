@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func AskPage(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func AskPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries),
+		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())

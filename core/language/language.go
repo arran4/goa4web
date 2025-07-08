@@ -8,7 +8,6 @@ import (
 	"unicode"
 
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // validateLanguageName ensures the provided language name contains only
@@ -38,11 +37,11 @@ func ValidateDefaultLanguage(ctx context.Context, q *db.Queries, name string) er
 }
 
 // ResolveDefaultLanguageID converts the configured language name to its ID.
-func ResolveDefaultLanguageID(ctx context.Context, q *db.Queries) int32 {
-	if runtimeconfig.AppRuntimeConfig.DefaultLanguage == "" {
+func ResolveDefaultLanguageID(ctx context.Context, q *db.Queries, name string) int32 {
+	if name == "" {
 		return 0
 	}
-	id, err := q.GetLanguageIDByName(ctx, sql.NullString{String: runtimeconfig.AppRuntimeConfig.DefaultLanguage, Valid: true})
+	id, err := q.GetLanguageIDByName(ctx, sql.NullString{String: name, Valid: true})
 	if err != nil {
 		return 0
 	}

@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_DATABASE: a4web
+      MYSQL_ROOT_PASSWORD: changeme
+    volumes:
+      - db-data:/var/lib/mysql
+
+  app:
+    build: ..
+    ports:
+      - "8080:8080"
+    environment:
+      DB_DRIVER: mysql
+      DB_CONN: root:changeme@tcp(db:3306)/a4web?parseTime=true
+      AUTO_MIGRATE: "true"
+    volumes:
+      - app-data:/data
+    depends_on:
+      - db
+
+volumes:
+  db-data:
+  app-data:

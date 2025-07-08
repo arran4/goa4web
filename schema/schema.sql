@@ -151,10 +151,10 @@ CREATE TABLE `imagepost` (
 );
 
 CREATE TABLE `imagepostSearch` (
-  `imagepost_idimagepost` int(10) NOT NULL DEFAULT 0,
+  `image_post_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`imagepost_idimagepost`,`searchwordlist_idsearchwordlist`),
-  KEY `imagepostSearch_FKIndex1` (`imagepost_idimagepost`),
+  PRIMARY KEY (`image_post_id`,`searchwordlist_idsearchwordlist`),
+  KEY `imagepostSearch_FKIndex1` (`image_post_id`),
   KEY `imagepostSearch_FKIndex2` (`searchwordlist_idsearchwordlist`)
 );
 

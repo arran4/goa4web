@@ -249,27 +249,27 @@ AND cs.linker_idlinker IN (sqlc.slice('ids'))
 
 -- name: AddToImagePostSearch :exec
 INSERT IGNORE INTO imagepostSearch
-(imagepost_idimagepost, searchwordlist_idsearchwordlist)
+(image_post_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
 -- name: DeleteImagePostSearch :exec
 DELETE FROM imagepostSearch;
 
 -- name: RemakeImagePostSearchInsert :exec
-INSERT INTO imagepostSearch (text, imagepost_idimagepost)
+INSERT INTO imagepostSearch (text, image_post_id)
 SELECT description, idimagepost
 FROM imagepost;
 
 -- name: ImagePostSearchFirst :many
-SELECT DISTINCT cs.imagepost_idimagepost
+SELECT DISTINCT cs.image_post_id
 FROM imagepostSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?;
 
 -- name: ImagePostSearchNext :many
-SELECT DISTINCT cs.imagepost_idimagepost
+SELECT DISTINCT cs.image_post_id
 FROM imagepostSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.imagepost_idimagepost IN (sqlc.slice('ids'));
+AND cs.image_post_id IN (sqlc.slice('ids'));
 

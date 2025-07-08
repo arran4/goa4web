@@ -1,9 +1,9 @@
 package router
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 )
 
@@ -35,7 +35,7 @@ func TestInitModulesDependencyOrder(t *testing.T) {
 	InitModules(r)
 
 	want := []string{"a", "b", "c"}
-	if !reflect.DeepEqual(order, want) {
-		t.Fatalf("order %+v want %+v", order, want)
+	if diff := cmp.Diff(want, order); diff != "" {
+		t.Fatalf("order mismatch (-want +got):\n%s", diff)
 	}
 }

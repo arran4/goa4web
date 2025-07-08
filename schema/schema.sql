@@ -355,7 +355,7 @@ CREATE TABLE `writingSearch` (
   KEY `searchwordlist_has_writing_FKIndex2` (`writing_idwriting`)
 );
 
-CREATE TABLE `writtingApprovedUsers` (
+CREATE TABLE `writingApprovedUsers` (
   `writing_idwriting` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `readdoc` tinyint(1) DEFAULT NULL,

@@ -1,3 +1,4 @@
+-- Remove obsolete columns from subscriptions table
 -- Remove obsolete item_type and target_id columns from subscriptions
 ALTER TABLE subscriptions
     DROP COLUMN IF EXISTS item_type,

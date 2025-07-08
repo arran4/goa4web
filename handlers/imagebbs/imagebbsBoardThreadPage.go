@@ -37,7 +37,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		Comments           []*CommentPlus
 		BoardId            int
 		ImagePost          *db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
-		Thread             *db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsRow
+		Thread             *db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
 		Offset             int
 		IsReplyable        bool
 	}
@@ -73,7 +73,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPoserUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(thid),
 	})
@@ -81,7 +81,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPoserUserNameAndPermissions: %s", err)
+			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}

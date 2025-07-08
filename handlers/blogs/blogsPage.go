@@ -26,9 +26,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*CoreData
-		Rows     []*BlogRow
-		IsOffset bool
-		UID      string
+		Rows      []*BlogRow
+		HasOffset bool
+		UID       string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -58,9 +58,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
-		IsOffset: offset != 0,
-		UID:      buid,
+		CoreData:  r.Context().Value(common.KeyCoreData).(*CoreData),
+		HasOffset: offset != 0,
+		UID:       buid,
 	}
 
 	for _, row := range rows {

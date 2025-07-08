@@ -19,7 +19,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		*corecommon.CoreData
 		Abstracts []*db.GetPublicWritingsByUserRow
 		Username  string
-		IsOffset  bool
+		HasOffset bool
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -54,7 +54,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:  r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Abstracts: rows,
 		Username:  username,
-		IsOffset:  offset != 0,
+		HasOffset: offset != 0,
 	}
 
 	CustomWritingsIndex(data.CoreData, r)

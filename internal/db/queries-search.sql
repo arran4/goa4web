@@ -61,8 +61,8 @@ FROM blogs;
 
 -- name: RemakeWritingSearch :exec
 -- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
-INSERT INTO writingSearch (text, writing_idwriting)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing;
 
@@ -108,8 +108,8 @@ DELETE FROM blogsSearch;
 
 -- name: RemakeWritingSearchInsert :exec
 -- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
-INSERT INTO writingSearch (text, writing_idwriting)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing;
 
@@ -188,7 +188,7 @@ AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
 
 -- name: AddToForumWritingSearch :exec
 INSERT IGNORE INTO writingSearch
-(writing_idwriting, searchwordlist_idsearchwordlist)
+(writing_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
 -- name: AddToLinkerSearch :exec
@@ -199,22 +199,22 @@ VALUES (?, ?);
 
 -- name: WritingSearchDelete :exec
 DELETE FROM writingSearch
-WHERE writing_idwriting=?
+WHERE writing_id=?
 ;
 
 -- name: WritingSearchFirst :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 ;
 
 -- name: WritingSearchNext :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.writing_idwriting IN (sqlc.slice('ids'))
+AND cs.writing_id IN (sqlc.slice('ids'))
 ;
 
 -- name: SiteNewsSearchFirst :many

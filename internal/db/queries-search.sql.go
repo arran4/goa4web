@@ -29,17 +29,17 @@ func (q *Queries) AddToForumCommentSearch(ctx context.Context, arg AddToForumCom
 
 const addToForumWritingSearch = `-- name: AddToForumWritingSearch :exec
 INSERT IGNORE INTO writingSearch
-(writing_idwriting, searchwordlist_idsearchwordlist)
+(writing_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
 
 type AddToForumWritingSearchParams struct {
-	WritingIdwriting               int32
+	WritingID                      int32
 	SearchwordlistIdsearchwordlist int32
 }
 
 func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWritingSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingIdwriting, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingID, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
@@ -677,26 +677,26 @@ func (q *Queries) RemakeNewsSearchInsert(ctx context.Context) error {
 }
 
 const remakeWritingSearch = `-- name: RemakeWritingSearch :exec
-INSERT INTO writingSearch (text, writing_idwriting)
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 
 // This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
 func (q *Queries) RemakeWritingSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearch)
 	return err
 }
 
 const remakeWritingSearchInsert = `-- name: RemakeWritingSearchInsert :exec
-INSERT INTO writingSearch (text, writing_idwriting)
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 
 // This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
 func (q *Queries) RemakeWritingSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearchInsert)
 	return err
@@ -876,16 +876,16 @@ func (q *Queries) WordListWithCountsByPrefix(ctx context.Context, arg WordListWi
 
 const writingSearchDelete = `-- name: WritingSearchDelete :exec
 DELETE FROM writingSearch
-WHERE writing_idwriting=?
+WHERE writing_id=?
 `
 
-func (q *Queries) WritingSearchDelete(ctx context.Context, writingIdwriting int32) error {
-	_, err := q.db.ExecContext(ctx, writingSearchDelete, writingIdwriting)
+func (q *Queries) WritingSearchDelete(ctx context.Context, writingID int32) error {
+	_, err := q.db.ExecContext(ctx, writingSearchDelete, writingID)
 	return err
 }
 
 const writingSearchFirst = `-- name: WritingSearchFirst :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -899,11 +899,11 @@ func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) (
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var writing_idwriting int32
-		if err := rows.Scan(&writing_idwriting); err != nil {
+		var writing_id int32
+		if err := rows.Scan(&writing_id); err != nil {
 			return nil, err
 		}
-		items = append(items, writing_idwriting)
+		items = append(items, writing_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -915,11 +915,11 @@ func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) (
 }
 
 const writingSearchNext = `-- name: WritingSearchNext :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.writing_idwriting IN (/*SLICE:ids*/?)
+AND cs.writing_id IN (/*SLICE:ids*/?)
 `
 
 type WritingSearchNextParams struct {
@@ -946,11 +946,11 @@ func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextPa
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var writing_idwriting int32
-		if err := rows.Scan(&writing_idwriting); err != nil {
+		var writing_id int32
+		if err := rows.Scan(&writing_id); err != nil {
 			return nil, err
 		}
-		items = append(items, writing_idwriting)
+		items = append(items, writing_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

@@ -263,6 +263,7 @@ environment variables listed below.
 | `DEFAULT_LANGUAGE` | `--default-language` | No | - | Site's default language name. |
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
 | `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
+| `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
 
 ### Dead Letter Queue Providers
 

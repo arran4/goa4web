@@ -56,6 +56,9 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 
 // PerformStartupChecks checks the database and upload directory configuration.
 func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
+	if err := maybeAutoMigrate(cfg); err != nil {
+		return err
+	}
 	if ue := InitDB(cfg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}

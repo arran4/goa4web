@@ -7,6 +7,7 @@ RUN go build -o /goa4web ./cmd/goa4web
 FROM scratch
 # Install the application into the final image.
 ENV PATH=/usr/local/bin
+ENV AUTO_MIGRATE=false
 COPY --from=build /goa4web /usr/local/bin/goa4web
 # Image uploads are stored under /data/imagebbs inside the container.
 VOLUME ["/data/imagebbs"]

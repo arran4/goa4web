@@ -148,7 +148,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	bid, err := strconv.Atoi(vars["board"])
+	bid, err := strconv.Atoi(vars["boardno"])
 
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

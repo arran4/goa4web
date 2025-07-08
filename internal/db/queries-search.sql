@@ -68,8 +68,8 @@ FROM writing;
 
 -- name: RemakeLinkerSearch :exec
 -- This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
-INSERT INTO linkerSearch (text, linker_idlinker)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker;
 
@@ -119,8 +119,8 @@ DELETE FROM writingSearch;
 
 -- name: RemakeLinkerSearchInsert :exec
 -- This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
-INSERT INTO linkerSearch (text, linker_idlinker)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker;
 
@@ -193,7 +193,7 @@ VALUES (?, ?);
 
 -- name: AddToLinkerSearch :exec
 INSERT IGNORE INTO linkerSearch
-(linker_idlinker, searchwordlist_idsearchwordlist)
+(linker_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
 
@@ -233,18 +233,18 @@ AND cs.site_news_id IN (sqlc.slice('ids'))
 ;
 
 -- name: LinkerSearchFirst :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 ;
 
 -- name: LinkerSearchNext :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.linker_idlinker IN (sqlc.slice('ids'))
+AND cs.linker_id IN (sqlc.slice('ids'))
 ;
 
 -- name: AddToImagePostSearch :exec

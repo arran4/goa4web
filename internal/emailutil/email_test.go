@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/mail"
-	"reflect"
 	"regexp"
 	"testing"
 
@@ -138,7 +137,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	rec := &mockemail.Provider{}
 	emailutil.ProcessPendingEmail(context.Background(), q, rec, nil)
 
-	if len(rec.Messages) != 1 || rec.Messages[0].To.Address != "e" {
+	if len(rec.Messages) != 1 || rec.Messages[0].To != "\"bob\" <e@>" {
 		t.Fatalf("got %#v", rec.Messages)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

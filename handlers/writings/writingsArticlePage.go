@@ -208,7 +208,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	aid, err := strconv.Atoi(vars["post"])
+	aid, err := strconv.Atoi(vars["article"])
 
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

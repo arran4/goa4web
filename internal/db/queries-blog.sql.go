@@ -29,7 +29,7 @@ func (q *Queries) AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThrea
 }
 
 const blogsSearchFirst = `-- name: BlogsSearchFirst :many
-SELECT DISTINCT cs.blogs_idblogs
+SELECT DISTINCT cs.blog_id
 FROM blogsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -43,11 +43,11 @@ func (q *Queries) BlogsSearchFirst(ctx context.Context, word sql.NullString) ([]
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var blogs_idblogs int32
-		if err := rows.Scan(&blogs_idblogs); err != nil {
+		var blog_id int32
+		if err := rows.Scan(&blog_id); err != nil {
 			return nil, err
 		}
-		items = append(items, blogs_idblogs)
+		items = append(items, blog_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -59,11 +59,11 @@ func (q *Queries) BlogsSearchFirst(ctx context.Context, word sql.NullString) ([]
 }
 
 const blogsSearchNext = `-- name: BlogsSearchNext :many
-SELECT DISTINCT cs.blogs_idblogs
+SELECT DISTINCT cs.blog_id
 FROM blogsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.blogs_idblogs IN (/*SLICE:ids*/?)
+AND cs.blog_id IN (/*SLICE:ids*/?)
 `
 
 type BlogsSearchNextParams struct {
@@ -90,11 +90,11 @@ func (q *Queries) BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var blogs_idblogs int32
-		if err := rows.Scan(&blogs_idblogs); err != nil {
+		var blog_id int32
+		if err := rows.Scan(&blog_id); err != nil {
 			return nil, err
 		}
-		items = append(items, blogs_idblogs)
+		items = append(items, blog_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

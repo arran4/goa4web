@@ -8,13 +8,12 @@ on:
 jobs:
   generate:
     runs-on: self-hosted
+    container:
+      image: ghcr.io/openai/codex-universal:latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: go.mod
       - name: Generate examples
         run: |
           go run ./cmd/goa4web config as-env-file > examples/config.env

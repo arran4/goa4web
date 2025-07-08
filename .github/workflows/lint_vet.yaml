@@ -8,14 +8,11 @@ on:
 jobs:
   lint-vet:
     runs-on: self-hosted
+    container:
+      image: ghcr.io/openai/codex-universal:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: ${{ !contains(runner.labels, 'self-hosted') }}
       - name: Go Vet
         run: go vet ./...
       - name: Golangci Lint

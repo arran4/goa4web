@@ -281,7 +281,6 @@ type PendingEmail struct {
 	ToEmail    string
 	Subject    string
 	Body       string
-	HtmlBody   sql.NullString
 	ErrorCount int32
 	CreatedAt  time.Time
 	SentAt     sql.NullTime

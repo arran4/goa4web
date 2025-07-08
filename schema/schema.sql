@@ -386,7 +386,6 @@ CREATE TABLE IF NOT EXISTS `pending_emails` (
   `to_email` text NOT NULL,
   `subject` text NOT NULL,
   `body` text NOT NULL,
-  `html_body` text,
   `error_count` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `sent_at` datetime DEFAULT NULL,

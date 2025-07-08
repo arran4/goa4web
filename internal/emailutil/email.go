@@ -117,7 +117,7 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	}
 
 	if q, ok := ctx.Value(hcommon.KeyQueries).(*db.Queries); ok {
-		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: textBody, HtmlBody: htmlBody}); err != nil {
+		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: textBody}); err != nil {
 			return err
 		}
 	} else if provider != nil {

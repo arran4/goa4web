@@ -276,8 +276,6 @@ type Password struct {
 	CreatedAt       time.Time
 }
 
-// PendingEmail represents a queued email message stored in full including
-// headers and MIME body. The message is addressed to the referenced user.
 type PendingEmail struct {
 	ID         int32
 	ToUserID   int32

@@ -14,6 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
 )
@@ -55,7 +56,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 		IsReplyable:        true,
 	}
 

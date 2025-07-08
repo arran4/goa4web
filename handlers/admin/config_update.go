@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 )
 
 // updateConfigKey writes the given key/value pair to the config file.
@@ -10,5 +10,5 @@ func updateConfigKey(path, key, value string) error {
 	if UpdateConfigKeyFunc == nil {
 		return nil
 	}
-	return UpdateConfigKeyFunc(config.OSFS{}, path, key, value)
+	return UpdateConfigKeyFunc(core.OSFS{}, path, key, value)
 }

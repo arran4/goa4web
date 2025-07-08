@@ -36,7 +36,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])

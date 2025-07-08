@@ -29,10 +29,10 @@ CREATE TABLE `blogs` (
 );
 
 CREATE TABLE `blogsSearch` (
-  `blogs_idblogs` int(10) NOT NULL DEFAULT 0,
+  `blog_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`blogs_idblogs`,`searchwordlist_idsearchwordlist`),
-  KEY `blogs_has_searchwordlist_FKIndex1` (`blogs_idblogs`),
+  PRIMARY KEY (`blog_id`,`searchwordlist_idsearchwordlist`),
+  KEY `blogs_has_searchwordlist_FKIndex1` (`blog_id`),
   KEY `blogs_has_searchwordlist_FKIndex2` (`searchwordlist_idsearchwordlist`)
 );
 
@@ -261,10 +261,10 @@ CREATE TABLE `siteNews` (
 );
 
 CREATE TABLE `siteNewsSearch` (
-  `siteNews_idsiteNews` int(10) NOT NULL DEFAULT 0,
+  `site_news_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`siteNews_idsiteNews`,`searchwordlist_idsearchwordlist`),
-  KEY `siteNews_has_searchwordlist_FKIndex1` (`siteNews_idsiteNews`),
+  PRIMARY KEY (`site_news_id`,`searchwordlist_idsearchwordlist`),
+  KEY `siteNews_has_searchwordlist_FKIndex1` (`site_news_id`),
   KEY `siteNews_has_searchwordlist_FKIndex2` (`searchwordlist_idsearchwordlist`)
 );
 

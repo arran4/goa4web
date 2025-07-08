@@ -47,15 +47,15 @@ FROM comments;
 
 -- name: RemakeNewsSearch :exec
 -- This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
-INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "site_news_id".
+INSERT INTO siteNewsSearch (text, site_news_id)
 SELECT news, idsiteNews
 FROM siteNews;
 
 -- name: RemakeBlogSearch :exec
 -- This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
-INSERT INTO blogsSearch (text, blogs_idblogs)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blog_id".
+INSERT INTO blogsSearch (text, blog_id)
 SELECT blog, idblogs
 FROM blogs;
 
@@ -86,8 +86,8 @@ DELETE FROM commentsSearch;
 
 -- name: RemakeNewsSearchInsert :exec
 -- This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
-INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "site_news_id".
+INSERT INTO siteNewsSearch (text, site_news_id)
 SELECT news, idsiteNews
 FROM siteNews;
 
@@ -97,8 +97,8 @@ DELETE FROM siteNewsSearch;
 
 -- name: RemakeBlogsSearchInsert :exec
 -- This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
-INSERT INTO blogsSearch (text, blogs_idblogs)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blog_id".
+INSERT INTO blogsSearch (text, blog_id)
 SELECT blog, idblogs
 FROM blogs;
 
@@ -218,18 +218,18 @@ AND cs.writing_idwriting IN (sqlc.slice('ids'))
 ;
 
 -- name: SiteNewsSearchFirst :many
-SELECT DISTINCT cs.siteNews_idsiteNews
+SELECT DISTINCT cs.site_news_id
 FROM siteNewsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 ;
 
 -- name: SiteNewsSearchNext :many
-SELECT DISTINCT cs.siteNews_idsiteNews
+SELECT DISTINCT cs.site_news_id
 FROM siteNewsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.siteNews_idsiteNews IN (sqlc.slice('ids'))
+AND cs.site_news_id IN (sqlc.slice('ids'))
 ;
 
 -- name: LinkerSearchFirst :many

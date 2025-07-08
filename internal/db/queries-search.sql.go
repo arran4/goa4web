@@ -562,26 +562,26 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 }
 
 const remakeBlogSearch = `-- name: RemakeBlogSearch :exec
-INSERT INTO blogsSearch (text, blogs_idblogs)
+INSERT INTO blogsSearch (text, blog_id)
 SELECT blog, idblogs
 FROM blogs
 `
 
 // This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blog_id".
 func (q *Queries) RemakeBlogSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeBlogSearch)
 	return err
 }
 
 const remakeBlogsSearchInsert = `-- name: RemakeBlogsSearchInsert :exec
-INSERT INTO blogsSearch (text, blogs_idblogs)
+INSERT INTO blogsSearch (text, blog_id)
 SELECT blog, idblogs
 FROM blogs
 `
 
 // This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blogs_idblogs".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blog_id".
 func (q *Queries) RemakeBlogsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeBlogsSearchInsert)
 	return err
@@ -651,26 +651,26 @@ func (q *Queries) RemakeLinkerSearchInsert(ctx context.Context) error {
 }
 
 const remakeNewsSearch = `-- name: RemakeNewsSearch :exec
-INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+INSERT INTO siteNewsSearch (text, site_news_id)
 SELECT news, idsiteNews
 FROM siteNews
 `
 
 // This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "site_news_id".
 func (q *Queries) RemakeNewsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeNewsSearch)
 	return err
 }
 
 const remakeNewsSearchInsert = `-- name: RemakeNewsSearchInsert :exec
-INSERT INTO siteNewsSearch (text, siteNews_idsiteNews)
+INSERT INTO siteNewsSearch (text, site_news_id)
 SELECT news, idsiteNews
 FROM siteNews
 `
 
 // This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "siteNews_idsiteNews".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "site_news_id".
 func (q *Queries) RemakeNewsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeNewsSearchInsert)
 	return err
@@ -703,7 +703,7 @@ func (q *Queries) RemakeWritingSearchInsert(ctx context.Context) error {
 }
 
 const siteNewsSearchFirst = `-- name: SiteNewsSearchFirst :many
-SELECT DISTINCT cs.siteNews_idsiteNews
+SELECT DISTINCT cs.site_news_id
 FROM siteNewsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -717,11 +717,11 @@ func (q *Queries) SiteNewsSearchFirst(ctx context.Context, word sql.NullString) 
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var sitenews_idsitenews int32
-		if err := rows.Scan(&sitenews_idsitenews); err != nil {
+		var site_news_id int32
+		if err := rows.Scan(&site_news_id); err != nil {
 			return nil, err
 		}
-		items = append(items, sitenews_idsitenews)
+		items = append(items, site_news_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -733,11 +733,11 @@ func (q *Queries) SiteNewsSearchFirst(ctx context.Context, word sql.NullString) 
 }
 
 const siteNewsSearchNext = `-- name: SiteNewsSearchNext :many
-SELECT DISTINCT cs.siteNews_idsiteNews
+SELECT DISTINCT cs.site_news_id
 FROM siteNewsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.siteNews_idsiteNews IN (/*SLICE:ids*/?)
+AND cs.site_news_id IN (/*SLICE:ids*/?)
 `
 
 type SiteNewsSearchNextParams struct {
@@ -764,11 +764,11 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var sitenews_idsitenews int32
-		if err := rows.Scan(&sitenews_idsitenews); err != nil {
+		var site_news_id int32
+		if err := rows.Scan(&site_news_id); err != nil {
 			return nil, err
 		}
-		items = append(items, sitenews_idsitenews)
+		items = append(items, site_news_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

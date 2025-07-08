@@ -36,7 +36,7 @@ type Blog struct {
 }
 
 type Blogssearch struct {
-	BlogsIdblogs                   int32
+	BlogID                         int32
 	SearchwordlistIdsearchwordlist int32
 }
 
@@ -338,7 +338,7 @@ type Sitenews struct {
 }
 
 type Sitenewssearch struct {
-	SitenewsIdsitenews             int32
+	SiteNewsID                     int32
 	SearchwordlistIdsearchwordlist int32
 }
 

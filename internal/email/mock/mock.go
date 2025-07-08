@@ -1,7 +1,13 @@
 package mock
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"mime"
+	"mime/multipart"
+	"net/mail"
+	"strings"
 	"sync"
 
 	"github.com/arran4/goa4web/internal/email"
@@ -22,8 +28,42 @@ type Provider struct {
 	Messages []SentMail
 }
 
+func parseRawEmail(raw []byte) (string, string) {
+	m, err := mail.ReadMessage(bytes.NewReader(raw))
+	if err != nil {
+		return string(raw), ""
+	}
+	ctype := m.Header.Get("Content-Type")
+	med, params, err := mime.ParseMediaType(ctype)
+	if err != nil {
+		b, _ := io.ReadAll(m.Body)
+		return string(b), ""
+	}
+	if strings.HasPrefix(med, "multipart/") {
+		mr := multipart.NewReader(m.Body, params["boundary"])
+		var textBody, htmlBody string
+		for {
+			p, err := mr.NextPart()
+			if err != nil {
+				break
+			}
+			b, _ := io.ReadAll(p)
+			ct := p.Header.Get("Content-Type")
+			if strings.HasPrefix(ct, "text/plain") {
+				textBody = string(b)
+			} else if strings.HasPrefix(ct, "text/html") {
+				htmlBody = string(b)
+			}
+		}
+		return textBody, htmlBody
+	}
+	b, _ := io.ReadAll(m.Body)
+	return string(b), ""
+}
+
 // Send appends the message to the Provider's Messages slice.
-func (p *Provider) Send(_ context.Context, to, subject, textBody, htmlBody string) error {
+func (p *Provider) Send(_ context.Context, to, subject string, rawEmailMessage []byte) error {
+	textBody, htmlBody := parseRawEmail(rawEmailMessage)
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Messages = append(p.Messages, SentMail{To: to, Subject: subject, Text: textBody, HTML: htmlBody})

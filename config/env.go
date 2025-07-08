@@ -20,7 +20,8 @@ const (
 	EnvSMTPAuth = "SMTP_AUTH"
 	// EnvSMTPStartTLS enables STARTTLS when sending SMTP mail.
 	EnvSMTPStartTLS = "SMTP_STARTTLS"
-	// EnvEmailFrom sets the default From address for outgoing mail.
+	// EnvEmailFrom sets the default From address for outgoing mail. The
+	// value must be a valid RFC 5322 address.
 	EnvEmailFrom = "EMAIL_FROM"
 	// EnvAWSRegion is the AWS region for the SES provider.
 	EnvAWSRegion = "AWS_REGION"

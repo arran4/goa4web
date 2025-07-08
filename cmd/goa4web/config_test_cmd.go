@@ -122,7 +122,12 @@ func (c *configTestEmailCmd) Run() error {
 		if err := ht.Execute(&buf, nil); err != nil {
 			return fmt.Errorf("exec html template: %w", err)
 		}
-		msg, err := email.BuildMessage(c.rootCmd.cfg.EmailFrom, addr, "Goa4Web Test Email", textBody, buf.String())
+		fromAddr := email.ParseAddress(c.rootCmd.cfg.EmailFrom)
+		if fromAddr.Name == "" {
+			fromAddr.Name = email.DefaultFromName
+		}
+		toAddr := email.ParseAddress(addr)
+		msg, err := email.BuildMessage(fromAddr, toAddr, "Goa4Web Test Email", textBody, buf.String())
 		if err != nil {
 			return fmt.Errorf("build message: %w", err)
 		}

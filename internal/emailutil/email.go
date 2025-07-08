@@ -62,7 +62,10 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	if !EmailSendingEnabled() {
 		return nil
 	}
-	from := runtimeconfig.AppRuntimeConfig.EmailFrom
+	fromAddr := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
+	if fromAddr.Name == "" {
+		fromAddr.Name = email.DefaultFromName
+	}
 
 	type EmailContent struct {
 		To      string
@@ -78,7 +81,7 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	// Define email content
 	content := EmailContent{
 		To:      emailAddr,
-		From:    from,
+		From:    fromAddr.Address,
 		Subject: "Website Update Notification",
 		URL:     page,
 		Action:  action,
@@ -117,11 +120,17 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	}
 
 	if q, ok := ctx.Value(hcommon.KeyQueries).(*db.Queries); ok {
-		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: textBody, HtmlBody: htmlBody}); err != nil {
+		toAddr := email.ParseAddress(emailAddr)
+		msg, err := email.BuildMessage(fromAddr, toAddr, content.Subject, textBody, htmlBody)
+		if err != nil {
+			return fmt.Errorf("build message: %w", err)
+		}
+		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: string(msg), HtmlBody: ""}); err != nil {
 			return err
 		}
 	} else if provider != nil {
-		msg, err := email.BuildMessage(from, emailAddr, content.Subject, textBody, htmlBody)
+		toAddr := email.ParseAddress(emailAddr)
+		msg, err := email.BuildMessage(fromAddr, toAddr, content.Subject, textBody, htmlBody)
 		if err != nil {
 			return fmt.Errorf("build message: %w", err)
 		}

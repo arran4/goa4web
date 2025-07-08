@@ -225,7 +225,7 @@ environment variables listed below.
 | `DB_CONN` | `--db-conn` | Yes | - | Database connection string. |
 | `DB_DRIVER` | `--db-driver` | Yes | `mysql` | Database driver name. |
 | `EMAIL_PROVIDER` | `--email-provider` | No | `ses` | Selects the mail sending backend. |
-| `EMAIL_FROM` | `--email-from` | No | - | Default From address for outgoing mail. |
+| `EMAIL_FROM` | `--email-from` | No | - | Default From address for outgoing mail. Must be a valid RFC 5322 address. |
 | `SMTP_HOST` | `--smtp-host` | No | - | SMTP server hostname. |
 | `SMTP_PORT` | `--smtp-port` | No | - | SMTP server port. |
 | `SMTP_USER` | `--smtp-user` | No | - | SMTP username. |

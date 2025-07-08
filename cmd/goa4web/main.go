@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
+	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -98,6 +99,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	r.args = fs.Args()
 	r.ConfigFile = cfgPath
 	r.cfg = runtimeconfig.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
+	email.SetDefaultFromName(r.cfg.EmailFrom)
 	return r, nil
 }
 

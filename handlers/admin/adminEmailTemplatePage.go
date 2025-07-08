@@ -118,7 +118,12 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, user.Email.String, content.Subject, buf.String(), "")
+	fromAddr := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
+	if fromAddr.Name == "" {
+		fromAddr.Name = email.DefaultFromName
+	}
+	toAddr := email.ParseAddress(user.Email.String)
+	msg, err := email.BuildMessage(fromAddr, toAddr, content.Subject, buf.String(), "")
 	if err != nil {
 		log.Printf("build message: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

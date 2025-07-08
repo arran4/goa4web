@@ -2,7 +2,6 @@ name: gitleaks
 
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -12,7 +11,8 @@ on:
         default: 'false'
 
 jobs:
-  gitleaks:
+  scan:
+    name: gitleaks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,10 +22,14 @@ jobs:
       - name: Run gitleaks
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.full_history != 'true'
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: "--no-git --redact"
       - name: Run gitleaks on full history
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.full_history == 'true'
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: "--redact"

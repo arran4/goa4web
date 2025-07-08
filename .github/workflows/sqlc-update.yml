@@ -37,7 +37,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore(sqlc): regenerate code'
           branch: sqlc-autogen-${{ github.run_id }}
-          base: ${{ github.ref_name }}
+          base: ${{ github.head_ref || github.ref_name }}
           title: 'Update sqlc generated files'
           body: |
             This PR updates generated code after SQL file changes.

@@ -17,9 +17,9 @@ import (
 func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Links    []*db.GetLinkerItemsByUserDescendingRow
-		Username string
-		IsOffset bool
+		Links     []*db.GetLinkerItemsByUserDescendingRow
+		Username  string
+		HasOffset bool
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -51,10 +51,10 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
-		Links:    rows,
-		Username: username,
-		IsOffset: offset != 0,
+		CoreData:  r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		Links:     rows,
+		Username:  username,
+		HasOffset: offset != 0,
 	}
 
 	CustomLinkerIndex(data.CoreData, r)

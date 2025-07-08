@@ -46,7 +46,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			*corecommon.CoreData
 			Categories any
 			Links      any
-			Offset     bool
+			HasOffset  bool
 			CatId      int32
 		}{&corecommon.CoreData{}, nil, nil, false, 0}},
 		{"forumPage", struct {
@@ -78,11 +78,12 @@ func TestPageTemplatesRender(t *testing.T) {
 		{"linkerCategoryPage", struct {
 			*corecommon.CoreData
 			Offset      int
+			HasOffset   bool
 			CatId       int
 			CommentOnId int
 			ReplyToId   int
 			Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
-		}{&corecommon.CoreData{}, 0, 0, 0, 0, nil}},
+		}{&corecommon.CoreData{}, 0, false, 0, 0, 0, nil}},
 		{"writingsCategoryPage", struct {
 			*corecommon.CoreData
 			Categories                       []*db.Writingcategory

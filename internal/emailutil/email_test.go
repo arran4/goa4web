@@ -144,7 +144,7 @@ func TestEmailQueueWorker(t *testing.T) {
 
 type errProvider struct{}
 
-func (errProvider) Send(context.Context, string, string, string, string) error {
+func (errProvider) Send(context.Context, string, string, []byte) error {
 	return fmt.Errorf("fail")
 }
 

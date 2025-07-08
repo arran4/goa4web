@@ -16,15 +16,13 @@ func parseBool(v string) (bool, bool) {
 	}
 }
 
-func resolveFeedsEnabled(cli, file, env string) bool {
-	if b, ok := parseBool(cli); ok {
-		return b
+// resolveBool returns the first valid boolean parsed from the provided values
+// in order, defaulting to def when none are valid.
+func resolveBool(def bool, vals ...string) bool {
+	for _, v := range vals {
+		if b, ok := parseBool(v); ok {
+			return b
+		}
 	}
-	if b, ok := parseBool(file); ok {
-		return b
-	}
-	if b, ok := parseBool(env); ok {
-		return b
-	}
-	return true
+	return def
 }

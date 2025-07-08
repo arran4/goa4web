@@ -11,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestNotificationsQueries(t *testing.T) {
@@ -69,6 +70,11 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	rows := sqlmock.NewRows([]string{
 		"idcomments", "forumthread_idforumthread", "users_idusers", "language_idlanguage",
 		"written", "text", "idusers", "email", "username",
@@ -95,6 +101,11 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	mock.ExpectQuery("SELECT u.email").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
 	mock.ExpectQuery("SELECT u.email").

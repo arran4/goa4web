@@ -9,6 +9,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 type busDummyProvider struct{ to string }
@@ -89,6 +90,11 @@ func (errProvider) Send(ctx context.Context, to, sub, textBody, htmlBody string)
 
 func TestProcessEventDLQ(t *testing.T) {
 	ctx := context.Background()
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -122,6 +128,11 @@ func TestProcessEventDLQ(t *testing.T) {
 
 func TestProcessEventSubscribeSelf(t *testing.T) {
 	ctx := context.Background()
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -154,6 +165,11 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 
 func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	ctx := context.Background()
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)

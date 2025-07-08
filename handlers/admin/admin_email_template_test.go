@@ -5,14 +5,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	db "github.com/arran4/goa4web/internal/db"
@@ -23,7 +21,6 @@ import (
 func init() { logProv.Register() }
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
-	os.Unsetenv(config.EnvEmailProvider)
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
@@ -46,9 +43,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 }
 
 func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
-	os.Setenv(config.EnvEmailProvider, "log")
 	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
-	defer os.Unsetenv(config.EnvEmailProvider)
 
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
@@ -122,15 +117,11 @@ func (r *recordAdminMail) Send(ctx context.Context, to, subject, textBody, htmlB
 }
 
 func TestNotifyAdminsEnv(t *testing.T) {
-	orig := runtimeconfig.AppRuntimeConfig
-	defer func() { runtimeconfig.AppRuntimeConfig = orig }()
+	cfgOrig := runtimeconfig.AppRuntimeConfig
 	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
-	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
-	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
-	defer os.Unsetenv(config.EnvAdminEmails)
-	orig := runtimeconfig.AppRuntimeConfig.AdminEmails
-	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
-	defer func() { runtimeconfig.AppRuntimeConfig.AdminEmails = orig }()
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = cfgOrig })
 	rec := &recordAdminMail{}
 	notifyAdmins(context.Background(), rec, nil, "page")
 	if len(rec.to) != 2 {
@@ -139,16 +130,11 @@ func TestNotifyAdminsEnv(t *testing.T) {
 }
 
 func TestNotifyAdminsDisabled(t *testing.T) {
-	orig := runtimeconfig.AppRuntimeConfig
-	defer func() { runtimeconfig.AppRuntimeConfig = orig }()
+	cfgOrig := runtimeconfig.AppRuntimeConfig
 	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com"
-	os.Setenv(config.EnvAdminNotify, "false")
-	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com"
-	defer os.Unsetenv(config.EnvAdminEmails)
-	defer os.Unsetenv(config.EnvAdminNotify)
-	orig := runtimeconfig.AppRuntimeConfig.AdminEmails
-	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com"
-	defer func() { runtimeconfig.AppRuntimeConfig.AdminEmails = orig }()
+	runtimeconfig.AppRuntimeConfig.AdminNotify = false
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = cfgOrig })
 	rec := &recordAdminMail{}
 	notifyAdmins(context.Background(), rec, nil, "page")
 	if len(rec.to) != 0 {

@@ -4,25 +4,16 @@ import (
 	"crypto/sha256"
 	"net/http"
 	"net/url"
-	"os"
-	"strings"
 
-	config "github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/csrf"
 )
 
 // CSRFEnabled reports if CSRF protection should be active.
+// CSRFEnabled reports if CSRF protection should be active according to the
+// runtime configuration.
 func CSRFEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvCSRFEnabled))
-	if v == "" {
-		return true
-	}
-	switch v {
-	case "0", "false", "off", "no":
-		return false
-	default:
-		return true
-	}
+	return runtimeconfig.AppRuntimeConfig.CSRFEnabled
 }
 
 // NewCSRFMiddleware returns middleware enforcing CSRF protection using the

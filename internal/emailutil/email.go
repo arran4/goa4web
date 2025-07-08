@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/mail"
 	"os"
 	"strings"
 	"text/template"
@@ -123,12 +122,7 @@ func NotifyChange(ctx context.Context, provider email.Provider, userID int32, em
 		htmlBody = buf.String()
 	}
 
-	addr := mail.Address{Address: emailAddr}
-	fromAddr := mail.Address{Address: from}
-	if f, err := mail.ParseAddress(from); err == nil {
-		fromAddr = *f
-	}
-	msg, err := email.BuildMessage(fromAddr, addr, content.Subject, textBody, htmlBody)
+	msg, err := email.BuildMessage(from, toAddr, content.Subject, textBody, htmlBody)
 	if err != nil {
 		return fmt.Errorf("build message: %w", err)
 	}
@@ -137,7 +131,7 @@ func NotifyChange(ctx context.Context, provider email.Provider, userID int32, em
 			return err
 		}
 	} else if provider != nil {
-		if err := provider.Send(ctx, addr, msg); err != nil {
+		if err := provider.Send(ctx, toAddr, msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}

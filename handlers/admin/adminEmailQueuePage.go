@@ -80,11 +80,11 @@ func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 	for _, e := range emails {
 		user, ok := users[e.ToUserID]
 		if !ok || !user.Email.Valid {
-			log.Printf("invalid user email for %d", e.ToUserID)
+			log.Printf("missing or invalid user email for %d", e.ToUserID)
 			continue
 		}
+		addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
 		if provider != nil {
-			addr := mail.Address{Name: e.ToEmail, Address: user.Email.String}
 			if err := provider.Send(r.Context(), addr, []byte(e.Body)); err != nil {
 				log.Printf("send email: %v", err)
 				continue

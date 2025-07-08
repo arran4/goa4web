@@ -29,13 +29,13 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 		fromAddr = *f
 	}
 	for _, addrStr := range emailutil.GetAdminEmails(ctx, e.Queries) {
-		addr := mail.Address{Address: addrStr}
-		msg, err := email.BuildMessage(fromAddr, addr, "DLQ message", message, "")
+		toAddr := mail.Address{Address: addrStr}
+		msg, err := email.BuildMessage(fromAddr, toAddr, "DLQ message", message, "")
 		if err != nil {
 			log.Printf("build message: %v", err)
 			continue
 		}
-		if err := e.Provider.Send(ctx, toAddr.Address, msg); err != nil {
+		if err := e.Provider.Send(ctx, toAddr, msg); err != nil {
 			log.Printf("dlq email: %v", err)
 		}
 	}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
@@ -35,16 +34,7 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 }
 
 func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[string]string, error) {
-	m := make(map[string]string)
-	for _, o := range runtimeconfig.StringOptions {
-		m[o.Env] = *o.Target(&cfg)
-	}
-	for _, o := range runtimeconfig.IntOptions {
-		m[o.Env] = strconv.Itoa(*o.Target(&cfg))
-	}
-	for _, o := range runtimeconfig.BoolOptions {
-		m[o.Env] = strconv.FormatBool(*o.Target(&cfg))
-	}
+	m := runtimeconfig.ValuesMap(cfg)
 
 	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	if err != nil {
@@ -61,19 +51,21 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 	}
 
 	m[config.EnvConfigFile] = cfgPath
-	m[config.EnvSessionSecret] = first("", os.Getenv(config.EnvSessionSecret))
-	sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
-	if sessionFile == "" {
-		sessionFile = runtimeconfig.DefaultSessionSecretPath()
+	if m[config.EnvSessionSecretFile] == "" {
+		sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
+		if sessionFile == "" {
+			sessionFile = runtimeconfig.DefaultSessionSecretPath()
+		}
+		m[config.EnvSessionSecretFile] = sessionFile
 	}
-	m[config.EnvSessionSecretFile] = sessionFile
 
 	return m, nil
 }
 
 func defaultMap() map[string]string {
-	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	m, _ := envMapFromConfig(def, "")
+	m := runtimeconfig.DefaultMap()
+	m[config.EnvConfigFile] = ""
+	m[config.EnvSessionSecretFile] = runtimeconfig.DefaultSessionSecretPath()
 	return m
 }
 
@@ -88,8 +80,8 @@ func (c *configAsCmd) asEnvFile() error {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	usage := usageMap()
-	ext := extendedUsageMap()
+	usage := runtimeconfig.UsageMap()
+	ext := runtimeconfig.ExtendedUsageMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -121,8 +113,8 @@ func (c *configAsCmd) asEnv() error {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	usage := usageMap()
-	ext := extendedUsageMap()
+	usage := runtimeconfig.UsageMap()
+	ext := runtimeconfig.ExtendedUsageMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -163,7 +155,7 @@ func (c *configAsCmd) asCLI() error {
 	}
 	def := defaultMap()
 	var parts []string
-	nameMap := nameMap()
+	nameMap := runtimeconfig.NameMap()
 	for env, val := range current {
 		if def[env] == val {
 			continue
@@ -177,68 +169,4 @@ func (c *configAsCmd) asCLI() error {
 	sort.Strings(parts)
 	fmt.Println(strings.Join(parts, " "))
 	return nil
-}
-
-func extendedUsageMap() map[string]string {
-	m := make(map[string]string)
-	for _, o := range runtimeconfig.StringOptions {
-		if o.ExtendedUsage != "" {
-			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
-				m[o.Env] = txt
-			}
-		}
-	}
-	for _, o := range runtimeconfig.IntOptions {
-		if o.ExtendedUsage != "" {
-			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
-				m[o.Env] = txt
-			}
-		}
-	}
-	for _, o := range runtimeconfig.BoolOptions {
-		if o.ExtendedUsage != "" {
-			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
-				m[o.Env] = txt
-			}
-		}
-	}
-	return m
-}
-
-func usageMap() map[string]string {
-	m := make(map[string]string)
-	for _, o := range runtimeconfig.StringOptions {
-		m[o.Env] = o.Usage
-	}
-	for _, o := range runtimeconfig.IntOptions {
-		m[o.Env] = o.Usage
-	}
-	for _, o := range runtimeconfig.BoolOptions {
-		m[o.Env] = o.Usage
-	}
-	m[config.EnvStatsStartYear] = "start year for usage stats"
-	m[config.EnvConfigFile] = "path to config file"
-	m[config.EnvSessionSecret] = "session secret key"
-	m[config.EnvSessionSecretFile] = "path to session secret file"
-	m[config.EnvAdminEmails] = "administrator email addresses"
-	return m
-}
-
-func nameMap() map[string]string {
-	m := make(map[string]string)
-	for _, o := range runtimeconfig.StringOptions {
-		m[o.Env] = o.Name
-	}
-	for _, o := range runtimeconfig.IntOptions {
-		m[o.Env] = o.Name
-	}
-	for _, o := range runtimeconfig.BoolOptions {
-		if o.Name != "" {
-			m[o.Env] = o.Name
-		}
-	}
-	m[config.EnvConfigFile] = "config-file"
-	m[config.EnvSessionSecret] = "session-secret"
-	m[config.EnvSessionSecretFile] = "session-secret-file"
-	return m
 }

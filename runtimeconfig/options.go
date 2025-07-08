@@ -57,6 +57,8 @@ var StringOptions = []StringOption{
 	{"dlq-provider", config.EnvDLQProvider, "dead letter queue provider", "", "", func(c *RuntimeConfig) *string { return &c.DLQProvider }},
 	{"dlq-file", config.EnvDLQFile, "dead letter queue file path", "", "", func(c *RuntimeConfig) *string { return &c.DLQFile }},
 	{"admin-emails", config.EnvAdminEmails, "administrator email addresses", "", "", func(c *RuntimeConfig) *string { return &c.AdminEmails }},
+	{"session-secret", config.EnvSessionSecret, "session secret key", "", "", func(c *RuntimeConfig) *string { return &c.SessionSecret }},
+	{"session-secret-file", config.EnvSessionSecretFile, "path to session secret file", "", "", func(c *RuntimeConfig) *string { return &c.SessionSecretFile }},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.

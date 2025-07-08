@@ -26,7 +26,7 @@ func (q *Queries) AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThis
 }
 
 const createNewsPost = `-- name: CreateNewsPost :exec
-INSERT INTO siteNews (news, users_idusers, occured, language_idlanguage)
+INSERT INTO siteNews (news, users_idusers, occurred, language_idlanguage)
 VALUES (?, ?, NOW(), ?)
 `
 
@@ -70,7 +70,7 @@ func (q *Queries) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews i
 }
 
 const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
@@ -85,7 +85,7 @@ type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	LanguageIdlanguage       int32
 	UsersIdusers             int32
 	News                     sql.NullString
-	Occured                  sql.NullTime
+	Occurred                 sql.NullTime
 	Comments                 sql.NullInt32
 }
 
@@ -100,14 +100,14 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 		&i.LanguageIdlanguage,
 		&i.UsersIdusers,
 		&i.News,
-		&i.Occured,
+		&i.Occurred,
 		&i.Comments,
 	)
 	return &i, err
 }
 
 const getNewsPostsByIdsWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostsByIdsWithWriterIdAndThreadCommentCount :many
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
@@ -122,7 +122,7 @@ type GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow struct {
 	LanguageIdlanguage       int32
 	UsersIdusers             int32
 	News                     sql.NullString
-	Occured                  sql.NullTime
+	Occurred                 sql.NullTime
 	Comments                 sql.NullInt32
 }
 
@@ -153,7 +153,7 @@ func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context
 			&i.LanguageIdlanguage,
 			&i.UsersIdusers,
 			&i.News,
-			&i.Occured,
+			&i.Occurred,
 			&i.Comments,
 		); err != nil {
 			return nil, err
@@ -170,11 +170,11 @@ func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context
 }
 
 const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occured, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM siteNews s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
-ORDER BY s.occured DESC
+ORDER BY s.occurred DESC
 LIMIT ? OFFSET ?
 `
 
@@ -191,7 +191,7 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
 	LanguageIdlanguage       int32
 	UsersIdusers             int32
 	News                     sql.NullString
-	Occured                  sql.NullTime
+	Occurred                 sql.NullTime
 	Comments                 sql.NullInt32
 }
 
@@ -212,7 +212,7 @@ func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(
 			&i.LanguageIdlanguage,
 			&i.UsersIdusers,
 			&i.News,
-			&i.Occured,
+			&i.Occurred,
 			&i.Comments,
 		); err != nil {
 			return nil, err

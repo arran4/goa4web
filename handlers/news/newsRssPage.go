@@ -48,8 +48,8 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 			Title: text[:i],
 			Link:  &feeds.Link{Href: fmt.Sprintf("/news/news/%d", row.Idsitenews)},
 			Created: func() time.Time {
-				if row.Occured.Valid {
-					return row.Occured.Time
+				if row.Occurred.Valid {
+					return row.Occurred.Time
 				}
 				return time.Now()
 			}(),

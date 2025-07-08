@@ -335,7 +335,7 @@ type Sitenews struct {
 	LanguageIdlanguage       int32
 	UsersIdusers             int32
 	News                     sql.NullString
-	Occured                  sql.NullTime
+	Occurred                 sql.NullTime
 }
 
 type Sitenewssearch struct {

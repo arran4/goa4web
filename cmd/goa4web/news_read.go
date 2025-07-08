@@ -50,8 +50,8 @@ func (c *newsReadCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}
-	if row.Occured.Valid {
-		fmt.Printf("Posted: %s\n", row.Occured.Time.Format(time.RFC3339))
+	if row.Occurred.Valid {
+		fmt.Printf("Posted: %s\n", row.Occurred.Time.Format(time.RFC3339))
 	}
 	fmt.Println(row.News.String)
 	return nil

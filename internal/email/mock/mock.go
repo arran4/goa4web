@@ -62,7 +62,7 @@ func (p *Provider) Send(_ context.Context, to mail.Address, rawEmailMessage []by
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.Messages = append(p.Messages, SentMail{To: to.Address, Subject: subject, Raw: rawEmailMessage, Text: textBody, HTML: htmlBody})
+	p.Messages = append(p.Messages, SentMail{To: to, Subject: subject, Raw: rawEmailMessage, Text: textBody, HTML: htmlBody})
 	return nil
 }
 

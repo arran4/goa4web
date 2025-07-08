@@ -29,7 +29,7 @@ func UserAdderMiddleware(next http.Handler) http.Handler {
 			user        *db.User
 			permissions []*db.Permission
 			preference  *db.Preference
-			languages   []*db.Userlang
+			languages   []*db.UserLanguage
 			uid         int32
 		)
 		if uidi, ok := session.Values["UID"]; ok {

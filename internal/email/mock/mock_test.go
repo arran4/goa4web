@@ -17,7 +17,7 @@ func TestProvider(t *testing.T) {
 	if err != nil {
 		t.Fatalf("build: %v", err)
 	}
-	if err := p.Send(context.Background(), to.Address, "sub", msg); err != nil {
+	if err := p.Send(context.Background(), to, msg); err != nil {
 		t.Fatalf("send: %v", err)
 	}
 	if len(p.Messages) != 1 {

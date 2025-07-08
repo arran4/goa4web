@@ -87,8 +87,8 @@ func TestListUnsentPendingEmails(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := db.New(sqldb)
-	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "html_body", "error_count", "created_at"}).AddRow(1, "a@test", "s", "b", "h", 0, time.Now())
-	mock.ExpectQuery("SELECT id, to_email, subject, body, html_body, error_count, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "error_count", "created_at"}).AddRow(1, "a@test", "s", "b", 0, time.Now())
+	mock.ExpectQuery("SELECT id, to_email, subject, body, error_count, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id").WillReturnRows(rows)
 	if _, err := q.ListUnsentPendingEmails(context.Background()); err != nil {
 		t.Fatalf("list: %v", err)
 	}

@@ -281,7 +281,6 @@ type PendingEmail struct {
 	ToEmail    string
 	Subject    string
 	Body       string
-	HtmlBody   sql.NullString
 	ErrorCount int32
 	CreatedAt  time.Time
 	SentAt     sql.NullTime
@@ -347,8 +346,6 @@ type Sitenewssearch struct {
 type Subscription struct {
 	ID           int32
 	UsersIdusers int32
-	ItemType     string
-	TargetID     int32
 	Method       string
 	Pattern      string
 	CreatedAt    time.Time

@@ -48,7 +48,7 @@ func (c *serveCmd) Run() error {
 	}
 	app.ConfigFile = c.rootCmd.ConfigFile
 	cfg := runtimeconfig.GenerateRuntimeConfig(c.fs, fileVals, os.Getenv)
-	secret, err := core.LoadSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := runtimeconfig.LoadSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}

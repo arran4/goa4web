@@ -37,7 +37,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		Comments           []*CommentPlus
 		BoardId            int
 		ImagePost          *db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
-		Thread             *db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
+		Thread             *db.GetThreadLastPosterAndPermsRow
 		Offset             int
 		IsReplyable        bool
 	}
@@ -73,7 +73,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(thid),
 	})

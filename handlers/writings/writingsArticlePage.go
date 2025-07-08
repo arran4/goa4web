@@ -38,7 +38,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		UserId              int32
 		Languages           []*db.Language
 		SelectedLanguageId  int
-		Thread              *db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
+		Thread              *db.GetThreadLastPosterAndPermsRow
 		Comments            []*CommentPlus
 		IsReplyable         bool
 		IsAdmin             bool
@@ -151,7 +151,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
 		Idforumthread: writing.ForumthreadIdforumthread,
 	})

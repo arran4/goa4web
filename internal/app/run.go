@@ -74,6 +74,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		return fmt.Errorf("smtp fallback: %w", err)
 	}
 	runtimeconfig.AppRuntimeConfig = cfg
+	email.SetDefaultFromName(cfg.EmailFrom)
 
 	if dbPool != nil {
 		defer func() {

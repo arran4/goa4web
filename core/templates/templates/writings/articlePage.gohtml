@@ -11,7 +11,7 @@
         <strong>Abstract:</strong><br>
         {{ .Writing.Abstract.String | a4code2html }}
         <hr>
-        {{ .Writing.Writting.String | a4code2html }}
+        {{ .Writing.Writing.String | a4code2html }}
         <hr>Comments:<br>
         {{ template "threadComments" $ }}
         {{ if .CanReply }}

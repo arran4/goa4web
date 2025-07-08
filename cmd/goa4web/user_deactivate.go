@@ -103,7 +103,7 @@ func (c *userDeactivateCmd) Run() error {
 			WritingcategoryIdwritingcategory: w.WritingcategoryIdwritingcategory,
 			Title:                            w.Title,
 			Published:                        w.Published,
-			Writting:                         w.Writting,
+			Writing:                          w.Writing,
 			Abstract:                         w.Abstract,
 			Private:                          w.Private,
 		}); err != nil {
@@ -112,7 +112,7 @@ func (c *userDeactivateCmd) Run() error {
 		}
 		if err := qtx.ScrubWriting(ctx, dbpkg.ScrubWritingParams{
 			Title:     sql.NullString{String: scrubText(w.Title.String), Valid: w.Title.Valid},
-			Writting:  sql.NullString{String: scrubText(w.Writting.String), Valid: w.Writting.Valid},
+			Writing:   sql.NullString{String: scrubText(w.Writing.String), Valid: w.Writing.Valid},
 			Abstract:  sql.NullString{String: scrubText(w.Abstract.String), Valid: w.Abstract.Valid},
 			Idwriting: w.Idwriting,
 		}); err != nil {

@@ -327,7 +327,7 @@ CREATE TABLE `writing` (
   `writingCategory_idwritingCategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `published` datetime DEFAULT NULL,
-  `writting` longtext DEFAULT NULL,
+  `writing` longtext DEFAULT NULL,
   `abstract` mediumtext DEFAULT NULL,
   `private` tinyint(1) DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
@@ -355,7 +355,7 @@ CREATE TABLE `writingSearch` (
   KEY `searchwordlist_has_writing_FKIndex2` (`writing_idwriting`)
 );
 
-CREATE TABLE `writtingApprovedUsers` (
+CREATE TABLE `writingApprovedUsers` (
   `writing_idwriting` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `readdoc` tinyint(1) DEFAULT NULL,
@@ -499,7 +499,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_writings` (
   `writingCategory_idwritingCategory` int NOT NULL,
   `title` tinytext,
   `published` datetime,
-  `writting` longtext,
+  `writing` longtext,
   `abstract` mediumtext,
   `private` tinyint(1) DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,

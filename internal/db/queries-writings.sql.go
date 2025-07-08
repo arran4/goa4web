@@ -26,7 +26,7 @@ func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWriti
 }
 
 const createWritingApproval = `-- name: CreateWritingApproval :exec
-INSERT INTO writtingApprovedUsers (writing_idwriting, users_idusers, readdoc, editdoc)
+INSERT INTO writingApprovedUsers (writing_idwriting, users_idusers, readdoc, editdoc)
 VALUES (?, ?, ?, ?)
 `
 
@@ -48,7 +48,7 @@ func (q *Queries) CreateWritingApproval(ctx context.Context, arg CreateWritingAp
 }
 
 const deleteWritingApproval = `-- name: DeleteWritingApproval :exec
-DELETE FROM writtingApprovedUsers
+DELETE FROM writingApprovedUsers
 WHERE writing_idwriting = ? AND users_idusers = ?
 `
 
@@ -97,7 +97,7 @@ func (q *Queries) FetchAllCategories(ctx context.Context) ([]*Writingcategory, e
 
 const getAllWritingApprovals = `-- name: GetAllWritingApprovals :many
 SELECT idusers, u.username, wau.writing_idwriting, wau.users_idusers, wau.readdoc, wau.editdoc
-FROM writtingApprovedUsers wau
+FROM writingApprovedUsers wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 `
 
@@ -175,7 +175,7 @@ func (q *Queries) GetAllWritingCategories(ctx context.Context, writingcategoryId
 }
 
 const getAllWritingsByUser = `-- name: GetAllWritingsByUser :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, w.deleted_at, u.username,
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
@@ -191,7 +191,7 @@ type GetAllWritingsByUserRow struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -216,7 +216,7 @@ func (q *Queries) GetAllWritingsByUser(ctx context.Context, usersIdusers int32) 
 			&i.WritingcategoryIdwritingcategory,
 			&i.Title,
 			&i.Published,
-			&i.Writting,
+			&i.Writing,
 			&i.Abstract,
 			&i.Private,
 			&i.DeletedAt,
@@ -237,7 +237,7 @@ func (q *Queries) GetAllWritingsByUser(ctx context.Context, usersIdusers int32) 
 }
 
 const getPublicWritings = `-- name: GetPublicWritings :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, w.deleted_at
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC
@@ -266,7 +266,7 @@ func (q *Queries) GetPublicWritings(ctx context.Context, arg GetPublicWritingsPa
 			&i.WritingcategoryIdwritingcategory,
 			&i.Title,
 			&i.Published,
-			&i.Writting,
+			&i.Writing,
 			&i.Abstract,
 			&i.Private,
 			&i.DeletedAt,
@@ -285,7 +285,7 @@ func (q *Queries) GetPublicWritings(ctx context.Context, arg GetPublicWritingsPa
 }
 
 const getPublicWritingsByUser = `-- name: GetPublicWritingsByUser :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, w.deleted_at, u.username,
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
@@ -308,7 +308,7 @@ type GetPublicWritingsByUserRow struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -333,7 +333,7 @@ func (q *Queries) GetPublicWritingsByUser(ctx context.Context, arg GetPublicWrit
 			&i.WritingcategoryIdwritingcategory,
 			&i.Title,
 			&i.Published,
-			&i.Writting,
+			&i.Writing,
 			&i.Abstract,
 			&i.Private,
 			&i.DeletedAt,
@@ -354,7 +354,7 @@ func (q *Queries) GetPublicWritingsByUser(ctx context.Context, arg GetPublicWrit
 }
 
 const getPublicWritingsInCategory = `-- name: GetPublicWritingsInCategory :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, w.deleted_at, u.Username,
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
@@ -377,7 +377,7 @@ type GetPublicWritingsInCategoryRow struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -402,7 +402,7 @@ func (q *Queries) GetPublicWritingsInCategory(ctx context.Context, arg GetPublic
 			&i.WritingcategoryIdwritingcategory,
 			&i.Title,
 			&i.Published,
-			&i.Writting,
+			&i.Writing,
 			&i.Abstract,
 			&i.Private,
 			&i.DeletedAt,
@@ -423,10 +423,10 @@ func (q *Queries) GetPublicWritingsInCategory(ctx context.Context, arg GetPublic
 }
 
 const getWritingByIdForUserDescendingByPublishedDate = `-- name: GetWritingByIdForUserDescendingByPublishedDate :one
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+LEFT JOIN writingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
 WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
 ORDER BY w.published DESC
 `
@@ -444,7 +444,7 @@ type GetWritingByIdForUserDescendingByPublishedDateRow struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -463,7 +463,7 @@ func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Con
 		&i.WritingcategoryIdwritingcategory,
 		&i.Title,
 		&i.Published,
-		&i.Writting,
+		&i.Writing,
 		&i.Abstract,
 		&i.Private,
 		&i.DeletedAt,
@@ -474,10 +474,10 @@ func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Con
 }
 
 const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsByIdsForUserDescendingByPublishedDate :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writting, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.username AS WriterUsername
+SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writingcategory_idwritingcategory, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writtingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
+LEFT JOIN writingApprovedUsers wau ON w.idwriting = wau.writing_idwriting AND wau.users_idusers = ?
 WHERE w.idwriting IN (/*SLICE:writingids*/?) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
 ORDER BY w.published DESC
 `
@@ -495,7 +495,7 @@ type GetWritingsByIdsForUserDescendingByPublishedDateRow struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -532,7 +532,7 @@ func (q *Queries) GetWritingsByIdsForUserDescendingByPublishedDate(ctx context.C
 			&i.WritingcategoryIdwritingcategory,
 			&i.Title,
 			&i.Published,
-			&i.Writting,
+			&i.Writing,
 			&i.Abstract,
 			&i.Private,
 			&i.DeletedAt,
@@ -553,7 +553,7 @@ func (q *Queries) GetWritingsByIdsForUserDescendingByPublishedDate(ctx context.C
 }
 
 const insertWriting = `-- name: InsertWriting :execlastid
-INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
+INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writing, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
 `
 
@@ -561,7 +561,7 @@ type InsertWritingParams struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Abstract                         sql.NullString
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Private                          sql.NullBool
 	LanguageIdlanguage               int32
 	UsersIdusers                     int32
@@ -572,7 +572,7 @@ func (q *Queries) InsertWriting(ctx context.Context, arg InsertWritingParams) (i
 		arg.WritingcategoryIdwritingcategory,
 		arg.Title,
 		arg.Abstract,
-		arg.Writting,
+		arg.Writing,
 		arg.Private,
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
@@ -601,14 +601,14 @@ func (q *Queries) InsertWritingCategory(ctx context.Context, arg InsertWritingCa
 
 const updateWriting = `-- name: UpdateWriting :exec
 UPDATE writing
-SET title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
+SET title = ?, abstract = ?, writing = ?, private = ?, language_idlanguage = ?
 WHERE idwriting = ?
 `
 
 type UpdateWritingParams struct {
 	Title              sql.NullString
 	Abstract           sql.NullString
-	Writting           sql.NullString
+	Writing            sql.NullString
 	Private            sql.NullBool
 	LanguageIdlanguage int32
 	Idwriting          int32
@@ -618,7 +618,7 @@ func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) er
 	_, err := q.db.ExecContext(ctx, updateWriting,
 		arg.Title,
 		arg.Abstract,
-		arg.Writting,
+		arg.Writing,
 		arg.Private,
 		arg.LanguageIdlanguage,
 		arg.Idwriting,
@@ -627,7 +627,7 @@ func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) er
 }
 
 const updateWritingApproval = `-- name: UpdateWritingApproval :exec
-UPDATE writtingApprovedUsers
+UPDATE writingApprovedUsers
 SET readdoc = ?, editdoc = ?
 WHERE writing_idwriting = ? AND users_idusers = ?
 `

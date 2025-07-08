@@ -63,7 +63,7 @@ FROM blogs;
 -- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
 -- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
 INSERT INTO writingSearch (text, writing_idwriting)
-SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing;
 
 -- name: RemakeLinkerSearch :exec
@@ -110,7 +110,7 @@ DELETE FROM blogsSearch;
 -- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
 -- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
 INSERT INTO writingSearch (text, writing_idwriting)
-SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing;
 
 -- name: DeleteWritingSearch :exec

@@ -53,6 +53,6 @@ func (c *writingReadCmd) Run() error {
 		return fmt.Errorf("get writing: %w", err)
 	}
 	fmt.Printf("Title: %s\n", row.Title.String)
-	fmt.Println(row.Writting.String)
+	fmt.Println(row.Writing.String)
 	return nil
 }

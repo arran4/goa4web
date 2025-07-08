@@ -75,7 +75,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},
 		Abstract:           sql.NullString{Valid: true, String: abstract},
-		Writting:           sql.NullString{Valid: true, String: body},
+		Writing:            sql.NullString{Valid: true, String: body},
 		Private:            sql.NullBool{Valid: true, Bool: private},
 		LanguageIdlanguage: int32(languageId),
 		Idwriting:          writing.Idwriting,

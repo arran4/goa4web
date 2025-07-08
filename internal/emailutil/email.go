@@ -5,12 +5,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/arran4/goa4web/config"
 
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -179,32 +176,15 @@ func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 }
 
 // AdminNotificationsEnabled reports whether administrator notification emails
-// should be sent. The ADMIN_NOTIFY environment variable can be set to any of
-// "0", "false", "off" or "no" to disable notifications.
+// should be sent based on the runtime configuration.
 func AdminNotificationsEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
-	if v == "" {
-		return true
-	}
-	switch v {
-	case "0", "false", "off", "no":
-		return false
-	default:
-		return true
-	}
+	return runtimeconfig.AppRuntimeConfig.AdminNotify
 }
 
+// EmailSendingEnabled reports if queued emails should be dispatched according
+// to the runtime configuration.
 func EmailSendingEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvEmailEnabled))
-	if v == "" {
-		return true
-	}
-	switch v {
-	case "0", "false", "off", "no":
-		return false
-	default:
-		return true
-	}
+	return runtimeconfig.AppRuntimeConfig.EmailEnabled
 }
 
 // NotifyAdmins sends a change notification email to all administrator addresses

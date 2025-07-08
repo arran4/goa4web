@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 )
 
@@ -16,7 +17,7 @@ import (
 const defaultSecretName = ".session_secret"
 
 // FileSystem abstracts file operations for loading and storing the secret.
-type FileSystem = config.FileSystem
+type FileSystem = core.FileSystem
 
 // DefaultSessionSecretPath returns the default path for the session secret file
 // based on the execution environment.

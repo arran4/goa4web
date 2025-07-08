@@ -45,7 +45,7 @@ func (c *emailQueueResendCmd) Run() error {
 	}
 	provider := email.ProviderFromConfig(c.rootCmd.cfg)
 	if provider != nil {
-		msg, err := email.BuildMessage(c.rootCmd.cfg.EmailFrom, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String)
+		msg, err := email.BuildMessage(c.rootCmd.cfg.EmailFrom, e.ToEmail, e.Subject, e.Body, "")
 		if err != nil {
 			return fmt.Errorf("build message: %w", err)
 		}

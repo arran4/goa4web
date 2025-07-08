@@ -61,17 +61,17 @@ func (q *Queries) AddToImagePostSearch(ctx context.Context, arg AddToImagePostSe
 
 const addToLinkerSearch = `-- name: AddToLinkerSearch :exec
 INSERT IGNORE INTO linkerSearch
-(linker_idlinker, searchwordlist_idsearchwordlist)
+(linker_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
 
 type AddToLinkerSearchParams struct {
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 	SearchwordlistIdsearchwordlist int32
 }
 
 func (q *Queries) AddToLinkerSearch(ctx context.Context, arg AddToLinkerSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerIdlinker, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerID, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
@@ -485,7 +485,7 @@ func (q *Queries) ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNe
 }
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -499,11 +499,11 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var linker_idlinker int32
-		if err := rows.Scan(&linker_idlinker); err != nil {
+		var linker_id int32
+		if err := rows.Scan(&linker_id); err != nil {
 			return nil, err
 		}
-		items = append(items, linker_idlinker)
+		items = append(items, linker_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -515,11 +515,11 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([
 }
 
 const linkerSearchNext = `-- name: LinkerSearchNext :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.linker_idlinker IN (/*SLICE:ids*/?)
+AND cs.linker_id IN (/*SLICE:ids*/?)
 `
 
 type LinkerSearchNextParams struct {
@@ -546,11 +546,11 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var linker_idlinker int32
-		if err := rows.Scan(&linker_idlinker); err != nil {
+		var linker_id int32
+		if err := rows.Scan(&linker_id); err != nil {
 			return nil, err
 		}
-		items = append(items, linker_idlinker)
+		items = append(items, linker_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -625,26 +625,26 @@ func (q *Queries) RemakeImagePostSearchInsert(ctx context.Context) error {
 }
 
 const remakeLinkerSearch = `-- name: RemakeLinkerSearch :exec
-INSERT INTO linkerSearch (text, linker_idlinker)
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
 `
 
 // This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
 func (q *Queries) RemakeLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearch)
 	return err
 }
 
 const remakeLinkerSearchInsert = `-- name: RemakeLinkerSearchInsert :exec
-INSERT INTO linkerSearch (text, linker_idlinker)
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
 `
 
 // This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
 func (q *Queries) RemakeLinkerSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearchInsert)
 	return err

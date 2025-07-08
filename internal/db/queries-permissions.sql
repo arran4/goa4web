@@ -78,10 +78,10 @@ FROM userstopiclevel utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 ;
 
--- name: DeleteTopicRestrictionsByForumTopicId :exec
+-- name: DeleteTopicRestrictionByForumTopicId :exec
 DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
 
--- name: UpsertForumTopicRestrictions :exec
+-- name: UpsertForumTopicRestriction :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
@@ -94,13 +94,13 @@ ON DUPLICATE KEY UPDATE
     modlevel = VALUES(modlevel),
     adminlevel = VALUES(adminlevel);
 
--- name: GetForumTopicRestrictionsByForumTopicId :many
+-- name: GetForumTopicRestrictionByForumTopicId :many
 SELECT t.idforumtopic, r.*
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?;
 
--- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
+-- name: GetAllForumTopicRestrictionWithForumTopicTitle :many
 SELECT t.idforumtopic, r.*
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;

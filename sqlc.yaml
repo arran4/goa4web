@@ -1,4 +1,8 @@
 version: 2
+overrides:
+    go:
+        rename:
+            topicrestriction: TopicRestriction
 sql:
     - engine: "mysql"
       schema: "schema/schema.sql"

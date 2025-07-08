@@ -19,7 +19,7 @@ func AdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*CoreData
-		Restrictions []*db.GetAllForumTopicRestrictionsWithForumTopicTitleRow
+		Restrictions []*db.GetAllForumTopicRestrictionWithForumTopicTitleRow
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -28,7 +28,7 @@ func AdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	restrictions, err := queries.GetAllForumTopicRestrictionsWithForumTopicTitle(r.Context())
+	restrictions, err := queries.GetAllForumTopicRestrictionWithForumTopicTitle(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -98,7 +98,7 @@ func AdminTopicsRestrictionLevelChangePage(w http.ResponseWriter, r *http.Reques
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	if err := queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
+	if err := queries.UpsertForumTopicRestriction(r.Context(), db.UpsertForumTopicRestrictionParams{
 		ForumtopicIdforumtopic: int32(ftid),
 		Viewlevel:              sql.NullInt32{Valid: true, Int32: int32(view)},
 		Replylevel:             sql.NullInt32{Valid: true, Int32: int32(reply)},
@@ -126,7 +126,7 @@ func AdminTopicsRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Reques
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	if err := queries.DeleteTopicRestrictionsByForumTopicId(r.Context(), int32(ftid)); err != nil {
+	if err := queries.DeleteTopicRestrictionByForumTopicId(r.Context(), int32(ftid)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -150,20 +150,20 @@ func AdminTopicsRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request)
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	src, err := queries.GetForumTopicRestrictionsByForumTopicId(r.Context(), int32(fromID))
+	src, err := queries.GetForumTopicRestrictionByForumTopicId(r.Context(), int32(fromID))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
 	if len(src) == 0 || !src[0].ForumtopicIdforumtopic.Valid {
-		if err := queries.DeleteTopicRestrictionsByForumTopicId(r.Context(), int32(toID)); err != nil {
+		if err := queries.DeleteTopicRestrictionByForumTopicId(r.Context(), int32(toID)); err != nil {
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
 	} else {
 		row := src[0]
-		if err := queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
+		if err := queries.UpsertForumTopicRestriction(r.Context(), db.UpsertForumTopicRestrictionParams{
 			ForumtopicIdforumtopic: int32(toID),
 			Viewlevel:              row.Viewlevel,
 			Replylevel:             row.Replylevel,

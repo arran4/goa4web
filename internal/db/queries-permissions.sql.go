@@ -44,12 +44,12 @@ func (q *Queries) CountPermissionSections(ctx context.Context) ([]*CountPermissi
 	return items, nil
 }
 
-const deleteTopicRestrictionsByForumTopicId = `-- name: DeleteTopicRestrictionsByForumTopicId :exec
+const deleteTopicRestrictionByForumTopicId = `-- name: DeleteTopicRestrictionByForumTopicId :exec
 DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?
 `
 
-func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, forumtopicIdforumtopic int32) error {
-	_, err := q.db.ExecContext(ctx, deleteTopicRestrictionsByForumTopicId, forumtopicIdforumtopic)
+func (q *Queries) DeleteTopicRestrictionByForumTopicId(ctx context.Context, forumtopicIdforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, deleteTopicRestrictionByForumTopicId, forumtopicIdforumtopic)
 	return err
 }
 
@@ -71,13 +71,13 @@ func (q *Queries) GetAdministratorPermissionByUserId(ctx context.Context, usersI
 	return &i, err
 }
 
-const getAllForumTopicRestrictionsWithForumTopicTitle = `-- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
+const getAllForumTopicRestrictionWithForumTopicTitle = `-- name: GetAllForumTopicRestrictionWithForumTopicTitle :many
 SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 `
 
-type GetAllForumTopicRestrictionsWithForumTopicTitleRow struct {
+type GetAllForumTopicRestrictionWithForumTopicTitleRow struct {
 	Idforumtopic           int32
 	ForumtopicIdforumtopic sql.NullInt32
 	Viewlevel              sql.NullInt32
@@ -90,15 +90,15 @@ type GetAllForumTopicRestrictionsWithForumTopicTitleRow struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Context) ([]*GetAllForumTopicRestrictionsWithForumTopicTitleRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllForumTopicRestrictionsWithForumTopicTitle)
+func (q *Queries) GetAllForumTopicRestrictionWithForumTopicTitle(ctx context.Context) ([]*GetAllForumTopicRestrictionWithForumTopicTitleRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllForumTopicRestrictionWithForumTopicTitle)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllForumTopicRestrictionsWithForumTopicTitleRow
+	var items []*GetAllForumTopicRestrictionWithForumTopicTitleRow
 	for rows.Next() {
-		var i GetAllForumTopicRestrictionsWithForumTopicTitleRow
+		var i GetAllForumTopicRestrictionWithForumTopicTitleRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.ForumtopicIdforumtopic,
@@ -124,14 +124,14 @@ func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Co
 	return items, nil
 }
 
-const getForumTopicRestrictionsByForumTopicId = `-- name: GetForumTopicRestrictionsByForumTopicId :many
+const getForumTopicRestrictionByForumTopicId = `-- name: GetForumTopicRestrictionByForumTopicId :many
 SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?
 `
 
-type GetForumTopicRestrictionsByForumTopicIdRow struct {
+type GetForumTopicRestrictionByForumTopicIdRow struct {
 	Idforumtopic           int32
 	ForumtopicIdforumtopic sql.NullInt32
 	Viewlevel              sql.NullInt32
@@ -144,15 +144,15 @@ type GetForumTopicRestrictionsByForumTopicIdRow struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) GetForumTopicRestrictionsByForumTopicId(ctx context.Context, idforumtopic int32) ([]*GetForumTopicRestrictionsByForumTopicIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, getForumTopicRestrictionsByForumTopicId, idforumtopic)
+func (q *Queries) GetForumTopicRestrictionByForumTopicId(ctx context.Context, idforumtopic int32) ([]*GetForumTopicRestrictionByForumTopicIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getForumTopicRestrictionByForumTopicId, idforumtopic)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetForumTopicRestrictionsByForumTopicIdRow
+	var items []*GetForumTopicRestrictionByForumTopicIdRow
 	for rows.Next() {
-		var i GetForumTopicRestrictionsByForumTopicIdRow
+		var i GetForumTopicRestrictionByForumTopicIdRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.ForumtopicIdforumtopic,
@@ -495,7 +495,7 @@ func (q *Queries) RenamePermissionSection(ctx context.Context, arg RenamePermiss
 	return err
 }
 
-const upsertForumTopicRestrictions = `-- name: UpsertForumTopicRestrictions :exec
+const upsertForumTopicRestriction = `-- name: UpsertForumTopicRestriction :exec
 INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
@@ -509,7 +509,7 @@ ON DUPLICATE KEY UPDATE
     adminlevel = VALUES(adminlevel)
 `
 
-type UpsertForumTopicRestrictionsParams struct {
+type UpsertForumTopicRestrictionParams struct {
 	ForumtopicIdforumtopic int32
 	Viewlevel              sql.NullInt32
 	Replylevel             sql.NullInt32
@@ -521,8 +521,8 @@ type UpsertForumTopicRestrictionsParams struct {
 	Adminlevel             sql.NullInt32
 }
 
-func (q *Queries) UpsertForumTopicRestrictions(ctx context.Context, arg UpsertForumTopicRestrictionsParams) error {
-	_, err := q.db.ExecContext(ctx, upsertForumTopicRestrictions,
+func (q *Queries) UpsertForumTopicRestriction(ctx context.Context, arg UpsertForumTopicRestrictionParams) error {
+	_, err := q.db.ExecContext(ctx, upsertForumTopicRestriction,
 		arg.ForumtopicIdforumtopic,
 		arg.Viewlevel,
 		arg.Replylevel,

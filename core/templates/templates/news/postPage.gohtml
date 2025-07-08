@@ -2,7 +2,7 @@
     {{ template "newsPost" $.Post }}
     <hr><font size=4>Replies:</font>
     {{ template "threadComments" $ }}
-    <a id="reply">
+    <a id="reply"></a>
     {{ if or .IsReplyable }}
         <font size=4>Reply:</font>
         <form method="post" action="?#reply">

@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"reflect"
 	"regexp"
 	"testing"
 
@@ -34,7 +33,8 @@ func init() {
 
 func TestGetEmailProviderLog(t *testing.T) {
 	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "log"}
-	if p := email.ProviderFromConfig(cfg); reflect.TypeOf(p) != reflect.TypeOf(logProv.Provider{}) {
+	p := email.ProviderFromConfig(cfg)
+	if _, ok := p.(logProv.Provider); !ok {
 		t.Errorf("expected LogProvider, got %#v", p)
 	}
 }

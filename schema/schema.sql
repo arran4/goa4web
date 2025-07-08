@@ -374,8 +374,6 @@ CREATE TABLE IF NOT EXISTS `schema_version` (
 CREATE TABLE IF NOT EXISTS `subscriptions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `users_idusers` int NOT NULL,
-  `item_type` varchar(32) NOT NULL,
-  `target_id` int NOT NULL,
   `method` varchar(16) NOT NULL DEFAULT 'internal',
   `pattern` varchar(255) NOT NULL DEFAULT '',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -388,7 +386,7 @@ CREATE TABLE IF NOT EXISTS `pending_emails` (
   `to_email` text NOT NULL,
   `subject` text NOT NULL,
   `body` text NOT NULL,
-  `html_body` text,
+  `error_count` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `sent_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -406,7 +404,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 );
 
 -- Persist errors from asynchronous workers.
-CREATE TABLE IF NOT EXISTS `worker_errors` (
+CREATE TABLE IF NOT EXISTS `dead_letters` (
   `id` int NOT NULL AUTO_INCREMENT,
   `message` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

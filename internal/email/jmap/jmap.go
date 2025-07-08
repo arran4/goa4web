@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
@@ -24,19 +23,9 @@ type Provider struct {
 	From      string
 }
 
-func (j Provider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+func (j Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
 	var msg bytes.Buffer
-	boundary := "a4web" + strings.ReplaceAll(fmt.Sprint(time.Now().UnixNano()), "-", "")
-	fmt.Fprintf(&msg, "From: %s\r\n", j.From)
-	fmt.Fprintf(&msg, "To: %s\r\n", to)
-	if htmlBody != "" {
-		fmt.Fprintf(&msg, "Subject: %s\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=%s\r\n\r\n", subject, boundary)
-		fmt.Fprintf(&msg, "--%s\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", boundary, textBody)
-		fmt.Fprintf(&msg, "--%s\r\nContent-Type: text/html; charset=utf-8\r\n\r\n%s\r\n--%s--", boundary, htmlBody, boundary)
-	} else {
-		fmt.Fprintf(&msg, "Subject: %s\r\n\r\n", subject)
-		msg.WriteString(textBody)
-	}
+	msg.Write(rawEmailMessage)
 
 	uploadURL := fmt.Sprintf("%s/upload/%s", strings.TrimRight(j.Endpoint, "/"), j.AccountID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, bytes.NewReader(msg.Bytes()))

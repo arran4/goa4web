@@ -5,6 +5,10 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
+	"strings"
+	"text/template"
+
+	coretemplates "github.com/arran4/goa4web/core/templates"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -101,7 +105,28 @@ func (c *configTestEmailCmd) Run() error {
 		return fmt.Errorf("no administrator emails configured")
 	}
 	for _, addr := range emails {
-		if err := provider.Send(ctx, addr, "goa4web test", "goa4web email configuration works", ""); err != nil {
+		var buf strings.Builder
+		t, err := template.New("txt").Parse(coretemplates.TestEmailText)
+		if err != nil {
+			return fmt.Errorf("parse text template: %w", err)
+		}
+		if err := t.Execute(&buf, nil); err != nil {
+			return fmt.Errorf("exec text template: %w", err)
+		}
+		textBody := buf.String()
+		buf.Reset()
+		ht, err := template.New("html").Parse(coretemplates.TestEmailHTML)
+		if err != nil {
+			return fmt.Errorf("parse html template: %w", err)
+		}
+		if err := ht.Execute(&buf, nil); err != nil {
+			return fmt.Errorf("exec html template: %w", err)
+		}
+		msg, err := email.BuildMessage(c.rootCmd.cfg.EmailFrom, addr, "Goa4Web Test Email", textBody, buf.String())
+		if err != nil {
+			return fmt.Errorf("build message: %w", err)
+		}
+		if err := provider.Send(ctx, addr, "Goa4Web Test Email", msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}

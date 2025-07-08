@@ -89,9 +89,9 @@ requests.
 
 ### Section registration
 
-Site sections register their navigation items with the `sections` package so
-menus can be assembled dynamically. Use `sections.RegisterIndexLink` for public
-links and `sections.RegisterAdminControlCenter` for admin navigation. Each call
+Site sections register their navigation items with the `navigation` package so
+menus can be assembled dynamically. Use `navigation.RegisterIndexLink` for public
+links and `navigation.RegisterAdminControlCenter` for admin navigation. Each call
 accepts a weight value; lower numbers appear first.
 
 Example weights:
@@ -263,6 +263,7 @@ environment variables listed below.
 | `DEFAULT_LANGUAGE` | `--default-language` | No | - | Site's default language name. |
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
 | `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
+| `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
 
 ### Dead Letter Queue Providers
 
@@ -293,7 +294,7 @@ defined in `internal/email/provider.go`:
 
 ```go
 type Provider interface {
-    Send(ctx context.Context, to, subject, body string) error
+    Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error
 }
 ```
 

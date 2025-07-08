@@ -4,9 +4,15 @@
 package sendgrid
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"mime"
+	"mime/multipart"
+	"net/mail"
+	"strings"
 
 	sg "github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -24,7 +30,8 @@ type Provider struct {
 	From   string
 }
 
-func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody string) error {
+func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
+	textBody, htmlBody := parseRawEmail(rawEmailMessage)
 	from := mail.NewEmail("", s.From)
 	toAddr := mail.NewEmail("", to)
 	msg := mail.NewSingleEmail(from, subject, toAddr, textBody, htmlBody)
@@ -37,6 +44,39 @@ func (s Provider) Send(ctx context.Context, to, subject, textBody, htmlBody stri
 		return fmt.Errorf("sendgrid: status %d: %s", resp.StatusCode, resp.Body)
 	}
 	return nil
+}
+
+func parseRawEmail(raw []byte) (string, string) {
+	m, err := mail.ReadMessage(bytes.NewReader(raw))
+	if err != nil {
+		return string(raw), ""
+	}
+	ctype := m.Header.Get("Content-Type")
+	med, params, err := mime.ParseMediaType(ctype)
+	if err != nil {
+		b, _ := io.ReadAll(m.Body)
+		return string(b), ""
+	}
+	if strings.HasPrefix(med, "multipart/") {
+		mr := multipart.NewReader(m.Body, params["boundary"])
+		var textBody, htmlBody string
+		for {
+			p, err := mr.NextPart()
+			if err != nil {
+				break
+			}
+			b, _ := io.ReadAll(p)
+			ct := p.Header.Get("Content-Type")
+			if strings.HasPrefix(ct, "text/plain") {
+				textBody = string(b)
+			} else if strings.HasPrefix(ct, "text/html") {
+				htmlBody = string(b)
+			}
+		}
+		return textBody, htmlBody
+	}
+	b, _ := io.ReadAll(m.Body)
+	return string(b), ""
 }
 
 func providerFromConfig(key string, from string) email.Provider {

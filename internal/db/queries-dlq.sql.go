@@ -10,50 +10,50 @@ import (
 	"time"
 )
 
-const countWorkerErrors = `-- name: CountWorkerErrors :one
-SELECT COUNT(*) FROM worker_errors
+const countDeadLetters = `-- name: CountDeadLetters :one
+SELECT COUNT(*) FROM dead_letters
 `
 
-func (q *Queries) CountWorkerErrors(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countWorkerErrors)
+func (q *Queries) CountDeadLetters(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countDeadLetters)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const deleteWorkerError = `-- name: DeleteWorkerError :exec
-DELETE FROM worker_errors WHERE id = ?
+const deleteDeadLetter = `-- name: DeleteDeadLetter :exec
+DELETE FROM dead_letters WHERE id = ?
 `
 
-func (q *Queries) DeleteWorkerError(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteWorkerError, id)
+func (q *Queries) DeleteDeadLetter(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteDeadLetter, id)
 	return err
 }
 
-const insertWorkerError = `-- name: InsertWorkerError :exec
-INSERT INTO worker_errors (message) VALUES (?)
+const insertDeadLetter = `-- name: InsertDeadLetter :exec
+INSERT INTO dead_letters (message) VALUES (?)
 `
 
-func (q *Queries) InsertWorkerError(ctx context.Context, message string) error {
-	_, err := q.db.ExecContext(ctx, insertWorkerError, message)
+func (q *Queries) InsertDeadLetter(ctx context.Context, message string) error {
+	_, err := q.db.ExecContext(ctx, insertDeadLetter, message)
 	return err
 }
 
-const listWorkerErrors = `-- name: ListWorkerErrors :many
-SELECT id, message, created_at FROM worker_errors
+const listDeadLetters = `-- name: ListDeadLetters :many
+SELECT id, message, created_at FROM dead_letters
 ORDER BY id DESC
 LIMIT ?
 `
 
-func (q *Queries) ListWorkerErrors(ctx context.Context, limit int32) ([]*WorkerError, error) {
-	rows, err := q.db.QueryContext(ctx, listWorkerErrors, limit)
+func (q *Queries) ListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error) {
+	rows, err := q.db.QueryContext(ctx, listDeadLetters, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*WorkerError
+	var items []*DeadLetter
 	for rows.Next() {
-		var i WorkerError
+		var i DeadLetter
 		if err := rows.Scan(&i.ID, &i.Message, &i.CreatedAt); err != nil {
 			return nil, err
 		}
@@ -68,11 +68,11 @@ func (q *Queries) ListWorkerErrors(ctx context.Context, limit int32) ([]*WorkerE
 	return items, nil
 }
 
-const purgeWorkerErrorsBefore = `-- name: PurgeWorkerErrorsBefore :exec
-DELETE FROM worker_errors WHERE created_at < ?
+const purgeDeadLettersBefore = `-- name: PurgeDeadLettersBefore :exec
+DELETE FROM dead_letters WHERE created_at < ?
 `
 
-func (q *Queries) PurgeWorkerErrorsBefore(ctx context.Context, createdAt time.Time) error {
-	_, err := q.db.ExecContext(ctx, purgeWorkerErrorsBefore, createdAt)
+func (q *Queries) PurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error {
+	_, err := q.db.ExecContext(ctx, purgeDeadLettersBefore, createdAt)
 	return err
 }

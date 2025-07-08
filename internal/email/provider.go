@@ -5,5 +5,5 @@ import "context"
 // Provider defines a simple interface that all mail backends must implement.
 // Only the fields necessary for sending basic notification emails are included.
 type Provider interface {
-	Send(ctx context.Context, to, subject, textBody, htmlBody string) error
+	Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error
 }

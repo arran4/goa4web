@@ -135,7 +135,7 @@ func safeGo(fn func()) {
 func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg runtimeconfig.RuntimeConfig) {
 	log.Printf("Starting email worker")
 	safeGo(func() {
-		emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
+		emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
 	})
 	log.Printf("Starting notification purger worker")
 	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })

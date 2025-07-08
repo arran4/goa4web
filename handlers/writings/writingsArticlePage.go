@@ -80,6 +80,50 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if writing.ForumthreadIdforumthread == 0 && uid != 0 {
+		pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
+			String: WritingTopicName,
+			Valid:  true,
+		})
+		var ptid int32
+		if errors.Is(err, sql.ErrNoRows) {
+			ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
+				ForumcategoryIdforumcategory: 0,
+				Title:                        sql.NullString{String: WritingTopicName, Valid: true},
+				Description:                  sql.NullString{String: WritingTopicDescription, Valid: true},
+			})
+			if err != nil {
+				log.Printf("Error: createForumTopic: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			ptid = int32(ptidi)
+		} else if err != nil {
+			log.Printf("Error: findForumTopicByTitle: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		} else {
+			ptid = pt.Idforumtopic
+		}
+
+		pthidi, err := queries.MakeThread(r.Context(), ptid)
+		if err != nil {
+			log.Printf("Error: makeThread: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		pthid := int32(pthidi)
+		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
+			ForumthreadIdforumthread: pthid,
+			Idwriting:                writing.Idwriting,
+		}); err != nil {
+			log.Printf("Error: assign_article_to_thread: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		writing.ForumthreadIdforumthread = pthid
+	}
+
 	data.Writing = writing
 	data.IsAuthor = writing.UsersIdusers == uid
 	data.CanEdit = (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("writer") && data.IsAuthor)
@@ -208,7 +252,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	aid, err := strconv.Atoi(vars["post"])
+	aid, err := strconv.Atoi(vars["article"])
 
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

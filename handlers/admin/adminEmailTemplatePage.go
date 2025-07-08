@@ -104,21 +104,32 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	content := struct{ To, From, Subject, URL, Action, Path, Time string }{
-		To:      user.Email.String,
-		From:    runtimeconfig.AppRuntimeConfig.EmailFrom,
-		Subject: "Website Update Notification",
-		URL:     pageURL,
-		Action:  common.TaskTestMail,
-		Path:    r.URL.Path,
-		Time:    time.Now().Format(time.RFC822),
+	unsub := "/usr/subscriptions"
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	}
+	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubURL string }{
+		To:       user.Email.String,
+		From:     runtimeconfig.AppRuntimeConfig.EmailFrom,
+		Subject:  "Website Update Notification",
+		URL:      pageURL,
+		Action:   common.TaskTestMail,
+		Path:     r.URL.Path,
+		Time:     time.Now().Format(time.RFC822),
+		UnsubURL: unsub,
 	}
 	if err := tmpl.Execute(&buf, content); err != nil {
 		log.Printf("execute template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := provider.Send(r.Context(), user.Email.String, content.Subject, buf.String(), ""); err != nil {
+	msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, user.Email.String, content.Subject, buf.String(), "")
+	if err != nil {
+		log.Printf("build message: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if err := provider.Send(r.Context(), user.Email.String, content.Subject, msg); err != nil {
 		log.Printf("send email: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)

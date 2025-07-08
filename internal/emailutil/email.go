@@ -62,26 +62,32 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	from := runtimeconfig.AppRuntimeConfig.EmailFrom
 
 	type EmailContent struct {
-		To      string
-		From    string
-		Subject string
-		URL     string
-		Action  string
-		Path    string
-		Time    string
-		Item    interface{}
+		To       string
+		From     string
+		Subject  string
+		URL      string
+		Action   string
+		Path     string
+		Time     string
+		UnsubURL string
+		Item     interface{}
 	}
 
 	// Define email content
+	unsub := "/usr/subscriptions"
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	}
 	content := EmailContent{
-		To:      emailAddr,
-		From:    from,
-		Subject: "Website Update Notification",
-		URL:     page,
-		Action:  action,
-		Path:    page,
-		Time:    time.Now().Format(time.RFC822),
-		Item:    item,
+		To:       emailAddr,
+		From:     from,
+		Subject:  "Website Update Notification",
+		URL:      page,
+		Action:   action,
+		Path:     page,
+		Time:     time.Now().Format(time.RFC822),
+		UnsubURL: unsub,
+		Item:     item,
 	}
 
 	// Create a new buffer to store the rendered email content
@@ -114,11 +120,15 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	}
 
 	if q, ok := ctx.Value(hcommon.KeyQueries).(*db.Queries); ok {
-		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: textBody, HtmlBody: htmlBody}); err != nil {
+		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: textBody}); err != nil {
 			return err
 		}
 	} else if provider != nil {
-		if err := provider.Send(ctx, emailAddr, content.Subject, textBody, htmlBody); err != nil {
+		msg, err := email.BuildMessage(from, emailAddr, content.Subject, textBody, htmlBody)
+		if err != nil {
+			return fmt.Errorf("build message: %w", err)
+		}
+		if err := provider.Send(ctx, emailAddr, content.Subject, msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}
@@ -138,6 +148,9 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 // addresses using this logic.
 func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 	env := runtimeconfig.AppRuntimeConfig.AdminEmails
+	if env == "" {
+		env = os.Getenv(config.EnvAdminEmails)
+	}
 	var emails []string
 	if env != "" {
 		for _, e := range strings.Split(env, ",") {

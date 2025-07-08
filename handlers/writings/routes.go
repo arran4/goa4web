@@ -9,13 +9,13 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
-	"github.com/arran4/goa4web/internal/sections"
+	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
 // RegisterRoutes attaches the public writings endpoints to r.
 func RegisterRoutes(r *mux.Router) {
-	sections.RegisterIndexLink("Writings", "/writings", SectionWeight)
-	sections.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
+	nav.RegisterIndexLink("Writings", "/writings", SectionWeight)
+	nav.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()
 	wr.HandleFunc("/rss", RssPage).Methods("GET")
 	wr.HandleFunc("/atom", AtomPage).Methods("GET")

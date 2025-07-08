@@ -137,6 +137,12 @@ type DeactivatedWriting struct {
 	RestoredAt                       sql.NullTime
 }
 
+type DeadLetter struct {
+	ID        int32
+	Message   string
+	CreatedAt time.Time
+}
+
 type Faq struct {
 	Idfaq                        int32
 	FaqcategoriesIdfaqcategories int32
@@ -271,13 +277,13 @@ type Password struct {
 }
 
 type PendingEmail struct {
-	ID        int32
-	ToEmail   string
-	Subject   string
-	Body      string
-	HtmlBody  sql.NullString
-	CreatedAt time.Time
-	SentAt    sql.NullTime
+	ID         int32
+	ToEmail    string
+	Subject    string
+	Body       string
+	ErrorCount int32
+	CreatedAt  time.Time
+	SentAt     sql.NullTime
 }
 
 type Permission struct {
@@ -340,8 +346,6 @@ type Sitenewssearch struct {
 type Subscription struct {
 	ID           int32
 	UsersIdusers int32
-	ItemType     string
-	TargetID     int32
 	Method       string
 	Pattern      string
 	CreatedAt    time.Time
@@ -384,12 +388,6 @@ type Userstopiclevel struct {
 	Level                  sql.NullInt32
 	Invitemax              sql.NullInt32
 	ExpiresAt              sql.NullTime
-}
-
-type WorkerError struct {
-	ID        int32
-	Message   string
-	CreatedAt time.Time
 }
 
 type Writing struct {

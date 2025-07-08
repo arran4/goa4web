@@ -9,7 +9,7 @@ A new blog post was published by {{.Item.Author}}.
 Read it here:
 {{.URL}}
 
-You can manage your subscriptions in your settings.
+Manage notifications: {{.UnsubURL}}
 
 Cheers,
 The A4Web Team

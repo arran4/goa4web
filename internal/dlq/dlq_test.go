@@ -1,21 +1,20 @@
 package dlq_test
 
 import (
-	"reflect"
 	"testing"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	dlq "github.com/arran4/goa4web/internal/dlq"
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
 	dirdlq "github.com/arran4/goa4web/internal/dlq/dir"
+	dlqdefaults "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 	emaildlq "github.com/arran4/goa4web/internal/dlq/email"
 	filedlq "github.com/arran4/goa4web/internal/dlq/file"
-	defaults "github.com/arran4/goa4web/internal/dlq/register/defaults"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestProviderFromConfigRegistry(t *testing.T) {
-	defaults.Register()
+	dlqdefaults.Register()
 
 	cfg := runtimeconfig.RuntimeConfig{DLQProvider: "file", DLQFile: "p"}
 	if _, ok := dlq.ProviderFromConfig(cfg, nil).(*filedlq.DLQ); !ok {
@@ -33,8 +32,11 @@ func TestProviderFromConfigRegistry(t *testing.T) {
 	}
 
 	cfg = runtimeconfig.RuntimeConfig{DLQProvider: "email"}
-	if p := dlq.ProviderFromConfig(cfg, nil); reflect.TypeOf(p) != reflect.TypeOf(emaildlq.DLQ{}) && reflect.TypeOf(p) != reflect.TypeOf(dlq.LogDLQ{}) {
-		t.Fatalf("unexpected type %T", p)
+	p := dlq.ProviderFromConfig(cfg, nil)
+	if _, ok := p.(emaildlq.DLQ); !ok {
+		if _, ok := p.(dlq.LogDLQ); !ok {
+			t.Fatalf("unexpected type %T", p)
+		}
 	}
 
 	cfg = runtimeconfig.RuntimeConfig{DLQProvider: "db,log"}

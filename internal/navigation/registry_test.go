@@ -1,4 +1,4 @@
-package sections
+package navigation
 
 import (
 	"testing"

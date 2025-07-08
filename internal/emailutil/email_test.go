@@ -3,13 +3,15 @@ package emailutil_test
 import (
 	"context"
 	"flag"
-	"reflect"
+	"fmt"
+	"regexp"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	mockdlq "github.com/arran4/goa4web/internal/dlq/mock"
 	"github.com/arran4/goa4web/internal/email"
 	jmapProv "github.com/arran4/goa4web/internal/email/jmap"
 	localProv "github.com/arran4/goa4web/internal/email/local"
@@ -31,7 +33,8 @@ func init() {
 
 func TestGetEmailProviderLog(t *testing.T) {
 	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "log"}
-	if p := email.ProviderFromConfig(cfg); reflect.TypeOf(p) != reflect.TypeOf(logProv.Provider{}) {
+	p := email.ProviderFromConfig(cfg)
+	if _, ok := p.(logProv.Provider); !ok {
 		t.Errorf("expected LogProvider, got %#v", p)
 	}
 }
@@ -81,7 +84,7 @@ func TestNotifyChange(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("a@b.com", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("a@b.com", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
 	rec := &mockemail.Provider{}
 	if err := emailutil.NotifyChange(ctx, rec, "a@b.com", "http://host", "update", nil); err != nil {
@@ -107,9 +110,9 @@ func TestInsertPendingEmail(t *testing.T) {
 	defer db.Close()
 
 	q := dbpkg.New(db)
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("t@test", "sub", "body", "html").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs("t@test", "sub", "body").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToEmail: "t@test", Subject: "sub", Body: "body", HtmlBody: "html"}); err != nil {
+	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToEmail: "t@test", Subject: "sub", Body: "body"}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -124,15 +127,46 @@ func TestEmailQueueWorker(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "html_body"}).AddRow(1, "a@test", "s", "b", "h")
+	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "error_count"}).AddRow(1, "a@test", "s", "b", 0)
 	mock.ExpectQuery("SELECT id, to_email").WillReturnRows(rows)
 	mock.ExpectExec("UPDATE pending_emails SET sent_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &mockemail.Provider{}
-	emailutil.ProcessPendingEmail(context.Background(), q, rec)
+	emailutil.ProcessPendingEmail(context.Background(), q, rec, nil)
 
 	if len(rec.Messages) != 1 || rec.Messages[0].To != "a@test" {
 		t.Fatalf("got %#v", rec.Messages)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+type errProvider struct{}
+
+func (errProvider) Send(context.Context, string, string, []byte) error {
+	return fmt.Errorf("fail")
+}
+
+func TestProcessPendingEmailDLQ(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{"id", "to_email", "subject", "body", "error_count"}).AddRow(1, "a@test", "s", "b", 4)
+	mock.ExpectQuery("SELECT id, to_email").WillReturnRows(rows)
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("SELECT error_count FROM pending_emails WHERE id = ?").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"error_count"}).AddRow(5))
+	mock.ExpectExec("DELETE FROM pending_emails WHERE id = ?").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	p := errProvider{}
+	dlqRec := &mockdlq.Provider{}
+	emailutil.ProcessPendingEmail(context.Background(), q, p, dlqRec)
+
+	if len(dlqRec.Records) != 1 {
+		t.Fatalf("dlq records=%d", len(dlqRec.Records))
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

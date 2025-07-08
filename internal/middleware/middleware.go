@@ -14,7 +14,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sections"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -51,7 +51,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		idx := sections.IndexItems()
+		idx := nav.IndexItems()
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
@@ -61,6 +61,12 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			if err == nil {
 				count = c
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
+			}
+		}
+		var username string
+		if u, ok := r.Context().Value(hcommon.KeyUser).(*dbpkg.User); ok {
+			if u != nil && u.Username.Valid {
+				username = u.Username.String
 			}
 		}
 		var ann *dbpkg.GetActiveAnnouncementWithNewsRow
@@ -73,6 +79,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			SecurityLevel:     level,
 			IndexItems:        idx,
 			UserID:            uid,
+			Username:          username,
 			Title:             "Arran's Site",
 			FeedsEnabled:      runtimeconfig.AppRuntimeConfig.FeedsEnabled,
 			AdminMode:         r.URL.Query().Get("mode") == "admin",

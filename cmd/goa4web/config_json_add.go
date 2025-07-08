@@ -6,6 +6,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // configJSONAddCmd implements "config add-json".
@@ -32,7 +33,7 @@ func (c *configJSONAddCmd) Run() error {
 	if c.File == "" {
 		return fmt.Errorf("file required")
 	}
-	values, err := envMapFromConfig(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	values, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}

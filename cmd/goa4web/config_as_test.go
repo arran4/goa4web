@@ -7,7 +7,7 @@ import (
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
-func TestEnvMapFromConfigLoops(t *testing.T) {
+func TestToEnvMapLoops(t *testing.T) {
 	cfg := runtimeconfig.RuntimeConfig{
 		EmailEnabled:         false,
 		NotificationsEnabled: false,
@@ -18,9 +18,9 @@ func TestEnvMapFromConfigLoops(t *testing.T) {
 		StatsStartYear:       2020,
 	}
 
-	m, err := envMapFromConfig(cfg, "")
+	m, err := runtimeconfig.ToEnvMap(cfg, "")
 	if err != nil {
-		t.Fatalf("envMapFromConfig: %v", err)
+		t.Fatalf("ToEnvMap: %v", err)
 	}
 	tests := map[string]string{
 		config.EnvEmailEnabled:         "false",

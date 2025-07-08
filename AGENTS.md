@@ -21,7 +21,9 @@ go test ./...
 ```
 
 SQL query files are compiled using `sqlc`. Do not manually edit the generated `*.sql.go` files; instead edit the `.sql` files under `internal/db/` and run `sqlc generate`.
+Avoid using the `overrides` section in `sqlc.yaml`; prefer Go type aliases if a different struct name is required.
 
+All database schema changes must include a new migration script in the `migrations/` directory (for example `0002.sql`, `0003.sql`). Never modify previously committed migration files so the history of changes remains intact.
 All database schema changes must include a new migration script in the `migrations/` directory (for example `0002.sql`, `0003.sql`). Never modify existing migration files as that would break deployments running older versions.
 
 Errors in critical functions like `main()` or `run()` must be logged or wrapped using `fmt.Errorf` with context. Prefer doing both when errors propagate.

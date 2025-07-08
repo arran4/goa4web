@@ -347,8 +347,6 @@ type Sitenewssearch struct {
 type Subscription struct {
 	ID           int32
 	UsersIdusers int32
-	ItemType     string
-	TargetID     int32
 	Method       string
 	Pattern      string
 	CreatedAt    time.Time

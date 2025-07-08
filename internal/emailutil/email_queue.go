@@ -51,12 +51,14 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		return
 	}
 	e := emails[0]
-	msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, e.ToEmail, e.Subject, e.Body, "")
+	from := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
+	to := email.ParseAddress(e.ToEmail)
+	msg, err := email.BuildMessage(from, to, e.Subject, e.Body, "")
 	if err != nil {
 		log.Printf("build message: %v", err)
 		return
 	}
-	if err := provider.Send(ctx, e.ToEmail, e.Subject, msg); err != nil {
+	if err := provider.Send(ctx, to.Address, e.Subject, msg); err != nil {
 		log.Printf("send queued mail: %v", err)
 		count, incErr := q.IncrementEmailError(ctx, e.ID)
 		if incErr != nil {

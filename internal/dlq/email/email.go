@@ -23,13 +23,15 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 	if e.Provider == nil {
 		return fmt.Errorf("no email provider")
 	}
+	from := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
 	for _, addr := range emailutil.GetAdminEmails(ctx, e.Queries) {
-		msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, addr, "DLQ message", message, "")
+		toAddr := email.ParseAddress(addr)
+		msg, err := email.BuildMessage(from, toAddr, "DLQ message", message, "")
 		if err != nil {
 			log.Printf("build message: %v", err)
 			continue
 		}
-		if err := e.Provider.Send(ctx, addr, "DLQ message", msg); err != nil {
+		if err := e.Provider.Send(ctx, toAddr.Address, "DLQ message", msg); err != nil {
 			log.Printf("dlq email: %v", err)
 		}
 	}

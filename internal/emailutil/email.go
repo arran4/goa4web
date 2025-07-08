@@ -5,10 +5,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
@@ -59,7 +61,7 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	if !EmailSendingEnabled() {
 		return nil
 	}
-	from := runtimeconfig.AppRuntimeConfig.EmailFrom
+	from := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
 
 	type EmailContent struct {
 		To       string
@@ -78,9 +80,10 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
 		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
 	}
+	toAddr := email.ParseAddress(emailAddr)
 	content := EmailContent{
 		To:       emailAddr,
-		From:     from,
+		From:     from.Address,
 		Subject:  "Website Update Notification",
 		URL:      page,
 		Action:   action,
@@ -124,11 +127,11 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 			return err
 		}
 	} else if provider != nil {
-		msg, err := email.BuildMessage(from, emailAddr, content.Subject, textBody, htmlBody)
+		msg, err := email.BuildMessage(from, toAddr, content.Subject, textBody, htmlBody)
 		if err != nil {
 			return fmt.Errorf("build message: %w", err)
 		}
-		if err := provider.Send(ctx, emailAddr, content.Subject, msg); err != nil {
+		if err := provider.Send(ctx, toAddr.Address, content.Subject, msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}

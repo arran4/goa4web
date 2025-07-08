@@ -330,7 +330,7 @@ type SiteAnnouncement struct {
 	CreatedAt  time.Time
 }
 
-type Sitenews struct {
+type SiteNews struct {
 	Idsitenews               int32
 	ForumthreadIdforumthread int32
 	LanguageIdlanguage       int32
@@ -339,7 +339,7 @@ type Sitenews struct {
 	Occurred                 sql.NullTime
 }
 
-type Sitenewssearch struct {
+type SiteNewsSearch struct {
 	SitenewsIdsitenews             int32
 	SearchwordlistIdsearchwordlist int32
 }

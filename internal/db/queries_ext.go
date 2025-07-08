@@ -42,16 +42,16 @@ func (q *Queries) GetPreferenceByUserID(ctx context.Context, userID int32) (*Pre
 }
 
 // GetUserLanguages returns the language records for the user.
-func (q *Queries) GetUserLanguages(ctx context.Context, userID int32) ([]*Userlang, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT iduserlang, users_idusers, language_idlanguage FROM userlang WHERE users_idusers = ?", userID)
+func (q *Queries) GetUserLanguages(ctx context.Context, userID int32) ([]*UserLanguage, error) {
+	rows, err := q.db.QueryContext(ctx, "SELECT iduser_language, users_idusers, language_idlanguage FROM user_language WHERE users_idusers = ?", userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Userlang
+	var items []*UserLanguage
 	for rows.Next() {
-		var ul Userlang
-		if err := rows.Scan(&ul.Iduserlang, &ul.UsersIdusers, &ul.LanguageIdlanguage); err != nil {
+		var ul UserLanguage
+		if err := rows.Scan(&ul.IduserLanguage, &ul.UsersIdusers, &ul.LanguageIdlanguage); err != nil {
 			return nil, err
 		}
 		items = append(items, &ul)
@@ -67,7 +67,7 @@ func (q *Queries) GetUserLanguages(ctx context.Context, userID int32) ([]*Userla
 
 // DeleteUserLanguagesByUser removes all language selections for a user.
 func (q *Queries) DeleteUserLanguagesByUser(ctx context.Context, userID int32) error {
-	_, err := q.db.ExecContext(ctx, "DELETE FROM userlang WHERE users_idusers = ?", userID)
+	_, err := q.db.ExecContext(ctx, "DELETE FROM user_language WHERE users_idusers = ?", userID)
 	return err
 }
 
@@ -78,7 +78,7 @@ type InsertUserLangParams struct {
 
 // InsertUserLang adds a user language record.
 func (q *Queries) InsertUserLang(ctx context.Context, arg InsertUserLangParams) error {
-	_, err := q.db.ExecContext(ctx, "INSERT INTO userlang (users_idusers, language_idlanguage) VALUES (?, ?)", arg.UsersIdusers, arg.LanguageIdlanguage)
+	_, err := q.db.ExecContext(ctx, "INSERT INTO user_language (users_idusers, language_idlanguage) VALUES (?, ?)", arg.UsersIdusers, arg.LanguageIdlanguage)
 	return err
 }
 

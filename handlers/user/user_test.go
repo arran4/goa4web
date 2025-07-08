@@ -100,18 +100,18 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	mock.ExpectQuery("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies FROM preferences WHERE users_idusers = ?").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).AddRow(1, 2, 1, false, 15, true))
-	mock.ExpectQuery("SELECT iduserlang, users_idusers, language_idlanguage FROM userlang WHERE users_idusers = ?").
+	mock.ExpectQuery("SELECT iduser_language, users_idusers, language_idlanguage FROM user_language WHERE users_idusers = ?").
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"iduserlang", "users_idusers", "language_idlanguage"}).AddRow(1, 1, 2))
+		WillReturnRows(sqlmock.NewRows([]string{"iduser_language", "users_idusers", "language_idlanguage"}).AddRow(1, 1, 2))
 
 	var gotPerms []*dbpkg.Permission
 	var gotPref *dbpkg.Preference
-	var gotLangs []*dbpkg.Userlang
+	var gotLangs []*dbpkg.UserLanguage
 
 	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPerms, _ = r.Context().Value(common.KeyPermissions).([]*dbpkg.Permission)
 		gotPref, _ = r.Context().Value(common.KeyPreference).(*dbpkg.Preference)
-		gotLangs, _ = r.Context().Value(common.KeyLanguages).([]*dbpkg.Userlang)
+		gotLangs, _ = r.Context().Value(common.KeyLanguages).([]*dbpkg.UserLanguage)
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -230,9 +230,9 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
-	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
-	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 	runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
 	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -279,9 +279,9 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
-	mock.ExpectExec("DELETE FROM userlang").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
-	mock.ExpectExec("INSERT INTO userlang").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveLanguagesActionPage(rr, req)
 

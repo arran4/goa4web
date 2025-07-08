@@ -34,7 +34,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
-	userLangs, _ := r.Context().Value(common.KeyLanguages).([]*db.Userlang)
+	userLangs, _ := r.Context().Value(common.KeyLanguages).([]*db.UserLanguage)
 
 	langs, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -72,7 +72,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 }
 func saveUserLanguages(r *http.Request, queries *db.Queries, uid int32) error {
 	// Clear existing language selections for the user.
-	if _, err := queries.DB().ExecContext(r.Context(), "DELETE FROM userlang WHERE users_idusers = ?", uid); err != nil {
+	if _, err := queries.DB().ExecContext(r.Context(), "DELETE FROM user_language WHERE users_idusers = ?", uid); err != nil {
 		return err
 	}
 
@@ -83,7 +83,7 @@ func saveUserLanguages(r *http.Request, queries *db.Queries, uid int32) error {
 
 	for _, l := range langs {
 		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
-			if _, err := queries.DB().ExecContext(r.Context(), "INSERT INTO userlang (users_idusers, language_idlanguage) VALUES (?, ?)", uid, l.Idlanguage); err != nil {
+			if _, err := queries.DB().ExecContext(r.Context(), "INSERT INTO user_language (users_idusers, language_idlanguage) VALUES (?, ?)", uid, l.Idlanguage); err != nil {
 				return err
 			}
 		}

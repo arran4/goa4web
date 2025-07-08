@@ -46,7 +46,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			*corecommon.CoreData
 			Categories any
 			Links      any
-			Offset     bool
+			HasOffset  bool
 			CatId      int32
 		}{&corecommon.CoreData{}, nil, nil, false, 0}},
 		{"forumPage", struct {

@@ -678,7 +678,7 @@ func (q *Queries) RemakeNewsSearchInsert(ctx context.Context) error {
 
 const remakeWritingSearch = `-- name: RemakeWritingSearch :exec
 INSERT INTO writingSearch (text, writing_idwriting)
-SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 
@@ -691,7 +691,7 @@ func (q *Queries) RemakeWritingSearch(ctx context.Context) error {
 
 const remakeWritingSearchInsert = `-- name: RemakeWritingSearchInsert :exec
 INSERT INTO writingSearch (text, writing_idwriting)
-SELECT CONCAT(title, ' ', abstract, ' ', writting), idwriting
+SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 

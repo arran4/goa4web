@@ -16,7 +16,7 @@ import (
 
 // SentMail records a delivered email message.
 type SentMail struct {
-	To      string
+	To      mail.Address
 	Subject string
 	Raw     []byte
 	Text    string
@@ -30,9 +30,14 @@ type Provider struct {
 }
 
 // Send appends the message to the Provider's Messages slice.
-func (p *Provider) Send(_ context.Context, to, subject string, rawEmailMessage []byte) error {
-	var textBody, htmlBody string
+func (p *Provider) Send(_ context.Context, to mail.Address, rawEmailMessage []byte) error {
+	var (
+		textBody string
+		htmlBody string
+		subject  string
+	)
 	if m, err := mail.ReadMessage(bytes.NewReader(rawEmailMessage)); err == nil {
+		subject = m.Header.Get("Subject")
 		ct := m.Header.Get("Content-Type")
 		mediaType, params, _ := mime.ParseMediaType(ct)
 		if strings.HasPrefix(mediaType, "multipart/") {

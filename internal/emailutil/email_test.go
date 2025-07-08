@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/mail"
-	"reflect"
 	"regexp"
 	"testing"
 
@@ -86,7 +85,7 @@ func TestNotifyChange(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-       mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
 	rec := &mockemail.Provider{}
 	if err := emailutil.NotifyChange(ctx, rec, 2, "a@b.com", "http://host", "update", nil); err != nil {

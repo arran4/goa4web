@@ -130,7 +130,7 @@ type DeactivatedWriting struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -276,8 +276,6 @@ type Password struct {
 	CreatedAt       time.Time
 }
 
-// PendingEmail represents a queued email message stored in full including
-// headers and MIME body. The message is addressed to the referenced user.
 type PendingEmail struct {
 	ID         int32
 	ToUserID   int32
@@ -399,10 +397,17 @@ type Writing struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
+}
+
+type Writingapproveduser struct {
+	WritingIdwriting int32
+	UsersIdusers     int32
+	Readdoc          sql.NullBool
+	Editdoc          sql.NullBool
 }
 
 type Writingcategory struct {
@@ -415,13 +420,6 @@ type Writingcategory struct {
 type Writingsearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingIdwriting               int32
-}
-
-type Writtingapproveduser struct {
-	WritingIdwriting int32
-	UsersIdusers     int32
-	Readdoc          sql.NullBool
-	Editdoc          sql.NullBool
 }
 
 type _1OldForumthread struct {

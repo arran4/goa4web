@@ -12,21 +12,18 @@
         {{ .Writing.Abstract.String | a4code2html }}
         <hr>
         {{ .Writing.Writting.String | a4code2html }}
-        {{ if .Writing.ForumthreadIdforumthread }}
-            <hr>Comments:<br>
-            {{ template "threadComments" $ }}
-            {{ if .CanReply }}
-                <hr><font size="4">Reply:</font><br>
-                <form method="post">
+        <hr>Comments:<br>
+        {{ template "threadComments" $ }}
+        {{ if .CanReply }}
+            <hr><font size="4">Reply:</font><br>
+            <form method="post">
         {{ csrfField }}
-                    <input type="hidden" name="replyTo" value="{{ .Writing.ForumthreadIdforumthread }}">
-                    <textarea name="replytext" cols="40" rows="20">{{ .ReplyText }}</textarea><br>
-                    {{ template "languageCombobox" $ }}
-                    <input type="submit" name="task" value="Reply">
-                </form>
-            {{ else }}
-                Please sign-in (or sign-up) to write a reply.<br>
-            {{ end }}
+                <textarea name="replytext" cols="40" rows="20">{{ .ReplyText }}</textarea><br>
+                {{ template "languageCombobox" $ }}
+                <input type="submit" name="task" value="Reply">
+            </form>
+        {{ else }}
+            Please sign-in (or sign-up) to write a reply.<br>
         {{ end }}
     {{ else }}
         Article doesn't exist.<br>

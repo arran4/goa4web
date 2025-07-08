@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,12 +50,47 @@ func parseBool(v string) (bool, bool) {
 
 func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[string]string, error) {
 	m := make(map[string]string)
-	v := reflect.ValueOf(cfg)
+
+	stringVals := map[string]string{
+		"DBConn":            cfg.DBConn,
+		"DBDriver":          cfg.DBDriver,
+		"HTTPListen":        cfg.HTTPListen,
+		"HTTPHostname":      cfg.HTTPHostname,
+		"EmailProvider":     cfg.EmailProvider,
+		"EmailSMTPHost":     cfg.EmailSMTPHost,
+		"EmailSMTPPort":     cfg.EmailSMTPPort,
+		"EmailSMTPUser":     cfg.EmailSMTPUser,
+		"EmailSMTPPass":     cfg.EmailSMTPPass,
+		"EmailSMTPAuth":     cfg.EmailSMTPAuth,
+		"EmailFrom":         cfg.EmailFrom,
+		"EmailAWSRegion":    cfg.EmailAWSRegion,
+		"EmailJMAPEndpoint": cfg.EmailJMAPEndpoint,
+		"EmailJMAPAccount":  cfg.EmailJMAPAccount,
+		"EmailJMAPIdentity": cfg.EmailJMAPIdentity,
+		"EmailJMAPUser":     cfg.EmailJMAPUser,
+		"EmailJMAPPass":     cfg.EmailJMAPPass,
+		"EmailSendGridKey":  cfg.EmailSendGridKey,
+		"AdminEmails":       cfg.AdminEmails,
+		"DefaultLanguage":   cfg.DefaultLanguage,
+		"ImageUploadDir":    cfg.ImageUploadDir,
+		"DLQProvider":       cfg.DLQProvider,
+		"DLQFile":           cfg.DLQFile,
+	}
 	for _, o := range runtimeconfig.StringOptions {
-		m[o.Env] = v.FieldByName(o.Field).String()
+		m[o.Env] = stringVals[o.Field]
+	}
+
+	intVals := map[string]int{
+		"DBLogVerbosity":      cfg.DBLogVerbosity,
+		"LogFlags":            cfg.LogFlags,
+		"PageSizeMin":         cfg.PageSizeMin,
+		"PageSizeMax":         cfg.PageSizeMax,
+		"PageSizeDefault":     cfg.PageSizeDefault,
+		"ImageMaxBytes":       cfg.ImageMaxBytes,
+		"EmailWorkerInterval": cfg.EmailWorkerInterval,
 	}
 	for _, o := range runtimeconfig.IntOptions {
-		m[o.Env] = strconv.Itoa(int(v.FieldByName(o.Field).Int()))
+		m[o.Env] = strconv.Itoa(intVals[o.Field])
 	}
 	m[config.EnvFeedsEnabled] = strconv.FormatBool(cfg.FeedsEnabled)
 	m[config.EnvStatsStartYear] = strconv.Itoa(cfg.StatsStartYear)

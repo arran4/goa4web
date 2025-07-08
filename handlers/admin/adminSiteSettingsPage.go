@@ -48,7 +48,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries),
+		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage),
 	}
 	data.CoreData.FeedsEnabled = runtimeconfig.AppRuntimeConfig.FeedsEnabled
 	if langs, err := queries.FetchLanguages(r.Context()); err == nil {

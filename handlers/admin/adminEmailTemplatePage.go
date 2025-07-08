@@ -8,6 +8,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"strings"
 	"text/template"
@@ -69,8 +70,7 @@ func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
-	if provider == nil {
+	if email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig) == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q
 		common.TaskErrorAcknowledgementPage(w, r)
@@ -105,7 +105,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	content := struct{ To, From, Subject, URL, Action, Path, Time string }{
-		To:      user.Email.String,
+		To:      (&mail.Address{Name: user.Username.String, Address: user.Email.String}).String(),
 		From:    runtimeconfig.AppRuntimeConfig.EmailFrom,
 		Subject: "Website Update Notification",
 		URL:     pageURL,
@@ -118,14 +118,19 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, user.Email.String, content.Subject, buf.String(), "")
+	addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+	fromAddr := mail.Address{Address: runtimeconfig.AppRuntimeConfig.EmailFrom}
+	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {
+		fromAddr = *f
+	}
+	msg, err := email.BuildMessage(fromAddr, addr, content.Subject, buf.String(), "")
 	if err != nil {
 		log.Printf("build message: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := provider.Send(r.Context(), user.Email.String, content.Subject, msg); err != nil {
-		log.Printf("send email: %v", err)
+	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: user.Idusers, Body: string(msg)}); err != nil {
+		log.Printf("queue email: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
 }

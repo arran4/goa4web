@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/mail"
 	"time"
 
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // emailQueueWorker periodically sends pending emails using the provided provider.
@@ -51,12 +51,17 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		return
 	}
 	e := emails[0]
-	msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String)
+	user, err := q.GetUserById(ctx, e.ToUserID)
 	if err != nil {
-		log.Printf("build message: %v", err)
+		log.Printf("get user: %v", err)
 		return
 	}
-	if err := provider.Send(ctx, e.ToEmail, e.Subject, msg); err != nil {
+	if !user.Email.Valid {
+		log.Printf("invalid email for user %d", e.ToUserID)
+		return
+	}
+	addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 		log.Printf("send queued mail: %v", err)
 		count, incErr := q.IncrementEmailError(ctx, e.ID)
 		if incErr != nil {
@@ -65,7 +70,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		}
 		if count > 4 {
 			if dlqProvider != nil {
-				_ = dlqProvider.Record(ctx, fmt.Sprintf("email %d to %s failed: %v", e.ID, e.ToEmail, err))
+				_ = dlqProvider.Record(ctx, fmt.Sprintf("email %d to %s failed: %v", e.ID, user.Email.String, err))
 			}
 			if delErr := q.DeletePendingEmail(ctx, e.ID); delErr != nil {
 				log.Printf("delete email: %v", delErr)

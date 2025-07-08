@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -13,8 +14,8 @@ import (
 
 type busDummyProvider struct{ to string }
 
-func (d *busDummyProvider) Send(_ context.Context, to, _ string, _ string, _ string) error {
-	d.to = to
+func (d *busDummyProvider) Send(_ context.Context, to mail.Address, _ []byte) error {
+	d.to = to.Address
 	return nil
 }
 
@@ -83,7 +84,7 @@ func TestRenderMessage(t *testing.T) {
 
 type errProvider struct{}
 
-func (errProvider) Send(ctx context.Context, to, sub string, rawEmailMessage []byte) error {
+func (errProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	return fmt.Errorf("send error")
 }
 

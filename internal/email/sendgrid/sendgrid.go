@@ -30,10 +30,10 @@ type Provider struct {
 	From   string
 }
 
-func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
-	textBody, htmlBody := parseRawEmail(rawEmailMessage)
+func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
+	subject, textBody, htmlBody := parseRawEmail(rawEmailMessage)
 	from := mail.NewEmail("", s.From)
-	toAddr := mail.NewEmail("", to)
+	toAddr := mail.NewEmail(to.Name, to.Address)
 	msg := mail.NewSingleEmail(from, subject, toAddr, textBody, htmlBody)
 	client := sg.NewSendClient(s.APIKey)
 	resp, err := client.SendWithContext(ctx, msg)
@@ -46,16 +46,17 @@ func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage 
 	return nil
 }
 
-func parseRawEmail(raw []byte) (string, string) {
+func parseRawEmail(raw []byte) (string, string, string) {
 	m, err := mail.ReadMessage(bytes.NewReader(raw))
 	if err != nil {
-		return string(raw), ""
+		return "", string(raw), ""
 	}
+	subject := m.Header.Get("Subject")
 	ctype := m.Header.Get("Content-Type")
 	med, params, err := mime.ParseMediaType(ctype)
 	if err != nil {
 		b, _ := io.ReadAll(m.Body)
-		return string(b), ""
+		return subject, string(b), ""
 	}
 	if strings.HasPrefix(med, "multipart/") {
 		mr := multipart.NewReader(m.Body, params["boundary"])
@@ -73,10 +74,10 @@ func parseRawEmail(raw []byte) (string, string) {
 				htmlBody = string(b)
 			}
 		}
-		return textBody, htmlBody
+		return subject, textBody, htmlBody
 	}
 	b, _ := io.ReadAll(m.Body)
-	return string(b), ""
+	return subject, string(b), ""
 }
 
 func providerFromConfig(key string, from string) email.Provider {

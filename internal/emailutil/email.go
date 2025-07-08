@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/mail"
 	"os"
 	"strings"
 	"text/template"
@@ -55,7 +56,7 @@ func getEmailTemplates(ctx context.Context, action string) (string, string) {
 	return text, html
 }
 
-func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page, action string, item interface{}) error {
+func NotifyChange(ctx context.Context, provider email.Provider, userID int32, emailAddr, page, action string, item interface{}) error {
 	if emailAddr == "" {
 		return fmt.Errorf("no email specified")
 	}
@@ -116,16 +117,21 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 		htmlBody = buf.String()
 	}
 
+	addr := mail.Address{Address: emailAddr}
+	fromAddr := mail.Address{Address: from}
+	if f, err := mail.ParseAddress(from); err == nil {
+		fromAddr = *f
+	}
+	msg, err := email.BuildMessage(fromAddr, addr, content.Subject, textBody, htmlBody)
+	if err != nil {
+		return fmt.Errorf("build message: %w", err)
+	}
 	if q, ok := ctx.Value(hcommon.KeyQueries).(*db.Queries); ok {
-		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToEmail: emailAddr, Subject: content.Subject, Body: textBody, HtmlBody: htmlBody}); err != nil {
+		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: userID, Body: string(msg)}); err != nil {
 			return err
 		}
 	} else if provider != nil {
-		msg, err := email.BuildMessage(from, emailAddr, content.Subject, textBody, htmlBody)
-		if err != nil {
-			return fmt.Errorf("build message: %w", err)
-		}
-		if err := provider.Send(ctx, emailAddr, content.Subject, msg); err != nil {
+		if err := provider.Send(ctx, addr, msg); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}
@@ -208,7 +214,7 @@ func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, p
 		return
 	}
 	for _, email := range GetAdminEmails(ctx, q) {
-		if err := NotifyChange(ctx, provider, email, page, "update", nil); err != nil {
+		if err := NotifyChange(ctx, provider, 0, email, page, "update", nil); err != nil {
 			log.Printf("Error: NotifyChange: %s", err)
 		}
 	}
@@ -228,7 +234,7 @@ func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db
 		return
 	}
 	for _, row := range rows {
-		if err := NotifyChange(ctx, provider, row.Username.String, page, "update", nil); err != nil {
+		if err := NotifyChange(ctx, provider, row.Idusers, row.Email.String, page, "update", nil); err != nil {
 			log.Printf("Error: NotifyChange: %s", err)
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/mail"
 	"net/smtp"
 	"strings"
 
@@ -43,7 +44,7 @@ func (a loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 	return nil, nil
 }
 
-func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage []byte) error {
+func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	host, port, err := net.SplitHostPort(s.Addr)
 	if err != nil {
 		return fmt.Errorf("invalid addr %q: %w", s.Addr, err)
@@ -108,7 +109,7 @@ func (s Provider) Send(ctx context.Context, to, subject string, rawEmailMessage 
 	if err = c.Mail(s.From); err != nil {
 		return fmt.Errorf("smtp from: %w", err)
 	}
-	if err = c.Rcpt(to); err != nil {
+	if err = c.Rcpt(to.Address); err != nil {
 		return fmt.Errorf("smtp rcpt: %w", err)
 	}
 	w, err := c.Data()

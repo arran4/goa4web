@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/mail"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -23,13 +24,18 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 	if e.Provider == nil {
 		return fmt.Errorf("no email provider")
 	}
-	for _, addr := range emailutil.GetAdminEmails(ctx, e.Queries) {
-		msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, addr, "DLQ message", message, "")
+	fromAddr := mail.Address{Address: runtimeconfig.AppRuntimeConfig.EmailFrom}
+	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {
+		fromAddr = *f
+	}
+	for _, addrStr := range emailutil.GetAdminEmails(ctx, e.Queries) {
+		addr := mail.Address{Address: addrStr}
+		msg, err := email.BuildMessage(fromAddr, addr, "DLQ message", message, "")
 		if err != nil {
 			log.Printf("build message: %v", err)
 			continue
 		}
-		if err := e.Provider.Send(ctx, addr, "DLQ message", msg); err != nil {
+		if err := e.Provider.Send(ctx, addr, msg); err != nil {
 			log.Printf("dlq email: %v", err)
 		}
 	}

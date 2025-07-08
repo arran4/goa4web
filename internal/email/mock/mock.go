@@ -2,6 +2,7 @@ package mock
 
 import (
 	"context"
+	"net/mail"
 	"sync"
 
 	"github.com/arran4/goa4web/internal/email"
@@ -10,10 +11,8 @@ import (
 
 // SentMail records a delivered email message.
 type SentMail struct {
-	To      string
-	Subject string
-	Text    string
-	HTML    string
+	To  mail.Address
+	Raw []byte
 }
 
 // Provider collects sent messages in memory for testing.
@@ -23,10 +22,10 @@ type Provider struct {
 }
 
 // Send appends the message to the Provider's Messages slice.
-func (p *Provider) Send(_ context.Context, to, subject, textBody, htmlBody string) error {
+func (p *Provider) Send(_ context.Context, to mail.Address, rawEmailMessage []byte) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.Messages = append(p.Messages, SentMail{To: to, Subject: subject, Text: textBody, HTML: htmlBody})
+	p.Messages = append(p.Messages, SentMail{To: to, Raw: rawEmailMessage})
 	return nil
 }
 

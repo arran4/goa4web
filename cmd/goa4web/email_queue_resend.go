@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"net/mail"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
@@ -45,11 +47,16 @@ func (c *emailQueueResendCmd) Run() error {
 	}
 	provider := email.ProviderFromConfig(c.rootCmd.cfg)
 	if provider != nil {
-		msg, err := email.BuildMessage(c.rootCmd.cfg.EmailFrom, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String)
+		user, err := queries.GetUserById(ctx, e.ToUserID)
 		if err != nil {
-			return fmt.Errorf("build message: %w", err)
+			return fmt.Errorf("get user: %w", err)
 		}
-		if err := provider.Send(ctx, e.ToEmail, e.Subject, msg); err != nil {
+		if !user.Email.Valid {
+			log.Printf("invalid user email for %d", e.ToUserID)
+			return nil
+		}
+		addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+		if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}

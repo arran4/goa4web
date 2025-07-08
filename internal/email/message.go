@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"mime"
 	"mime/multipart"
+	"net/mail"
 	"net/textproto"
 	"strings"
 	"time"
 )
 
 // BuildMessage constructs a MIME email message with optional HTML content.
-func BuildMessage(from, to, subject, textBody, htmlBody string) ([]byte, error) {
+func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]byte, error) {
 	var msg bytes.Buffer
 	hdr := textproto.MIMEHeader{}
-	hdr.Set("From", from)
-	hdr.Set("To", to)
+	hdr.Set("From", from.String())
+	hdr.Set("To", to.String())
 	hdr.Set("Subject", mime.QEncoding.Encode("utf-8", subject))
 	hdr.Set("MIME-Version", "1.0")
 

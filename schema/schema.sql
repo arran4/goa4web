@@ -281,11 +281,11 @@ CREATE TABLE `topicrestrictions` (
   KEY `threadrestrictions_FKIndex1` (`forumtopic_idforumtopic`)
 );
 
-CREATE TABLE `userlang` (
-  `iduserlang` int(10) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `user_language` (
+  `iduser_language` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`iduserlang`),
+  PRIMARY KEY (`iduser_language`),
   KEY `userpref_FKIndex1` (`language_idlanguage`),
   KEY `userpref_FKIndex2` (`users_idusers`)
 );

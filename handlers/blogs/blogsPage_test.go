@@ -23,7 +23,7 @@ var (
 	sessionName = "test-session"
 )
 
-func TestBlogsBloggerPage(t *testing.T) {
+func TestBlogsBloggerPostsPage(t *testing.T) {
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -37,8 +37,8 @@ func TestBlogsBloggerPage(t *testing.T) {
 
 	r := mux.NewRouter()
 	br := r.PathPrefix("/blogs").Subrouter()
-	br.HandleFunc("/blogger/{username}", BloggerPage).Methods("GET")
-	br.HandleFunc("/blogger/{username}/", BloggerPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}", BloggerPostsPage).Methods("GET")
+	br.HandleFunc("/blogger/{username}/", BloggerPostsPage).Methods("GET")
 
 	req := httptest.NewRequest("GET", "/blogs/blogger/bob", nil)
 

@@ -375,8 +375,8 @@ type User struct {
 	DeletedAt sql.NullTime
 }
 
-type Userlang struct {
-	Iduserlang         int32
+type UserLanguage struct {
+	IduserLanguage     int32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 }

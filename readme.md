@@ -120,18 +120,6 @@ go test ./...
 
 This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
 
-## GitLab CI
-
-Tagged releases trigger the `.gitlab-ci.yml` pipeline which runs GoReleaser.
-The job publishes multi‑architecture Docker images to
-`registry-gitlab.arran.net.au/arran4/goa4web`.
-When reusing snippets from other projects be sure to update the image name or
-use the `$CI_REGISTRY_IMAGE` variable which already points to the correct
-registry path for this repository.
-
-The resulting container image contains the `goa4web` binary at
-`/usr/local/bin/goa4web`. The directory is included in `PATH` inside the
-container.
 
 ## Application Configuration File
 
@@ -157,6 +145,13 @@ go run ./cmd/goa4web config as-env-file > examples/config.env
 ```
 Run `goa4web config options --extended` to see detailed descriptions of all
 configuration keys.
+
+Example environment based launch:
+```bash
+DB_DRIVER=sqlite
+DB_CONN=file:./a4web.sqlite?_fk=1 \
+AUTO_MIGRATE=true ./goa4web serve
+```
 
 ## Email Provider Configuration
 
@@ -305,9 +300,13 @@ example provider built with the `sendgrid` tag.
 
 ## Database Upgrades
 
-When upgrading from v0.0.1 use the SQL script under `migrations/0002.sql` to
-bring the database schema up to date. Apply it using the `mysql` command line
-tool:
+Database schema changes are stored in the `migrations/` directory. Run
+`goa4web db migrate` to apply all pending scripts using your configured
+database connection. Set `AUTO_MIGRATE=true` to perform this step
+automatically when the server starts.
+
+When upgrading from v0.0.1 the script `migrations/0002.sql` must be applied.
+This can be done manually using the `mysql` client:
 
 ```bash
 mysql -u a4web -p a4web < migrations/0002.sql
@@ -326,15 +325,13 @@ The linked counts now let you drill down to view all permissions for a section v
 
 ## Command Line Interface
 
-The `goa4web` binary exposes administrative subcommands in addition to `serve`
-which starts the web server. When using `user add` or `user add-admin`, omit the
-`--password` flag to enter a password interactively.
+The `goa4web` binary includes many administrative commands in addition to
+`serve`, which starts the web server. Run `goa4web help` to see the full list of
+subcommands. Most commands share the same configuration mechanism as the web
+server and honour flags, config files and environment variables.
 
-Example:
-```bash
-goa4web user add --username alice --email alice@example.com
-```
-This command prompts for the password on stderr if `--password` is not supplied.
+When using `user add` or `user add-admin`, omit the `--password` flag to be
+prompted securely on the terminal.
 
 Typical workflow:
 
@@ -372,9 +369,53 @@ go build -o goa4web ./cmd/goa4web
 ### Database operations
 
 ```bash
+# apply SQL migrations from ./migrations
+./goa4web db migrate
+
 # create a backup
 ./goa4web db backup --file backup.sql
 
 # restore from a backup
 ./goa4web db restore --file backup.sql
+```
+
+### Configuration utilities
+
+```bash
+# show all available options
+./goa4web config options --extended
+
+# generate an env file with current values
+./goa4web config as-env-file > config.env
+
+# reload configuration without restarting
+./goa4web config reload
+```
+
+## Docker Deployment
+
+Container images can be built from the provided `Dockerfile`:
+
+```bash
+docker build -t goa4web .
+```
+
+Start the container with environment variables for your database connection:
+
+```bash
+docker run -p 8080:8080 \
+  -e DB_DRIVER=sqlite \
+  -e DB_CONN=file:/data/a4web.sqlite?_fk=1 \
+  -e AUTO_MIGRATE=true \
+  -v $(pwd)/data:/data \
+  goa4web
+```
+
+### Docker Compose
+
+An example `docker-compose.yaml` is provided under `examples/`. It runs MySQL
+and automatically applies migrations on startup.
+
+```bash
+docker compose -f examples/docker-compose.yaml up
 ```

@@ -26,7 +26,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
@@ -106,7 +106,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow)
+	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)

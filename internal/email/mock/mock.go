@@ -31,11 +31,7 @@ type Provider struct {
 
 // Send appends the message to the Provider's Messages slice.
 func (p *Provider) Send(_ context.Context, to mail.Address, rawEmailMessage []byte) error {
-	var (
-		textBody string
-		htmlBody string
-		subject  string
-	)
+	var subject, textBody, htmlBody string
 	if m, err := mail.ReadMessage(bytes.NewReader(rawEmailMessage)); err == nil {
 		subject = m.Header.Get("Subject")
 		ct := m.Header.Get("Content-Type")
@@ -66,7 +62,7 @@ func (p *Provider) Send(_ context.Context, to mail.Address, rawEmailMessage []by
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.Messages = append(p.Messages, SentMail{To: to, Subject: subject, Raw: rawEmailMessage, Text: textBody, HTML: htmlBody})
+	p.Messages = append(p.Messages, SentMail{To: to.Address, Subject: subject, Raw: rawEmailMessage, Text: textBody, HTML: htmlBody})
 	return nil
 }
 

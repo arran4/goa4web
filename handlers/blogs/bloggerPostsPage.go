@@ -16,7 +16,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func BloggerPage(w http.ResponseWriter, r *http.Request) {
+// BloggerPostsPage shows the posts written by a specific blogger.
+func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*db.GetBlogEntriesForUserDescendingLanguagesRow
 		EditUrl string
@@ -90,7 +91,7 @@ func BloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "bloggerPage.gohtml", data, common.NewFuncs(r)); err != nil {
+	if err := templates.RenderTemplate(w, "bloggerPostsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

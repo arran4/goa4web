@@ -9,5 +9,7 @@ A new user {{.Item.Username}} has registered at {{.Time}}.
 Review the account here:
 {{.URL}}
 
+Manage notifications: {{.UnsubURL}}
+
 Cheers,
 The A4Web Team

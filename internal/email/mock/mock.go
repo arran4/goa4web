@@ -12,8 +12,7 @@ import (
 type SentMail struct {
 	To      string
 	Subject string
-	Text    string
-	HTML    string
+	Raw     []byte
 }
 
 // Provider collects sent messages in memory for testing.
@@ -23,10 +22,10 @@ type Provider struct {
 }
 
 // Send appends the message to the Provider's Messages slice.
-func (p *Provider) Send(_ context.Context, to, subject, textBody, htmlBody string) error {
+func (p *Provider) Send(_ context.Context, to, subject string, rawEmailMessage []byte) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.Messages = append(p.Messages, SentMail{To: to, Subject: subject, Text: textBody, HTML: htmlBody})
+	p.Messages = append(p.Messages, SentMail{To: to, Subject: subject, Raw: rawEmailMessage})
 	return nil
 }
 

@@ -9,7 +9,7 @@ Hello,
 {{if .URL}}View details here:
 {{.URL}}
 {{end}}
-If you no longer wish to receive these emails you can update your notification settings.
+Manage notifications: {{.UnsubURL}}
 
 Cheers,
 The A4Web Team

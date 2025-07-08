@@ -3,10 +3,7 @@ package runtimeconfig
 import (
 	"flag"
 	"os"
-	"reflect"
 	"strconv"
-
-	"github.com/arran4/goa4web/config"
 )
 
 // DefaultPageSize defines the number of items shown per page.
@@ -39,6 +36,15 @@ type RuntimeConfig struct {
 	EmailJMAPPass     string
 	EmailSendGridKey  string
 
+	// EmailEnabled toggles sending queued emails.
+	EmailEnabled bool
+	// NotificationsEnabled toggles the internal notification system.
+	NotificationsEnabled bool
+	// CSRFEnabled enables or disables CSRF protection.
+	CSRFEnabled bool
+	// AdminNotify toggles administrator notification emails.
+	AdminNotify bool
+
 	// AdminEmails holds a comma-separated list of administrator email
 	// addresses.
 	AdminEmails string
@@ -66,11 +72,12 @@ var AppRuntimeConfig RuntimeConfig
 
 // newRuntimeFlagSet returns a FlagSet containing the provided options merged
 // with the built-in ones.
-func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption) *flag.FlagSet {
+func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption, bopts []BoolOption) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 
 	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
 	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
+	bools := append(append([]BoolOption(nil), BoolOptions...), bopts...)
 
 	for _, o := range strings {
 		fs.String(o.Name, o.Default, o.Usage)
@@ -78,10 +85,11 @@ func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption) *fl
 	for _, o := range ints {
 		fs.Int(o.Name, o.Default, o.Usage)
 	}
-
-	fs.String("feeds-enabled", "", "enable or disable feeds")
-	fs.String("stats-start-year", "", "start year for usage stats")
-	fs.String("smtp-starttls", "", "enable or disable STARTTLS")
+	for _, o := range bools {
+		if o.Name != "" {
+			fs.String(o.Name, "", o.Usage)
+		}
+	}
 
 	return fs
 }
@@ -90,19 +98,19 @@ func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption) *fl
 // options. The returned FlagSet uses ContinueOnError to allow tests to supply
 // their own arguments without triggering os.Exit.
 func NewRuntimeFlagSet(name string) *flag.FlagSet {
-	return newRuntimeFlagSet(name, nil, nil)
+	return newRuntimeFlagSet(name, nil, nil, nil)
 }
 
 // NewRuntimeFlagSetWithOptions returns a FlagSet containing the built-in options
 // merged with the provided slices.
 func NewRuntimeFlagSetWithOptions(name string, sopts []StringOption, iopts []IntOption) *flag.FlagSet {
-	return newRuntimeFlagSet(name, sopts, iopts)
+	return newRuntimeFlagSet(name, sopts, iopts, nil)
 }
 
 // generateRuntimeConfig constructs the RuntimeConfig from the provided option
 // slices applying the standard precedence order of command line flags,
 // configuration file values and environment variables.
-func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption) RuntimeConfig {
+func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption, bopts []BoolOption) RuntimeConfig {
 	if getenv == nil {
 		getenv = os.Getenv
 	}
@@ -115,75 +123,61 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 
 	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
 	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
+	bools := append(append([]BoolOption(nil), BoolOptions...), bopts...)
 
 	for _, o := range strings {
-		dst := reflect.ValueOf(&cfg).Elem().FieldByName(o.Field)
-		if !dst.IsValid() || dst.Kind() != reflect.String {
-			continue
-		}
-		if fs != nil && setFlags[o.Name] {
-			if f := fs.Lookup(o.Name); f != nil {
-				dst.SetString(f.Value.String())
-				continue
-			}
-		}
-		if v := fileVals[o.Env]; v != "" {
-			dst.SetString(v)
-			continue
-		}
-		if v := getenv(o.Env); v != "" {
-			dst.SetString(v)
-		}
-	}
-
-	for _, o := range ints {
-		dst := reflect.ValueOf(&cfg).Elem().FieldByName(o.Field)
-		if !dst.IsValid() || dst.Kind() != reflect.Int {
-			continue
-		}
+		dst := o.Target(&cfg)
 		var val string
 		if fs != nil && setFlags[o.Name] {
 			if f := fs.Lookup(o.Name); f != nil {
 				val = f.Value.String()
 			}
-		} else if v := fileVals[o.Env]; v != "" {
-			val = v
-		} else if v := getenv(o.Env); v != "" {
-			val = v
+		}
+		if val == "" {
+			val = fileVals[o.Env]
+		}
+		if val == "" {
+			val = getenv(o.Env)
+		}
+		if val == "" {
+			val = o.Default
+		}
+		*dst = val
+	}
+
+	for _, o := range ints {
+		dst := o.Target(&cfg)
+		var val string
+		if fs != nil && setFlags[o.Name] {
+			if f := fs.Lookup(o.Name); f != nil {
+				val = f.Value.String()
+			}
+		}
+		if val == "" {
+			val = fileVals[o.Env]
+		}
+		if val == "" {
+			val = getenv(o.Env)
 		}
 		if val != "" {
 			if n, err := strconv.Atoi(val); err == nil {
-				dst.SetInt(int64(n))
+				*dst = n
 			}
+		} else if o.Default != 0 {
+			*dst = o.Default
 		}
 	}
 
-	var cliFeeds, cliStats, cliStartTLS string
-	if fs != nil && setFlags["feeds-enabled"] {
-		cliFeeds = fs.Lookup("feeds-enabled").Value.String()
+	for _, o := range bools {
+		dst := o.Target(&cfg)
+		var cliVal string
+		if fs != nil && o.Name != "" && setFlags[o.Name] {
+			if f := fs.Lookup(o.Name); f != nil {
+				cliVal = f.Value.String()
+			}
+		}
+		*dst = resolveBool(o.Default, cliVal, fileVals[o.Env], getenv(o.Env))
 	}
-	if fs != nil && setFlags["stats-start-year"] {
-		cliStats = fs.Lookup("stats-start-year").Value.String()
-	}
-	if fs != nil && setFlags["smtp-starttls"] {
-		cliStartTLS = fs.Lookup("smtp-starttls").Value.String()
-	}
-
-	cfg.FeedsEnabled = resolveFeedsEnabled(
-		cliFeeds,
-		fileVals[config.EnvFeedsEnabled],
-		getenv(config.EnvFeedsEnabled),
-	)
-	cfg.StatsStartYear = resolveStatsStartYear(
-		cliStats,
-		fileVals[config.EnvStatsStartYear],
-		getenv(config.EnvStatsStartYear),
-	)
-	cfg.EmailSMTPStartTLS = resolveSMTPStartTLS(
-		cliStartTLS,
-		fileVals[config.EnvSMTPStartTLS],
-		getenv(config.EnvSMTPStartTLS),
-	)
 
 	normalizeRuntimeConfig(&cfg)
 	AppRuntimeConfig = cfg
@@ -198,13 +192,13 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 // precedence rules from AGENTS.md. The getenv function is used to
 // retrieve environment values and defaults to os.Getenv when nil.
 func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string) RuntimeConfig {
-	return generateRuntimeConfig(fs, fileVals, getenv, nil, nil)
+	return generateRuntimeConfig(fs, fileVals, getenv, nil, nil, nil)
 }
 
 // GenerateRuntimeConfigWithOptions is like GenerateRuntimeConfig but also considers
 // the supplied option slices.
 func GenerateRuntimeConfigWithOptions(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption) RuntimeConfig {
-	return generateRuntimeConfig(fs, fileVals, getenv, sopts, iopts)
+	return generateRuntimeConfig(fs, fileVals, getenv, sopts, iopts, nil)
 }
 
 // normalizeRuntimeConfig applies default values and ensures pagination limits are valid.

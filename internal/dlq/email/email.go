@@ -24,7 +24,7 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 	if e.Provider == nil {
 		return fmt.Errorf("no email provider")
 	}
-	fromAddr := mail.Address{Address: runtimeconfig.AppRuntimeConfig.EmailFrom}
+	fromAddr := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
 	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {
 		fromAddr = *f
 	}
@@ -35,7 +35,7 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 			log.Printf("build message: %v", err)
 			continue
 		}
-		if err := e.Provider.Send(ctx, addr, msg); err != nil {
+		if err := e.Provider.Send(ctx, toAddr.Address, msg); err != nil {
 			log.Printf("dlq email: %v", err)
 		}
 	}

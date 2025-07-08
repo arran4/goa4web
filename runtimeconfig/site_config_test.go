@@ -2,17 +2,17 @@ package runtimeconfig
 
 import "testing"
 
-func TestResolveFeedsEnabledPrecedence(t *testing.T) {
-	if !resolveFeedsEnabled("", "", "") {
+func TestResolveBoolPrecedence(t *testing.T) {
+	if !resolveBool(true, "", "", "") {
 		t.Fatalf("default should be true")
 	}
-	if resolveFeedsEnabled("", "", "0") {
+	if resolveBool(true, "", "", "0") {
 		t.Fatalf("env false")
 	}
-	if resolveFeedsEnabled("", "0", "1") {
+	if resolveBool(true, "", "0", "1") {
 		t.Fatalf("file overrides env")
 	}
-	if !resolveFeedsEnabled("1", "0", "0") {
+	if !resolveBool(true, "1", "0", "0") {
 		t.Fatalf("cli overrides file and env")
 	}
 }

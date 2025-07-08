@@ -6,13 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/arran4/goa4web/config"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
@@ -139,7 +136,6 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 }
 
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
-	os.Unsetenv(config.EnvEmailProvider)
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})
@@ -163,9 +159,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 }
 
 func TestUserEmailTestAction_WithProvider(t *testing.T) {
-	os.Setenv(config.EnvEmailProvider, "log")
 	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
-	defer os.Unsetenv(config.EnvEmailProvider)
 
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})

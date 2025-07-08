@@ -63,6 +63,12 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
+		var username string
+		if u, ok := r.Context().Value(hcommon.KeyUser).(*dbpkg.User); ok {
+			if u != nil && u.Username.Valid {
+				username = u.Username.String
+			}
+		}
 		var ann *dbpkg.GetActiveAnnouncementWithNewsRow
 		if queries.DB() != nil {
 			if a, err := queries.GetActiveAnnouncementWithNews(r.Context()); err == nil {
@@ -73,6 +79,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			SecurityLevel:     level,
 			IndexItems:        idx,
 			UserID:            uid,
+			Username:          username,
 			Title:             "Arran's Site",
 			FeedsEnabled:      runtimeconfig.AppRuntimeConfig.FeedsEnabled,
 			AdminMode:         r.URL.Query().Get("mode") == "admin",

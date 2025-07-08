@@ -104,26 +104,34 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	content := struct{ To, From, Subject, URL, Action, Path, Time string }{
-		To:      (&mail.Address{Name: user.Username.String, Address: user.Email.String}).String(),
-		From:    runtimeconfig.AppRuntimeConfig.EmailFrom,
-		Subject: "Website Update Notification",
-		URL:     pageURL,
-		Action:  common.TaskTestMail,
-		Path:    r.URL.Path,
-		Time:    time.Now().Format(time.RFC822),
+	unsub := "/usr/subscriptions"
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	}
+	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubURL string }{
+		To:       (&mail.Address{Name: user.Username.String, Address: user.Email.String}).String(),
+		From:     runtimeconfig.AppRuntimeConfig.EmailFrom,
+		Subject:  "Website Update Notification",
+		URL:      pageURL,
+		Action:   common.TaskTestMail,
+		Path:     r.URL.Path,
+		Time:     time.Now().Format(time.RFC822),
+		UnsubURL: unsub,
 	}
 	if err := tmpl.Execute(&buf, content); err != nil {
 		log.Printf("execute template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
-	fromAddr := mail.Address{Address: runtimeconfig.AppRuntimeConfig.EmailFrom}
+	toAddr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+	var fromAddr mail.Address
+
 	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {
 		fromAddr = *f
+	} else {
+		fromAddr = mail.Address{Address: runtimeconfig.AppRuntimeConfig.EmailFrom}
 	}
-	msg, err := email.BuildMessage(fromAddr, addr, content.Subject, buf.String(), "")
+	msg, err := email.BuildMessage(fromAddr, toAddr, content.Subject, buf.String(), "")
 	if err != nil {
 		log.Printf("build message: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

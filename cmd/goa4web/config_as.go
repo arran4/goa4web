@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -35,45 +34,21 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 	return c, nil
 }
 
-func parseBool(v string) (bool, bool) {
-	if v == "" {
-		return false, false
-	}
-	switch strings.ToLower(v) {
-	case "0", "false", "off", "no":
-		return false, true
-	case "1", "true", "on", "yes":
-		return true, true
-	default:
-		return false, false
-	}
-}
-
 func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[string]string, error) {
 	m := make(map[string]string)
-	v := reflect.ValueOf(cfg)
 	for _, o := range runtimeconfig.StringOptions {
-		m[o.Env] = v.FieldByName(o.Field).String()
+		m[o.Env] = *o.Target(&cfg)
 	}
 	for _, o := range runtimeconfig.IntOptions {
-		m[o.Env] = strconv.Itoa(int(v.FieldByName(o.Field).Int()))
+		m[o.Env] = strconv.Itoa(*o.Target(&cfg))
 	}
-	m[config.EnvFeedsEnabled] = strconv.FormatBool(cfg.FeedsEnabled)
-	m[config.EnvStatsStartYear] = strconv.Itoa(cfg.StatsStartYear)
+	for _, o := range runtimeconfig.BoolOptions {
+		m[o.Env] = strconv.FormatBool(*o.Target(&cfg))
+	}
 
 	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("load config file: %w", err)
-	}
-
-	boolVal := func(file, env string, def bool) string {
-		if b, ok := parseBool(file); ok {
-			return strconv.FormatBool(b)
-		}
-		if b, ok := parseBool(env); ok {
-			return strconv.FormatBool(b)
-		}
-		return strconv.FormatBool(def)
 	}
 
 	first := func(vals ...string) string {
@@ -86,17 +61,12 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 	}
 
 	m[config.EnvConfigFile] = cfgPath
-	m[config.EnvEmailEnabled] = boolVal(fileVals[config.EnvEmailEnabled], os.Getenv(config.EnvEmailEnabled), true)
-	m[config.EnvNotificationsEnabled] = boolVal(fileVals[config.EnvNotificationsEnabled], os.Getenv(config.EnvNotificationsEnabled), true)
-	m[config.EnvCSRFEnabled] = boolVal(fileVals[config.EnvCSRFEnabled], os.Getenv(config.EnvCSRFEnabled), true)
-	m[config.EnvAdminNotify] = boolVal(fileVals[config.EnvAdminNotify], os.Getenv(config.EnvAdminNotify), true)
 	m[config.EnvSessionSecret] = first("", os.Getenv(config.EnvSessionSecret))
 	sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
 	if sessionFile == "" {
 		sessionFile = runtimeconfig.DefaultSessionSecretPath()
 	}
 	m[config.EnvSessionSecretFile] = sessionFile
-	m[config.EnvSMTPStartTLS] = boolVal(fileVals[config.EnvSMTPStartTLS], os.Getenv(config.EnvSMTPStartTLS), true)
 
 	return m, nil
 }
@@ -225,6 +195,13 @@ func extendedUsageMap() map[string]string {
 			}
 		}
 	}
+	for _, o := range runtimeconfig.BoolOptions {
+		if o.ExtendedUsage != "" {
+			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
+				m[o.Env] = txt
+			}
+		}
+	}
 	return m
 }
 
@@ -236,17 +213,14 @@ func usageMap() map[string]string {
 	for _, o := range runtimeconfig.IntOptions {
 		m[o.Env] = o.Usage
 	}
-	m[config.EnvFeedsEnabled] = "enable or disable feeds"
+	for _, o := range runtimeconfig.BoolOptions {
+		m[o.Env] = o.Usage
+	}
 	m[config.EnvStatsStartYear] = "start year for usage stats"
 	m[config.EnvConfigFile] = "path to config file"
-	m[config.EnvEmailEnabled] = "enable sending queued emails"
-	m[config.EnvNotificationsEnabled] = "enable internal notifications"
-	m[config.EnvCSRFEnabled] = "enable or disable CSRF protection"
 	m[config.EnvSessionSecret] = "session secret key"
 	m[config.EnvSessionSecretFile] = "path to session secret file"
 	m[config.EnvAdminEmails] = "administrator email addresses"
-	m[config.EnvAdminNotify] = "enable admin notification emails"
-	m[config.EnvSMTPStartTLS] = "enable or disable STARTTLS"
 	return m
 }
 
@@ -258,12 +232,13 @@ func nameMap() map[string]string {
 	for _, o := range runtimeconfig.IntOptions {
 		m[o.Env] = o.Name
 	}
-	// feeds-enabled and stats-start-year only used for CLI
-	m[config.EnvFeedsEnabled] = "feeds-enabled"
-	m[config.EnvStatsStartYear] = "stats-start-year"
+	for _, o := range runtimeconfig.BoolOptions {
+		if o.Name != "" {
+			m[o.Env] = o.Name
+		}
+	}
 	m[config.EnvConfigFile] = "config-file"
 	m[config.EnvSessionSecret] = "session-secret"
 	m[config.EnvSessionSecretFile] = "session-secret-file"
-	m[config.EnvSMTPStartTLS] = "smtp-starttls"
 	return m
 }

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
-
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
@@ -63,29 +62,36 @@ func NotifyChange(ctx context.Context, provider email.Provider, userID int32, em
 	if !EmailSendingEnabled() {
 		return nil
 	}
-	from := runtimeconfig.AppRuntimeConfig.EmailFrom
+	from := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
 
 	type EmailContent struct {
-		To      string
-		From    string
-		Subject string
-		URL     string
-		Action  string
-		Path    string
-		Time    string
-		Item    interface{}
+		To       string
+		From     string
+		Subject  string
+		URL      string
+		Action   string
+		Path     string
+		Time     string
+		UnsubURL string
+		Item     interface{}
 	}
 
 	// Define email content
+	unsub := "/usr/subscriptions"
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	}
+	toAddr := email.ParseAddress(emailAddr)
 	content := EmailContent{
-		To:      emailAddr,
-		From:    from,
-		Subject: "Website Update Notification",
-		URL:     page,
-		Action:  action,
-		Path:    page,
-		Time:    time.Now().Format(time.RFC822),
-		Item:    item,
+		To:       emailAddr,
+		From:     from.Address,
+		Subject:  "Website Update Notification",
+		URL:      page,
+		Action:   action,
+		Path:     page,
+		Time:     time.Now().Format(time.RFC822),
+		UnsubURL: unsub,
+		Item:     item,
 	}
 
 	// Create a new buffer to store the rendered email content
@@ -179,32 +185,15 @@ func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 }
 
 // AdminNotificationsEnabled reports whether administrator notification emails
-// should be sent. The ADMIN_NOTIFY environment variable can be set to any of
-// "0", "false", "off" or "no" to disable notifications.
+// should be sent based on the runtime configuration.
 func AdminNotificationsEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvAdminNotify))
-	if v == "" {
-		return true
-	}
-	switch v {
-	case "0", "false", "off", "no":
-		return false
-	default:
-		return true
-	}
+	return runtimeconfig.AppRuntimeConfig.AdminNotify
 }
 
+// EmailSendingEnabled reports if queued emails should be dispatched according
+// to the runtime configuration.
 func EmailSendingEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvEmailEnabled))
-	if v == "" {
-		return true
-	}
-	switch v {
-	case "0", "false", "off", "no":
-		return false
-	default:
-		return true
-	}
+	return runtimeconfig.AppRuntimeConfig.EmailEnabled
 }
 
 // NotifyAdmins sends a change notification email to all administrator addresses

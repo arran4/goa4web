@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -267,9 +268,21 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	uid, _ := session.Values["UID"].(int32)
 
-	endUrl := fmt.Sprintf("/news/news/%d", pid)
+	base := "http://" + r.Host
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
+	}
+	endUrl := base + fmt.Sprintf("/news/news/%d", pid)
 
 	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	var author string
+	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+		author = u.Username.String
+	}
+	action := "comment"
+	if author != "" {
+		action = fmt.Sprintf("comment by %s", author)
+	}
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadIdforumthread: pthid,
@@ -278,7 +291,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, "update", nil); err != nil {
+			if err := emailutil.NotifyChange(r.Context(), provider, row.Idusers, row.Email.String, endUrl, action, nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}

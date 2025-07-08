@@ -21,6 +21,7 @@ const (
 	// EnvSMTPStartTLS enables STARTTLS when sending SMTP mail.
 	EnvSMTPStartTLS = "SMTP_STARTTLS"
 	// EnvEmailFrom sets the default From address for outgoing mail.
+	// The value must be a valid RFC 5322 address.
 	EnvEmailFrom = "EMAIL_FROM"
 	// EnvAWSRegion is the AWS region for the SES provider.
 	EnvAWSRegion = "AWS_REGION"
@@ -98,4 +99,7 @@ const (
 	EnvDLQProvider = "DLQ_PROVIDER"
 	// EnvDLQFile is the file path used by the file DLQ provider.
 	EnvDLQFile = "DLQ_FILE"
+
+	// EnvAutoMigrate toggles automatic database migrations on startup.
+	EnvAutoMigrate = "AUTO_MIGRATE"
 )

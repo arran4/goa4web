@@ -12,8 +12,8 @@ func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 		config.EnvDBLogVerbosity: "2",
 	}
 
-	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Field: "DBConn", Usage: "", ExtendedUsage: ""}
-	intOpt := IntOption{Name: "db-verb-alt", Env: config.EnvDBLogVerbosity, Field: "DBLogVerbosity", Usage: "", ExtendedUsage: ""}
+	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Usage: "", ExtendedUsage: "", Target: func(c *RuntimeConfig) *string { return &c.DBConn }}
+	intOpt := IntOption{Name: "db-verb-alt", Env: config.EnvDBLogVerbosity, Usage: "", ExtendedUsage: "", Target: func(c *RuntimeConfig) *int { return &c.DBLogVerbosity }}
 	fs := NewRuntimeFlagSetWithOptions("test", []StringOption{strOpt}, []IntOption{intOpt})
 	_ = fs.Parse([]string{"--db-conn-alt=cli", "--db-verb-alt=5"})
 
@@ -30,7 +30,7 @@ func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 }
 
 func TestGenerateRuntimeConfigWithInjectedFileValue(t *testing.T) {
-	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Field: "DBConn", Usage: "", ExtendedUsage: ""}
+	strOpt := StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Usage: "", ExtendedUsage: "", Target: func(c *RuntimeConfig) *string { return &c.DBConn }}
 	fs := NewRuntimeFlagSetWithOptions("test", []StringOption{strOpt}, nil)
 	_ = fs.Parse(nil)
 

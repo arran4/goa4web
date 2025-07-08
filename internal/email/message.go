@@ -11,12 +11,32 @@ import (
 	"time"
 )
 
+// DefaultFromName is used when encoding From headers without a name component.
+var DefaultFromName string
+
+// SetDefaultFromName extracts the name from addr and stores it in DefaultFromName.
+func SetDefaultFromName(addr string) {
+	if a, err := mail.ParseAddress(addr); err == nil {
+		DefaultFromName = a.Name
+	}
+}
+
+func formatAddress(a mail.Address) string {
+	if a.Name != "" {
+		return mime.QEncoding.Encode("utf-8", a.Name) + " <" + a.Address + ">"
+	}
+	return a.Address
+}
+
 // BuildMessage constructs a MIME email message with optional HTML content.
 func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]byte, error) {
+	if from.Name == "" {
+		from.Name = DefaultFromName
+	}
 	var msg bytes.Buffer
 	hdr := textproto.MIMEHeader{}
-	hdr.Set("From", from.String())
-	hdr.Set("To", to.String())
+	hdr.Set("From", formatAddress(from.String()))
+	hdr.Set("To", formatAddress(to.String()))
 	hdr.Set("Subject", mime.QEncoding.Encode("utf-8", subject))
 	hdr.Set("MIME-Version", "1.0")
 

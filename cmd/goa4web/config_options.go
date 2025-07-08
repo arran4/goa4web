@@ -46,9 +46,9 @@ type option struct {
 
 func (c *configOptionsCmd) Run() error {
 	def := defaultMap()
-	usage := usageMap()
-	ext := optionsExtendedUsageMap()
-	names := nameMap()
+	usage := runtimeconfig.UsageMap()
+	ext := runtimeconfig.ExtendedUsageMap()
+	names := runtimeconfig.NameMap()
 	keys := make([]string, 0, len(def))
 	for k := range def {
 		keys = append(keys, k)
@@ -81,23 +81,4 @@ func (c *configOptionsCmd) Run() error {
 		return fmt.Errorf("parse template: %w", err)
 	}
 	return t.Execute(os.Stdout, opts)
-}
-
-func optionsExtendedUsageMap() map[string]string {
-	m := make(map[string]string)
-	for _, o := range runtimeconfig.StringOptions {
-		if o.ExtendedUsage != "" {
-			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
-				m[o.Env] = txt
-			}
-		}
-	}
-	for _, o := range runtimeconfig.IntOptions {
-		if o.ExtendedUsage != "" {
-			if txt, err := runtimeconfig.ExtendedUsage(o.ExtendedUsage); err == nil {
-				m[o.Env] = txt
-			}
-		}
-	}
-	return m
 }

@@ -9,7 +9,7 @@ A new writing "{{.Item.Title}}" was submitted.
 Read it here:
 {{.URL}}
 
-You can manage your subscriptions in your settings.
+Manage notifications: {{.UnsubURL}}
 
 Cheers,
 The A4Web Team

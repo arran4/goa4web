@@ -65,26 +65,32 @@ func NotifyChange(ctx context.Context, provider email.Provider, emailAddr, page,
 	from := runtimeconfig.AppRuntimeConfig.EmailFrom
 
 	type EmailContent struct {
-		To      string
-		From    string
-		Subject string
-		URL     string
-		Action  string
-		Path    string
-		Time    string
-		Item    interface{}
+		To       string
+		From     string
+		Subject  string
+		URL      string
+		Action   string
+		Path     string
+		Time     string
+		UnsubURL string
+		Item     interface{}
 	}
 
 	// Define email content
+	unsub := "/usr/subscriptions"
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	}
 	content := EmailContent{
-		To:      emailAddr,
-		From:    from,
-		Subject: "Website Update Notification",
-		URL:     page,
-		Action:  action,
-		Path:    page,
-		Time:    time.Now().Format(time.RFC822),
-		Item:    item,
+		To:       emailAddr,
+		From:     from,
+		Subject:  "Website Update Notification",
+		URL:      page,
+		Action:   action,
+		Path:     page,
+		Time:     time.Now().Format(time.RFC822),
+		UnsubURL: unsub,
+		Item:     item,
 	}
 
 	// Create a new buffer to store the rendered email content

@@ -104,14 +104,19 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	content := struct{ To, From, Subject, URL, Action, Path, Time string }{
-		To:      user.Email.String,
-		From:    runtimeconfig.AppRuntimeConfig.EmailFrom,
-		Subject: "Website Update Notification",
-		URL:     pageURL,
-		Action:  common.TaskTestMail,
-		Path:    r.URL.Path,
-		Time:    time.Now().Format(time.RFC822),
+	unsub := "/usr/subscriptions"
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	}
+	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubURL string }{
+		To:       user.Email.String,
+		From:     runtimeconfig.AppRuntimeConfig.EmailFrom,
+		Subject:  "Website Update Notification",
+		URL:      pageURL,
+		Action:   common.TaskTestMail,
+		Path:     r.URL.Path,
+		Time:     time.Now().Format(time.RFC822),
+		UnsubURL: unsub,
 	}
 	if err := tmpl.Execute(&buf, content); err != nil {
 		log.Printf("execute template: %v", err)

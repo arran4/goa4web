@@ -38,5 +38,6 @@
   "SMTP_STARTTLS": "true",
   "SMTP_PORT": "",
   "SMTP_USER": "",
-  "STATS_START_YEAR": "2005"
+  "STATS_START_YEAR": "2005",
+  "AUTO_MIGRATE": "false"
 }

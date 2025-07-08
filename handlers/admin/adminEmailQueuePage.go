@@ -50,7 +50,7 @@ func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if provider != nil {
-			msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, e.ToEmail, e.Subject, e.Body, e.HtmlBody.String)
+			msg, err := email.BuildMessage(runtimeconfig.AppRuntimeConfig.EmailFrom, e.ToEmail, e.Subject, e.Body, "")
 			if err != nil {
 				log.Printf("build message: %v", err)
 				continue

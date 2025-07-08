@@ -108,20 +108,19 @@ func (q *Queries) UpdatePreference(ctx context.Context, arg UpdatePreferencePara
 
 // InsertPendingEmail adds an email to the sending queue.
 type InsertPendingEmailParams struct {
-	ToEmail  string
-	Subject  string
-	Body     string
-	HtmlBody string
+	ToEmail string
+	Subject string
+	Body    string
 }
 
 func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
-	_, err := q.db.ExecContext(ctx, "INSERT INTO pending_emails (to_email, subject, body, html_body) VALUES (?, ?, ?, ?)", arg.ToEmail, arg.Subject, arg.Body, arg.HtmlBody)
+	_, err := q.db.ExecContext(ctx, "INSERT INTO pending_emails (to_email, subject, body) VALUES (?, ?, ?)", arg.ToEmail, arg.Subject, arg.Body)
 	return err
 }
 
 // FetchPendingEmails returns unsent queued emails up to the provided limit.
 func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*PendingEmail, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, html_body, error_count FROM pending_emails WHERE sent_at IS NULL ORDER BY id LIMIT ?", limit)
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, error_count FROM pending_emails WHERE sent_at IS NULL ORDER BY id LIMIT ?", limit)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +128,7 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Pendi
 	var items []*PendingEmail
 	for rows.Next() {
 		var p PendingEmail
-		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody, &p.ErrorCount); err != nil {
+		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.ErrorCount); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -145,7 +144,7 @@ func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
 
 // ListUnsentPendingEmails returns all queued emails that have not been sent yet.
 func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, html_body, error_count, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
+	rows, err := q.db.QueryContext(ctx, "SELECT id, to_email, subject, body, error_count, created_at FROM pending_emails WHERE sent_at IS NULL ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +152,7 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 	var items []*PendingEmail
 	for rows.Next() {
 		var p PendingEmail
-		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody, &p.ErrorCount, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.ErrorCount, &p.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -163,9 +162,9 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*PendingEmail,
 
 // GetPendingEmailByID returns a single pending email.
 func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*PendingEmail, error) {
-	row := q.db.QueryRowContext(ctx, "SELECT id, to_email, subject, body, html_body, error_count FROM pending_emails WHERE id = ?", id)
+	row := q.db.QueryRowContext(ctx, "SELECT id, to_email, subject, body, error_count FROM pending_emails WHERE id = ?", id)
 	var p PendingEmail
-	err := row.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.HtmlBody, &p.ErrorCount)
+	err := row.Scan(&p.ID, &p.ToEmail, &p.Subject, &p.Body, &p.ErrorCount)
 	if err != nil {
 		return nil, err
 	}

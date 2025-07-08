@@ -98,4 +98,7 @@ const (
 	EnvDLQProvider = "DLQ_PROVIDER"
 	// EnvDLQFile is the file path used by the file DLQ provider.
 	EnvDLQFile = "DLQ_FILE"
+
+	// EnvAutoMigrate toggles automatic database migrations on startup.
+	EnvAutoMigrate = "AUTO_MIGRATE"
 )

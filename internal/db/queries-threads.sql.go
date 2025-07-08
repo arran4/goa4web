@@ -30,7 +30,7 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 	return forumtopic_idforumtopic, err
 }
 
-const getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions = `-- name: GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions :one
+const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.seelevel, u.level
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -41,12 +41,12 @@ WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.le
 ORDER BY t.lastaddition DESC
 `
 
-type GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams struct {
+type GetThreadLastPosterAndPermsParams struct {
 	UsersIdusers  int32
 	Idforumthread int32
 }
 
-type GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow struct {
+type GetThreadLastPosterAndPermsRow struct {
 	Idforumthread          int32
 	Firstpost              int32
 	Lastposter             int32
@@ -59,9 +59,9 @@ type GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow struct {
 	Level                  sql.NullInt32
 }
 
-func (q *Queries) GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(ctx context.Context, arg GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams) (*GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow, error) {
-	row := q.db.QueryRowContext(ctx, getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions, arg.UsersIdusers, arg.Idforumthread)
-	var i GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
+func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
+	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPerms, arg.UsersIdusers, arg.Idforumthread)
+	var i GetThreadLastPosterAndPermsRow
 	err := row.Scan(
 		&i.Idforumthread,
 		&i.Firstpost,

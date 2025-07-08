@@ -60,7 +60,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		Offset             int
 		IsReplying         bool
 		IsReplyable        bool
-		Thread             *db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
+		Thread             *db.GetThreadLastPosterAndPermsRow
 		ReplyText          string
 	}
 
@@ -69,7 +69,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries),
+		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
@@ -103,7 +103,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
 		Idforumthread: int32(post.ForumthreadIdforumthread),
 	})

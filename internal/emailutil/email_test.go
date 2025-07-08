@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/mail"
-	"reflect"
 	"regexp"
 	"testing"
 
@@ -86,7 +85,7 @@ func TestNotifyChange(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-       mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
 	rec := &mockemail.Provider{}
 	if err := emailutil.NotifyChange(ctx, rec, 2, "a@b.com", "http://host", "update", nil); err != nil {
@@ -138,7 +137,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	rec := &mockemail.Provider{}
 	emailutil.ProcessPendingEmail(context.Background(), q, rec, nil)
 
-	if len(rec.Messages) != 1 || rec.Messages[0].To.Address != "e" {
+	if len(rec.Messages) != 1 || rec.Messages[0].To.String() != "\"bob\" <e@>" {
 		t.Fatalf("got %#v", rec.Messages)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

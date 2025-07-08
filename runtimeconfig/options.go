@@ -57,6 +57,8 @@ var StringOptions = []StringOption{
 	{"dlq-provider", config.EnvDLQProvider, "dead letter queue provider", "", "", func(c *RuntimeConfig) *string { return &c.DLQProvider }},
 	{"dlq-file", config.EnvDLQFile, "dead letter queue file path", "", "", func(c *RuntimeConfig) *string { return &c.DLQFile }},
 	{"admin-emails", config.EnvAdminEmails, "administrator email addresses", "", "", func(c *RuntimeConfig) *string { return &c.AdminEmails }},
+	{"session-secret", config.EnvSessionSecret, "session secret key", "", "", func(c *RuntimeConfig) *string { return &c.SessionSecret }},
+	{"session-secret-file", config.EnvSessionSecretFile, "path to session secret file", "", "", func(c *RuntimeConfig) *string { return &c.SessionSecretFile }},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.
@@ -75,8 +77,8 @@ var IntOptions = []IntOption{
 var BoolOptions = []BoolOption{
 	{"feeds-enabled", config.EnvFeedsEnabled, "enable or disable feeds", true, "", func(c *RuntimeConfig) *bool { return &c.FeedsEnabled }},
 	{"smtp-starttls", config.EnvSMTPStartTLS, "enable or disable STARTTLS", true, "", func(c *RuntimeConfig) *bool { return &c.EmailSMTPStartTLS }},
-	{"", config.EnvEmailEnabled, "enable sending queued emails", true, "", func(c *RuntimeConfig) *bool { return &c.EmailEnabled }},
-	{"", config.EnvNotificationsEnabled, "enable internal notifications", true, "", func(c *RuntimeConfig) *bool { return &c.NotificationsEnabled }},
-	{"", config.EnvCSRFEnabled, "enable or disable CSRF protection", true, "", func(c *RuntimeConfig) *bool { return &c.CSRFEnabled }},
-	{"", config.EnvAdminNotify, "enable admin notification emails", true, "", func(c *RuntimeConfig) *bool { return &c.AdminNotify }},
+	{"email-enabled", config.EnvEmailEnabled, "enable sending queued emails", true, "", func(c *RuntimeConfig) *bool { return &c.EmailEnabled }},
+	{"notifications-enabled", config.EnvNotificationsEnabled, "enable internal notifications", true, "", func(c *RuntimeConfig) *bool { return &c.NotificationsEnabled }},
+	{"csrf-enabled", config.EnvCSRFEnabled, "enable or disable CSRF protection", true, "", func(c *RuntimeConfig) *bool { return &c.CSRFEnabled }},
+	{"admin-notify", config.EnvAdminNotify, "enable admin notification emails", true, "", func(c *RuntimeConfig) *bool { return &c.AdminNotify }},
 }

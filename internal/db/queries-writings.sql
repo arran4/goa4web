@@ -27,11 +27,11 @@ LIMIT ? OFFSET ?
 
 -- name: UpdateWriting :exec
 UPDATE writing
-SET title = ?, abstract = ?, writting = ?, private = ?, language_idlanguage = ?
+SET title = ?, abstract = ?, writing = ?, private = ?, language_idlanguage = ?
 WHERE idwriting = ?;
 
 -- name: InsertWriting :execlastid
-INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writting, private, language_idlanguage, published, users_idusers)
+INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writing, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: GetWritingByIdForUserDescendingByPublishedDate :one

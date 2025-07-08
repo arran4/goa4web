@@ -309,9 +309,9 @@ LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
 WHERE (b.users_idusers = ? OR ? = 0)
 AND (
-    NOT EXISTS (SELECT 1 FROM userlang ul WHERE ul.users_idusers = ?)
+    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
     OR b.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM userlang ul WHERE ul.users_idusers = ?
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 ORDER BY b.written DESC

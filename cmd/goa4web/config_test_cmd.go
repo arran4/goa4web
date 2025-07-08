@@ -130,13 +130,13 @@ func (c *configTestEmailCmd) Run() error {
 		} else {
 			fromAddr = mail.Address{Address: c.rootCmd.cfg.EmailFrom}
 		}
-	    msg, err := email.BuildMessage(fromAddr, toAddr, "Goa4Web Test Email", textBody, buf.String())
-	    if err != nil {
-	 		   return fmt.Errorf("build message: %w", err)
-	    }
-	    if err := provider.Send(ctx, toAddr, msg); err != nil {
-	 		   return fmt.Errorf("send email: %w", err)
-	    }
+		msg, err := email.BuildMessage(fromAddr, toAddr, "Goa4Web Test Email", textBody, buf.String())
+		if err != nil {
+			return fmt.Errorf("build message: %w", err)
+		}
+		if err := provider.Send(ctx, toAddr, msg); err != nil {
+			return fmt.Errorf("send email: %w", err)
+		}
 	}
 	return nil
 }

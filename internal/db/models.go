@@ -130,7 +130,7 @@ type DeactivatedWriting struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -375,8 +375,8 @@ type User struct {
 	DeletedAt sql.NullTime
 }
 
-type Userlang struct {
-	Iduserlang         int32
+type UserLanguage struct {
+	IduserLanguage     int32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 }
@@ -397,7 +397,7 @@ type Writing struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime

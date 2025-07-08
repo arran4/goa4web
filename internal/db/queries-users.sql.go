@@ -356,7 +356,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writting, abstract, private, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writing, abstract, private, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -375,7 +375,7 @@ type ListUsersSubscribedToWritingRow struct {
 	WritingcategoryIdwritingcategory int32
 	Title                            sql.NullString
 	Published                        sql.NullTime
-	Writting                         sql.NullString
+	Writing                          sql.NullString
 	Abstract                         sql.NullString
 	Private                          sql.NullBool
 	DeletedAt                        sql.NullTime
@@ -408,7 +408,7 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.WritingcategoryIdwritingcategory,
 			&i.Title,
 			&i.Published,
-			&i.Writting,
+			&i.Writing,
 			&i.Abstract,
 			&i.Private,
 			&i.DeletedAt,

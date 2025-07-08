@@ -22,26 +22,18 @@ var serveUsageTemplate string
 // serveCmd starts the web server.
 type serveCmd struct {
 	*rootCmd
-	fs                *flag.FlagSet
-	sessionSecret     string
-	sessionSecretFile string
-	args              []string
+	fs   *flag.FlagSet
+	args []string
 }
 
 func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 	c := &serveCmd{rootCmd: parent}
-	sopts := []runtimeconfig.StringOption{
-		{Name: "session-secret", Env: config.EnvSessionSecret, Usage: "session secret key"},
-		{Name: "session-secret-file", Env: config.EnvSessionSecretFile, Usage: "path to session secret file"},
-	}
-	fs := runtimeconfig.NewRuntimeFlagSetWithOptions("serve", sopts, nil)
+	fs := runtimeconfig.NewRuntimeFlagSet("serve")
 	fs.Usage = c.Usage
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.sessionSecret = fs.Lookup("session-secret").Value.String()
-	c.sessionSecretFile = fs.Lookup("session-secret-file").Value.String()
 	c.args = fs.Args()
 	return c, nil
 }
@@ -55,17 +47,11 @@ func (c *serveCmd) Run() error {
 		return fmt.Errorf("load config file: %w", err)
 	}
 	app.ConfigFile = c.rootCmd.ConfigFile
-	secretPath := c.sessionSecretFile
-	if secretPath == "" {
-		if v, ok := fileVals["SESSION_SECRET_FILE"]; ok {
-			secretPath = v
-		}
-	}
-	secret, err := runtimeconfig.LoadSessionSecret(core.OSFS{}, c.sessionSecret, secretPath, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	cfg := runtimeconfig.GenerateRuntimeConfig(c.fs, fileVals, os.Getenv)
+	secret, err := core.LoadSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
-	cfg := runtimeconfig.GenerateRuntimeConfig(c.rootCmd.fs, fileVals, os.Getenv)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := app.RunWithConfig(ctx, cfg, secret); err != nil {

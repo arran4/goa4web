@@ -27,18 +27,18 @@ UPDATE comments SET text = ?, deleted_at = NULL WHERE idcomments = ?;
 UPDATE deactivated_comments SET restored_at = NOW() WHERE idcomments = ?;
 
 -- name: ArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writting, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: ScrubWriting :exec
-UPDATE writing SET title = ?, writting = ?, abstract = ?, deleted_at = NOW() WHERE idwriting = ?;
+UPDATE writing SET title = ?, writing = ?, abstract = ?, deleted_at = NOW() WHERE idwriting = ?;
 
 -- name: PendingDeactivatedWritings :many
-SELECT idwriting, title, writting, abstract, private FROM deactivated_writings
+SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
 WHERE users_idusers = ? AND restored_at IS NULL;
 
 -- name: RestoreWriting :exec
-UPDATE writing SET title = ?, writting = ?, abstract = ?, private = ?, deleted_at = NULL WHERE idwriting = ?;
+UPDATE writing SET title = ?, writing = ?, abstract = ?, private = ?, deleted_at = NULL WHERE idwriting = ?;
 
 -- name: MarkWritingRestored :exec
 UPDATE deactivated_writings SET restored_at = NOW() WHERE idwriting = ?;

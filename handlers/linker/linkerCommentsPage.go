@@ -45,7 +45,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		Text               string
 		CanEdit            bool
 		UserId             int32
-		Thread             *db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsRow
+		Thread             *db.GetThreadLastPosterAndPermsRow
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -56,7 +56,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
 		Offset:             offset,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
@@ -100,7 +100,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissions(r.Context(), db.GetThreadByIdForUserByIdWithLastPosterUserNameAndPermissionsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
 		Idforumthread: link.ForumthreadIdforumthread,
 	})

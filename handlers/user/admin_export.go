@@ -38,11 +38,11 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	perms, _ := queries.GetPermissionsByUserID(r.Context(), int32(uid))
 
 	data := struct {
-		Note        string           `json:"note"`
-		User        *db.User         `json:"user"`
-		Preference  *db.Preference   `json:"preference,omitempty"`
-		Languages   []*db.Userlang   `json:"languages,omitempty"`
-		Permissions []*db.Permission `json:"permissions,omitempty"`
+		Note        string             `json:"note"`
+		User        *db.User           `json:"user"`
+		Preference  *db.Preference     `json:"preference,omitempty"`
+		Languages   []*db.UserLanguage `json:"languages,omitempty"`
+		Permissions []*db.Permission   `json:"permissions,omitempty"`
 	}{
 		Note:        gdprExportNote,
 		User:        user,
@@ -83,9 +83,9 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(f).Encode(ws)
 	}
 	for _, wrow := range writings {
-		if wrow.Writting.Valid {
+		if wrow.Writing.Valid {
 			if f, err := zw.Create(fmt.Sprintf("writings/%d.html", wrow.Idwriting)); err == nil {
-				_, _ = f.Write([]byte(wrow.Writting.String))
+				_, _ = f.Write([]byte(wrow.Writing.String))
 			}
 		}
 	}

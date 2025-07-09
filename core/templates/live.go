@@ -29,3 +29,11 @@ func GetFaviconData() []byte {
 	}
 	return b
 }
+
+func GetPasteImageJSData() []byte {
+	b, err := os.ReadFile("core/templates/assets/pasteimg.js")
+	if err != nil {
+		panic(err)
+	}
+	return b
+}

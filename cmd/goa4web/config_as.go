@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -64,12 +66,6 @@ func defaultMap() map[string]string {
 	m := runtimeconfig.DefaultMap()
 	m[config.EnvConfigFile] = ""
 	m[config.EnvSessionSecretFile] = runtimeconfig.DefaultSessionSecretPath()
-	return m
-}
-
-func defaultMap() map[string]string {
-	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	m, _ := runtimeconfig.ToEnvMap(def, "")
 	return m
 }
 

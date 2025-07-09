@@ -60,8 +60,10 @@ type RuntimeConfig struct {
 	StatsStartYear  int
 	DefaultLanguage string
 
-	ImageUploadDir string
-	ImageMaxBytes  int
+	ImageUploadDir     string
+	ImageMaxBytes      int
+	ImageCacheDir      string
+	ImageCacheMaxBytes int
 
 	DLQProvider string
 	DLQFile     string
@@ -70,6 +72,10 @@ type RuntimeConfig struct {
 	SessionSecret string
 	// SessionSecretFile specifies the path to the session secret file.
 	SessionSecretFile string
+	// ImageSignSecret is used to sign image URLs.
+	ImageSignSecret string
+	// ImageSignSecretFile specifies the path to the image signing key.
+	ImageSignSecretFile string
 }
 
 // AppRuntimeConfig stores the current application configuration.
@@ -239,7 +245,10 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.ImageUploadDir = "uploads/images"
 	}
 	if cfg.ImageMaxBytes == 0 {
-		cfg.ImageMaxBytes = 5 * 1024 * 1024
+		cfg.ImageMaxBytes = 50 * 1024 * 1024
+	}
+	if cfg.ImageCacheDir == "" {
+		cfg.ImageCacheDir = "uploads/cache"
 	}
 	if cfg.EmailSMTPAuth == "" {
 		cfg.EmailSMTPAuth = "plain"

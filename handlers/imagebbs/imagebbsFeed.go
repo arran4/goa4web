@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
+	"io"
 	"log"
 	"net/http"
 	"sort"
@@ -34,10 +36,10 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 			continue
 		}
 		desc := row.Description.String
-		conv := a4code2html.NewA4Code2HTML()
+		conv := a4code2html.New(imageshandler.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
-		conv.Process()
+		out, _ := io.ReadAll(conv.Process())
 		i := len(desc)
 		if i > 255 {
 			i = 255
@@ -46,7 +48,7 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 			Title:   desc[:i],
 			Link:    &feeds.Link{Href: fmt.Sprintf("/imagebbs/board/%d/thread/%d", boardID, row.ForumthreadIdforumthread)},
 			Created: time.Now(),
-			Description: fmt.Sprintf("%s\n-\n%s", conv.Output(), func() string {
+			Description: fmt.Sprintf("%s\n-\n%s", string(out), func() string {
 				if row.Username.Valid {
 					return row.Username.String
 				}

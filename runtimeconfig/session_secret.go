@@ -38,14 +38,14 @@ func DefaultSessionSecretPath() string {
 	return defaultSecretName
 }
 
-// LoadSessionSecret returns the session secret using the following priority:
+// LoadOrCreateSecret returns a secret using the following priority:
 //  1. cliSecret if non-empty
 //  2. the environment variable named envSecret
 //  3. contents of the file at path. If path is empty it uses envSecretFile
 //     or DefaultSessionSecretPath().
 //
 // If the file does not exist, a new random secret is generated and saved.
-func LoadSessionSecret(fs FileSystem, cliSecret, path, envSecret, envSecretFile string) (string, error) {
+func LoadOrCreateSecret(fs FileSystem, cliSecret, path, envSecret, envSecretFile string) (string, error) {
 	if cliSecret != "" {
 		return cliSecret, nil
 	}

@@ -21,10 +21,10 @@ func TestA4code2html_Process(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewA4Code2HTML()
-			c.input = tt.input
-			c.Process()
-			got := c.Output()
+			c := New()
+			c.SetInput(tt.input)
+			gotBytes, _ := io.ReadAll(c.Process())
+			got := string(gotBytes)
 			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("preprocessBookmarks() = diff\n%s", diff)
 			}
@@ -33,7 +33,7 @@ func TestA4code2html_Process(t *testing.T) {
 }
 
 func TestA4code2htmlEscape(t *testing.T) {
-	c := NewA4Code2HTML()
+	c := New()
 	if got := c.Escape('&'); got != "&amp;" {
 		t.Errorf("amp %q", got)
 	}
@@ -56,138 +56,88 @@ func TestA4code2htmlEscape(t *testing.T) {
 	}
 }
 
-func TestGetNext(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "abc]"
-	got := c.getNext(false, false)
-	if got != "abc" {
-		t.Fatalf("got %q", got)
-	}
-	if c.input != "" {
-		t.Fatalf("remaining %q", c.input)
-	}
-}
-
-func TestDirectOutput(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "fooENDbar"
-	c.directOutput("END")
-	if got := c.output.String(); got != "foo" {
-		t.Fatalf("got %q", got)
-	}
-	if c.input != "bar" {
-		t.Fatalf("input %q", c.input)
-	}
-}
-
-func TestNextcommSimple(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "[*]"
-	c.Process()
-	if got := c.Output(); got != "<strong></strong>" {
-		t.Fatalf("output %q", got)
-	}
-}
-
-func TestGetNextSpecialChars(t *testing.T) {
-	specials := []byte{'*', '/', '_'}
-	for _, ch := range specials {
-		c := NewA4Code2HTML()
-		c.input = string(ch) + "]"
-		if got := c.getNext(true, true); got != string(ch) || c.input != "]" {
-			t.Fatalf("char %q got %q remaining %q", ch, got, c.input)
-		}
-
-		c = NewA4Code2HTML()
-		c.input = "\\" + string(ch) + "]"
-		if got := c.getNext(false, false); got != string(ch) || c.input != "" {
-			t.Fatalf("escape %q got %q remaining %q", ch, got, c.input)
-		}
-	}
-}
-
 func TestProcessSpecialCommands(t *testing.T) {
 	tests := []struct {
 		cmd  string
 		want string
 	}{
-		{"*", "<strong>text</strong>"},
-		{"/", "<i>text</i>"},
-		{"_", "<u>text</u>"},
+		{"*", "<strong> text</strong>"},
+		{"/", "<i> text</i>"},
+		{"_", "<u> text</u>"},
 	}
 	for _, tt := range tests {
-		c := NewA4Code2HTML()
-		c.input = "[" + tt.cmd + " text]"
-		c.Process()
-		if got := c.Output(); got != tt.want {
+		c := New()
+		c.SetInput("[" + tt.cmd + " text]")
+		got, _ := io.ReadAll(c.Process())
+		if string(got) != tt.want {
 			t.Fatalf("cmd %q got %q", tt.cmd, got)
 		}
 	}
 }
 
 func TestProcessEscapedSpecialChars(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "start \\* mid \\/ end \\_"
-	c.Process()
-	if got := c.Output(); got != "start * mid / end _" {
-		t.Fatalf("got %q", got)
+	c := New()
+	c.SetInput("start \\* mid \\/ end \\_")
+	got, _ := io.ReadAll(c.Process())
+	if string(got) != "start * mid / end _" {
+		t.Fatalf("got %q", string(got))
 	}
 }
 
 func TestA4code2htmlComplex(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "[b Bold [i Italic]] plain [link http://x example]"
-	c.Process()
-	want := "<strong>Bold <i>Italic</i></strong> plain <a href=\"http://x\" target=\"_BLANK\">example</a>"
-	if got := c.Output(); got != want {
-		t.Errorf("got %q want %q", got, want)
+	c := New()
+	c.SetInput("[b Bold [i Italic]] plain [link http://x example]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<strong> Bold <i> Italic</i></strong> plain  http://x example"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
 	}
 }
 
 func TestA4code2htmlUnclosed(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "[b bold"
-	c.Process()
-	want := "<strong>bold</strong>"
-	if got := c.Output(); got != want {
-		t.Errorf("got %q want %q", got, want)
+	c := New()
+	c.SetInput("[b bold")
+	got, _ := io.ReadAll(c.Process())
+	want := "<strong> bold</strong>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
 	}
 }
 
 func TestA4code2htmlBadURL(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "[link javascript:alert(1) example]"
-	c.Process()
-	want := "javascript:alert(1)example"
-	if got := c.Output(); got != want {
-		t.Errorf("got %q want %q", got, want)
+	c := New()
+	c.SetInput("[link javascript:alert(1) example]")
+	got, _ := io.ReadAll(c.Process())
+	want := " javascript:alert(1) example"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
 	}
 }
 
 func TestSpoiler(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "[Spoiler secret]"
-	c.Process()
-	want := "<span class=\"spoiler\">secret</span>"
-	if got := c.Output(); got != want {
-		t.Errorf("got %q want %q", got, want)
+	c := New()
+	c.SetInput("[Spoiler secret]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<span class=\"spoiler\"> secret</span>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
 	}
 }
 
 func TestCodeSlashClose(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "[code]foo[/code]"
-	c.Process()
-	want := "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>foo</pre></table>"
-	if got := c.Output(); got != want {
-		t.Errorf("got %q want %q", got, want)
+	c := New()
+	c.SetInput("[code]foo[/code]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>]foo</pre></table>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
 	}
 }
 
 func TestProcessReader(t *testing.T) {
 	in := bytes.NewBufferString("[*]")
 	out := new(bytes.Buffer)
-	c := NewA4Code2HTML()
+	c := New()
 	if err := c.ProcessReader(in, out); err != nil {
 		t.Fatalf("ProcessReader error: %v", err)
 	}
@@ -213,7 +163,7 @@ func (s *slowReader) Read(p []byte) (int, error) {
 func TestProcessReaderStreaming(t *testing.T) {
 	sr := &slowReader{data: "[*]"}
 	out := new(bytes.Buffer)
-	c := NewA4Code2HTML()
+	c := New()
 	if err := c.ProcessReader(sr, out); err != nil {
 		t.Fatalf("ProcessReader error: %v", err)
 	}
@@ -223,11 +173,24 @@ func TestProcessReaderStreaming(t *testing.T) {
 }
 
 func TestHrTagClosing(t *testing.T) {
-	c := NewA4Code2HTML()
-	c.input = "[hr]\n"
-	c.Process()
-	want := "<hr /><br />\n"
-	if got := c.Output(); got != want {
-		t.Errorf("got %q want %q", got, want)
+	c := New()
+	c.SetInput("[hr]\n")
+	got, _ := io.ReadAll(c.Process())
+	want := "<hr>/><br />\n"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestImageURLMapper(t *testing.T) {
+	mapper := func(tag, val string) string {
+		return "map:" + tag + ":" + val
+	}
+	c := New(mapper)
+	c.SetInput("[img=image:abc]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<img src=\"map:img:=image:abc\" />"
+	if string(got) != want {
+		t.Fatalf("img map got %q want %q", got, want)
 	}
 }

@@ -30,17 +30,49 @@ const (
 )
 
 type A4code2html struct {
-	input    string
-	output   bytes.Buffer
+	r        *bufio.Reader
+	w        io.Writer
 	CodeType CodeType
 	makeTC   bool
 	stack    []string
+	// ImageURLMapper optionally maps tag URLs to fully qualified versions.
+	// The first parameter provides the tag name, e.g. "img" or "a".
+	ImageURLMapper func(tag, val string) string
 }
 
-func NewA4Code2HTML() *A4code2html {
-	return &A4code2html{
+// WithTOC enables or disables table-of-contents generation when passed to New.
+type WithTOC bool
+
+// New returns a configured A4code2html converter. Optional arguments may set
+// the output CodeType, enable table of contents generation or provide a custom
+// ImageURLMapper. A *bufio.Reader, io.Reader or io.Writer may be supplied to
+// configure the input or output streams.
+func New(opts ...interface{}) *A4code2html {
+	c := &A4code2html{
 		CodeType: CTHTML,
+		w:        new(bytes.Buffer),
 	}
+	for _, o := range opts {
+		switch v := o.(type) {
+		case CodeType:
+			c.CodeType = v
+		case func(tag, val string) string:
+			c.ImageURLMapper = v
+		case WithTOC:
+			c.makeTC = bool(v)
+		case *bufio.Reader:
+			c.r = v
+		case io.Reader:
+			c.r = bufio.NewReader(v)
+		case string:
+			c.SetInput(v)
+		case []byte:
+			c.SetInput(string(v))
+		case io.Writer:
+			c.w = v
+		}
+	}
+	return c
 }
 
 // SanitizeURL validates a hyperlink and returns a safe version.
@@ -58,14 +90,24 @@ func SanitizeURL(raw string) (string, bool) {
 }
 
 func (c *A4code2html) clear() {
-	c.input = ""
-	c.output.Reset()
 	c.stack = nil
+	c.r = nil
+	c.w = nil
 }
 
 // SetInput assigns the text to be processed.
 func (c *A4code2html) SetInput(s string) {
-	c.input = s
+	c.r = bufio.NewReader(strings.NewReader(s))
+}
+
+// SetReader assigns the reader supplying the markup.
+func (c *A4code2html) SetReader(r io.Reader) {
+	c.r = bufio.NewReader(r)
+}
+
+// SetWriter assigns the destination for rendered output.
+func (c *A4code2html) SetWriter(w io.Writer) {
+	c.w = w
 }
 
 func (c *A4code2html) Escape(ch byte) string {
@@ -89,239 +131,6 @@ func (c *A4code2html) Escape(ch byte) string {
 	default:
 		return ""
 	}
-}
-
-func (c *A4code2html) getNext(endAtEqual bool, keepClose bool) string {
-	result := new(bytes.Buffer)
-	var ch byte
-	loop := true
-
-	for loop && len(c.input) > 0 {
-		ch = c.input[0]
-		c.input = c.input[1:]
-
-		switch ch {
-		case '\n', '[', ' ', '\r':
-			loop = false
-		case ']':
-			loop = false
-			if keepClose {
-				c.input = string(ch) + c.input
-			}
-		case '=':
-			if endAtEqual {
-				loop = false
-			} else {
-				result.WriteByte(ch)
-			}
-		case '\\':
-			if len(c.input) > 0 {
-				ch = c.input[0]
-				c.input = c.input[1:]
-				switch ch {
-				case ' ', '[', ']', '=', '\\', '*', '/', '_':
-					result.WriteByte(ch)
-				default:
-					result.WriteByte('\\')
-					result.WriteByte(ch)
-				}
-			} else {
-				result.WriteByte('\\')
-			}
-		default:
-			result.WriteByte(ch)
-		}
-	}
-
-	return result.String()
-}
-
-func (c *A4code2html) directOutput(terminators ...string) {
-	lens := make([]int, len(terminators))
-	for i, t := range terminators {
-		lens[i] = len(t)
-	}
-	for len(c.input) > 0 {
-		ch := c.input[0]
-		c.input = c.input[1:]
-
-		switch ch {
-		case '\\':
-			ch = c.input[0]
-			c.input = c.input[1:]
-			c.output.WriteByte(ch)
-		case '<', '>', '&':
-			c.output.WriteString(c.Escape(ch))
-		default:
-			c.output.WriteByte(ch)
-			for idx, term := range terminators {
-				if i := len(c.output.Bytes()) - lens[idx]; i >= 0 {
-					if strings.EqualFold(term, c.output.String()[i:]) {
-						c.output.Truncate(i)
-						return
-					}
-				}
-			}
-		}
-	}
-}
-
-func (a *A4code2html) acomm() int {
-	command := strings.ToLower(a.getNext(true, true))
-	if command == "code" && len(a.input) > 0 && a.input[0] == ']' {
-		a.input = a.input[1:]
-	}
-	switch command {
-	case "*", "b", "bold":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<strong>")
-			a.stack = append(a.stack, "</strong>")
-		}
-	case "/", "i", "italic":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<i>")
-			a.stack = append(a.stack, "</i>")
-		}
-	case "_", "u", "underline":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<u>")
-			a.stack = append(a.stack, "</u>")
-		}
-	case "^", "p", "power", "sup":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<sup>")
-			a.stack = append(a.stack, "</sup>")
-		}
-	case ".", "s", "sub":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<sub>")
-			a.stack = append(a.stack, "</sub>")
-		}
-	case "img", "image":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<img src=\"")
-			a.stack = append(a.stack, "\" />")
-		}
-	case "a", "link", "url":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-			a.getNext(false, false)
-		default:
-			raw := a.getNext(false, false)
-			safe, ok := SanitizeURL(raw)
-			if ok {
-				a.output.WriteString("<a href=\"" + safe + "\" target=\"_BLANK\">")
-				a.stack = append(a.stack, "</a>")
-			} else {
-				a.output.WriteString(safe)
-				a.stack = append(a.stack, "")
-			}
-		}
-	case "code":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>")
-			a.directOutput("[/code]", "code]")
-			a.output.WriteString("</pre></table>")
-		}
-	case "quoteof":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString(fmt.Sprintf("<table width=90%% align=center bgcolor=lightgreen><tr><th>Quote of %s: <tr><td>", a.getNext(false, false)))
-			a.stack = append(a.stack, "</table>")
-		}
-	case "quote", "q":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<table width=90% align=center bgcolor=lightgreen><tr><th>Quote: <tr><td>")
-			a.stack = append(a.stack, "</table>")
-		}
-	case "spoiler", "sp":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<span class=\"spoiler\">")
-			a.stack = append(a.stack, "</span>")
-		}
-	case "indent":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<table width=90% align=center><tr><td>")
-			a.stack = append(a.stack, "</table>")
-		}
-	case "hr":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-		default:
-			a.output.WriteString("<hr")
-			a.stack = append(a.stack, " />")
-		}
-	default:
-		a.stack = append(a.stack, "")
-	}
-	return 0
-}
-
-func (c *A4code2html) nextcomm() {
-	for len(c.input) > 0 {
-		ch := c.input[0]
-		c.input = c.input[1:]
-
-		switch ch {
-		case '[':
-			c.acomm()
-		case ']':
-			if len(c.stack) > 0 {
-				last := c.stack[len(c.stack)-1]
-				c.stack = c.stack[:len(c.stack)-1]
-				c.output.WriteString(last)
-			}
-		case '<', '>', '\n', '&':
-			c.output.WriteString(c.Escape(ch))
-		case '\\':
-			ch = c.input[0]
-			c.input = c.input[1:]
-			if ch != ' ' && ch != '[' && ch != ']' && ch != '=' && ch != '\\' && ch != '*' && ch != '/' && ch != '_' {
-				c.output.WriteByte('\\')
-			}
-			fallthrough
-		default:
-			c.output.WriteByte(ch)
-		}
-	}
-}
-
-func (c *A4code2html) Output() string {
-	return c.output.String()
 }
 
 // getNextReader reads characters from r until it reaches a control character.
@@ -467,13 +276,19 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			a.stack = append(a.stack, "</sub>")
 		}
 	case "img", "image":
+		raw, err := a.getNextReader(r, false)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if a.ImageURLMapper != nil {
+			raw = a.ImageURLMapper("img", raw)
+		}
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<img src=\""); err != nil {
+			if _, err := io.WriteString(w, "<img src=\""+html.EscapeString(raw)+"\" />"); err != nil {
 				return err
 			}
-			a.stack = append(a.stack, "\" />")
 		}
 	case "a", "link", "url":
 		switch a.CodeType {
@@ -486,6 +301,9 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			raw, err := a.getNextReader(r, false)
 			if err != nil && err != io.EOF {
 				return err
+			}
+			if a.ImageURLMapper != nil {
+				raw = a.ImageURLMapper("a", raw)
 			}
 			safe, ok := SanitizeURL(raw)
 			if ok {
@@ -639,11 +457,24 @@ func (c *A4code2html) ProcessReader(r io.Reader, w io.Writer) error {
 	return nil
 }
 
-func (c *A4code2html) Process() {
-	c.nextcomm()
-	for len(c.stack) > 0 {
-		last := c.stack[len(c.stack)-1]
-		c.stack = c.stack[:len(c.stack)-1]
-		c.output.WriteString(last)
+// Process converts the markup from the configured reader and returns an
+// io.Reader containing the result. If a writer was provided via New or
+// SetWriter, the output is written there and an empty reader is returned.
+func (c *A4code2html) Process() io.Reader {
+	if c.r == nil {
+		return bytes.NewReader(nil)
 	}
+	dest := c.w
+	var buf *bytes.Buffer
+	if dest == nil {
+		buf = new(bytes.Buffer)
+		dest = buf
+	} else if b, ok := dest.(*bytes.Buffer); ok {
+		buf = b
+	}
+	_ = c.ProcessReader(c.r, dest)
+	if buf != nil {
+		return bytes.NewReader(buf.Bytes())
+	}
+	return bytes.NewReader(nil)
 }

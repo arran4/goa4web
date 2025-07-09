@@ -15,6 +15,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	nav "github.com/arran4/goa4web/internal/navigation"
+	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -86,6 +87,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			NotificationCount: count,
 			Announcement:      ann,
 		}
+		cd.SetImageURLMapper(imagesign.MapURL)
 		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

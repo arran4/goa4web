@@ -6,6 +6,7 @@
                 {{template "headdata"}}
                 <link rel="stylesheet" href="/main.css">
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+                <script src="/images/pasteimg.js"></script>
         {{ if $.AutoRefresh }}
             <meta http-equiv="refresh" content="1">
         {{ end }}
@@ -16,5 +17,4 @@
 		<table border=0>
 			<tr valign=top>
 				<td width=200px>{{template "index" $}}
-				<td>
-{{end}}
+				<td>{{end}}

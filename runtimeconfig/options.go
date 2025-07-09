@@ -54,11 +54,14 @@ var StringOptions = []StringOption{
 	{"sendgrid-key", config.EnvSendGridKey, "SendGrid API key", "", "", func(c *RuntimeConfig) *string { return &c.EmailSendGridKey }},
 	{"default-language", config.EnvDefaultLanguage, "default language name", "", "", func(c *RuntimeConfig) *string { return &c.DefaultLanguage }},
 	{"image-upload-dir", config.EnvImageUploadDir, "directory to store uploaded images", "", "", func(c *RuntimeConfig) *string { return &c.ImageUploadDir }},
+	{"image-cache-dir", config.EnvImageCacheDir, "directory to store image thumbnails", "", "", func(c *RuntimeConfig) *string { return &c.ImageCacheDir }},
 	{"dlq-provider", config.EnvDLQProvider, "dead letter queue provider", "", "", func(c *RuntimeConfig) *string { return &c.DLQProvider }},
 	{"dlq-file", config.EnvDLQFile, "dead letter queue file path", "", "", func(c *RuntimeConfig) *string { return &c.DLQFile }},
 	{"admin-emails", config.EnvAdminEmails, "administrator email addresses", "", "", func(c *RuntimeConfig) *string { return &c.AdminEmails }},
 	{"session-secret", config.EnvSessionSecret, "session secret key", "", "", func(c *RuntimeConfig) *string { return &c.SessionSecret }},
 	{"session-secret-file", config.EnvSessionSecretFile, "path to session secret file", "", "", func(c *RuntimeConfig) *string { return &c.SessionSecretFile }},
+	{"image-sign-secret", config.EnvImageSignSecret, "image signing key", "", "", func(c *RuntimeConfig) *string { return &c.ImageSignSecret }},
+	{"image-sign-secret-file", config.EnvImageSignSecretFile, "path to image signing key", "", "", func(c *RuntimeConfig) *string { return &c.ImageSignSecretFile }},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.
@@ -69,6 +72,7 @@ var IntOptions = []IntOption{
 	{"page-size-max", config.EnvPageSizeMax, "maximum allowed page size", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},
 	{"page-size-default", config.EnvPageSizeDefault, "default page size", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeDefault }},
 	{"image-max-bytes", config.EnvImageMaxBytes, "maximum allowed upload size in bytes", 0, "", func(c *RuntimeConfig) *int { return &c.ImageMaxBytes }},
+	{"image-cache-max-bytes", config.EnvImageCacheMaxBytes, "maximum image cache size in bytes", -1, "", func(c *RuntimeConfig) *int { return &c.ImageCacheMaxBytes }},
 	{"email-worker-interval", config.EnvEmailWorkerInterval, "interval in seconds between email worker runs", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
 	{"stats-start-year", config.EnvStatsStartYear, "start year for usage stats", 0, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
 }

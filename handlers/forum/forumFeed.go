@@ -7,9 +7,11 @@ import (
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -28,10 +30,10 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 			continue
 		}
 		text := row.Firstposttext.String
-		conv := a4code2html.NewA4Code2HTML()
+		conv := a4code2html.New(imageshandler.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
-		conv.Process()
+		out, _ := io.ReadAll(conv.Process())
 		i := len(text)
 		if i > 255 {
 			i = 255
@@ -40,7 +42,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 			Title:   text[:i],
 			Link:    &feeds.Link{Href: fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, row.Idforumthread)},
 			Created: time.Now(),
-			Description: fmt.Sprintf("%s\n-\n%s", conv.Output(), func() string {
+			Description: fmt.Sprintf("%s\n-\n%s", string(out), func() string {
 				if row.Firstpostusername.Valid {
 					return row.Firstpostusername.String
 				}

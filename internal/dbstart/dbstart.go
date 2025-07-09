@@ -86,6 +86,17 @@ func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 		return &common.UserError{Err: err, ErrorMessage: "image upload directory not writable"}
 	}
 	os.Remove(test)
+
+	if cfg.ImageCacheDir != "" {
+		if info, err := os.Stat(cfg.ImageCacheDir); err != nil || !info.IsDir() {
+			return &common.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
+		}
+		test := filepath.Join(cfg.ImageCacheDir, ".check")
+		if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
+			return &common.UserError{Err: err, ErrorMessage: "image cache directory not writable"}
+		}
+		os.Remove(test)
+	}
 	return nil
 }
 

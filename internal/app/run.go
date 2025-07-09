@@ -14,6 +14,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
@@ -49,7 +50,7 @@ func init() {
 
 // RunWithConfig starts the application using the provided configuration and
 // session secret. The context controls the lifetime of the HTTP server.
-func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, sessionSecret string) error {
+func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, sessionSecret, imageSignSecret string) error {
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	core.Store = store
 	core.SessionName = sessionName
@@ -74,6 +75,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		return fmt.Errorf("smtp fallback: %w", err)
 	}
 	runtimeconfig.AppRuntimeConfig = cfg
+	imageshandler.SetSigningKey(imageSignSecret)
 	email.SetDefaultFromName(cfg.EmailFrom)
 
 	if dbPool != nil {

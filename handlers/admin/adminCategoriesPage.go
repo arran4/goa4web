@@ -17,7 +17,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Section           string
 		ForumCategories   []*db.GetAllForumCategoriesWithSubcategoryCountRow
-		WritingCategories []*db.Writingcategory
+		WritingCategories []*db.WritingCategory
 		LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
 	}
 

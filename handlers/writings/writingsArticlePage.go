@@ -43,10 +43,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		Comments            []*CommentPlus
 		IsReplyable         bool
 		IsAdmin             bool
-		Categories          []*db.Writingcategory
+		Categories          []*db.WritingCategory
 		CategoryId          int32
 		Offset              int32
-		CategoryBreadcrumbs []*db.Writingcategory
+		CategoryBreadcrumbs []*db.WritingCategory
 		ReplyText           string
 	}
 
@@ -177,7 +177,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryMap := map[int32]*db.Writingcategory{}
+	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
 		categoryMap[cat.Idwritingcategory] = cat
 		if cat.WritingcategoryIdwritingcategory == data.CategoryId {

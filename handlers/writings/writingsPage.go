@@ -19,7 +19,7 @@ var writingsPermissionsPageEnabled = true
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories                       []*db.Writingcategory
+		Categories                       []*db.WritingCategory
 		EditingCategoryId                int32
 		CategoryId                       int32
 		WritingcategoryIdwritingcategory int32

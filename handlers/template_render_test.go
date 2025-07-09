@@ -70,7 +70,7 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&corecommon.CoreData{}, nil, false, "", []struct{ Username string }{{"test"}}}},
 		{"writingsPage", struct {
 			*corecommon.CoreData
-			Categories                       []*db.Writingcategory
+			Categories                       []*db.WritingCategory
 			WritingcategoryIdwritingcategory int32
 			CategoryId                       int32
 			IsAdmin                          bool
@@ -86,8 +86,8 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&corecommon.CoreData{}, 0, false, 0, 0, 0, nil}},
 		{"writingsCategoryPage", struct {
 			*corecommon.CoreData
-			Categories                       []*db.Writingcategory
-			CategoryBreadcrumbs              []*db.Writingcategory
+			Categories                       []*db.WritingCategory
+			CategoryBreadcrumbs              []*db.WritingCategory
 			EditingCategoryId                int32
 			CategoryId                       int32
 			WritingcategoryIdwritingcategory int32

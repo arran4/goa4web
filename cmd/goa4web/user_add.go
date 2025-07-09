@@ -9,6 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/pbkdf2"
 
@@ -72,6 +73,9 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		username, email,
 	)
 	if err != nil {
+		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			return fmt.Errorf("user already exists")
+		}
 		return fmt.Errorf("insert user: %w", err)
 	}
 	id, err := res.LastInsertId()

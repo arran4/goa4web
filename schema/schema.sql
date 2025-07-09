@@ -279,7 +279,9 @@ CREATE TABLE `users` (
   `email` tinytext DEFAULT NULL,
   `username` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`idusers`)
+  PRIMARY KEY (`idusers`),
+  UNIQUE KEY `users_username_idx` (`username`(255)),
+  UNIQUE KEY `users_email_idx` (`email`(255))
 );
 
 CREATE TABLE `passwords` (

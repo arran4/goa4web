@@ -249,7 +249,7 @@ type Linkerqueue struct {
 
 type Linkersearch struct {
 	SearchwordlistIdsearchwordlist int32
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 }
 
 type LoginAttempt struct {
@@ -312,7 +312,7 @@ type Searchwordlist struct {
 
 type SearchwordlistHasLinker struct {
 	SearchwordlistIdsearchwordlist int32
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 }
 
 type Session struct {

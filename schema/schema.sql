@@ -206,10 +206,10 @@ CREATE TABLE `linkerQueue` (
 
 CREATE TABLE `linkerSearch` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
-  `linker_idlinker` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`linker_idlinker`),
+  `linker_id` int(10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`linker_id`),
   KEY `searchwordlist_has_linker_FKIndex1` (`searchwordlist_idsearchwordlist`),
-  KEY `searchwordlist_has_linker_FKIndex2` (`linker_idlinker`)
+  KEY `searchwordlist_has_linker_FKIndex2` (`linker_id`)
 );
 
 CREATE TABLE `permissions` (
@@ -241,10 +241,10 @@ CREATE TABLE `searchwordlist` (
 
 CREATE TABLE `searchwordlist_has_linker` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
-  `linker_idlinker` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`linker_idlinker`),
+  `linker_id` int(10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`linker_id`),
   KEY `searchwordlist_has_linker_FKIndex1` (`searchwordlist_idsearchwordlist`),
-  KEY `searchwordlist_has_linker_FKIndex2` (`linker_idlinker`)
+  KEY `searchwordlist_has_linker_FKIndex2` (`linker_id`)
 );
 
 CREATE TABLE `siteNews` (

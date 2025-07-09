@@ -64,7 +64,7 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, lid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToLinkerSearch(ctx, db.AddToLinkerSearchParams{
-			LinkerIdlinker:                 int32(lid),
+			LinkerID:                       int32(lid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})

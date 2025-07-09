@@ -1,0 +1,7 @@
+{{ template "head" $ }}
+<ul>
+{{ range .Users }}
+    <li><a href="/admin/user/{{ .Idusers }}">{{ .Username.String }}</a></li>
+{{ end }}
+</ul>
+{{ template "tail" $ }}

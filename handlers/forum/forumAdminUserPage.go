@@ -19,7 +19,7 @@ import (
 func AdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	type UserTopic struct {
-		User   *db.User
+		User   *db.AllUsersRow
 		Topics []*db.GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopicRow
 	}
 
@@ -63,10 +63,10 @@ func AdminUserPage(w http.ResponseWriter, r *http.Request) {
 
 	if data.Search != "" {
 		q := strings.ToLower(data.Search)
-		var filtered []*db.User
+		var filtered []*db.AllUsersRow
 		for _, u := range users {
 			if strings.Contains(strings.ToLower(u.Username.String), q) ||
-				strings.Contains(strings.ToLower(u.Email.String), q) {
+				strings.Contains(strings.ToLower(u.Email), q) {
 				filtered = append(filtered, u)
 			}
 		}

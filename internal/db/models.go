@@ -285,6 +285,16 @@ type PendingEmail struct {
 	SentAt     sql.NullTime
 }
 
+type PendingPassword struct {
+	ID               int32
+	UserID           int32
+	Passwd           string
+	PasswdAlgorithm  string
+	VerificationCode string
+	CreatedAt        time.Time
+	VerifiedAt       sql.NullTime
+}
+
 type Permission struct {
 	Idpermissions int32
 	UsersIdusers  int32
@@ -380,9 +390,18 @@ type UploadedImage struct {
 
 type User struct {
 	Idusers   int32
-	Email     sql.NullString
 	Username  sql.NullString
 	DeletedAt sql.NullTime
+}
+
+type UserEmail struct {
+	ID                    int32
+	UserID                int32
+	Email                 string
+	VerifiedAt            sql.NullTime
+	LastVerificationCode  sql.NullString
+	VerificationExpiresAt sql.NullTime
+	NotificationPriority  int32
 }
 
 type UserLanguage struct {

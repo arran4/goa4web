@@ -53,7 +53,7 @@ func (c *userListCmd) Run() error {
 			return fmt.Errorf("list users: %w", err2)
 		}
 		for _, u := range basic {
-			fmt.Printf("%d\t%s\t%s\n", u.Idusers, u.Username.String, u.Email.String)
+			fmt.Printf("%d\t%s\t%s\n", u.Idusers, u.Username.String, u.Email)
 		}
 		return nil
 	}

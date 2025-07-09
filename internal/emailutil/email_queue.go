@@ -56,11 +56,11 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		log.Printf("get user: %v", err)
 		return
 	}
-	if !user.Email.Valid {
+	if user.Email == "" {
 		log.Printf("invalid email for user %d", e.ToUserID)
 		return
 	}
-	addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+	addr := mail.Address{Name: user.Username.String, Address: user.Email}
 	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 		log.Printf("send queued mail: %v", err)
 		count, incErr := q.IncrementEmailError(ctx, e.ID)
@@ -70,7 +70,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		}
 		if count > 4 {
 			if dlqProvider != nil {
-				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, user.Email.String, err, e.Body)
+				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, user.Email, err, e.Body)
 				_ = dlqProvider.Record(ctx, msg)
 			}
 			if delErr := q.DeletePendingEmail(ctx, e.ID); delErr != nil {

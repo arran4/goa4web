@@ -146,7 +146,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Username: urow.Username}
+	user := &db.User{Idusers: urow.Idusers, Username: urow.Username}
 	data := struct {
 		*common.CoreData
 		User *db.User

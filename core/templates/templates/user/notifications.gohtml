@@ -11,4 +11,15 @@
 {{ else }}
     No notifications
 {{ end }}
+<hr>
+<form method="post" action="/usr/notifications">
+    {{ csrfField }}
+    <select name="email_id">
+        <option value="">In-app only</option>
+        {{- range .Emails }}
+        <option value="{{ .ID }}" {{ if eq .NotificationPriority $.MaxPriority }}selected{{ end }}>{{ .Email }}</option>
+        {{- end }}
+    </select>
+    <input type="submit" name="task" value="SaveAll">
+</form>
 {{ template "tail" $ }}

@@ -169,8 +169,8 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 
 	if evt.Task == hcommon.TaskTestMail {
 		user, err := n.Queries.GetUserById(ctx, evt.UserID)
-		if err == nil && user.Email.Valid {
-			if err := emailutil.NotifyChange(ctx, n.EmailProvider, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Item); err != nil {
+		if err == nil && user.Email != "" {
+			if err := emailutil.CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email, evt.Path, evt.Task, evt.Item); err != nil {
 				recordAndNotify(ctx, q, n, fmt.Sprintf("notify change: %v", err))
 			}
 			_ = n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
@@ -208,11 +208,11 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 					uid := id
 					subs[id][method] = func(c context.Context) error {
 						user, err := n.Queries.GetUserById(c, uid)
-						if err != nil || !user.Email.Valid {
+						if err != nil || user.Email == "" {
 							notifyMissingEmail(c, n.Queries, uid)
 							return err
 						}
-						return emailutil.NotifyChange(c, n.EmailProvider, uid, user.Email.String, evt.Path, evt.Task, evt.Item)
+						return emailutil.CreateEmailTemplateAndQueue(c, n.Queries, uid, user.Email, evt.Path, evt.Task, evt.Item)
 					}
 				} else if method == "internal" && msg != "" {
 					uid := id

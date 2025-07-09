@@ -57,7 +57,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "username"}).
 		AddRow(1, "e", "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, username\nFROM users\nWHERE username = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, username\nFROM users\nWHERE username = ?")).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(userRows)
 
@@ -89,7 +89,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 	queries := db.New(sqldb)
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, username\nFROM users\nWHERE username = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, username\nFROM users\nWHERE username = ?")).
 		WithArgs("bob").
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
 			AddRow(1, "e", "bob"))

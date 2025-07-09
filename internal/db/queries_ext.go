@@ -204,7 +204,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
+		var email sql.NullString
+		if err := rows.Scan(&u.Idusers, &email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -229,7 +230,8 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*Us
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
+		var email sql.NullString
+		if err := rows.Scan(&u.Idusers, &email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -246,7 +248,7 @@ type ListUsersFilteredParams struct {
 }
 
 func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]*User, error) {
-	query := "SELECT u.idusers, u.email, u.username FROM users u"
+	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
 	var args []interface{}
 	var cond []string
 	if arg.Role != "" {
@@ -271,7 +273,8 @@ func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredPa
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
+		var email sql.NullString
+		if err := rows.Scan(&u.Idusers, &email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -290,7 +293,7 @@ type SearchUsersFilteredParams struct {
 
 func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilteredParams) ([]*User, error) {
 	like := "%" + arg.Query + "%"
-	query := "SELECT u.idusers, u.email, u.username FROM users u"
+	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
 	var args []interface{}
 	var cond []string
 	if arg.Role != "" {
@@ -298,7 +301,7 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 		cond = append(cond, "p.level = ?")
 		args = append(args, arg.Role)
 	}
-	cond = append(cond, "(LOWER(u.username) LIKE LOWER(?) OR LOWER(u.email) LIKE LOWER(?))")
+	cond = append(cond, "(LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))")
 	args = append(args, like, like)
 	if arg.Status != "" {
 		cond = append(cond, "u.status = ?")
@@ -315,7 +318,8 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 	var items []*User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
+		var email sql.NullString
+		if err := rows.Scan(&u.Idusers, &email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -373,7 +377,7 @@ func (q *Queries) UsersByID(ctx context.Context, ids []int32) (map[int32]*User, 
 		placeholders[i] = "?"
 		args[i] = id
 	}
-	query := fmt.Sprintf("SELECT idusers, email, username FROM users WHERE idusers IN (%s)", strings.Join(placeholders, ","))
+	query := fmt.Sprintf("SELECT idusers, username FROM users WHERE idusers IN (%s)", strings.Join(placeholders, ","))
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -382,7 +386,7 @@ func (q *Queries) UsersByID(ctx context.Context, ids []int32) (map[int32]*User, 
 	users := make(map[int32]*User)
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
+		if err := rows.Scan(&u.Idusers, &u.Username); err != nil {
 			return nil, err
 		}
 		users[u.Idusers] = &u
@@ -431,7 +435,7 @@ type SearchBloggersParams struct {
 func (q *Queries) SearchBloggers(ctx context.Context, arg SearchBloggersParams) ([]*BloggerCountRow, error) {
 	like := "%" + arg.Query + "%"
 	rows, err := q.db.QueryContext(ctx,
-		"SELECT u.username, COUNT(b.idblogs) FROM blogs b JOIN users u ON b.users_idusers = u.idusers WHERE LOWER(u.username) LIKE LOWER(?) OR LOWER(u.email) LIKE LOWER(?) GROUP BY u.idusers ORDER BY u.username LIMIT ? OFFSET ?",
+		"SELECT u.username, COUNT(b.idblogs) FROM blogs b JOIN users u ON b.users_idusers = u.idusers WHERE LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?) GROUP BY u.idusers ORDER BY u.username LIMIT ? OFFSET ?",
 		like, like, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
@@ -450,7 +454,7 @@ func (q *Queries) SearchBloggers(ctx context.Context, arg SearchBloggersParams) 
 
 // GetPermissionsBySectionWithUsers lists permissions for a section with user info.
 func (q *Queries) GetPermissionsBySectionWithUsers(ctx context.Context, section string) ([]*PermissionWithUser, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, u.email FROM permissions p JOIN users u ON u.idusers = p.users_idusers WHERE p.section = ? ORDER BY p.level", section)
+	rows, err := q.db.QueryContext(ctx, "SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email FROM permissions p JOIN users u ON u.idusers = p.users_idusers WHERE p.section = ? ORDER BY p.level", section)
 	if err != nil {
 		return nil, err
 	}
@@ -844,14 +848,15 @@ type UserInfoRow struct {
 // ListUserInfo returns all users along with administrator flag and the earliest
 // session creation time if available.
 func (q *Queries) ListUserInfo(ctx context.Context) ([]*UserInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, `SELECT u.idusers, u.username, u.email,
+	rows, err := q.db.QueryContext(ctx, `SELECT u.idusers, u.username,
+                (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
                 IF(p.idpermissions IS NULL, 0, 1) AS admin,
                 MIN(s.created_at) AS created_at
                 FROM users u
                LEFT JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all' AND p.level = 'administrator'
-                LEFT JOIN sessions s ON s.users_idusers = u.idusers
-                GROUP BY u.idusers
-                ORDER BY u.idusers`)
+               LEFT JOIN sessions s ON s.users_idusers = u.idusers
+               GROUP BY u.idusers
+               ORDER BY u.idusers`)
 	if err != nil {
 		return nil, err
 	}

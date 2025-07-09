@@ -39,11 +39,16 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	for _, e := range rows {
 		ids = append(ids, e.ToUserID)
 	}
-	users, _ := queries.UsersByID(r.Context(), ids)
+	users := make(map[int32]*db.GetUserByIdRow)
+	for _, id := range ids {
+		if u, err := queries.GetUserById(r.Context(), id); err == nil {
+			users[id] = u
+		}
+	}
 	for _, e := range rows {
 		emailStr := ""
-		if u, ok := users[e.ToUserID]; ok && u.Email.Valid {
-			emailStr = u.Email.String
+		if u, ok := users[e.ToUserID]; ok && u.Email != "" {
+			emailStr = u.Email
 		}
 		subj := ""
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {
@@ -76,14 +81,19 @@ func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 		emails = append(emails, e)
 		ids = append(ids, e.ToUserID)
 	}
-	users, _ := queries.UsersByID(r.Context(), ids)
+	users := make(map[int32]*db.GetUserByIdRow)
+	for _, id := range ids {
+		if u, err := queries.GetUserById(r.Context(), id); err == nil {
+			users[id] = u
+		}
+	}
 	for _, e := range emails {
 		user, ok := users[e.ToUserID]
-		if !ok || !user.Email.Valid {
+		if !ok || user.Email == "" {
 			log.Printf("missing or invalid user email for %d", e.ToUserID)
 			continue
 		}
-		addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+		addr := mail.Address{Name: user.Username.String, Address: user.Email}
 		if provider != nil {
 			if err := provider.Send(r.Context(), addr, []byte(e.Body)); err != nil {
 				log.Printf("send email: %v", err)

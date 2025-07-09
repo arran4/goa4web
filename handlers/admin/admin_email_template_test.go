@@ -56,7 +56,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	q := db.New(sqldb)
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).
 		AddRow(1, "u@example.com", "u")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, username\nFROM users\nWHERE idusers = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, username\nFROM users\nWHERE idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)

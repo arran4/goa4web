@@ -12,9 +12,16 @@ import (
 )
 
 const allUsers = `-- name: AllUsers :many
-SELECT u.idusers, u.email, u.username, u.deleted_at
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
 `
+
+type AllUsersRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    string
+}
 
 // This query selects all admin users from the "users" table.
 // Result:
@@ -22,21 +29,16 @@ FROM users u
 //	idusers (int)
 //	username (string)
 //	email (string)
-func (q *Queries) AllUsers(ctx context.Context) ([]*User, error) {
+func (q *Queries) AllUsers(ctx context.Context) ([]*AllUsersRow, error) {
 	rows, err := q.db.QueryContext(ctx, allUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*User
+	var items []*AllUsersRow
 	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.Idusers,
-			&i.Email,
-			&i.Username,
-			&i.DeletedAt,
-		); err != nil {
+		var i AllUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -51,14 +53,16 @@ func (q *Queries) AllUsers(ctx context.Context) ([]*User, error) {
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT idusers, email, username
+SELECT idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       username
 FROM users
 WHERE idusers = ?
 `
 
 type GetUserByIdRow struct {
 	Idusers  int32
-	Email    sql.NullString
+	Email    string
 	Username sql.NullString
 }
 
@@ -70,14 +74,16 @@ func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*GetUserByIdR
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT idusers, email, username
+SELECT idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       username
 FROM users
 WHERE username = ?
 `
 
 type GetUserByUsernameRow struct {
 	Idusers  int32
-	Email    sql.NullString
+	Email    string
 	Username sql.NullString
 }
 
@@ -89,35 +95,30 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString
 }
 
 const insertUser = `-- name: InsertUser :execresult
-INSERT INTO users (username, email)
-VALUES (?, ?)
+INSERT INTO users (username)
+VALUES (?)
 `
 
-type InsertUserParams struct {
-	Username sql.NullString
-	Email    sql.NullString
-}
-
-func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertUser, arg.Username, arg.Email)
+func (q *Queries) InsertUser(ctx context.Context, username sql.NullString) (sql.Result, error) {
+	return q.db.ExecContext(ctx, insertUser, username)
 }
 
 const listAdministratorEmails = `-- name: ListAdministratorEmails :many
-SELECT u.email
+SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
 JOIN permissions p ON p.users_idusers = u.idusers
 WHERE p.section = 'all' and p.level = 'administrator'
 `
 
-func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]sql.NullString, error) {
+func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listAdministratorEmails)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []sql.NullString
+	var items []string
 	for rows.Next() {
-		var email sql.NullString
+		var email string
 		if err := rows.Scan(&email); err != nil {
 			return nil, err
 		}
@@ -133,7 +134,7 @@ func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]sql.NullString
 }
 
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
-SELECT idblogs, forumthread_id, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idblogs, forumthread_id, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -153,7 +154,6 @@ type ListUsersSubscribedToBlogsRow struct {
 	Written              time.Time
 	DeletedAt            sql.NullTime
 	Idusers              int32
-	Email                sql.NullString
 	Username             sql.NullString
 	DeletedAt_2          sql.NullTime
 	Idpreferences        int32
@@ -162,6 +162,7 @@ type ListUsersSubscribedToBlogsRow struct {
 	Emailforumupdates    sql.NullBool
 	PageSize             int32
 	AutoSubscribeReplies bool
+	Email                string
 }
 
 func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]*ListUsersSubscribedToBlogsRow, error) {
@@ -182,7 +183,6 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 			&i.Written,
 			&i.DeletedAt,
 			&i.Idusers,
-			&i.Email,
 			&i.Username,
 			&i.DeletedAt_2,
 			&i.Idpreferences,
@@ -191,6 +191,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 			&i.Emailforumupdates,
 			&i.PageSize,
 			&i.AutoSubscribeReplies,
+			&i.Email,
 		); err != nil {
 			return nil, err
 		}
@@ -206,7 +207,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 }
 
 const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
-SELECT idlinker, t.language_idlanguage, t.users_idusers, linker_category_id, forumthread_id, title, url, description, listed, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idlinker, t.language_idlanguage, t.users_idusers, linker_category_id, forumthread_id, title, url, description, listed, t.deleted_at, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -229,7 +230,6 @@ type ListUsersSubscribedToLinkerRow struct {
 	Listed               sql.NullTime
 	DeletedAt            sql.NullTime
 	Idusers              int32
-	Email                sql.NullString
 	Username             sql.NullString
 	DeletedAt_2          sql.NullTime
 	Idpreferences        int32
@@ -238,6 +238,7 @@ type ListUsersSubscribedToLinkerRow struct {
 	Emailforumupdates    sql.NullBool
 	PageSize             int32
 	AutoSubscribeReplies bool
+	Email                string
 }
 
 func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]*ListUsersSubscribedToLinkerRow, error) {
@@ -261,7 +262,6 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 			&i.Listed,
 			&i.DeletedAt,
 			&i.Idusers,
-			&i.Email,
 			&i.Username,
 			&i.DeletedAt_2,
 			&i.Idpreferences,
@@ -270,6 +270,7 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 			&i.Emailforumupdates,
 			&i.PageSize,
 			&i.AutoSubscribeReplies,
+			&i.Email,
 		); err != nil {
 			return nil, err
 		}
@@ -286,7 +287,9 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 
 const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
-    c.written, c.text, u.idusers, u.email, u.username,
+    c.written, c.text, u.idusers,
+    (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email,
+    u.username,
     p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies
 FROM comments c, users u, preferences p
 WHERE c.forumthread_id=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
@@ -306,7 +309,7 @@ type ListUsersSubscribedToThreadRow struct {
 	Written              sql.NullTime
 	Text                 sql.NullString
 	Idusers              int32
-	Email                sql.NullString
+	Email                string
 	Username             sql.NullString
 	Idpreferences        int32
 	LanguageIdlanguage_2 int32
@@ -356,7 +359,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_id, t.language_idlanguage, writing_category_id, title, published, writing, abstract, private, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idwriting, t.users_idusers, forumthread_id, t.language_idlanguage, writing_category_id, title, published, writing, abstract, private, t.deleted_at, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -380,7 +383,6 @@ type ListUsersSubscribedToWritingRow struct {
 	Private              sql.NullBool
 	DeletedAt            sql.NullTime
 	Idusers              int32
-	Email                sql.NullString
 	Username             sql.NullString
 	DeletedAt_2          sql.NullTime
 	Idpreferences        int32
@@ -389,6 +391,7 @@ type ListUsersSubscribedToWritingRow struct {
 	Emailforumupdates    sql.NullBool
 	PageSize             int32
 	AutoSubscribeReplies bool
+	Email                string
 }
 
 func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]*ListUsersSubscribedToWritingRow, error) {
@@ -413,7 +416,6 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.Private,
 			&i.DeletedAt,
 			&i.Idusers,
-			&i.Email,
 			&i.Username,
 			&i.DeletedAt_2,
 			&i.Idpreferences,
@@ -422,6 +424,7 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.Emailforumupdates,
 			&i.PageSize,
 			&i.AutoSubscribeReplies,
+			&i.Email,
 		); err != nil {
 			return nil, err
 		}
@@ -437,7 +440,9 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 }
 
 const login = `-- name: Login :one
-SELECT u.idusers, u.email, p.passwd, p.passwd_algorithm, u.username
+SELECT u.idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       p.passwd, p.passwd_algorithm, u.username
 FROM users u LEFT JOIN passwords p ON p.users_idusers = u.idusers
 WHERE u.username = ?
 ORDER BY p.created_at DESC
@@ -446,7 +451,7 @@ LIMIT 1
 
 type LoginRow struct {
 	Idusers         int32
-	Email           sql.NullString
+	Email           string
 	Passwd          sql.NullString
 	PasswdAlgorithm sql.NullString
 	Username        sql.NullString
@@ -466,34 +471,33 @@ func (q *Queries) Login(ctx context.Context, username sql.NullString) (*LoginRow
 }
 
 const updateUserEmail = `-- name: UpdateUserEmail :exec
-UPDATE users
-SET email = ?
-WHERE idusers = ?
+UPDATE user_emails SET email = ? WHERE user_id = ?
 `
 
 type UpdateUserEmailParams struct {
-	Email   sql.NullString
-	Idusers int32
+	Email  string
+	UserID int32
 }
 
 func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.Email, arg.Idusers)
+	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.Email, arg.UserID)
 	return err
 }
 
 const userByEmail = `-- name: UserByEmail :one
-SELECT idusers, email, username
-FROM users
-WHERE email = ?
+SELECT u.idusers, ue.email, u.username
+FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
+WHERE ue.email = ?
+LIMIT 1
 `
 
 type UserByEmailRow struct {
 	Idusers  int32
-	Email    sql.NullString
+	Email    string
 	Username sql.NullString
 }
 
-func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*UserByEmailRow, error) {
+func (q *Queries) UserByEmail(ctx context.Context, email string) (*UserByEmailRow, error) {
 	row := q.db.QueryRowContext(ctx, userByEmail, email)
 	var i UserByEmailRow
 	err := row.Scan(&i.Idusers, &i.Email, &i.Username)
@@ -501,14 +505,16 @@ func (q *Queries) UserByEmail(ctx context.Context, email sql.NullString) (*UserB
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT idusers, email, username
+SELECT idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       username
 FROM users
 WHERE username = ?
 `
 
 type UserByUsernameRow struct {
 	Idusers  int32
-	Email    sql.NullString
+	Email    string
 	Username sql.NullString
 }
 

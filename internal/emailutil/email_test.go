@@ -10,7 +10,6 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	mockdlq "github.com/arran4/goa4web/internal/dlq/mock"
 	"github.com/arran4/goa4web/internal/email"
@@ -79,7 +78,7 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	}
 }
 
-func TestNotifyChange(t *testing.T) {
+func TestCreateEmailTemplateAndQueue(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -87,9 +86,8 @@ func TestNotifyChange(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	ctx := context.WithValue(context.Background(), common.KeyQueries, q)
-	rec := &mockemail.Provider{}
-	if err := emailutil.NotifyChange(ctx, rec, 2, "a@b.com", "http://host", "update", nil); err != nil {
+	ctx := context.Background()
+	if err := emailutil.CreateEmailTemplateAndQueue(ctx, q, 2, "a@b.com", "http://host", "update", nil); err != nil {
 		t.Fatalf("notify error: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -97,9 +95,9 @@ func TestNotifyChange(t *testing.T) {
 	}
 }
 
-func TestNotifyChangeErrors(t *testing.T) {
+func TestCreateEmailTemplateErrors(t *testing.T) {
 	rec := &mockemail.Provider{}
-	if err := emailutil.NotifyChange(context.Background(), rec, 0, "", "p", "update", nil); err == nil {
+	if err := emailutil.CreateEmailTemplateAndSend(context.Background(), rec, "", "p", "update", nil); err == nil {
 		t.Fatal("expected error for empty email")
 	}
 }
@@ -131,7 +129,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	q := dbpkg.New(db)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count"}).AddRow(1, 2, "b", 0)
 	mock.ExpectQuery("SELECT id, to_user_id").WillReturnRows(rows)
-	mock.ExpectQuery("SELECT idusers, email, username FROM users WHERE idusers = ?").WithArgs(int32(2)).
+	mock.ExpectQuery("SELECT idusers").WithArgs(int32(2)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "e", "bob"))
 	mock.ExpectExec("UPDATE pending_emails SET sent_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -161,7 +159,7 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 	q := dbpkg.New(db)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count"}).AddRow(1, 2, "b", 4)
 	mock.ExpectQuery("SELECT id, to_user_id").WillReturnRows(rows)
-	mock.ExpectQuery("SELECT idusers, email, username FROM users WHERE idusers = ?").WithArgs(int32(2)).
+	mock.ExpectQuery("SELECT idusers").WithArgs(int32(2)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "a@test", "a"))
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT error_count FROM pending_emails WHERE id = ?").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"error_count"}).AddRow(5))

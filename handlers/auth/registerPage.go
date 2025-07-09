@@ -77,10 +77,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := queries.UserByEmail(r.Context(), sql.NullString{
-		String: email,
-		Valid:  true,
-	}); errors.Is(err, sql.ErrNoRows) {
+	if _, err := queries.UserByEmail(r.Context(), email); errors.Is(err, sql.ErrNoRows) {
 	} else if err != nil {
 		log.Printf("UserByUsername Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -100,8 +97,8 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := queries.DB().ExecContext(r.Context(),
-		"INSERT INTO users (username, email) VALUES (?, ?)",
-		username, email,
+		"INSERT INTO users (username) VALUES (?)",
+		username,
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -117,6 +114,11 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("LastInsertId Error: %s", err)
 		http.Error(w, "Session error", http.StatusForbidden)
+		return
+	}
+	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: int32(lastInsertID), Email: email, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
+		log.Printf("InsertUserEmail Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(lastInsertID), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {

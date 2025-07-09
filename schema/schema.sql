@@ -276,12 +276,10 @@ CREATE TABLE `user_language` (
 
 CREATE TABLE `users` (
   `idusers` int(10) NOT NULL AUTO_INCREMENT,
-  `email` tinytext DEFAULT NULL,
   `username` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idusers`),
-  UNIQUE KEY `users_username_idx` (`username`(255)),
-  UNIQUE KEY `users_email_idx` (`email`(255))
+  UNIQUE KEY `users_username_idx` (`username`(255))
 );
 
 CREATE TABLE `passwords` (
@@ -292,6 +290,19 @@ CREATE TABLE `passwords` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `passwords_user_idx` (`users_idusers`)
+);
+
+CREATE TABLE `user_emails` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `email` tinytext NOT NULL,
+  `verified_at` datetime DEFAULT NULL,
+  `last_verification_code` varchar(64) DEFAULT NULL,
+  `verification_expires_at` datetime DEFAULT NULL,
+  `notification_priority` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_emails_email_idx` (`email`(255)),
+  KEY `user_emails_user_idx` (`user_id`)
 );
 
 CREATE TABLE `userstopiclevel` (
@@ -375,6 +386,19 @@ CREATE TABLE IF NOT EXISTS `pending_emails` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `sent_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `pending_passwords` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `passwd` tinytext NOT NULL,
+  `passwd_algorithm` tinytext NOT NULL,
+  `verification_code` varchar(64) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `verified_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pending_password_code_idx` (`verification_code`),
+  KEY `pending_password_user_idx` (`user_id`)
 );
 
 -- Internal notification list.

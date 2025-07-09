@@ -85,8 +85,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	user := &db.User{Idusers: urow.Idusers, Email: urow.Email, Username: urow.Username}
-	if !user.Email.Valid {
+	if urow.Email == "" {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
@@ -109,7 +108,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
 	}
 	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubURL string }{
-		To:       (&mail.Address{Name: user.Username.String, Address: user.Email.String}).String(),
+		To:       (&mail.Address{Name: urow.Username.String, Address: urow.Email}).String(),
 		From:     runtimeconfig.AppRuntimeConfig.EmailFrom,
 		Subject:  "Website Update Notification",
 		URL:      pageURL,
@@ -123,7 +122,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	toAddr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+	toAddr := mail.Address{Name: urow.Username.String, Address: urow.Email}
 	var fromAddr mail.Address
 
 	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {
@@ -137,7 +136,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: user.Idusers, Body: string(msg)}); err != nil {
+	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: urow.Idusers, Body: string(msg)}); err != nil {
 		log.Printf("queue email: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)

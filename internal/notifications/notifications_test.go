@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"net/http/httptest"
 	"net/mail"
-	"regexp"
 	"testing"
 	"time"
 
@@ -82,7 +81,7 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 		"idpreferences", "language_idlanguage_2", "users_idusers_2", "emailforumupdates",
 		"page_size", "auto_subscribe_replies",
 	}).AddRow(1, 2, 2, 1, nil, "t", 2, "e", "bob", 1, 1, 2, 1, 10, true)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, u.idusers, u.email, u.username, p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies\nFROM comments c, users u, preferences p\nWHERE c.forumthread_id=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?\nGROUP BY u.idusers")).
+	mock.ExpectQuery("SELECT c.idcomments").
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)
 	rec := &dummyProvider{}
@@ -107,9 +106,9 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.AdminNotify = true
 	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
 	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
-	mock.ExpectQuery("SELECT u.email").
+	mock.ExpectQuery("SELECT").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
-	mock.ExpectQuery("SELECT u.email").
+	mock.ExpectQuery("SELECT").
 		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
 	mock.ExpectQuery("UserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).

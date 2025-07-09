@@ -21,7 +21,7 @@ func AdminUsersRestrictionsPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		MaxUserLevel    int32
 		UserTopicLevels []*db.GetAllForumTopicsWithPermissionsAndTopicRow
-		Users           []*db.User
+		Users           []*db.AllUsersRow
 		Topics          []*db.Forumtopic
 	}
 

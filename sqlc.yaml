@@ -27,6 +27,8 @@ sql:
         - "internal/db/queries-auditlog.sql"
         - "internal/db/queries-deactivation.sql"
         - "internal/db/queries-subscriptions.sql"
+        - "internal/db/queries-user_emails.sql"
+        - "internal/db/queries-password_resets.sql"
         - "internal/db/queries-dlq.sql"
       gen:
           go:

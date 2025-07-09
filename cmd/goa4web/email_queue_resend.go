@@ -51,11 +51,11 @@ func (c *emailQueueResendCmd) Run() error {
 		if err != nil {
 			return fmt.Errorf("get user: %w", err)
 		}
-		if !user.Email.Valid {
+		if user.Email == "" {
 			log.Printf("invalid user email for %d", e.ToUserID)
 			return nil
 		}
-		addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
+		addr := mail.Address{Name: user.Username.String, Address: user.Email}
 		if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}

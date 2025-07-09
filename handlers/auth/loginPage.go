@@ -67,6 +67,19 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !verifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
+		reset, err := queries.GetPasswordResetByUser(r.Context(), row.Idusers)
+		if err == nil && verifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
+			session, ok := core.GetSessionOrFail(w, r)
+			if !ok {
+				return
+			}
+			session.Values["PendingResetID"] = reset.ID
+			_ = session.Save(r, w)
+			if err := templates.RenderTemplate(w, "passwordVerifyPage.gohtml", struct{ *corecommon.CoreData }{r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)}, corecommon.NewFuncs(r)); err != nil {
+				log.Printf("template: %v", err)
+			}
+			return
+		}
 		_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 			Username:  username,
 			IpAddress: strings.Split(r.RemoteAddr, ":")[0],
@@ -82,7 +95,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	user := &db.User{Idusers: row.Idusers, Email: row.Email}
+	user := &db.User{Idusers: row.Idusers}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -135,4 +148,32 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func LoginVerifyPage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	id, _ := session.Values["PendingResetID"].(int32)
+	if id == 0 {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	code := r.FormValue("code")
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	reset, err := queries.GetPasswordResetByCode(r.Context(), code)
+	if err != nil || reset.ID != id {
+		http.Error(w, "invalid code", http.StatusUnauthorized)
+		return
+	}
+	_ = queries.MarkPasswordResetVerified(r.Context(), reset.ID)
+	_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
+	delete(session.Values, "PendingResetID")
+	_ = session.Save(r, w)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

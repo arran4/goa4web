@@ -4,62 +4,74 @@
 --   idusers (int)
 --   username (string)
 --   email (string)
-SELECT u.*
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u;
 
 -- name: GetUserByUsername :one
-SELECT idusers, email, username
+SELECT idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       username
 FROM users
 WHERE username = ?;
 
 -- name: Login :one
-SELECT u.idusers, u.email, p.passwd, p.passwd_algorithm, u.username
+SELECT u.idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       p.passwd, p.passwd_algorithm, u.username
 FROM users u LEFT JOIN passwords p ON p.users_idusers = u.idusers
 WHERE u.username = ?
 ORDER BY p.created_at DESC
 LIMIT 1;
 
 -- name: GetUserById :one
-SELECT idusers, email, username
+SELECT idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       username
 FROM users
 WHERE idusers = ?;
 
 -- name: UserByUsername :one
-SELECT idusers, email, username
+SELECT idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       username
 FROM users
 WHERE username = ?;
 
 -- name: UserByEmail :one
-SELECT idusers, email, username
-FROM users
-WHERE email = ?;
+SELECT u.idusers, ue.email, u.username
+FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
+WHERE ue.email = ?
+LIMIT 1;
 
 -- name: InsertUser :execresult
-INSERT INTO users (username, email)
-VALUES (?, ?)
+INSERT INTO users (username)
+VALUES (?)
 ;
 
 -- name: ListUsersSubscribedToBlogs :many
-SELECT *
+SELECT *, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToLinker :many
-SELECT *
+SELECT *, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToWriting :many
-SELECT *
+SELECT *, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToThread :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
-    c.written, c.text, u.idusers, u.email, u.username,
+    c.written, c.text, u.idusers,
+    (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email,
+    u.username,
     p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies
 FROM comments c, users u, preferences p
 WHERE c.forumthread_id=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
@@ -67,12 +79,10 @@ GROUP BY u.idusers;
 
 
 -- name: ListAdministratorEmails :many
-SELECT u.email
+SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
 JOIN permissions p ON p.users_idusers = u.idusers
 WHERE p.section = 'all' and p.level = 'administrator';
 
 -- name: UpdateUserEmail :exec
-UPDATE users
-SET email = ?
-WHERE idusers = ?;
+UPDATE user_emails SET email = ? WHERE user_id = ?;

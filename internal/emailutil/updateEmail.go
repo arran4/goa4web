@@ -14,14 +14,18 @@ var (
 	defaultUpdateEmailText = templates.UpdateEmailText
 	defaultUpdateEmailHTML = templates.UpdateEmailHTML
 
-	defaultThreadEmailText  = templates.ThreadEmailText
-	defaultThreadEmailHTML  = templates.ThreadEmailHTML
-	defaultBlogEmailText    = templates.BlogEmailText
-	defaultBlogEmailHTML    = templates.BlogEmailHTML
-	defaultWritingEmailText = templates.WritingEmailText
-	defaultWritingEmailHTML = templates.WritingEmailHTML
-	defaultSignupEmailText  = templates.SignupEmailText
-	defaultSignupEmailHTML  = templates.SignupEmailHTML
+	defaultThreadEmailText        = templates.ThreadEmailText
+	defaultThreadEmailHTML        = templates.ThreadEmailHTML
+	defaultBlogEmailText          = templates.BlogEmailText
+	defaultBlogEmailHTML          = templates.BlogEmailHTML
+	defaultWritingEmailText       = templates.WritingEmailText
+	defaultWritingEmailHTML       = templates.WritingEmailHTML
+	defaultSignupEmailText        = templates.SignupEmailText
+	defaultSignupEmailHTML        = templates.SignupEmailHTML
+	defaultVerificationEmailText  = templates.VerificationEmailText
+	defaultVerificationEmailHTML  = templates.VerificationEmailHTML
+	defaultPasswordResetEmailText = templates.PasswordResetEmailText
+	defaultPasswordResetEmailHTML = templates.PasswordResetEmailHTML
 )
 
 // getUpdateEmailText returns the update email template body, preferring a database

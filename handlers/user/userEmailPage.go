@@ -1,14 +1,18 @@
 package user
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -27,6 +31,8 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		UserData        *db.User
+		Verified        []*db.UserEmail
+		Unverified      []*db.UserEmail
 		UserPreferences struct {
 			EmailUpdates         bool
 			AutoSubscribeReplies bool
@@ -37,10 +43,21 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(common.KeyUser).(*db.User)
 	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
 
+	emails, _ := r.Context().Value(common.KeyQueries).(*db.Queries).GetUserEmailsByUserID(r.Context(), user.Idusers)
+	var verified, unverified []*db.UserEmail
+	for _, e := range emails {
+		if e.VerifiedAt.Valid {
+			verified = append(verified, e)
+		} else {
+			unverified = append(unverified, e)
+		}
+	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
-		UserData: user,
-		Error:    r.URL.Query().Get("error"),
+		CoreData:   r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		UserData:   user,
+		Verified:   verified,
+		Unverified: unverified,
+		Error:      r.URL.Query().Get("error"),
 	}
 	if pref != nil {
 		if pref.Emailforumupdates.Valid {
@@ -115,10 +132,21 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(common.KeyUser).(*db.User)
-	if user == nil || !user.Email.Valid {
+	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
+	queries, _ := r.Context().Value(common.KeyQueries).(*db.Queries)
+	var emails []*db.UserEmail
+	var err error
+	if queries != nil {
+		emails, err = queries.GetUserEmailsByUserID(r.Context(), user.Idusers)
+	}
+	if err != nil || len(emails) == 0 {
+		http.Error(w, "email unknown", http.StatusBadRequest)
+		return
+	}
+	addr := emails[0].Email
 	base := "http://" + r.Host
 	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
 		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
@@ -132,8 +160,136 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		common.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	if err := emailutil.NotifyChange(r.Context(), provider, user.Idusers, user.Email.String, pageURL, "update", nil); err != nil {
-		log.Printf("notifyChange Error: %s", err)
+	if err := emailutil.CreateEmailTemplateAndSend(r.Context(), provider, addr, pageURL, "update", nil); err != nil {
+		log.Printf("notify Error: %s", err)
 	}
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+}
+
+func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	if err := r.ParseForm(); err != nil {
+		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+		return
+	}
+	emailAddr := r.FormValue("new_email")
+	if emailAddr == "" {
+		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+		return
+	}
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
+		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
+		return
+	}
+	var buf [8]byte
+	_, _ = rand.Read(buf[:])
+	code := hex.EncodeToString(buf[:])
+	expire := time.Now().Add(24 * time.Hour)
+	_ = queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0})
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	if provider != nil {
+		page := "http://" + r.Host + "/usr/email/verify?code=" + code
+		if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+			page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+		}
+		_ = emailutil.CreateEmailTemplateAndSend(r.Context(), provider, emailAddr, page, "Email Verification", nil)
+	}
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+}
+
+func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	if err := r.ParseForm(); err != nil {
+		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+		return
+	}
+	id, _ := strconv.Atoi(r.FormValue("id"))
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
+	if err != nil || ue.UserID != uid {
+		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+		return
+	}
+	var buf [8]byte
+	_, _ = rand.Read(buf[:])
+	code := hex.EncodeToString(buf[:])
+	expire := time.Now().Add(24 * time.Hour)
+	_ = queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)})
+	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	if provider != nil {
+		page := "http://" + r.Host + "/usr/email/verify?code=" + code
+		if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+			page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+		}
+		_ = emailutil.CreateEmailTemplateAndSend(r.Context(), provider, ue.Email, page, "Email Verification", nil)
+	}
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+}
+
+func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	if err := r.ParseForm(); err != nil {
+		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+		return
+	}
+	id, _ := strconv.Atoi(r.FormValue("id"))
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
+	if err == nil && ue.UserID == uid {
+		_ = queries.DeleteUserEmail(r.Context(), int32(id))
+	}
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+}
+
+func userEmailNotifyActionPage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	if err := r.ParseForm(); err != nil {
+		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+		return
+	}
+	id, _ := strconv.Atoi(r.FormValue("id"))
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	val, _ := queries.GetMaxNotificationPriority(r.Context(), uid)
+	var maxPr int32
+	switch v := val.(type) {
+	case int64:
+		maxPr = int32(v)
+	case int32:
+		maxPr = v
+	}
+	_ = queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)})
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+}
+
+func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.NotFound(w, r)
+		return
+	}
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	ue, err := queries.GetUserEmailByCode(r.Context(), sql.NullString{String: code, Valid: true})
+	if err != nil || (ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now())) {
+		http.Error(w, "invalid code", http.StatusBadRequest)
+		return
+	}
+	_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

@@ -53,8 +53,8 @@ func (c *userUpdateCmd) Run() error {
 	}
 	if c.Email != "" {
 		if err := queries.UpdateUserEmail(ctx, dbpkg.UpdateUserEmailParams{
-			Email:   sql.NullString{String: c.Email, Valid: true},
-			Idusers: u.Idusers,
+			Email:  c.Email,
+			UserID: u.Idusers,
 		}); err != nil {
 			return fmt.Errorf("update email: %w", err)
 		}

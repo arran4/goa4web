@@ -14,9 +14,14 @@ func RegisterRoutes(r *mux.Router) {
 	rr.HandleFunc("", RegisterPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
 	rr.HandleFunc("", RegisterActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskRegister))
 
-	lr := r.PathPrefix("/login").Subrouter()
-	lr.HandleFunc("", LoginUserPassPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
-	lr.HandleFunc("", LoginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskLogin))
+        lr := r.PathPrefix("/login").Subrouter()
+        lr.HandleFunc("", LoginUserPassPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
+        lr.HandleFunc("", LoginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskLogin))
+        lr.HandleFunc("/verify", LoginVerifyPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSaveAll))
+
+	fr := r.PathPrefix("/forgot").Subrouter()
+	fr.HandleFunc("", ForgotPasswordPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
+	fr.HandleFunc("", ForgotPasswordActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskAdd))
 }
 
 // Register registers the auth router module.

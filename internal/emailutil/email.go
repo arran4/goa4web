@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/mail"
 	"os"
 	"strings"
 	"text/template"
@@ -29,6 +30,8 @@ var defaultEmailTemplates = map[string]emailTemplate{
 	strings.ToLower(hcommon.TaskNewPost):       {text: defaultBlogEmailText, html: defaultBlogEmailHTML},
 	strings.ToLower(hcommon.TaskSubmitWriting): {text: defaultWritingEmailText, html: defaultWritingEmailHTML},
 	strings.ToLower(hcommon.TaskRegister):      {text: defaultSignupEmailText, html: defaultSignupEmailHTML},
+	strings.ToLower("Email Verification"):      {text: defaultVerificationEmailText, html: defaultVerificationEmailHTML},
+	strings.ToLower("Password Reset"):          {text: defaultPasswordResetEmailText, html: defaultPasswordResetEmailHTML},
 }
 
 func getEmailTemplates(ctx context.Context, action string) (string, string) {
@@ -54,12 +57,9 @@ func getEmailTemplates(ctx context.Context, action string) (string, string) {
 	return text, html
 }
 
-func NotifyChange(ctx context.Context, provider email.Provider, userID int32, emailAddr, page, action string, item interface{}) error {
+func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, item interface{}) ([]byte, mail.Address, error) {
 	if emailAddr == "" {
-		return fmt.Errorf("no email specified")
-	}
-	if !EmailSendingEnabled() {
-		return nil
+		return nil, mail.Address{}, fmt.Errorf("no email specified")
 	}
 	from := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
 
@@ -97,16 +97,16 @@ func NotifyChange(ctx context.Context, provider email.Provider, userID int32, em
 	var textBody, htmlBody string
 	tmplText, tmplHTML := getEmailTemplates(ctx, action)
 	if tmplText == "" && tmplHTML == "" {
-		return nil
+		return nil, mail.Address{}, nil
 	}
 	if tmplText != "" {
 		var buf bytes.Buffer
 		t, err := template.New("text").Parse(tmplText)
 		if err != nil {
-			return fmt.Errorf("parse email template: %w", err)
+			return nil, mail.Address{}, fmt.Errorf("parse email template: %w", err)
 		}
 		if err := t.Execute(&buf, content); err != nil {
-			return fmt.Errorf("execute email template: %w", err)
+			return nil, mail.Address{}, fmt.Errorf("execute email template: %w", err)
 		}
 		textBody = buf.String()
 	}
@@ -114,28 +114,44 @@ func NotifyChange(ctx context.Context, provider email.Provider, userID int32, em
 		var buf bytes.Buffer
 		t, err := template.New("html").Parse(tmplHTML)
 		if err != nil {
-			return fmt.Errorf("parse email html template: %w", err)
+			return nil, mail.Address{}, fmt.Errorf("parse email html template: %w", err)
 		}
 		if err := t.Execute(&buf, content); err != nil {
-			return fmt.Errorf("execute email html template: %w", err)
+			return nil, mail.Address{}, fmt.Errorf("execute email html template: %w", err)
 		}
 		htmlBody = buf.String()
 	}
 
 	msg, err := email.BuildMessage(from, toAddr, content.Subject, textBody, htmlBody)
 	if err != nil {
-		return fmt.Errorf("build message: %w", err)
+		return nil, mail.Address{}, fmt.Errorf("build message: %w", err)
 	}
-	if q, ok := ctx.Value(hcommon.KeyQueries).(*db.Queries); ok {
-		if err := q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: userID, Body: string(msg)}); err != nil {
-			return err
-		}
-	} else if provider != nil {
-		if err := provider.Send(ctx, toAddr, msg); err != nil {
-			return fmt.Errorf("send email: %w", err)
-		}
+	return msg, toAddr, nil
+}
+
+func CreateEmailTemplateAndSend(ctx context.Context, provider email.Provider, emailAddr, page, action string, item interface{}) error {
+	if !EmailSendingEnabled() {
+		return nil
 	}
-	return nil
+	msg, toAddr, err := CreateEmailTemplate(ctx, emailAddr, page, action, item)
+	if err != nil {
+		return err
+	}
+	if provider == nil {
+		return fmt.Errorf("no provider")
+	}
+	return provider.Send(ctx, toAddr, msg)
+}
+
+func CreateEmailTemplateAndQueue(ctx context.Context, q *db.Queries, userID int32, emailAddr, page, action string, item interface{}) error {
+	if q == nil {
+		return fmt.Errorf("no query")
+	}
+	msg, _, err := CreateEmailTemplate(ctx, emailAddr, page, action, item)
+	if err != nil {
+		return err
+	}
+	return q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: userID, Body: string(msg)})
 }
 
 // getEmailProvider returns the mail provider configured by environment variables.
@@ -169,9 +185,9 @@ func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 			log.Printf("list admin emails: %v", err)
 			return emails
 		}
-		for _, email := range rows {
-			if email.Valid {
-				emails = append(emails, email.String)
+		for _, e := range rows {
+			if e != "" {
+				emails = append(emails, e)
 			}
 		}
 	}
@@ -197,8 +213,8 @@ func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, p
 		return
 	}
 	for _, email := range GetAdminEmails(ctx, q) {
-		if err := NotifyChange(ctx, provider, 0, email, page, "update", nil); err != nil {
-			log.Printf("Error: NotifyChange: %s", err)
+		if err := CreateEmailTemplateAndSend(ctx, provider, email, page, "update", nil); err != nil {
+			log.Printf("Error: send: %s", err)
 		}
 	}
 }
@@ -217,8 +233,8 @@ func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db
 		return
 	}
 	for _, row := range rows {
-		if err := NotifyChange(ctx, provider, row.Idusers, row.Email.String, page, "update", nil); err != nil {
-			log.Printf("Error: NotifyChange: %s", err)
+		if err := CreateEmailTemplateAndSend(ctx, provider, row.Email, page, "update", nil); err != nil {
+			log.Printf("Error: send: %s", err)
 		}
 	}
 }

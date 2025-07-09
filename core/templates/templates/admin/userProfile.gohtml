@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+<h2>User {{ .User.Username.String }} (ID {{ .User.Idusers }})</h2>
+<table border="1">
+<tr><th>Email</th><th>Verified</th><th>Priority</th></tr>
+{{ range .Emails }}
+<tr><td>{{ .Email }}</td><td>{{ if .VerifiedAt.Valid }}{{ .VerifiedAt.Time }}{{ else }}no{{ end }}</td><td>{{ .NotificationPriority }}</td></tr>
+{{ end }}
+</table>
+{{ template "tail" $ }}

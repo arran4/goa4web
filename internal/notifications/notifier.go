@@ -19,7 +19,11 @@ type Notifier struct {
 
 // NotifyChange delivers a single update to the given user and address.
 func (n Notifier) NotifyChange(ctx context.Context, userID int32, emailAddr, page, action string, item interface{}) error {
-	if err := emailutil.NotifyChange(ctx, n.EmailProvider, userID, emailAddr, page, action, item); err != nil {
+	if n.Queries != nil {
+		if err := emailutil.CreateEmailTemplateAndQueue(ctx, n.Queries, userID, emailAddr, page, action, item); err != nil {
+			return err
+		}
+	} else if err := emailutil.CreateEmailTemplateAndSend(ctx, n.EmailProvider, emailAddr, page, action, item); err != nil {
 		return err
 	}
 	if n.Queries != nil && common.NotificationsEnabled() && userID != 0 {
@@ -42,7 +46,7 @@ func (n Notifier) NotifyAdmins(ctx context.Context, page string) {
 		return
 	}
 	for _, addr := range emailutil.GetAdminEmails(ctx, n.Queries) {
-		u, err := n.Queries.UserByEmail(ctx, sql.NullString{String: addr, Valid: true})
+		u, err := n.Queries.UserByEmail(ctx, addr)
 		if err != nil {
 			log.Printf("user by email %s: %v", addr, err)
 			continue

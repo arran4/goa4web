@@ -90,7 +90,7 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, email, username\nFROM users\nWHERE idusers = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, username\nFROM users\nWHERE idusers = ?")).
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
 			AddRow(1, "e", "u"))
@@ -137,9 +137,14 @@ func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
 
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Idusers: 1})
 	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
+	ctx = context.WithValue(ctx, common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -161,9 +166,14 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
 
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Idusers: 1})
 	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
+	ctx = context.WithValue(ctx, common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -178,9 +188,14 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 }
 
 func TestUserEmailPage_ShowError(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Email: sql.NullString{String: "u@example.com", Valid: true}})
+	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Idusers: 1})
 	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
+	ctx = context.WithValue(ctx, common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

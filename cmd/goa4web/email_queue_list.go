@@ -44,14 +44,16 @@ func (c *emailQueueListCmd) Run() error {
 	for _, e := range rows {
 		ids = append(ids, e.ToUserID)
 	}
-	users, err := queries.UsersByID(ctx, ids)
-	if err != nil {
-		return fmt.Errorf("get users: %w", err)
+	users := make(map[int32]*dbpkg.GetUserByIdRow)
+	for _, id := range ids {
+		if u, err := queries.GetUserById(ctx, id); err == nil {
+			users[id] = u
+		}
 	}
 	for _, e := range rows {
 		emailStr := ""
-		if u, ok := users[e.ToUserID]; ok && u.Email.Valid {
-			emailStr = u.Email.String
+		if u, ok := users[e.ToUserID]; ok && u.Email != "" {
+			emailStr = u.Email
 		}
 		subj := ""
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {

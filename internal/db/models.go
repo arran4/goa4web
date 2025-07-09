@@ -58,7 +58,7 @@ type Comment struct {
 
 type Commentssearch struct {
 	SearchwordlistIdsearchwordlist int32
-	CommentsIdcomments             int32
+	CommentID                      int32
 }
 
 type DeactivatedBlog struct {

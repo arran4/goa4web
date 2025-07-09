@@ -1,3 +1,5 @@
+ALTER TABLE commentsSearch CHANGE COLUMN comments_idcomments comment_id int(10) NOT NULL DEFAULT 0;
+
 -- Rename imagepost search column to snake_case
 ALTER TABLE imagepostSearch CHANGE COLUMN imagepost_idimagepost image_post_id int(10) NOT NULL DEFAULT 0;
 

@@ -128,7 +128,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-  		editUrl = fmt.Sprintf("?editComment=%d", row.Idcomments)
+			editUrl = fmt.Sprintf("?editComment=%d", row.Idcomments)
 			editSaveUrl = "?"
 			// TODO
 			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)

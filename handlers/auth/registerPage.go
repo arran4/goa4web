@@ -104,6 +104,10 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		username, email,
 	)
 	if err != nil {
+		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			http.Error(w, "User already exists", http.StatusForbidden)
+			return
+		}
 		log.Printf("InsertUser Error: %s", err)
 		http.Error(w, "Can't create user", http.StatusForbidden)
 		return

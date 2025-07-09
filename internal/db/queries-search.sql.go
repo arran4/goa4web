@@ -13,17 +13,17 @@ import (
 
 const addToForumCommentSearch = `-- name: AddToForumCommentSearch :exec
 INSERT IGNORE INTO commentsSearch
-(comments_idcomments, searchwordlist_idsearchwordlist)
+(comment_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
 
 type AddToForumCommentSearchParams struct {
-	CommentsIdcomments             int32
+	CommentID                      int32
 	SearchwordlistIdsearchwordlist int32
 }
 
 func (q *Queries) AddToForumCommentSearch(ctx context.Context, arg AddToForumCommentSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentsIdcomments, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentID, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
@@ -76,10 +76,10 @@ func (q *Queries) AddToLinkerSearch(ctx context.Context, arg AddToLinkerSearchPa
 }
 
 const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 WHERE swl.word=?
 AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
@@ -109,11 +109,11 @@ func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var comments_idcomments int32
-		if err := rows.Scan(&comments_idcomments); err != nil {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
 			return nil, err
 		}
-		items = append(items, comments_idcomments)
+		items = append(items, comment_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -125,10 +125,10 @@ func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 }
 
 const commentsSearchFirstNotInRestrictedTopic = `-- name: CommentsSearchFirstNotInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
@@ -143,11 +143,11 @@ func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, w
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var comments_idcomments int32
-		if err := rows.Scan(&comments_idcomments); err != nil {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
 			return nil, err
 		}
-		items = append(items, comments_idcomments)
+		items = append(items, comment_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -159,13 +159,13 @@ func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, w
 }
 
 const commentsSearchNextInRestrictedTopic = `-- name: CommentsSearchNextInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 WHERE swl.word=?
-AND cs.comments_idcomments IN (/*SLICE:ids*/?)
+AND cs.comment_id IN (/*SLICE:ids*/?)
 AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
 `
 
@@ -202,11 +202,11 @@ func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg C
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var comments_idcomments int32
-		if err := rows.Scan(&comments_idcomments); err != nil {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
 			return nil, err
 		}
-		items = append(items, comments_idcomments)
+		items = append(items, comment_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -218,14 +218,14 @@ func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg C
 }
 
 const commentsSearchNextNotInRestrictedTopic = `-- name: CommentsSearchNextNotInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
-AND cs.comments_idcomments IN (/*SLICE:ids*/?)
+AND cs.comment_id IN (/*SLICE:ids*/?)
 AND ft.forumcategory_idforumcategory!=0
 `
 
@@ -253,11 +253,11 @@ func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, ar
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var comments_idcomments int32
-		if err := rows.Scan(&comments_idcomments); err != nil {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
 			return nil, err
 		}
-		items = append(items, comments_idcomments)
+		items = append(items, comment_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -588,26 +588,26 @@ func (q *Queries) RemakeBlogsSearchInsert(ctx context.Context) error {
 }
 
 const remakeCommentsSearch = `-- name: RemakeCommentsSearch :exec
-INSERT INTO commentsSearch (text, comments_idcomments)
+INSERT INTO commentsSearch (text, comment_id)
 SELECT text, idcomments
 FROM comments
 `
 
 // This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comment_id".
 func (q *Queries) RemakeCommentsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeCommentsSearch)
 	return err
 }
 
 const remakeCommentsSearchInsert = `-- name: RemakeCommentsSearchInsert :exec
-INSERT INTO commentsSearch (text, comments_idcomments)
+INSERT INTO commentsSearch (text, comment_id)
 SELECT text, idcomments
 FROM comments
 `
 
 // This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comment_id".
 func (q *Queries) RemakeCommentsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeCommentsSearchInsert)
 	return err

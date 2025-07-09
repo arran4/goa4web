@@ -60,10 +60,10 @@ CREATE TABLE `comments` (
 
 CREATE TABLE `commentsSearch` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
-  `comments_idcomments` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`comments_idcomments`),
+  `comment_id` int(10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`comment_id`),
   KEY `searchwordlist_has_comments_FKIndex1` (`searchwordlist_idsearchwordlist`),
-  KEY `searchwordlist_has_comments_FKIndex2` (`comments_idcomments`)
+  KEY `searchwordlist_has_comments_FKIndex2` (`comment_id`)
 );
 
 CREATE TABLE `faq` (

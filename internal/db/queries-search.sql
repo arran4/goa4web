@@ -40,8 +40,8 @@ LIMIT ? OFFSET ?;
 
 -- name: RemakeCommentsSearch :exec
 -- This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
-INSERT INTO commentsSearch (text, comments_idcomments)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comment_id".
+INSERT INTO commentsSearch (text, comment_id)
 SELECT text, idcomments
 FROM comments;
 
@@ -75,8 +75,8 @@ FROM linker;
 
 -- name: RemakeCommentsSearchInsert :exec
 -- This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comments_idcomments".
-INSERT INTO commentsSearch (text, comments_idcomments)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comment_id".
+INSERT INTO commentsSearch (text, comment_id)
 SELECT text, idcomments
 FROM comments;
 
@@ -139,14 +139,14 @@ VALUES (lcase(sqlc.arg(word)));
 
 -- name: AddToForumCommentSearch :exec
 INSERT IGNORE INTO commentsSearch
-(comments_idcomments, searchwordlist_idsearchwordlist)
+(comment_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
 -- name: CommentsSearchFirstNotInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
@@ -154,35 +154,35 @@ AND ft.forumcategory_idforumcategory!=0
 ;
 
 -- name: CommentsSearchNextNotInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
-AND cs.comments_idcomments IN (sqlc.slice('ids'))
+AND cs.comment_id IN (sqlc.slice('ids'))
 AND ft.forumcategory_idforumcategory!=0
 ;
 
 -- name: CommentsSearchFirstInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 WHERE swl.word=?
 AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
 ;
 
 -- name: CommentsSearchNextInRestrictedTopic :many
-SELECT DISTINCT cs.comments_idcomments
+SELECT DISTINCT cs.comment_id
 FROM commentsSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comments_idcomments
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
 WHERE swl.word=?
-AND cs.comments_idcomments IN (sqlc.slice('ids'))
+AND cs.comment_id IN (sqlc.slice('ids'))
 AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
 ;
 

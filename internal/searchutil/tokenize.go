@@ -94,7 +94,7 @@ func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds 
 func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, cid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToForumCommentSearch(ctx, db.AddToForumCommentSearchParams{
-			CommentsIdcomments:             int32(cid),
+			CommentID:                      int32(cid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})

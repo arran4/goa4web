@@ -11,7 +11,7 @@ import (
 )
 
 const createFAQCategory = `-- name: CreateFAQCategory :exec
-INSERT INTO faqCategories (name)
+INSERT INTO faq_categories (name)
 VALUES (?)
 `
 
@@ -47,7 +47,7 @@ func (q *Queries) DeleteFAQ(ctx context.Context, idfaq int32) error {
 }
 
 const deleteFAQCategory = `-- name: DeleteFAQCategory :exec
-UPDATE faqCategories SET deleted_at = NOW()
+UPDATE faq_categories SET deleted_at = NOW()
 WHERE idfaqCategories = ?
 `
 
@@ -59,7 +59,7 @@ func (q *Queries) DeleteFAQCategory(ctx context.Context, idfaqcategories int32) 
 const getAllAnsweredFAQWithFAQCategories = `-- name: GetAllAnsweredFAQWithFAQCategories :many
 SELECT c.idfaqcategories, c.name, f.idfaq, f.faqcategories_idfaqcategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
-LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
+LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
 WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories
 `
@@ -109,18 +109,18 @@ func (q *Queries) GetAllAnsweredFAQWithFAQCategories(ctx context.Context) ([]*Ge
 
 const getAllFAQCategories = `-- name: GetAllFAQCategories :many
 SELECT idfaqcategories, name
-FROM faqCategories
+FROM faq_categories
 `
 
-func (q *Queries) GetAllFAQCategories(ctx context.Context) ([]*Faqcategory, error) {
+func (q *Queries) GetAllFAQCategories(ctx context.Context) ([]*FaqCategory, error) {
 	rows, err := q.db.QueryContext(ctx, getAllFAQCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Faqcategory
+	var items []*FaqCategory
 	for rows.Next() {
-		var i Faqcategory
+		var i FaqCategory
 		if err := rows.Scan(&i.Idfaqcategories, &i.Name); err != nil {
 			return nil, err
 		}
@@ -172,7 +172,7 @@ func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
 
 const getFAQCategoriesWithQuestionCount = `-- name: GetFAQCategoriesWithQuestionCount :many
 SELECT c.idfaqcategories, c.name, COUNT(f.idfaq) AS QuestionCount
-FROM faqCategories c
+FROM faq_categories c
 LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
 GROUP BY c.idfaqCategories
 `
@@ -243,7 +243,7 @@ func (q *Queries) GetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 }
 
 const renameFAQCategory = `-- name: RenameFAQCategory :exec
-UPDATE faqCategories
+UPDATE faq_categories
 SET name = ?
 WHERE idfaqCategories = ?
 `

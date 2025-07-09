@@ -18,7 +18,7 @@ UPDATE site_announcements SET active = ? WHERE id = ?;
 -- name: GetActiveAnnouncementWithNews :one
 SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a
-JOIN siteNews n ON n.idsiteNews = a.site_news_id
+JOIN site_news n ON n.idsiteNews = a.site_news_id
 WHERE a.active = 1
 ORDER BY a.created_at DESC
 LIMIT 1;
@@ -26,5 +26,5 @@ LIMIT 1;
 -- name: ListAnnouncementsWithNews :many
 SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
 FROM site_announcements a
-JOIN siteNews n ON n.idsiteNews = a.site_news_id
+JOIN site_news n ON n.idsiteNews = a.site_news_id
 ORDER BY a.created_at DESC;

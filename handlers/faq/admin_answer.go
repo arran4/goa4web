@@ -16,7 +16,7 @@ import (
 func AdminAnswerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories []*db.Faqcategory
+		Categories []*db.FaqCategory
 		Rows       []*db.Faq
 	}
 

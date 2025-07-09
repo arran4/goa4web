@@ -26,7 +26,7 @@ func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWriti
 }
 
 const createWritingApproval = `-- name: CreateWritingApproval :exec
-INSERT INTO writingApprovedUsers (writing_id, users_idusers, readdoc, editdoc)
+INSERT INTO writing_approved_users (writing_id, users_idusers, readdoc, editdoc)
 VALUES (?, ?, ?, ?)
 `
 
@@ -48,7 +48,7 @@ func (q *Queries) CreateWritingApproval(ctx context.Context, arg CreateWritingAp
 }
 
 const deleteWritingApproval = `-- name: DeleteWritingApproval :exec
-DELETE FROM writingApprovedUsers
+DELETE FROM writing_approved_users
 WHERE writing_id = ? AND users_idusers = ?
 `
 
@@ -97,7 +97,7 @@ func (q *Queries) FetchAllCategories(ctx context.Context) ([]*WritingCategory, e
 
 const getAllWritingApprovals = `-- name: GetAllWritingApprovals :many
 SELECT idusers, u.username, wau.writing_id, wau.users_idusers, wau.readdoc, wau.editdoc
-FROM writingApprovedUsers wau
+FROM writing_approved_users wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 `
 
@@ -426,7 +426,7 @@ const getWritingByIdForUserDescendingByPublishedDate = `-- name: GetWritingByIdF
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writingApprovedUsers wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
+LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
 WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
 ORDER BY w.published DESC
 `
@@ -477,7 +477,7 @@ const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsBy
 SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writingApprovedUsers wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
+LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
 WHERE w.idwriting IN (/*SLICE:writingids*/?) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
 ORDER BY w.published DESC
 `
@@ -627,7 +627,7 @@ func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) er
 }
 
 const updateWritingApproval = `-- name: UpdateWritingApproval :exec
-UPDATE writingApprovedUsers
+UPDATE writing_approved_users
 SET readdoc = ?, editdoc = ?
 WHERE writing_id = ? AND users_idusers = ?
 `

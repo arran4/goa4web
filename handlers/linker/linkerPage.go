@@ -25,7 +25,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CommentOnId int
 		ReplyToId   int
 		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
-		Categories  []*db.Linkercategory
+		Categories  []*db.LinkerCategory
 	}
 
 	data := Data{

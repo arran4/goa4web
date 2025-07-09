@@ -30,7 +30,7 @@ func (q *Queries) AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThrea
 
 const blogsSearchFirst = `-- name: BlogsSearchFirst :many
 SELECT DISTINCT cs.blog_id
-FROM blogsSearch cs
+FROM blogs_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
@@ -60,7 +60,7 @@ func (q *Queries) BlogsSearchFirst(ctx context.Context, word sql.NullString) ([]
 
 const blogsSearchNext = `-- name: BlogsSearchNext :many
 SELECT DISTINCT cs.blog_id
-FROM blogsSearch cs
+FROM blogs_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 AND cs.blog_id IN (/*SLICE:ids*/?)

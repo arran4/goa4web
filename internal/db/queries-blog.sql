@@ -62,14 +62,14 @@ GROUP BY u.idusers;
 
 -- name: BlogsSearchFirst :many
 SELECT DISTINCT cs.blog_id
-FROM blogsSearch cs
+FROM blogs_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 ;
 
 -- name: BlogsSearchNext :many
 SELECT DISTINCT cs.blog_id
-FROM blogsSearch cs
+FROM blogs_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 AND cs.blog_id IN (sqlc.slice('ids'))

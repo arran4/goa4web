@@ -8,16 +8,16 @@ SELECT *
 FROM faq;
 
 -- name: RenameFAQCategory :exec
-UPDATE faqCategories
+UPDATE faq_categories
 SET name = ?
 WHERE idfaqCategories = ?;
 
 -- name: DeleteFAQCategory :exec
-UPDATE faqCategories SET deleted_at = NOW()
+UPDATE faq_categories SET deleted_at = NOW()
 WHERE idfaqCategories = ?;
 
 -- name: CreateFAQCategory :exec
-INSERT INTO faqCategories (name)
+INSERT INTO faq_categories (name)
 VALUES (?);
 
 -- name: CreateFAQQuestion :exec
@@ -35,18 +35,18 @@ WHERE idfaq = ?;
 
 -- name: GetAllFAQCategories :many
 SELECT *
-FROM faqCategories;
+FROM faq_categories;
 
 -- name: GetAllAnsweredFAQWithFAQCategories :many
 SELECT c.*, f.*
 FROM faq f
-LEFT JOIN faqCategories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
+LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
 WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories;
 
 -- name: GetFAQCategoriesWithQuestionCount :many
 SELECT c.*, COUNT(f.idfaq) AS QuestionCount
-FROM faqCategories c
+FROM faq_categories c
 LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
 GROUP BY c.idfaqCategories;
 

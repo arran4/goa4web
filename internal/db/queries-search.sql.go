@@ -12,7 +12,7 @@ import (
 )
 
 const addToForumCommentSearch = `-- name: AddToForumCommentSearch :exec
-INSERT IGNORE INTO commentsSearch
+INSERT IGNORE INTO comments_search
 (comment_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
@@ -28,7 +28,7 @@ func (q *Queries) AddToForumCommentSearch(ctx context.Context, arg AddToForumCom
 }
 
 const addToForumWritingSearch = `-- name: AddToForumWritingSearch :exec
-INSERT IGNORE INTO writingSearch
+INSERT IGNORE INTO writing_search
 (writing_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
@@ -44,7 +44,7 @@ func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWri
 }
 
 const addToImagePostSearch = `-- name: AddToImagePostSearch :exec
-INSERT IGNORE INTO imagepostSearch
+INSERT IGNORE INTO imagepost_search
 (image_post_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
@@ -60,7 +60,7 @@ func (q *Queries) AddToImagePostSearch(ctx context.Context, arg AddToImagePostSe
 }
 
 const addToLinkerSearch = `-- name: AddToLinkerSearch :exec
-INSERT IGNORE INTO linkerSearch
+INSERT IGNORE INTO linker_search
 (linker_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
@@ -77,7 +77,7 @@ func (q *Queries) AddToLinkerSearch(ctx context.Context, arg AddToLinkerSearchPa
 
 const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
 SELECT DISTINCT cs.comment_id
-FROM commentsSearch cs
+FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
@@ -126,7 +126,7 @@ func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 
 const commentsSearchFirstNotInRestrictedTopic = `-- name: CommentsSearchFirstNotInRestrictedTopic :many
 SELECT DISTINCT cs.comment_id
-FROM commentsSearch cs
+FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
@@ -160,7 +160,7 @@ func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, w
 
 const commentsSearchNextInRestrictedTopic = `-- name: CommentsSearchNextInRestrictedTopic :many
 SELECT DISTINCT cs.comment_id
-FROM commentsSearch cs
+FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
@@ -219,7 +219,7 @@ func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg C
 
 const commentsSearchNextNotInRestrictedTopic = `-- name: CommentsSearchNextNotInRestrictedTopic :many
 SELECT DISTINCT cs.comment_id
-FROM commentsSearch cs
+FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
@@ -336,27 +336,27 @@ func (q *Queries) CreateSearchWord(ctx context.Context, word string) (int64, err
 }
 
 const deleteBlogsSearch = `-- name: DeleteBlogsSearch :exec
-DELETE FROM blogsSearch
+DELETE FROM blogs_search
 `
 
-// This query deletes all data from the "blogsSearch" table.
+// This query deletes all data from the "blogs_search" table.
 func (q *Queries) DeleteBlogsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteBlogsSearch)
 	return err
 }
 
 const deleteCommentsSearch = `-- name: DeleteCommentsSearch :exec
-DELETE FROM commentsSearch
+DELETE FROM comments_search
 `
 
-// This query deletes all data from the "commentsSearch" table.
+// This query deletes all data from the "comments_search" table.
 func (q *Queries) DeleteCommentsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteCommentsSearch)
 	return err
 }
 
 const deleteImagePostSearch = `-- name: DeleteImagePostSearch :exec
-DELETE FROM imagepostSearch
+DELETE FROM imagepost_search
 `
 
 func (q *Queries) DeleteImagePostSearch(ctx context.Context) error {
@@ -365,30 +365,30 @@ func (q *Queries) DeleteImagePostSearch(ctx context.Context) error {
 }
 
 const deleteLinkerSearch = `-- name: DeleteLinkerSearch :exec
-DELETE FROM linkerSearch
+DELETE FROM linker_search
 `
 
-// This query deletes all data from the "linkerSearch" table.
+// This query deletes all data from the "linker_search" table.
 func (q *Queries) DeleteLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteLinkerSearch)
 	return err
 }
 
 const deleteSiteNewsSearch = `-- name: DeleteSiteNewsSearch :exec
-DELETE FROM siteNewsSearch
+DELETE FROM site_news_search
 `
 
-// This query deletes all data from the "siteNewsSearch" table.
+// This query deletes all data from the "site_news_search" table.
 func (q *Queries) DeleteSiteNewsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteSiteNewsSearch)
 	return err
 }
 
 const deleteWritingSearch = `-- name: DeleteWritingSearch :exec
-DELETE FROM writingSearch
+DELETE FROM writing_search
 `
 
-// This query deletes all data from the "writingSearch" table.
+// This query deletes all data from the "writing_search" table.
 func (q *Queries) DeleteWritingSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteWritingSearch)
 	return err
@@ -409,7 +409,7 @@ func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase strin
 
 const imagePostSearchFirst = `-- name: ImagePostSearchFirst :many
 SELECT DISTINCT cs.image_post_id
-FROM imagepostSearch cs
+FROM imagepost_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
@@ -439,7 +439,7 @@ func (q *Queries) ImagePostSearchFirst(ctx context.Context, word sql.NullString)
 
 const imagePostSearchNext = `-- name: ImagePostSearchNext :many
 SELECT DISTINCT cs.image_post_id
-FROM imagepostSearch cs
+FROM imagepost_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 AND cs.image_post_id IN (/*SLICE:ids*/?)
@@ -486,7 +486,7 @@ func (q *Queries) ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNe
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
 SELECT DISTINCT cs.linker_id
-FROM linkerSearch cs
+FROM linker_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
@@ -516,7 +516,7 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([
 
 const linkerSearchNext = `-- name: LinkerSearchNext :many
 SELECT DISTINCT cs.linker_id
-FROM linkerSearch cs
+FROM linker_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 AND cs.linker_id IN (/*SLICE:ids*/?)
@@ -562,59 +562,59 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 }
 
 const remakeBlogSearch = `-- name: RemakeBlogSearch :exec
-INSERT INTO blogsSearch (text, blog_id)
+INSERT INTO blogs_search (text, blog_id)
 SELECT blog, idblogs
 FROM blogs
 `
 
-// This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blog_id".
+// This query selects data from the "blogs" table and populates the "blogs_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogs_search" using the "blog_id".
 func (q *Queries) RemakeBlogSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeBlogSearch)
 	return err
 }
 
 const remakeBlogsSearchInsert = `-- name: RemakeBlogsSearchInsert :exec
-INSERT INTO blogsSearch (text, blog_id)
+INSERT INTO blogs_search (text, blog_id)
 SELECT blog, idblogs
 FROM blogs
 `
 
-// This query selects data from the "blogs" table and populates the "blogsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogsSearch" using the "blog_id".
+// This query selects data from the "blogs" table and populates the "blogs_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogs_search" using the "blog_id".
 func (q *Queries) RemakeBlogsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeBlogsSearchInsert)
 	return err
 }
 
 const remakeCommentsSearch = `-- name: RemakeCommentsSearch :exec
-INSERT INTO commentsSearch (text, comment_id)
+INSERT INTO comments_search (text, comment_id)
 SELECT text, idcomments
 FROM comments
 `
 
-// This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comment_id".
+// This query selects data from the "comments" table and populates the "comments_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "comments_search" using the "comment_id".
 func (q *Queries) RemakeCommentsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeCommentsSearch)
 	return err
 }
 
 const remakeCommentsSearchInsert = `-- name: RemakeCommentsSearchInsert :exec
-INSERT INTO commentsSearch (text, comment_id)
+INSERT INTO comments_search (text, comment_id)
 SELECT text, idcomments
 FROM comments
 `
 
-// This query selects data from the "comments" table and populates the "commentsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "commentsSearch" using the "comment_id".
+// This query selects data from the "comments" table and populates the "comments_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "comments_search" using the "comment_id".
 func (q *Queries) RemakeCommentsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeCommentsSearchInsert)
 	return err
 }
 
 const remakeImagePostSearchInsert = `-- name: RemakeImagePostSearchInsert :exec
-INSERT INTO imagepostSearch (text, image_post_id)
+INSERT INTO imagepost_search (text, image_post_id)
 SELECT description, idimagepost
 FROM imagepost
 `
@@ -625,78 +625,78 @@ func (q *Queries) RemakeImagePostSearchInsert(ctx context.Context) error {
 }
 
 const remakeLinkerSearch = `-- name: RemakeLinkerSearch :exec
-INSERT INTO linkerSearch (text, linker_id)
+INSERT INTO linker_search (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
 `
 
-// This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
+// This query selects data from the "linker" table and populates the "linker_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linker_search" using the "linker_id".
 func (q *Queries) RemakeLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearch)
 	return err
 }
 
 const remakeLinkerSearchInsert = `-- name: RemakeLinkerSearchInsert :exec
-INSERT INTO linkerSearch (text, linker_id)
+INSERT INTO linker_search (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
 `
 
-// This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
+// This query selects data from the "linker" table and populates the "linker_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linker_search" using the "linker_id".
 func (q *Queries) RemakeLinkerSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearchInsert)
 	return err
 }
 
 const remakeNewsSearch = `-- name: RemakeNewsSearch :exec
-INSERT INTO siteNewsSearch (text, site_news_id)
+INSERT INTO site_news_search (text, site_news_id)
 SELECT news, idsiteNews
-FROM siteNews
+FROM site_news
 `
 
-// This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "site_news_id".
+// This query selects data from the "site_news" table and populates the "site_news_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "site_news_search" using the "site_news_id".
 func (q *Queries) RemakeNewsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeNewsSearch)
 	return err
 }
 
 const remakeNewsSearchInsert = `-- name: RemakeNewsSearchInsert :exec
-INSERT INTO siteNewsSearch (text, site_news_id)
+INSERT INTO site_news_search (text, site_news_id)
 SELECT news, idsiteNews
-FROM siteNews
+FROM site_news
 `
 
-// This query selects data from the "siteNews" table and populates the "siteNewsSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "siteNewsSearch" using the "site_news_id".
+// This query selects data from the "site_news" table and populates the "site_news_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "site_news_search" using the "site_news_id".
 func (q *Queries) RemakeNewsSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeNewsSearchInsert)
 	return err
 }
 
 const remakeWritingSearch = `-- name: RemakeWritingSearch :exec
-INSERT INTO writingSearch (text, writing_id)
+INSERT INTO writing_search (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 
-// This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
+// This query selects data from the "writing" table and populates the "writing_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writing_search" using the "writing_id".
 func (q *Queries) RemakeWritingSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearch)
 	return err
 }
 
 const remakeWritingSearchInsert = `-- name: RemakeWritingSearchInsert :exec
-INSERT INTO writingSearch (text, writing_id)
+INSERT INTO writing_search (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 
-// This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
+// This query selects data from the "writing" table and populates the "writing_search" table with the specified columns.
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writing_search" using the "writing_id".
 func (q *Queries) RemakeWritingSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearchInsert)
 	return err
@@ -704,7 +704,7 @@ func (q *Queries) RemakeWritingSearchInsert(ctx context.Context) error {
 
 const siteNewsSearchFirst = `-- name: SiteNewsSearchFirst :many
 SELECT DISTINCT cs.site_news_id
-FROM siteNewsSearch cs
+FROM site_news_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
@@ -734,7 +734,7 @@ func (q *Queries) SiteNewsSearchFirst(ctx context.Context, word sql.NullString) 
 
 const siteNewsSearchNext = `-- name: SiteNewsSearchNext :many
 SELECT DISTINCT cs.site_news_id
-FROM siteNewsSearch cs
+FROM site_news_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 AND cs.site_news_id IN (/*SLICE:ids*/?)
@@ -781,12 +781,12 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 
 const wordListWithCounts = `-- name: WordListWithCounts :many
 SELECT swl.word,
-       (SELECT COUNT(*) FROM commentsSearch cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM imagepostSearch ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+       (SELECT COUNT(*) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 ORDER BY swl.word
 LIMIT ? OFFSET ?
@@ -828,12 +828,12 @@ func (q *Queries) WordListWithCounts(ctx context.Context, arg WordListWithCounts
 
 const wordListWithCountsByPrefix = `-- name: WordListWithCountsByPrefix :many
 SELECT swl.word,
-       (SELECT COUNT(*) FROM commentsSearch cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM siteNewsSearch ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM blogsSearch bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM linkerSearch ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM writingSearch ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM imagepostSearch ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+       (SELECT COUNT(*) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT COUNT(*) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 WHERE swl.word LIKE CONCAT(?, '%')
 ORDER BY swl.word
@@ -875,7 +875,7 @@ func (q *Queries) WordListWithCountsByPrefix(ctx context.Context, arg WordListWi
 }
 
 const writingSearchDelete = `-- name: WritingSearchDelete :exec
-DELETE FROM writingSearch
+DELETE FROM writing_search
 WHERE writing_id=?
 `
 
@@ -886,7 +886,7 @@ func (q *Queries) WritingSearchDelete(ctx context.Context, writingID int32) erro
 
 const writingSearchFirst = `-- name: WritingSearchFirst :many
 SELECT DISTINCT cs.writing_id
-FROM writingSearch cs
+FROM writing_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 `
@@ -916,7 +916,7 @@ func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) (
 
 const writingSearchNext = `-- name: WritingSearchNext :many
 SELECT DISTINCT cs.writing_id
-FROM writingSearch cs
+FROM writing_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 AND cs.writing_id IN (/*SLICE:ids*/?)

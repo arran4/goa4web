@@ -5,7 +5,7 @@ WHERE idblogs = ?;
 
 -- name: CreateBlogEntry :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-VALUES (?, ?, ?, NOW());
+VALUES (?, ?, ?, CURRENT_TIMESTAMP);
 
 -- name: AssignThreadIdToBlogEntry :exec
 UPDATE blogs

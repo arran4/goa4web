@@ -107,7 +107,7 @@ func (q *Queries) BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams
 
 const createBlogEntry = `-- name: CreateBlogEntry :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-VALUES (?, ?, ?, NOW())
+VALUES (?, ?, ?, CURRENT_TIMESTAMP)
 `
 
 type CreateBlogEntryParams struct {

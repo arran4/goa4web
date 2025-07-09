@@ -38,7 +38,9 @@ func RedirectPermanentPrefix(from, to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rest := strings.TrimPrefix(r.URL.Path, from)
 		if !strings.HasPrefix(rest, "/") && rest != "" {
-			rest = "/" + rest
+			// not an exact match or subpath - avoid redirect loop
+			http.NotFound(w, r)
+			return
 		}
 		target := to + rest
 		if r.URL.RawQuery != "" {

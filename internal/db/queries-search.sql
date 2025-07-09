@@ -61,15 +61,15 @@ FROM blogs;
 
 -- name: RemakeWritingSearch :exec
 -- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
-INSERT INTO writingSearch (text, writing_idwriting)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing;
 
 -- name: RemakeLinkerSearch :exec
 -- This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
-INSERT INTO linkerSearch (text, linker_idlinker)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker;
 
@@ -108,8 +108,8 @@ DELETE FROM blogsSearch;
 
 -- name: RemakeWritingSearchInsert :exec
 -- This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
-INSERT INTO writingSearch (text, writing_idwriting)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing;
 
@@ -119,8 +119,8 @@ DELETE FROM writingSearch;
 
 -- name: RemakeLinkerSearchInsert :exec
 -- This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
--- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
-INSERT INTO linkerSearch (text, linker_idlinker)
+-- Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker;
 
@@ -188,33 +188,33 @@ AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
 
 -- name: AddToForumWritingSearch :exec
 INSERT IGNORE INTO writingSearch
-(writing_idwriting, searchwordlist_idsearchwordlist)
+(writing_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
 -- name: AddToLinkerSearch :exec
 INSERT IGNORE INTO linkerSearch
-(linker_idlinker, searchwordlist_idsearchwordlist)
+(linker_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?);
 
 
 -- name: WritingSearchDelete :exec
 DELETE FROM writingSearch
-WHERE writing_idwriting=?
+WHERE writing_id=?
 ;
 
 -- name: WritingSearchFirst :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 ;
 
 -- name: WritingSearchNext :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.writing_idwriting IN (sqlc.slice('ids'))
+AND cs.writing_id IN (sqlc.slice('ids'))
 ;
 
 -- name: SiteNewsSearchFirst :many
@@ -233,18 +233,18 @@ AND cs.site_news_id IN (sqlc.slice('ids'))
 ;
 
 -- name: LinkerSearchFirst :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
 ;
 
 -- name: LinkerSearchNext :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.linker_idlinker IN (sqlc.slice('ids'))
+AND cs.linker_id IN (sqlc.slice('ids'))
 ;
 
 -- name: AddToImagePostSearch :exec

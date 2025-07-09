@@ -64,7 +64,7 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, lid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToLinkerSearch(ctx, db.AddToLinkerSearchParams{
-			LinkerIdlinker:                 int32(lid),
+			LinkerID:                       int32(lid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})
@@ -84,7 +84,7 @@ func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []
 func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, wacid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToForumWritingSearch(ctx, db.AddToForumWritingSearchParams{
-			WritingIdwriting:               int32(wacid),
+			WritingID:                      int32(wacid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})

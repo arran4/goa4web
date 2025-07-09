@@ -249,7 +249,7 @@ type Linkerqueue struct {
 
 type Linkersearch struct {
 	SearchwordlistIdsearchwordlist int32
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 }
 
 type LoginAttempt struct {
@@ -312,7 +312,7 @@ type Searchwordlist struct {
 
 type SearchwordlistHasLinker struct {
 	SearchwordlistIdsearchwordlist int32
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 }
 
 type Session struct {
@@ -404,10 +404,10 @@ type Writing struct {
 }
 
 type Writingapproveduser struct {
-	WritingIdwriting int32
-	UsersIdusers     int32
-	Readdoc          sql.NullBool
-	Editdoc          sql.NullBool
+	WritingID    int32
+	UsersIdusers int32
+	Readdoc      sql.NullBool
+	Editdoc      sql.NullBool
 }
 
 type Writingcategory struct {
@@ -419,7 +419,7 @@ type Writingcategory struct {
 
 type Writingsearch struct {
 	SearchwordlistIdsearchwordlist int32
-	WritingIdwriting               int32
+	WritingID                      int32
 }
 
 type _1OldForumthread struct {

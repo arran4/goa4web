@@ -20,7 +20,7 @@ SELECT w.*, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
-WHERE w.private = 0 AND w.writingCategory_idwritingCategory=?
+WHERE w.private = 0 AND w.writing_category_id=?
 ORDER BY w.published DESC
 LIMIT ? OFFSET ?
 ;
@@ -31,7 +31,7 @@ SET title = ?, abstract = ?, writing = ?, private = ?, language_idlanguage = ?
 WHERE idwriting = ?;
 
 -- name: InsertWriting :execlastid
-INSERT INTO writing (writingCategory_idwritingCategory, title, abstract, writing, private, language_idlanguage, published, users_idusers)
+INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: GetWritingByIdForUserDescendingByPublishedDate :one
@@ -53,18 +53,18 @@ ORDER BY w.published DESC
 ;
 
 -- name: InsertWritingCategory :exec
-INSERT INTO writing_category (writingCategory_idwritingCategory, title, description)
+INSERT INTO writing_category (writing_category_id, title, description)
 VALUES (?, ?, ?);
 
 -- name: UpdateWritingCategory :exec
 UPDATE writing_category
-SET title = ?, description = ?, writingCategory_idwritingCategory = ?
+SET title = ?, description = ?, writing_category_id = ?
 WHERE idwritingCategory = ?;
 
 -- name: GetAllWritingCategories :many
 SELECT *
 FROM writing_category
-WHERE writingCategory_idwritingCategory = ?;
+WHERE writing_category_id = ?;
 
 -- name: FetchAllCategories :many
 SELECT wc.*

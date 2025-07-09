@@ -70,10 +70,10 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&corecommon.CoreData{}, nil, false, "", []struct{ Username string }{{"test"}}}},
 		{"writingsPage", struct {
 			*corecommon.CoreData
-			Categories                       []*db.WritingCategory
-			WritingcategoryIdwritingcategory int32
-			CategoryId                       int32
-			IsAdmin                          bool
+			Categories        []*db.WritingCategory
+			WritingCategoryID int32
+			CategoryId        int32
+			IsAdmin           bool
 		}{&corecommon.CoreData{}, nil, 0, 0, false}},
 		{"linkerCategoryPage", struct {
 			*corecommon.CoreData
@@ -86,14 +86,14 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&corecommon.CoreData{}, 0, false, 0, 0, 0, nil}},
 		{"writingsCategoryPage", struct {
 			*corecommon.CoreData
-			Categories                       []*db.WritingCategory
-			CategoryBreadcrumbs              []*db.WritingCategory
-			EditingCategoryId                int32
-			CategoryId                       int32
-			WritingcategoryIdwritingcategory int32
-			IsAdmin                          bool
-			IsWriter                         bool
-			Abstracts                        []*db.GetPublicWritingsInCategoryRow
+			Categories          []*db.WritingCategory
+			CategoryBreadcrumbs []*db.WritingCategory
+			EditingCategoryId   int32
+			CategoryId          int32
+			WritingCategoryID   int32
+			IsAdmin             bool
+			IsWriter            bool
+			Abstracts           []*db.GetPublicWritingsInCategoryRow
 		}{&corecommon.CoreData{}, nil, nil, 0, 0, 0, false, false, nil}},
 		{"searchPage", struct {
 			*corecommon.CoreData

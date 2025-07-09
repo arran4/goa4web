@@ -310,7 +310,7 @@ CREATE TABLE `writing` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
-  `writingCategory_idwritingCategory` int(10) NOT NULL DEFAULT 0,
+  `writing_category_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `published` datetime DEFAULT NULL,
   `writing` longtext DEFAULT NULL,
@@ -318,7 +318,7 @@ CREATE TABLE `writing` (
   `private` tinyint(1) DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idwriting`),
-  KEY `writing_FKIndex1` (`writingCategory_idwritingCategory`),
+  KEY `writing_FKIndex1` (`writing_category_id`),
   KEY `writing_FKIndex2` (`language_idlanguage`),
   KEY `writing_FKIndex3` (`forumthread_idforumthread`),
   KEY `writing_FKIndex4` (`users_idusers`)
@@ -326,11 +326,11 @@ CREATE TABLE `writing` (
 
 CREATE TABLE `writing_category` (
   `idwritingCategory` int(10) NOT NULL AUTO_INCREMENT,
-  `writingCategory_idwritingCategory` int(10) NOT NULL DEFAULT 0,
+  `writing_category_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   PRIMARY KEY (`idwritingCategory`),
-  KEY `writingCategory_FKIndex1` (`writingCategory_idwritingCategory`)
+  KEY `writingCategory_FKIndex1` (`writing_category_id`)
 );
 
 CREATE TABLE `writingSearch` (
@@ -482,7 +482,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_writings` (
   `users_idusers` int NOT NULL,
   `forumthread_idforumthread` int NOT NULL,
   `language_idlanguage` int NOT NULL,
-  `writingCategory_idwritingCategory` int NOT NULL,
+  `writing_category_id` int NOT NULL,
   `title` tinytext,
   `published` datetime,
   `writing` longtext,

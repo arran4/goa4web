@@ -356,7 +356,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writing, abstract, private, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writing_category_id, title, published, writing, abstract, private, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -368,27 +368,27 @@ type ListUsersSubscribedToWritingParams struct {
 }
 
 type ListUsersSubscribedToWritingRow struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
-	DeletedAt                        sql.NullTime
-	Idusers                          int32
-	Email                            sql.NullString
-	Username                         sql.NullString
-	DeletedAt_2                      sql.NullTime
-	Idpreferences                    int32
-	LanguageIdlanguage_2             int32
-	UsersIdusers_2                   int32
-	Emailforumupdates                sql.NullBool
-	PageSize                         int32
-	AutoSubscribeReplies             bool
+	Idwriting                int32
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
+	WritingCategoryID        int32
+	Title                    sql.NullString
+	Published                sql.NullTime
+	Writing                  sql.NullString
+	Abstract                 sql.NullString
+	Private                  sql.NullBool
+	DeletedAt                sql.NullTime
+	Idusers                  int32
+	Email                    sql.NullString
+	Username                 sql.NullString
+	DeletedAt_2              sql.NullTime
+	Idpreferences            int32
+	LanguageIdlanguage_2     int32
+	UsersIdusers_2           int32
+	Emailforumupdates        sql.NullBool
+	PageSize                 int32
+	AutoSubscribeReplies     bool
 }
 
 func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]*ListUsersSubscribedToWritingRow, error) {
@@ -405,7 +405,7 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.UsersIdusers,
 			&i.ForumthreadIdforumthread,
 			&i.LanguageIdlanguage,
-			&i.WritingcategoryIdwritingcategory,
+			&i.WritingCategoryID,
 			&i.Title,
 			&i.Published,
 			&i.Writing,

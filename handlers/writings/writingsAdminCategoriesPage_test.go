@@ -22,9 +22,9 @@ func TestWritingsAdminCategoriesPage(t *testing.T) {
 
 	queries := db.New(sqlDB)
 
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writingcategory_idwritingcategory", "title", "description"}).
+	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "b")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT wc.idwritingcategory, wc.writingcategory_idwritingcategory, wc.title, wc.description\nFROM writing_category wc")).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description\nFROM writing_category wc")).WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/admin/writings/categories", nil)
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)

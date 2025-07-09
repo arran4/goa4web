@@ -27,7 +27,7 @@ UPDATE comments SET text = ?, deleted_at = NULL WHERE idcomments = ?;
 UPDATE deactivated_comments SET restored_at = NOW() WHERE idcomments = ?;
 
 -- name: ArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writing, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writing_category_id, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: ScrubWriting :exec

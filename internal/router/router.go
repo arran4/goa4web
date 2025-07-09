@@ -21,8 +21,10 @@ func RegisterRoutes(r *mux.Router) {
 	InitModules(r)
 
 	// legacy redirects
-	r.PathPrefix("/writing").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
-	r.PathPrefix("/links").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
+	r.Path("/writing").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
+	r.PathPrefix("/writing/").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
+	r.Path("/links").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
+	r.PathPrefix("/links/").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
 }
 
 // RoleCheckerMiddleware ensures the user has one of the supplied roles.

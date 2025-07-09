@@ -209,8 +209,8 @@ func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db
 		return
 	}
 	rows, err := q.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: threadID,
-		Idusers:                  excludeUser,
+		ForumthreadID: threadID,
+		Idusers:       excludeUser,
 	})
 	if err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)

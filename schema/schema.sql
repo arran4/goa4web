@@ -12,7 +12,7 @@ CREATE TABLE `blogs` (
   KEY `blogs_FKIndex3` (`forumthread_idforumthread`)
 );
 
-CREATE TABLE `blogsSearch` (
+CREATE TABLE `blogs_search` (
   `blog_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`blog_id`,`searchwordlist_idsearchwordlist`),
@@ -42,7 +42,7 @@ CREATE TABLE `comments` (
   KEY `comments_FKIndex3` (`forumthread_idforumthread`)
 );
 
-CREATE TABLE `commentsSearch` (
+CREATE TABLE `comments_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `comment_id` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`searchwordlist_idsearchwordlist`,`comment_id`),
@@ -63,7 +63,7 @@ CREATE TABLE `faq` (
   KEY `Table_21_FKIndex3` (`faqCategories_idfaqCategories`)
 );
 
-CREATE TABLE `faqCategories` (
+CREATE TABLE `faq_categories` (
   `idfaqCategories` int(10) NOT NULL AUTO_INCREMENT,
   `name` tinytext DEFAULT NULL,
   PRIMARY KEY (`idfaqCategories`)
@@ -134,7 +134,7 @@ CREATE TABLE `imagepost` (
   KEY `imagepost_FKIndex3` (`forumthread_idforumthread`)
 );
 
-CREATE TABLE `imagepostSearch` (
+CREATE TABLE `imagepost_search` (
   `image_post_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`image_post_id`,`searchwordlist_idsearchwordlist`),
@@ -166,7 +166,7 @@ CREATE TABLE `linker` (
   KEY `linker_FKIndex4` (`language_idlanguage`)
 );
 
-CREATE TABLE `linkerCategory` (
+CREATE TABLE `linker_category` (
   `idlinkerCategory` int(10) NOT NULL AUTO_INCREMENT,
   `position` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
@@ -174,7 +174,7 @@ CREATE TABLE `linkerCategory` (
   PRIMARY KEY (`idlinkerCategory`)
 );
 
-CREATE TABLE `linkerQueue` (
+CREATE TABLE `linker_queue` (
   `idlinkerQueue` int(10) NOT NULL AUTO_INCREMENT,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
@@ -188,7 +188,7 @@ CREATE TABLE `linkerQueue` (
   KEY `linkerQueue_FKIndex3` (`language_idlanguage`)
 );
 
-CREATE TABLE `linkerSearch` (
+CREATE TABLE `linker_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `linker_id` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`searchwordlist_idsearchwordlist`,`linker_id`),
@@ -231,7 +231,7 @@ CREATE TABLE `searchwordlist_has_linker` (
   KEY `searchwordlist_has_linker_FKIndex2` (`linker_id`)
 );
 
-CREATE TABLE `siteNews` (
+CREATE TABLE `site_news` (
   `idsiteNews` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
@@ -244,7 +244,7 @@ CREATE TABLE `siteNews` (
   KEY `siteNews_FKIndex3` (`forumthread_idforumthread`)
 );
 
-CREATE TABLE `siteNewsSearch` (
+CREATE TABLE `site_news_search` (
   `site_news_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`site_news_id`,`searchwordlist_idsearchwordlist`),
@@ -333,7 +333,7 @@ CREATE TABLE `writing_category` (
   KEY `writingCategory_FKIndex1` (`writing_category_id`)
 );
 
-CREATE TABLE `writingSearch` (
+CREATE TABLE `writing_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `writing_id` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`searchwordlist_idsearchwordlist`,`writing_id`),
@@ -341,7 +341,7 @@ CREATE TABLE `writingSearch` (
   KEY `searchwordlist_has_writing_FKIndex2` (`writing_id`)
 );
 
-CREATE TABLE `writingApprovedUsers` (
+CREATE TABLE `writing_approved_users` (
   `writing_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `readdoc` tinyint(1) DEFAULT NULL,

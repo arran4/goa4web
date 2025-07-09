@@ -19,7 +19,7 @@ import (
 func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories         []*db.Linkercategory
+		Categories         []*db.LinkerCategory
 		Languages          []*db.Language
 		SelectedLanguageId int
 	}

@@ -35,7 +35,7 @@ type Blog struct {
 	DeletedAt                sql.NullTime
 }
 
-type Blogssearch struct {
+type BlogsSearch struct {
 	BlogID                         int32
 	SearchwordlistIdsearchwordlist int32
 }
@@ -56,7 +56,7 @@ type Comment struct {
 	DeletedAt                sql.NullTime
 }
 
-type Commentssearch struct {
+type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	CommentID                      int32
 }
@@ -152,7 +152,7 @@ type Faq struct {
 	Question                     sql.NullString
 }
 
-type Faqcategory struct {
+type FaqCategory struct {
 	Idfaqcategories int32
 	Name            sql.NullString
 }
@@ -207,7 +207,7 @@ type Imagepost struct {
 	DeletedAt                sql.NullTime
 }
 
-type Imagepostsearch struct {
+type ImagepostSearch struct {
 	ImagePostID                    int32
 	SearchwordlistIdsearchwordlist int32
 }
@@ -230,14 +230,14 @@ type Linker struct {
 	DeletedAt                      sql.NullTime
 }
 
-type Linkercategory struct {
+type LinkerCategory struct {
 	Idlinkercategory int32
 	Position         int32
 	Title            sql.NullString
 	Sortorder        int32
 }
 
-type Linkerqueue struct {
+type LinkerQueue struct {
 	Idlinkerqueue                  int32
 	LanguageIdlanguage             int32
 	UsersIdusers                   int32
@@ -247,7 +247,7 @@ type Linkerqueue struct {
 	Description                    sql.NullString
 }
 
-type Linkersearch struct {
+type LinkerSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	LinkerID                       int32
 }
@@ -328,7 +328,7 @@ type SiteAnnouncement struct {
 	CreatedAt  time.Time
 }
 
-type Sitenews struct {
+type SiteNews struct {
 	Idsitenews               int32
 	ForumthreadIdforumthread int32
 	LanguageIdlanguage       int32
@@ -337,7 +337,7 @@ type Sitenews struct {
 	Occurred                 sql.NullTime
 }
 
-type Sitenewssearch struct {
+type SiteNewsSearch struct {
 	SiteNewsID                     int32
 	SearchwordlistIdsearchwordlist int32
 }
@@ -403,6 +403,13 @@ type Writing struct {
 	DeletedAt                sql.NullTime
 }
 
+type WritingApprovedUser struct {
+	WritingID    int32
+	UsersIdusers int32
+	Readdoc      sql.NullBool
+	Editdoc      sql.NullBool
+}
+
 type WritingCategory struct {
 	Idwritingcategory int32
 	WritingCategoryID int32
@@ -410,14 +417,7 @@ type WritingCategory struct {
 	Description       sql.NullString
 }
 
-type Writingapproveduser struct {
-	WritingID    int32
-	UsersIdusers int32
-	Readdoc      sql.NullBool
-	Editdoc      sql.NullBool
-}
-
-type Writingsearch struct {
+type WritingSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingID                      int32
 }

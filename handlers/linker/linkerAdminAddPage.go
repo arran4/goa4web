@@ -21,7 +21,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 		*corecommon.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
-		Categories         []*db.Linkercategory
+		Categories         []*db.LinkerCategory
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

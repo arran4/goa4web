@@ -43,13 +43,13 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	count("SELECT COUNT(*) FROM searchwordlist", &data.Stats.Words)
-	count("SELECT COUNT(*) FROM commentsSearch", &data.Stats.Comments)
-	count("SELECT COUNT(*) FROM siteNewsSearch", &data.Stats.News)
-	count("SELECT COUNT(*) FROM blogsSearch", &data.Stats.Blogs)
-	count("SELECT COUNT(*) FROM linkerSearch", &data.Stats.Linker)
-	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writing)
-	count("SELECT COUNT(*) FROM writingSearch", &data.Stats.Writings)
-	count("SELECT COUNT(*) FROM imagepostSearch", &data.Stats.Images)
+	count("SELECT COUNT(*) FROM comments_search", &data.Stats.Comments)
+	count("SELECT COUNT(*) FROM site_news_search", &data.Stats.News)
+	count("SELECT COUNT(*) FROM blogs_search", &data.Stats.Blogs)
+	count("SELECT COUNT(*) FROM linker_search", &data.Stats.Linker)
+	count("SELECT COUNT(*) FROM writing_search", &data.Stats.Writing)
+	count("SELECT COUNT(*) FROM writing_search", &data.Stats.Writings)
+	count("SELECT COUNT(*) FROM imagepost_search", &data.Stats.Images)
 
 	if err := templates.RenderTemplate(w, "adminSearchPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

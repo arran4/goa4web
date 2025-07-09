@@ -3,7 +3,6 @@ package runtimeconfig
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -13,17 +12,7 @@ import (
 // The cfgPath argument sets the CONFIG_FILE entry and is used to
 // resolve SESSION_SECRET_FILE when empty.
 func ToEnvMap(cfg RuntimeConfig, cfgPath string) (map[string]string, error) {
-	m := make(map[string]string)
-
-	for _, o := range StringOptions {
-		m[o.Env] = *o.Target(&cfg)
-	}
-	for _, o := range IntOptions {
-		m[o.Env] = strconv.Itoa(*o.Target(&cfg))
-	}
-	for _, o := range BoolOptions {
-		m[o.Env] = strconv.FormatBool(*o.Target(&cfg))
-	}
+	m := ValuesMap(cfg)
 
 	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	if err != nil {

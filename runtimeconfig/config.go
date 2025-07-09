@@ -190,6 +190,10 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		*dst = resolveBool(o.Default, cliVal, fileVals[o.Env], getenv(o.Env))
 	}
 
+	if cfg.SessionSecretFile == "" {
+		cfg.SessionSecretFile = DefaultSessionSecretPath()
+	}
+
 	normalizeRuntimeConfig(&cfg)
 	AppRuntimeConfig = cfg
 	return cfg

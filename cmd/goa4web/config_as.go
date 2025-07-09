@@ -4,12 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -33,40 +30,8 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 	return c, nil
 }
 
-func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[string]string, error) {
-	m := runtimeconfig.ValuesMap(cfg)
-
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
-	if err != nil {
-		return nil, fmt.Errorf("load config file: %w", err)
-	}
-
-	first := func(vals ...string) string {
-		for _, v := range vals {
-			if v != "" {
-				return v
-			}
-		}
-		return ""
-	}
-
-	m[config.EnvConfigFile] = cfgPath
-	if m[config.EnvSessionSecretFile] == "" {
-		sessionFile := first(fileVals[config.EnvSessionSecretFile], os.Getenv(config.EnvSessionSecretFile))
-		if sessionFile == "" {
-			sessionFile = runtimeconfig.DefaultSessionSecretPath()
-		}
-		m[config.EnvSessionSecretFile] = sessionFile
-	}
-
-	return m, nil
-}
-
 func defaultMap() map[string]string {
-	
-  TODO add to ToEnvMap: m[config.EnvSessionSecretFile] = runtimeconfig.DefaultSessionSecretPath()
-
-  def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	m, _ := runtimeconfig.ToEnvMap(def, "")
 	return m
 }

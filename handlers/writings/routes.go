@@ -10,7 +10,10 @@ import (
 	router "github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
+	pkghandlers "github.com/arran4/goa4web/pkg/handlers"
 )
+
+var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.
 func RegisterRoutes(r *mux.Router) {
@@ -35,6 +38,12 @@ func RegisterRoutes(r *mux.Router) {
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
 	wr.HandleFunc("/category/{category}/add", ArticleAddPage).Methods("GET").MatcherFunc(Or(auth.RequiredAccess("writer"), auth.RequiredAccess("administrator")))
 	wr.HandleFunc("/category/{category}/add", ArticleAddActionPage).Methods("POST").MatcherFunc(Or(auth.RequiredAccess("writer"), auth.RequiredAccess("administrator"))).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSubmitWriting))
+
+	if legacyRedirectsEnabled {
+		// legacy redirects
+		r.Path("/writing").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/writing", "/writings"))
+		r.PathPrefix("/writing/").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/writing", "/writings"))
+	}
 }
 
 // Register registers the writings router module.

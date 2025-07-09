@@ -6,7 +6,10 @@ import (
 
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
+	pkghandlers "github.com/arran4/goa4web/pkg/handlers"
 )
+
+var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
 func RegisterRoutes(r *mux.Router) {
@@ -26,6 +29,12 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/show/{link}", ShowReplyPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
 	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")
 	lr.HandleFunc("/suggest", SuggestActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSuggest))
+
+	if legacyRedirectsEnabled {
+		// legacy redirects
+		r.Path("/links").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/links", "/linker"))
+		r.PathPrefix("/links/").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/links", "/linker"))
+	}
 }
 
 // Register registers the linker router module.

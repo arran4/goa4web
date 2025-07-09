@@ -421,15 +421,3 @@ type Writingsearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingID                      int32
 }
-
-type _1OldForumthread struct {
-	Idforumthread          int32
-	ForumtopicIdforumtopic int32
-}
-
-type _1OldForumtopic struct {
-	Idforumtopic                 int32
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-}

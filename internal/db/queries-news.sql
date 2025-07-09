@@ -9,19 +9,19 @@ UPDATE site_news SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?;
 UPDATE site_news SET deleted_at = NOW() WHERE idsiteNews = ?;
 
 -- name: GetForumThreadIdByNewsPostId :one
-SELECT s.forumthread_idforumthread, u.idusers
+SELECT s.forumthread_id, u.idusers
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 WHERE s.idsiteNews = ?;
 
 -- name: AssignNewsThisThreadId :exec
-UPDATE site_news SET forumthread_idforumthread = ? WHERE idsiteNews = ?;
+UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?;
 
 -- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
 SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.idsiteNews = ?
 ;
 
@@ -29,7 +29,7 @@ WHERE s.idsiteNews = ?
 SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.Idsitenews IN (sqlc.slice(newsIds))
 ;
 
@@ -37,7 +37,7 @@ WHERE s.Idsitenews IN (sqlc.slice(newsIds))
 SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 ORDER BY s.occurred DESC
 LIMIT ? OFFSET ?
 ;

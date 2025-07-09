@@ -14,17 +14,17 @@ import (
 
 const assignThreadIdToBlogEntry = `-- name: AssignThreadIdToBlogEntry :exec
 UPDATE blogs
-SET forumthread_idforumthread = ?
+SET forumthread_id = ?
 WHERE idblogs = ?
 `
 
 type AssignThreadIdToBlogEntryParams struct {
-	ForumthreadIdforumthread int32
-	Idblogs                  int32
+	ForumthreadID int32
+	Idblogs       int32
 }
 
 func (q *Queries) AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThreadIdToBlogEntryParams) error {
-	_, err := q.db.ExecContext(ctx, assignThreadIdToBlogEntry, arg.ForumthreadIdforumthread, arg.Idblogs)
+	_, err := q.db.ExecContext(ctx, assignThreadIdToBlogEntry, arg.ForumthreadID, arg.Idblogs)
 	return err
 }
 
@@ -125,23 +125,23 @@ func (q *Queries) CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams
 }
 
 const getAllBlogEntriesByUser = `-- name: GetAllBlogEntriesByUser :many
-SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.users_idusers = ?
 ORDER BY b.written DESC
 `
 
 type GetAllBlogEntriesByUserRow struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  time.Time
-	Username                 sql.NullString
-	Comments                 int32
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	Username           sql.NullString
+	Comments           int32
 }
 
 func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int32) ([]*GetAllBlogEntriesByUserRow, error) {
@@ -155,7 +155,7 @@ func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int3
 		var i GetAllBlogEntriesByUserRow
 		if err := rows.Scan(
 			&i.Idblogs,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Blog,
@@ -177,21 +177,21 @@ func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int3
 }
 
 const getBlogEntriesByIdsDescending = `-- name: GetBlogEntriesByIdsDescending :many
-SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs IN (/*SLICE:blogids*/?)
 ORDER BY b.written DESC
 `
 
 type GetBlogEntriesByIdsDescendingRow struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  time.Time
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
 }
 
 func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []int32) ([]*GetBlogEntriesByIdsDescendingRow, error) {
@@ -215,7 +215,7 @@ func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []i
 		var i GetBlogEntriesByIdsDescendingRow
 		if err := rows.Scan(
 			&i.Idblogs,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Blog,
@@ -235,10 +235,10 @@ func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []i
 }
 
 const getBlogEntriesForUserDescending = `-- name: GetBlogEntriesForUserDescending :many
-SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (b.language_idlanguage = ? OR ? = 0)
 AND (b.users_idusers = ? OR ? = 0)
 ORDER BY b.written DESC
@@ -253,14 +253,14 @@ type GetBlogEntriesForUserDescendingParams struct {
 }
 
 type GetBlogEntriesForUserDescendingRow struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  time.Time
-	Username                 sql.NullString
-	Comments                 int32
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	Username           sql.NullString
+	Comments           int32
 }
 
 func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBlogEntriesForUserDescendingParams) ([]*GetBlogEntriesForUserDescendingRow, error) {
@@ -281,7 +281,7 @@ func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBl
 		var i GetBlogEntriesForUserDescendingRow
 		if err := rows.Scan(
 			&i.Idblogs,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Blog,
@@ -303,10 +303,10 @@ func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBl
 }
 
 const getBlogEntriesForUserDescendingLanguages = `-- name: GetBlogEntriesForUserDescendingLanguages :many
-SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (b.users_idusers = ? OR ? = 0)
 AND (
     NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
@@ -326,14 +326,14 @@ type GetBlogEntriesForUserDescendingLanguagesParams struct {
 }
 
 type GetBlogEntriesForUserDescendingLanguagesRow struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  time.Time
-	Username                 sql.NullString
-	Comments                 int32
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	Username           sql.NullString
+	Comments           int32
 }
 
 func (q *Queries) GetBlogEntriesForUserDescendingLanguages(ctx context.Context, arg GetBlogEntriesForUserDescendingLanguagesParams) ([]*GetBlogEntriesForUserDescendingLanguagesRow, error) {
@@ -354,7 +354,7 @@ func (q *Queries) GetBlogEntriesForUserDescendingLanguages(ctx context.Context, 
 		var i GetBlogEntriesForUserDescendingLanguagesRow
 		if err := rows.Scan(
 			&i.Idblogs,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Blog,
@@ -376,23 +376,23 @@ func (q *Queries) GetBlogEntriesForUserDescendingLanguages(ctx context.Context, 
 }
 
 const getBlogEntryForUserById = `-- name: GetBlogEntryForUserById :one
-SELECT b.idblogs, b.forumthread_idforumthread, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs = ?
 LIMIT 1
 `
 
 type GetBlogEntryForUserByIdRow struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  time.Time
-	Username                 sql.NullString
-	Comments                 int32
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	Username           sql.NullString
+	Comments           int32
 }
 
 func (q *Queries) GetBlogEntryForUserById(ctx context.Context, idblogs int32) (*GetBlogEntryForUserByIdRow, error) {
@@ -400,7 +400,7 @@ func (q *Queries) GetBlogEntryForUserById(ctx context.Context, idblogs int32) (*
 	var i GetBlogEntryForUserByIdRow
 	err := row.Scan(
 		&i.Idblogs,
-		&i.ForumthreadIdforumthread,
+		&i.ForumthreadID,
 		&i.UsersIdusers,
 		&i.LanguageIdlanguage,
 		&i.Blog,

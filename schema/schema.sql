@@ -1,6 +1,6 @@
 CREATE TABLE `blogs` (
   `idblogs` int(10) NOT NULL AUTO_INCREMENT,
-  `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
+  `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `blog` longtext DEFAULT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE `blogs` (
   PRIMARY KEY (`idblogs`),
   KEY `blogs_FKIndex1` (`language_idlanguage`),
   KEY `blogs_FKIndex2` (`users_idusers`),
-  KEY `blogs_FKIndex3` (`forumthread_idforumthread`)
+  KEY `blogs_FKIndex3` (`forumthread_id`)
 );
 
 CREATE TABLE `blogs_search` (
@@ -30,7 +30,7 @@ CREATE TABLE `bookmarks` (
 
 CREATE TABLE `comments` (
   `idcomments` int(10) NOT NULL AUTO_INCREMENT,
-  `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
+  `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `written` datetime DEFAULT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE `comments` (
   PRIMARY KEY (`idcomments`),
   KEY `comments_FKIndex1` (`language_idlanguage`),
   KEY `comments_FKIndex2` (`users_idusers`),
-  KEY `comments_FKIndex3` (`forumthread_idforumthread`)
+  KEY `comments_FKIndex3` (`forumthread_id`)
 );
 
 CREATE TABLE `comments_search` (
@@ -118,7 +118,7 @@ CREATE TABLE `imageboard` (
 
 CREATE TABLE `imagepost` (
   `idimagepost` int(10) NOT NULL AUTO_INCREMENT,
-  `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
+  `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
   `posted` datetime DEFAULT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE `imagepost` (
   PRIMARY KEY (`idimagepost`),
   KEY `imagepost_FKIndex1` (`imageboard_idimageboard`),
   KEY `imagepost_FKIndex2` (`users_idusers`),
-  KEY `imagepost_FKIndex3` (`forumthread_idforumthread`)
+  KEY `imagepost_FKIndex3` (`forumthread_id`)
 );
 
 CREATE TABLE `imagepost_search` (
@@ -152,16 +152,16 @@ CREATE TABLE `linker` (
   `idlinker` int(10) NOT NULL AUTO_INCREMENT,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `linkerCategory_idlinkerCategory` int(10) NOT NULL DEFAULT 0,
-  `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
+  `linker_category_id` int(10) NOT NULL DEFAULT 0,
+  `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `url` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `listed` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idlinker`),
-  KEY `linker_FKIndex1` (`forumthread_idforumthread`),
-  KEY `linker_FKIndex2` (`linkerCategory_idlinkerCategory`),
+  KEY `linker_FKIndex1` (`forumthread_id`),
+  KEY `linker_FKIndex2` (`linker_category_id`),
   KEY `linker_FKIndex3` (`users_idusers`),
   KEY `linker_FKIndex4` (`language_idlanguage`)
 );
@@ -178,12 +178,12 @@ CREATE TABLE `linker_queue` (
   `idlinkerQueue` int(10) NOT NULL AUTO_INCREMENT,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `linkerCategory_idlinkerCategory` int(10) NOT NULL DEFAULT 0,
+  `linker_category_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `url` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   PRIMARY KEY (`idlinkerQueue`),
-  KEY `linkerQueue_FKIndex1` (`linkerCategory_idlinkerCategory`),
+  KEY `linkerQueue_FKIndex1` (`linker_category_id`),
   KEY `linkerQueue_FKIndex2` (`users_idusers`),
   KEY `linkerQueue_FKIndex3` (`language_idlanguage`)
 );
@@ -233,7 +233,7 @@ CREATE TABLE `searchwordlist_has_linker` (
 
 CREATE TABLE `site_news` (
   `idsiteNews` int(10) NOT NULL AUTO_INCREMENT,
-  `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
+  `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
@@ -241,7 +241,7 @@ CREATE TABLE `site_news` (
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
   KEY `siteNews_FKIndex2` (`language_idlanguage`),
-  KEY `siteNews_FKIndex3` (`forumthread_idforumthread`)
+  KEY `siteNews_FKIndex3` (`forumthread_id`)
 );
 
 CREATE TABLE `site_news_search` (
@@ -308,7 +308,7 @@ CREATE TABLE `userstopiclevel` (
 CREATE TABLE `writing` (
   `idwriting` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
+  `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `writing_category_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
@@ -320,7 +320,7 @@ CREATE TABLE `writing` (
   PRIMARY KEY (`idwriting`),
   KEY `writing_FKIndex1` (`writing_category_id`),
   KEY `writing_FKIndex2` (`language_idlanguage`),
-  KEY `writing_FKIndex3` (`forumthread_idforumthread`),
+  KEY `writing_FKIndex3` (`forumthread_id`),
   KEY `writing_FKIndex4` (`users_idusers`)
 );
 
@@ -467,7 +467,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_users` (
 
 CREATE TABLE IF NOT EXISTS `deactivated_comments` (
   `idcomments` int NOT NULL,
-  `forumthread_idforumthread` int NOT NULL,
+  `forumthread_id` int NOT NULL,
   `users_idusers` int NOT NULL,
   `language_idlanguage` int NOT NULL,
   `written` datetime,
@@ -480,7 +480,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_comments` (
 CREATE TABLE IF NOT EXISTS `deactivated_writings` (
   `idwriting` int NOT NULL,
   `users_idusers` int NOT NULL,
-  `forumthread_idforumthread` int NOT NULL,
+  `forumthread_id` int NOT NULL,
   `language_idlanguage` int NOT NULL,
   `writing_category_id` int NOT NULL,
   `title` tinytext,
@@ -495,7 +495,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_writings` (
 
 CREATE TABLE IF NOT EXISTS `deactivated_blogs` (
   `idblogs` int NOT NULL,
-  `forumthread_idforumthread` int NOT NULL,
+  `forumthread_id` int NOT NULL,
   `users_idusers` int NOT NULL,
   `language_idlanguage` int NOT NULL,
   `blog` longtext,
@@ -507,7 +507,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_blogs` (
 
 CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
   `idimagepost` int NOT NULL,
-  `forumthread_idforumthread` int NOT NULL,
+  `forumthread_id` int NOT NULL,
   `users_idusers` int NOT NULL,
   `imageboard_idimageboard` int NOT NULL,
   `posted` datetime,
@@ -525,8 +525,8 @@ CREATE TABLE IF NOT EXISTS `deactivated_linker` (
   `idlinker` int NOT NULL,
   `language_idlanguage` int NOT NULL,
   `users_idusers` int NOT NULL,
-  `linkerCategory_idlinkerCategory` int NOT NULL,
-  `forumthread_idforumthread` int NOT NULL,
+  `linker_category_id` int NOT NULL,
+  `forumthread_id` int NOT NULL,
   `title` tinytext,
   `url` tinytext,
   `description` tinytext,

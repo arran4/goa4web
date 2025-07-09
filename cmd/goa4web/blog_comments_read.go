@@ -62,7 +62,7 @@ func (c *blogCommentsReadCmd) Run() error {
 		return fmt.Errorf("get blog: %w", err)
 	}
 	if c.All {
-		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadIdforumthread: b.ForumthreadIdforumthread})
+		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadID: b.ForumthreadID})
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
 		}

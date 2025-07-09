@@ -12,16 +12,16 @@ import (
 )
 
 const assignWritingThisThreadId = `-- name: AssignWritingThisThreadId :exec
-UPDATE writing SET forumthread_idforumthread = ? WHERE idwriting = ?
+UPDATE writing SET forumthread_id = ? WHERE idwriting = ?
 `
 
 type AssignWritingThisThreadIdParams struct {
-	ForumthreadIdforumthread int32
-	Idwriting                int32
+	ForumthreadID int32
+	Idwriting     int32
 }
 
 func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWritingThisThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, assignWritingThisThreadId, arg.ForumthreadIdforumthread, arg.Idwriting)
+	_, err := q.db.ExecContext(ctx, assignWritingThisThreadId, arg.ForumthreadID, arg.Idwriting)
 	return err
 }
 
@@ -175,8 +175,8 @@ func (q *Queries) GetAllWritingCategories(ctx context.Context, writingCategoryID
 }
 
 const getAllWritingsByUser = `-- name: GetAllWritingsByUser :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = ?
@@ -184,19 +184,19 @@ ORDER BY w.published DESC
 `
 
 type GetAllWritingsByUserRow struct {
-	Idwriting                int32
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	WritingCategoryID        int32
-	Title                    sql.NullString
-	Published                sql.NullTime
-	Writing                  sql.NullString
-	Abstract                 sql.NullString
-	Private                  sql.NullBool
-	DeletedAt                sql.NullTime
-	Username                 sql.NullString
-	Comments                 int64
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	Username           sql.NullString
+	Comments           int64
 }
 
 func (q *Queries) GetAllWritingsByUser(ctx context.Context, usersIdusers int32) ([]*GetAllWritingsByUserRow, error) {
@@ -211,7 +211,7 @@ func (q *Queries) GetAllWritingsByUser(ctx context.Context, usersIdusers int32) 
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
 			&i.WritingCategoryID,
 			&i.Title,
@@ -237,7 +237,7 @@ func (q *Queries) GetAllWritingsByUser(ctx context.Context, usersIdusers int32) 
 }
 
 const getPublicWritings = `-- name: GetPublicWritings :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC
@@ -261,7 +261,7 @@ func (q *Queries) GetPublicWritings(ctx context.Context, arg GetPublicWritingsPa
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
 			&i.WritingCategoryID,
 			&i.Title,
@@ -285,8 +285,8 @@ func (q *Queries) GetPublicWritings(ctx context.Context, arg GetPublicWritingsPa
 }
 
 const getPublicWritingsByUser = `-- name: GetPublicWritingsByUser :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = ?
@@ -301,19 +301,19 @@ type GetPublicWritingsByUserParams struct {
 }
 
 type GetPublicWritingsByUserRow struct {
-	Idwriting                int32
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	WritingCategoryID        int32
-	Title                    sql.NullString
-	Published                sql.NullTime
-	Writing                  sql.NullString
-	Abstract                 sql.NullString
-	Private                  sql.NullBool
-	DeletedAt                sql.NullTime
-	Username                 sql.NullString
-	Comments                 int64
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	Username           sql.NullString
+	Comments           int64
 }
 
 func (q *Queries) GetPublicWritingsByUser(ctx context.Context, arg GetPublicWritingsByUserParams) ([]*GetPublicWritingsByUserRow, error) {
@@ -328,7 +328,7 @@ func (q *Queries) GetPublicWritingsByUser(ctx context.Context, arg GetPublicWrit
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
 			&i.WritingCategoryID,
 			&i.Title,
@@ -354,8 +354,8 @@ func (q *Queries) GetPublicWritingsByUser(ctx context.Context, arg GetPublicWrit
 }
 
 const getPublicWritingsInCategory = `-- name: GetPublicWritingsInCategory :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.Username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.Username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id=?
@@ -370,19 +370,19 @@ type GetPublicWritingsInCategoryParams struct {
 }
 
 type GetPublicWritingsInCategoryRow struct {
-	Idwriting                int32
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	WritingCategoryID        int32
-	Title                    sql.NullString
-	Published                sql.NullTime
-	Writing                  sql.NullString
-	Abstract                 sql.NullString
-	Private                  sql.NullBool
-	DeletedAt                sql.NullTime
-	Username                 sql.NullString
-	Comments                 int64
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	Username           sql.NullString
+	Comments           int64
 }
 
 func (q *Queries) GetPublicWritingsInCategory(ctx context.Context, arg GetPublicWritingsInCategoryParams) ([]*GetPublicWritingsInCategoryRow, error) {
@@ -397,7 +397,7 @@ func (q *Queries) GetPublicWritingsInCategory(ctx context.Context, arg GetPublic
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
 			&i.WritingCategoryID,
 			&i.Title,
@@ -423,7 +423,7 @@ func (q *Queries) GetPublicWritingsInCategory(ctx context.Context, arg GetPublic
 }
 
 const getWritingByIdForUserDescendingByPublishedDate = `-- name: GetWritingByIdForUserDescendingByPublishedDate :one
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
@@ -437,19 +437,19 @@ type GetWritingByIdForUserDescendingByPublishedDateParams struct {
 }
 
 type GetWritingByIdForUserDescendingByPublishedDateRow struct {
-	Idwriting                int32
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	WritingCategoryID        int32
-	Title                    sql.NullString
-	Published                sql.NullTime
-	Writing                  sql.NullString
-	Abstract                 sql.NullString
-	Private                  sql.NullBool
-	DeletedAt                sql.NullTime
-	Writerid                 int32
-	Writerusername           sql.NullString
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	Writerid           int32
+	Writerusername     sql.NullString
 }
 
 func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Context, arg GetWritingByIdForUserDescendingByPublishedDateParams) (*GetWritingByIdForUserDescendingByPublishedDateRow, error) {
@@ -458,7 +458,7 @@ func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Con
 	err := row.Scan(
 		&i.Idwriting,
 		&i.UsersIdusers,
-		&i.ForumthreadIdforumthread,
+		&i.ForumthreadID,
 		&i.LanguageIdlanguage,
 		&i.WritingCategoryID,
 		&i.Title,
@@ -474,7 +474,7 @@ func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Con
 }
 
 const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsByIdsForUserDescendingByPublishedDate :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_idforumthread, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.username AS WriterUsername
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
@@ -488,19 +488,19 @@ type GetWritingsByIdsForUserDescendingByPublishedDateParams struct {
 }
 
 type GetWritingsByIdsForUserDescendingByPublishedDateRow struct {
-	Idwriting                int32
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	WritingCategoryID        int32
-	Title                    sql.NullString
-	Published                sql.NullTime
-	Writing                  sql.NullString
-	Abstract                 sql.NullString
-	Private                  sql.NullBool
-	DeletedAt                sql.NullTime
-	Writerid                 int32
-	Writerusername           sql.NullString
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	Writerid           int32
+	Writerusername     sql.NullString
 }
 
 func (q *Queries) GetWritingsByIdsForUserDescendingByPublishedDate(ctx context.Context, arg GetWritingsByIdsForUserDescendingByPublishedDateParams) ([]*GetWritingsByIdsForUserDescendingByPublishedDateRow, error) {
@@ -527,7 +527,7 @@ func (q *Queries) GetWritingsByIdsForUserDescendingByPublishedDate(ctx context.C
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
 			&i.WritingCategoryID,
 			&i.Title,

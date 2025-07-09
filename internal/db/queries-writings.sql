@@ -8,7 +8,7 @@ LIMIT ? OFFSET ?
 
 -- name: GetPublicWritingsByUser :many
 SELECT w.*, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = ?
@@ -17,7 +17,7 @@ LIMIT ? OFFSET ?;
 
 -- name: GetPublicWritingsInCategory :many
 SELECT w.*, u.Username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) as Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id=?
@@ -91,12 +91,12 @@ LEFT JOIN users u ON idusers = wau.users_idusers
 ;
 
 -- name: AssignWritingThisThreadId :exec
-UPDATE writing SET forumthread_idforumthread = ? WHERE idwriting = ?;
+UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;
 
 
 -- name: GetAllWritingsByUser :many
 SELECT w.*, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_idforumthread=w.forumthread_idforumthread AND w.forumthread_idforumthread != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = ?

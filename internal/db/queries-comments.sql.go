@@ -12,22 +12,22 @@ import (
 )
 
 const createComment = `-- name: CreateComment :execlastid
-INSERT INTO comments (language_idlanguage, users_idusers, forumthread_idforumthread, text, written)
+INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
 VALUES (?, ?, ?, ?, NOW() )
 `
 
 type CreateCommentParams struct {
-	LanguageIdlanguage       int32
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
-	Text                     sql.NullString
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	Text               sql.NullString
 }
 
 func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, createComment,
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
-		arg.ForumthreadIdforumthread,
+		arg.ForumthreadID,
 		arg.Text,
 	)
 	if err != nil {
@@ -37,22 +37,22 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (i
 }
 
 const getAllCommentsByUser = `-- name: GetAllCommentsByUser :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, th.forumtopic_idforumtopic
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, th.forumtopic_idforumtopic
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 WHERE c.users_idusers = ?
 ORDER BY c.written
 `
 
 type GetAllCommentsByUserRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	DeletedAt                sql.NullTime
-	ForumtopicIdforumtopic   sql.NullInt32
+	Idcomments             int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	LanguageIdlanguage     int32
+	Written                sql.NullTime
+	Text                   sql.NullString
+	DeletedAt              sql.NullTime
+	ForumtopicIdforumtopic sql.NullInt32
 }
 
 func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) ([]*GetAllCommentsByUserRow, error) {
@@ -66,7 +66,7 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 		var i GetAllCommentsByUserRow
 		if err := rows.Scan(
 			&i.Idcomments,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Written,
@@ -88,7 +88,7 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 }
 
 const getCommentById = `-- name: GetCommentById :one
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
 FROM comments c
 WHERE c.Idcomments=?
 `
@@ -98,7 +98,7 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 	var i Comment
 	err := row.Scan(
 		&i.Idcomments,
-		&i.ForumthreadIdforumthread,
+		&i.ForumthreadID,
 		&i.UsersIdusers,
 		&i.LanguageIdlanguage,
 		&i.Written,
@@ -109,9 +109,9 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 }
 
 const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.Username
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.Username
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
@@ -126,14 +126,14 @@ type GetCommentByIdForUserParams struct {
 }
 
 type GetCommentByIdForUserRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	DeletedAt                sql.NullTime
-	Username                 sql.NullString
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Written            sql.NullTime
+	Text               sql.NullString
+	DeletedAt          sql.NullTime
+	Username           sql.NullString
 }
 
 func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
@@ -141,7 +141,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 	var i GetCommentByIdForUserRow
 	err := row.Scan(
 		&i.Idcomments,
-		&i.ForumthreadIdforumthread,
+		&i.ForumthreadID,
 		&i.UsersIdusers,
 		&i.LanguageIdlanguage,
 		&i.Written,
@@ -153,7 +153,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 }
 
 const getCommentsByIds = `-- name: GetCommentsByIds :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
 FROM comments c
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
 `
@@ -179,7 +179,7 @@ func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment
 		var i Comment
 		if err := rows.Scan(
 			&i.Idcomments,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Written,
@@ -200,9 +200,9 @@ func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment
 }
 
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
@@ -218,19 +218,19 @@ type GetCommentsByIdsForUserWithThreadInfoParams struct {
 }
 
 type GetCommentsByIdsForUserWithThreadInfoRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	DeletedAt                sql.NullTime
-	Posterusername           sql.NullString
-	Idforumthread            sql.NullInt32
-	Idforumtopic             sql.NullInt32
-	ForumtopicTitle          sql.NullString
-	Idforumcategory          sql.NullInt32
-	ForumcategoryTitle       sql.NullString
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Written            sql.NullTime
+	Text               sql.NullString
+	DeletedAt          sql.NullTime
+	Posterusername     sql.NullString
+	Idforumthread      sql.NullInt32
+	Idforumtopic       sql.NullInt32
+	ForumtopicTitle    sql.NullString
+	Idforumcategory    sql.NullInt32
+	ForumcategoryTitle sql.NullString
 }
 
 func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error) {
@@ -255,7 +255,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 		var i GetCommentsByIdsForUserWithThreadInfoRow
 		if err := rows.Scan(
 			&i.Idcomments,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Written,
@@ -282,35 +282,35 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 }
 
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_idforumthread=th.idforumthread
+LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
 LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.forumthread_idforumthread=? AND c.forumthread_idforumthread!=0 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE c.forumthread_id=? AND c.forumthread_id!=0 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
 ORDER BY c.written
 `
 
 type GetCommentsByThreadIdForUserParams struct {
-	UsersIdusers             int32
-	ForumthreadIdforumthread int32
+	UsersIdusers  int32
+	ForumthreadID int32
 }
 
 type GetCommentsByThreadIdForUserRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	DeletedAt                sql.NullTime
-	Posterusername           sql.NullString
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Written            sql.NullTime
+	Text               sql.NullString
+	DeletedAt          sql.NullTime
+	Posterusername     sql.NullString
 }
 
 func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser, arg.UsersIdusers, arg.ForumthreadIdforumthread)
+	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser, arg.UsersIdusers, arg.ForumthreadID)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 		var i GetCommentsByThreadIdForUserRow
 		if err := rows.Scan(
 			&i.Idcomments,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Written,

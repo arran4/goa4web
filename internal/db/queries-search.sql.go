@@ -80,7 +80,7 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 WHERE swl.word=?
 AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
 `
@@ -129,7 +129,7 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
 AND ft.forumcategory_idforumcategory!=0
@@ -163,7 +163,7 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 WHERE swl.word=?
 AND cs.comment_id IN (/*SLICE:ids*/?)
 AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
@@ -222,7 +222,7 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_idforumthread
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
 AND cs.comment_id IN (/*SLICE:ids*/?)

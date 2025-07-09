@@ -12,16 +12,16 @@ import (
 )
 
 const assignNewsThisThreadId = `-- name: AssignNewsThisThreadId :exec
-UPDATE site_news SET forumthread_idforumthread = ? WHERE idsiteNews = ?
+UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?
 `
 
 type AssignNewsThisThreadIdParams struct {
-	ForumthreadIdforumthread int32
-	Idsitenews               int32
+	ForumthreadID int32
+	Idsitenews    int32
 }
 
 func (q *Queries) AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThisThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, assignNewsThisThreadId, arg.ForumthreadIdforumthread, arg.Idsitenews)
+	_, err := q.db.ExecContext(ctx, assignNewsThisThreadId, arg.ForumthreadID, arg.Idsitenews)
 	return err
 }
 
@@ -51,42 +51,42 @@ func (q *Queries) DeactivateNewsPost(ctx context.Context, idsitenews int32) erro
 }
 
 const getForumThreadIdByNewsPostId = `-- name: GetForumThreadIdByNewsPostId :one
-SELECT s.forumthread_idforumthread, u.idusers
+SELECT s.forumthread_id, u.idusers
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 WHERE s.idsiteNews = ?
 `
 
 type GetForumThreadIdByNewsPostIdRow struct {
-	ForumthreadIdforumthread int32
-	Idusers                  sql.NullInt32
+	ForumthreadID int32
+	Idusers       sql.NullInt32
 }
 
 func (q *Queries) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews int32) (*GetForumThreadIdByNewsPostIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getForumThreadIdByNewsPostId, idsitenews)
 	var i GetForumThreadIdByNewsPostIdRow
-	err := row.Scan(&i.ForumthreadIdforumthread, &i.Idusers)
+	err := row.Scan(&i.ForumthreadID, &i.Idusers)
 	return &i, err
 }
 
 const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.idsiteNews = ?
 `
 
 type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
-	Writername               sql.NullString
-	Writerid                 sql.NullInt32
-	Idsitenews               int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	UsersIdusers             int32
-	News                     sql.NullString
-	Occurred                 sql.NullTime
-	Comments                 sql.NullInt32
+	Writername         sql.NullString
+	Writerid           sql.NullInt32
+	Idsitenews         int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	News               sql.NullString
+	Occurred           sql.NullTime
+	Comments           sql.NullInt32
 }
 
 func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, idsitenews int32) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error) {
@@ -96,7 +96,7 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 		&i.Writername,
 		&i.Writerid,
 		&i.Idsitenews,
-		&i.ForumthreadIdforumthread,
+		&i.ForumthreadID,
 		&i.LanguageIdlanguage,
 		&i.UsersIdusers,
 		&i.News,
@@ -107,23 +107,23 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 }
 
 const getNewsPostsByIdsWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostsByIdsWithWriterIdAndThreadCommentCount :many
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
 `
 
 type GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow struct {
-	Writername               sql.NullString
-	Writerid                 sql.NullInt32
-	Idsitenews               int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	UsersIdusers             int32
-	News                     sql.NullString
-	Occurred                 sql.NullTime
-	Comments                 sql.NullInt32
+	Writername         sql.NullString
+	Writerid           sql.NullInt32
+	Idsitenews         int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	News               sql.NullString
+	Occurred           sql.NullTime
+	Comments           sql.NullInt32
 }
 
 func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context.Context, newsids []int32) ([]*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, error) {
@@ -149,7 +149,7 @@ func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context
 			&i.Writername,
 			&i.Writerid,
 			&i.Idsitenews,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
 			&i.UsersIdusers,
 			&i.News,
@@ -170,10 +170,10 @@ func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context
 }
 
 const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_idforumthread, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 ORDER BY s.occurred DESC
 LIMIT ? OFFSET ?
 `
@@ -184,15 +184,15 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams struct 
 }
 
 type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
-	Writername               sql.NullString
-	Writerid                 sql.NullInt32
-	Idsitenews               int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	UsersIdusers             int32
-	News                     sql.NullString
-	Occurred                 sql.NullTime
-	Comments                 sql.NullInt32
+	Writername         sql.NullString
+	Writerid           sql.NullInt32
+	Idsitenews         int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	News               sql.NullString
+	Occurred           sql.NullTime
+	Comments           sql.NullInt32
 }
 
 func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
@@ -208,7 +208,7 @@ func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(
 			&i.Writername,
 			&i.Writerid,
 			&i.Idsitenews,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
 			&i.UsersIdusers,
 			&i.News,

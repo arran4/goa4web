@@ -90,8 +90,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: int32(post.ForumthreadIdforumthread),
+		UsersIdusers:  uid,
+		ForumthreadID: int32(post.ForumthreadID),
 	})
 	if err != nil {
 		switch {
@@ -105,7 +105,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
-		Idforumthread: int32(post.ForumthreadIdforumthread),
+		Idforumthread: int32(post.ForumthreadID),
 	})
 	if err != nil {
 		switch {
@@ -215,7 +215,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pthid = post.ForumthreadIdforumthread
+	var pthid = post.ForumthreadID
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
 		String: NewsTopicName,
 		Valid:  true,
@@ -255,8 +255,8 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignNewsThisThreadId(r.Context(), db.AssignNewsThisThreadIdParams{
-			ForumthreadIdforumthread: pthid,
-			Idsitenews:               int32(pid),
+			ForumthreadID: pthid,
+			Idsitenews:    int32(pid),
 		}); err != nil {
 			log.Printf("Error: assign_news_to_thread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -285,8 +285,8 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: pthid,
-		Idusers:                  uid,
+		ForumthreadID: pthid,
+		Idusers:       uid,
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
@@ -313,9 +313,9 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	//}
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage:       int32(languageId),
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: pthid,
+		LanguageIdlanguage: int32(languageId),
+		UsersIdusers:       uid,
+		ForumthreadID:      pthid,
 		Text: sql.NullString{
 			String: text,
 			Valid:  true,

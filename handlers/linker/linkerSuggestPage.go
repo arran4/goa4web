@@ -74,11 +74,11 @@ func SuggestActionPage(w http.ResponseWriter, r *http.Request) {
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
 	if err := queries.CreateLinkerQueuedItem(r.Context(), db.CreateLinkerQueuedItemParams{
-		UsersIdusers:                   uid,
-		LinkercategoryIdlinkercategory: int32(category),
-		Title:                          sql.NullString{Valid: true, String: title},
-		Url:                            sql.NullString{Valid: true, String: url},
-		Description:                    sql.NullString{Valid: true, String: description},
+		UsersIdusers:     uid,
+		LinkerCategoryID: int32(category),
+		Title:            sql.NullString{Valid: true, String: title},
+		Url:              sql.NullString{Valid: true, String: url},
+		Description:      sql.NullString{Valid: true, String: description},
 	}); err != nil {
 		log.Printf("createLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

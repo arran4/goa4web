@@ -114,12 +114,12 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 	blogs := make([]*db.Blog, 0, len(rows))
 	for _, r := range rows {
 		blogs = append(blogs, &db.Blog{
-			Idblogs:                  r.Idblogs,
-			ForumthreadIdforumthread: r.ForumthreadIdforumthread,
-			UsersIdusers:             r.UsersIdusers,
-			LanguageIdlanguage:       r.LanguageIdlanguage,
-			Blog:                     r.Blog,
-			Written:                  r.Written,
+			Idblogs:            r.Idblogs,
+			ForumthreadID:      r.ForumthreadID,
+			UsersIdusers:       r.UsersIdusers,
+			LanguageIdlanguage: r.LanguageIdlanguage,
+			Blog:               r.Blog,
+			Written:            r.Written,
 		})
 	}
 

@@ -58,11 +58,11 @@ WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND 
 GROUP BY u.idusers;
 
 -- name: ListUsersSubscribedToThread :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
     c.written, c.text, u.idusers, u.email, u.username,
     p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies
 FROM comments c, users u, preferences p
-WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
+WHERE c.forumthread_id=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
 

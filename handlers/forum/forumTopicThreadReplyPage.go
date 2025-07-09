@@ -44,8 +44,8 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: threadRow.Idforumthread,
-		Idusers:                  uid,
+		ForumthreadID: threadRow.Idforumthread,
+		Idusers:       uid,
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
@@ -57,8 +57,8 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		Idusers:                  uid,
-		ForumthreadIdforumthread: threadRow.Idforumthread,
+		Idusers:       uid,
+		ForumthreadID: threadRow.Idforumthread,
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
@@ -71,9 +71,9 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage:       int32(languageId),
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: threadRow.Idforumthread,
+		LanguageIdlanguage: int32(languageId),
+		UsersIdusers:       uid,
+		ForumthreadID:      threadRow.Idforumthread,
 		Text: sql.NullString{
 			String: text,
 			Valid:  true,

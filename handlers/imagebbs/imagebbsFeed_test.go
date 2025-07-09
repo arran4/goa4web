@@ -11,11 +11,11 @@ import (
 func TestImagebbsFeed(t *testing.T) {
 	rows := []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow{
 		{
-			Idimagepost:              1,
-			ForumthreadIdforumthread: 2,
-			Description:              sql.NullString{String: "hello", Valid: true},
-			Username:                 sql.NullString{String: "bob", Valid: true},
-			Posted:                   sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Idimagepost:   1,
+			ForumthreadID: 2,
+			Description:   sql.NullString{String: "hello", Valid: true},
+			Username:      sql.NullString{String: "bob", Valid: true},
+			Posted:        sql.NullTime{Time: time.Unix(0, 0), Valid: true},
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/imagebbs/board/1.rss", nil)

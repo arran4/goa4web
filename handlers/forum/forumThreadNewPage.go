@@ -89,9 +89,9 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage:       int32(languageId),
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: int32(threadId),
+		LanguageIdlanguage: int32(languageId),
+		UsersIdusers:       uid,
+		ForumthreadID:      int32(threadId),
 		Text: sql.NullString{
 			String: text,
 			Valid:  true,

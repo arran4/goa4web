@@ -73,12 +73,12 @@ func (c *userDeactivateCmd) Run() error {
 	}
 	for _, cm := range comments {
 		if err := qtx.ArchiveComment(ctx, dbpkg.ArchiveCommentParams{
-			Idcomments:               cm.Idcomments,
-			ForumthreadIdforumthread: cm.ForumthreadIdforumthread,
-			UsersIdusers:             cm.UsersIdusers,
-			LanguageIdlanguage:       cm.LanguageIdlanguage,
-			Written:                  cm.Written,
-			Text:                     cm.Text,
+			Idcomments:         cm.Idcomments,
+			ForumthreadID:      cm.ForumthreadID,
+			UsersIdusers:       cm.UsersIdusers,
+			LanguageIdlanguage: cm.LanguageIdlanguage,
+			Written:            cm.Written,
+			Text:               cm.Text,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive comment: %w", err)
@@ -96,16 +96,16 @@ func (c *userDeactivateCmd) Run() error {
 	}
 	for _, w := range writings {
 		if err := qtx.ArchiveWriting(ctx, dbpkg.ArchiveWritingParams{
-			Idwriting:                w.Idwriting,
-			UsersIdusers:             w.UsersIdusers,
-			ForumthreadIdforumthread: w.ForumthreadIdforumthread,
-			LanguageIdlanguage:       w.LanguageIdlanguage,
-			WritingCategoryID:        w.WritingCategoryID,
-			Title:                    w.Title,
-			Published:                w.Published,
-			Writing:                  w.Writing,
-			Abstract:                 w.Abstract,
-			Private:                  w.Private,
+			Idwriting:          w.Idwriting,
+			UsersIdusers:       w.UsersIdusers,
+			ForumthreadID:      w.ForumthreadID,
+			LanguageIdlanguage: w.LanguageIdlanguage,
+			WritingCategoryID:  w.WritingCategoryID,
+			Title:              w.Title,
+			Published:          w.Published,
+			Writing:            w.Writing,
+			Abstract:           w.Abstract,
+			Private:            w.Private,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive writing: %w", err)
@@ -127,12 +127,12 @@ func (c *userDeactivateCmd) Run() error {
 	}
 	for _, b := range blogs {
 		if err := qtx.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
-			Idblogs:                  b.Idblogs,
-			ForumthreadIdforumthread: b.ForumthreadIdforumthread,
-			UsersIdusers:             b.UsersIdusers,
-			LanguageIdlanguage:       b.LanguageIdlanguage,
-			Blog:                     b.Blog,
-			Written:                  sql.NullTime{Time: b.Written, Valid: true},
+			Idblogs:            b.Idblogs,
+			ForumthreadID:      b.ForumthreadID,
+			UsersIdusers:       b.UsersIdusers,
+			LanguageIdlanguage: b.LanguageIdlanguage,
+			Blog:               b.Blog,
+			Written:            sql.NullTime{Time: b.Written, Valid: true},
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive blog: %w", err)
@@ -149,16 +149,16 @@ func (c *userDeactivateCmd) Run() error {
 	}
 	for _, img := range imgs {
 		if err := qtx.ArchiveImagepost(ctx, dbpkg.ArchiveImagepostParams{
-			Idimagepost:              img.Idimagepost,
-			ForumthreadIdforumthread: img.ForumthreadIdforumthread,
-			UsersIdusers:             img.UsersIdusers,
-			ImageboardIdimageboard:   img.ImageboardIdimageboard,
-			Posted:                   img.Posted,
-			Description:              img.Description,
-			Thumbnail:                img.Thumbnail,
-			Fullimage:                img.Fullimage,
-			FileSize:                 img.FileSize,
-			Approved:                 sql.NullBool{Bool: img.Approved, Valid: true},
+			Idimagepost:            img.Idimagepost,
+			ForumthreadID:          img.ForumthreadID,
+			UsersIdusers:           img.UsersIdusers,
+			ImageboardIdimageboard: img.ImageboardIdimageboard,
+			Posted:                 img.Posted,
+			Description:            img.Description,
+			Thumbnail:              img.Thumbnail,
+			Fullimage:              img.Fullimage,
+			FileSize:               img.FileSize,
+			Approved:               sql.NullBool{Bool: img.Approved, Valid: true},
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive imagepost: %w", err)
@@ -175,15 +175,15 @@ func (c *userDeactivateCmd) Run() error {
 	}
 	for _, l := range links {
 		if err := qtx.ArchiveLink(ctx, dbpkg.ArchiveLinkParams{
-			Idlinker:                       l.Idlinker,
-			LanguageIdlanguage:             l.LanguageIdlanguage,
-			UsersIdusers:                   l.UsersIdusers,
-			LinkercategoryIdlinkercategory: l.LinkercategoryIdlinkercategory,
-			ForumthreadIdforumthread:       l.ForumthreadIdforumthread,
-			Title:                          l.Title,
-			Url:                            l.Url,
-			Description:                    l.Description,
-			Listed:                         l.Listed,
+			Idlinker:           l.Idlinker,
+			LanguageIdlanguage: l.LanguageIdlanguage,
+			UsersIdusers:       l.UsersIdusers,
+			LinkerCategoryID:   l.LinkerCategoryID,
+			ForumthreadID:      l.ForumthreadID,
+			Title:              l.Title,
+			Url:                l.Url,
+			Description:        l.Description,
+			Listed:             l.Listed,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive link: %w", err)

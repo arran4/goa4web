@@ -49,7 +49,7 @@ func (c *blogCommentsListCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get blog: %w", err)
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadIdforumthread: b.ForumthreadIdforumthread})
+	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadID: b.ForumthreadID})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}

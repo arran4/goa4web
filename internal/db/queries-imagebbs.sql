@@ -13,14 +13,14 @@ WHERE imageboard_idimageboard = ?;
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.imageboard_idimageboard = ? AND i.approved = 1;
 
 -- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.idimagepost = ? AND i.approved = 1;
 
 -- name: CreateImagePost :execlastid
@@ -37,13 +37,13 @@ INSERT INTO imagepost (
 VALUES (?, ?, ?, ?, ?, NOW(), ?, ?);
 
 -- name: UpdateImagePostByIdForumThreadId :exec
-UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?;
+UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?;
 
 -- name: GetImagePostsByUserDescending :many
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = ? AND i.approved = 1
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;

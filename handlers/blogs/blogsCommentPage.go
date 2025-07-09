@@ -92,7 +92,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 	commentIdString := r.URL.Query().Get("comment")
 	commentId, _ := strconv.Atoi(commentIdString)
-	if blog.ForumthreadIdforumthread > 0 { // TODO make nullable.
+	if blog.ForumthreadID > 0 { // TODO make nullable.
 
 		if commentIdString != "" {
 			comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
@@ -113,8 +113,8 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		rows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-			UsersIdusers:             uid,
-			ForumthreadIdforumthread: blog.ForumthreadIdforumthread,
+			UsersIdusers:  uid,
+			ForumthreadID: blog.ForumthreadID,
 		})
 		if err != nil {
 			switch {

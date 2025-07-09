@@ -44,7 +44,7 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 		}
 		item := &feeds.Item{
 			Title:   desc[:i],
-			Link:    &feeds.Link{Href: fmt.Sprintf("/imagebbs/board/%d/thread/%d", boardID, row.ForumthreadIdforumthread)},
+			Link:    &feeds.Link{Href: fmt.Sprintf("/imagebbs/board/%d/thread/%d", boardID, row.ForumthreadID)},
 			Created: time.Now(),
 			Description: fmt.Sprintf("%s\n-\n%s", conv.Output(), func() string {
 				if row.Username.Valid {

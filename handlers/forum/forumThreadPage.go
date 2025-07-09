@@ -70,8 +70,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: threadRow.Idforumthread,
+		UsersIdusers:  uid,
+		ForumthreadID: threadRow.Idforumthread,
 	})
 	if err != nil {
 		switch {

@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql/driver"
 
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/lib/pq"
 )
 
@@ -24,3 +25,6 @@ func (Driver) Examples() []string {
 func (Driver) OpenConnector(dsn string) (driver.Connector, error) {
 	return pq.NewConnector(dsn)
 }
+
+// Register registers the PostgreSQL driver.
+func Register() { dbdrivers.RegisterDriver(Driver{}) }

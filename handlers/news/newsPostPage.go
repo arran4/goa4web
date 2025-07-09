@@ -125,7 +125,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	editCommentIdString := r.URL.Query().Get("editComment")
 	editCommentId, _ := strconv.Atoi(editCommentIdString)
 	for i, row := range commentRows {
-		editUrl := fmt.Sprintf("?edit=%d", row.Idcomments)
+		editUrl := fmt.Sprintf("?editComment=%d", row.Idcomments)
 		editSaveUrl := "?"
 		if uid == row.UsersIdusers {
 			// TODO

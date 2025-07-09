@@ -15,6 +15,8 @@ var (
 	mainCSSData []byte
 	//go:embed "assets/favicon.svg"
 	faviconData []byte
+	//go:embed "assets/pasteimg.js"
+	pasteImageJSData []byte
 )
 
 func GetCompiledTemplates(funcs template.FuncMap) *template.Template {
@@ -29,4 +31,9 @@ func GetMainCSSData() []byte {
 // GetFaviconData returns the site's favicon image data.
 func GetFaviconData() []byte {
 	return faviconData
+}
+
+// GetPasteImageJSData returns the JavaScript that enables image pasting.
+func GetPasteImageJSData() []byte {
+	return pasteImageJSData
 }

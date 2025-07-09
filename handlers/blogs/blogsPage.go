@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	db "github.com/arran4/goa4web/internal/db"
+	"io"
 
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -16,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
 	"github.com/gorilla/feeds"
 )
 
@@ -237,10 +239,10 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 	for _, row := range rows {
 		u := r.URL
 		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
-		conv := a4code2html.NewA4Code2HTML()
+		conv := a4code2html.New(imageshandler.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)
-		conv.Process()
+		out, _ := io.ReadAll(conv.Process())
 		i := len(row.Blog.String)
 		if i > 255 {
 			i = 255
@@ -250,7 +252,7 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 			Link: &feeds.Link{
 				Href: u.String(),
 			},
-			Description: fmt.Sprintf("%s\n-\n%s", conv.Output(), row.Username.String),
+			Description: fmt.Sprintf("%s\n-\n%s", string(out), row.Username.String),
 		})
 	}
 	return feed, nil

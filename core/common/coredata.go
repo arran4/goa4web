@@ -27,6 +27,20 @@ type CoreData struct {
 	AdminMode         bool
 	NotificationCount int32
 	Announcement      *db.GetActiveAnnouncementWithNewsRow
+	mapper            func(tag, val string) string
+}
+
+// ImageURLMapper maps image references like "image:" or "cache:" to full URLs.
+func (cd *CoreData) ImageURLMapper(tag, val string) string {
+	if cd.mapper != nil {
+		return cd.mapper(tag, val)
+	}
+	return val
+}
+
+// SetImageURLMapper configures the mapper used by ImageURLMapper.
+func (cd *CoreData) SetImageURLMapper(fn func(tag, val string) string) {
+	cd.mapper = fn
 }
 
 var rolePriority = map[string]int{

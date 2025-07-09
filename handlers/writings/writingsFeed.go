@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -33,10 +35,10 @@ func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
 		if desc == "" {
 			desc = row.Writing.String
 		}
-		conv := a4code2html.NewA4Code2HTML()
+		conv := a4code2html.New(imageshandler.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
-		conv.Process()
+		out, _ := io.ReadAll(conv.Process())
 		title := row.Title.String
 		if title == "" {
 			if len(desc) > 20 {
@@ -49,7 +51,7 @@ func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
 			Title:       title,
 			Link:        &feeds.Link{Href: fmt.Sprintf("/writings/article/%d", row.Idwriting)},
 			Created:     time.Now(),
-			Description: conv.Output(),
+			Description: string(out),
 		}
 		if row.Published.Valid {
 			item.Created = row.Published.Time

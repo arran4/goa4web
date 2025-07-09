@@ -58,7 +58,7 @@ func main() {
 			in = f
 		}
 
-		conv := a4code2html.NewA4Code2HTML()
+		conv := a4code2html.New()
 		if err := conv.ProcessReader(in, out); err != nil {
 			log.Fatal(err)
 		}

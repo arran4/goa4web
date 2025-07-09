@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code2html"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -36,10 +38,10 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 
 	for _, row := range posts {
 		text := row.News.String
-		conv := a4code2html.NewA4Code2HTML()
+		conv := a4code2html.New(imageshandler.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
-		conv.Process()
+		out, _ := io.ReadAll(conv.Process())
 		i := len(text)
 		if i > 255 {
 			i = 255
@@ -53,7 +55,7 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 				}
 				return time.Now()
 			}(),
-			Description: fmt.Sprintf("%s\n-\n%s", conv.Output(), row.Writername.String),
+			Description: fmt.Sprintf("%s\n-\n%s", string(out), row.Writername.String),
 		})
 	}
 

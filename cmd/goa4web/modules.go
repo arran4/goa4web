@@ -8,6 +8,7 @@ import (
 	faq "github.com/arran4/goa4web/handlers/faq"
 	forum "github.com/arran4/goa4web/handlers/forum"
 	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
+	images "github.com/arran4/goa4web/handlers/images"
 	information "github.com/arran4/goa4web/handlers/information"
 	languages "github.com/arran4/goa4web/handlers/languages"
 	linker "github.com/arran4/goa4web/handlers/linker"
@@ -31,6 +32,7 @@ func init() {
 	linker.Register()
 	news.Register()
 	search.Register()
+	images.Register()
 	user.Register()
 	writings.Register()
 }

@@ -368,6 +368,16 @@ type Topicrestriction struct {
 	Adminlevel             sql.NullInt32
 }
 
+type UploadedImage struct {
+	Iduploadedimage int32
+	UsersIdusers    int32
+	Path            sql.NullString
+	Width           sql.NullInt32
+	Height          sql.NullInt32
+	FileSize        int32
+	Uploaded        time.Time
+}
+
 type User struct {
 	Idusers   int32
 	Email     sql.NullString

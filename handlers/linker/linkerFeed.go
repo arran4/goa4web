@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,11 +28,11 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 		}
 		desc := ""
 		if row.Description.Valid {
-			conv := a4code2html.NewA4Code2HTML()
+			conv := a4code2html.New(imageshandler.MapURL)
 			conv.CodeType = a4code2html.CTTagStrip
 			conv.SetInput(row.Description.String)
-			conv.Process()
-			desc = conv.Output()
+			out, _ := io.ReadAll(conv.Process())
+			desc = string(out)
 		}
 		href := fmt.Sprintf("/linker/show/%d", row.Idlinker)
 		if row.Url.Valid && row.Url.String != "" {

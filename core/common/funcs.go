@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -17,25 +18,37 @@ import (
 
 var Version = "dev"
 
+// NewFuncs returns template helpers for the current request context.
+// Deprecated: prefer (*CoreData).Funcs.
 func NewFuncs(r *http.Request) template.FuncMap {
+	cd, _ := r.Context().Value(ContextValues("coreData")).(*CoreData)
+	if cd == nil {
+		cd = &CoreData{}
+	}
+	return cd.Funcs(r)
+}
+
+// Funcs returns template helpers configured with cd's ImageURLMapper.
+func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	var LatestNews any
+	mapper := cd.ImageURLMapper
 	return map[string]any{
 		"now":       func() time.Time { return time.Now() },
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
 		"version":   func() string { return Version },
 		"a4code2html": func(s string) template.HTML {
-			c := a4code2html.NewA4Code2HTML()
+			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTHTML
 			c.SetInput(s)
-			c.Process()
-			return template.HTML(c.Output())
+			out, _ := io.ReadAll(c.Process())
+			return template.HTML(out)
 		},
 		"a4code2string": func(s string) string {
-			c := a4code2html.NewA4Code2HTML()
+			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTWordsOnly
 			c.SetInput(s)
-			c.Process()
-			return c.Output()
+			out, _ := io.ReadAll(c.Process())
+			return string(out)
 		},
 		"firstline": func(s string) string {
 			return strings.Split(s, "\n")[0]

@@ -28,6 +28,7 @@ sql:
         - "internal/db/queries-deactivation.sql"
         - "internal/db/queries-subscriptions.sql"
         - "internal/db/queries-dlq.sql"
+        - "internal/db/queries-uploadimages.sql"
       gen:
           go:
               package: "db"

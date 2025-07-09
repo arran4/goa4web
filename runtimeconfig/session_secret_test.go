@@ -8,8 +8,8 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 )
 
-func TestLoadSessionSecretCLI(t *testing.T) {
-	secret, err := LoadSessionSecret(useMemFS(t), "cli", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
+func TestLoadOrCreateSecretCLI(t *testing.T) {
+	secret, err := LoadOrCreateSecret(useMemFS(t), "cli", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -18,9 +18,9 @@ func TestLoadSessionSecretCLI(t *testing.T) {
 	}
 }
 
-func TestLoadSessionSecretEnv(t *testing.T) {
+func TestLoadOrCreateSecretEnv(t *testing.T) {
 	t.Setenv(config.EnvSessionSecret, "env")
-	secret, err := LoadSessionSecret(useMemFS(t), "", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := LoadOrCreateSecret(useMemFS(t), "", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -29,13 +29,13 @@ func TestLoadSessionSecretEnv(t *testing.T) {
 	}
 }
 
-func TestLoadSessionSecretFile(t *testing.T) {
+func TestLoadOrCreateSecretFile(t *testing.T) {
 	fs := useMemFS(t)
 	file := "sec"
 	if err := fs.WriteFile(file, []byte("fromfile"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
-	secret, err := LoadSessionSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := LoadOrCreateSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -44,10 +44,10 @@ func TestLoadSessionSecretFile(t *testing.T) {
 	}
 }
 
-func TestLoadSessionSecretGenerate(t *testing.T) {
+func TestLoadOrCreateSecretGenerate(t *testing.T) {
 	fs := useMemFS(t)
 	file := "new"
-	secret, err := LoadSessionSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := LoadOrCreateSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

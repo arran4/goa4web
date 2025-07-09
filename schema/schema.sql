@@ -536,3 +536,15 @@ CREATE TABLE IF NOT EXISTS `deactivated_linker` (
   PRIMARY KEY (`idlinker`)
 );
 
+
+CREATE TABLE IF NOT EXISTS `uploaded_images` (
+  `iduploadedimage` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `path` tinytext,
+  `width` int DEFAULT NULL,
+  `height` int DEFAULT NULL,
+  `file_size` int NOT NULL,
+  `uploaded` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`iduploadedimage`),
+  KEY `uploaded_images_user_idx` (`users_idusers`)
+);

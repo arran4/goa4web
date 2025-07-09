@@ -179,6 +179,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("ipban: %w", err)
 		}
 		return c.Run()
+	case "images":
+		c, err := parseImagesCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("images: %w", err)
+		}
+		return c.Run()
 	case "audit":
 		c, err := parseAuditCmd(r, r.args[1:])
 		if err != nil {

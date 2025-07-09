@@ -1,3 +1,8 @@
+ALTER TABLE uploaded_images
+  DROP COLUMN thumbnail,
+  ADD COLUMN width INT DEFAULT NULL,
+  ADD COLUMN height INT DEFAULT NULL;
+
 ALTER TABLE commentsSearch CHANGE COLUMN comments_idcomments comment_id int(10) NOT NULL DEFAULT 0;
 
 -- Rename imagepost search column to snake_case

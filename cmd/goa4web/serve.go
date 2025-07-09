@@ -48,13 +48,17 @@ func (c *serveCmd) Run() error {
 	}
 	app.ConfigFile = c.rootCmd.ConfigFile
 	cfg := runtimeconfig.GenerateRuntimeConfig(c.fs, fileVals, os.Getenv)
-	secret, err := runtimeconfig.LoadSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := runtimeconfig.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
+	signKey, err := runtimeconfig.LoadOrCreateSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile)
+	if err != nil {
+		return fmt.Errorf("image sign secret: %w", err)
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := app.RunWithConfig(ctx, cfg, secret); err != nil {
+	if err := app.RunWithConfig(ctx, cfg, secret, signKey); err != nil {
 		return err
 	}
 	return nil

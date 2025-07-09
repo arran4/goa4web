@@ -63,7 +63,10 @@ func envMapFromConfig(cfg runtimeconfig.RuntimeConfig, cfgPath string) (map[stri
 }
 
 func defaultMap() map[string]string {
-	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	
+  TODO add to ToEnvMap: m[config.EnvSessionSecretFile] = runtimeconfig.DefaultSessionSecretPath()
+
+  def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	m, _ := runtimeconfig.ToEnvMap(def, "")
 	return m
 }

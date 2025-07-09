@@ -91,6 +91,14 @@ const (
 	EnvImageUploadDir = "IMAGE_UPLOAD_DIR"
 	// EnvImageMaxBytes sets the maximum allowed size of uploaded images in bytes.
 	EnvImageMaxBytes = "IMAGE_MAX_BYTES"
+	// EnvImageCacheDir defines where thumbnails are cached.
+	EnvImageCacheDir = "IMAGE_CACHE_DIR"
+	// EnvImageCacheMaxBytes sets the maximum cache size in bytes.
+	EnvImageCacheMaxBytes = "IMAGE_CACHE_MAX_BYTES"
+	// EnvImageSignSecret provides the signing key for image URLs.
+	EnvImageSignSecret = "IMAGE_SIGN_SECRET"
+	// EnvImageSignSecretFile specifies the file containing the signing key.
+	EnvImageSignSecretFile = "IMAGE_SIGN_SECRET_FILE"
 
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"

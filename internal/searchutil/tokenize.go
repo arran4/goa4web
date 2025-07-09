@@ -74,7 +74,7 @@ func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds [
 func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, pid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToImagePostSearch(ctx, db.AddToImagePostSearchParams{
-			ImagepostIdimagepost:           int32(pid),
+			ImagePostID:                    int32(pid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})

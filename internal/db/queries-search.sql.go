@@ -45,17 +45,17 @@ func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWri
 
 const addToImagePostSearch = `-- name: AddToImagePostSearch :exec
 INSERT IGNORE INTO imagepostSearch
-(imagepost_idimagepost, searchwordlist_idsearchwordlist)
+(image_post_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
 
 type AddToImagePostSearchParams struct {
-	ImagepostIdimagepost           int32
+	ImagePostID                    int32
 	SearchwordlistIdsearchwordlist int32
 }
 
 func (q *Queries) AddToImagePostSearch(ctx context.Context, arg AddToImagePostSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagepostIdimagepost, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagePostID, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
@@ -408,7 +408,7 @@ func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase strin
 }
 
 const imagePostSearchFirst = `-- name: ImagePostSearchFirst :many
-SELECT DISTINCT cs.imagepost_idimagepost
+SELECT DISTINCT cs.image_post_id
 FROM imagepostSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -422,11 +422,11 @@ func (q *Queries) ImagePostSearchFirst(ctx context.Context, word sql.NullString)
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var imagepost_idimagepost int32
-		if err := rows.Scan(&imagepost_idimagepost); err != nil {
+		var image_post_id int32
+		if err := rows.Scan(&image_post_id); err != nil {
 			return nil, err
 		}
-		items = append(items, imagepost_idimagepost)
+		items = append(items, image_post_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -438,11 +438,11 @@ func (q *Queries) ImagePostSearchFirst(ctx context.Context, word sql.NullString)
 }
 
 const imagePostSearchNext = `-- name: ImagePostSearchNext :many
-SELECT DISTINCT cs.imagepost_idimagepost
+SELECT DISTINCT cs.image_post_id
 FROM imagepostSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.imagepost_idimagepost IN (/*SLICE:ids*/?)
+AND cs.image_post_id IN (/*SLICE:ids*/?)
 `
 
 type ImagePostSearchNextParams struct {
@@ -469,11 +469,11 @@ func (q *Queries) ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNe
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var imagepost_idimagepost int32
-		if err := rows.Scan(&imagepost_idimagepost); err != nil {
+		var image_post_id int32
+		if err := rows.Scan(&image_post_id); err != nil {
 			return nil, err
 		}
-		items = append(items, imagepost_idimagepost)
+		items = append(items, image_post_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -614,7 +614,7 @@ func (q *Queries) RemakeCommentsSearchInsert(ctx context.Context) error {
 }
 
 const remakeImagePostSearchInsert = `-- name: RemakeImagePostSearchInsert :exec
-INSERT INTO imagepostSearch (text, imagepost_idimagepost)
+INSERT INTO imagepostSearch (text, image_post_id)
 SELECT description, idimagepost
 FROM imagepost
 `

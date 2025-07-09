@@ -208,7 +208,7 @@ type Imagepost struct {
 }
 
 type Imagepostsearch struct {
-	ImagepostIdimagepost           int32
+	ImagePostID                    int32
 	SearchwordlistIdsearchwordlist int32
 }
 

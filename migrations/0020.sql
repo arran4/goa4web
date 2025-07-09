@@ -1,3 +1,6 @@
+-- Rename imagepost search column to snake_case
+ALTER TABLE imagepostSearch CHANGE COLUMN imagepost_idimagepost image_post_id int(10) NOT NULL DEFAULT 0;
+
 -- Rename writing search foreign keys to snake_case
 ALTER TABLE writingSearch CHANGE COLUMN writing_idwriting writing_id int(10) NOT NULL DEFAULT 0;
 ALTER TABLE writingApprovedUsers CHANGE COLUMN writing_idwriting writing_id int(10) NOT NULL DEFAULT 0;

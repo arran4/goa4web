@@ -85,7 +85,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if urow.Email == "" {
+	if !urow.Email.Valid || urow.Email.String == "" {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
@@ -108,7 +108,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
 	}
 	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubURL string }{
-		To:       (&mail.Address{Name: urow.Username.String, Address: urow.Email}).String(),
+		To:       (&mail.Address{Name: urow.Username.String, Address: urow.Email.String}).String(),
 		From:     runtimeconfig.AppRuntimeConfig.EmailFrom,
 		Subject:  "Website Update Notification",
 		URL:      pageURL,
@@ -122,7 +122,7 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	toAddr := mail.Address{Name: urow.Username.String, Address: urow.Email}
+	toAddr := mail.Address{Name: urow.Username.String, Address: urow.Email.String}
 	var fromAddr mail.Address
 
 	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {

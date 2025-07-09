@@ -25,11 +25,14 @@ ORDER BY p.created_at DESC
 LIMIT 1;
 
 -- name: GetUserById :one
-SELECT idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       username
-FROM users
-WHERE idusers = ?;
+SELECT u.idusers, ue.email, u.username
+FROM users u
+LEFT JOIN user_emails ue ON ue.id = (
+        SELECT id FROM user_emails ue2
+        WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL
+        ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE u.idusers = ?;
 
 -- name: UserByUsername :one
 SELECT idusers,

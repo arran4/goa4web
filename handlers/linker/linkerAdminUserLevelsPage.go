@@ -51,7 +51,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("GetUserById Error: %s", err)
 			continue
 		}
-		perms = append(perms, &PermissionUser{Permission: p, Username: row.Username, Email: sql.NullString{String: row.Email, Valid: row.Email != ""}})
+		perms = append(perms, &PermissionUser{Permission: p, Username: row.Username, Email: row.Email})
 	}
 
 	if data.Search != "" {

@@ -12,8 +12,8 @@
         <tr>
             <form method="post">
         {{ csrfField }}
-                <td><input type="hidden" name="wid" value="{{ .Idwriting }}">
-                <td><input type="hidden" name="uid" value="{{ .Userid }}">{{ .Username.String }}
+                <td><input type="hidden" name="wid" value="{{ .WritingID }}">
+                <td><input type="hidden" name="uid" value="{{ .UsersIdusers }}">{{ .Username.String }}
                 <td><input type="checkbox" name="readdoc"{{ if .Readdoc.Bool }} checked{{ end }}>
                 <td><input type="checkbox" name="editdoc"{{ if .Editdoc.Bool }} checked{{ end }}>
                 <td>
@@ -26,7 +26,7 @@
         <tr>
             <form method="post">
         {{ csrfField }}
-                <td><input type="number" name="wid" value="{{ .WritingIdwriting }}">
+                <td><input type="number" name="wid" value="{{ .WritingID }}">
                 <td><input name="username" value="USERNAME">
                 <td><input type="checkbox" name="readdoc" checked>
                 <td><input type="checkbox" name="writedoc">
@@ -35,5 +35,4 @@
                 </td>
             </form>
         </tr>
-    </table><br>
-{{ template "tail" $ }}
+    </table><br>{{ template "tail" $ }}

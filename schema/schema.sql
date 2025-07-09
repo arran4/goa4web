@@ -349,19 +349,19 @@ CREATE TABLE `writingCategory` (
 
 CREATE TABLE `writingSearch` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
-  `writing_idwriting` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`writing_idwriting`),
+  `writing_id` int(10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`searchwordlist_idsearchwordlist`,`writing_id`),
   KEY `searchwordlist_has_writing_FKIndex1` (`searchwordlist_idsearchwordlist`),
-  KEY `searchwordlist_has_writing_FKIndex2` (`writing_idwriting`)
+  KEY `searchwordlist_has_writing_FKIndex2` (`writing_id`)
 );
 
 CREATE TABLE `writingApprovedUsers` (
-  `writing_idwriting` int(10) NOT NULL DEFAULT 0,
+  `writing_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `readdoc` tinyint(1) DEFAULT NULL,
   `editdoc` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`writing_idwriting`,`users_idusers`),
-  KEY `writing_has_users_FKIndex1` (`writing_idwriting`),
+  PRIMARY KEY (`writing_id`,`users_idusers`),
+  KEY `writing_has_users_FKIndex1` (`writing_id`),
   KEY `writing_has_users_FKIndex2` (`users_idusers`)
 );
 

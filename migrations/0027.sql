@@ -3,8 +3,7 @@ ALTER TABLE user_emails
     DROP COLUMN verified,
     ADD COLUMN verified_at datetime DEFAULT NULL,
     DROP INDEX user_emails_unique,
-    ADD UNIQUE KEY user_emails_email_idx (email(255)),
-    ADD KEY user_emails_user_idx (user_id);
+    ADD UNIQUE KEY user_emails_email_idx (email(255));
 
 INSERT INTO user_emails (user_id, email, verified_at)
 SELECT idusers, email, NOW() FROM users

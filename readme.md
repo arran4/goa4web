@@ -6,7 +6,7 @@ Goa4Web is a monolithic web application written in Go. It powers the original `a
 
 Project URL: <https://github.com/arran4/goa4web>
 
-The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in a SQL database. MySQL, PostgreSQL and SQLite are supported. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
+The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in a SQL database. MySQL, PostgreSQL and SQLite are supported. SQLite support is optional and requires the `sqlite` build tag when compiling. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
 
 ## Features
 
@@ -40,7 +40,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
    * PostgreSQL: `postgres://user:pass@localhost/a4web?sslmode=disable`
    * SQLite: `file:./a4web.sqlite?_fk=1`
-4. Download dependencies and build the application:
+4. Download dependencies and build the application (SQLite support requires the `sqlite` build tag):
    ```bash
    go mod download
    go build -o goa4web ./cmd/goa4web
@@ -111,9 +111,9 @@ Information 100
 
 ## Testing
 
-Unit tests focus mainly on utility packages and template compilation. Execute all tests with:
+Unit tests focus mainly on utility packages and template compilation. Execute all tests with the `nosqlite` tag:
 ```bash
-go test ./...
+go test -tags nosqlite ./...
 ```
 
 ---
@@ -152,6 +152,7 @@ DB_DRIVER=sqlite
 DB_CONN=file:./a4web.sqlite?_fk=1 \
 AUTO_MIGRATE=true ./goa4web serve
 ```
+When using SQLite you must compile the binary with the `sqlite` build tag.
 
 ## Email Provider Configuration
 

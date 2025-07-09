@@ -1,9 +1,12 @@
+//go:build sqlite
+
 package sqlite
 
 import (
 	"context"
 	"database/sql/driver"
 
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/mattn/go-sqlite3"
 )
 
@@ -33,3 +36,6 @@ func (c connector) Driver() driver.Driver { return &sqlite3.SQLiteDriver{} }
 func (Driver) OpenConnector(dsn string) (driver.Connector, error) {
 	return connector{dsn: dsn}, nil
 }
+
+// Register registers the SQLite driver.
+func Register() { dbdrivers.RegisterDriver(Driver{}) }

@@ -1,4 +1,4 @@
-package dbdrivers_test
+package dbdefaults_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 )
 
 type testConnector struct{}
@@ -14,13 +15,15 @@ func (testConnector) Connect(context.Context) (driver.Conn, error) { return nil,
 func (testConnector) Driver() driver.Driver                        { return nil }
 
 func TestConnectorUnknown(t *testing.T) {
+	dbdefaults.Register()
 	if _, err := dbdrivers.Connector("unknown-driver", ""); err == nil {
 		t.Fatalf("expected error for unknown driver")
 	}
 }
 
 func TestRegistryNames(t *testing.T) {
-	want := []string{"mysql", "postgres", "sqlite3"}
+	dbdefaults.Register()
+	want := []string{"mysql", "postgres"}
 	names := dbdrivers.Names()
 	for _, n := range want {
 		found := false

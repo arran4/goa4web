@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql/driver"
 
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	sqlmysql "github.com/go-sql-driver/mysql"
 )
 
@@ -28,3 +29,6 @@ func (Driver) OpenConnector(dsn string) (driver.Connector, error) {
 	}
 	return sqlmysql.NewConnector(cfg)
 }
+
+// Register registers the MySQL driver.
+func Register() { dbdrivers.RegisterDriver(Driver{}) }

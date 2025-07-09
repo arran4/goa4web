@@ -64,18 +64,18 @@ func (q *Queries) DeleteWritingApproval(ctx context.Context, arg DeleteWritingAp
 
 const fetchAllCategories = `-- name: FetchAllCategories :many
 SELECT wc.idwritingcategory, wc.writingcategory_idwritingcategory, wc.title, wc.description
-FROM writingCategory wc
+FROM writing_category wc
 `
 
-func (q *Queries) FetchAllCategories(ctx context.Context) ([]*Writingcategory, error) {
+func (q *Queries) FetchAllCategories(ctx context.Context) ([]*WritingCategory, error) {
 	rows, err := q.db.QueryContext(ctx, fetchAllCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Writingcategory
+	var items []*WritingCategory
 	for rows.Next() {
-		var i Writingcategory
+		var i WritingCategory
 		if err := rows.Scan(
 			&i.Idwritingcategory,
 			&i.WritingcategoryIdwritingcategory,
@@ -142,19 +142,19 @@ func (q *Queries) GetAllWritingApprovals(ctx context.Context) ([]*GetAllWritingA
 
 const getAllWritingCategories = `-- name: GetAllWritingCategories :many
 SELECT idwritingcategory, writingcategory_idwritingcategory, title, description
-FROM writingCategory
+FROM writing_category
 WHERE writingCategory_idwritingCategory = ?
 `
 
-func (q *Queries) GetAllWritingCategories(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*Writingcategory, error) {
+func (q *Queries) GetAllWritingCategories(ctx context.Context, writingcategoryIdwritingcategory int32) ([]*WritingCategory, error) {
 	rows, err := q.db.QueryContext(ctx, getAllWritingCategories, writingcategoryIdwritingcategory)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Writingcategory
+	var items []*WritingCategory
 	for rows.Next() {
-		var i Writingcategory
+		var i WritingCategory
 		if err := rows.Scan(
 			&i.Idwritingcategory,
 			&i.WritingcategoryIdwritingcategory,
@@ -584,7 +584,7 @@ func (q *Queries) InsertWriting(ctx context.Context, arg InsertWritingParams) (i
 }
 
 const insertWritingCategory = `-- name: InsertWritingCategory :exec
-INSERT INTO writingCategory (writingCategory_idwritingCategory, title, description)
+INSERT INTO writing_category (writingCategory_idwritingCategory, title, description)
 VALUES (?, ?, ?)
 `
 
@@ -650,7 +650,7 @@ func (q *Queries) UpdateWritingApproval(ctx context.Context, arg UpdateWritingAp
 }
 
 const updateWritingCategory = `-- name: UpdateWritingCategory :exec
-UPDATE writingCategory
+UPDATE writing_category
 SET title = ?, description = ?, writingCategory_idwritingCategory = ?
 WHERE idwritingCategory = ?
 `

@@ -53,22 +53,22 @@ ORDER BY w.published DESC
 ;
 
 -- name: InsertWritingCategory :exec
-INSERT INTO writingCategory (writingCategory_idwritingCategory, title, description)
+INSERT INTO writing_category (writingCategory_idwritingCategory, title, description)
 VALUES (?, ?, ?);
 
 -- name: UpdateWritingCategory :exec
-UPDATE writingCategory
+UPDATE writing_category
 SET title = ?, description = ?, writingCategory_idwritingCategory = ?
 WHERE idwritingCategory = ?;
 
 -- name: GetAllWritingCategories :many
 SELECT *
-FROM writingCategory
+FROM writing_category
 WHERE writingCategory_idwritingCategory = ?;
 
 -- name: FetchAllCategories :many
 SELECT wc.*
-FROM writingCategory wc
+FROM writing_category wc
 ;
 
 -- name: DeleteWritingApproval :exec

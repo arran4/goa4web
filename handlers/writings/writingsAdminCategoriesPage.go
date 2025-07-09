@@ -16,7 +16,7 @@ import (
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories []*db.Writingcategory
+		Categories []*db.WritingCategory
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 

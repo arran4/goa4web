@@ -324,7 +324,7 @@ CREATE TABLE `writing` (
   KEY `writing_FKIndex4` (`users_idusers`)
 );
 
-CREATE TABLE `writingCategory` (
+CREATE TABLE `writing_category` (
   `idwritingCategory` int(10) NOT NULL AUTO_INCREMENT,
   `writingCategory_idwritingCategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,

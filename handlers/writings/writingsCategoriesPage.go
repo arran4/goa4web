@@ -16,8 +16,8 @@ import (
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories                       []*db.Writingcategory
-		CategoryBreadcrumbs              []*db.Writingcategory
+		Categories                       []*db.WritingCategory
+		CategoryBreadcrumbs              []*db.WritingCategory
 		EditingCategoryId                int32
 		IsAdmin                          bool
 		IsWriter                         bool
@@ -63,7 +63,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryMap := map[int32]*db.Writingcategory{}
+	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
 		categoryMap[cat.Idwritingcategory] = cat
 		if cat.WritingcategoryIdwritingcategory == 0 {

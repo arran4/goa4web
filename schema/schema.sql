@@ -1,19 +1,3 @@
-CREATE TABLE `1_old_forumthread` (
-  `idforumthread` int(10) NOT NULL AUTO_INCREMENT,
-  `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`idforumthread`),
-  KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`)
-);
-
-CREATE TABLE `1_old_forumtopic` (
-  `idforumtopic` int(10) NOT NULL AUTO_INCREMENT,
-  `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
-  `title` tinytext DEFAULT NULL,
-  `description` mediumtext DEFAULT NULL,
-  PRIMARY KEY (`idforumtopic`),
-  KEY `forumtopic_FKIndex1` (`forumcategory_idforumcategory`)
-);
-
 CREATE TABLE `blogs` (
   `idblogs` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
@@ -269,7 +253,7 @@ CREATE TABLE `siteNewsSearch` (
 );
 
 CREATE TABLE `topicrestrictions` (
-  `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0, -- TODO Primary key this
+  `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
   `viewlevel` int(10) DEFAULT NULL,
   `replylevel` int(10) DEFAULT NULL,
   `newthreadlevel` int(10) DEFAULT NULL,
@@ -278,7 +262,7 @@ CREATE TABLE `topicrestrictions` (
   `readlevel` int(10) DEFAULT NULL,
   `modlevel` int(10) DEFAULT NULL,
   `adminlevel` int(10) DEFAULT NULL,
-  KEY `threadrestrictions_FKIndex1` (`forumtopic_idforumtopic`)
+  PRIMARY KEY (`forumtopic_idforumtopic`)
 );
 
 CREATE TABLE `user_language` (

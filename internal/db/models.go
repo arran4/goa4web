@@ -123,18 +123,18 @@ type DeactivatedUser struct {
 }
 
 type DeactivatedWriting struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
-	DeletedAt                        sql.NullTime
-	RestoredAt                       sql.NullTime
+	Idwriting                int32
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
+	WritingCategoryID        int32
+	Title                    sql.NullString
+	Published                sql.NullTime
+	Writing                  sql.NullString
+	Abstract                 sql.NullString
+	Private                  sql.NullBool
+	DeletedAt                sql.NullTime
+	RestoredAt               sql.NullTime
 }
 
 type DeadLetter struct {
@@ -390,24 +390,24 @@ type Userstopiclevel struct {
 }
 
 type Writing struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
-	DeletedAt                        sql.NullTime
+	Idwriting                int32
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
+	WritingCategoryID        int32
+	Title                    sql.NullString
+	Published                sql.NullTime
+	Writing                  sql.NullString
+	Abstract                 sql.NullString
+	Private                  sql.NullBool
+	DeletedAt                sql.NullTime
 }
 
 type WritingCategory struct {
-	Idwritingcategory                int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Description                      sql.NullString
+	Idwritingcategory int32
+	WritingCategoryID int32
+	Title             sql.NullString
+	Description       sql.NullString
 }
 
 type Writingapproveduser struct {

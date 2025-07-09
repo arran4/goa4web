@@ -64,7 +64,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	}
 	var ws []writingExport
 	for _, wrow := range writings {
-		ws = append(ws, writingExport{wrow, catMap[wrow.WritingcategoryIdwritingcategory]})
+		ws = append(ws, writingExport{wrow, catMap[wrow.WritingCategoryID]})
 	}
 
 	blogs, _ := queries.GetAllBlogEntriesByUser(r.Context(), int32(uid))

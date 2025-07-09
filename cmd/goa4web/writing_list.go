@@ -57,9 +57,9 @@ func (c *writingListCmd) Run() error {
 	}
 	if c.Category != 0 {
 		rows, err := queries.GetPublicWritingsInCategory(ctx, dbpkg.GetPublicWritingsInCategoryParams{
-			WritingcategoryIdwritingcategory: int32(c.Category),
-			Limit:                            int32(c.Limit),
-			Offset:                           int32(c.Offset),
+			WritingCategoryID: int32(c.Category),
+			Limit:             int32(c.Limit),
+			Offset:            int32(c.Offset),
 		})
 		if err != nil {
 			return fmt.Errorf("list writings: %w", err)

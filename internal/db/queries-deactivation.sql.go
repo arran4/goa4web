@@ -142,21 +142,21 @@ func (q *Queries) ArchiveUser(ctx context.Context, idusers int32) error {
 }
 
 const archiveWriting = `-- name: ArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writing, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writing_category_id, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type ArchiveWritingParams struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
+	Idwriting                int32
+	UsersIdusers             int32
+	ForumthreadIdforumthread int32
+	LanguageIdlanguage       int32
+	WritingCategoryID        int32
+	Title                    sql.NullString
+	Published                sql.NullTime
+	Writing                  sql.NullString
+	Abstract                 sql.NullString
+	Private                  sql.NullBool
 }
 
 func (q *Queries) ArchiveWriting(ctx context.Context, arg ArchiveWritingParams) error {
@@ -165,7 +165,7 @@ func (q *Queries) ArchiveWriting(ctx context.Context, arg ArchiveWritingParams) 
 		arg.UsersIdusers,
 		arg.ForumthreadIdforumthread,
 		arg.LanguageIdlanguage,
-		arg.WritingcategoryIdwritingcategory,
+		arg.WritingCategoryID,
 		arg.Title,
 		arg.Published,
 		arg.Writing,

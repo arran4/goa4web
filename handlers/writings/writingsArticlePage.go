@@ -128,7 +128,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.Writing = writing
 	data.IsAuthor = writing.UsersIdusers == uid
 	data.CanEdit = (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("writer") && data.IsAuthor)
-	data.CategoryId = writing.WritingcategoryIdwritingcategory
+	data.CategoryId = writing.WritingCategoryID
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -180,7 +180,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
 		categoryMap[cat.Idwritingcategory] = cat
-		if cat.WritingcategoryIdwritingcategory == data.CategoryId {
+		if cat.WritingCategoryID == data.CategoryId {
 			data.Categories = append(data.Categories, cat)
 		}
 	}
@@ -188,7 +188,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cat, ok := categoryMap[cid]
 		if ok {
 			data.CategoryBreadcrumbs = append(data.CategoryBreadcrumbs, cat)
-			cid = cat.WritingcategoryIdwritingcategory
+			cid = cat.WritingCategoryID
 		} else {
 			break
 		}

@@ -96,16 +96,16 @@ func (c *userDeactivateCmd) Run() error {
 	}
 	for _, w := range writings {
 		if err := qtx.ArchiveWriting(ctx, dbpkg.ArchiveWritingParams{
-			Idwriting:                        w.Idwriting,
-			UsersIdusers:                     w.UsersIdusers,
-			ForumthreadIdforumthread:         w.ForumthreadIdforumthread,
-			LanguageIdlanguage:               w.LanguageIdlanguage,
-			WritingcategoryIdwritingcategory: w.WritingcategoryIdwritingcategory,
-			Title:                            w.Title,
-			Published:                        w.Published,
-			Writing:                          w.Writing,
-			Abstract:                         w.Abstract,
-			Private:                          w.Private,
+			Idwriting:                w.Idwriting,
+			UsersIdusers:             w.UsersIdusers,
+			ForumthreadIdforumthread: w.ForumthreadIdforumthread,
+			LanguageIdlanguage:       w.LanguageIdlanguage,
+			WritingCategoryID:        w.WritingCategoryID,
+			Title:                    w.Title,
+			Published:                w.Published,
+			Writing:                  w.Writing,
+			Abstract:                 w.Abstract,
+			Private:                  w.Private,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive writing: %w", err)

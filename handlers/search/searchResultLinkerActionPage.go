@@ -18,13 +18,13 @@ import (
 func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*hcommon.CoreData
-		Comments                         []*db.GetCommentsByIdsForUserWithThreadInfoRow
-		Links                            []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
-		CommentsNoResults                bool
-		CommentsEmptyWords               bool
-		NoResults                        bool
-		EmptyWords                       bool
-		WritingcategoryIdwritingcategory int32
+		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
+		Links              []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
+		CommentsNoResults  bool
+		CommentsEmptyWords bool
+		NoResults          bool
+		EmptyWords         bool
+		WritingCategoryID  int32
 	}
 
 	data := Data{

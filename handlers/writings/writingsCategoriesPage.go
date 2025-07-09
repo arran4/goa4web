@@ -16,13 +16,13 @@ import (
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories                       []*db.WritingCategory
-		CategoryBreadcrumbs              []*db.WritingCategory
-		EditingCategoryId                int32
-		IsAdmin                          bool
-		IsWriter                         bool
-		Abstracts                        []*db.GetPublicWritingsInCategoryRow
-		WritingcategoryIdwritingcategory int32
+		Categories          []*db.WritingCategory
+		CategoryBreadcrumbs []*db.WritingCategory
+		EditingCategoryId   int32
+		IsAdmin             bool
+		IsWriter            bool
+		Abstracts           []*db.GetPublicWritingsInCategoryRow
+		WritingCategoryID   int32
 	}
 
 	data := Data{
@@ -33,7 +33,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	data.IsWriter = data.CoreData.HasRole("writer") || data.IsAdmin
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
-	data.WritingcategoryIdwritingcategory = 0
+	data.WritingCategoryID = 0
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
@@ -49,9 +49,9 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writingsRows, err := queries.GetPublicWritingsInCategory(r.Context(), db.GetPublicWritingsInCategoryParams{
-		WritingcategoryIdwritingcategory: 0,
-		Limit:                            15,
-		Offset:                           0,
+		WritingCategoryID: 0,
+		Limit:             15,
+		Offset:            0,
 	})
 	if err != nil {
 		switch {
@@ -66,7 +66,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
 		categoryMap[cat.Idwritingcategory] = cat
-		if cat.WritingcategoryIdwritingcategory == 0 {
+		if cat.WritingCategoryID == 0 {
 			data.Categories = append(data.Categories, cat)
 		}
 	}

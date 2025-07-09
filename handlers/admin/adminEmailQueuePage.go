@@ -47,8 +47,8 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, e := range rows {
 		emailStr := ""
-		if u, ok := users[e.ToUserID]; ok && u.Email != "" {
-			emailStr = u.Email
+		if u, ok := users[e.ToUserID]; ok && u.Email.Valid && u.Email.String != "" {
+			emailStr = u.Email.String
 		}
 		subj := ""
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {
@@ -89,11 +89,11 @@ func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, e := range emails {
 		user, ok := users[e.ToUserID]
-		if !ok || user.Email == "" {
+		if !ok || !user.Email.Valid || user.Email.String == "" {
 			log.Printf("missing or invalid user email for %d", e.ToUserID)
 			continue
 		}
-		addr := mail.Address{Name: user.Username.String, Address: user.Email}
+		addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
 		if provider != nil {
 			if err := provider.Send(r.Context(), addr, []byte(e.Body)); err != nil {
 				log.Printf("send email: %v", err)

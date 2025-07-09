@@ -52,8 +52,8 @@ func (c *emailQueueListCmd) Run() error {
 	}
 	for _, e := range rows {
 		emailStr := ""
-		if u, ok := users[e.ToUserID]; ok && u.Email != "" {
-			emailStr = u.Email
+		if u, ok := users[e.ToUserID]; ok && u.Email.Valid && u.Email.String != "" {
+			emailStr = u.Email.String
 		}
 		subj := ""
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {

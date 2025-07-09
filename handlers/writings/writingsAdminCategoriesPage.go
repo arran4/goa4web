@@ -16,7 +16,7 @@ import (
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories []*db.Writingcategory
+		Categories []*db.WritingCategory
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
@@ -70,8 +70,8 @@ func AdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 			Valid:  true,
 			String: desc,
 		},
-		Idwritingcategory:                int32(categoryId),
-		WritingcategoryIdwritingcategory: int32(wcid),
+		Idwritingcategory: int32(categoryId),
+		WritingCategoryID: int32(wcid),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -91,7 +91,7 @@ func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := queries.InsertWritingCategory(r.Context(), db.InsertWritingCategoryParams{
-		WritingcategoryIdwritingcategory: int32(pcid),
+		WritingCategoryID: int32(pcid),
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,

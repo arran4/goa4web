@@ -43,10 +43,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		Comments            []*CommentPlus
 		IsReplyable         bool
 		IsAdmin             bool
-		Categories          []*db.Writingcategory
+		Categories          []*db.WritingCategory
 		CategoryId          int32
 		Offset              int32
-		CategoryBreadcrumbs []*db.Writingcategory
+		CategoryBreadcrumbs []*db.WritingCategory
 		ReplyText           string
 	}
 
@@ -81,7 +81,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if writing.ForumthreadIdforumthread == 0 && uid != 0 {
+	if writing.ForumthreadID == 0 && uid != 0 {
 		pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
 			String: WritingTopicName,
 			Valid:  true,
@@ -115,20 +115,20 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 		pthid := int32(pthidi)
 		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
-			ForumthreadIdforumthread: pthid,
-			Idwriting:                writing.Idwriting,
+			ForumthreadID: pthid,
+			Idwriting:     writing.Idwriting,
 		}); err != nil {
 			log.Printf("Error: assign_article_to_thread: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		writing.ForumthreadIdforumthread = pthid
+		writing.ForumthreadID = pthid
 	}
 
 	data.Writing = writing
 	data.IsAuthor = writing.UsersIdusers == uid
 	data.CanEdit = (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("writer") && data.IsAuthor)
-	data.CategoryId = writing.WritingcategoryIdwritingcategory
+	data.CategoryId = writing.WritingCategoryID
 
 	languageRows, err := queries.FetchLanguages(r.Context())
 	if err != nil {
@@ -139,8 +139,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.Languages = languageRows
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: writing.ForumthreadIdforumthread,
+		UsersIdusers:  uid,
+		ForumthreadID: writing.ForumthreadID,
 	})
 	if err != nil {
 		switch {
@@ -154,7 +154,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		UsersIdusers:  uid,
-		Idforumthread: writing.ForumthreadIdforumthread,
+		Idforumthread: writing.ForumthreadID,
 	})
 	if err != nil {
 		switch {
@@ -177,10 +177,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryMap := map[int32]*db.Writingcategory{}
+	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
 		categoryMap[cat.Idwritingcategory] = cat
-		if cat.WritingcategoryIdwritingcategory == data.CategoryId {
+		if cat.WritingCategoryID == data.CategoryId {
 			data.Categories = append(data.Categories, cat)
 		}
 	}
@@ -188,7 +188,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cat, ok := categoryMap[cid]
 		if ok {
 			data.CategoryBreadcrumbs = append(data.CategoryBreadcrumbs, cat)
-			cid = cat.WritingcategoryIdwritingcategory
+			cid = cat.WritingCategoryID
 		} else {
 			break
 		}
@@ -278,7 +278,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pthid int32 = post.ForumthreadIdforumthread
+	var pthid int32 = post.ForumthreadID
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
 		String: WritingTopicName,
 		Valid:  true,
@@ -318,8 +318,8 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
-			ForumthreadIdforumthread: pthid,
-			Idwriting:                int32(aid),
+			ForumthreadID: pthid,
+			Idwriting:     int32(aid),
 		}); err != nil {
 			log.Printf("Error: assign_article_to_thread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -346,9 +346,9 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	//}
 
 	if _, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage:       int32(languageId),
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: pthid,
+		LanguageIdlanguage: int32(languageId),
+		UsersIdusers:       uid,
+		ForumthreadID:      pthid,
 		Text: sql.NullString{
 			String: text,
 			Valid:  true,

@@ -18,14 +18,14 @@ import (
 func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories                       []*db.Writingcategory
-		CategoryBreadcrumbs              []*db.Writingcategory
-		EditingCategoryId                int32
-		CategoryId                       int32
-		WritingcategoryIdwritingcategory int32
-		IsAdmin                          bool
-		IsWriter                         bool
-		Abstracts                        []*db.GetPublicWritingsInCategoryRow
+		Categories          []*db.WritingCategory
+		CategoryBreadcrumbs []*db.WritingCategory
+		EditingCategoryId   int32
+		CategoryId          int32
+		WritingCategoryID   int32
+		IsAdmin             bool
+		IsWriter            bool
+		Abstracts           []*db.GetPublicWritingsInCategoryRow
 	}
 
 	data := Data{
@@ -40,7 +40,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 	data.CategoryId = int32(categoryId)
-	data.WritingcategoryIdwritingcategory = data.CategoryId
+	data.WritingCategoryID = data.CategoryId
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
@@ -56,9 +56,9 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writingsRows, err := queries.GetPublicWritingsInCategory(r.Context(), db.GetPublicWritingsInCategoryParams{
-		WritingcategoryIdwritingcategory: data.CategoryId,
-		Limit:                            15,
-		Offset:                           0,
+		WritingCategoryID: data.CategoryId,
+		Limit:             15,
+		Offset:            0,
 	})
 	if err != nil {
 		switch {
@@ -71,10 +71,10 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryMap := map[int32]*db.Writingcategory{}
+	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
 		categoryMap[cat.Idwritingcategory] = cat
-		if cat.WritingcategoryIdwritingcategory == data.CategoryId {
+		if cat.WritingCategoryID == data.CategoryId {
 			data.Categories = append(data.Categories, cat)
 		}
 	}
@@ -82,7 +82,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		cat, ok := categoryMap[cid]
 		if ok {
 			data.CategoryBreadcrumbs = append(data.CategoryBreadcrumbs, cat)
-			cid = cat.WritingcategoryIdwritingcategory
+			cid = cat.WritingCategoryID
 		} else {
 			break
 		}

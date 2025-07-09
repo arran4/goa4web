@@ -1,5 +1,5 @@
 {{ define "listWritingCategories" }}
-    <font size="4">{{ if $.WritingcategoryIdwritingcategory }}Sub-{{ end }}Categories:</font><br>
+    <font size="4">{{ if $.WritingCategoryID }}Sub-{{ end }}Categories:</font><br>
     <table>
         {{ range .Categories }}
             {{ $title := .Title.String }}

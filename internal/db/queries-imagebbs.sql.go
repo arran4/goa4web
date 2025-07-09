@@ -159,27 +159,27 @@ func (q *Queries) GetAllImageBoards(ctx context.Context) ([]*Imageboard, error) 
 }
 
 const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.imageboard_idimageboard = ? AND i.approved = 1
 `
 
 type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow struct {
-	Idimagepost              int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	ImageboardIdimageboard   int32
-	Posted                   sql.NullTime
-	Description              sql.NullString
-	Thumbnail                sql.NullString
-	Fullimage                sql.NullString
-	FileSize                 int32
-	Approved                 bool
-	DeletedAt                sql.NullTime
-	Username                 sql.NullString
-	Comments                 sql.NullInt32
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
 }
 
 func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(ctx context.Context, imageboardIdimageboard int32) ([]*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow, error) {
@@ -193,7 +193,7 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 		var i GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
 		if err := rows.Scan(
 			&i.Idimagepost,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.ImageboardIdimageboard,
 			&i.Posted,
@@ -220,27 +220,27 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 }
 
 const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.idimagepost = ? AND i.approved = 1
 `
 
 type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow struct {
-	Idimagepost              int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	ImageboardIdimageboard   int32
-	Posted                   sql.NullTime
-	Description              sql.NullString
-	Thumbnail                sql.NullString
-	Fullimage                sql.NullString
-	FileSize                 int32
-	Approved                 bool
-	DeletedAt                sql.NullTime
-	Username                 sql.NullString
-	Comments                 sql.NullInt32
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
 }
 
 func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ctx context.Context, idimagepost int32) (*GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow, error) {
@@ -248,7 +248,7 @@ func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ct
 	var i GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
 	err := row.Scan(
 		&i.Idimagepost,
-		&i.ForumthreadIdforumthread,
+		&i.ForumthreadID,
 		&i.UsersIdusers,
 		&i.ImageboardIdimageboard,
 		&i.Posted,
@@ -282,10 +282,10 @@ func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*I
 }
 
 const getImagePostsByUserDescending = `-- name: GetImagePostsByUserDescending :many
-SELECT i.idimagepost, i.forumthread_idforumthread, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_idforumthread = th.idforumthread
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = ? AND i.approved = 1
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?
@@ -298,19 +298,19 @@ type GetImagePostsByUserDescendingParams struct {
 }
 
 type GetImagePostsByUserDescendingRow struct {
-	Idimagepost              int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	ImageboardIdimageboard   int32
-	Posted                   sql.NullTime
-	Description              sql.NullString
-	Thumbnail                sql.NullString
-	Fullimage                sql.NullString
-	FileSize                 int32
-	Approved                 bool
-	DeletedAt                sql.NullTime
-	Username                 sql.NullString
-	Comments                 sql.NullInt32
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
 }
 
 func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error) {
@@ -324,7 +324,7 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 		var i GetImagePostsByUserDescendingRow
 		if err := rows.Scan(
 			&i.Idimagepost,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.ImageboardIdimageboard,
 			&i.Posted,
@@ -374,15 +374,15 @@ func (q *Queries) UpdateImageBoard(ctx context.Context, arg UpdateImageBoardPara
 }
 
 const updateImagePostByIdForumThreadId = `-- name: UpdateImagePostByIdForumThreadId :exec
-UPDATE imagepost SET forumthread_idforumthread = ? WHERE idimagepost = ?
+UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?
 `
 
 type UpdateImagePostByIdForumThreadIdParams struct {
-	ForumthreadIdforumthread int32
-	Idimagepost              int32
+	ForumthreadID int32
+	Idimagepost   int32
 }
 
 func (q *Queries) UpdateImagePostByIdForumThreadId(ctx context.Context, arg UpdateImagePostByIdForumThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, updateImagePostByIdForumThreadId, arg.ForumthreadIdforumthread, arg.Idimagepost)
+	_, err := q.db.ExecContext(ctx, updateImagePostByIdForumThreadId, arg.ForumthreadID, arg.Idimagepost)
 	return err
 }

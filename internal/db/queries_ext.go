@@ -488,7 +488,7 @@ func (q *Queries) RecentNotifications(ctx context.Context, limit int32) ([]*Noti
 func (q *Queries) CountThreadsByBoard(ctx context.Context, boardID int32) (int32, error) {
 	var c int32
 	err := q.db.QueryRowContext(ctx,
-		"SELECT COUNT(DISTINCT forumthread_idforumthread) FROM imagepost WHERE imageboard_idimageboard = ?",
+		"SELECT COUNT(DISTINCT forumthread_id) FROM imagepost WHERE imageboard_idimageboard = ?",
 		boardID).Scan(&c)
 	return c, err
 }
@@ -566,8 +566,8 @@ func (q *Queries) ImageboardPostCounts(ctx context.Context) ([]*BoardPostCountRo
 // WritingCategoryCounts returns the number of writings per writing category ordered by title.
 func (q *Queries) WritingCategoryCounts(ctx context.Context) ([]*CategoryCountRow, error) {
 	rows, err := q.db.QueryContext(ctx,
-		"SELECT wc.title, COUNT(w.idwriting) FROM writingCategory wc "+
-			"LEFT JOIN writing w ON w.writingCategory_idwritingCategory = wc.idwritingCategory "+
+		"SELECT wc.title, COUNT(w.idwriting) FROM writing_category wc "+
+			"LEFT JOIN writing w ON w.writing_category_id = wc.idwritingCategory "+
 			"GROUP BY wc.idwritingCategory ORDER BY wc.title")
 	if err != nil {
 		return nil, err

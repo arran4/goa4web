@@ -5,7 +5,7 @@
         {{ if .Writing.Private.Bool }} (Restricted access) {{ end }}
         {{ if or .CanEdit .IsAuthor }}
             [<a href="/writings/article/{{ .Writing.Idwriting }}/edit">EDIT</a>]
-            {{ if .IsAuthor }} [<a href="/admin/writings/users/access?category={{ .Writing.WritingcategoryIdwritingcategory }}&article={{ .Writing.Idwriting }}">APPROVED USERS</a>] {{ end }}
+            {{ if .IsAuthor }} [<a href="/admin/writings/users/access?category={{ .Writing.WritingCategoryID }}&article={{ .Writing.Idwriting }}">APPROVED USERS</a>] {{ end }}
         {{ end }}
         <br>
         <strong>Abstract:</strong><br>
@@ -28,5 +28,4 @@
     {{ else }}
         Article doesn't exist.<br>
     {{ end }}
-
 {{ template "tail" $ }}

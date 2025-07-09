@@ -11,23 +11,23 @@ import (
 )
 
 const archiveBlog = `-- name: ArchiveBlog :exec
-INSERT INTO deactivated_blogs (idblogs, forumthread_idforumthread, users_idusers, language_idlanguage, blog, written, deleted_at)
+INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, NOW())
 `
 
 type ArchiveBlogParams struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  sql.NullTime
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            sql.NullTime
 }
 
 func (q *Queries) ArchiveBlog(ctx context.Context, arg ArchiveBlogParams) error {
 	_, err := q.db.ExecContext(ctx, archiveBlog,
 		arg.Idblogs,
-		arg.ForumthreadIdforumthread,
+		arg.ForumthreadID,
 		arg.UsersIdusers,
 		arg.LanguageIdlanguage,
 		arg.Blog,
@@ -37,23 +37,23 @@ func (q *Queries) ArchiveBlog(ctx context.Context, arg ArchiveBlogParams) error 
 }
 
 const archiveComment = `-- name: ArchiveComment :exec
-INSERT INTO deactivated_comments (idcomments, forumthread_idforumthread, users_idusers, language_idlanguage, written, text, deleted_at)
+INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, NOW())
 `
 
 type ArchiveCommentParams struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Written            sql.NullTime
+	Text               sql.NullString
 }
 
 func (q *Queries) ArchiveComment(ctx context.Context, arg ArchiveCommentParams) error {
 	_, err := q.db.ExecContext(ctx, archiveComment,
 		arg.Idcomments,
-		arg.ForumthreadIdforumthread,
+		arg.ForumthreadID,
 		arg.UsersIdusers,
 		arg.LanguageIdlanguage,
 		arg.Written,
@@ -63,27 +63,27 @@ func (q *Queries) ArchiveComment(ctx context.Context, arg ArchiveCommentParams) 
 }
 
 const archiveImagepost = `-- name: ArchiveImagepost :exec
-INSERT INTO deactivated_imageposts (idimagepost, forumthread_idforumthread, users_idusers, imageboard_idimageboard, posted, description, thumbnail, fullimage, file_size, approved, deleted_at)
+INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, description, thumbnail, fullimage, file_size, approved, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type ArchiveImagepostParams struct {
-	Idimagepost              int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	ImageboardIdimageboard   int32
-	Posted                   sql.NullTime
-	Description              sql.NullString
-	Thumbnail                sql.NullString
-	Fullimage                sql.NullString
-	FileSize                 int32
-	Approved                 sql.NullBool
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               sql.NullBool
 }
 
 func (q *Queries) ArchiveImagepost(ctx context.Context, arg ArchiveImagepostParams) error {
 	_, err := q.db.ExecContext(ctx, archiveImagepost,
 		arg.Idimagepost,
-		arg.ForumthreadIdforumthread,
+		arg.ForumthreadID,
 		arg.UsersIdusers,
 		arg.ImageboardIdimageboard,
 		arg.Posted,
@@ -97,20 +97,20 @@ func (q *Queries) ArchiveImagepost(ctx context.Context, arg ArchiveImagepostPara
 }
 
 const archiveLink = `-- name: ArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linkerCategory_idlinkerCategory, forumthread_idforumthread, title, url, description, listed, deleted_at)
+INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type ArchiveLinkParams struct {
-	Idlinker                       int32
-	LanguageIdlanguage             int32
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	ForumthreadIdforumthread       int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-	Listed                         sql.NullTime
+	Idlinker           int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	LinkerCategoryID   int32
+	ForumthreadID      int32
+	Title              sql.NullString
+	Url                sql.NullString
+	Description        sql.NullString
+	Listed             sql.NullTime
 }
 
 func (q *Queries) ArchiveLink(ctx context.Context, arg ArchiveLinkParams) error {
@@ -118,8 +118,8 @@ func (q *Queries) ArchiveLink(ctx context.Context, arg ArchiveLinkParams) error 
 		arg.Idlinker,
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
-		arg.LinkercategoryIdlinkercategory,
-		arg.ForumthreadIdforumthread,
+		arg.LinkerCategoryID,
+		arg.ForumthreadID,
 		arg.Title,
 		arg.Url,
 		arg.Description,
@@ -142,30 +142,30 @@ func (q *Queries) ArchiveUser(ctx context.Context, idusers int32) error {
 }
 
 const archiveWriting = `-- name: ArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writing, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_idlanguage, writing_category_id, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type ArchiveWritingParams struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
 }
 
 func (q *Queries) ArchiveWriting(ctx context.Context, arg ArchiveWritingParams) error {
 	_, err := q.db.ExecContext(ctx, archiveWriting,
 		arg.Idwriting,
 		arg.UsersIdusers,
-		arg.ForumthreadIdforumthread,
+		arg.ForumthreadID,
 		arg.LanguageIdlanguage,
-		arg.WritingcategoryIdwritingcategory,
+		arg.WritingCategoryID,
 		arg.Title,
 		arg.Published,
 		arg.Writing,

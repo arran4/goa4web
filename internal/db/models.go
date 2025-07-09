@@ -26,17 +26,17 @@ type BannedIp struct {
 }
 
 type Blog struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  time.Time
-	DeletedAt                sql.NullTime
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	DeletedAt          sql.NullTime
 }
 
-type Blogssearch struct {
-	BlogsIdblogs                   int32
+type BlogsSearch struct {
+	BlogID                         int32
 	SearchwordlistIdsearchwordlist int32
 }
 
@@ -47,69 +47,69 @@ type Bookmark struct {
 }
 
 type Comment struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	DeletedAt                sql.NullTime
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Written            sql.NullTime
+	Text               sql.NullString
+	DeletedAt          sql.NullTime
 }
 
-type Commentssearch struct {
+type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int32
-	CommentsIdcomments             int32
+	CommentID                      int32
 }
 
 type DeactivatedBlog struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  sql.NullTime
-	DeletedAt                sql.NullTime
-	RestoredAt               sql.NullTime
+	Idblogs            int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            sql.NullTime
+	DeletedAt          sql.NullTime
+	RestoredAt         sql.NullTime
 }
 
 type DeactivatedComment struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	DeletedAt                sql.NullTime
-	RestoredAt               sql.NullTime
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Written            sql.NullTime
+	Text               sql.NullString
+	DeletedAt          sql.NullTime
+	RestoredAt         sql.NullTime
 }
 
 type DeactivatedImagepost struct {
-	Idimagepost              int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	ImageboardIdimageboard   int32
-	Posted                   sql.NullTime
-	Description              sql.NullString
-	Thumbnail                sql.NullString
-	Fullimage                sql.NullString
-	FileSize                 int32
-	Approved                 sql.NullBool
-	DeletedAt                sql.NullTime
-	RestoredAt               sql.NullTime
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               sql.NullBool
+	DeletedAt              sql.NullTime
+	RestoredAt             sql.NullTime
 }
 
 type DeactivatedLinker struct {
-	Idlinker                       int32
-	LanguageIdlanguage             int32
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	ForumthreadIdforumthread       int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-	Listed                         sql.NullTime
-	DeletedAt                      sql.NullTime
-	RestoredAt                     sql.NullTime
+	Idlinker           int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	LinkerCategoryID   int32
+	ForumthreadID      int32
+	Title              sql.NullString
+	Url                sql.NullString
+	Description        sql.NullString
+	Listed             sql.NullTime
+	DeletedAt          sql.NullTime
+	RestoredAt         sql.NullTime
 }
 
 type DeactivatedUser struct {
@@ -123,18 +123,18 @@ type DeactivatedUser struct {
 }
 
 type DeactivatedWriting struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
-	DeletedAt                        sql.NullTime
-	RestoredAt                       sql.NullTime
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	RestoredAt         sql.NullTime
 }
 
 type DeadLetter struct {
@@ -152,7 +152,7 @@ type Faq struct {
 	Question                     sql.NullString
 }
 
-type Faqcategory struct {
+type FaqCategory struct {
 	Idfaqcategories int32
 	Name            sql.NullString
 }
@@ -194,21 +194,21 @@ type Imageboard struct {
 }
 
 type Imagepost struct {
-	Idimagepost              int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	ImageboardIdimageboard   int32
-	Posted                   sql.NullTime
-	Description              sql.NullString
-	Thumbnail                sql.NullString
-	Fullimage                sql.NullString
-	FileSize                 int32
-	Approved                 bool
-	DeletedAt                sql.NullTime
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
 }
 
-type Imagepostsearch struct {
-	ImagepostIdimagepost           int32
+type ImagepostSearch struct {
+	ImagePostID                    int32
 	SearchwordlistIdsearchwordlist int32
 }
 
@@ -218,38 +218,38 @@ type Language struct {
 }
 
 type Linker struct {
-	Idlinker                       int32
-	LanguageIdlanguage             int32
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	ForumthreadIdforumthread       int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-	Listed                         sql.NullTime
-	DeletedAt                      sql.NullTime
+	Idlinker           int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	LinkerCategoryID   int32
+	ForumthreadID      int32
+	Title              sql.NullString
+	Url                sql.NullString
+	Description        sql.NullString
+	Listed             sql.NullTime
+	DeletedAt          sql.NullTime
 }
 
-type Linkercategory struct {
+type LinkerCategory struct {
 	Idlinkercategory int32
 	Position         int32
 	Title            sql.NullString
 	Sortorder        int32
 }
 
-type Linkerqueue struct {
-	Idlinkerqueue                  int32
-	LanguageIdlanguage             int32
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
+type LinkerQueue struct {
+	Idlinkerqueue      int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	LinkerCategoryID   int32
+	Title              sql.NullString
+	Url                sql.NullString
+	Description        sql.NullString
 }
 
-type Linkersearch struct {
+type LinkerSearch struct {
 	SearchwordlistIdsearchwordlist int32
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 }
 
 type LoginAttempt struct {
@@ -312,7 +312,7 @@ type Searchwordlist struct {
 
 type SearchwordlistHasLinker struct {
 	SearchwordlistIdsearchwordlist int32
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 }
 
 type Session struct {
@@ -328,17 +328,17 @@ type SiteAnnouncement struct {
 	CreatedAt  time.Time
 }
 
-type Sitenews struct {
-	Idsitenews               int32
-	ForumthreadIdforumthread int32
-	LanguageIdlanguage       int32
-	UsersIdusers             int32
-	News                     sql.NullString
-	Occurred                 sql.NullTime
+type SiteNews struct {
+	Idsitenews         int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	News               sql.NullString
+	Occurred           sql.NullTime
 }
 
-type Sitenewssearch struct {
-	SitenewsIdsitenews             int32
+type SiteNewsSearch struct {
+	SiteNewsID                     int32
 	SearchwordlistIdsearchwordlist int32
 }
 
@@ -400,46 +400,34 @@ type Userstopiclevel struct {
 }
 
 type Writing struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
-	DeletedAt                        sql.NullTime
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
 }
 
-type Writingapproveduser struct {
-	WritingIdwriting int32
-	UsersIdusers     int32
-	Readdoc          sql.NullBool
-	Editdoc          sql.NullBool
+type WritingApprovedUser struct {
+	WritingID    int32
+	UsersIdusers int32
+	Readdoc      sql.NullBool
+	Editdoc      sql.NullBool
 }
 
-type Writingcategory struct {
-	Idwritingcategory                int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Description                      sql.NullString
+type WritingCategory struct {
+	Idwritingcategory int32
+	WritingCategoryID int32
+	Title             sql.NullString
+	Description       sql.NullString
 }
 
-type Writingsearch struct {
+type WritingSearch struct {
 	SearchwordlistIdsearchwordlist int32
-	WritingIdwriting               int32
-}
-
-type _1OldForumthread struct {
-	Idforumthread          int32
-	ForumtopicIdforumtopic int32
-}
-
-type _1OldForumtopic struct {
-	Idforumtopic                 int32
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
+	WritingID                      int32
 }

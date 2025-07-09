@@ -64,7 +64,7 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, lid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToLinkerSearch(ctx, db.AddToLinkerSearchParams{
-			LinkerIdlinker:                 int32(lid),
+			LinkerID:                       int32(lid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})
@@ -74,7 +74,7 @@ func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds [
 func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, pid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToImagePostSearch(ctx, db.AddToImagePostSearchParams{
-			ImagepostIdimagepost:           int32(pid),
+			ImagePostID:                    int32(pid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})
@@ -84,7 +84,7 @@ func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []
 func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, wacid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToForumWritingSearch(ctx, db.AddToForumWritingSearchParams{
-			WritingIdwriting:               int32(wacid),
+			WritingID:                      int32(wacid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})
@@ -94,7 +94,7 @@ func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds 
 func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, cid int64) bool {
 	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
 		return queries.AddToForumCommentSearch(ctx, db.AddToForumCommentSearchParams{
-			CommentsIdcomments:             int32(cid),
+			CommentID:                      int32(cid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 		})
 	})

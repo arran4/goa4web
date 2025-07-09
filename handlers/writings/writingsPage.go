@@ -19,11 +19,11 @@ var writingsPermissionsPageEnabled = true
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories                       []*db.Writingcategory
-		EditingCategoryId                int32
-		CategoryId                       int32
-		WritingcategoryIdwritingcategory int32
-		IsAdmin                          bool
+		Categories        []*db.WritingCategory
+		EditingCategoryId int32
+		CategoryId        int32
+		WritingCategoryID int32
+		IsAdmin           bool
 	}
 
 	data := Data{
@@ -34,7 +34,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
 	data.CategoryId = 0
-	data.WritingcategoryIdwritingcategory = data.CategoryId
+	data.WritingCategoryID = data.CategoryId
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 

@@ -62,13 +62,13 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	articleId, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
-		WritingcategoryIdwritingcategory: int32(categoryId),
-		Title:                            sql.NullString{Valid: true, String: title},
-		Abstract:                         sql.NullString{Valid: true, String: abstract},
-		Writing:                          sql.NullString{Valid: true, String: body},
-		Private:                          sql.NullBool{Valid: true, Bool: private},
-		LanguageIdlanguage:               int32(languageId),
-		UsersIdusers:                     uid,
+		WritingCategoryID:  int32(categoryId),
+		Title:              sql.NullString{Valid: true, String: title},
+		Abstract:           sql.NullString{Valid: true, String: abstract},
+		Writing:            sql.NullString{Valid: true, String: body},
+		Private:            sql.NullBool{Valid: true, Bool: private},
+		LanguageIdlanguage: int32(languageId),
+		UsersIdusers:       uid,
 	})
 	if err != nil {
 		log.Printf("insertWriting Error: %s", err)

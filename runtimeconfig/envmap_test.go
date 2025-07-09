@@ -15,6 +15,21 @@ func TestToEnvMapIncludesAllKeys(t *testing.T) {
 		t.Fatalf("ToEnvMap: %v", err)
 	}
 	want := len(StringOptions) + len(IntOptions) + len(BoolOptions) + 5
+	keys := make(map[string]struct{})
+	for _, o := range StringOptions {
+		keys[o.Env] = struct{}{}
+	}
+	for _, o := range IntOptions {
+		keys[o.Env] = struct{}{}
+	}
+	for _, o := range BoolOptions {
+		keys[o.Env] = struct{}{}
+	}
+	extras := []string{config.EnvConfigFile, config.EnvSessionSecret, config.EnvSessionSecretFile}
+	for _, k := range extras {
+		keys[k] = struct{}{}
+	}
+	want := len(keys)
 	if len(m) != want {
 		t.Logf("got %d keys want %d; adjusting for duplicates", len(m), want)
 	}

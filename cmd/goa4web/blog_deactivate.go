@@ -44,12 +44,12 @@ func (c *blogDeactivateCmd) Run() error {
 		return fmt.Errorf("fetch blog: %w", err)
 	}
 	if err := queries.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
-		Idblogs:                  b.Idblogs,
-		ForumthreadIdforumthread: b.ForumthreadIdforumthread,
-		UsersIdusers:             b.UsersIdusers,
-		LanguageIdlanguage:       b.LanguageIdlanguage,
-		Blog:                     b.Blog,
-		Written:                  sql.NullTime{Time: b.Written, Valid: true},
+		Idblogs:            b.Idblogs,
+		ForumthreadID:      b.ForumthreadID,
+		UsersIdusers:       b.UsersIdusers,
+		LanguageIdlanguage: b.LanguageIdlanguage,
+		Blog:               b.Blog,
+		Written:            sql.NullTime{Time: b.Written, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("archive blog: %w", err)
 	}

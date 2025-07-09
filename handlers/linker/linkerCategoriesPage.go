@@ -15,7 +15,7 @@ import (
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories []*db.Linkercategory
+		Categories []*db.LinkerCategory
 	}
 
 	data := Data{

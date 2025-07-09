@@ -64,8 +64,8 @@ func (n Notifier) NotifyThreadSubscribers(ctx context.Context, threadID, exclude
 		return
 	}
 	rows, err := n.Queries.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: threadID,
-		Idusers:                  excludeUser,
+		ForumthreadID: threadID,
+		Idusers:       excludeUser,
 	})
 	if err != nil {
 		log.Printf("list subscribers: %v", err)

@@ -1,11 +1,11 @@
 -- name: DeleteLinkerCategory :exec
-DELETE FROM linkerCategory WHERE idlinkerCategory = ?;
+DELETE FROM linker_category WHERE idlinkerCategory = ?;
 
 -- name: RenameLinkerCategory :exec
-UPDATE linkerCategory SET title = ?, position = ? WHERE idlinkerCategory = ?;
+UPDATE linker_category SET title = ?, position = ? WHERE idlinkerCategory = ?;
 
 -- name: CreateLinkerCategory :exec
-INSERT INTO linkerCategory (title, position) VALUES (?, ?);
+INSERT INTO linker_category (title, position) VALUES (?, ?);
 
 -- name: GetAllLinkerCategories :many
 SELECT
@@ -13,14 +13,14 @@ SELECT
     lc.position,
     lc.title,
     lc.sortorder
-FROM linkerCategory lc
+FROM linker_category lc
 ORDER BY lc.position
 ;
 
 -- name: GetLinkerCategoryLinkCounts :many
 SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
-FROM linkerCategory c
-LEFT JOIN linker l ON c.idlinkerCategory = l.linkerCategory_idlinkerCategory
+FROM linker_category c
+LEFT JOIN linker l ON c.idlinkerCategory = l.linker_category_id
 GROUP BY c.idlinkerCategory
 ORDER BY c.position
 ;
@@ -31,86 +31,86 @@ SELECT
     position,
     title,
     sortorder
-FROM linkerCategory
+FROM linker_category
 ORDER BY sortorder;
 
 
 -- name: DeleteLinkerQueuedItem :exec
-DELETE FROM linkerQueue WHERE idlinkerQueue = ?;
+DELETE FROM linker_queue WHERE idlinkerQueue = ?;
 
 -- name: UpdateLinkerQueuedItem :exec
-UPDATE linkerQueue SET linkerCategory_idlinkerCategory = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?;
+UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?;
 
 -- name: CreateLinkerQueuedItem :exec
-INSERT INTO linkerQueue (users_idusers, linkerCategory_idlinkerCategory, title, url, description) VALUES (?, ?, ?, ?, ?);
+INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description) VALUES (?, ?, ?, ?, ?);
 
 -- name: GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails :many
 SELECT l.*, u.username, c.title as category_title, c.idlinkerCategory
-FROM linkerQueue l
+FROM linker_queue l
 JOIN users u ON l.users_idusers = u.idusers
-JOIN linkerCategory c ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
+JOIN linker_category c ON l.linker_category_id = c.idlinkerCategory
 ;
 -- name: SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId :execlastid
-INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, language_idlanguage, title, `url`, description)
-SELECT l.users_idusers, l.linkerCategory_idlinkerCategory, l.language_idlanguage, l.title, l.url, l.description
-FROM linkerQueue l
+INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, title, `url`, description)
+SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
+FROM linker_queue l
 WHERE l.idlinkerQueue = ?
 ;
 
 -- name: CreateLinkerItem :exec
-INSERT INTO linker (users_idusers, linkerCategory_idlinkerCategory, title, url, description, listed)
+INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)
 VALUES (?, ?, ?, ?, ?, NOW());
 
 -- name: UpdateLinkerItem :exec
-UPDATE linker SET title = ?, url = ?, description = ?, linkerCategory_idlinkerCategory = ?, language_idlanguage = ?
+UPDATE linker SET title = ?, url = ?, description = ?, linker_category_id = ?, language_idlanguage = ?
 WHERE idlinker = ?;
 
 -- name: AssignLinkerThisThreadId :exec
-UPDATE linker SET forumthread_idforumthread = ? WHERE idlinker = ?;
+UPDATE linker SET forumthread_id = ? WHERE idlinker = ?;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
+LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
+LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercategory) = 0)
 ORDER BY l.listed DESC;
 
 -- name: GetLinkerItemsByUserDescending :many
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, th.comments, lc.title as Category_Title, u.username as PosterUsername
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.comments, lc.title as Category_Title, u.username as PosterUsername
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_idforumthread = th.idforumthread
+LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
+LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE l.users_idusers = ?
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
-JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker = ?;
 
 -- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending :many
-SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linkerCategory_idlinkerCategory, l.forumthread_idforumthread, l.title, l.url, l.description, l.listed, u.username, lc.title
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
-JOIN linkerCategory lc ON l.linkerCategory_idlinkerCategory = lc.idlinkerCategory
+JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker IN (sqlc.slice(linkerIds));
 
 -- name: GetLinkerCategoriesWithCount :many
 SELECT c.idlinkerCategory, c.title, c.sortorder, COUNT(l.idlinker) AS linkcount
-FROM linkerCategory c
-LEFT JOIN linker l ON l.linkerCategory_idlinkerCategory = c.idlinkerCategory
+FROM linker_category c
+LEFT JOIN linker l ON l.linker_category_id = c.idlinkerCategory
 GROUP BY c.idlinkerCategory
 ORDER BY c.sortorder;
 
 -- name: UpdateLinkerCategorySortOrder :exec
-UPDATE linkerCategory SET sortorder = ? WHERE idlinkerCategory = ?;
+UPDATE linker_category SET sortorder = ? WHERE idlinkerCategory = ?;
 
 -- name: CountLinksByCategory :one
-SELECT COUNT(*) FROM linker WHERE linkerCategory_idlinkerCategory = ?;
+SELECT COUNT(*) FROM linker WHERE linker_category_id = ?;
 

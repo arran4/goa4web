@@ -133,7 +133,7 @@ func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]sql.NullString
 }
 
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
-SELECT idblogs, forumthread_idforumthread, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idblogs, forumthread_id, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -145,23 +145,23 @@ type ListUsersSubscribedToBlogsParams struct {
 }
 
 type ListUsersSubscribedToBlogsRow struct {
-	Idblogs                  int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Blog                     sql.NullString
-	Written                  time.Time
-	DeletedAt                sql.NullTime
-	Idusers                  int32
-	Email                    sql.NullString
-	Username                 sql.NullString
-	DeletedAt_2              sql.NullTime
-	Idpreferences            int32
-	LanguageIdlanguage_2     int32
-	UsersIdusers_2           int32
-	Emailforumupdates        sql.NullBool
-	PageSize                 int32
-	AutoSubscribeReplies     bool
+	Idblogs              int32
+	ForumthreadID        int32
+	UsersIdusers         int32
+	LanguageIdlanguage   int32
+	Blog                 sql.NullString
+	Written              time.Time
+	DeletedAt            sql.NullTime
+	Idusers              int32
+	Email                sql.NullString
+	Username             sql.NullString
+	DeletedAt_2          sql.NullTime
+	Idpreferences        int32
+	LanguageIdlanguage_2 int32
+	UsersIdusers_2       int32
+	Emailforumupdates    sql.NullBool
+	PageSize             int32
+	AutoSubscribeReplies bool
 }
 
 func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersSubscribedToBlogsParams) ([]*ListUsersSubscribedToBlogsRow, error) {
@@ -175,7 +175,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 		var i ListUsersSubscribedToBlogsRow
 		if err := rows.Scan(
 			&i.Idblogs,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Blog,
@@ -206,7 +206,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 }
 
 const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
-SELECT idlinker, t.language_idlanguage, t.users_idusers, linkercategory_idlinkercategory, forumthread_idforumthread, title, url, description, listed, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idlinker, t.language_idlanguage, t.users_idusers, linker_category_id, forumthread_id, title, url, description, listed, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -218,26 +218,26 @@ type ListUsersSubscribedToLinkerParams struct {
 }
 
 type ListUsersSubscribedToLinkerRow struct {
-	Idlinker                       int32
-	LanguageIdlanguage             int32
-	UsersIdusers                   int32
-	LinkercategoryIdlinkercategory int32
-	ForumthreadIdforumthread       int32
-	Title                          sql.NullString
-	Url                            sql.NullString
-	Description                    sql.NullString
-	Listed                         sql.NullTime
-	DeletedAt                      sql.NullTime
-	Idusers                        int32
-	Email                          sql.NullString
-	Username                       sql.NullString
-	DeletedAt_2                    sql.NullTime
-	Idpreferences                  int32
-	LanguageIdlanguage_2           int32
-	UsersIdusers_2                 int32
-	Emailforumupdates              sql.NullBool
-	PageSize                       int32
-	AutoSubscribeReplies           bool
+	Idlinker             int32
+	LanguageIdlanguage   int32
+	UsersIdusers         int32
+	LinkerCategoryID     int32
+	ForumthreadID        int32
+	Title                sql.NullString
+	Url                  sql.NullString
+	Description          sql.NullString
+	Listed               sql.NullTime
+	DeletedAt            sql.NullTime
+	Idusers              int32
+	Email                sql.NullString
+	Username             sql.NullString
+	DeletedAt_2          sql.NullTime
+	Idpreferences        int32
+	LanguageIdlanguage_2 int32
+	UsersIdusers_2       int32
+	Emailforumupdates    sql.NullBool
+	PageSize             int32
+	AutoSubscribeReplies bool
 }
 
 func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsersSubscribedToLinkerParams) ([]*ListUsersSubscribedToLinkerRow, error) {
@@ -253,8 +253,8 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 			&i.Idlinker,
 			&i.LanguageIdlanguage,
 			&i.UsersIdusers,
-			&i.LinkercategoryIdlinkercategory,
-			&i.ForumthreadIdforumthread,
+			&i.LinkerCategoryID,
+			&i.ForumthreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -285,39 +285,39 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
-SELECT c.idcomments, c.forumthread_idforumthread, c.users_idusers, c.language_idlanguage,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
     c.written, c.text, u.idusers, u.email, u.username,
     p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates, p.page_size, p.auto_subscribe_replies
 FROM comments c, users u, preferences p
-WHERE c.forumthread_idforumthread=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
+WHERE c.forumthread_id=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=c.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
 `
 
 type ListUsersSubscribedToThreadParams struct {
-	ForumthreadIdforumthread int32
-	Idusers                  int32
+	ForumthreadID int32
+	Idusers       int32
 }
 
 type ListUsersSubscribedToThreadRow struct {
-	Idcomments               int32
-	ForumthreadIdforumthread int32
-	UsersIdusers             int32
-	LanguageIdlanguage       int32
-	Written                  sql.NullTime
-	Text                     sql.NullString
-	Idusers                  int32
-	Email                    sql.NullString
-	Username                 sql.NullString
-	Idpreferences            int32
-	LanguageIdlanguage_2     int32
-	UsersIdusers_2           int32
-	Emailforumupdates        sql.NullBool
-	PageSize                 int32
-	AutoSubscribeReplies     bool
+	Idcomments           int32
+	ForumthreadID        int32
+	UsersIdusers         int32
+	LanguageIdlanguage   int32
+	Written              sql.NullTime
+	Text                 sql.NullString
+	Idusers              int32
+	Email                sql.NullString
+	Username             sql.NullString
+	Idpreferences        int32
+	LanguageIdlanguage_2 int32
+	UsersIdusers_2       int32
+	Emailforumupdates    sql.NullBool
+	PageSize             int32
+	AutoSubscribeReplies bool
 }
 
 func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsersSubscribedToThreadParams) ([]*ListUsersSubscribedToThreadRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToThread, arg.ForumthreadIdforumthread, arg.Idusers)
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToThread, arg.ForumthreadID, arg.Idusers)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 		var i ListUsersSubscribedToThreadRow
 		if err := rows.Scan(
 			&i.Idcomments,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.UsersIdusers,
 			&i.LanguageIdlanguage,
 			&i.Written,
@@ -356,7 +356,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_idforumthread, t.language_idlanguage, writingcategory_idwritingcategory, title, published, writing, abstract, private, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idwriting, t.users_idusers, forumthread_id, t.language_idlanguage, writing_category_id, title, published, writing, abstract, private, t.deleted_at, idusers, email, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -368,27 +368,27 @@ type ListUsersSubscribedToWritingParams struct {
 }
 
 type ListUsersSubscribedToWritingRow struct {
-	Idwriting                        int32
-	UsersIdusers                     int32
-	ForumthreadIdforumthread         int32
-	LanguageIdlanguage               int32
-	WritingcategoryIdwritingcategory int32
-	Title                            sql.NullString
-	Published                        sql.NullTime
-	Writing                          sql.NullString
-	Abstract                         sql.NullString
-	Private                          sql.NullBool
-	DeletedAt                        sql.NullTime
-	Idusers                          int32
-	Email                            sql.NullString
-	Username                         sql.NullString
-	DeletedAt_2                      sql.NullTime
-	Idpreferences                    int32
-	LanguageIdlanguage_2             int32
-	UsersIdusers_2                   int32
-	Emailforumupdates                sql.NullBool
-	PageSize                         int32
-	AutoSubscribeReplies             bool
+	Idwriting            int32
+	UsersIdusers         int32
+	ForumthreadID        int32
+	LanguageIdlanguage   int32
+	WritingCategoryID    int32
+	Title                sql.NullString
+	Published            sql.NullTime
+	Writing              sql.NullString
+	Abstract             sql.NullString
+	Private              sql.NullBool
+	DeletedAt            sql.NullTime
+	Idusers              int32
+	Email                sql.NullString
+	Username             sql.NullString
+	DeletedAt_2          sql.NullTime
+	Idpreferences        int32
+	LanguageIdlanguage_2 int32
+	UsersIdusers_2       int32
+	Emailforumupdates    sql.NullBool
+	PageSize             int32
+	AutoSubscribeReplies bool
 }
 
 func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUsersSubscribedToWritingParams) ([]*ListUsersSubscribedToWritingRow, error) {
@@ -403,9 +403,9 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
-			&i.ForumthreadIdforumthread,
+			&i.ForumthreadID,
 			&i.LanguageIdlanguage,
-			&i.WritingcategoryIdwritingcategory,
+			&i.WritingCategoryID,
 			&i.Title,
 			&i.Published,
 			&i.Writing,

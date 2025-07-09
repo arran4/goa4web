@@ -10,7 +10,7 @@ UPDATE users SET username = ?, email = '', passwd = '', passwd_algorithm = '', d
 WHERE idusers = ?;
 
 -- name: ArchiveComment :exec
-INSERT INTO deactivated_comments (idcomments, forumthread_idforumthread, users_idusers, language_idlanguage, written, text, deleted_at)
+INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, NOW());
 
 -- name: ScrubComment :exec
@@ -27,7 +27,7 @@ UPDATE comments SET text = ?, deleted_at = NULL WHERE idcomments = ?;
 UPDATE deactivated_comments SET restored_at = NOW() WHERE idcomments = ?;
 
 -- name: ArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_idforumthread, language_idlanguage, writingCategory_idwritingCategory, title, published, writing, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_idlanguage, writing_category_id, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: ScrubWriting :exec
@@ -44,7 +44,7 @@ UPDATE writing SET title = ?, writing = ?, abstract = ?, private = ?, deleted_at
 UPDATE deactivated_writings SET restored_at = NOW() WHERE idwriting = ?;
 
 -- name: ArchiveBlog :exec
-INSERT INTO deactivated_blogs (idblogs, forumthread_idforumthread, users_idusers, language_idlanguage, blog, written, deleted_at)
+INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, NOW());
 
 -- name: ScrubBlog :exec
@@ -60,7 +60,7 @@ UPDATE blogs SET blog = ?, deleted_at = NULL WHERE idblogs = ?;
 UPDATE deactivated_blogs SET restored_at = NOW() WHERE idblogs = ?;
 
 -- name: ArchiveImagepost :exec
-INSERT INTO deactivated_imageposts (idimagepost, forumthread_idforumthread, users_idusers, imageboard_idimageboard, posted, description, thumbnail, fullimage, file_size, approved, deleted_at)
+INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, description, thumbnail, fullimage, file_size, approved, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: ScrubImagepost :exec
@@ -76,7 +76,7 @@ UPDATE imagepost SET description = ?, thumbnail = ?, fullimage = ?, deleted_at =
 UPDATE deactivated_imageposts SET restored_at = NOW() WHERE idimagepost = ?;
 
 -- name: ArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linkerCategory_idlinkerCategory, forumthread_idforumthread, title, url, description, listed, deleted_at)
+INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: ScrubLink :exec

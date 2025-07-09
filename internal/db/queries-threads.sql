@@ -3,23 +3,23 @@ UPDATE forumthread
 SET lastaddition = (
     SELECT written
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
     ORDER BY written DESC
     LIMIT 1
 ), comments = (
     SELECT COUNT(users_idusers) - 1
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
 ), lastposter = (
     SELECT users_idusers
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
     ORDER BY written DESC
     LIMIT 1
 ), firstpost = (
     SELECT idcomments
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
     LIMIT 1
 );
 
@@ -28,23 +28,23 @@ UPDATE forumthread
 SET lastaddition = (
     SELECT written
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
     ORDER BY written DESC
     LIMIT 1
 ), comments = (
     SELECT COUNT(users_idusers) - 1
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
 ), lastposter = (
     SELECT users_idusers
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
     ORDER BY written DESC
     LIMIT 1
 ), firstpost = (
     SELECT idcomments
     FROM comments
-    WHERE forumthread_idforumthread = idforumthread
+    WHERE forumthread_id = idforumthread
     LIMIT 1
 )
 WHERE idforumthread = ?;

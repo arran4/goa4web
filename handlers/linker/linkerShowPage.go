@@ -93,7 +93,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pthid int32 = link.ForumthreadIdforumthread
+	var pthid int32 = link.ForumthreadID
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
 		String: LinkerTopicName,
 		Valid:  true,
@@ -133,8 +133,8 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignLinkerThisThreadId(r.Context(), db.AssignLinkerThisThreadIdParams{
-			ForumthreadIdforumthread: pthid,
-			Idlinker:                 int32(linkId),
+			ForumthreadID: pthid,
+			Idlinker:      int32(linkId),
 		}); err != nil {
 			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -151,8 +151,8 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadIdforumthread: pthid,
-		Idusers:                  uid,
+		ForumthreadID: pthid,
+		Idusers:       uid,
 	}); err != nil {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
@@ -178,9 +178,9 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage:       int32(languageId),
-		UsersIdusers:             uid,
-		ForumthreadIdforumthread: pthid,
+		LanguageIdlanguage: int32(languageId),
+		UsersIdusers:       uid,
+		ForumthreadID:      pthid,
 		Text: sql.NullString{
 			String: text,
 			Valid:  true,

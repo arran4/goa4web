@@ -3,11 +3,9 @@ package dbdrivers
 import (
 	"database/sql/driver"
 	"fmt"
+	"log"
 	"sort"
-
-	"github.com/arran4/goa4web/internal/dbdrivers/mysql"
-	"github.com/arran4/goa4web/internal/dbdrivers/postgres"
-	"github.com/arran4/goa4web/internal/dbdrivers/sqlite"
+	"sync"
 )
 
 // DBDriver describes a database driver and how to create connectors.
@@ -18,16 +16,31 @@ type DBDriver interface {
 }
 
 // Registry lists the built-in database drivers.
-var Registry = []DBDriver{
-	mysql.Driver{},
-	postgres.Driver{},
-	sqlite.Driver{},
+var (
+	regMu    sync.RWMutex
+	Registry []DBDriver
+)
+
+// RegisterDriver adds d to the Registry.
+func RegisterDriver(d DBDriver) {
+	regMu.Lock()
+	defer regMu.Unlock()
+	for _, r := range Registry {
+		if r.Name() == d.Name() {
+			log.Printf("dbdrivers: driver %s already registered", d.Name())
+			return
+		}
+	}
+	Registry = append(Registry, d)
 }
 
 // Connector returns a driver.Connector for the driver with the given name and
 // DSN. It searches the Registry for a matching driver.
 func Connector(name, dsn string) (driver.Connector, error) {
-	for _, d := range Registry {
+	regMu.RLock()
+	drivers := append([]DBDriver(nil), Registry...)
+	regMu.RUnlock()
+	for _, d := range drivers {
 		if d.Name() == name {
 			return d.OpenConnector(dsn)
 		}
@@ -37,8 +50,11 @@ func Connector(name, dsn string) (driver.Connector, error) {
 
 // Names returns the names of all registered drivers.
 func Names() []string {
+	regMu.RLock()
+	drivers := append([]DBDriver(nil), Registry...)
+	regMu.RUnlock()
 	m := map[string]struct{}{}
-	for _, d := range Registry {
+	for _, d := range drivers {
 		m[d.Name()] = struct{}{}
 	}
 	names := make([]string, 0, len(m))

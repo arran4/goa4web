@@ -29,49 +29,49 @@ func (q *Queries) AddToForumCommentSearch(ctx context.Context, arg AddToForumCom
 
 const addToForumWritingSearch = `-- name: AddToForumWritingSearch :exec
 INSERT IGNORE INTO writingSearch
-(writing_idwriting, searchwordlist_idsearchwordlist)
+(writing_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
 
 type AddToForumWritingSearchParams struct {
-	WritingIdwriting               int32
+	WritingID                      int32
 	SearchwordlistIdsearchwordlist int32
 }
 
 func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWritingSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingIdwriting, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingID, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
 const addToImagePostSearch = `-- name: AddToImagePostSearch :exec
 INSERT IGNORE INTO imagepostSearch
-(imagepost_idimagepost, searchwordlist_idsearchwordlist)
+(image_post_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
 
 type AddToImagePostSearchParams struct {
-	ImagepostIdimagepost           int32
+	ImagePostID                    int32
 	SearchwordlistIdsearchwordlist int32
 }
 
 func (q *Queries) AddToImagePostSearch(ctx context.Context, arg AddToImagePostSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagepostIdimagepost, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagePostID, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
 const addToLinkerSearch = `-- name: AddToLinkerSearch :exec
 INSERT IGNORE INTO linkerSearch
-(linker_idlinker, searchwordlist_idsearchwordlist)
+(linker_id, searchwordlist_idsearchwordlist)
 VALUES (?, ?)
 `
 
 type AddToLinkerSearchParams struct {
-	LinkerIdlinker                 int32
+	LinkerID                       int32
 	SearchwordlistIdsearchwordlist int32
 }
 
 func (q *Queries) AddToLinkerSearch(ctx context.Context, arg AddToLinkerSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerIdlinker, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerID, arg.SearchwordlistIdsearchwordlist)
 	return err
 }
 
@@ -408,7 +408,7 @@ func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase strin
 }
 
 const imagePostSearchFirst = `-- name: ImagePostSearchFirst :many
-SELECT DISTINCT cs.imagepost_idimagepost
+SELECT DISTINCT cs.image_post_id
 FROM imagepostSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -422,11 +422,11 @@ func (q *Queries) ImagePostSearchFirst(ctx context.Context, word sql.NullString)
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var imagepost_idimagepost int32
-		if err := rows.Scan(&imagepost_idimagepost); err != nil {
+		var image_post_id int32
+		if err := rows.Scan(&image_post_id); err != nil {
 			return nil, err
 		}
-		items = append(items, imagepost_idimagepost)
+		items = append(items, image_post_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -438,11 +438,11 @@ func (q *Queries) ImagePostSearchFirst(ctx context.Context, word sql.NullString)
 }
 
 const imagePostSearchNext = `-- name: ImagePostSearchNext :many
-SELECT DISTINCT cs.imagepost_idimagepost
+SELECT DISTINCT cs.image_post_id
 FROM imagepostSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.imagepost_idimagepost IN (/*SLICE:ids*/?)
+AND cs.image_post_id IN (/*SLICE:ids*/?)
 `
 
 type ImagePostSearchNextParams struct {
@@ -469,11 +469,11 @@ func (q *Queries) ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNe
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var imagepost_idimagepost int32
-		if err := rows.Scan(&imagepost_idimagepost); err != nil {
+		var image_post_id int32
+		if err := rows.Scan(&image_post_id); err != nil {
 			return nil, err
 		}
-		items = append(items, imagepost_idimagepost)
+		items = append(items, image_post_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -485,7 +485,7 @@ func (q *Queries) ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNe
 }
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -499,11 +499,11 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var linker_idlinker int32
-		if err := rows.Scan(&linker_idlinker); err != nil {
+		var linker_id int32
+		if err := rows.Scan(&linker_id); err != nil {
 			return nil, err
 		}
-		items = append(items, linker_idlinker)
+		items = append(items, linker_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -515,11 +515,11 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([
 }
 
 const linkerSearchNext = `-- name: LinkerSearchNext :many
-SELECT DISTINCT cs.linker_idlinker
+SELECT DISTINCT cs.linker_id
 FROM linkerSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.linker_idlinker IN (/*SLICE:ids*/?)
+AND cs.linker_id IN (/*SLICE:ids*/?)
 `
 
 type LinkerSearchNextParams struct {
@@ -546,11 +546,11 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var linker_idlinker int32
-		if err := rows.Scan(&linker_idlinker); err != nil {
+		var linker_id int32
+		if err := rows.Scan(&linker_id); err != nil {
 			return nil, err
 		}
-		items = append(items, linker_idlinker)
+		items = append(items, linker_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -614,7 +614,7 @@ func (q *Queries) RemakeCommentsSearchInsert(ctx context.Context) error {
 }
 
 const remakeImagePostSearchInsert = `-- name: RemakeImagePostSearchInsert :exec
-INSERT INTO imagepostSearch (text, imagepost_idimagepost)
+INSERT INTO imagepostSearch (text, image_post_id)
 SELECT description, idimagepost
 FROM imagepost
 `
@@ -625,26 +625,26 @@ func (q *Queries) RemakeImagePostSearchInsert(ctx context.Context) error {
 }
 
 const remakeLinkerSearch = `-- name: RemakeLinkerSearch :exec
-INSERT INTO linkerSearch (text, linker_idlinker)
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
 `
 
 // This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
 func (q *Queries) RemakeLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearch)
 	return err
 }
 
 const remakeLinkerSearchInsert = `-- name: RemakeLinkerSearchInsert :exec
-INSERT INTO linkerSearch (text, linker_idlinker)
+INSERT INTO linkerSearch (text, linker_id)
 SELECT CONCAT(title, ' ', description), idlinker
 FROM linker
 `
 
 // This query selects data from the "linker" table and populates the "linkerSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_idlinker".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linkerSearch" using the "linker_id".
 func (q *Queries) RemakeLinkerSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeLinkerSearchInsert)
 	return err
@@ -677,26 +677,26 @@ func (q *Queries) RemakeNewsSearchInsert(ctx context.Context) error {
 }
 
 const remakeWritingSearch = `-- name: RemakeWritingSearch :exec
-INSERT INTO writingSearch (text, writing_idwriting)
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 
 // This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
 func (q *Queries) RemakeWritingSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearch)
 	return err
 }
 
 const remakeWritingSearchInsert = `-- name: RemakeWritingSearchInsert :exec
-INSERT INTO writingSearch (text, writing_idwriting)
+INSERT INTO writingSearch (text, writing_id)
 SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
 FROM writing
 `
 
 // This query selects data from the "writing" table and populates the "writingSearch" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_idwriting".
+// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writingSearch" using the "writing_id".
 func (q *Queries) RemakeWritingSearchInsert(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, remakeWritingSearchInsert)
 	return err
@@ -876,16 +876,16 @@ func (q *Queries) WordListWithCountsByPrefix(ctx context.Context, arg WordListWi
 
 const writingSearchDelete = `-- name: WritingSearchDelete :exec
 DELETE FROM writingSearch
-WHERE writing_idwriting=?
+WHERE writing_id=?
 `
 
-func (q *Queries) WritingSearchDelete(ctx context.Context, writingIdwriting int32) error {
-	_, err := q.db.ExecContext(ctx, writingSearchDelete, writingIdwriting)
+func (q *Queries) WritingSearchDelete(ctx context.Context, writingID int32) error {
+	_, err := q.db.ExecContext(ctx, writingSearchDelete, writingID)
 	return err
 }
 
 const writingSearchFirst = `-- name: WritingSearchFirst :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
@@ -899,11 +899,11 @@ func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) (
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var writing_idwriting int32
-		if err := rows.Scan(&writing_idwriting); err != nil {
+		var writing_id int32
+		if err := rows.Scan(&writing_id); err != nil {
 			return nil, err
 		}
-		items = append(items, writing_idwriting)
+		items = append(items, writing_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -915,11 +915,11 @@ func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) (
 }
 
 const writingSearchNext = `-- name: WritingSearchNext :many
-SELECT DISTINCT cs.writing_idwriting
+SELECT DISTINCT cs.writing_id
 FROM writingSearch cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 WHERE swl.word=?
-AND cs.writing_idwriting IN (/*SLICE:ids*/?)
+AND cs.writing_id IN (/*SLICE:ids*/?)
 `
 
 type WritingSearchNextParams struct {
@@ -946,11 +946,11 @@ func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextPa
 	defer rows.Close()
 	var items []int32
 	for rows.Next() {
-		var writing_idwriting int32
-		if err := rows.Scan(&writing_idwriting); err != nil {
+		var writing_id int32
+		if err := rows.Scan(&writing_id); err != nil {
 			return nil, err
 		}
-		items = append(items, writing_idwriting)
+		items = append(items, writing_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

@@ -91,10 +91,10 @@ func AdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := queries.CreateWritingApproval(r.Context(), db.CreateWritingApprovalParams{
-		WritingIdwriting: int32(wid),
-		UsersIdusers:     int32(u.Idusers),
-		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
-		Editdoc:          sql.NullBool{Valid: true, Bool: editdoc},
+		WritingID:    int32(wid),
+		UsersIdusers: int32(u.Idusers),
+		Readdoc:      sql.NullBool{Valid: true, Bool: readdoc},
+		Editdoc:      sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {
 		log.Printf("createWritingApproval Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -110,10 +110,10 @@ func AdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	editdoc, _ := strconv.ParseBool(r.PostFormValue("editdoc"))
 
 	if err := queries.UpdateWritingApproval(r.Context(), db.UpdateWritingApprovalParams{
-		WritingIdwriting: int32(wid),
-		UsersIdusers:     int32(uid),
-		Readdoc:          sql.NullBool{Valid: true, Bool: readdoc},
-		Editdoc:          sql.NullBool{Valid: true, Bool: editdoc},
+		WritingID:    int32(wid),
+		UsersIdusers: int32(uid),
+		Readdoc:      sql.NullBool{Valid: true, Bool: readdoc},
+		Editdoc:      sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {
 		log.Printf("createWritingApproval Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -128,8 +128,8 @@ func AdminUserAccessRemoveActionPage(w http.ResponseWriter, r *http.Request) {
 	wid, _ := strconv.Atoi(r.PostFormValue("wid"))
 
 	if err := queries.DeleteWritingApproval(r.Context(), db.DeleteWritingApprovalParams{
-		WritingIdwriting: int32(wid),
-		UsersIdusers:     int32(uid),
+		WritingID:    int32(wid),
+		UsersIdusers: int32(uid),
 	}); err != nil {
 		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

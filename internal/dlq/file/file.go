@@ -17,6 +17,9 @@ type DLQ struct {
 	mu   sync.Mutex
 }
 
+// fileSeparator marks the boundary around each recorded message.
+const fileSeparator = "-----"
+
 // Record writes the message to the configured file.
 func (f *DLQ) Record(_ context.Context, message string) error {
 	f.mu.Lock()
@@ -29,7 +32,7 @@ func (f *DLQ) Record(_ context.Context, message string) error {
 		return err
 	}
 	defer fh.Close()
-	_, err = fmt.Fprintln(fh, message)
+	_, err = fmt.Fprintf(fh, "%s\n%s\n%s\n", fileSeparator, message, fileSeparator)
 	return err
 }
 

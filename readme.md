@@ -265,10 +265,12 @@ environment variables listed below.
 The `DLQ_PROVIDER` setting selects how failed messages are recorded:
 
 * `log` – writes messages to the application log (default)
-* `file` – appends messages to a file in mbox/JSON lines format at `DLQ_FILE`
+* `file` – appends messages to a file using separator lines at `DLQ_FILE`
 * `dir` – creates one file per message under the directory `DLQ_FILE` using a KSUID name
 * `db` – stores messages in the database
 * `email` – sends messages to administrator addresses using the configured mail provider
+
+Messages include any error details and full email contents when available.
 Example config file:
 
 ```conf

@@ -22,6 +22,7 @@ import (
 	smtpProv "github.com/arran4/goa4web/internal/email/smtp"
 	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
+	"strings"
 )
 
 func init() {
@@ -172,6 +173,10 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 
 	if len(dlqRec.Records) != 1 {
 		t.Fatalf("dlq records=%d", len(dlqRec.Records))
+	}
+	msg := dlqRec.Records[0].Message
+	if !strings.Contains(msg, "b") || !strings.Contains(msg, "fail") {
+		t.Fatalf("unexpected dlq message: %s", msg)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

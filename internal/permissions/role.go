@@ -22,14 +22,20 @@ func Allowed(r *http.Request, roles ...string) bool {
 		return false
 	}
 
-	user, uok := r.Context().Value(hcommon.KeyUser).(*dbpkg.User)
 	queries, qok := r.Context().Value(hcommon.KeyQueries).(*dbpkg.Queries)
-	if !uok || !qok {
+	if !qok {
+		return false
+	}
+	var uid int32
+	if cd != nil {
+		uid = cd.UserID
+	}
+	if uid == 0 {
 		return false
 	}
 	section := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")[0]
 	perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(r.Context(), dbpkg.GetPermissionsByUserIdAndSectionAndSectionAllParams{
-		UsersIdusers: user.Idusers,
+		UsersIdusers: uid,
 		Section:      sql.NullString{String: section, Valid: true},
 	})
 	if err != nil || !perm.Level.Valid {

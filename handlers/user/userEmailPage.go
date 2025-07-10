@@ -40,10 +40,12 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		Error string
 	}
 
-	user, _ := r.Context().Value(common.KeyUser).(*db.User)
-	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	user, _ := cd.CurrentUser()
+	pref, _ := cd.Preference()
 
-	emails, _ := r.Context().Value(common.KeyQueries).(*db.Queries).GetUserEmailsByUserID(r.Context(), user.Idusers)
+	emails, _ := queries.GetUserEmailsByUserID(r.Context(), cd.UserID)
 	var verified, unverified []*db.UserEmail
 	for _, e := range emails {
 		if e.VerifiedAt.Valid {
@@ -131,7 +133,8 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(common.KeyUser).(*db.User)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	user, _ := cd.CurrentUser()
 	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return

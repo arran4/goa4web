@@ -15,7 +15,6 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
-	userhandlers "github.com/arran4/goa4web/handlers/user"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -91,7 +90,6 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 
 	handler := middleware.NewMiddlewareChain(
 		middleware.DBAdderMiddleware,
-		userhandlers.UserAdderMiddleware,
 		middleware.CoreAdderMiddleware,
 		middleware.RequestLoggerMiddleware,
 		middleware.TaskEventMiddleware,

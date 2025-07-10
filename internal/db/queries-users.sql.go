@@ -150,7 +150,7 @@ type ListUsersSubscribedToBlogsParams struct {
 
 type ListUsersSubscribedToBlogsRow struct {
 	Idblogs              int32
-	ForumthreadID        int32
+	ForumthreadID        sql.NullInt32
 	UsersIdusers         int32
 	LanguageIdlanguage   int32
 	Blog                 sql.NullString

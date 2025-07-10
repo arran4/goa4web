@@ -1,3 +1,6 @@
+ALTER TABLE blogs
+    MODIFY COLUMN forumthread_id int(10) DEFAULT NULL;
+
 -- Ensure each forum topic only has one restrictions row
 ALTER TABLE topicrestrictions
     ADD UNIQUE INDEX topicrestrictions_forumtopic_idx (forumtopic_idforumtopic);

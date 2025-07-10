@@ -62,7 +62,7 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if row.Email != "" {
 		page := r.URL.Scheme + "://" + r.Host + "/login"
-		_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, "Password Reset", code)
+		_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, common.TaskUserResetPassword, code)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

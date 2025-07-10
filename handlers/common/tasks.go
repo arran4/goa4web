@@ -238,7 +238,10 @@ const (
 	TaskUserDoNothing = "User do nothing"
 
 	// TaskUserResetPassword resets a user's password.
-	TaskUserResetPassword = "Reset Password"
+	TaskUserResetPassword = "Password Reset"
+
+	// TaskUserEmailVerification verifies a user's email address.
+	TaskUserEmailVerification = "Email Verification"
 
 	// TaskAllow approves a news user level.
 	TaskAllow = "allow"

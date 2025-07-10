@@ -195,7 +195,7 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
 		page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
-	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, "Email Verification", nil)
+	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, common.TaskUserEmailVerification, nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -225,7 +225,7 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
 		page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
-	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, "Email Verification", nil)
+	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, common.TaskUserEmailVerification, nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 

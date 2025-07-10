@@ -200,7 +200,7 @@ CREATE TABLE `permissions` (
   `idpermissions` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `section` tinytext DEFAULT NULL,
-  `level` tinyblob DEFAULT NULL,
+  `role` tinyblob DEFAULT NULL,
   PRIMARY KEY (`idpermissions`),
   KEY `permissions_FKIndex1` (`users_idusers`)
 );

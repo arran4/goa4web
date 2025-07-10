@@ -206,22 +206,9 @@ func EmailSendingEnabled() bool {
 	return runtimeconfig.AppRuntimeConfig.EmailEnabled
 }
 
-// NotifyAdmins sends a change notification email to all administrator addresses
-// returned by GetAdminEmails.
-func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
-	if provider == nil || !AdminNotificationsEnabled() {
-		return
-	}
-	for _, email := range GetAdminEmails(ctx, q) {
-		if err := CreateEmailTemplateAndSend(ctx, provider, email, page, "update", nil); err != nil {
-			log.Printf("Error: send: %s", err)
-		}
-	}
-}
-
 // notifyThreadSubscribers emails users subscribed to the forum thread.
 func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db.Queries, threadID, excludeUser int32, page string) {
-	if provider == nil {
+	if q == nil {
 		return
 	}
 	rows, err := q.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
@@ -233,8 +220,28 @@ func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db
 		return
 	}
 	for _, row := range rows {
-		if err := CreateEmailTemplateAndSend(ctx, provider, row.Email, page, "update", nil); err != nil {
-			log.Printf("Error: send: %s", err)
+		if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
+			log.Printf("Error: queue: %s", err)
+		}
+	}
+}
+
+// NotifyNewsSubscribers queues update emails for users subscribed to the given news post.
+func NotifyNewsSubscribers(ctx context.Context, q *db.Queries, newsID, excludeUser int32, page string) {
+	if q == nil {
+		return
+	}
+	rows, err := q.ListUsersSubscribedToNews(ctx, db.ListUsersSubscribedToNewsParams{
+		Idsitenews: newsID,
+		Idusers:    excludeUser,
+	})
+	if err != nil {
+		log.Printf("Error: listUsersSubscribedToNews: %v", err)
+		return
+	}
+	for _, row := range rows {
+		if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
+			log.Printf("Error: notifyChange: %v", err)
 		}
 	}
 }

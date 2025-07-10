@@ -122,8 +122,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, link.ForumthreadID, row.Idcomments)
-			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, link.ForumthreadID, row.Idcomments)
+			editUrl = fmt.Sprintf("/linker/comments/%d?comment=%d#edit", link.Idlinker, row.Idcomments)
+			editSaveUrl = fmt.Sprintf("/linker/comments/%d/comment/%d", link.Idlinker, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
 				data.IsReplyable = false
 			}
@@ -136,8 +136,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
 			Offset:                          i + offset,
-			Languages:                       nil,
-			SelectedLanguageId:              0,
+			Languages:                       languageRows,
+			SelectedLanguageId:              row.LanguageIdlanguage,
 		})
 	}
 

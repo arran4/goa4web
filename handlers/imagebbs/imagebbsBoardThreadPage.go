@@ -89,14 +89,20 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
+	languageRows, err := queries.FetchLanguages(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	commentIdString := r.URL.Query().Get("comment")
 	commentId, _ := strconv.Atoi(commentIdString)
 	for i, row := range commentRows {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, thid, row.Idcomments)
-			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, thid, row.Idcomments)
+			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, row.Idcomments)
+			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
 				data.IsReplyable = false
 			}
@@ -109,8 +115,8 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
 			Offset:                          i + offset,
-			Languages:                       nil,
-			SelectedLanguageId:              0,
+			Languages:                       languageRows,
+			SelectedLanguageId:              row.LanguageIdlanguage,
 		})
 	}
 
@@ -124,11 +130,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	data.ImagePost = post
 
-	languageRows, err := queries.FetchLanguages(r.Context())
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
 	data.Languages = languageRows
 
 	CustomImageBBSIndex(data.CoreData, r)

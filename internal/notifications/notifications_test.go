@@ -73,6 +73,8 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	origCfg := runtimeconfig.AppRuntimeConfig
 	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
 	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test"
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
 	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
 	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	rows := sqlmock.NewRows([]string{
@@ -84,10 +86,11 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	mock.ExpectQuery("SELECT c.idcomments").
 		WithArgs(int32(2), int32(1)).
 		WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
 	emailutil.NotifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
-	if rec.to != "e" {
-		t.Fatalf("expected mail to e got %s", rec.to)
+	if rec.to != "" {
+		t.Fatalf("expected no direct mail got %s", rec.to)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -104,21 +107,20 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	origCfg := runtimeconfig.AppRuntimeConfig
 	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
 	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test"
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
 	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
 	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
-	mock.ExpectQuery("SELECT").
-		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
-	mock.ExpectQuery("SELECT").
-		WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("a@test"))
 	mock.ExpectQuery("UserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
 	n := Notifier{EmailProvider: rec, Queries: q}
 	n.NotifyAdmins(context.Background(), "/p")
-	if rec.to != "a@test" {
-		t.Fatalf("expected mail to a@test got %s", rec.to)
+	if rec.to != "" {
+		t.Fatalf("expected no direct mail got %s", rec.to)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
+	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -58,6 +59,8 @@ func RegisterRoutes(r *mux.Router) {
 	nr.HandleFunc("", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", NewsPostReplyActionPage).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(NewsPostCommentEditActionPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply))
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(NewsPostCommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
 	nr.HandleFunc("/news/{post}", NewsPostEditActionPage).Methods("POST").MatcherFunc(auth.RequiredAccess("writer", "administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEdit))
 	nr.HandleFunc("/news/{post}", NewsPostNewActionPage).Methods("POST").MatcherFunc(auth.RequiredAccess("writer", "administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskNewPost))
 	nr.HandleFunc("/news/{post}/announcement", NewsAnnouncementActivateActionPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskAdd))

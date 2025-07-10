@@ -10,7 +10,8 @@ The code in this repository exposes all pages using the [Gorilla Mux](https://gi
 
 ## Features
 
-- **News** – publish posts and allow discussion in comment threads.
+- **News** – publish posts and allow discussion in comment threads. Writers,
+  moderators and administrators may edit posts.
 - **FAQ** – manage question and answer entries with administrative tools.
 - **Blogs** – users can write blogs, comment on posts and subscribe to bloggers.
 - **Forum** – a traditional threaded forum with categories, topics and moderation tools.
@@ -260,6 +261,7 @@ environment variables listed below.
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
 | `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
 | `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
+| `CREATE_DIRS` | `--create-dirs` | No | `false` | Create missing directories on startup. |
 
 ### Dead Letter Queue Providers
 

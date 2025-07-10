@@ -295,13 +295,6 @@ type PendingPassword struct {
 	VerifiedAt       sql.NullTime
 }
 
-type Permission struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	Section       sql.NullString
-	Role          sql.NullString
-}
-
 type Preference struct {
 	Idpreferences        int32
 	LanguageIdlanguage   int32
@@ -309,6 +302,11 @@ type Preference struct {
 	Emailforumupdates    sql.NullBool
 	PageSize             int32
 	AutoSubscribeReplies bool
+}
+
+type Role struct {
+	ID   int32
+	Name string
 }
 
 type SchemaVersion struct {
@@ -408,6 +406,12 @@ type UserLanguage struct {
 	IduserLanguage     int32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
+}
+
+type UserRole struct {
+	Idpermissions int32
+	UsersIdusers  int32
+	RoleID        int32
 }
 
 type Userstopiclevel struct {

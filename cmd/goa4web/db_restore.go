@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/arran4/goa4web/cmd/goa4web/dbhandlers"
+	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
 )
 
 // dbRestoreCmd implements "db restore".
@@ -32,11 +32,7 @@ func (c *dbRestoreCmd) Run() error {
 		return fmt.Errorf("file required")
 	}
 	cfg := c.rootCmd.cfg
-	h := dbhandlers.RestoreFor(cfg.DBDriver)
-	if h == nil {
-		return fmt.Errorf("restore not supported for driver %s", cfg.DBDriver)
-	}
-	if err := h.Restore(cfg, c.File); err != nil {
+	if err := dbdrivers.Restore(cfg.DBDriver, cfg.DBConn, c.File); err != nil {
 		return err
 	}
 	if c.rootCmd.Verbosity > 0 {

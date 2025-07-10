@@ -10,38 +10,24 @@ import (
 	"database/sql"
 )
 
-const countPermissionSections = `-- name: CountPermissionSections :many
-SELECT section, COUNT(*) AS SectionCount
-FROM permissions
-GROUP BY section
+const createUserRole = `-- name: CreateUserRole :exec
+INSERT INTO user_roles (users_idusers, role_id)
+SELECT ?, r.id FROM roles r WHERE r.name = ?
 `
 
-type CountPermissionSectionsRow struct {
-	Section      sql.NullString
-	Sectioncount int64
+type CreateUserRoleParams struct {
+	UsersIdusers int32
+	Name         string
 }
 
-func (q *Queries) CountPermissionSections(ctx context.Context) ([]*CountPermissionSectionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, countPermissionSections)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*CountPermissionSectionsRow
-	for rows.Next() {
-		var i CountPermissionSectionsRow
-		if err := rows.Scan(&i.Section, &i.Sectioncount); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+// This query inserts a new permission into the "permissions" table.
+// Parameters:
+//
+//	? - User ID to be associated with the permission (int)
+//	? - Role of the permission (string)
+func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) error {
+	_, err := q.db.ExecContext(ctx, createUserRole, arg.UsersIdusers, arg.Name)
+	return err
 }
 
 const deleteTopicRestrictionsByForumTopicId = `-- name: DeleteTopicRestrictionsByForumTopicId :exec
@@ -53,21 +39,31 @@ func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, for
 	return err
 }
 
-const getAdministratorPermissionByUserId = `-- name: GetAdministratorPermissionByUserId :one
-SELECT idpermissions, users_idusers, section, role
-FROM permissions
-WHERE users_idusers = ? AND section = 'all' AND role = 'administrator'
+const deleteUserRole = `-- name: DeleteUserRole :exec
+DELETE FROM user_roles
+WHERE idpermissions = ?
 `
 
-func (q *Queries) GetAdministratorPermissionByUserId(ctx context.Context, usersIdusers int32) (*Permission, error) {
-	row := q.db.QueryRowContext(ctx, getAdministratorPermissionByUserId, usersIdusers)
-	var i Permission
-	err := row.Scan(
-		&i.Idpermissions,
-		&i.UsersIdusers,
-		&i.Section,
-		&i.Role,
-	)
+// This query deletes a permission from the "permissions" table based on the provided "permid".
+// Parameters:
+//
+//	? - Permission ID to be deleted (int)
+func (q *Queries) DeleteUserRole(ctx context.Context, idpermissions int32) error {
+	_, err := q.db.ExecContext(ctx, deleteUserRole, idpermissions)
+	return err
+}
+
+const getAdministratorUserRole = `-- name: GetAdministratorUserRole :one
+SELECT ur.idpermissions, ur.users_idusers, ur.role_id
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = 'administrator'
+`
+
+func (q *Queries) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error) {
+	row := q.db.QueryRowContext(ctx, getAdministratorUserRole, usersIdusers)
+	var i UserRole
+	err := row.Scan(&i.Idpermissions, &i.UsersIdusers, &i.RoleID)
 	return &i, err
 }
 
@@ -178,178 +174,11 @@ func (q *Queries) GetForumTopicRestrictionsByForumTopicId(ctx context.Context, i
 	return items, nil
 }
 
-const getPermissionsByUserIdAndSectionAndSectionAll = `-- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
-SELECT idpermissions, users_idusers, section, role
-FROM permissions
-WHERE
-    users_idusers = ? AND (section = ? OR section = 'all')
-`
-
-type GetPermissionsByUserIdAndSectionAndSectionAllParams struct {
-	UsersIdusers int32
-	Section      sql.NullString
-}
-
-func (q *Queries) GetPermissionsByUserIdAndSectionAndSectionAll(ctx context.Context, arg GetPermissionsByUserIdAndSectionAndSectionAllParams) (*Permission, error) {
-	row := q.db.QueryRowContext(ctx, getPermissionsByUserIdAndSectionAndSectionAll, arg.UsersIdusers, arg.Section)
-	var i Permission
-	err := row.Scan(
-		&i.Idpermissions,
-		&i.UsersIdusers,
-		&i.Section,
-		&i.Role,
-	)
-	return &i, err
-}
-
-const getPermissionsByUserIdAndSectionBlogs = `-- name: GetPermissionsByUserIdAndSectionBlogs :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.role, u.idusers, u.username, u.deleted_at
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = "blogs"
-ORDER BY p.role
-`
-
-type GetPermissionsByUserIdAndSectionBlogsRow struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	Section       sql.NullString
-	Role          sql.NullString
-	Idusers       int32
-	Username      sql.NullString
-	DeletedAt     sql.NullTime
-}
-
-func (q *Queries) GetPermissionsByUserIdAndSectionBlogs(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionBlogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPermissionsByUserIdAndSectionBlogs)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetPermissionsByUserIdAndSectionBlogsRow
-	for rows.Next() {
-		var i GetPermissionsByUserIdAndSectionBlogsRow
-		if err := rows.Scan(
-			&i.Idpermissions,
-			&i.UsersIdusers,
-			&i.Section,
-			&i.Role,
-			&i.Idusers,
-			&i.Username,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPermissionsByUserIdAndSectionNews = `-- name: GetPermissionsByUserIdAndSectionNews :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.role, u.idusers, u.username, u.deleted_at
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = "news"
-ORDER BY p.role
-`
-
-type GetPermissionsByUserIdAndSectionNewsRow struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	Section       sql.NullString
-	Role          sql.NullString
-	Idusers       int32
-	Username      sql.NullString
-	DeletedAt     sql.NullTime
-}
-
-func (q *Queries) GetPermissionsByUserIdAndSectionNews(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionNewsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPermissionsByUserIdAndSectionNews)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetPermissionsByUserIdAndSectionNewsRow
-	for rows.Next() {
-		var i GetPermissionsByUserIdAndSectionNewsRow
-		if err := rows.Scan(
-			&i.Idpermissions,
-			&i.UsersIdusers,
-			&i.Section,
-			&i.Role,
-			&i.Idusers,
-			&i.Username,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPermissionsByUserIdAndSectionWritings = `-- name: GetPermissionsByUserIdAndSectionWritings :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.role, u.idusers, u.username, u.deleted_at
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
-ORDER BY p.role
-`
-
-type GetPermissionsByUserIdAndSectionWritingsRow struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	Section       sql.NullString
-	Role          sql.NullString
-	Idusers       int32
-	Username      sql.NullString
-	DeletedAt     sql.NullTime
-}
-
-func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) ([]*GetPermissionsByUserIdAndSectionWritingsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPermissionsByUserIdAndSectionWritings)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetPermissionsByUserIdAndSectionWritingsRow
-	for rows.Next() {
-		var i GetPermissionsByUserIdAndSectionWritingsRow
-		if err := rows.Scan(
-			&i.Idpermissions,
-			&i.UsersIdusers,
-			&i.Section,
-			&i.Role,
-			&i.Idusers,
-			&i.Username,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getUserRole = `-- name: GetUserRole :one
-SELECT role
-FROM permissions
-WHERE users_idusers = ?
+SELECT r.name as role
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ?
 LIMIT 1
 `
 
@@ -357,17 +186,24 @@ LIMIT 1
 // Result:
 //
 //	role (string)
-func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (sql.NullString, error) {
+func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, error) {
 	row := q.db.QueryRowContext(ctx, getUserRole, usersIdusers)
-	var role sql.NullString
+	var role string
 	err := row.Scan(&role)
 	return role, err
 }
 
-const getUsersPermissions = `-- name: GetUsersPermissions :many
-SELECT p.idpermissions, p.users_idusers, p.section, p.role
-FROM permissions p
+const getUserRoles = `-- name: GetUserRoles :many
+SELECT ur.idpermissions, ur.users_idusers, r.name AS role
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
 `
+
+type GetUserRolesRow struct {
+	Idpermissions int32
+	UsersIdusers  int32
+	Role          string
+}
 
 // This query selects permissions information for admin users.
 // Result:
@@ -376,22 +212,16 @@ FROM permissions p
 //	role (string)
 //	username (string)
 //	email (string)
-//	section (string)
-func (q *Queries) GetUsersPermissions(ctx context.Context) ([]*Permission, error) {
-	rows, err := q.db.QueryContext(ctx, getUsersPermissions)
+func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserRoles)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Permission
+	var items []*GetUserRolesRow
 	for rows.Next() {
-		var i Permission
-		if err := rows.Scan(
-			&i.Idpermissions,
-			&i.UsersIdusers,
-			&i.Section,
-			&i.Role,
-		); err != nil {
+		var i GetUserRolesRow
+		if err := rows.Scan(&i.Idpermissions, &i.UsersIdusers, &i.Role); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -427,58 +257,6 @@ func (q *Queries) GetUsersTopicLevelByUserIdAndThreadId(ctx context.Context, arg
 		&i.ExpiresAt,
 	)
 	return &i, err
-}
-
-const permissionUserAllow = `-- name: PermissionUserAllow :exec
-INSERT INTO permissions (users_idusers, section, role)
-VALUES (?, ?, ?)
-`
-
-type PermissionUserAllowParams struct {
-	UsersIdusers int32
-	Section      sql.NullString
-	Role         sql.NullString
-}
-
-// This query inserts a new permission into the "permissions" table.
-// Parameters:
-//
-//	? - User ID to be associated with the permission (int)
-//	? - Section for which the permission is granted (string)
-//	? - Role of the permission (string)
-func (q *Queries) PermissionUserAllow(ctx context.Context, arg PermissionUserAllowParams) error {
-	_, err := q.db.ExecContext(ctx, permissionUserAllow, arg.UsersIdusers, arg.Section, arg.Role)
-	return err
-}
-
-const permissionUserDisallow = `-- name: PermissionUserDisallow :exec
-DELETE FROM permissions
-WHERE idpermissions = ?
-`
-
-// This query deletes a permission from the "permissions" table based on the provided "permid".
-// Parameters:
-//
-//	? - Permission ID to be deleted (int)
-func (q *Queries) PermissionUserDisallow(ctx context.Context, idpermissions int32) error {
-	_, err := q.db.ExecContext(ctx, permissionUserDisallow, idpermissions)
-	return err
-}
-
-const renamePermissionSection = `-- name: RenamePermissionSection :exec
-UPDATE permissions
-SET section = ?
-WHERE section = ?
-`
-
-type RenamePermissionSectionParams struct {
-	Section   sql.NullString
-	Section_2 sql.NullString
-}
-
-func (q *Queries) RenamePermissionSection(ctx context.Context, arg RenamePermissionSectionParams) error {
-	_, err := q.db.ExecContext(ctx, renamePermissionSection, arg.Section, arg.Section_2)
-	return err
 }
 
 const upsertForumTopicRestrictions = `-- name: UpsertForumTopicRestrictions :exec

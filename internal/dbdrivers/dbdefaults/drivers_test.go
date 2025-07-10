@@ -44,6 +44,8 @@ type testDriver struct{}
 func (testDriver) Name() string                                   { return "test" }
 func (testDriver) Examples() []string                             { return nil }
 func (testDriver) OpenConnector(string) (driver.Connector, error) { return testConnector{}, nil }
+func (testDriver) Backup(string, string) error                    { return nil }
+func (testDriver) Restore(string, string) error                   { return nil }
 
 func TestConnectorRegistered(t *testing.T) {
 	orig := dbdrivers.Registry

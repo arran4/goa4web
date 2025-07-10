@@ -18,6 +18,7 @@ import (
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	db "github.com/arran4/goa4web/internal/db"
 	logProv "github.com/arran4/goa4web/internal/email/log"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -132,7 +133,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	defer func() { runtimeconfig.AppRuntimeConfig.AdminEmails = origEmails }()
 	rec := &recordAdminMail{}
-	notifyAdmins(context.Background(), rec, nil, "page")
+	notif.Notifier{EmailProvider: rec}.NotifyAdmins(context.Background(), "page")
 	if len(rec.to) != 2 {
 		t.Fatalf("expected 2 mails, got %d", len(rec.to))
 	}
@@ -155,7 +156,7 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test.com"
 	defer func() { runtimeconfig.AppRuntimeConfig.AdminEmails = origEmails }()
 	rec := &recordAdminMail{}
-	notifyAdmins(context.Background(), rec, nil, "page")
+	notif.Notifier{EmailProvider: rec}.NotifyAdmins(context.Background(), "page")
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))
 	}

@@ -6,14 +6,12 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 )
 
@@ -101,8 +99,6 @@ func AdminUserLevelUpdatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifyAdmins(r.Context(), email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig), queries, r.URL.Path)
-
 	common.TaskDoneAutoRefreshPage(w, r)
 
 }
@@ -124,8 +120,6 @@ func AdminUserLevelDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-
-	notifyAdmins(r.Context(), email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig), queries, r.URL.Path)
 
 	common.TaskDoneAutoRefreshPage(w, r)
 

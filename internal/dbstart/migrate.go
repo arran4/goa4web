@@ -1,4 +1,4 @@
-package migrate
+package dbstart
 
 import (
 	"bufio"
@@ -12,36 +12,33 @@ import (
 	"strings"
 )
 
-// Apply reads SQL migration files from the provided filesystem and
-// executes each one in order, updating the schema_version table after
-// every successful script.
-// Apply reads SQL migration files from the provided filesystem and executes
-// each one in order, updating the schema_version table after every successful
-// script. When verbose is true, progress information is printed to stdout.
-func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool) error {
-	if verbose {
-		fmt.Println("ensuring schema_version table")
-	}
+// ensureVersionTable creates the schema_version table when missing and
+// returns the current version number stored in the table.
+func ensureVersionTable(ctx context.Context, db *sql.DB) (int, error) {
 	if _, err := db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)"); err != nil {
-		return fmt.Errorf("create schema_version: %w", err)
-	}
-	if verbose {
-		fmt.Println("checking current schema version")
+		return 0, fmt.Errorf("create schema_version: %w", err)
 	}
 	var version int
 	err := db.QueryRowContext(ctx, "SELECT version FROM schema_version").Scan(&version)
 	if err == sql.ErrNoRows {
-		if verbose {
-			fmt.Println("initialising schema_version to 1")
-		}
 		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (?)", 1); err != nil {
-			return fmt.Errorf("init schema_version: %w", err)
+			return 0, fmt.Errorf("init schema_version: %w", err)
 		}
 		version = 1
 	} else if err != nil {
-		return fmt.Errorf("select schema_version: %w", err)
+		return 0, fmt.Errorf("select schema_version: %w", err)
 	}
+	return version, nil
+}
 
+// Apply reads SQL migration files from the provided filesystem and executes
+// each one in order, updating the schema_version table after every successful
+// script. When verbose is true, progress information is printed to stdout.
+func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool) error {
+	version, err := ensureVersionTable(ctx, db)
+	if err != nil {
+		return err
+	}
 	entries, err := fs.ReadDir(f, ".")
 	if err != nil {
 		return fmt.Errorf("read dir: %w", err)

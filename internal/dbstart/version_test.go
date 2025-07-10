@@ -1,4 +1,4 @@
-package migrate
+package dbstart
 
 import (
 	"io/fs"

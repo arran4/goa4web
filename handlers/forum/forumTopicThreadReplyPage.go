@@ -101,7 +101,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifyThreadSubscribers(r.Context(), provider, queries, threadRow.Idforumthread, uid, endUrl)
+	notif.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), threadRow.Idforumthread, uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

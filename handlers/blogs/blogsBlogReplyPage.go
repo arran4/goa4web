@@ -24,6 +24,11 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := hcommon.ValidateForm(r, []string{"language", "replytext"}, []string{"language", "replytext"}); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["blog"])
 

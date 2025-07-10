@@ -44,7 +44,7 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "no verified email", http.StatusBadRequest)
 		return
 	}
-	hash, alg, err := hashPassword(pw)
+	hash, alg, err := HashPassword(pw)
 	if err != nil {
 		http.Error(w, "hash error", http.StatusInternalServerError)
 		return

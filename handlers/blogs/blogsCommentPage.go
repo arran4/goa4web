@@ -54,7 +54,6 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
-		IsReplyable:        true,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 		EditUrl:            fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 	}
@@ -84,6 +83,8 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		editUrl = fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs)
 	}
 
+	rep := currentUserMayReply(r, blog)
+	data.IsReplyable = rep
 	data.Blog = &BlogRow{
 		GetBlogEntryForUserByIdRow: blog,
 		EditUrl:                    editUrl,

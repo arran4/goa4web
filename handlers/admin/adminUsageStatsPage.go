@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -46,13 +46,13 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	if data.LinkerCategories, err = queries.GetLinkerCategoryLinkCounts(r.Context()); err != nil {
 		log.Printf("linker category counts: %v", err)
 	}
-	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(runtimeconfig.AppRuntimeConfig.StatsStartYear)); err != nil {
+	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err != nil {
 		log.Printf("monthly usage counts: %v", err)
 	}
-	if data.UserMonthly, err = queries.UserMonthlyUsageCounts(r.Context(), int32(runtimeconfig.AppRuntimeConfig.StatsStartYear)); err != nil {
+	if data.UserMonthly, err = queries.UserMonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err != nil {
 		log.Printf("user monthly usage counts: %v", err)
 	}
-	data.StartYear = runtimeconfig.AppRuntimeConfig.StatsStartYear
+	data.StartYear = config.AppRuntimeConfig.StatsStartYear
 
 	if err := templates.RenderTemplate(w, "usageStatsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)

@@ -9,12 +9,12 @@ import (
 	"github.com/go-sql-driver/mysql"
 
 	"github.com/arran4/goa4web/cmd/goa4web/dbhandlers"
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 type handler struct{}
 
-func (handler) Backup(cfg runtimeconfig.RuntimeConfig, file string) error {
+func (handler) Backup(cfg config.RuntimeConfig, file string) error {
 	if cfg.DBConn == "" {
 		return fmt.Errorf("connection string required")
 	}
@@ -37,7 +37,7 @@ func (handler) Backup(cfg runtimeconfig.RuntimeConfig, file string) error {
 	return nil
 }
 
-func (handler) Restore(cfg runtimeconfig.RuntimeConfig, file string) error {
+func (handler) Restore(cfg config.RuntimeConfig, file string) error {
 	if cfg.DBConn == "" {
 		return fmt.Errorf("connection string required")
 	}

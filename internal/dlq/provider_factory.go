@@ -4,12 +4,12 @@ import (
 	"log"
 	"strings"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // ProviderFromConfig returns a DLQ implementation configured from cfg.
-func ProviderFromConfig(cfg runtimeconfig.RuntimeConfig, q *dbpkg.Queries) DLQ {
+func ProviderFromConfig(cfg config.RuntimeConfig, q *dbpkg.Queries) DLQ {
 	names := strings.Split(cfg.DLQProvider, ",")
 	var qs []DLQ
 	for _, name := range names {

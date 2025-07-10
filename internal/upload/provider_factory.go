@@ -2,10 +2,10 @@ package upload
 
 import "strings"
 
-import "github.com/arran4/goa4web/runtimeconfig"
+import "github.com/arran4/goa4web/config"
 
 // ProviderFromConfig returns a provider selected by cfg.ImageUploadProvider.
-func ProviderFromConfig(cfg runtimeconfig.RuntimeConfig) Provider {
+func ProviderFromConfig(cfg config.RuntimeConfig) Provider {
 	name := strings.ToLower(cfg.ImageUploadProvider)
 	if f := providerFactory(name); f != nil {
 		return f(cfg)
@@ -14,7 +14,7 @@ func ProviderFromConfig(cfg runtimeconfig.RuntimeConfig) Provider {
 }
 
 // CacheProviderFromConfig returns a provider selected by cfg.ImageCacheProvider.
-func CacheProviderFromConfig(cfg runtimeconfig.RuntimeConfig) Provider {
+func CacheProviderFromConfig(cfg config.RuntimeConfig) Provider {
 	c := cfg
 	c.ImageUploadProvider = cfg.ImageCacheProvider
 	c.ImageUploadDir = cfg.ImageCacheDir

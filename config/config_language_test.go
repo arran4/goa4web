@@ -1,18 +1,16 @@
-package runtimeconfig
+package config
 
 import (
 	"flag"
 	"testing"
-
-	"github.com/arran4/goa4web/config"
 )
 
 func TestDefaultLanguageConfigPrecedence(t *testing.T) {
-	env := map[string]string{config.EnvDefaultLanguage: "env"}
+	env := map[string]string{EnvDefaultLanguage: "env"}
 
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	fs.String("default-language", "cli", "")
-	vals := map[string]string{config.EnvDefaultLanguage: "file"}
+	vals := map[string]string{EnvDefaultLanguage: "file"}
 	_ = fs.Parse([]string{"--default-language=cli"})
 
 	cfg := GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
@@ -23,7 +21,7 @@ func TestDefaultLanguageConfigPrecedence(t *testing.T) {
 
 func TestLoadDefaultLanguageFromFileValues(t *testing.T) {
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
-	vals := map[string]string{config.EnvDefaultLanguage: "fileval"}
+	vals := map[string]string{EnvDefaultLanguage: "fileval"}
 	cfg := GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.DefaultLanguage != "fileval" {
 		t.Fatalf("want fileval got %q", cfg.DefaultLanguage)

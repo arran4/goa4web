@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/pkg/upload"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // imagesCmd implements image cache management utilities.
@@ -50,12 +50,12 @@ func (c *imagesCmd) runCache(args []string) error {
 		c.fs.Usage()
 		return fmt.Errorf("missing cache command")
 	}
-	dir := runtimeconfig.AppRuntimeConfig.ImageCacheDir
+	dir := config.AppRuntimeConfig.ImageCacheDir
 	switch args[0] {
 	case "prune":
-		if cp := upload.CacheProviderFromConfig(runtimeconfig.AppRuntimeConfig); cp != nil {
+		if cp := upload.CacheProviderFromConfig(config.AppRuntimeConfig); cp != nil {
 			if ccp, ok := cp.(upload.CacheProvider); ok {
-				return ccp.Cleanup(context.Background(), int64(runtimeconfig.AppRuntimeConfig.ImageCacheMaxBytes))
+				return ccp.Cleanup(context.Background(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes))
 			}
 		}
 		return nil

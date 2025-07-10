@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
@@ -22,7 +23,6 @@ import (
 	"github.com/arran4/goa4web/internal/emailutil"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 type NewsPost struct {
@@ -70,7 +70,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage),
+		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
@@ -269,12 +269,12 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	base := "http://" + r.Host
-	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
+	if config.AppRuntimeConfig.HTTPHostname != "" {
+		base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
 	}
 	endUrl := base + fmt.Sprintf("/news/news/%d", pid)
 
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	var author string
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String

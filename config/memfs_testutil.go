@@ -1,4 +1,4 @@
-package runtimeconfig
+package config
 
 import (
 	"io/fs"

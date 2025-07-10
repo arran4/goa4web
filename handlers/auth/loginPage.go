@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // LoginUserPassPage serves the username/password login form.
@@ -36,7 +36,7 @@ func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
 
 // LoginActionPage processes the submitted login form.
 func LoginActionPage(w http.ResponseWriter, r *http.Request) {
-	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("login attempt for %s", r.PostFormValue("username"))
 	}
 	username := r.PostFormValue("username")
@@ -118,7 +118,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("login success uid=%d", user.Idusers)
 	}
 

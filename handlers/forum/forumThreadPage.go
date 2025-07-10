@@ -14,9 +14,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +51,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())

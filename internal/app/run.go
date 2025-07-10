@@ -27,7 +27,6 @@ import (
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	startup "github.com/arran4/goa4web/internal/startup"
 	"github.com/arran4/goa4web/pkg/server"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -50,7 +49,7 @@ func init() {
 
 // RunWithConfig starts the application using the provided configuration and
 // session secret. The context controls the lifetime of the HTTP server.
-func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, sessionSecret, imageSignSecret string) error {
+func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string) error {
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	core.Store = store
 	core.SessionName = sessionName
@@ -71,10 +70,10 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 		return fmt.Errorf("default language: %w", err)
 	}
 
-	if err := runtimeconfig.ApplySMTPFallbacks(&cfg); err != nil {
+	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
 		return fmt.Errorf("smtp fallback: %w", err)
 	}
-	runtimeconfig.AppRuntimeConfig = cfg
+	config.AppRuntimeConfig = cfg
 	imageshandler.SetSigningKey(imageSignSecret)
 	email.SetDefaultFromName(cfg.EmailFrom)
 
@@ -144,7 +143,7 @@ func safeGo(fn func()) {
 	}()
 }
 
-func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg runtimeconfig.RuntimeConfig) {
+func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg config.RuntimeConfig) {
 	log.Printf("Starting email worker")
 	safeGo(func() {
 		emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, time.Duration(cfg.EmailWorkerInterval)*time.Second)

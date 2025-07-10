@@ -1,9 +1,7 @@
-package runtimeconfig
+package config
 
 import (
 	"testing"
-
-	"github.com/arran4/goa4web/config"
 )
 
 // TestToEnvMapIncludesAllKeys ensures that the helper returns entries for all
@@ -24,7 +22,7 @@ func TestToEnvMapIncludesAllKeys(t *testing.T) {
 	for _, o := range BoolOptions {
 		keys[o.Env] = struct{}{}
 	}
-	extras := []string{config.EnvConfigFile, config.EnvSessionSecret, config.EnvSessionSecretFile}
+	extras := []string{EnvConfigFile, EnvSessionSecret, EnvSessionSecretFile}
 	for _, k := range extras {
 		keys[k] = struct{}{}
 	}
@@ -47,7 +45,7 @@ func TestToEnvMapIncludesAllKeys(t *testing.T) {
 			t.Errorf("missing %s", o.Env)
 		}
 	}
-	extras = []string{config.EnvConfigFile, config.EnvSessionSecret, config.EnvSessionSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile}
+	extras = []string{EnvConfigFile, EnvSessionSecret, EnvSessionSecretFile, EnvImageSignSecret, EnvImageSignSecretFile}
 	for _, k := range extras {
 		if _, ok := m[k]; !ok {
 			t.Errorf("missing %s", k)

@@ -8,7 +8,7 @@ Configuration values may be supplied in three ways and must be resolved in this 
 2. Values from a config file
 3. Environment variables
 
-Defaults should only be used when a value is still empty after applying the above rules. See `runtimeconfig.GenerateRuntimeConfig` for details.
+Defaults should only be used when a value is still empty after applying the above rules. See `config.GenerateRuntimeConfig` for details.
 
 Environment variable names are centralised in `config/env.go`. Example configuration files live in `examples/` and use the same keys.
 

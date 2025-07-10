@@ -1,24 +1,22 @@
-package runtimeconfig
+package config
 
 import (
 	"flag"
 	"testing"
-
-	"github.com/arran4/goa4web/config"
 )
 
 func TestHTTPConfigPrecedence(t *testing.T) {
 	env := map[string]string{
-		config.EnvListen:   ":1",
-		config.EnvHostname: "http://env",
+		EnvListen:   ":1",
+		EnvHostname: "http://env",
 	}
 
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	fs.String("listen", ":3", "")
 	fs.String("hostname", "http://cli", "")
 	vals := map[string]string{
-		config.EnvListen:   ":2",
-		config.EnvHostname: "http://file",
+		EnvListen:   ":2",
+		EnvHostname: "http://file",
 	}
 	_ = fs.Parse([]string{"--listen=:3", "--hostname=http://cli"})
 	cfg := GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
@@ -31,7 +29,7 @@ func TestHTTPConfigPrecedence(t *testing.T) {
 func TestLoadHTTPConfigFromFileValues(t *testing.T) {
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	vals := map[string]string{
-		config.EnvListen: ":9",
+		EnvListen: ":9",
 	}
 	cfg := GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.HTTPListen != ":9" {

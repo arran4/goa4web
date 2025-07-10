@@ -2,9 +2,9 @@ package config_test
 
 import (
 	"encoding/json"
+	"github.com/arran4/goa4web/config"
 	"testing"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
 

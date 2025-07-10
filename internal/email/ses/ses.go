@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // Provider wraps the AWS SES client.
@@ -30,7 +30,7 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return err
 }
 
-func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
 	awsCfg := aws.NewConfig()
 	if region := cfg.EmailAWSRegion; region != "" {
 		awsCfg = awsCfg.WithRegion(region)

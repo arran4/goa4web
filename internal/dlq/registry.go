@@ -5,12 +5,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // ProviderFactory creates a DLQ provider using runtime configuration.
-type ProviderFactory func(runtimeconfig.RuntimeConfig, *dbpkg.Queries) DLQ
+type ProviderFactory func(config.RuntimeConfig, *dbpkg.Queries) DLQ
 
 var (
 	regMu     sync.RWMutex

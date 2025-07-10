@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/dbstart"
 	"github.com/arran4/goa4web/pkg/upload"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // PerformChecks checks DB connectivity and the upload provider.
-func PerformChecks(cfg runtimeconfig.RuntimeConfig) error {
+func PerformChecks(cfg config.RuntimeConfig) error {
 	if err := dbstart.MaybeAutoMigrate(cfg); err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func PerformChecks(cfg runtimeconfig.RuntimeConfig) error {
 }
 
 // CheckUploadTarget verifies that the configured upload backend is available.
-func CheckUploadTarget(cfg runtimeconfig.RuntimeConfig) *common.UserError {
+func CheckUploadTarget(cfg config.RuntimeConfig) *common.UserError {
 	if cfg.ImageUploadDir == "" {
 		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}

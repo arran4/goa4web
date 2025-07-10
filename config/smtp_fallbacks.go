@@ -1,11 +1,9 @@
-package runtimeconfig
+package config
 
 import (
 	"fmt"
 	"log"
 	"strings"
-
-	"github.com/arran4/goa4web/config"
 )
 
 // ApplySMTPFallbacks ensures EmailFrom and EmailSMTPUser are set when using the
@@ -17,19 +15,19 @@ func ApplySMTPFallbacks(cfg *RuntimeConfig) error {
 		return nil
 	}
 	if cfg.EmailFrom == "" && cfg.EmailSMTPUser == "" {
-		return fmt.Errorf("smtp: %s and %s not set", config.EnvSMTPUser, config.EnvEmailFrom)
+		return fmt.Errorf("smtp: %s and %s not set", EnvSMTPUser, EnvEmailFrom)
 	}
 	if cfg.EmailFrom == "" && strings.Contains(cfg.EmailSMTPUser, "@") {
 		cfg.EmailFrom = cfg.EmailSMTPUser
-		log.Printf("%s not set, using %s=%q", config.EnvEmailFrom, config.EnvSMTPUser, cfg.EmailFrom)
+		log.Printf("%s not set, using %s=%q", EnvEmailFrom, EnvSMTPUser, cfg.EmailFrom)
 	} else if cfg.EmailSMTPUser == "" && strings.Contains(cfg.EmailFrom, "@") {
 		cfg.EmailSMTPUser = cfg.EmailFrom
-		log.Printf("%s not set, using %s=%q", config.EnvSMTPUser, config.EnvEmailFrom, cfg.EmailSMTPUser)
+		log.Printf("%s not set, using %s=%q", EnvSMTPUser, EnvEmailFrom, cfg.EmailSMTPUser)
 	} else {
 		if strings.Contains(cfg.EmailSMTPUser, "@") && strings.Contains(cfg.EmailFrom, "@") && cfg.EmailSMTPUser != cfg.EmailFrom {
-			log.Printf("%s=%q and %s=%q differ", config.EnvSMTPUser, cfg.EmailSMTPUser, config.EnvEmailFrom, cfg.EmailFrom)
+			log.Printf("%s=%q and %s=%q differ", EnvSMTPUser, cfg.EmailSMTPUser, EnvEmailFrom, cfg.EmailFrom)
 		} else {
-			log.Printf("using %s=%q and %s=%q", config.EnvSMTPUser, cfg.EmailSMTPUser, config.EnvEmailFrom, cfg.EmailFrom)
+			log.Printf("using %s=%q and %s=%q", EnvSMTPUser, cfg.EmailSMTPUser, EnvEmailFrom, cfg.EmailFrom)
 		}
 	}
 	return nil

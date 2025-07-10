@@ -1,9 +1,8 @@
 package config_test
 
 import (
-	"testing"
-
 	"github.com/arran4/goa4web/config"
+	"testing"
 )
 
 func TestParseEnvBytes(t *testing.T) {

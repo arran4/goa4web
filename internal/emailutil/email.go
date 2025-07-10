@@ -15,7 +15,6 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 type emailTemplate struct {
@@ -61,7 +60,7 @@ func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, it
 	if emailAddr == "" {
 		return nil, mail.Address{}, fmt.Errorf("no email specified")
 	}
-	from := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
+	from := email.ParseAddress(config.AppRuntimeConfig.EmailFrom)
 
 	type EmailContent struct {
 		To       string
@@ -77,8 +76,8 @@ func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, it
 
 	// Define email content
 	unsub := "/usr/subscriptions"
-	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	if config.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + unsub
 	}
 	toAddr := email.ParseAddress(emailAddr)
 	content := EmailContent{
@@ -152,7 +151,7 @@ func CreateEmailTemplateAndQueue(ctx context.Context, q *db.Queries, userID int3
 // administrator accounts. GetAdminEmails returns a slice of administrator
 // addresses using this logic.
 func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
-	env := runtimeconfig.AppRuntimeConfig.AdminEmails
+	env := config.AppRuntimeConfig.AdminEmails
 	if env == "" {
 		env = os.Getenv(config.EnvAdminEmails)
 	}
@@ -183,13 +182,13 @@ func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 // AdminNotificationsEnabled reports whether administrator notification emails
 // should be sent based on the runtime configuration.
 func AdminNotificationsEnabled() bool {
-	return runtimeconfig.AppRuntimeConfig.AdminNotify
+	return config.AppRuntimeConfig.AdminNotify
 }
 
 // EmailSendingEnabled reports if queued emails should be dispatched according
 // to the runtime configuration.
 func EmailSendingEnabled() bool {
-	return runtimeconfig.AppRuntimeConfig.EmailEnabled
+	return config.AppRuntimeConfig.EmailEnabled
 }
 
 // notifyThreadSubscribers emails users subscribed to the forum thread.

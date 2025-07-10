@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 type busDummyProvider struct{ to string }
@@ -95,16 +95,16 @@ func (errProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 
 func TestProcessEventDLQ(t *testing.T) {
 	ctx := context.Background()
-	origCfg := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
-	runtimeconfig.AppRuntimeConfig.AdminNotify = true
-	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -139,12 +139,12 @@ func TestProcessEventDLQ(t *testing.T) {
 
 func TestProcessEventSubscribeSelf(t *testing.T) {
 	ctx := context.Background()
-	origCfg := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
-	runtimeconfig.AppRuntimeConfig.AdminNotify = true
-	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -178,11 +178,11 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 
 func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	ctx := context.Background()
-	origCfg := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
-	runtimeconfig.AppRuntimeConfig.AdminNotify = true
-	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -204,13 +204,13 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 
 func TestProcessEventAdminNotify(t *testing.T) {
 	ctx := context.Background()
-	origCfg := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
-	runtimeconfig.AppRuntimeConfig.AdminNotify = true
-	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test"
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.AdminEmails = "a@test"
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -235,12 +235,12 @@ func TestProcessEventAdminNotify(t *testing.T) {
 
 func TestBusWorker(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	origCfg := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
-	runtimeconfig.AppRuntimeConfig.AdminNotify = true
-	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	bus := eventbus.NewBus()
 
 	db, mock, err := sqlmock.New()

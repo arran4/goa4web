@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 // configAsCmd implements "config as-*" commands.
@@ -31,13 +31,13 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 }
 
 func defaultMap() map[string]string {
-	def := runtimeconfig.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	m, _ := runtimeconfig.ToEnvMap(def, "")
+	def := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	m, _ := config.ToEnvMap(def, "")
 	return m
 }
 
 func (c *configAsCmd) asEnvFile() error {
-	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -47,9 +47,9 @@ func (c *configAsCmd) asEnvFile() error {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	usage := runtimeconfig.UsageMap()
-	ext := runtimeconfig.ExtendedUsageMap()
-	ex := runtimeconfig.ExamplesMap()
+	usage := config.UsageMap()
+	ext := config.ExtendedUsageMap()
+	ex := config.ExamplesMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -76,7 +76,7 @@ func (c *configAsCmd) asEnvFile() error {
 }
 
 func (c *configAsCmd) asEnv() error {
-	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -86,9 +86,9 @@ func (c *configAsCmd) asEnv() error {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	usage := runtimeconfig.UsageMap()
-	ext := runtimeconfig.ExtendedUsageMap()
-	ex := runtimeconfig.ExamplesMap()
+	usage := config.UsageMap()
+	ext := config.ExtendedUsageMap()
+	ex := config.ExamplesMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
@@ -115,7 +115,7 @@ func (c *configAsCmd) asEnv() error {
 }
 
 func (c *configAsCmd) asJSON() error {
-	m, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	m, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -128,13 +128,13 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-	current, err := runtimeconfig.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
 	def := defaultMap()
 	var parts []string
-	nameMap := runtimeconfig.NameMap()
+	nameMap := config.NameMap()
 	for env, val := range current {
 		if def[env] == val {
 			continue

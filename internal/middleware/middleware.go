@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	imagesign "github.com/arran4/goa4web/pkg/images"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/sessions"
 )
 
@@ -97,7 +97,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd.IndexItems = idx
 		cd.UserID = uid
 		cd.Title = "Arran's Site"
-		cd.FeedsEnabled = runtimeconfig.AppRuntimeConfig.FeedsEnabled
+		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 		cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 		cd.NotificationCount = count
 		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)

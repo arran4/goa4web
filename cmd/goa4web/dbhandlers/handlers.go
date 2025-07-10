@@ -3,17 +3,17 @@ package dbhandlers
 import (
 	"sync"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 // BackupHandler backs up a database to the provided file path.
 type BackupHandler interface {
-	Backup(cfg runtimeconfig.RuntimeConfig, file string) error
+	Backup(cfg config.RuntimeConfig, file string) error
 }
 
 // RestoreHandler restores a database from the provided file path.
 type RestoreHandler interface {
-	Restore(cfg runtimeconfig.RuntimeConfig, file string) error
+	Restore(cfg config.RuntimeConfig, file string) error
 }
 
 var (

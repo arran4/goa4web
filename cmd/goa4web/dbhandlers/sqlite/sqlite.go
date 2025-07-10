@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/cmd/goa4web/dbhandlers"
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 type handler struct{}
@@ -23,7 +23,7 @@ func pathFromConn(conn string) string {
 	return path
 }
 
-func (handler) Backup(cfg runtimeconfig.RuntimeConfig, file string) error {
+func (handler) Backup(cfg config.RuntimeConfig, file string) error {
 	path := pathFromConn(cfg.DBConn)
 	cmd := exec.Command("sqlite3", path, ".dump")
 	outFile, err := os.Create(file)
@@ -38,7 +38,7 @@ func (handler) Backup(cfg runtimeconfig.RuntimeConfig, file string) error {
 	return nil
 }
 
-func (handler) Restore(cfg runtimeconfig.RuntimeConfig, file string) error {
+func (handler) Restore(cfg config.RuntimeConfig, file string) error {
 	path := pathFromConn(cfg.DBConn)
 	inFile, err := os.Open(file)
 	if err != nil {

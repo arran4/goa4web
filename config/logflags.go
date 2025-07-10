@@ -1,4 +1,4 @@
-package runtimeconfig
+package config
 
 // Log flags for selectively enabling request logs.
 const (

@@ -23,8 +23,8 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/internal/upload"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/pkg/upload"
 )
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {

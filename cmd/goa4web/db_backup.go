@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/arran4/goa4web/cmd/goa4web/dbhandlers"
+	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
 )
 
 // dbBackupCmd implements "db backup".
@@ -32,11 +32,7 @@ func (c *dbBackupCmd) Run() error {
 		return fmt.Errorf("file required")
 	}
 	cfg := c.rootCmd.cfg
-	h := dbhandlers.BackupFor(cfg.DBDriver)
-	if h == nil {
-		return fmt.Errorf("backup not supported for driver %s", cfg.DBDriver)
-	}
-	if err := h.Backup(cfg, c.File); err != nil {
+	if err := dbdrivers.Backup(cfg.DBDriver, cfg.DBConn, c.File); err != nil {
 		return err
 	}
 	if c.rootCmd.Verbosity > 0 {

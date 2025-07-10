@@ -13,6 +13,8 @@ type DBDriver interface {
 	Name() string
 	Examples() []string
 	OpenConnector(dsn string) (driver.Connector, error)
+	Backup(dsn, file string) error
+	Restore(dsn, file string) error
 }
 
 // Registry lists the built-in database drivers.
@@ -46,6 +48,37 @@ func Connector(name, dsn string) (driver.Connector, error) {
 		}
 	}
 	return nil, fmt.Errorf("unsupported driver %s", name)
+}
+
+// Driver looks up a registered driver by name.
+func Driver(name string) (DBDriver, error) {
+	regMu.RLock()
+	drivers := append([]DBDriver(nil), Registry...)
+	regMu.RUnlock()
+	for _, d := range drivers {
+		if d.Name() == name {
+			return d, nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported driver %s", name)
+}
+
+// Backup invokes the driver's Backup method.
+func Backup(name, dsn, file string) error {
+	d, err := Driver(name)
+	if err != nil {
+		return err
+	}
+	return d.Backup(dsn, file)
+}
+
+// Restore invokes the driver's Restore method.
+func Restore(name, dsn, file string) error {
+	d, err := Driver(name)
+	if err != nil {
+		return err
+	}
+	return d.Restore(dsn, file)
 }
 
 // Names returns the names of all registered drivers.

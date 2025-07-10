@@ -8,7 +8,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/dbstart"
-	"github.com/arran4/goa4web/pkg/upload"
+	"github.com/arran4/goa4web/internal/upload"
 )
 
 // PerformChecks checks DB connectivity and the upload provider.

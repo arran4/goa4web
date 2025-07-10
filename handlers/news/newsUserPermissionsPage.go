@@ -22,7 +22,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*hcommon.CoreData
-		Rows []*db.GetPermissionsByUserIdAndSectionNewsRow
+		Rows []*db.GetUserRolesRow
 	}
 
 	data := Data{
@@ -31,7 +31,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
-	rows, err := queries.GetPermissionsByUserIdAndSectionNews(r.Context())
+	rows, err := queries.GetUserRoles(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -53,7 +53,6 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	where := "news"
 	level := r.PostFormValue("role")
 	data := struct {
 		*hcommon.CoreData
@@ -66,16 +65,9 @@ func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
-	} else if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
+	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Section: sql.NullString{
-			String: where,
-			Valid:  true,
-		},
-		Role: sql.NullString{
-			String: level,
-			Valid:  true,
-		},
+		Name:         level,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
@@ -103,7 +95,7 @@ func NewsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.PermissionUserDisallow(r.Context(), int32(permidi)); err != nil {
+	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	CustomNewsIndex(data.CoreData, r)

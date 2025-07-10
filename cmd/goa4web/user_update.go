@@ -64,32 +64,32 @@ func (c *userUpdateCmd) Run() error {
 			return fmt.Errorf("invalid role %q", c.Role)
 		}
 
-		perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(ctx,
-			dbpkg.GetPermissionsByUserIdAndSectionAndSectionAllParams{
-				UsersIdusers: u.Idusers,
-				Section:      sql.NullString{String: "all", Valid: true},
-			})
+		perms, err := queries.GetPermissionsByUserID(ctx, u.Idusers)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("check role: %w", err)
 		}
 
-		if perm != nil && perm.Role.Valid {
-			if perm.Role.String == "administrator" && c.Role != "administrator" && c.rootCmd.Verbosity > 0 {
+		var perm *dbpkg.GetUserRolesRow
+		if len(perms) > 0 {
+			perm = perms[0]
+		}
+
+		if perm != nil && perm.Role != "" {
+			if perm.Role == "administrator" && c.Role != "administrator" && c.rootCmd.Verbosity > 0 {
 				fmt.Printf("warning: removing administrator from %s\n", c.Username)
 			}
-			if c.Role == "reader" || perm.Role.String != c.Role {
-				if err := queries.PermissionUserDisallow(ctx, perm.Idpermissions); err != nil {
+			if c.Role == "reader" || perm.Role != c.Role {
+				if err := queries.DeleteUserRole(ctx, perm.Idpermissions); err != nil {
 					return fmt.Errorf("update role: %w", err)
 				}
 				perm = nil
 			}
 		}
 
-		if c.Role != "reader" && (perm == nil || perm.Role.String != c.Role) {
-			if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
+		if c.Role != "reader" && (perm == nil || perm.Role != c.Role) {
+			if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
 				UsersIdusers: u.Idusers,
-				Section:      sql.NullString{String: "all", Valid: true},
-				Role:         sql.NullString{String: c.Role, Valid: true},
+				Name:         c.Role,
 			}); err != nil {
 				return fmt.Errorf("set role: %w", err)
 			}

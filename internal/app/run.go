@@ -26,7 +26,6 @@ import (
 	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	startup "github.com/arran4/goa4web/internal/startup"
-	"github.com/arran4/goa4web/pkg/server"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )

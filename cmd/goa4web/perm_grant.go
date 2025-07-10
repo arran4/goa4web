@@ -13,18 +13,16 @@ import (
 // permGrantCmd implements "perm grant".
 type permGrantCmd struct {
 	*permCmd
-	fs      *flag.FlagSet
-	User    string
-	Section string
-	Role    string
-	args    []string
+	fs   *flag.FlagSet
+	User string
+	Role string
+	args []string
 }
 
 func parsePermGrantCmd(parent *permCmd, args []string) (*permGrantCmd, error) {
 	c := &permGrantCmd{permCmd: parent}
 	fs := flag.NewFlagSet("grant", flag.ContinueOnError)
 	fs.StringVar(&c.User, "user", "", "username")
-	fs.StringVar(&c.Section, "section", "", "permission section")
 	fs.StringVar(&c.Role, "role", "", "permission role")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
@@ -35,8 +33,8 @@ func parsePermGrantCmd(parent *permCmd, args []string) (*permGrantCmd, error) {
 }
 
 func (c *permGrantCmd) Run() error {
-	if c.User == "" || c.Section == "" || c.Role == "" {
-		return fmt.Errorf("user, section and role required")
+	if c.User == "" || c.Role == "" {
+		return fmt.Errorf("user and role required")
 	}
 	db, err := c.rootCmd.DB()
 	if err != nil {
@@ -48,8 +46,8 @@ func (c *permGrantCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
-	if c.Section == "all" && c.Role == "administrator" {
-		if _, err := queries.GetAdministratorPermissionByUserId(ctx, u.Idusers); err == nil {
+	if c.Role == "administrator" {
+		if _, err := queries.GetAdministratorUserRole(ctx, u.Idusers); err == nil {
 			if c.rootCmd.Verbosity > 0 {
 				fmt.Printf("%s already administrator\n", c.User)
 			}
@@ -58,10 +56,9 @@ func (c *permGrantCmd) Run() error {
 			return fmt.Errorf("check admin: %w", err)
 		}
 	}
-	if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
+	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Section:      sql.NullString{String: c.Section, Valid: true},
-		Role:         sql.NullString{String: c.Role, Valid: true},
+		Name:         c.Role,
 	}); err != nil {
 		return fmt.Errorf("grant: %w", err)
 	}

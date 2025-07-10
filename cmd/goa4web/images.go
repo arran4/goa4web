@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/pkg/upload"
+	"github.com/arran4/goa4web/internal/upload"
 )
 
 // imagesCmd implements image cache management utilities.

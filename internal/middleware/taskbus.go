@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -28,9 +28,10 @@ func (r *statusRecorder) WriteHeader(code int) {
 func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
-		var uid int32
-		if u, ok := r.Context().Value(hcommon.KeyUser).(*dbpkg.User); ok && u != nil {
-			uid = u.Idusers
+		uid := int32(0)
+		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+		if cd != nil {
+			uid = cd.UserID
 		}
 		admin := strings.Contains(r.URL.Path, "/admin")
 		evt := &eventbus.Event{
@@ -40,9 +41,11 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 			Time:   time.Now(),
 			Admin:  admin,
 		}
-		ctx := context.WithValue(r.Context(), hcommon.KeyBusEvent, evt)
+		if cd != nil {
+			cd.SetEvent(evt)
+		}
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
-		next.ServeHTTP(sr, r.WithContext(ctx))
+		next.ServeHTTP(sr, r)
 		if task != "" && sr.status < http.StatusBadRequest {
 			if err := eventbus.DefaultBus.Publish(*evt); err != nil {
 				log.Printf("publish task event: %v", err)

@@ -8,7 +8,7 @@
             <th class="sortable">ID</th>
             <th class="sortable">User</th>
             <th class="sortable">Email</th>
-            <th class="sortable">Level</th>
+            <th class="sortable">Role</th>
             <th class="section" style="display:none">Section</th>
             <th>Edit</th>
             <th>Delete</th>
@@ -20,7 +20,7 @@
             <td>{{.Idpermissions}}</td>
             <td class="username">{{.Username.String}}</td>
             <td class="email">{{.Email.String}}</td>
-            <td class="level">{{.Level.String}}</td>
+            <td class="level">{{.Role.String}}</td>
             <td class="section" style="display:none">{{.Section.String}}</td>
             <td><button class="edit-btn" data-id="{{.Idpermissions}}">Edit</button></td>
             <td><button class="delete-btn" data-id="{{.Idpermissions}}">Delete</button></td>
@@ -33,8 +33,8 @@
 <form id="add-permission-form">
     Username: <input name="username">
     Section: <input name="where">
-    Level:
-    <select name="level">
+    Role:
+    <select name="role">
         <option value="reader">reader</option>
         <option value="writer">writer</option>
         <option value="moderator">moderator</option>
@@ -73,7 +73,7 @@
                 var data = new URLSearchParams();
                 data.set('task','Update permission');
                 data.set('permid',btn.dataset.id);
-                data.set('level',levelCell.querySelector('select').value);
+                data.set('role',levelCell.querySelector('select').value);
                 data.set('where',sectionCell.querySelector('input').value);
                 post(data).then(function(){ location.reload(); });
             }, {once:true});

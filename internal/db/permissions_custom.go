@@ -11,7 +11,7 @@ type PermissionWithUser struct {
 	Idpermissions int32
 	UsersIdusers  int32
 	Section       sql.NullString
-	Level         sql.NullString
+	Role          sql.NullString
 	Username      sql.NullString
 	Email         sql.NullString
 }
@@ -40,7 +40,7 @@ func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user, section sql
 	var items []*PermissionWithUser
 	for rows.Next() {
 		var i PermissionWithUser
-		if err := rows.Scan(&i.Idpermissions, &i.UsersIdusers, &i.Section, &i.Level, &i.Username, &i.Email); err != nil {
+		if err := rows.Scan(&i.Idpermissions, &i.UsersIdusers, &i.Section, &i.Role, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -54,15 +54,15 @@ func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user, section sql
 	return items, nil
 }
 
-// UpdatePermission modifies an existing permission's section and level.
+// UpdatePermission modifies an existing permission's section and role.
 type UpdatePermissionParams struct {
 	ID      int32
 	Section sql.NullString
-	Level   sql.NullString
+	Role    sql.NullString
 }
 
 func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
-	const query = `UPDATE permissions SET section = ?, level = ? WHERE idpermissions = ?`
-	_, err := q.db.ExecContext(ctx, query, arg.Section, arg.Level, arg.ID)
+	const query = `UPDATE permissions SET section = ?, role = ? WHERE idpermissions = ?`
+	_, err := q.db.ExecContext(ctx, query, arg.Section, arg.Role, arg.ID)
 	return err
 }

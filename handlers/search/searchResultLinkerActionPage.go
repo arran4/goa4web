@@ -7,7 +7,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	hlinker "github.com/arran4/goa4web/handlers/linker"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 

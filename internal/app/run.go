@@ -19,7 +19,6 @@ import (
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
-	emailutil "github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/internal/eventbus"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
@@ -27,6 +26,7 @@ import (
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/server"
 	startup "github.com/arran4/goa4web/internal/startup"
+	emailutil "github.com/arran4/goa4web/internal/utils/emailutil"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )

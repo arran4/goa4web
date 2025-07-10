@@ -113,11 +113,21 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 
 	dlqProvider := dlq.ProviderFromConfig(cfg, dbpkg.New(dbPool))
-	startWorkers(ctx, dbPool, emailProvider, dlqProvider, cfg)
+
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+	defer workerCancel()
+	startWorkers(workerCtx, dbPool, emailProvider, dlqProvider, cfg)
 
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
 	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := eventbus.DefaultBus.Shutdown(shutdownCtx); err != nil {
+		log.Printf("eventbus shutdown: %v", err)
+	}
+	workerCancel()
 
 	return nil
 }

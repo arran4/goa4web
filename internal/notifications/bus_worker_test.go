@@ -202,6 +202,37 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	}
 }
 
+func TestProcessEventAdminNotify(t *testing.T) {
+	ctx := context.Background()
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test"
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	prov := &busDummyProvider{}
+	n := Notifier{EmailProvider: prov, Queries: q}
+
+	mock.ExpectQuery("UserByEmail").
+		WithArgs(sql.NullString{String: "a@test", Valid: true}).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: hcommon.TaskSetTopicRestriction, UserID: 1, Admin: true}, n, nil)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
 func TestBusWorker(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	origCfg := runtimeconfig.AppRuntimeConfig

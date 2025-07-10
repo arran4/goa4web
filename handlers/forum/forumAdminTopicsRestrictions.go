@@ -6,13 +6,11 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func AdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
@@ -113,8 +111,6 @@ func AdminTopicsRestrictionLevelChangePage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	notifyAdmins(r.Context(), email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig), queries, r.URL.Path)
-
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
@@ -130,8 +126,6 @@ func AdminTopicsRestrictionLevelDeletePage(w http.ResponseWriter, r *http.Reques
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-
-	notifyAdmins(r.Context(), email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig), queries, r.URL.Path)
 
 	common.TaskDoneAutoRefreshPage(w, r)
 }
@@ -178,8 +172,6 @@ func AdminTopicsRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-
-	notifyAdmins(r.Context(), email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig), queries, r.URL.Path)
 
 	common.TaskDoneAutoRefreshPage(w, r)
 }

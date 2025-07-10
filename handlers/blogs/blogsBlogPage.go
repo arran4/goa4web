@@ -87,13 +87,13 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable:                true,
 	}
 
-	if blog.ForumthreadID == 0 {
+	if !blog.ForumthreadID.Valid {
 		data.IsReplyable = false
 		data.Blog.IsReplyable = false
 	} else {
 		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 			UsersIdusers:  uid,
-			Idforumthread: blog.ForumthreadID,
+			Idforumthread: blog.ForumthreadID.Int32,
 		})
 		if err != nil {
 			if err != sql.ErrNoRows {

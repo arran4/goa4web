@@ -1,3 +1,6 @@
+-- Ensure each forum topic only has one restrictions row
+ALTER TABLE topicrestrictions
+    ADD UNIQUE INDEX topicrestrictions_forumtopic_idx (forumtopic_idforumtopic);
 ALTER TABLE topicrestrictions
     ADD PRIMARY KEY (forumtopic_idforumtopic);
 

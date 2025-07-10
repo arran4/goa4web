@@ -183,6 +183,27 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 	}
 }
 
+func TestNotifyNewsSubscribers(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{
+		"idsitenews", "forumthread_id", "language_idlanguage", "users_idusers",
+		"news", "occurred", "idusers", "username", "deleted_at",
+		"idpreferences", "language_idlanguage_2", "users_idusers_2",
+		"emailforumupdates", "page_size", "auto_subscribe_replies", "email",
+	}).AddRow(1, 2, 1, 3, "n", nil, 3, "bob", nil, 1, 1, 3, 1, 10, true, "e@test")
+	mock.ExpectQuery("SELECT idsitenews").WithArgs(int32(1), int32(2)).WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(3), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	emailutil.NotifyNewsSubscribers(context.Background(), q, 1, 2, "/p")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
 func TestGetEmailProviderSMTP(t *testing.T) {
 	p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{
 		EmailProvider:     "smtp",

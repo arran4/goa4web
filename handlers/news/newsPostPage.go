@@ -299,20 +299,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO
-	//if rows, err := queries.SomethingNotifyNews(r.Context(), somethingNotifyNewssParams{
-	//	Idusers: uid,
-	//	Idnewss: int32(bid),
-	//}); err != nil {
-	//	log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	//} else {
-	//	for _, row := range rows {
-	//		if err := notifyChange(r.Context(), email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig), row.String, endUrl); err != nil {
-	//			log.Printf("Error: notifyChange: %s", err)
-	//
-	//		}
-	//	}
-	//}
+	emailutil.NotifyNewsSubscribers(r.Context(), queries, int32(pid), uid, endUrl)
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),

@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -28,7 +29,8 @@ func setupCommentRequest(t *testing.T, queries *db.Queries, store *sessions.Cook
 		req.AddCookie(c)
 	}
 	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, &CoreData{})
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
+	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess
 }

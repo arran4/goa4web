@@ -141,9 +141,6 @@ const (
 	// TaskRenameLanguage renames a language entry.
 	TaskRenameLanguage = "Rename Language"
 
-	// TaskRenameSection renames a permissions section.
-	TaskRenameSection = "Rename section"
-
 	// TaskReply posts a reply to a thread or comment.
 	TaskReply = "Reply"
 

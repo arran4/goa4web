@@ -17,9 +17,9 @@ const (
 	passwordIterations = 10000
 )
 
-// hashPassword returns a PBKDF2-SHA256 hash of the password along with the
+// HashPassword returns a PBKDF2-SHA256 hash of the password along with the
 // algorithm descriptor storing iterations and salt.
-func hashPassword(pw string) (string, string, error) {
+func HashPassword(pw string) (string, string, error) {
 	var salt [16]byte
 	if _, err := rand.Read(salt[:]); err != nil {
 		return "", "", err
@@ -29,9 +29,9 @@ func hashPassword(pw string) (string, string, error) {
 	return hex.EncodeToString(hash), alg, nil
 }
 
-// verifyPassword checks the password against the stored hash and algorithm
+// VerifyPassword checks the password against the stored hash and algorithm
 // descriptor.
-func verifyPassword(pw, storedHash, alg string) bool {
+func VerifyPassword(pw, storedHash, alg string) bool {
 	parts := strings.Split(alg, ":")
 	switch parts[0] {
 	case "pbkdf2-sha256":

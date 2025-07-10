@@ -66,9 +66,9 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !verifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
+	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
 		reset, err := queries.GetPasswordResetByUser(r.Context(), row.Idusers)
-		if err == nil && verifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
+		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
 			session, ok := core.GetSessionOrFail(w, r)
 			if !ok {
 				return
@@ -89,7 +89,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
-		newHash, newAlg, err := hashPassword(password)
+		newHash, newAlg, err := HashPassword(password)
 		if err == nil {
 			_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: row.Idusers, Passwd: newHash, PasswdAlgorithm: sql.NullString{String: newAlg, Valid: true}})
 		}

@@ -177,29 +177,6 @@ func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Req
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func userLangSaveDefaultLanguageActionPage(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
-	if err := saveDefaultLanguage(r, queries, uid); err != nil {
-		log.Printf("Save language Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	common.TaskDoneAutoRefreshPage(w, r)
-}
-
 func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
@@ -227,10 +204,4 @@ func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.TaskDoneAutoRefreshPage(w, r)
-}
-
-// userLangSaveLanguageActionPage is kept for compatibility and forwards to
-// userLangSaveLanguagePreferenceActionPage.
-func userLangSaveLanguageActionPage(w http.ResponseWriter, r *http.Request) {
-	userLangSaveLanguagePreferenceActionPage(w, r)
 }

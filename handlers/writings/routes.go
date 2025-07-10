@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
+	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -31,6 +32,8 @@ func RegisterRoutes(r *mux.Router) {
 	wr.HandleFunc("/users/permissions", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUserDisallow))
 	wr.HandleFunc("/article/{article}", ArticlePage).Methods("GET")
 	wr.HandleFunc("/article/{article}", ArticleReplyActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
+	wr.HandleFunc("/article/{article}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(ArticleCommentEditActionPage)).ServeHTTP).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply))
+	wr.HandleFunc("/article/{article}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(ArticleCommentEditActionCancelPage)).ServeHTTP).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
 	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(ArticleEditPage))).Methods("GET").MatcherFunc(auth.RequiredAccess("writer", "administrator"))
 	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(ArticleEditActionPage))).Methods("POST").MatcherFunc(auth.RequiredAccess("writer", "administrator")).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUpdateWriting))
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")

@@ -2,18 +2,14 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/pbkdf2"
-
+	auth "github.com/arran4/goa4web/handlers/auth"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -65,7 +61,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	hash, alg, err := hashPassword(password)
+	hash, alg, err := auth.HashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
@@ -108,16 +104,4 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		fmt.Printf("created user %s (id %d)\n", username, id)
 	}
 	return nil
-}
-
-// hashPassword creates a PBKDF2-SHA256 hash and algorithm string.
-func hashPassword(pw string) (string, string, error) {
-	const iterations = 10000
-	var salt [16]byte
-	if _, err := rand.Read(salt[:]); err != nil {
-		return "", "", err
-	}
-	hash := pbkdf2.Key([]byte(pw), salt[:], iterations, 32, sha256.New)
-	alg := fmt.Sprintf("pbkdf2-sha256:%d:%x", iterations, salt)
-	return hex.EncodeToString(hash), alg, nil
 }

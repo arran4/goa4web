@@ -90,7 +90,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 
 	//hashedPassword := hex.EncodeToString(sum[:])
 
-	hash, alg, err := hashPassword(password)
+	hash, alg, err := HashPassword(password)
 	if err != nil {
 		log.Printf("hashPassword Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

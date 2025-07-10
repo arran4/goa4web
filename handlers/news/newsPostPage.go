@@ -167,10 +167,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
-		ShowReply: data.CoreData.UserID != 0,
-		ShowEdit: data.CoreData.HasRole("writer") ||
-			data.CoreData.HasRole("moderator") ||
-			data.CoreData.HasRole("administrator"),
+		ShowReply:    data.CoreData.UserID != 0,
+		ShowEdit:     canEditNewsPost(data.CoreData, post.UsersIdusers),
 		Editing:      editingId == int(post.Idsitenews),
 		Announcement: ann,
 		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,

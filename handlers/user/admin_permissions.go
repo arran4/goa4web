@@ -68,7 +68,7 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -86,7 +86,7 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 			String: where,
 			Valid:  true,
 		},
-		Level: sql.NullString{
+		Role: sql.NullString{
 			String: level,
 			Valid:  true,
 		},
@@ -129,7 +129,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	where := r.PostFormValue("where")
 
 	data := struct {
@@ -147,7 +147,7 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
 		ID:      int32(id),
 		Section: sql.NullString{String: where, Valid: true},
-		Level:   sql.NullString{String: level, Valid: true},
+		Role:    sql.NullString{String: level, Valid: true},
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 	}

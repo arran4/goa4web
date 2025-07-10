@@ -7,7 +7,7 @@ Commands:
   list     list permissions
 
 Examples:
-  {{.Prog}} perm grant -user bob -section forum -level read
+  {{.Prog}} perm grant -user bob -section forum -role read
   {{.Prog}} perm list
 
 Flags:

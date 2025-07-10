@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/core"
@@ -141,8 +140,10 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if evt, ok := r.Context().Value(common.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
-		evt.Item = notif.SignupInfo{Username: username}
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			evt.Item = notif.SignupInfo{Username: username}
+		}
 	}
 
 	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {

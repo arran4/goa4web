@@ -110,7 +110,7 @@ const listAdministratorEmails = `-- name: ListAdministratorEmails :many
 SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
 JOIN permissions p ON p.users_idusers = u.idusers
-WHERE p.section = 'all' and p.level = 'administrator'
+WHERE p.section = 'all' and p.role = 'administrator'
 `
 
 func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]string, error) {

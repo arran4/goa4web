@@ -11,7 +11,7 @@
             <th>ID</th>
             <th>User</th>
             <th>Email</th>
-            <th>Level</th>
+            <th>Role</th>
         </tr>
         {{- if .UserLevels }}
             {{- range $result := .UserLevels }}
@@ -20,7 +20,7 @@
                     <td>{{ $result.ID }}</td>
                     <td>{{ $result.Username.String }}</td>
                     <td>{{ $result.Email.String }}</td>
-                    <td>{{ $result.Level.String }}</td>
+                    <td>{{ $result.Role.String }}</td>
                 </tr>
             {{- end }}
         {{- else }}
@@ -30,7 +30,7 @@
             <td colspan="6">
                 Usernames (space or comma separated):<br>
                 <textarea name="usernames" rows="2" cols="40"></textarea><br>
-                <select name="level">
+                <select name="role">
                     <option value="reader">reader</option>
                     <option value="writer">writer</option>
                     <option value="moderator">moderator</option>

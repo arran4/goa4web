@@ -15,7 +15,7 @@ type permUpdateCmd struct {
 	fs      *flag.FlagSet
 	ID      int
 	Section string
-	Level   string
+	Role    string
 	args    []string
 }
 
@@ -24,7 +24,7 @@ func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) 
 	fs := flag.NewFlagSet("update", flag.ContinueOnError)
 	fs.IntVar(&c.ID, "id", 0, "permission id")
 	fs.StringVar(&c.Section, "section", "", "permission section")
-	fs.StringVar(&c.Level, "level", "", "permission level")
+	fs.StringVar(&c.Role, "role", "", "permission role")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -34,8 +34,8 @@ func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) 
 }
 
 func (c *permUpdateCmd) Run() error {
-	if c.ID == 0 || c.Section == "" || c.Level == "" {
-		return fmt.Errorf("id, section and level required")
+	if c.ID == 0 || c.Section == "" || c.Role == "" {
+		return fmt.Errorf("id, section and role required")
 	}
 	db, err := c.rootCmd.DB()
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *permUpdateCmd) Run() error {
 	if err := queries.UpdatePermission(ctx, dbpkg.UpdatePermissionParams{
 		ID:      int32(c.ID),
 		Section: sql.NullString{String: c.Section, Valid: true},
-		Level:   sql.NullString{String: c.Level, Valid: true},
+		Role:    sql.NullString{String: c.Role, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("update permission: %w", err)
 	}

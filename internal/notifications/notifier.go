@@ -41,22 +41,24 @@ func (n Notifier) NotifyChange(ctx context.Context, userID int32, emailAddr, pag
 
 // NotifyAdmins sends a change notification to all administrator accounts.
 func (n Notifier) NotifyAdmins(ctx context.Context, page string) {
-	emailutil.NotifyAdmins(ctx, n.EmailProvider, n.Queries, page)
-	if n.Queries == nil || !common.NotificationsEnabled() {
+	if !emailutil.AdminNotificationsEnabled() {
+		return
+	}
+	if n.EmailProvider == nil && n.Queries == nil {
 		return
 	}
 	for _, addr := range emailutil.GetAdminEmails(ctx, n.Queries) {
-		u, err := n.Queries.UserByEmail(ctx, addr)
-		if err != nil {
-			log.Printf("user by email %s: %v", addr, err)
-			continue
+		var uid int32
+		if n.Queries != nil {
+			u, err := n.Queries.UserByEmail(ctx, addr)
+			if err != nil {
+				log.Printf("user by email %s: %v", addr, err)
+			} else {
+				uid = u.Idusers
+			}
 		}
-		if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
-			UsersIdusers: u.Idusers,
-			Link:         sql.NullString{String: page, Valid: page != ""},
-			Message:      sql.NullString{},
-		}); err != nil {
-			log.Printf("insert notification: %v", err)
+		if err := n.NotifyChange(ctx, uid, addr, page, "update", nil); err != nil {
+			log.Printf("notify admin %s: %v", addr, err)
 		}
 	}
 }

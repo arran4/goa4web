@@ -7,14 +7,16 @@ import (
 
 	"github.com/gorilla/mux"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 func TestRequiredAccessAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &db.User{Idusers: 1})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{SecurityLevel: "writer"})
+	cd := corecommon.NewCoreData(req.Context(), nil)
+	cd.UserID = 1
+	cd.SetRole("writer")
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if !RequiredAccess("writer")(req, &mux.RouteMatch{}) {
@@ -24,8 +26,10 @@ func TestRequiredAccessAllowed(t *testing.T) {
 
 func TestRequiredAccessDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &db.User{Idusers: 1})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{SecurityLevel: "reader"})
+	cd := corecommon.NewCoreData(req.Context(), nil)
+	cd.UserID = 1
+	cd.SetRole("reader")
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if RequiredAccess("writer")(req, &mux.RouteMatch{}) {

@@ -89,12 +89,12 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl:                    editUrl,
 	}
 
-	if blog.ForumthreadID == 0 {
+	if !blog.ForumthreadID.Valid {
 		data.IsReplyable = false
 	} else {
 		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 			UsersIdusers:  uid,
-			Idforumthread: blog.ForumthreadID,
+			Idforumthread: blog.ForumthreadID.Int32,
 		})
 		if err != nil {
 			if err != sql.ErrNoRows {

@@ -51,7 +51,7 @@ func shouldNotify(task string) bool {
 		hcommon.TaskSetUserLevel, hcommon.TaskUpdateUserLevel, hcommon.TaskDeleteUserLevel,
 		hcommon.TaskSetTopicRestriction, hcommon.TaskUpdateTopicRestriction, hcommon.TaskDeleteTopicRestriction,
 		hcommon.TaskCopyTopicRestriction, hcommon.TaskCreateThread, hcommon.TaskNewPost,
-		hcommon.TaskSubmitWriting, hcommon.TaskRegister:
+		hcommon.TaskSubmitWriting, hcommon.TaskRegister, hcommon.TaskUserResetPassword:
 		return true
 	default:
 		return false
@@ -165,6 +165,18 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 				ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
 			}
 		}
+	}
+
+	if evt.Task == hcommon.TaskUserResetPassword {
+		user, err := n.Queries.GetUserById(ctx, evt.UserID)
+		if err == nil && user.Email.Valid && user.Email.String != "" {
+			if err := emailutil.CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Item); err != nil {
+				recordAndNotify(ctx, q, n, fmt.Sprintf("notify change: %v", err))
+			}
+		} else {
+			notifyMissingEmail(ctx, n.Queries, evt.UserID)
+		}
+		return
 	}
 
 	if evt.Task == hcommon.TaskTestMail {

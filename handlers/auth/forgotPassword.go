@@ -6,14 +6,13 @@ import (
 	"encoding/hex"
 	"log"
 	"net/http"
+	"time"
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
@@ -62,10 +61,17 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
-	if provider != nil && row.Email != "" {
-		page := r.URL.Scheme + "://" + r.Host + "/login"
-		_ = emailutil.CreateEmailTemplateAndSend(r.Context(), provider, row.Email, page, "Password Reset", code)
+	if row.Email != "" {
+		if evt, ok := r.Context().Value(common.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
+			evt.Path = r.URL.Scheme + "://" + r.Host + "/login"
+			evt.Task = common.TaskUserResetPassword
+			evt.UserID = row.Idusers
+			evt.Time = time.Now()
+			evt.Item = struct {
+				Username string
+				Code     string
+			}{Username: username, Code: code}
+		}
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

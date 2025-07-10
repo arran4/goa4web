@@ -189,3 +189,31 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 		t.Fatalf("expect: %v", err)
 	}
 }
+
+func TestProcessEventResetPassword(t *testing.T) {
+	ctx := context.Background()
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	n := Notifier{Queries: q}
+
+	mock.ExpectQuery("GetUserById").WithArgs(int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "u@test", "u"))
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskUserResetPassword, UserID: 1, Item: struct{ Username, Code string }{"u", "c"}}, n, nil)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}

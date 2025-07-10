@@ -85,4 +85,5 @@ var BoolOptions = []BoolOption{
 	{"notifications-enabled", config.EnvNotificationsEnabled, "enable internal notifications", true, "", func(c *RuntimeConfig) *bool { return &c.NotificationsEnabled }},
 	{"csrf-enabled", config.EnvCSRFEnabled, "enable or disable CSRF protection", true, "", func(c *RuntimeConfig) *bool { return &c.CSRFEnabled }},
 	{"admin-notify", config.EnvAdminNotify, "enable admin notification emails", true, "", func(c *RuntimeConfig) *bool { return &c.AdminNotify }},
+	{"create-dirs", config.EnvCreateDirs, "create missing directories", false, "", func(c *RuntimeConfig) *bool { return &c.CreateDirs }},
 }

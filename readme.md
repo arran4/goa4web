@@ -260,6 +260,7 @@ environment variables listed below.
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
 | `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
 | `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
+| `CREATE_DIRS` | `--create-dirs` | No | `false` | Create missing directories on startup. |
 
 ### Dead Letter Queue Providers
 

@@ -7,9 +7,9 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 
+	pkghandlers "github.com/arran4/goa4web/handlers/common"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
-	pkghandlers "github.com/arran4/goa4web/pkg/handlers"
 )
 
 var legacyRedirectsEnabled = true

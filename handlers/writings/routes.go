@@ -10,8 +10,8 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
+	pkghandlers "github.com/arran4/goa4web/handlers/common"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	pkghandlers "github.com/arran4/goa4web/pkg/handlers"
 )
 
 var legacyRedirectsEnabled = true

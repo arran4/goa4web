@@ -10,13 +10,12 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/permissions"
-	handlers "github.com/arran4/goa4web/pkg/handlers"
 )
 
 // RegisterRoutes sets up all application routes on r.
 func RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
-	r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
+	r.HandleFunc("/main.css", hcommon.MainCSS).Methods("GET")
+	r.HandleFunc("/favicon.svg", hcommon.Favicon).Methods("GET")
 
 	InitModules(r)
 

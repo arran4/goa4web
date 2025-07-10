@@ -89,6 +89,23 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl:                    editUrl,
 	}
 
+	if blog.ForumthreadID == 0 {
+		data.IsReplyable = false
+	} else {
+		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+			UsersIdusers:  uid,
+			Idforumthread: blog.ForumthreadID,
+		})
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Printf("GetThreadLastPosterAndPerms: %v", err)
+			}
+			data.IsReplyable = false
+		} else if threadRow.Locked.Valid && threadRow.Locked.Bool {
+			data.IsReplyable = false
+		}
+	}
+
 	replyType := r.URL.Query().Get("type")
 	commentIdString := r.URL.Query().Get("comment")
 	commentId, _ := strconv.Atoi(commentIdString)

@@ -109,8 +109,10 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				}
 				result = append(result, &Post{
 					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
-					ShowReply:    cd.UserID != 0,
-					ShowEdit:     cd.HasRole("writer"),
+					ShowReply: cd.UserID != 0,
+					ShowEdit: cd.HasRole("writer") ||
+						cd.HasRole("moderator") ||
+						cd.HasRole("administrator"),
 					Editing:      editingId == int(post.Idsitenews),
 					Announcement: ann,
 					IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,

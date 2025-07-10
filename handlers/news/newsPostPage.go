@@ -27,8 +27,9 @@ import (
 
 type NewsPost struct {
 	ShowReply bool
-	ShowEdit  bool
-	// TODO or (eq .Level "authWriter") (and (ge .Level "authModerator") (le .Level "authAdministrator"))
+	// ShowEdit is true when the current user can modify the post. Users with
+	// the writer, moderator or administrator role are permitted to edit.
+	ShowEdit bool
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +118,13 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	languageRows, err := queries.FetchLanguages(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	data.Languages = languageRows
+
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	commentIdString := r.URL.Query().Get("comment")
@@ -128,11 +136,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-			editUrl = fmt.Sprintf("?editComment=%d", row.Idcomments)
-			editSaveUrl = "?"
-			// TODO
-			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
-			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, row.Idcomments)
+			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
 				data.IsReplyable = false
 			}
@@ -154,8 +159,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         editCommentId != 0 && int32(editCommentId) == row.Idcomments,
 			Offset:                          i + offset,
-			Languages:                       nil,
-			SelectedLanguageId:              0,
+			Languages:                       languageRows,
+			SelectedLanguageId:              int(row.LanguageIdlanguage),
 		})
 	}
 
@@ -167,18 +172,11 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
 		ShowReply:    data.CoreData.UserID != 0,
-		ShowEdit:     data.CoreData.HasRole("writer"),
+		ShowEdit:     canEditNewsPost(data.CoreData, post.UsersIdusers),
 		Editing:      editingId == int(post.Idsitenews),
 		Announcement: ann,
 		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,
 	}
-
-	languageRows, err := queries.FetchLanguages(r.Context())
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	data.Languages = languageRows
 
 	CustomNewsIndex(data.CoreData, r)
 

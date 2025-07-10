@@ -3,6 +3,7 @@
   "ADMIN_NOTIFY": "true",
   "AWS_REGION": "",
   "CONFIG_FILE": "",
+  "CREATE_DIRS": "false",
   "CSRF_ENABLED": "true",
   "DB_CONN": "",
   "DB_DRIVER": "mysql",

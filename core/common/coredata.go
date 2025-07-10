@@ -109,7 +109,7 @@ func (cd *CoreData) RoleLazy() string {
 	if cd.Role != "" {
 		return cd.Role
 	}
-	lvl, _ := cd.role.load(func() (string, error) {
+	role, _ := cd.role.load(func() (string, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return "reader", nil
 		}
@@ -123,9 +123,9 @@ func (cd *CoreData) RoleLazy() string {
 		return perm.Level.String, nil
 	})
 	if cd.Role == "" {
-		cd.Role = lvl
+		cd.Role = role
 	}
-	return lvl
+	return role
 }
 
 // SetSession stores s on cd for later retrieval.

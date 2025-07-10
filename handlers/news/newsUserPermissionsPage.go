@@ -54,7 +54,7 @@ func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := "news"
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	data := struct {
 		*hcommon.CoreData
 		Errors   []string
@@ -72,7 +72,7 @@ func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 			String: where,
 			Valid:  true,
 		},
-		Level: sql.NullString{
+		Role: sql.NullString{
 			String: level,
 			Valid:  true,
 		},

@@ -51,7 +51,7 @@ func AdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := r.PostFormValue("where")
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("GetUserByUsername Error: %s", err)
@@ -65,7 +65,7 @@ func AdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
 			String: where,
 			Valid:  true,
 		},
-		Level: sql.NullString{
+		Role: sql.NullString{
 			String: level,
 			Valid:  true,
 		},

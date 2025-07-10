@@ -78,7 +78,7 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
 	where := r.PostFormValue("where")
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
 		return r == ',' || r == '\n' || r == '\r' || r == '\t' || r == ' '
 	})
@@ -94,7 +94,7 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 		if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 			UsersIdusers: u.Idusers,
 			Section:      sql.NullString{String: where, Valid: true},
-			Level:        sql.NullString{String: level, Valid: true},
+			Role:         sql.NullString{String: level, Valid: true},
 		}); err != nil {
 			log.Printf("permissionUserAllow Error: %s", err)
 		}

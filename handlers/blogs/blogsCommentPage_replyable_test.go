@@ -29,7 +29,6 @@ func setupCommentRequest(t *testing.T, queries *db.Queries, store *sessions.Cook
 	}
 	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
 	ctx = context.WithValue(ctx, hcommon.KeyCoreData, &CoreData{})
-	ctx = context.WithValue(ctx, hcommon.KeySession, sess)
 	req = req.WithContext(ctx)
 	return req, sess
 }

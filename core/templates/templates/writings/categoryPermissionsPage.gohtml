@@ -5,7 +5,7 @@ Category {{.CategoryID}} permissions:<br>
         <th>ID</th>
         <th>User</th>
         <th>Email</th>
-        <th>Level</th>
+        <th>Role</th>
         <th>Delete?</th>
     </tr>
     {{- range .UserLevels }}
@@ -13,7 +13,7 @@ Category {{.CategoryID}} permissions:<br>
         <td>{{ .Idpermissions }}</td>
         <td>{{ .Username.String }}</td>
         <td>{{ .Email.String }}</td>
-        <td>{{ .Level.String }}</td>
+        <td>{{ .Role.String }}</td>
         <td>
             <form method="post">
         {{ csrfField }}
@@ -30,7 +30,7 @@ Category {{.CategoryID}} permissions:<br>
             <td><input name="username"></td>
             <td>?</td>
             <td>
-                <select name="level">
+                <select name="role">
                     <option value="reader">reader</option>
                     <option value="writer">writer</option>
                     <option value="moderator">moderator</option>

@@ -49,7 +49,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := "writing"
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	data := struct {
 		*corecommon.CoreData
 		Errors   []string
@@ -67,7 +67,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 			String: where,
 			Valid:  true,
 		},
-		Level: sql.NullString{
+		Role: sql.NullString{
 			String: level,
 			Valid:  true,
 		},

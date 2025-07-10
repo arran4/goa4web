@@ -24,14 +24,14 @@ type emailTemplate struct {
 }
 
 var defaultEmailTemplates = map[string]emailTemplate{
-	"update":                                   {text: defaultUpdateEmailText, html: defaultUpdateEmailHTML},
-	strings.ToLower(hcommon.TaskReply):         {text: defaultReplyEmailText, html: defaultReplyEmailHTML},
-	strings.ToLower(hcommon.TaskCreateThread):  {text: defaultThreadEmailText, html: defaultThreadEmailHTML},
-	strings.ToLower(hcommon.TaskNewPost):       {text: defaultBlogEmailText, html: defaultBlogEmailHTML},
-	strings.ToLower(hcommon.TaskSubmitWriting): {text: defaultWritingEmailText, html: defaultWritingEmailHTML},
-	strings.ToLower(hcommon.TaskRegister):      {text: defaultSignupEmailText, html: defaultSignupEmailHTML},
-	strings.ToLower("Email Verification"):      {text: defaultVerificationEmailText, html: defaultVerificationEmailHTML},
-	strings.ToLower("Password Reset"):          {text: defaultPasswordResetEmailText, html: defaultPasswordResetEmailHTML},
+	"update":                                           {text: defaultUpdateEmailText, html: defaultUpdateEmailHTML},
+	strings.ToLower(hcommon.TaskReply):                 {text: defaultReplyEmailText, html: defaultReplyEmailHTML},
+	strings.ToLower(hcommon.TaskCreateThread):          {text: defaultThreadEmailText, html: defaultThreadEmailHTML},
+	strings.ToLower(hcommon.TaskNewPost):               {text: defaultBlogEmailText, html: defaultBlogEmailHTML},
+	strings.ToLower(hcommon.TaskSubmitWriting):         {text: defaultWritingEmailText, html: defaultWritingEmailHTML},
+	strings.ToLower(hcommon.TaskRegister):              {text: defaultSignupEmailText, html: defaultSignupEmailHTML},
+	strings.ToLower(hcommon.TaskUserEmailVerification): {text: defaultVerificationEmailText, html: defaultVerificationEmailHTML},
+	strings.ToLower(hcommon.TaskUserResetPassword):     {text: defaultPasswordResetEmailText, html: defaultPasswordResetEmailHTML},
 }
 
 func getEmailTemplates(ctx context.Context, action string) (string, string) {

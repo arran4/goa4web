@@ -33,8 +33,8 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
-	userLangs, _ := r.Context().Value(common.KeyLanguages).([]*db.UserLanguage)
+	pref, _ := cd.Preference()
+	userLangs, _ := cd.Languages()
 
 	langs, err := queries.FetchLanguages(r.Context())
 	if err != nil {

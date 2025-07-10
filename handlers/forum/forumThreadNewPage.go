@@ -8,7 +8,6 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"log"
@@ -86,8 +85,10 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
-		evt.Item = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
+	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			evt.Item = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
+		}
 	}
 
 	text := r.PostFormValue("replytext")
@@ -127,7 +128,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifyThreadSubscribers(r.Context(), provider, queries, int32(threadId), uid, endUrl)
+	notif.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), int32(threadId), uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

@@ -1,3 +1,6 @@
+ALTER TABLE permissions
+    CHANGE COLUMN level role tinyblob DEFAULT NULL;
+
 ALTER TABLE blogs
     MODIFY COLUMN forumthread_id int(10) DEFAULT NULL;
 

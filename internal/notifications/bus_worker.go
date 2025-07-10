@@ -14,8 +14,8 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
-	"github.com/arran4/goa4web/internal/emailutil"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 	"time"
 )
 

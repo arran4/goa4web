@@ -8,13 +8,13 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 
 	"github.com/arran4/goa4web/core"

@@ -16,7 +16,7 @@ import (
 
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 

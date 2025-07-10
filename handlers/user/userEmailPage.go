@@ -160,7 +160,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		common.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	if err := emailutil.CreateEmailTemplateAndSend(r.Context(), provider, addr, pageURL, "update", nil); err != nil {
+	if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, user.Idusers, addr, pageURL, "update", nil); err != nil {
 		log.Printf("notify Error: %s", err)
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
@@ -191,14 +191,11 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0})
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
-	if provider != nil {
-		page := "http://" + r.Host + "/usr/email/verify?code=" + code
-		if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-			page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
-		}
-		_ = emailutil.CreateEmailTemplateAndSend(r.Context(), provider, emailAddr, page, "Email Verification", nil)
+	page := "http://" + r.Host + "/usr/email/verify?code=" + code
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
+	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, "Email Verification", nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -224,14 +221,11 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)})
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
-	if provider != nil {
-		page := "http://" + r.Host + "/usr/email/verify?code=" + code
-		if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-			page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
-		}
-		_ = emailutil.CreateEmailTemplateAndSend(r.Context(), provider, ue.Email, page, "Email Verification", nil)
+	page := "http://" + r.Host + "/usr/email/verify?code=" + code
+	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
+		page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
+	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, "Email Verification", nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 

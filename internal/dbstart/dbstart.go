@@ -115,21 +115,9 @@ func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 
 // EnsureSchema creates core tables if they do not exist and inserts a version row.
 func EnsureSchema(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)"); err != nil {
-		return fmt.Errorf("create schema_version: %w", err)
-	}
-	var count int
-	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM schema_version").Scan(&count); err != nil {
-		return fmt.Errorf("count schema_version: %w", err)
-	}
-	if count == 0 {
-		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (?)", 1); err != nil {
-			return fmt.Errorf("insert schema_version: %w", err)
-		}
-	}
-	var version int
-	if err := db.QueryRowContext(ctx, "SELECT version FROM schema_version").Scan(&version); err != nil {
-		return fmt.Errorf("select schema_version: %w", err)
+	version, err := ensureVersionTable(ctx, db)
+	if err != nil {
+		return err
 	}
 	if version != hcommon.ExpectedSchemaVersion {
 		msg := RenderSchemaMismatch(version, hcommon.ExpectedSchemaVersion)

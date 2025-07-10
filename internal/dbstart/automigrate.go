@@ -11,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
-	"github.com/arran4/goa4web/internal/migrate"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -43,7 +42,7 @@ func applyMigrations(ctx context.Context, cfg runtimeconfig.RuntimeConfig) error
 		return err
 	}
 	fsys := os.DirFS("migrations")
-	return migrate.Apply(ctx, db, fsys, false)
+	return Apply(ctx, db, fsys, false)
 }
 
 // MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.

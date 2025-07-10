@@ -9,7 +9,6 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/permissions"
 	handlers "github.com/arran4/goa4web/pkg/handlers"
 )
 
@@ -26,7 +25,7 @@ func RegisterRoutes(r *mux.Router) {
 func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !permissions.Allowed(r, roles...) {
+			if !corecommon.Allowed(r, roles...) {
 				err := templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData))
 				if err != nil {
 					log.Printf("Template Error: %s", err)

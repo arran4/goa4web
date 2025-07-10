@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/a4code"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -217,9 +218,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		if int32(commentId) == row.Idcomments {
 			switch replyType {
 			case "full":
-				data.ReplyText = hcommon.ProcessCommentFullQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = a4code.FullQuoteOf(row.Posterusername.String, row.Text.String)
 			default:
-				data.ReplyText = hcommon.ProcessCommentQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = a4code.QuoteOfText(row.Posterusername.String, row.Text.String)
 			}
 		}
 

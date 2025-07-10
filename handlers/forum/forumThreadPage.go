@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/a4code"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
@@ -169,9 +170,9 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 		switch replyType {
 		case "full":
-			data.Text = common.ProcessCommentFullQuote(comment.Username.String, comment.Text.String)
+			data.Text = a4code.FullQuoteOf(comment.Username.String, comment.Text.String)
 		default:
-			data.Text = common.ProcessCommentQuote(comment.Username.String, comment.Text.String)
+			data.Text = a4code.QuoteOfText(comment.Username.String, comment.Text.String)
 		}
 	}
 

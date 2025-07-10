@@ -129,20 +129,6 @@ func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, it
 	return msg, toAddr, nil
 }
 
-func CreateEmailTemplateAndSend(ctx context.Context, provider email.Provider, emailAddr, page, action string, item interface{}) error {
-	if !EmailSendingEnabled() {
-		return nil
-	}
-	msg, toAddr, err := CreateEmailTemplate(ctx, emailAddr, page, action, item)
-	if err != nil {
-		return err
-	}
-	if provider == nil {
-		return fmt.Errorf("no provider")
-	}
-	return provider.Send(ctx, toAddr, msg)
-}
-
 func CreateEmailTemplateAndQueue(ctx context.Context, q *db.Queries, userID int32, emailAddr, page, action string, item interface{}) error {
 	if q == nil {
 		return fmt.Errorf("no query")

@@ -96,8 +96,7 @@ func TestCreateEmailTemplateAndQueue(t *testing.T) {
 }
 
 func TestCreateEmailTemplateErrors(t *testing.T) {
-	rec := &mockemail.Provider{}
-	if err := emailutil.CreateEmailTemplateAndSend(context.Background(), rec, "", "p", "update", nil); err == nil {
+	if _, _, err := emailutil.CreateEmailTemplate(context.Background(), "", "p", "update", nil); err == nil {
 		t.Fatal("expected error for empty email")
 	}
 }

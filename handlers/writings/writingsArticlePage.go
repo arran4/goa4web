@@ -207,7 +207,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-      // TODO make a writer/writing/comment/reply not a forum/topic/thread/comment
+			// TODO make a writer/writing/comment/reply not a forum/topic/thread/comment
 			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, writing.ForumthreadID, row.Idcomments)
 			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, writing.ForumthreadID, row.Idcomments)
 			if editCommentId != 0 && int32(editCommentId) == row.Idcomments {

@@ -136,8 +136,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
 			Offset:                          i + offset,
-			Languages:                       nil,
-			SelectedLanguageId:              0,
+			Languages:                       languageRows,
+			SelectedLanguageId:              row.LanguageIdlanguage,
 		})
 	}
 

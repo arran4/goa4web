@@ -27,8 +27,9 @@ import (
 
 type NewsPost struct {
 	ShowReply bool
-	ShowEdit  bool
-	// TODO or (eq .Level "authWriter") (and (ge .Level "authModerator") (le .Level "authAdministrator"))
+	// ShowEdit is true when the current user can modify the post. Users with
+	// the writer, moderator or administrator role are permitted to edit.
+	ShowEdit bool
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {

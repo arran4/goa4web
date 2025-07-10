@@ -19,8 +19,6 @@ func TestEnsureSchemaVersionMatch(t *testing.T) {
 
 	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)")).
 		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM schema_version")).
-		WillReturnRows(sqlmock.NewRows([]string{"cnt"}).AddRow(1))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
 		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(hcommon.ExpectedSchemaVersion))
 
@@ -41,8 +39,6 @@ func TestEnsureSchemaVersionMismatch(t *testing.T) {
 
 	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)")).
 		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM schema_version")).
-		WillReturnRows(sqlmock.NewRows([]string{"cnt"}).AddRow(1))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
 		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(hcommon.ExpectedSchemaVersion - 1))
 

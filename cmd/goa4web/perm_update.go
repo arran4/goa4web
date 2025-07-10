@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 
@@ -12,18 +11,16 @@ import (
 // permUpdateCmd implements "perm update".
 type permUpdateCmd struct {
 	*permCmd
-	fs      *flag.FlagSet
-	ID      int
-	Section string
-	Role    string
-	args    []string
+	fs   *flag.FlagSet
+	ID   int
+	Role string
+	args []string
 }
 
 func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) {
 	c := &permUpdateCmd{permCmd: parent}
 	fs := flag.NewFlagSet("update", flag.ContinueOnError)
 	fs.IntVar(&c.ID, "id", 0, "permission id")
-	fs.StringVar(&c.Section, "section", "", "permission section")
 	fs.StringVar(&c.Role, "role", "", "permission role")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
@@ -34,8 +31,8 @@ func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) 
 }
 
 func (c *permUpdateCmd) Run() error {
-	if c.ID == 0 || c.Section == "" || c.Role == "" {
-		return fmt.Errorf("id, section and role required")
+	if c.ID == 0 || c.Role == "" {
+		return fmt.Errorf("id and role required")
 	}
 	db, err := c.rootCmd.DB()
 	if err != nil {
@@ -44,9 +41,8 @@ func (c *permUpdateCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	if err := queries.UpdatePermission(ctx, dbpkg.UpdatePermissionParams{
-		ID:      int32(c.ID),
-		Section: sql.NullString{String: c.Section, Valid: true},
-		Role:    sql.NullString{String: c.Role, Valid: true},
+		ID:   int32(c.ID),
+		Role: c.Role,
 	}); err != nil {
 		return fmt.Errorf("update permission: %w", err)
 	}

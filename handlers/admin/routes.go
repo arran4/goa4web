@@ -21,7 +21,6 @@ import (
 func RegisterRoutes(ar *mux.Router) {
 	nav.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
 	nav.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
-	nav.RegisterAdminControlCenter("Permission Sections", "/admin/permissions/sections", 100)
 	nav.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
 	nav.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
 	nav.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
@@ -32,9 +31,6 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
-	ar.HandleFunc("/permissions/sections", AdminPermissionsSectionPage).Methods("GET")
-	ar.HandleFunc("/permissions/sections/view", AdminPermissionsSectionViewPage).Methods("GET")
-	ar.HandleFunc("/permissions/sections", AdminPermissionsSectionRenamePage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskRenameSection))
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
 	ar.HandleFunc("/email/queue", AdminEmailQueueResendActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskResend))
 	ar.HandleFunc("/email/queue", AdminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDelete))

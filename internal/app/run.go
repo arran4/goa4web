@@ -24,6 +24,7 @@ import (
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/server"
 	startup "github.com/arran4/goa4web/internal/startup"
 	emailutil "github.com/arran4/goa4web/internal/utils/emailutil"
 	"github.com/arran4/goa4web/pkg/server"

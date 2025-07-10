@@ -27,8 +27,9 @@ import (
 
 type NewsPost struct {
 	ShowReply bool
-	ShowEdit  bool
-	// TODO or (eq .Level "authWriter") (and (ge .Level "authModerator") (le .Level "authAdministrator"))
+	// ShowEdit is true when the current user can modify the post. Users with
+	// the writer, moderator or administrator role are permitted to edit.
+	ShowEdit bool
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +172,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
 		ShowReply:    data.CoreData.UserID != 0,
-		ShowEdit:     data.CoreData.HasRole("writer"),
+		ShowEdit:     canEditNewsPost(data.CoreData, post.UsersIdusers),
 		Editing:      editingId == int(post.Idsitenews),
 		Announcement: ann,
 		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,

@@ -110,4 +110,7 @@ const (
 
 	// EnvAutoMigrate toggles automatic database migrations on startup.
 	EnvAutoMigrate = "AUTO_MIGRATE"
+
+	// EnvCreateDirs creates missing directories when enabled.
+	EnvCreateDirs = "CREATE_DIRS"
 )

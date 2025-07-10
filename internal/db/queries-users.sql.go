@@ -109,8 +109,9 @@ func (q *Queries) InsertUser(ctx context.Context, username sql.NullString) (sql.
 const listAdministratorEmails = `-- name: ListAdministratorEmails :many
 SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
-JOIN permissions p ON p.users_idusers = u.idusers
-WHERE p.section = 'all' and p.role = 'administrator'
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.section = 'all' and r.name = 'administrator'
 `
 
 func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]string, error) {

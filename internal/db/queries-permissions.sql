@@ -2,71 +2,46 @@
 -- This query returns the role for a user.
 -- Result:
 --   role (string)
-SELECT role
-FROM permissions
-WHERE users_idusers = ?
+SELECT r.name as role
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ?
 LIMIT 1;
 
--- name: GetUsersPermissions :many
+-- name: GetUserRoles :many
 -- This query selects permissions information for admin users.
 -- Result:
 --   idpermissions (int)
 --   role (string)
 --   username (string)
 --   email (string)
---   section (string)
-SELECT p.*
-FROM permissions p
+SELECT ur.idpermissions, ur.users_idusers, r.name AS role
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
 ;
 
--- name: PermissionUserAllow :exec
+-- name: CreateUserRole :exec
 -- This query inserts a new permission into the "permissions" table.
 -- Parameters:
 --   ? - User ID to be associated with the permission (int)
---   ? - Section for which the permission is granted (string)
 --   ? - Role of the permission (string)
-INSERT INTO permissions (users_idusers, section, role)
-VALUES (?, ?, ?);
+INSERT INTO user_roles (users_idusers, role_id)
+SELECT ?, r.id FROM roles r WHERE r.name = ?;
 
--- name: PermissionUserDisallow :exec
+-- name: DeleteUserRole :exec
 -- This query deletes a permission from the "permissions" table based on the provided "permid".
 -- Parameters:
 --   ? - Permission ID to be deleted (int)
-DELETE FROM permissions
+DELETE FROM user_roles
 WHERE idpermissions = ?;
 
--- name: GetAdministratorPermissionByUserId :one
-SELECT *
-FROM permissions
-WHERE users_idusers = ? AND section = 'all' AND role = 'administrator';
-
--- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
-SELECT *
-FROM permissions
-WHERE
-    users_idusers = ? AND (section = ? OR section = 'all');
-
--- name: GetPermissionsByUserIdAndSectionBlogs :many
-SELECT p.*, u.*
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = "blogs"
-ORDER BY p.role
-;
+-- name: GetAdministratorUserRole :one
+SELECT ur.*
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = 'administrator';
 
 
--- name: GetPermissionsByUserIdAndSectionNews :many
-SELECT p.*, u.*
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND p.section = "news"
-ORDER BY p.role
-;
-
--- name: GetPermissionsByUserIdAndSectionWritings :many
-SELECT p.*, u.*
-FROM permissions p, users u
-WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
-ORDER BY p.role
-;
 
 -- name: GetUsersTopicLevelByUserIdAndThreadId :one
 SELECT utl.*
@@ -101,12 +76,3 @@ SELECT t.idforumtopic, r.*
 FROM forumtopic t
 LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 
--- name: CountPermissionSections :many
-SELECT section, COUNT(*) AS SectionCount
-FROM permissions
-GROUP BY section;
-
--- name: RenamePermissionSection :exec
-UPDATE permissions
-SET section = ?
-WHERE section = ?;

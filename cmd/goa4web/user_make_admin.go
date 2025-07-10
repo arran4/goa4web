@@ -45,7 +45,7 @@ func (c *userMakeAdminCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
-	if _, err := queries.GetAdministratorPermissionByUserId(ctx, u.Idusers); err == nil {
+	if _, err := queries.GetAdministratorUserRole(ctx, u.Idusers); err == nil {
 		if c.rootCmd.Verbosity > 0 {
 			fmt.Printf("%s already administrator\n", c.Username)
 		}
@@ -53,10 +53,9 @@ func (c *userMakeAdminCmd) Run() error {
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check admin: %w", err)
 	}
-	if err := queries.PermissionUserAllow(ctx, dbpkg.PermissionUserAllowParams{
+	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Section:      sql.NullString{String: "all", Valid: true},
-		Role:         sql.NullString{String: "administrator", Valid: true},
+		Name:         "administrator",
 	}); err != nil {
 		return fmt.Errorf("grant admin: %w", err)
 	}

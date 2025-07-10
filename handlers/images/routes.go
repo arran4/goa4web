@@ -19,9 +19,9 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/upload"
 	handlerspkg "github.com/arran4/goa4web/pkg/handlers"
 	imagesign "github.com/arran4/goa4web/pkg/images"
-	"github.com/arran4/goa4web/pkg/upload"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/disintegration/imaging"
 )

@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/arran4/goa4web/pkg/upload"
+	"github.com/arran4/goa4web/internal/upload"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 

@@ -37,12 +37,18 @@ func Allowed(r *http.Request, roles ...string) bool {
 	if uid == 0 {
 		return false
 	}
-	roleVal, err := queries.GetUserRole(r.Context(), uid)
-	if err != nil || !roleVal.Valid {
+	perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
+	if err != nil || len(perms) == 0 {
 		return false
 	}
+	var rolesList []string
+	for _, p := range perms {
+		if p.Role != "" {
+			rolesList = append(rolesList, p.Role)
+		}
+	}
 	cd = NewCoreData(r.Context(), queries)
-	cd.SetRole(roleVal.String)
+	cd.SetRoles(rolesList)
 	for _, lvl := range roles {
 		if cd.HasRole(lvl) {
 			return true

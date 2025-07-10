@@ -16,7 +16,7 @@ import (
 func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*hcommon.CoreData
-		UserLevels []*db.Permission
+		UserLevels []*db.GetUserRolesRow
 	}
 
 	data := Data{
@@ -24,7 +24,7 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	rows, err := queries.GetUsersPermissions(r.Context())
+	rows, err := queries.GetUserRoles(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -48,7 +48,6 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	where := r.PostFormValue("where")
 	level := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
@@ -57,16 +56,9 @@ func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
+	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Section: sql.NullString{
-			String: where,
-			Valid:  true,
-		},
-		Role: sql.NullString{
-			String: level,
-			Valid:  true,
-		},
+		Name:         level,
 	}); err != nil {
 		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -84,7 +76,7 @@ func NewsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := queries.PermissionUserDisallow(r.Context(), int32(permid)); err != nil {
+	if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
 		log.Printf("permissionUserDisallow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

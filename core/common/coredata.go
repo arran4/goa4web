@@ -40,17 +40,17 @@ type CoreData struct {
 	queries *db.Queries
 
 	user         lazyValue[*db.User]
-	perms        lazyValue[[]*db.Permission]
+	perms        lazyValue[[]*db.GetUserRolesRow]
 	pref         lazyValue[*db.Preference]
 	langs        lazyValue[[]*db.UserLanguage]
-	role         lazyValue[string]
+	roles        lazyValue[[]string]
 	announcement lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 
 	event *eventbus.Event
 }
 
 // SetRole preloads the current role value.
-func (cd *CoreData) SetRole(role string) { cd.role.set(role) }
+func (cd *CoreData) SetRoles(r []string) { cd.roles.set(r) }
 
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)
@@ -107,18 +107,38 @@ func ContainsItem(items []IndexItem, name string) bool {
 }
 
 // Role returns the user role loaded lazily.
-func (cd *CoreData) Role() string {
-	role, _ := cd.role.load(func() (string, error) {
+func (cd *CoreData) Roles() []string {
+	roles, _ := cd.roles.load(func() ([]string, error) {
 		if cd.UserID == 0 || cd.queries == nil {
-			return "reader", nil
+			return []string{"reader"}, nil
 		}
-		roleVal, err := cd.queries.GetUserRole(cd.ctx, cd.UserID)
-		if err != nil || !roleVal.Valid {
-			return "reader", nil
+		perms, err := cd.queries.GetPermissionsByUserID(cd.ctx, cd.UserID)
+		if err != nil {
+			return []string{"reader"}, nil
 		}
-		return roleVal.String, nil
+		var rs []string
+		for _, p := range perms {
+			if p.Role != "" {
+				rs = append(rs, p.Role)
+			}
+		}
+		if len(rs) == 0 {
+			rs = []string{"reader"}
+		}
+		return rs, nil
 	})
-	return role
+	return roles
+}
+
+func (cd *CoreData) Role() string {
+	roles := cd.Roles()
+	best := "reader"
+	for _, r := range roles {
+		if rolePriority[r] > rolePriority[best] {
+			best = r
+		}
+	}
+	return best
 }
 
 // SetSession stores s on cd for later retrieval.
@@ -151,8 +171,8 @@ func (cd *CoreData) CurrentUser() (*db.User, error) {
 }
 
 // Permissions returns the user's permissions loaded on demand.
-func (cd *CoreData) Permissions() ([]*db.Permission, error) {
-	return cd.perms.load(func() ([]*db.Permission, error) {
+func (cd *CoreData) Permissions() ([]*db.GetUserRolesRow, error) {
+	return cd.perms.load(func() ([]*db.GetUserRolesRow, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}

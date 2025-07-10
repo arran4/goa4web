@@ -6,6 +6,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -53,7 +56,7 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 
 // PerformStartupChecks checks the database and upload directory configuration.
 func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
-	if err := maybeAutoMigrate(cfg); err != nil {
+	if err := MaybeAutoMigrate(cfg); err != nil {
 		return err
 	}
 	if ue := InitDB(cfg); ue != nil {

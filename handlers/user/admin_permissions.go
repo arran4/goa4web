@@ -16,13 +16,9 @@ import (
 )
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	type SectionGroup struct {
-		Section string
-		Rows    []*db.PermissionWithUser
-	}
 	type Data struct {
 		*common.CoreData
-		Sections []SectionGroup
+		Rows []*db.PermissionWithUser
 	}
 
 	data := Data{
@@ -31,7 +27,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	rows, err := queries.GetPermissionsWithUsers(r.Context(), sql.NullString{}, sql.NullString{})
+	rows, err := queries.GetPermissionsWithUsers(r.Context(), sql.NullString{})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -41,20 +37,9 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	sort.Slice(rows, func(i, j int) bool {
-		if rows[i].Section.String == rows[j].Section.String {
-			return rows[i].Username.String < rows[j].Username.String
-		}
-		return rows[i].Section.String < rows[j].Section.String
+		return rows[i].Username.String < rows[j].Username.String
 	})
-	var groups []SectionGroup
-	for _, r := range rows {
-		sec := r.Section.String
-		if len(groups) == 0 || groups[len(groups)-1].Section != sec {
-			groups = append(groups, SectionGroup{Section: sec})
-		}
-		groups[len(groups)-1].Rows = append(groups[len(groups)-1].Rows, r)
-	}
-	data.Sections = groups
+	data.Rows = rows
 
 	err = templates.RenderTemplate(w, "usersPermissionsPage.gohtml", data, corecommon.NewFuncs(r))
 	if err != nil {
@@ -67,7 +52,6 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	where := r.PostFormValue("where")
 	level := r.PostFormValue("role")
 	data := struct {
 		*common.CoreData
@@ -80,16 +64,9 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
-	} else if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
+	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Section: sql.NullString{
-			String: where,
-			Valid:  true,
-		},
-		Role: sql.NullString{
-			String: level,
-			Valid:  true,
-		},
+		Name:         level,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
@@ -115,7 +92,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.PermissionUserDisallow(r.Context(), int32(permidi)); err != nil {
+	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
@@ -130,7 +107,6 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	level := r.PostFormValue("role")
-	where := r.PostFormValue("where")
 
 	data := struct {
 		*common.CoreData
@@ -145,9 +121,8 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	if id, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
-		ID:      int32(id),
-		Section: sql.NullString{String: where, Valid: true},
-		Role:    sql.NullString{String: level, Valid: true},
+		ID:   int32(id),
+		Role: level,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 	}

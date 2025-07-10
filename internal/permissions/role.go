@@ -31,12 +31,12 @@ func Allowed(r *http.Request, roles ...string) bool {
 	if uid == 0 {
 		return false
 	}
-	perm, err := queries.GetUserPermissions(r.Context(), uid)
-	if err != nil || !perm.Level.Valid {
+	roleVal, err := queries.GetUserRole(r.Context(), uid)
+	if err != nil || !roleVal.Valid {
 		return false
 	}
 	cd = corecommon.NewCoreData(r.Context(), queries)
-	cd.SetRole(perm.Level.String)
+	cd.SetRole(roleVal.String)
 	for _, lvl := range roles {
 		if cd.HasRole(lvl) {
 			return true

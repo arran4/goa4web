@@ -72,9 +72,9 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		level := "reader"
 		if uid != 0 {
-			perm, err := queries.GetUserPermissions(r.Context(), uid)
-			if err == nil && perm.Level.Valid {
-				level = perm.Level.String
+			roleVal, err := queries.GetUserRole(r.Context(), uid)
+			if err == nil && roleVal.Valid {
+				level = roleVal.String
 			}
 		}
 

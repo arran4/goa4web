@@ -112,11 +112,11 @@ func (cd *CoreData) Role() string {
 		if cd.UserID == 0 || cd.queries == nil {
 			return "reader", nil
 		}
-		perm, err := cd.queries.GetUserPermissions(cd.ctx, cd.UserID)
-		if err != nil || !perm.Level.Valid {
+		roleVal, err := cd.queries.GetUserRole(cd.ctx, cd.UserID)
+		if err != nil || !roleVal.Valid {
 			return "reader", nil
 		}
-		return perm.Level.String, nil
+		return roleVal.String, nil
 	})
 	return role
 }

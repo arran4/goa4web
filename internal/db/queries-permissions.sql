@@ -1,15 +1,11 @@
--- name: GetUserPermissions :one
--- This query selects permissions information for admin users.
+-- name: GetUserRole :one
+-- This query returns the role for a user.
 -- Result:
---   idpermissions (int)
---   level (int)
---   username (string)
---   email (string)
---   section (string)
-SELECT p.*
+--   role (string)
+SELECT p.level AS role
 FROM permissions p
 WHERE p.users_idusers = ?
-;
+LIMIT 1;
 
 -- name: GetUsersPermissions :many
 -- This query selects permissions information for admin users.

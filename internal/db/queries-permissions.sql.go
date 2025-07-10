@@ -346,30 +346,22 @@ func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) 
 	return items, nil
 }
 
-const getUserPermissions = `-- name: GetUserPermissions :one
-SELECT p.idpermissions, p.users_idusers, p.section, p.level
+const getUserRole = `-- name: GetUserRole :one
+SELECT p.level AS role
 FROM permissions p
 WHERE p.users_idusers = ?
+LIMIT 1
 `
 
-// This query selects permissions information for admin users.
+// This query returns the role for a user.
 // Result:
 //
-//	idpermissions (int)
-//	level (int)
-//	username (string)
-//	email (string)
-//	section (string)
-func (q *Queries) GetUserPermissions(ctx context.Context, usersIdusers int32) (*Permission, error) {
-	row := q.db.QueryRowContext(ctx, getUserPermissions, usersIdusers)
-	var i Permission
-	err := row.Scan(
-		&i.Idpermissions,
-		&i.UsersIdusers,
-		&i.Section,
-		&i.Level,
-	)
-	return &i, err
+//	role (string)
+func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getUserRole, usersIdusers)
+	var role sql.NullString
+	err := row.Scan(&role)
+	return role, err
 }
 
 const getUsersPermissions = `-- name: GetUsersPermissions :many

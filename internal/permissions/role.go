@@ -41,7 +41,8 @@ func Allowed(r *http.Request, roles ...string) bool {
 	if err != nil || !perm.Level.Valid {
 		return false
 	}
-	cd = &corecommon.CoreData{Role: perm.Level.String}
+	cd = corecommon.NewCoreData(r.Context(), queries)
+	cd.SetRole(perm.Level.String)
 	for _, lvl := range roles {
 		if cd.HasRole(lvl) {
 			return true

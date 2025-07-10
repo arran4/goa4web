@@ -7,13 +7,16 @@ import (
 )
 
 func TestCustomFAQIndexRoles(t *testing.T) {
-	cd := &corecommon.CoreData{Role: "administrator", AdminMode: true}
+	cd := corecommon.NewCoreData(nil, nil)
+	cd.SetRole("administrator")
+	cd.AdminMode = true
 	CustomFAQIndex(cd)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("admin should see question controls")
 	}
 
-	cd = &corecommon.CoreData{Role: "reader"}
+	cd = corecommon.NewCoreData(nil, nil)
+	cd.SetRole("reader")
 	CustomFAQIndex(cd)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("reader should not see admin items")

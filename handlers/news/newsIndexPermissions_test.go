@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 )
 
 func TestCustomNewsIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 
-	cd := &hcommon.CoreData{Role: "administrator", AdminMode: true}
+	cd := corecommon.NewCoreData(req.Context(), nil)
+	cd.SetRole("administrator")
+	cd.AdminMode = true
 	CustomNewsIndex(cd, req)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("admin should see user permissions")
@@ -20,7 +21,8 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 		t.Errorf("admin should see add news")
 	}
 
-	cd = &hcommon.CoreData{Role: "writer"}
+	cd = corecommon.NewCoreData(req.Context(), nil)
+	cd.SetRole("writer")
 	CustomNewsIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("writer should not see user permissions")
@@ -29,7 +31,8 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 		t.Errorf("writer should see add news")
 	}
 
-	cd = &hcommon.CoreData{Role: "reader"}
+	cd = corecommon.NewCoreData(req.Context(), nil)
+	cd.SetRole("reader")
 	CustomNewsIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") || corecommon.ContainsItem(cd.CustomIndexItems, "Add News") {
 		t.Errorf("reader should not see admin items")

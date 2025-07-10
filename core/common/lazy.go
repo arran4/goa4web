@@ -14,3 +14,8 @@ func (l *lazyValue[T]) load(fn func() (T, error)) (T, error) {
 	l.once.Do(func() { l.value, l.err = fn() })
 	return l.value, l.err
 }
+
+// set stores a precomputed value if not already loaded.
+func (l *lazyValue[T]) set(v T) {
+	l.once.Do(func() { l.value = v })
+}

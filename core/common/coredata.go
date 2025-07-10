@@ -24,7 +24,6 @@ type CoreData struct {
 	IndexItems       []IndexItem
 	CustomIndexItems []IndexItem
 	UserID           int32
-	Role             string
 	Title            string
 	AutoRefresh      bool
 	FeedsEnabled     bool
@@ -49,6 +48,9 @@ type CoreData struct {
 
 	event *eventbus.Event
 }
+
+// SetRole preloads the current role value.
+func (cd *CoreData) SetRole(role string) { cd.role.set(role) }
 
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)
@@ -106,9 +108,6 @@ func ContainsItem(items []IndexItem, name string) bool {
 
 // RoleLazy loads the user role if not already set.
 func (cd *CoreData) RoleLazy() string {
-	if cd.Role != "" {
-		return cd.Role
-	}
 	role, _ := cd.role.load(func() (string, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return "reader", nil
@@ -122,9 +121,6 @@ func (cd *CoreData) RoleLazy() string {
 		}
 		return perm.Level.String, nil
 	})
-	if cd.Role == "" {
-		cd.Role = role
-	}
 	return role
 }
 

@@ -36,7 +36,7 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 	sess.Values["UID"] = int32(1)
 
 	cd := corecommon.NewCoreData(req.Context(), q, corecommon.WithSession(sess))
-	cd.Role = "writer"
+	cd.SetRole("writer")
 	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
 	ctx = context.WithValue(ctx, hcommon.KeyQueries, q)
 	req = req.WithContext(ctx)

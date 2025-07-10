@@ -42,7 +42,6 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("logout success")
 
 	data.CoreData.UserID = 0
-	data.CoreData.Role = ""
 
 	if err := templates.RenderTemplate(w, "logoutPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

@@ -8,11 +8,10 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -21,6 +20,7 @@ import (
 	router "github.com/arran4/goa4web/internal/router"
 	handlerspkg "github.com/arran4/goa4web/pkg/handlers"
 	imagesign "github.com/arran4/goa4web/pkg/images"
+	"github.com/arran4/goa4web/pkg/upload"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/disintegration/imaging"
 )
@@ -85,6 +85,16 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub1, sub2 := id[:2], id[2:4]
+	key := path.Join(sub1, sub2, id)
+	if p := upload.CacheProviderFromConfig(runtimeconfig.AppRuntimeConfig); p != nil {
+		data, err := p.Read(r.Context(), key)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		http.ServeContent(w, r, id, time.Now(), bytes.NewReader(data))
+		return
+	}
 	full := filepath.Join(runtimeconfig.AppRuntimeConfig.ImageCacheDir, sub1, sub2, id)
 	http.ServeFile(w, r, full)
 }
@@ -101,12 +111,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-
-	info, err := os.Stat(runtimeconfig.AppRuntimeConfig.ImageUploadDir)
-	if err != nil || !info.IsDir() {
-		http.Error(w, "Uploads disabled", http.StatusInternalServerError)
-		return
-	}
 
 	data, err := io.ReadAll(file)
 	if err != nil {
@@ -127,32 +131,34 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := id[:2], id[2:4]
-	destDir := filepath.Join(runtimeconfig.AppRuntimeConfig.ImageUploadDir, sub1, sub2)
-	if err := os.MkdirAll(destDir, 0755); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
 	fname := id + ext
-	fullPath := filepath.Join(destDir, fname)
-	if err := os.WriteFile(fullPath, data, 0644); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	if p := upload.ProviderFromConfig(runtimeconfig.AppRuntimeConfig); p != nil {
+		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
+			log.Printf("upload write: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
 	thumb := imaging.Thumbnail(img, 200, 200, imaging.Lanczos)
-	cacheDir := filepath.Join(runtimeconfig.AppRuntimeConfig.ImageCacheDir, sub1, sub2)
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
 	thumbName := id + "_thumb" + ext
-	thumbPath := filepath.Join(cacheDir, thumbName)
-	if err := imaging.Save(thumb, thumbPath); err != nil {
+	var tbuf bytes.Buffer
+	imgFmt, _ := imaging.FormatFromExtension(ext)
+	if err := imaging.Encode(&tbuf, thumb, imgFmt); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	PruneCache(runtimeconfig.AppRuntimeConfig.ImageCacheDir, int64(runtimeconfig.AppRuntimeConfig.ImageCacheMaxBytes), 0)
+	if cp := upload.CacheProviderFromConfig(runtimeconfig.AppRuntimeConfig); cp != nil {
+		if err := cp.Write(r.Context(), path.Join(sub1, sub2, thumbName), tbuf.Bytes()); err != nil {
+			log.Printf("cache write: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		if ccp, ok := cp.(upload.CacheProvider); ok {
+			_ = ccp.Cleanup(r.Context(), int64(runtimeconfig.AppRuntimeConfig.ImageCacheMaxBytes))
+		}
+	}
 
 	url := path.Join("/uploads", sub1, sub2, fname)
 
@@ -180,54 +186,4 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 // Register registers the images router module.
 func Register() {
 	router.RegisterModule("images", nil, RegisterRoutes)
-}
-
-type fileInfo struct {
-	path string
-	info os.FileInfo
-}
-
-// PruneCache removes old files until the total size is under limit.
-func PruneCache(dir string, limit int64, verbosity int) {
-	if limit <= 0 {
-		return
-	}
-	var files []fileInfo
-	var total int64
-	filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		info, err := d.Info()
-		if err != nil {
-			return nil
-		}
-		if rel, err := filepath.Rel(dir, path); err != nil || strings.HasPrefix(rel, "..") {
-			return nil
-		}
-		files = append(files, fileInfo{path, info})
-		total += info.Size()
-		return nil
-	})
-	if total <= limit {
-		if verbosity > 1 {
-			log.Printf("cache within limit: %d bytes", total)
-		}
-		return
-	}
-	if verbosity > 0 {
-		log.Printf("pruning cache %s: %d bytes over limit", dir, total-limit)
-	}
-	sort.Slice(files, func(i, j int) bool { return files[i].info.ModTime().Before(files[j].info.ModTime()) })
-	for _, f := range files {
-		if total <= limit {
-			break
-		}
-		if err := os.Remove(f.path); err == nil {
-			if verbosity > 1 {
-				log.Printf("removed %s (%d bytes)", f.path, f.info.Size())
-			}
-			total -= f.info.Size()
-		}
-	}
 }

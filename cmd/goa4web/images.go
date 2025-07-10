@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	imageshandler "github.com/arran4/goa4web/handlers/images"
+	"github.com/arran4/goa4web/pkg/upload"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -52,7 +53,11 @@ func (c *imagesCmd) runCache(args []string) error {
 	dir := runtimeconfig.AppRuntimeConfig.ImageCacheDir
 	switch args[0] {
 	case "prune":
-		imageshandler.PruneCache(dir, int64(runtimeconfig.AppRuntimeConfig.ImageCacheMaxBytes), c.rootCmd.Verbosity)
+		if cp := upload.CacheProviderFromConfig(runtimeconfig.AppRuntimeConfig); cp != nil {
+			if ccp, ok := cp.(upload.CacheProvider); ok {
+				return ccp.Cleanup(context.Background(), int64(runtimeconfig.AppRuntimeConfig.ImageCacheMaxBytes))
+			}
+		}
 		return nil
 	case "list":
 		return listCache(dir)

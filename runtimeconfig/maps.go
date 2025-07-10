@@ -134,6 +134,17 @@ func ExtendedUsageMap() map[string]string {
 	return m
 }
 
+// ExamplesMap returns a map of environment variable names to example values.
+func ExamplesMap() map[string][]string {
+	m := make(map[string][]string)
+	for _, o := range StringOptions {
+		if len(o.Examples) > 0 {
+			m[o.Env] = append([]string(nil), o.Examples...)
+		}
+	}
+	return m
+}
+
 // ValuesMap returns a map of environment variable names to the values stored
 // in cfg.
 func ValuesMap(cfg RuntimeConfig) map[string]string {

@@ -255,7 +255,13 @@ environment variables listed below.
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Interval in seconds between email worker runs. |
 | `ADMIN_EMAILS` | `--admin-emails` | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
-| `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored. |
+| `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored when using the local provider. |
+| `IMAGE_UPLOAD_PROVIDER` | `--image-upload-provider` | No | `local` | Upload backend to use. |
+| `IMAGE_UPLOAD_S3_URL` | `--image-upload-s3-url` | No | - | S3 prefix URL for uploads when using the S3 provider. |
+| `IMAGE_CACHE_PROVIDER` | `--image-cache-provider` | No | `local` | Cache backend to use. |
+| `IMAGE_CACHE_S3_URL` | `--image-cache-s3-url` | No | - | S3 prefix URL for cache when using the S3 provider. |
+| `IMAGE_CACHE_DIR` | `--image-cache-dir` | No | `uploads/cache` | Directory for cached thumbnails when using the local provider. |
+| `IMAGE_CACHE_MAX_BYTES` | `--image-cache-max-bytes` | No | `-1` | Maximum image cache size in bytes. |
 | `IMAGE_MAX_BYTES` | `--image-max-bytes` | No | `5242880` | Maximum allowed size of uploaded images. |
 | `DEFAULT_LANGUAGE` | `--default-language` | No | - | Site's default language name. |
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |

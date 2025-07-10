@@ -1,6 +1,7 @@
 package imagebbs
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"database/sql"
 	"errors"
@@ -12,7 +13,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -23,6 +23,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/pkg/upload"
 	"github.com/arran4/goa4web/runtimeconfig"
 )
 
@@ -102,12 +103,6 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.HasPrefix(runtimeconfig.AppRuntimeConfig.ImageUploadDir, "s3://") {
-		// TODO: upload to S3 instead of the local filesystem
-		http.Error(w, "s3 uploads not implemented", http.StatusNotImplemented)
-		return
-	}
-
 	r.Body = http.MaxBytesReader(w, r.Body, int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes)); err != nil {
 		http.Error(w, "bad upload", http.StatusBadRequest)
@@ -121,65 +116,50 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	info, err := os.Stat(runtimeconfig.AppRuntimeConfig.ImageUploadDir)
-	if err != nil || !info.IsDir() {
-		log.Printf("invalid upload dir: %v", err)
-		http.Error(w, "Uploads disabled", http.StatusInternalServerError)
-		return
-	}
-
-	tmp, err := os.CreateTemp(runtimeconfig.AppRuntimeConfig.ImageUploadDir, "upload-")
-	if err != nil {
-		log.Printf("tempfile error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tmp.Name())
-
+	var buf bytes.Buffer
 	h := sha1.New()
-	size, err := io.Copy(io.MultiWriter(tmp, h), file)
+	size, err := io.Copy(io.MultiWriter(&buf, h), file)
 	if err != nil {
-		tmp.Close()
 		log.Printf("copy upload error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	tmp.Close()
 
 	shaHex := fmt.Sprintf("%x", h.Sum(nil))
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
-	destDir := filepath.Join(runtimeconfig.AppRuntimeConfig.ImageUploadDir, sub1, sub2)
-	if err := os.MkdirAll(destDir, 0755); err != nil {
-		log.Printf("mkdir error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	fname := shaHex + ext
-	fullPath := filepath.Join(destDir, fname)
-	if err := os.Rename(tmp.Name(), fullPath); err != nil {
-		log.Printf("rename error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	img, err := imaging.Open(fullPath)
+	data := buf.Bytes()
+	img, err := imaging.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Printf("decode image error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	thumb := imaging.Thumbnail(img, 200, 200, imaging.Lanczos)
-	thumbName := shaHex + "_thumb" + ext
-	thumbPath := filepath.Join(destDir, thumbName)
-	if err := imaging.Save(thumb, thumbPath); err != nil {
-		log.Printf("save thumbnail error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	fname := shaHex + ext
+	if p := upload.ProviderFromConfig(runtimeconfig.AppRuntimeConfig); p != nil {
+		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
+			log.Printf("upload write: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		thumb := imaging.Thumbnail(img, 200, 200, imaging.Lanczos)
+		var buf bytes.Buffer
+		if err := imaging.Encode(&buf, thumb, imaging.PNG); err != nil {
+			log.Printf("encode thumb: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		thumbName := shaHex + "_thumb" + ext
+		if err := p.Write(r.Context(), path.Join(sub1, sub2, thumbName), buf.Bytes()); err != nil {
+			log.Printf("thumb write: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	relBase := path.Join("/imagebbs/images", sub1, sub2)
 	relFull := path.Join(relBase, fname)
+	thumbName := shaHex + "_thumb" + ext
 	relThumb := path.Join(relBase, thumbName)
 
 	approved := !board.ApprovalRequired

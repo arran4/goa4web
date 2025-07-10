@@ -26,6 +26,7 @@ import (
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	startup "github.com/arran4/goa4web/internal/startup"
 	"github.com/arran4/goa4web/pkg/server"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
@@ -62,7 +63,7 @@ func RunWithConfig(ctx context.Context, cfg runtimeconfig.RuntimeConfig, session
 	}
 	common.Version = version
 
-	if err := dbstart.PerformStartupChecks(cfg); err != nil {
+	if err := startup.PerformChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 

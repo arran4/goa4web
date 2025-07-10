@@ -6,9 +6,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"

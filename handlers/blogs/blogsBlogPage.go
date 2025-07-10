@@ -1,6 +1,7 @@
 package blogs
 
 import (
+	"database/sql"
 	"fmt"
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -83,7 +84,27 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	data.Blog = &BlogRow{
 		GetBlogEntryForUserByIdRow: blog,
 		EditUrl:                    editUrl,
-		IsReplyable:                true, // TODO
+		IsReplyable:                true,
+	}
+
+	if blog.ForumthreadID == 0 {
+		data.IsReplyable = false
+		data.Blog.IsReplyable = false
+	} else {
+		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+			UsersIdusers:  uid,
+			Idforumthread: blog.ForumthreadID,
+		})
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Printf("GetThreadLastPosterAndPerms: %v", err)
+			}
+			data.IsReplyable = false
+			data.Blog.IsReplyable = false
+		} else if threadRow.Locked.Valid && threadRow.Locked.Bool {
+			data.IsReplyable = false
+			data.Blog.IsReplyable = false
+		}
 	}
 
 	CustomBlogIndex(data.CoreData, r)

@@ -2,9 +2,13 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/mail"
+	"regexp"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -95,11 +99,17 @@ func TestProcessEventDLQ(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
 	runtimeconfig.AppRuntimeConfig.AdminNotify = true
 	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
 	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
+	mock.MatchExpectationsInOrder(false)
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &errProvider{}
@@ -133,11 +143,13 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
 	runtimeconfig.AppRuntimeConfig.AdminNotify = true
 	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
 	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
+	mock.MatchExpectationsInOrder(false)
 	defer db.Close()
 	q := dbpkg.New(db)
 	n := Notifier{Queries: q}
@@ -184,6 +196,70 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	mock.ExpectQuery("preferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 
 	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, nil)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
+func TestBusWorker(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	origCfg := runtimeconfig.AppRuntimeConfig
+	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
+	runtimeconfig.AppRuntimeConfig.AdminNotify = true
+	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
+	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
+	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	bus := eventbus.NewBus()
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	prov := &busDummyProvider{}
+	n := Notifier{EmailProvider: prov, Queries: q}
+
+	mock.ExpectQuery("SELECT body FROM template_overrides").
+		WithArgs("notify_register").
+		WillReturnRows(sqlmock.NewRows([]string{"body"}))
+
+	mock.ExpectQuery("subscriptions").
+		WithArgs("register:/*", "email").
+		WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(2))
+
+	mock.ExpectQuery("subscriptions").
+		WithArgs("register:/*", "internal").
+		WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(3))
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
+		WithArgs(int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
+			AddRow(2, sql.NullString{String: "e@example.com", Valid: true}, sql.NullString{String: "u", Valid: true}))
+
+	mock.ExpectExec("INSERT INTO pending_emails").
+		WithArgs(int32(2), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectExec("INSERT INTO notifications").
+		WithArgs(int32(3), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		BusWorker(ctx, bus, n, nil)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	bus.Publish(eventbus.Event{Path: "/", Task: hcommon.TaskRegister, UserID: 1, Item: SignupInfo{Username: "bob"}})
+	time.Sleep(200 * time.Millisecond)
+	cancel()
+	wg.Wait()
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)

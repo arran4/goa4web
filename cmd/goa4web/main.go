@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/arran4/goa4web/cmd/goa4web/dbhandlers/dbdefaults"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"

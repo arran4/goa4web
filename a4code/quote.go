@@ -1,13 +1,13 @@
-package common
+package a4code
 
 import (
 	"bytes"
 	"fmt"
 )
 
-// ProcessCommentFullQuote constructs quoted markup with the full
-// contents of the comment.
-func ProcessCommentFullQuote(username, text string) string {
+// FullQuoteOf constructs markup quoting the full text from the given user.
+// Paragraphs separated by blank lines are quoted separately.
+func FullQuoteOf(username, text string) string {
 	var out bytes.Buffer
 	var quote bytes.Buffer
 	var it, bc, nlc int
@@ -26,7 +26,7 @@ func ProcessCommentFullQuote(username, text string) string {
 			}
 		case '\n':
 			if bc == 0 && nlc == 1 {
-				quote.WriteString(ProcessCommentQuote(username, out.String()))
+				quote.WriteString(QuoteOfText(username, out.String()))
 				out.Reset()
 			}
 			nlc++
@@ -48,11 +48,11 @@ func ProcessCommentFullQuote(username, text string) string {
 		}
 		it++
 	}
-	quote.WriteString(ProcessCommentQuote(username, out.String()))
+	quote.WriteString(QuoteOfText(username, out.String()))
 	return quote.String()
 }
 
-// ProcessCommentQuote wraps the given text in a quoting tag referencing the user.
-func ProcessCommentQuote(username, text string) string {
+// QuoteOfText wraps the given text in a quote tag referencing the user.
+func QuoteOfText(username, text string) string {
 	return fmt.Sprintf("[quoteof \"%s\" %s]\n", username, text)
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
@@ -145,9 +146,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		if int32(commentId) == row.Idcomments {
 			switch replyType {
 			case "full":
-				data.ReplyText = hcommon.ProcessCommentFullQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = a4code.FullQuoteOf(row.Posterusername.String, row.Text.String)
 			default:
-				data.ReplyText = hcommon.ProcessCommentQuote(row.Posterusername.String, row.Text.String)
+				data.ReplyText = a4code.QuoteOfText(row.Posterusername.String, row.Text.String)
 			}
 		}
 

@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <form method="get">
-    Filter by level:
-    <select name="level">
+Filter by role:
+    <select name="role">
         <option value=""{{if eq .Filter ""}} selected{{end}}>all</option>
         <option value="reader"{{if eq .Filter "reader"}} selected{{end}}>reader</option>
         <option value="writer"{{if eq .Filter "writer"}} selected{{end}}>writer</option>
@@ -19,7 +19,7 @@
             <th>ID</th>
             <th>User</th>
             <th>Email</th>
-            <th>Level</th>
+            <th>Role</th>
         </tr>
         {{range .Rows}}
         <tr>
@@ -27,15 +27,15 @@
             <td>{{.Idpermissions}}</td>
             <td>{{.Username.String}}</td>
             <td>{{.Email.String}}</td>
-            <td>{{.Level.String}}</td>
+            <td>{{.Role.String}}</td>
         </tr>
         {{end}}
     </table>
     <input type="submit" name="task" value="Users Disallow"><br><br>
     Usernames (comma or newline separated):<br>
     <textarea name="usernames" rows="3" cols="40"></textarea><br>
-    Level:
-    <select name="level">
+    Role:
+    <select name="role">
         <option value="reader">reader</option>
         <option value="writer">writer</option>
         <option value="moderator">moderator</option>

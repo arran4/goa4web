@@ -1,21 +1,17 @@
--- name: GetUserPermissions :one
--- This query selects permissions information for admin users.
+-- name: GetUserRole :one
+-- This query returns the role for a user.
 -- Result:
---   idpermissions (int)
---   level (int)
---   username (string)
---   email (string)
---   section (string)
-SELECT p.*
-FROM permissions p
-WHERE p.users_idusers = ?
-;
+--   role (string)
+SELECT role
+FROM permissions
+WHERE users_idusers = ?
+LIMIT 1;
 
 -- name: GetUsersPermissions :many
 -- This query selects permissions information for admin users.
 -- Result:
 --   idpermissions (int)
---   level (int)
+--   role (string)
 --   username (string)
 --   email (string)
 --   section (string)
@@ -28,8 +24,8 @@ FROM permissions p
 -- Parameters:
 --   ? - User ID to be associated with the permission (int)
 --   ? - Section for which the permission is granted (string)
---   ? - Level of the permission (string)
-INSERT INTO permissions (users_idusers, section, level)
+--   ? - Role of the permission (string)
+INSERT INTO permissions (users_idusers, section, role)
 VALUES (?, ?, ?);
 
 -- name: PermissionUserDisallow :exec
@@ -42,7 +38,7 @@ WHERE idpermissions = ?;
 -- name: GetAdministratorPermissionByUserId :one
 SELECT *
 FROM permissions
-WHERE users_idusers = ? AND section = 'all' AND level = 'administrator';
+WHERE users_idusers = ? AND section = 'all' AND role = 'administrator';
 
 -- name: GetPermissionsByUserIdAndSectionAndSectionAll :one
 SELECT *
@@ -54,7 +50,7 @@ WHERE
 SELECT p.*, u.*
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "blogs"
-ORDER BY p.level
+ORDER BY p.role
 ;
 
 
@@ -62,14 +58,14 @@ ORDER BY p.level
 SELECT p.*, u.*
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND p.section = "news"
-ORDER BY p.level
+ORDER BY p.role
 ;
 
 -- name: GetPermissionsByUserIdAndSectionWritings :many
 SELECT p.*, u.*
 FROM permissions p, users u
 WHERE u.idusers = p.users_idusers AND (p.section = "writing" OR p.section = "writings")
-ORDER BY p.level
+ORDER BY p.role
 ;
 
 -- name: GetUsersTopicLevelByUserIdAndThreadId :one

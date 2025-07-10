@@ -1,9 +1,7 @@
 package permissions
 
 import (
-	"database/sql"
 	"net/http"
-	"strings"
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -33,11 +31,7 @@ func Allowed(r *http.Request, roles ...string) bool {
 	if uid == 0 {
 		return false
 	}
-	section := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")[0]
-	perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(r.Context(), dbpkg.GetPermissionsByUserIdAndSectionAndSectionAllParams{
-		UsersIdusers: uid,
-		Section:      sql.NullString{String: section, Valid: true},
-	})
+	perm, err := queries.GetUserPermissions(r.Context(), uid)
 	if err != nil || !perm.Level.Valid {
 		return false
 	}

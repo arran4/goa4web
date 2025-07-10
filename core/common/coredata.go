@@ -93,7 +93,7 @@ var rolePriority = map[string]int{
 }
 
 func (cd *CoreData) HasRole(role string) bool {
-	return rolePriority[cd.RoleLazy()] >= rolePriority[role]
+	return rolePriority[cd.Role()] >= rolePriority[role]
 }
 
 // ContainsItem returns true if items includes an entry with the given name.
@@ -106,16 +106,13 @@ func ContainsItem(items []IndexItem, name string) bool {
 	return false
 }
 
-// RoleLazy loads the user role if not already set.
-func (cd *CoreData) RoleLazy() string {
+// Role returns the user role loaded lazily.
+func (cd *CoreData) Role() string {
 	role, _ := cd.role.load(func() (string, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return "reader", nil
 		}
-		perm, err := cd.queries.GetPermissionsByUserIdAndSectionAndSectionAll(cd.ctx, db.GetPermissionsByUserIdAndSectionAndSectionAllParams{
-			UsersIdusers: cd.UserID,
-			Section:      sql.NullString{String: "all", Valid: true},
-		})
+		perm, err := cd.queries.GetUserPermissions(cd.ctx, cd.UserID)
 		if err != nil || !perm.Level.Valid {
 			return "reader", nil
 		}

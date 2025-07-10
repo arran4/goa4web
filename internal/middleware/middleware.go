@@ -72,10 +72,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		level := "reader"
 		if uid != 0 {
-			perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(r.Context(), dbpkg.GetPermissionsByUserIdAndSectionAndSectionAllParams{
-				UsersIdusers: uid,
-				Section:      sql.NullString{String: "all", Valid: true},
-			})
+			perm, err := queries.GetUserPermissions(r.Context(), uid)
 			if err == nil && perm.Level.Valid {
 				level = perm.Level.String
 			}

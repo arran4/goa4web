@@ -20,9 +20,9 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 )
 
 type NewsPost struct {

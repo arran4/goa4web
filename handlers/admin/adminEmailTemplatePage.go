@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.

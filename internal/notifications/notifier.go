@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 // Notifier dispatches updates via email and the internal notification system.

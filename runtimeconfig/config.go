@@ -60,10 +60,14 @@ type RuntimeConfig struct {
 	StatsStartYear  int
 	DefaultLanguage string
 
-	ImageUploadDir     string
-	ImageMaxBytes      int
-	ImageCacheDir      string
-	ImageCacheMaxBytes int
+	ImageUploadProvider string
+	ImageUploadDir      string
+	ImageUploadS3URL    string
+	ImageCacheProvider  string
+	ImageCacheDir       string
+	ImageCacheS3URL     string
+	ImageMaxBytes       int
+	ImageCacheMaxBytes  int
 
 	DLQProvider string
 	DLQFile     string
@@ -76,6 +80,9 @@ type RuntimeConfig struct {
 	ImageSignSecret string
 	// ImageSignSecretFile specifies the path to the image signing key.
 	ImageSignSecretFile string
+
+	// CreateDirs creates missing directories when enabled.
+	CreateDirs bool
 }
 
 // AppRuntimeConfig stores the current application configuration.
@@ -245,14 +252,20 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.StatsStartYear == 0 {
 		cfg.StatsStartYear = 2005
 	}
+	if cfg.ImageUploadProvider == "" {
+		cfg.ImageUploadProvider = "local"
+	}
 	if cfg.ImageUploadDir == "" {
 		cfg.ImageUploadDir = "uploads/images"
 	}
-	if cfg.ImageMaxBytes == 0 {
-		cfg.ImageMaxBytes = 50 * 1024 * 1024
+	if cfg.ImageCacheProvider == "" {
+		cfg.ImageCacheProvider = "local"
 	}
 	if cfg.ImageCacheDir == "" {
 		cfg.ImageCacheDir = "uploads/cache"
+	}
+	if cfg.ImageMaxBytes == 0 {
+		cfg.ImageMaxBytes = 50 * 1024 * 1024
 	}
 	if cfg.EmailSMTPAuth == "" {
 		cfg.EmailSMTPAuth = "plain"

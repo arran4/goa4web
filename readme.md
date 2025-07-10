@@ -10,7 +10,8 @@ The code in this repository exposes all pages using the [Gorilla Mux](https://gi
 
 ## Features
 
-- **News** – publish posts and allow discussion in comment threads.
+- **News** – publish posts and allow discussion in comment threads. Writers,
+  moderators and administrators may edit posts.
 - **FAQ** – manage question and answer entries with administrative tools.
 - **Blogs** – users can write blogs, comment on posts and subscribe to bloggers.
 - **Forum** – a traditional threaded forum with categories, topics and moderation tools.
@@ -254,12 +255,19 @@ environment variables listed below.
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Interval in seconds between email worker runs. |
 | `ADMIN_EMAILS` | `--admin-emails` | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
-| `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored. |
+| `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored when using the local provider. |
+| `IMAGE_UPLOAD_PROVIDER` | `--image-upload-provider` | No | `local` | Upload backend to use. |
+| `IMAGE_UPLOAD_S3_URL` | `--image-upload-s3-url` | No | - | S3 prefix URL for uploads when using the S3 provider. |
+| `IMAGE_CACHE_PROVIDER` | `--image-cache-provider` | No | `local` | Cache backend to use. |
+| `IMAGE_CACHE_S3_URL` | `--image-cache-s3-url` | No | - | S3 prefix URL for cache when using the S3 provider. |
+| `IMAGE_CACHE_DIR` | `--image-cache-dir` | No | `uploads/cache` | Directory for cached thumbnails when using the local provider. |
+| `IMAGE_CACHE_MAX_BYTES` | `--image-cache-max-bytes` | No | `-1` | Maximum image cache size in bytes. |
 | `IMAGE_MAX_BYTES` | `--image-max-bytes` | No | `5242880` | Maximum allowed size of uploaded images. |
 | `DEFAULT_LANGUAGE` | `--default-language` | No | - | Site's default language name. |
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
 | `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
 | `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
+| `CREATE_DIRS` | `--create-dirs` | No | `false` | Create missing directories on startup. |
 
 ### Dead Letter Queue Providers
 

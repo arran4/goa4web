@@ -6,9 +6,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -78,6 +75,12 @@ func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 		return nil
 	}
 	info, err := os.Stat(cfg.ImageUploadDir)
+	if (err != nil || !info.IsDir()) && cfg.CreateDirs {
+		if err := os.MkdirAll(cfg.ImageUploadDir, 0o755); err != nil {
+			return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
+		}
+		info, err = os.Stat(cfg.ImageUploadDir)
+	}
 	if err != nil || !info.IsDir() {
 		return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
 	}
@@ -88,7 +91,14 @@ func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 	os.Remove(test)
 
 	if cfg.ImageCacheDir != "" {
-		if info, err := os.Stat(cfg.ImageCacheDir); err != nil || !info.IsDir() {
+		info, err := os.Stat(cfg.ImageCacheDir)
+		if (err != nil || !info.IsDir()) && cfg.CreateDirs {
+			if err := os.MkdirAll(cfg.ImageCacheDir, 0o755); err != nil {
+				return &common.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
+			}
+			info, err = os.Stat(cfg.ImageCacheDir)
+		}
+		if err != nil || !info.IsDir() {
 			return &common.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
 		}
 		test := filepath.Join(cfg.ImageCacheDir, ".check")

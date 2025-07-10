@@ -1,6 +1,8 @@
 package eventbus
 
 import (
+	"context"
+	"errors"
 	"sync"
 	"time"
 )
@@ -19,7 +21,11 @@ type Event struct {
 type Bus struct {
 	mu          sync.RWMutex
 	subscribers []chan Event
+	closed      bool
 }
+
+// ErrBusClosed is returned when publishing to a bus after Shutdown.
+var ErrBusClosed = errors.New("event bus closed")
 
 // NewBus creates an empty bus instance.
 func NewBus() *Bus {
@@ -36,8 +42,13 @@ func (b *Bus) Subscribe() <-chan Event {
 }
 
 // Publish dispatches an event to all current subscribers.
-func (b *Bus) Publish(evt Event) {
+// It returns ErrBusClosed when publishing after Shutdown.
+func (b *Bus) Publish(evt Event) error {
 	b.mu.RLock()
+	if b.closed {
+		b.mu.RUnlock()
+		return ErrBusClosed
+	}
 	subs := append([]chan Event(nil), b.subscribers...)
 	b.mu.RUnlock()
 	for _, ch := range subs {
@@ -46,6 +57,32 @@ func (b *Bus) Publish(evt Event) {
 		default:
 		}
 	}
+	return nil
+}
+
+const drainInterval = 10 * time.Millisecond // wait time between draining checks
+
+// Shutdown waits for all queued events to be processed and
+// prevents any new events from being published.
+func (b *Bus) Shutdown(ctx context.Context) error {
+	b.mu.Lock()
+	b.closed = true
+	subs := append([]chan Event(nil), b.subscribers...)
+	b.mu.Unlock()
+	for _, ch := range subs {
+		for {
+			if len(ch) == 0 {
+				break
+			}
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+				time.Sleep(drainInterval)
+			}
+		}
+	}
+	return nil
 }
 
 var (

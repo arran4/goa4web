@@ -45,6 +45,10 @@ func AskPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AskActionPage(w http.ResponseWriter, r *http.Request) {
+	if err := common.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

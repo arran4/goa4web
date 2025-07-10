@@ -1,6 +1,6 @@
 CREATE TABLE `blogs` (
   `idblogs` int(10) NOT NULL AUTO_INCREMENT,
-  `forumthread_id` int(10) NOT NULL DEFAULT 0,
+  `forumthread_id` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `blog` longtext DEFAULT NULL,

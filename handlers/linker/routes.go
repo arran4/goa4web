@@ -1,12 +1,18 @@
 package linker
 
 import (
+	"net/http"
+
+	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
+	pkghandlers "github.com/arran4/goa4web/pkg/handlers"
 )
+
+var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
 func RegisterRoutes(r *mux.Router) {
@@ -22,10 +28,18 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
 	lr.HandleFunc("/comments/{link}", CommentsPage).Methods("GET")
 	lr.HandleFunc("/comments/{link}", CommentsReplyPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply))
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
 	lr.HandleFunc("/show/{link}", ShowPage).Methods("GET")
 	lr.HandleFunc("/show/{link}", ShowReplyPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
 	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")
 	lr.HandleFunc("/suggest", SuggestActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSuggest))
+
+	if legacyRedirectsEnabled {
+		// legacy redirects
+		r.Path("/links").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/links", "/linker"))
+		r.PathPrefix("/links/").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/links", "/linker"))
+	}
 }
 
 // Register registers the linker router module.

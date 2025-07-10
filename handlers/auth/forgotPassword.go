@@ -11,9 +11,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
@@ -62,10 +60,9 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
-	if provider != nil && row.Email != "" {
+	if row.Email != "" {
 		page := r.URL.Scheme + "://" + r.Host + "/login"
-		_ = emailutil.CreateEmailTemplateAndSend(r.Context(), provider, row.Email, page, "Password Reset", code)
+		_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, common.TaskUserResetPassword, code)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

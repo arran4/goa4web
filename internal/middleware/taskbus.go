@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -45,7 +47,10 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sr, r)
 		if task != "" && sr.status < http.StatusBadRequest {
-			eventbus.DefaultBus.Publish(*evt)
+			if err := eventbus.DefaultBus.Publish(*evt); err != nil {
+				log.Printf("publish task event: %v", err)
+				// TODO: queue task events for resumption when the bus is closed
+			}
 		}
 	})
 }

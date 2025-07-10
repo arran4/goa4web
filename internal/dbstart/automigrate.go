@@ -46,8 +46,8 @@ func applyMigrations(ctx context.Context, cfg runtimeconfig.RuntimeConfig) error
 	return migrate.Apply(ctx, db, fsys, false)
 }
 
-// maybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.
-func maybeAutoMigrate(cfg runtimeconfig.RuntimeConfig) error {
+// MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.
+func MaybeAutoMigrate(cfg runtimeconfig.RuntimeConfig) error {
 	if !autoMigrateEnabled() {
 		return nil
 	}

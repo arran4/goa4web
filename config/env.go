@@ -89,10 +89,20 @@ const (
 
 	// EnvImageUploadDir defines the directory where uploaded images are stored.
 	EnvImageUploadDir = "IMAGE_UPLOAD_DIR"
+	// EnvImageUploadProvider selects the image upload backend.
+	EnvImageUploadProvider = "IMAGE_UPLOAD_PROVIDER"
+	// EnvImageUploadS3URL defines the S3 bucket and prefix used by the S3
+	// upload provider.
+	EnvImageUploadS3URL = "IMAGE_UPLOAD_S3_URL"
 	// EnvImageMaxBytes sets the maximum allowed size of uploaded images in bytes.
 	EnvImageMaxBytes = "IMAGE_MAX_BYTES"
 	// EnvImageCacheDir defines where thumbnails are cached.
 	EnvImageCacheDir = "IMAGE_CACHE_DIR"
+	// EnvImageCacheProvider selects the cache storage backend.
+	EnvImageCacheProvider = "IMAGE_CACHE_PROVIDER"
+	// EnvImageCacheS3URL defines the S3 bucket and prefix used by the S3
+	// cache provider.
+	EnvImageCacheS3URL = "IMAGE_CACHE_S3_URL"
 	// EnvImageCacheMaxBytes sets the maximum cache size in bytes.
 	EnvImageCacheMaxBytes = "IMAGE_CACHE_MAX_BYTES"
 	// EnvImageSignSecret provides the signing key for image URLs.
@@ -110,4 +120,7 @@ const (
 
 	// EnvAutoMigrate toggles automatic database migrations on startup.
 	EnvAutoMigrate = "AUTO_MIGRATE"
+
+	// EnvCreateDirs creates missing directories when enabled.
+	EnvCreateDirs = "CREATE_DIRS"
 )

@@ -149,6 +149,10 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 		return
 	}
 
+	if evt.Admin {
+		n.NotifyAdmins(ctx, evt.Path)
+	}
+
 	if evt.Task == hcommon.TaskReply && n.Queries != nil {
 		auto := true
 		email := false

@@ -58,6 +58,16 @@ FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers;
 
+-- name: ListUsersSubscribedToNews :many
+SELECT idsitenews, forumthread_id, t.language_idlanguage, t.users_idusers,
+    news, occurred, u.idusers, u.username, u.deleted_at,
+    p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates,
+    p.page_size, p.auto_subscribe_replies,
+    (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+FROM site_news t, users u, preferences p
+WHERE t.idsiteNews=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers;
+
 -- name: ListUsersSubscribedToLinker :many
 SELECT *, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM linker t, users u, preferences p

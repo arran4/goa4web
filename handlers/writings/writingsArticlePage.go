@@ -3,6 +3,7 @@ package writings
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -206,9 +207,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-			// TODO
-			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
-			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			editUrl = fmt.Sprintf("/writings/article/%d?comment=%d#edit", writing.Idwriting, row.Idcomments)
+			editSaveUrl = fmt.Sprintf("/writings/article/%d/comment/%d", writing.Idwriting, row.Idcomments)
 			if editCommentId != 0 && int32(editCommentId) == row.Idcomments {
 				data.IsReplyable = false
 			}
@@ -230,8 +230,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         editCommentId != 0 && uid == row.UsersIdusers && int32(editCommentId) == row.Idcomments,
 			Offset:                          i + offset,
-			Languages:                       nil,
-			SelectedLanguageId:              0,
+			Languages:                       languageRows,
+			SelectedLanguageId:              row.LanguageIdlanguage,
 		})
 	}
 

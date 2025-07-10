@@ -43,9 +43,13 @@ func (c *blogDeactivateCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("fetch blog: %w", err)
 	}
+	var threadID int32
+	if b.ForumthreadID.Valid {
+		threadID = b.ForumthreadID.Int32
+	}
 	if err := queries.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
 		Idblogs:            b.Idblogs,
-		ForumthreadID:      b.ForumthreadID,
+		ForumthreadID:      threadID,
 		UsersIdusers:       b.UsersIdusers,
 		LanguageIdlanguage: b.LanguageIdlanguage,
 		Blog:               b.Blog,

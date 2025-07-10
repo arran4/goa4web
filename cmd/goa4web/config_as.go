@@ -49,14 +49,20 @@ func (c *configAsCmd) asEnvFile() error {
 	sort.Strings(keys)
 	usage := runtimeconfig.UsageMap()
 	ext := runtimeconfig.ExtendedUsageMap()
+	ex := runtimeconfig.ExamplesMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
+		line := "# "
 		if u != "" {
-			fmt.Printf("# %s (default: %s)\n", u, d)
+			line += fmt.Sprintf("%s (default: %s)", u, d)
 		} else {
-			fmt.Printf("# default: %s\n", d)
+			line += fmt.Sprintf("default: %s", d)
 		}
+		if xs := ex[k]; len(xs) > 0 {
+			line += fmt.Sprintf(" (examples: %s)", strings.Join(xs, ", "))
+		}
+		fmt.Println(line)
 		if c.extended {
 			if e := ext[k]; e != "" {
 				for _, line := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
@@ -82,14 +88,20 @@ func (c *configAsCmd) asEnv() error {
 	sort.Strings(keys)
 	usage := runtimeconfig.UsageMap()
 	ext := runtimeconfig.ExtendedUsageMap()
+	ex := runtimeconfig.ExamplesMap()
 	for _, k := range keys {
 		u := usage[k]
 		d := def[k]
+		line := "# "
 		if u != "" {
-			fmt.Printf("# %s (default: %s)\n", u, d)
+			line += fmt.Sprintf("%s (default: %s)", u, d)
 		} else {
-			fmt.Printf("# default: %s\n", d)
+			line += fmt.Sprintf("default: %s", d)
 		}
+		if xs := ex[k]; len(xs) > 0 {
+			line += fmt.Sprintf(" (examples: %s)", strings.Join(xs, ", "))
+		}
+		fmt.Println(line)
 		if c.extended {
 			if e := ext[k]; e != "" {
 				for _, line := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {

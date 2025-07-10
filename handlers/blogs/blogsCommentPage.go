@@ -89,10 +89,28 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl:                    editUrl,
 	}
 
+	if !blog.ForumthreadID.Valid {
+		data.IsReplyable = false
+	} else {
+		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+			UsersIdusers:  uid,
+			Idforumthread: blog.ForumthreadID.Int32,
+		})
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Printf("GetThreadLastPosterAndPerms: %v", err)
+			}
+			data.IsReplyable = false
+		} else if threadRow.Locked.Valid && threadRow.Locked.Bool {
+			data.IsReplyable = false
+		}
+	}
+
 	replyType := r.URL.Query().Get("type")
 	commentIdString := r.URL.Query().Get("comment")
 	commentId, _ := strconv.Atoi(commentIdString)
-	if blog.ForumthreadID > 0 { // TODO make nullable.
+	if blog.ForumthreadID.Valid {
+		pthid := blog.ForumthreadID.Int32
 
 		if commentIdString != "" {
 			comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
@@ -114,7 +132,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 
 		rows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 			UsersIdusers:  uid,
-			ForumthreadID: blog.ForumthreadID,
+			ForumthreadID: pthid,
 		})
 		if err != nil {
 			switch {

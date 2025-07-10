@@ -24,14 +24,14 @@ type emailTemplate struct {
 }
 
 var defaultEmailTemplates = map[string]emailTemplate{
-	"update":                                   {text: defaultUpdateEmailText, html: defaultUpdateEmailHTML},
-	strings.ToLower(hcommon.TaskReply):         {text: defaultReplyEmailText, html: defaultReplyEmailHTML},
-	strings.ToLower(hcommon.TaskCreateThread):  {text: defaultThreadEmailText, html: defaultThreadEmailHTML},
-	strings.ToLower(hcommon.TaskNewPost):       {text: defaultBlogEmailText, html: defaultBlogEmailHTML},
-	strings.ToLower(hcommon.TaskSubmitWriting): {text: defaultWritingEmailText, html: defaultWritingEmailHTML},
-	strings.ToLower(hcommon.TaskRegister):      {text: defaultSignupEmailText, html: defaultSignupEmailHTML},
-	strings.ToLower("Email Verification"):      {text: defaultVerificationEmailText, html: defaultVerificationEmailHTML},
-	strings.ToLower("Password Reset"):          {text: defaultPasswordResetEmailText, html: defaultPasswordResetEmailHTML},
+	"update":                                           {text: defaultUpdateEmailText, html: defaultUpdateEmailHTML},
+	strings.ToLower(hcommon.TaskReply):                 {text: defaultReplyEmailText, html: defaultReplyEmailHTML},
+	strings.ToLower(hcommon.TaskCreateThread):          {text: defaultThreadEmailText, html: defaultThreadEmailHTML},
+	strings.ToLower(hcommon.TaskNewPost):               {text: defaultBlogEmailText, html: defaultBlogEmailHTML},
+	strings.ToLower(hcommon.TaskSubmitWriting):         {text: defaultWritingEmailText, html: defaultWritingEmailHTML},
+	strings.ToLower(hcommon.TaskRegister):              {text: defaultSignupEmailText, html: defaultSignupEmailHTML},
+	strings.ToLower(hcommon.TaskUserEmailVerification): {text: defaultVerificationEmailText, html: defaultVerificationEmailHTML},
+	strings.ToLower(hcommon.TaskUserResetPassword):     {text: defaultPasswordResetEmailText, html: defaultPasswordResetEmailHTML},
 }
 
 func getEmailTemplates(ctx context.Context, action string) (string, string) {
@@ -129,20 +129,6 @@ func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, it
 	return msg, toAddr, nil
 }
 
-func CreateEmailTemplateAndSend(ctx context.Context, provider email.Provider, emailAddr, page, action string, item interface{}) error {
-	if !EmailSendingEnabled() {
-		return nil
-	}
-	msg, toAddr, err := CreateEmailTemplate(ctx, emailAddr, page, action, item)
-	if err != nil {
-		return err
-	}
-	if provider == nil {
-		return fmt.Errorf("no provider")
-	}
-	return provider.Send(ctx, toAddr, msg)
-}
-
 func CreateEmailTemplateAndQueue(ctx context.Context, q *db.Queries, userID int32, emailAddr, page, action string, item interface{}) error {
 	if q == nil {
 		return fmt.Errorf("no query")
@@ -206,22 +192,9 @@ func EmailSendingEnabled() bool {
 	return runtimeconfig.AppRuntimeConfig.EmailEnabled
 }
 
-// NotifyAdmins sends a change notification email to all administrator addresses
-// returned by GetAdminEmails.
-func NotifyAdmins(ctx context.Context, provider email.Provider, q *db.Queries, page string) {
-	if provider == nil || !AdminNotificationsEnabled() {
-		return
-	}
-	for _, email := range GetAdminEmails(ctx, q) {
-		if err := CreateEmailTemplateAndSend(ctx, provider, email, page, "update", nil); err != nil {
-			log.Printf("Error: send: %s", err)
-		}
-	}
-}
-
 // notifyThreadSubscribers emails users subscribed to the forum thread.
 func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db.Queries, threadID, excludeUser int32, page string) {
-	if provider == nil {
+	if q == nil {
 		return
 	}
 	rows, err := q.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
@@ -233,8 +206,28 @@ func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db
 		return
 	}
 	for _, row := range rows {
-		if err := CreateEmailTemplateAndSend(ctx, provider, row.Email, page, "update", nil); err != nil {
-			log.Printf("Error: send: %s", err)
+		if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
+			log.Printf("Error: queue: %s", err)
+		}
+	}
+}
+
+// NotifyNewsSubscribers queues update emails for users subscribed to the given news post.
+func NotifyNewsSubscribers(ctx context.Context, q *db.Queries, newsID, excludeUser int32, page string) {
+	if q == nil {
+		return
+	}
+	rows, err := q.ListUsersSubscribedToNews(ctx, db.ListUsersSubscribedToNewsParams{
+		Idsitenews: newsID,
+		Idusers:    excludeUser,
+	})
+	if err != nil {
+		log.Printf("Error: listUsersSubscribedToNews: %v", err)
+		return
+	}
+	for _, row := range rows {
+		if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
+			log.Printf("Error: notifyChange: %v", err)
 		}
 	}
 }

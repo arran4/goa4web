@@ -76,6 +76,9 @@ type RuntimeConfig struct {
 	ImageSignSecret string
 	// ImageSignSecretFile specifies the path to the image signing key.
 	ImageSignSecretFile string
+
+	// CreateDirs creates missing directories when enabled.
+	CreateDirs bool
 }
 
 // AppRuntimeConfig stores the current application configuration.

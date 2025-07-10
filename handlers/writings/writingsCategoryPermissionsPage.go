@@ -44,7 +44,7 @@ func CategoryPermissionsAllowPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	cid, _ := strconv.Atoi(vars["category"])
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("GetUserByUsername Error: %s", err)
@@ -54,7 +54,7 @@ func CategoryPermissionsAllowPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 		UsersIdusers: u.Idusers,
 		Section:      sql.NullString{Valid: true, String: fmt.Sprintf("writing:%d", cid)},
-		Level:        sql.NullString{Valid: true, String: level},
+		Role:         sql.NullString{Valid: true, String: level},
 	}); err != nil {
 		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

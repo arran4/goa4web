@@ -17,7 +17,8 @@ import (
 )
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
-	pref, _ := r.Context().Value(common.KeyPreference).(*db.Preference)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	pref, _ := cd.Preference()
 	size := runtimeconfig.AppRuntimeConfig.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
@@ -28,7 +29,7 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 		Min  int
 		Max  int
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Size:     size,
 		Min:      runtimeconfig.AppRuntimeConfig.PageSizeMin,
 		Max:      runtimeconfig.AppRuntimeConfig.PageSizeMax,

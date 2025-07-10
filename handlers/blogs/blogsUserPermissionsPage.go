@@ -48,7 +48,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	if data.Filter != "" {
 		filtered := rows[:0]
 		for _, row := range rows {
-			if row.Level.String == data.Filter {
+			if row.Role.String == data.Filter {
 				filtered = append(filtered, row)
 			}
 		}
@@ -70,7 +70,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	where := "blogs"
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	data := struct {
 		*CoreData
 		Errors   []string
@@ -88,7 +88,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 			String: where,
 			Valid:  true,
 		},
-		Level: sql.NullString{
+		Role: sql.NullString{
 			String: level,
 			Valid:  true,
 		},
@@ -135,7 +135,7 @@ func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	names := strings.FieldsFunc(r.PostFormValue("usernames"), func(r rune) bool { return r == ',' || r == '\n' || r == ' ' || r == '\t' })
-	level := r.PostFormValue("level")
+	level := r.PostFormValue("role")
 	data := struct {
 		*CoreData
 		Errors   []string
@@ -158,7 +158,7 @@ func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 		if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
 			UsersIdusers: u.Idusers,
 			Section:      sql.NullString{String: "blogs", Valid: true},
-			Level:        sql.NullString{String: level, Valid: true},
+			Role:         sql.NullString{String: level, Valid: true},
 		}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow %s: %w", n, err).Error())
 		}

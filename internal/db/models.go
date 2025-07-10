@@ -299,7 +299,7 @@ type Permission struct {
 	Idpermissions int32
 	UsersIdusers  int32
 	Section       sql.NullString
-	Level         sql.NullString
+	Role          sql.NullString
 }
 
 type Preference struct {

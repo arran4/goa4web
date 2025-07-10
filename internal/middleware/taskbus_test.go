@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -63,8 +64,10 @@ func TestTaskEventMiddleware(t *testing.T) {
 
 	// ensure handlers can attach event data
 	itemHandler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok {
-			evt.Item = "info"
+		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				evt.Item = "info"
+			}
 		}
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -72,7 +75,8 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	itemHandler.ServeHTTP(rec, req)
+	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &hcommon.CoreData{})
+	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
 		if evt.Item != "info" {

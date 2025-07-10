@@ -10,12 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/middleware"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 var (
@@ -28,7 +28,7 @@ func GetDBPool() *sql.DB { return dbPool }
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
+func InitDB(cfg config.RuntimeConfig) *common.UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
 	conn := cfg.DBConn
@@ -55,7 +55,7 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 }
 
 // PerformStartupChecks checks the database and upload directory configuration.
-func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
+func PerformStartupChecks(cfg config.RuntimeConfig) error {
 	if err := MaybeAutoMigrate(cfg); err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
 }
 
 // CheckUploadDir verifies that the upload directory is accessible.
-func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
+func CheckUploadDir(cfg config.RuntimeConfig) *common.UserError {
 	if cfg.ImageUploadDir == "" {
 		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}

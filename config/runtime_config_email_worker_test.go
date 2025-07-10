@@ -1,4 +1,4 @@
-package runtimeconfig
+package config_test
 
 import (
 	"flag"
@@ -15,7 +15,7 @@ func TestEmailWorkerIntervalPrecedence(t *testing.T) {
 	vals := map[string]string{config.EnvEmailWorkerInterval: "20"}
 	_ = fs.Parse([]string{"--email-worker-interval=15"})
 
-	cfg := GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
 	if cfg.EmailWorkerInterval != 15 {
 		t.Fatalf("merged %#v", cfg.EmailWorkerInterval)
 	}
@@ -25,7 +25,7 @@ func TestLoadEmailWorkerIntervalFromFileValues(t *testing.T) {
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	vals := map[string]string{config.EnvEmailWorkerInterval: "25"}
 
-	cfg := GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.EmailWorkerInterval != 25 {
 		t.Fatalf("want 25 got %d", cfg.EmailWorkerInterval)
 	}

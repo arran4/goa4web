@@ -13,12 +13,12 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	logProv "github.com/arran4/goa4web/internal/email/log"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func init() { logProv.Register() }
@@ -44,7 +44,7 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 }
 
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
-	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
+	config.AppRuntimeConfig.EmailProvider = ""
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 	queries := dbpkg.New(db)
@@ -74,7 +74,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 }
 
 func TestUserEmailTestAction_WithProvider(t *testing.T) {
-	runtimeconfig.AppRuntimeConfig.EmailProvider = "log"
+	config.AppRuntimeConfig.EmailProvider = "log"
 
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
@@ -163,8 +163,8 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
-	runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
-	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
+	config.AppRuntimeConfig.PageSizeDefault = 15
+	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(config.AppRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveAllActionPage(rr, req)
 
@@ -230,7 +230,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	defer db.Close()
 
 	queries := dbpkg.New(db)
-	runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
+	config.AppRuntimeConfig.PageSizeDefault = 15
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -257,9 +257,9 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
-		AddRow(1, 1, 1, nil, runtimeconfig.AppRuntimeConfig.PageSizeDefault, true)
+		AddRow(1, 1, 1, nil, config.AppRuntimeConfig.PageSizeDefault, true)
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
-	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(config.AppRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	userLangSaveLanguagePreferenceActionPage(rr, req)
 

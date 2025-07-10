@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func userPageSizePage(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +17,7 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 			min, _ := strconv.Atoi(r.PostFormValue("min"))
 			max, _ := strconv.Atoi(r.PostFormValue("max"))
 			def, _ := strconv.Atoi(r.PostFormValue("default"))
-			runtimeconfig.UpdatePaginationConfig(&runtimeconfig.AppRuntimeConfig, min, max, def)
+			config.UpdatePaginationConfig(&config.AppRuntimeConfig, min, max, def)
 		}
 		http.Redirect(w, r, "/usr/page-size", http.StatusSeeOther)
 		return
@@ -29,9 +29,9 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Default int
 	}{
 		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
-		Min:      runtimeconfig.AppRuntimeConfig.PageSizeMin,
-		Max:      runtimeconfig.AppRuntimeConfig.PageSizeMax,
-		Default:  runtimeconfig.AppRuntimeConfig.PageSizeDefault,
+		Min:      config.AppRuntimeConfig.PageSizeMin,
+		Max:      config.AppRuntimeConfig.PageSizeMax,
+		Default:  config.AppRuntimeConfig.PageSizeDefault,
 	}
 	if err := templates.RenderTemplate(w, "pageSizePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)

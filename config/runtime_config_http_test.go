@@ -1,4 +1,4 @@
-package runtimeconfig
+package config_test
 
 import (
 	"flag"
@@ -21,7 +21,7 @@ func TestHTTPConfigPrecedence(t *testing.T) {
 		config.EnvHostname: "http://file",
 	}
 	_ = fs.Parse([]string{"--listen=:3", "--hostname=http://cli"})
-	cfg := GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
 
 	if cfg.HTTPListen != ":3" || cfg.HTTPHostname != "http://cli" {
 		t.Fatalf("merged %#v", cfg)
@@ -33,7 +33,7 @@ func TestLoadHTTPConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvListen: ":9",
 	}
-	cfg := GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.HTTPListen != ":9" {
 		t.Fatalf("want :9 got %q", cfg.HTTPListen)
 	}

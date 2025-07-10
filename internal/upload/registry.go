@@ -5,11 +5,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 // ProviderFactory creates an upload provider from cfg.
-type ProviderFactory func(runtimeconfig.RuntimeConfig) Provider
+type ProviderFactory func(config.RuntimeConfig) Provider
 
 var (
 	regMu    sync.RWMutex

@@ -1,15 +1,14 @@
-package runtimeconfig
+package config
 
 import (
 	"path/filepath"
 	"testing"
 
-	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
 )
 
 func TestLoadOrCreateSecretCLI(t *testing.T) {
-	secret, err := LoadOrCreateSecret(useMemFS(t), "cli", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := LoadOrCreateSecret(useMemFS(t), "cli", "", EnvSessionSecret, EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -19,8 +18,8 @@ func TestLoadOrCreateSecretCLI(t *testing.T) {
 }
 
 func TestLoadOrCreateSecretEnv(t *testing.T) {
-	t.Setenv(config.EnvSessionSecret, "env")
-	secret, err := LoadOrCreateSecret(useMemFS(t), "", "", config.EnvSessionSecret, config.EnvSessionSecretFile)
+	t.Setenv(EnvSessionSecret, "env")
+	secret, err := LoadOrCreateSecret(useMemFS(t), "", "", EnvSessionSecret, EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -35,7 +34,7 @@ func TestLoadOrCreateSecretFile(t *testing.T) {
 	if err := fs.WriteFile(file, []byte("fromfile"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
-	secret, err := LoadOrCreateSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := LoadOrCreateSecret(fs, "", file, EnvSessionSecret, EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -47,7 +46,7 @@ func TestLoadOrCreateSecretFile(t *testing.T) {
 func TestLoadOrCreateSecretGenerate(t *testing.T) {
 	fs := useMemFS(t)
 	file := "new"
-	secret, err := LoadOrCreateSecret(fs, "", file, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := LoadOrCreateSecret(fs, "", file, EnvSessionSecret, EnvSessionSecretFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -65,7 +64,7 @@ func TestLoadOrCreateSecretGenerate(t *testing.T) {
 
 func TestDefaultSessionSecretPathDev(t *testing.T) {
 	common.Version = "dev"
-	t.Setenv(config.EnvDocker, "")
+	t.Setenv(EnvDocker, "")
 	got := DefaultSessionSecretPath()
 	if got != ".session_secret" {
 		t.Fatalf("want .session_secret got %s", got)
@@ -74,7 +73,7 @@ func TestDefaultSessionSecretPathDev(t *testing.T) {
 
 func TestDefaultSessionSecretPathDocker(t *testing.T) {
 	common.Version = "1"
-	t.Setenv(config.EnvDocker, "1")
+	t.Setenv(EnvDocker, "1")
 	t.Setenv("HOME", "/home/test")
 	got := DefaultSessionSecretPath()
 	if got != "/var/lib/goa4web/session_secret" {
@@ -84,7 +83,7 @@ func TestDefaultSessionSecretPathDocker(t *testing.T) {
 
 func TestDefaultSessionSecretPathUser(t *testing.T) {
 	common.Version = "1"
-	t.Setenv(config.EnvDocker, "")
+	t.Setenv(EnvDocker, "")
 	t.Setenv("XDG_CONFIG_HOME", "/cfg")
 	got := DefaultSessionSecretPath()
 	want := filepath.Join("/cfg", "goa4web", "session_secret")

@@ -12,7 +12,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // Provider uses the standard net/smtp package.
@@ -125,7 +124,7 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return c.Quit()
 }
 
-func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
 	host := cfg.EmailSMTPHost
 	port := cfg.EmailSMTPPort
 	user := cfg.EmailSMTPUser

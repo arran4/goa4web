@@ -8,7 +8,7 @@ import (
 	"sort"
 	"text/template"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 //go:embed templates/config_options.txt
@@ -46,9 +46,9 @@ type option struct {
 
 func (c *configOptionsCmd) Run() error {
 	def := defaultMap()
-	usage := runtimeconfig.UsageMap()
-	ext := runtimeconfig.ExtendedUsageMap()
-	names := runtimeconfig.NameMap()
+	usage := config.UsageMap()
+	ext := config.ExtendedUsageMap()
+	names := config.NameMap()
 	keys := make([]string, 0, len(def))
 	for k := range def {
 		keys = append(keys, k)

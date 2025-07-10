@@ -1,11 +1,11 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/config"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"log"
 	"net/http"
 	"net/mail"
@@ -65,7 +65,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 
 func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

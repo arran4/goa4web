@@ -1,4 +1,4 @@
-package runtimeconfig
+package config_test
 
 import (
 	"flag"
@@ -15,7 +15,7 @@ func TestDefaultLanguageConfigPrecedence(t *testing.T) {
 	vals := map[string]string{config.EnvDefaultLanguage: "file"}
 	_ = fs.Parse([]string{"--default-language=cli"})
 
-	cfg := GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
 	if cfg.DefaultLanguage != "cli" {
 		t.Fatalf("merged %#v", cfg.DefaultLanguage)
 	}
@@ -24,7 +24,7 @@ func TestDefaultLanguageConfigPrecedence(t *testing.T) {
 func TestLoadDefaultLanguageFromFileValues(t *testing.T) {
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	vals := map[string]string{config.EnvDefaultLanguage: "fileval"}
-	cfg := GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.DefaultLanguage != "fileval" {
 		t.Fatalf("want fileval got %q", cfg.DefaultLanguage)
 	}

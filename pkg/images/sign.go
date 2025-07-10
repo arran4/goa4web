@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 var signKey string
@@ -29,14 +29,14 @@ func sign(data string) (int64, string) {
 // SignedURL maps an image identifier to a signed URL.
 func SignedURL(id string) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
-	host := strings.TrimSuffix(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
+	host := strings.TrimSuffix(config.AppRuntimeConfig.HTTPHostname, "/")
 	ts, sig := sign("image:" + id)
 	return fmt.Sprintf("%s/images/image/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 
 // SignedCacheURL maps a cache identifier to a signed URL.
 func SignedCacheURL(id string) string {
-	host := strings.TrimSuffix(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
+	host := strings.TrimSuffix(config.AppRuntimeConfig.HTTPHostname, "/")
 	ts, sig := sign("cache:" + id)
 	return fmt.Sprintf("%s/images/cache/%s?ts=%d&sig=%s", host, id, ts, sig)
 }

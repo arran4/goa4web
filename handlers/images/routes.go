@@ -15,13 +15,13 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/config"
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/upload"
 	imagesign "github.com/arran4/goa4web/pkg/images"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/disintegration/imaging"
 )
 
@@ -74,7 +74,7 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub1, sub2 := id[:2], id[2:4]
-	full := filepath.Join(runtimeconfig.AppRuntimeConfig.ImageUploadDir, sub1, sub2, id)
+	full := filepath.Join(config.AppRuntimeConfig.ImageUploadDir, sub1, sub2, id)
 	http.ServeFile(w, r, full)
 }
 
@@ -86,7 +86,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	}
 	sub1, sub2 := id[:2], id[2:4]
 	key := path.Join(sub1, sub2, id)
-	if p := upload.CacheProviderFromConfig(runtimeconfig.AppRuntimeConfig); p != nil {
+	if p := upload.CacheProviderFromConfig(config.AppRuntimeConfig); p != nil {
 		data, err := p.Read(r.Context(), key)
 		if err != nil {
 			http.NotFound(w, r)
@@ -95,13 +95,13 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, id, time.Now(), bytes.NewReader(data))
 		return
 	}
-	full := filepath.Join(runtimeconfig.AppRuntimeConfig.ImageCacheDir, sub1, sub2, id)
+	full := filepath.Join(config.AppRuntimeConfig.ImageCacheDir, sub1, sub2, id)
 	http.ServeFile(w, r, full)
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes))
-	if err := r.ParseMultipartForm(int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes)); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
+	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
 		http.Error(w, "bad upload", http.StatusBadRequest)
 		return
 	}
@@ -132,7 +132,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := id[:2], id[2:4]
 	fname := id + ext
-	if p := upload.ProviderFromConfig(runtimeconfig.AppRuntimeConfig); p != nil {
+	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			log.Printf("upload write: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -149,14 +149,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if cp := upload.CacheProviderFromConfig(runtimeconfig.AppRuntimeConfig); cp != nil {
+	if cp := upload.CacheProviderFromConfig(config.AppRuntimeConfig); cp != nil {
 		if err := cp.Write(r.Context(), path.Join(sub1, sub2, thumbName), tbuf.Bytes()); err != nil {
 			log.Printf("cache write: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 		if ccp, ok := cp.(upload.CacheProvider); ok {
-			_ = ccp.Cleanup(r.Context(), int64(runtimeconfig.AppRuntimeConfig.ImageCacheMaxBytes))
+			_ = ccp.Cleanup(r.Context(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes))
 		}
 	}
 

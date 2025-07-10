@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // DLQ stores messages in the database.
@@ -22,7 +22,7 @@ func (d DLQ) Record(ctx context.Context, message string) error {
 
 // Register registers the database provider.
 func Register() {
-	dlq.RegisterProvider("db", func(_ runtimeconfig.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
+	dlq.RegisterProvider("db", func(_ config.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
 		return DLQ{Queries: q}
 	})
 }

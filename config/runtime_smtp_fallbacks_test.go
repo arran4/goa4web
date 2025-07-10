@@ -1,10 +1,14 @@
-package runtimeconfig
+package config_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/arran4/goa4web/config"
+)
 
 func TestApplySMTPFallbacksUseUser(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "smtp", EmailSMTPUser: "user@example.com"}
-	if err := ApplySMTPFallbacks(&cfg); err != nil {
+	cfg := config.RuntimeConfig{EmailProvider: "smtp", EmailSMTPUser: "user@example.com"}
+	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if cfg.EmailFrom != "user@example.com" {
@@ -13,8 +17,8 @@ func TestApplySMTPFallbacksUseUser(t *testing.T) {
 }
 
 func TestApplySMTPFallbacksUseFrom(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "smtp", EmailFrom: "from@example.com"}
-	if err := ApplySMTPFallbacks(&cfg); err != nil {
+	cfg := config.RuntimeConfig{EmailProvider: "smtp", EmailFrom: "from@example.com"}
+	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if cfg.EmailSMTPUser != "from@example.com" {
@@ -23,22 +27,22 @@ func TestApplySMTPFallbacksUseFrom(t *testing.T) {
 }
 
 func TestApplySMTPFallbacksBothBlank(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "smtp"}
-	if err := ApplySMTPFallbacks(&cfg); err == nil {
+	cfg := config.RuntimeConfig{EmailProvider: "smtp"}
+	if err := config.ApplySMTPFallbacks(&cfg); err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestApplySMTPFallbacksNoSMTP(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "log"}
-	if err := ApplySMTPFallbacks(&cfg); err != nil {
+	cfg := config.RuntimeConfig{EmailProvider: "log"}
+	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 }
 
 func TestApplySMTPFallbacksBothSet(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "smtp", EmailFrom: "a@example.com", EmailSMTPUser: "user"}
-	if err := ApplySMTPFallbacks(&cfg); err != nil {
+	cfg := config.RuntimeConfig{EmailProvider: "smtp", EmailFrom: "a@example.com", EmailSMTPUser: "user"}
+	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if cfg.EmailFrom != "a@example.com" || cfg.EmailSMTPUser != "user" {
@@ -47,8 +51,8 @@ func TestApplySMTPFallbacksBothSet(t *testing.T) {
 }
 
 func TestApplySMTPFallbacksMismatch(t *testing.T) {
-	cfg := RuntimeConfig{EmailProvider: "smtp", EmailFrom: "a@example.com", EmailSMTPUser: "b@example.com"}
-	if err := ApplySMTPFallbacks(&cfg); err != nil {
+	cfg := config.RuntimeConfig{EmailProvider: "smtp", EmailFrom: "a@example.com", EmailSMTPUser: "b@example.com"}
+	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if cfg.EmailFrom != "a@example.com" || cfg.EmailSMTPUser != "b@example.com" {

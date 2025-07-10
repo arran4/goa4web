@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 //go:embed templates/root_usage.txt
@@ -41,7 +40,7 @@ func main() {
 // rootCmd is the top-level command state.
 type rootCmd struct {
 	fs         *flag.FlagSet
-	cfg        runtimeconfig.RuntimeConfig
+	cfg        config.RuntimeConfig
 	ConfigFile string
 	args       []string
 	db         *sql.DB
@@ -89,14 +88,14 @@ func parseRoot(args []string) (*rootCmd, error) {
 		}
 		return nil, fmt.Errorf("load config file: %w", err)
 	}
-	fs := runtimeconfig.NewRuntimeFlagSet(args[0])
+	fs := config.NewRuntimeFlagSet(args[0])
 	fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
 	fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
 	_ = fs.Parse(args[1:])
 	r.fs = fs
 	r.args = fs.Args()
 	r.ConfigFile = cfgPath
-	r.cfg = runtimeconfig.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
+	r.cfg = config.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
 	return r, nil
 }
 

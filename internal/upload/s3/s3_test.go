@@ -8,7 +8,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 	awsS3 "github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -53,7 +53,7 @@ func TestProviderCheckSuccess(t *testing.T) {
 	newClient = func(string) (api, error) { return mock, nil }
 	defer func() { newClient = orig }()
 
-	p := providerFromConfig(runtimeconfig.RuntimeConfig{EmailAWSRegion: "us-east-1", ImageUploadS3URL: "s3://bucket/path"})
+	p := providerFromConfig(config.RuntimeConfig{EmailAWSRegion: "us-east-1", ImageUploadS3URL: "s3://bucket/path"})
 	if p == nil {
 		t.Fatal("nil provider")
 	}
@@ -71,7 +71,7 @@ func TestProviderCheckWriteError(t *testing.T) {
 	newClient = func(string) (api, error) { return mock, nil }
 	defer func() { newClient = orig }()
 
-	p := providerFromConfig(runtimeconfig.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"})
+	p := providerFromConfig(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"})
 	if err := p.Check(nil); err == nil {
 		t.Fatal("expected error")
 	}
@@ -83,7 +83,7 @@ func TestProviderRead(t *testing.T) {
 	newClient = func(string) (api, error) { return mock, nil }
 	defer func() { newClient = orig }()
 
-	p := providerFromConfig(runtimeconfig.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"})
+	p := providerFromConfig(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"})
 	if p == nil {
 		t.Fatal("nil provider")
 	}

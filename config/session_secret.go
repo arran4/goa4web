@@ -1,4 +1,4 @@
-package runtimeconfig
+package config
 
 import (
 	"crypto/rand"
@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 )
@@ -25,7 +24,7 @@ func DefaultSessionSecretPath() string {
 	if common.Version == "dev" {
 		return defaultSecretName
 	}
-	if os.Getenv(config.EnvDocker) != "" {
+	if os.Getenv(EnvDocker) != "" {
 		return "/var/lib/goa4web/session_secret"
 	}
 	if os.Getenv("HOME") == "" && os.Getenv("XDG_CONFIG_HOME") == "" {

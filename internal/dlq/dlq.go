@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // DLQ records failed asynchronous operations.
@@ -23,7 +23,7 @@ func (LogDLQ) Record(_ context.Context, message string) error {
 
 // RegisterLogDLQ registers the log provider.
 func RegisterLogDLQ() {
-	RegisterProvider("log", func(runtimeconfig.RuntimeConfig, *dbpkg.Queries) DLQ {
+	RegisterProvider("log", func(config.RuntimeConfig, *dbpkg.Queries) DLQ {
 		return LogDLQ{}
 	})
 }

@@ -20,7 +20,6 @@ import (
 	sesProv "github.com/arran4/goa4web/internal/email/ses"
 	smtpProv "github.com/arran4/goa4web/internal/email/smtp"
 	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"strings"
 )
 
@@ -33,7 +32,7 @@ func init() {
 }
 
 func TestGetEmailProviderLog(t *testing.T) {
-	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "log"}
+	cfg := config.RuntimeConfig{EmailProvider: "log"}
 	p := email.ProviderFromConfig(cfg)
 	if _, ok := p.(logProv.Provider); !ok {
 		t.Errorf("expected LogProvider, got %#v", p)
@@ -41,7 +40,7 @@ func TestGetEmailProviderLog(t *testing.T) {
 }
 
 func TestGetEmailProviderUnknown(t *testing.T) {
-	cfg := runtimeconfig.RuntimeConfig{EmailProvider: "unknown"}
+	cfg := config.RuntimeConfig{EmailProvider: "unknown"}
 	if p := email.ProviderFromConfig(cfg); p != nil {
 		t.Errorf("expected nil for unknown provider, got %#v", p)
 	}
@@ -61,7 +60,7 @@ func TestEmailConfigPrecedence(t *testing.T) {
 		config.EnvSMTPHost:      "file",
 	}
 	_ = fs.Parse([]string{"--email-provider=smtp", "--smtp-port=25"})
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
 	if cfg.EmailProvider != "smtp" || cfg.EmailSMTPHost != "file" || cfg.EmailSMTPPort != "25" {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -72,7 +71,7 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvEmailProvider: "log",
 	}
-	cfg := runtimeconfig.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := config.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
 	if cfg.EmailProvider != "log" {
 		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}
@@ -204,7 +203,7 @@ func TestNotifyNewsSubscribers(t *testing.T) {
 }
 
 func TestGetEmailProviderSMTP(t *testing.T) {
-	p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{
+	p := email.ProviderFromConfig(config.RuntimeConfig{
 		EmailProvider:     "smtp",
 		EmailSMTPHost:     "localhost",
 		EmailSMTPPort:     "25",
@@ -221,13 +220,13 @@ func TestGetEmailProviderSMTP(t *testing.T) {
 }
 
 func TestGetEmailProviderLocal(t *testing.T) {
-	if _, ok := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "local"}).(localProv.Provider); !ok {
+	if _, ok := email.ProviderFromConfig(config.RuntimeConfig{EmailProvider: "local"}).(localProv.Provider); !ok {
 		t.Fatalf("expected LocalProvider")
 	}
 }
 
 func TestGetEmailProviderJMAP(t *testing.T) {
-	p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{
+	p := email.ProviderFromConfig(config.RuntimeConfig{
 		EmailProvider:     "jmap",
 		EmailJMAPEndpoint: "http://example.com",
 		EmailJMAPAccount:  "acct",
@@ -243,18 +242,18 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 }
 
 func TestGetEmailProviderSESNoCreds(t *testing.T) {
-	if p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
+	if p := email.ProviderFromConfig(config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
 		t.Errorf("expected nil provider, got %#v", p)
 	}
 }
 
 func TestProviderRegistry(t *testing.T) {
 	called := false
-	email.RegisterProvider("testprov", func(cfg runtimeconfig.RuntimeConfig) email.Provider {
+	email.RegisterProvider("testprov", func(cfg config.RuntimeConfig) email.Provider {
 		called = true
 		return logProv.Provider{}
 	})
-	p := email.ProviderFromConfig(runtimeconfig.RuntimeConfig{EmailProvider: "testprov"})
+	p := email.ProviderFromConfig(config.RuntimeConfig{EmailProvider: "testprov"})
 	if !called {
 		t.Fatal("factory not called")
 	}

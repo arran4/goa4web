@@ -46,7 +46,10 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pthid int32 = blog.ForumthreadID
+	var pthid int32
+	if blog.ForumthreadID.Valid {
+		pthid = blog.ForumthreadID.Int32
+	}
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
 		String: BloggerTopicName,
 		Valid:  true,
@@ -86,7 +89,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignThreadIdToBlogEntry(r.Context(), db.AssignThreadIdToBlogEntryParams{
-			ForumthreadID: pthid,
+			ForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
 			Idblogs:       int32(bid),
 		}); err != nil {
 			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)

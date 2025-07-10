@@ -19,7 +19,7 @@ WHERE idblogs = ?
 `
 
 type AssignThreadIdToBlogEntryParams struct {
-	ForumthreadID int32
+	ForumthreadID sql.NullInt32
 	Idblogs       int32
 }
 
@@ -135,7 +135,7 @@ ORDER BY b.written DESC
 
 type GetAllBlogEntriesByUserRow struct {
 	Idblogs            int32
-	ForumthreadID      int32
+	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 	Blog               sql.NullString
@@ -187,7 +187,7 @@ ORDER BY b.written DESC
 
 type GetBlogEntriesByIdsDescendingRow struct {
 	Idblogs            int32
-	ForumthreadID      int32
+	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 	Blog               sql.NullString
@@ -254,7 +254,7 @@ type GetBlogEntriesForUserDescendingParams struct {
 
 type GetBlogEntriesForUserDescendingRow struct {
 	Idblogs            int32
-	ForumthreadID      int32
+	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 	Blog               sql.NullString
@@ -327,7 +327,7 @@ type GetBlogEntriesForUserDescendingLanguagesParams struct {
 
 type GetBlogEntriesForUserDescendingLanguagesRow struct {
 	Idblogs            int32
-	ForumthreadID      int32
+	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 	Blog               sql.NullString
@@ -386,7 +386,7 @@ LIMIT 1
 
 type GetBlogEntryForUserByIdRow struct {
 	Idblogs            int32
-	ForumthreadID      int32
+	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 	Blog               sql.NullString

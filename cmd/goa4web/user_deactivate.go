@@ -126,9 +126,13 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list blogs: %w", err)
 	}
 	for _, b := range blogs {
+		var threadID int32
+		if b.ForumthreadID.Valid {
+			threadID = b.ForumthreadID.Int32
+		}
 		if err := qtx.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
 			Idblogs:            b.Idblogs,
-			ForumthreadID:      b.ForumthreadID,
+			ForumthreadID:      threadID,
 			UsersIdusers:       b.UsersIdusers,
 			LanguageIdlanguage: b.LanguageIdlanguage,
 			Blog:               b.Blog,

@@ -11,7 +11,7 @@ import (
 
 // GetPermissionsByUserID returns all permissions for the given user.
 func (q *Queries) GetPermissionsByUserID(ctx context.Context, userID int32) ([]*Permission, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT idpermissions, users_idusers, section, level FROM permissions WHERE users_idusers = ?", userID)
+	rows, err := q.db.QueryContext(ctx, "SELECT idpermissions, users_idusers, section, role FROM permissions WHERE users_idusers = ?", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -19,7 +19,7 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, userID int32) ([]*
 	var items []*Permission
 	for rows.Next() {
 		var p Permission
-		if err := rows.Scan(&p.Idpermissions, &p.UsersIdusers, &p.Section, &p.Level); err != nil {
+		if err := rows.Scan(&p.Idpermissions, &p.UsersIdusers, &p.Section, &p.Role); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -253,7 +253,7 @@ func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredPa
 	var cond []string
 	if arg.Role != "" {
 		query += " JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all'"
-		cond = append(cond, "p.level = ?")
+		cond = append(cond, "p.role = ?")
 		args = append(args, arg.Role)
 	}
 	if arg.Status != "" {
@@ -298,7 +298,7 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 	var cond []string
 	if arg.Role != "" {
 		query += " JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all'"
-		cond = append(cond, "p.level = ?")
+		cond = append(cond, "p.role = ?")
 		args = append(args, arg.Role)
 	}
 	cond = append(cond, "(LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))")
@@ -330,7 +330,7 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 // ListUserIDsByRole returns all user IDs with the specified role.
 func (q *Queries) ListUserIDsByRole(ctx context.Context, role string) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx,
-		"SELECT u.idusers FROM users u JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all' WHERE p.level = ? ORDER BY u.idusers",
+		"SELECT u.idusers FROM users u JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all' WHERE p.role = ? ORDER BY u.idusers",
 		role,
 	)
 	if err != nil {
@@ -454,7 +454,7 @@ func (q *Queries) SearchBloggers(ctx context.Context, arg SearchBloggersParams) 
 
 // GetPermissionsBySectionWithUsers lists permissions for a section with user info.
 func (q *Queries) GetPermissionsBySectionWithUsers(ctx context.Context, section string) ([]*PermissionWithUser, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email FROM permissions p JOIN users u ON u.idusers = p.users_idusers WHERE p.section = ? ORDER BY p.level", section)
+	rows, err := q.db.QueryContext(ctx, "SELECT p.idpermissions, p.users_idusers, p.section, p.role, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email FROM permissions p JOIN users u ON u.idusers = p.users_idusers WHERE p.section = ? ORDER BY p.role", section)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +462,7 @@ func (q *Queries) GetPermissionsBySectionWithUsers(ctx context.Context, section 
 	var items []*PermissionWithUser
 	for rows.Next() {
 		var p PermissionWithUser
-		if err := rows.Scan(&p.Idpermissions, &p.UsersIdusers, &p.Section, &p.Level, &p.Username, &p.Email); err != nil {
+		if err := rows.Scan(&p.Idpermissions, &p.UsersIdusers, &p.Section, &p.Role, &p.Username, &p.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)
@@ -853,7 +853,7 @@ func (q *Queries) ListUserInfo(ctx context.Context) ([]*UserInfoRow, error) {
                 IF(p.idpermissions IS NULL, 0, 1) AS admin,
                 MIN(s.created_at) AS created_at
                 FROM users u
-               LEFT JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all' AND p.level = 'administrator'
+               LEFT JOIN permissions p ON p.users_idusers = u.idusers AND p.section = 'all' AND p.role = 'administrator'
                LEFT JOIN sessions s ON s.users_idusers = u.idusers
                GROUP BY u.idusers
                ORDER BY u.idusers`)

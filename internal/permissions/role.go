@@ -1,9 +1,7 @@
 package permissions
 
 import (
-	"database/sql"
 	"net/http"
-	"strings"
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -22,20 +20,23 @@ func Allowed(r *http.Request, roles ...string) bool {
 		return false
 	}
 
-	user, uok := r.Context().Value(hcommon.KeyUser).(*dbpkg.User)
 	queries, qok := r.Context().Value(hcommon.KeyQueries).(*dbpkg.Queries)
-	if !uok || !qok {
+	if !qok {
 		return false
 	}
-	section := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")[0]
-	perm, err := queries.GetPermissionsByUserIdAndSectionAndSectionAll(r.Context(), dbpkg.GetPermissionsByUserIdAndSectionAndSectionAllParams{
-		UsersIdusers: user.Idusers,
-		Section:      sql.NullString{String: section, Valid: true},
-	})
-	if err != nil || !perm.Level.Valid {
+	var uid int32
+	if cd != nil {
+		uid = cd.UserID
+	}
+	if uid == 0 {
 		return false
 	}
-	cd = &corecommon.CoreData{SecurityLevel: perm.Level.String}
+	roleVal, err := queries.GetUserRole(r.Context(), uid)
+	if err != nil || !roleVal.Valid {
+		return false
+	}
+	cd = corecommon.NewCoreData(r.Context(), queries)
+	cd.SetRole(roleVal.String)
 	for _, lvl := range roles {
 		if cd.HasRole(lvl) {
 			return true

@@ -19,7 +19,6 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchutil"
 	"github.com/arran4/goa4web/runtimeconfig"
@@ -388,8 +387,10 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
-		if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
-			evt.Item = notif.BlogPostInfo{Author: u.Username.String}
+		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				evt.Item = notif.BlogPostInfo{Author: u.Username.String}
+			}
 		}
 	}
 

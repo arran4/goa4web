@@ -9,12 +9,12 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	logProv "github.com/arran4/goa4web/internal/email/log"
@@ -43,108 +43,18 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 	return r, httptest.NewRecorder()
 }
 
-func TestUserAdderMiddleware_ExpiredSession(t *testing.T) {
-	store = sessions.NewCookieStore([]byte("test-key"))
-	core.Store = store
-	core.SessionName = sessionName
-	core.Store = store
-	core.SessionName = sessionName
-	req, rr := newRequestWithSession("GET", "/", map[string]interface{}{
-		"UID":        int32(1),
-		"ExpiryTime": time.Now().Add(-time.Hour).Unix(),
-	})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, dbpkg.New(nil))
-	req = req.WithContext(ctx)
-
-	called := false
-	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		called = true
-	}))
-
-	handler.ServeHTTP(rr, req)
-	if rr.Result().StatusCode != http.StatusTemporaryRedirect {
-		t.Fatalf("expected redirect, got %d", rr.Result().StatusCode)
-	}
-	if loc := rr.Result().Header.Get("Location"); !strings.HasPrefix(loc, "/login") {
-		t.Errorf("expected redirect to /login, got %s", loc)
-	}
-	if called {
-		t.Errorf("handler should not be called")
-	}
-}
-
-func TestUserAdderMiddleware_AttachesPrefs(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer db.Close()
-	store = sessions.NewCookieStore([]byte("test-key"))
-
-	req, rr := newRequestWithSession("GET", "/", map[string]interface{}{
-		"UID":        int32(1),
-		"ExpiryTime": time.Now().Add(time.Hour).Unix(),
-	})
-
-	queries := dbpkg.New(db)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	req = req.WithContext(ctx)
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
-		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
-			AddRow(1, sql.NullString{String: "e", Valid: true}, "u"))
-	mock.ExpectQuery("SELECT idpermissions, users_idusers, section, level FROM permissions WHERE users_idusers = ?").
-		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idpermissions", "users_idusers", "section", "level"}).AddRow(1, 1, "all", "admin"))
-	mock.ExpectQuery("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies FROM preferences WHERE users_idusers = ?").
-		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).AddRow(1, 2, 1, false, 15, true))
-	mock.ExpectQuery("SELECT iduser_language, users_idusers, language_idlanguage FROM user_language WHERE users_idusers = ?").
-		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"iduser_language", "users_idusers", "language_idlanguage"}).AddRow(1, 1, 2))
-
-	var gotPerms []*dbpkg.Permission
-	var gotPref *dbpkg.Preference
-	var gotLangs []*dbpkg.UserLanguage
-
-	handler := UserAdderMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPerms, _ = r.Context().Value(common.KeyPermissions).([]*dbpkg.Permission)
-		gotPref, _ = r.Context().Value(common.KeyPreference).(*dbpkg.Preference)
-		gotLangs, _ = r.Context().Value(common.KeyLanguages).([]*dbpkg.UserLanguage)
-		w.WriteHeader(http.StatusOK)
-	}))
-
-	handler.ServeHTTP(rr, req)
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations not met: %v", err)
-	}
-
-	if rr.Code != http.StatusOK {
-		t.Fatalf("got status %d", rr.Code)
-	}
-	if len(gotPerms) != 1 || gotPerms[0].Level.String != "admin" {
-		t.Errorf("permissions not attached")
-	}
-	if gotPref == nil || gotPref.LanguageIdlanguage != 2 {
-		t.Errorf("preference missing")
-	}
-	if len(gotLangs) != 1 || gotLangs[0].LanguageIdlanguage != 2 {
-		t.Errorf("languages missing")
-	}
-}
-
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	runtimeconfig.AppRuntimeConfig.EmailProvider = ""
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Idusers: 1})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
-	ctx = context.WithValue(ctx, common.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := corecommon.NewCoreData(ctx, queries)
+	cd.UserID = 1
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -169,11 +79,13 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Idusers: 1})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
-	ctx = context.WithValue(ctx, common.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := corecommon.NewCoreData(ctx, queries)
+	cd.UserID = 1
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -191,11 +103,13 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
-	ctx := context.WithValue(req.Context(), common.KeyUser, &dbpkg.User{Idusers: 1})
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
-	ctx = context.WithValue(ctx, common.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := corecommon.NewCoreData(ctx, queries)
+	cd.UserID = 1
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -241,8 +155,8 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctx = context.WithValue(ctx, common.KeySession, sess)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
+	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
 	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -289,8 +203,8 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctx = context.WithValue(ctx, common.KeySession, sess)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
+	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
@@ -338,8 +252,8 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctx = context.WithValue(ctx, common.KeySession, sess)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
+	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).

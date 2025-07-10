@@ -6,6 +6,7 @@ import (
 	"fmt"
 	db "github.com/arran4/goa4web/internal/db"
 
+	"github.com/arran4/goa4web/a4code"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -124,9 +125,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			}
 			switch replyType {
 			case "full":
-				data.Text = common.ProcessCommentFullQuote(comment.Username.String, comment.Text.String)
+				data.Text = a4code.FullQuoteOf(comment.Username.String, comment.Text.String)
 			default:
-				data.Text = common.ProcessCommentQuote(comment.Username.String, comment.Text.String)
+				data.Text = a4code.QuoteOfText(comment.Username.String, comment.Text.String)
 			}
 		}
 

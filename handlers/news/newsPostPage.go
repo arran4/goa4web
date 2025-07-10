@@ -128,11 +128,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		editUrl := ""
 		editSaveUrl := ""
 		if uid == row.UsersIdusers {
-			editUrl = fmt.Sprintf("?editComment=%d", row.Idcomments)
-			editSaveUrl = "?"
-			// TODO
-			//editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadId, row.Idcomments)
-			//editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadId, row.Idcomments)
+			editUrl = fmt.Sprintf("?editComment=%d#edit", row.Idcomments)
+			editSaveUrl = fmt.Sprintf("/news/news/%d/comment/%d", pid, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
 				data.IsReplyable = false
 			}

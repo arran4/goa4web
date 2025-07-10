@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/arran4/goa4web/handlers/common"
@@ -23,8 +24,20 @@ func (n Notifier) NotifyChange(ctx context.Context, userID int32, emailAddr, pag
 		if err := emailutil.CreateEmailTemplateAndQueue(ctx, n.Queries, userID, emailAddr, page, action, item); err != nil {
 			return err
 		}
-	} else if err := emailutil.CreateEmailTemplateAndSend(ctx, n.EmailProvider, emailAddr, page, action, item); err != nil {
-		return err
+	} else {
+		if !emailutil.EmailSendingEnabled() {
+			return nil
+		}
+		msg, toAddr, err := emailutil.CreateEmailTemplate(ctx, emailAddr, page, action, item)
+		if err != nil {
+			return err
+		}
+		if n.EmailProvider == nil {
+			return fmt.Errorf("no provider")
+		}
+		if err := n.EmailProvider.Send(ctx, toAddr, msg); err != nil {
+			return err
+		}
 	}
 	if n.Queries != nil && common.NotificationsEnabled() && userID != 0 {
 		err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{

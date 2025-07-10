@@ -238,3 +238,23 @@ func NotifyThreadSubscribers(ctx context.Context, provider email.Provider, q *db
 		}
 	}
 }
+
+// NotifyNewsSubscribers queues update emails for users subscribed to the given news post.
+func NotifyNewsSubscribers(ctx context.Context, q *db.Queries, newsID, excludeUser int32, page string) {
+	if q == nil {
+		return
+	}
+	rows, err := q.ListUsersSubscribedToNews(ctx, db.ListUsersSubscribedToNewsParams{
+		Idsitenews: newsID,
+		Idusers:    excludeUser,
+	})
+	if err != nil {
+		log.Printf("Error: listUsersSubscribedToNews: %v", err)
+		return
+	}
+	for _, row := range rows {
+		if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
+			log.Printf("Error: notifyChange: %v", err)
+		}
+	}
+}

@@ -288,6 +288,81 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 	return items, nil
 }
 
+const listUsersSubscribedToNews = `-- name: ListUsersSubscribedToNews :many
+SELECT idsitenews, forumthread_id, t.language_idlanguage, t.users_idusers,
+    news, occurred, u.idusers, u.username, u.deleted_at,
+    p.idpreferences, p.language_idlanguage, p.users_idusers, p.emailforumupdates,
+    p.page_size, p.auto_subscribe_replies,
+    (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+FROM site_news t, users u, preferences p
+WHERE t.idsiteNews=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
+GROUP BY u.idusers
+`
+
+type ListUsersSubscribedToNewsParams struct {
+	Idsitenews int32
+	Idusers    int32
+}
+
+type ListUsersSubscribedToNewsRow struct {
+	Idsitenews           int32
+	ForumthreadID        int32
+	LanguageIdlanguage   int32
+	UsersIdusers         int32
+	News                 sql.NullString
+	Occurred             sql.NullTime
+	Idusers              int32
+	Username             sql.NullString
+	DeletedAt            sql.NullTime
+	Idpreferences        int32
+	LanguageIdlanguage_2 int32
+	UsersIdusers_2       int32
+	Emailforumupdates    sql.NullBool
+	PageSize             int32
+	AutoSubscribeReplies bool
+	Email                string
+}
+
+func (q *Queries) ListUsersSubscribedToNews(ctx context.Context, arg ListUsersSubscribedToNewsParams) ([]*ListUsersSubscribedToNewsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersSubscribedToNews, arg.Idsitenews, arg.Idusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListUsersSubscribedToNewsRow
+	for rows.Next() {
+		var i ListUsersSubscribedToNewsRow
+		if err := rows.Scan(
+			&i.Idsitenews,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.News,
+			&i.Occurred,
+			&i.Idusers,
+			&i.Username,
+			&i.DeletedAt,
+			&i.Idpreferences,
+			&i.LanguageIdlanguage_2,
+			&i.UsersIdusers_2,
+			&i.Emailforumupdates,
+			&i.PageSize,
+			&i.AutoSubscribeReplies,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsersSubscribedToThread = `-- name: ListUsersSubscribedToThread :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
     c.written, c.text, u.idusers,

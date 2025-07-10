@@ -125,7 +125,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &CoreData{Role: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	BlogAddPage(rr, req)
@@ -136,7 +136,7 @@ func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 
 func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &CoreData{Role: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	BlogEditPage(rr, req)
@@ -147,7 +147,7 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 
 func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/blogs/user/permissions", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &CoreData{Role: "reader"})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	GetPermissionsByUserIdAndSectionBlogsPage(rr, req)

@@ -15,7 +15,7 @@ func TestRequiredAccessAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.UserID = 1
-	cd.SecurityLevel = "writer"
+	cd.Role = "writer"
 	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -28,7 +28,7 @@ func TestRequiredAccessDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.UserID = 1
-	cd.SecurityLevel = "reader"
+	cd.Role = "reader"
 	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

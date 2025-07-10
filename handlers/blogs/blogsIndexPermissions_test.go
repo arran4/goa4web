@@ -10,7 +10,7 @@ import (
 func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
-	cd := &CoreData{SecurityLevel: "administrator", AdminMode: true}
+	cd := &CoreData{Role: "administrator", AdminMode: true}
 	CustomBlogIndex(cd, req)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("admin should see user permissions")
@@ -19,7 +19,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("admin should see write blog")
 	}
 
-	cd = &CoreData{SecurityLevel: "writer"}
+	cd = &CoreData{Role: "writer"}
 	CustomBlogIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
 		t.Errorf("writer should not see user permissions")
@@ -28,7 +28,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("writer should see write blog")
 	}
 
-	cd = &CoreData{SecurityLevel: "reader"}
+	cd = &CoreData{Role: "reader"}
 	CustomBlogIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") || corecommon.ContainsItem(cd.CustomIndexItems, "Write blog") {
 		t.Errorf("reader should not see writer/admin items")

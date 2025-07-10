@@ -24,7 +24,7 @@ type CoreData struct {
 	IndexItems       []IndexItem
 	CustomIndexItems []IndexItem
 	UserID           int32
-	SecurityLevel    string
+	Role             string
 	Title            string
 	AutoRefresh      bool
 	FeedsEnabled     bool
@@ -44,7 +44,7 @@ type CoreData struct {
 	perms        lazyValue[[]*db.Permission]
 	pref         lazyValue[*db.Preference]
 	langs        lazyValue[[]*db.UserLanguage]
-	lvl          lazyValue[string]
+	role         lazyValue[string]
 	announcement lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 
 	event *eventbus.Event
@@ -91,7 +91,7 @@ var rolePriority = map[string]int{
 }
 
 func (cd *CoreData) HasRole(role string) bool {
-	return rolePriority[cd.SecurityLevelLazy()] >= rolePriority[role]
+	return rolePriority[cd.RoleLazy()] >= rolePriority[role]
 }
 
 // ContainsItem returns true if items includes an entry with the given name.
@@ -104,12 +104,12 @@ func ContainsItem(items []IndexItem, name string) bool {
 	return false
 }
 
-// SecurityLevelLazy loads the security level if not already set.
-func (cd *CoreData) SecurityLevelLazy() string {
-	if cd.SecurityLevel != "" {
-		return cd.SecurityLevel
+// RoleLazy loads the user role if not already set.
+func (cd *CoreData) RoleLazy() string {
+	if cd.Role != "" {
+		return cd.Role
 	}
-	lvl, _ := cd.lvl.load(func() (string, error) {
+	lvl, _ := cd.role.load(func() (string, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return "reader", nil
 		}
@@ -122,8 +122,8 @@ func (cd *CoreData) SecurityLevelLazy() string {
 		}
 		return perm.Level.String, nil
 	})
-	if cd.SecurityLevel == "" {
-		cd.SecurityLevel = lvl
+	if cd.Role == "" {
+		cd.Role = lvl
 	}
 	return lvl
 }

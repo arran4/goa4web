@@ -10,7 +10,7 @@
     {{ range $i := $.CustomIndexItems }}
         <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}
-    {{ if eq $.SecurityLevel "administrator"}}
+    {{ if eq $.Role "administrator"}}
         <hr>
         <a href="{{ addmode "/admin" }}">Control center</a><br>
         {{ if $.AdminMode }}

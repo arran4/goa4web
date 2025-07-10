@@ -13,7 +13,7 @@ import (
 
 func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &corecommon.CoreData{SecurityLevel: "administrator"})
+	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &corecommon.CoreData{Role: "administrator"})
 	req = req.WithContext(ctx)
 
 	called := false
@@ -36,7 +36,7 @@ func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 
 func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &corecommon.CoreData{SecurityLevel: "reader"})
+	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &corecommon.CoreData{Role: "reader"})
 	req = req.WithContext(ctx)
 
 	called := false

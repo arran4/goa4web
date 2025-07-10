@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -43,9 +42,8 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		if cd != nil {
 			cd.SetEvent(evt)
 		}
-		ctx := context.WithValue(r.Context(), hcommon.KeyBusEvent, evt)
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
-		next.ServeHTTP(sr, r.WithContext(ctx))
+		next.ServeHTTP(sr, r)
 		if task != "" && sr.status < http.StatusBadRequest {
 			eventbus.DefaultBus.Publish(*evt)
 		}

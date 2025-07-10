@@ -96,7 +96,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd := common.NewCoreData(r.Context(), queries,
 			common.WithImageURLMapper(imagesign.MapURL),
 			common.WithSession(session))
-		cd.SecurityLevel = level
+		cd.Role = level
 		cd.IndexItems = idx
 		cd.UserID = uid
 		cd.Title = "Arran's Site"

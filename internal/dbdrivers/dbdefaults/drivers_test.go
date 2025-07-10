@@ -38,3 +38,23 @@ func TestRegistryNames(t *testing.T) {
 		}
 	}
 }
+
+type testDriver struct{}
+
+func (testDriver) Name() string                                   { return "test" }
+func (testDriver) Examples() []string                             { return nil }
+func (testDriver) OpenConnector(string) (driver.Connector, error) { return testConnector{}, nil }
+
+func TestConnectorRegistered(t *testing.T) {
+	orig := dbdrivers.Registry
+	t.Cleanup(func() { dbdrivers.Registry = orig })
+
+	dbdrivers.RegisterDriver(testDriver{})
+	c, err := dbdrivers.Connector("test", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := c.(testConnector); !ok {
+		t.Fatalf("unexpected connector type %T", c)
+	}
+}

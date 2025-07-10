@@ -3,7 +3,9 @@
 
     {{ template "getAllForumCategories" $ }}
 
+    {{ if .CanCreateThread }}
     <a href="/forum/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a><br />
+    {{ end }}
 
     {{ template "topicThreads" $ }}
 {{ template "tail" $ }}

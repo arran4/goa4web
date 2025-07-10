@@ -49,7 +49,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
 		Offset:             offset,
-		IsReplyable:        true,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
 	}
 
@@ -62,6 +61,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+
+	data.IsReplyable = CanReply(r, topicRow.Idforumtopic)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -116,7 +117,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 		data.Comments = append(data.Comments, &CommentPlus{
 			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       true,
+			ShowReply:                       data.IsReplyable,
 			EditUrl:                         editUrl,
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,

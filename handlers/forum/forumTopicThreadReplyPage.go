@@ -29,6 +29,11 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
+	if !CanReply(r, topicRow.Idforumtopic) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	if evt, ok := r.Context().Value(hcommon.KeyBusEvent).(*eventbus.Event); ok && evt != nil {
 		evt.Item = notif.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
 	}

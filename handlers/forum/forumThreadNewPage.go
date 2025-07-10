@@ -29,6 +29,13 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
+	vars := mux.Vars(r)
+	tid, _ := strconv.Atoi(vars["topic"])
+	if !CanCreateThread(r, int32(tid)) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*CoreData),
@@ -61,7 +68,10 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	// TODO check if the user has the right right to topic
+	if !CanCreateThread(r, int32(topicId)) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 
 	threadId, err := queries.MakeThread(r.Context(), int32(topicId))
 	if err != nil {

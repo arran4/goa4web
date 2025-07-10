@@ -26,6 +26,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		Categories              []*ForumcategoryPlus
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
+		CanCreateThread         bool
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -38,8 +39,9 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	topicId, _ := strconv.Atoi(vars["topic"])
 
 	data := &Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
-		Admin:    true,
+		CoreData:        r.Context().Value(common.KeyCoreData).(*CoreData),
+		Admin:           true,
+		CanCreateThread: CanCreateThread(r, int32(topicId)),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {

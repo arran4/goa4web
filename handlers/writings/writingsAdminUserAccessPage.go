@@ -50,7 +50,6 @@ func AdminUserAccessPage(w http.ResponseWriter, r *http.Request) {
 func AdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	where := r.PostFormValue("where")
 	level := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
@@ -59,16 +58,9 @@ func AdminUserAccessAllowActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
+	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Section: sql.NullString{
-			String: where,
-			Valid:  true,
-		},
-		Role: sql.NullString{
-			String: level,
-			Valid:  true,
-		},
+		Name:         level,
 	}); err != nil {
 		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -196,13 +196,20 @@ CREATE TABLE `linker_search` (
   KEY `searchwordlist_has_linker_FKIndex2` (`linker_id`)
 );
 
-CREATE TABLE `permissions` (
+CREATE TABLE `roles` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `name` tinytext NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `roles_name_idx` (`name`(255))
+);
+
+CREATE TABLE `user_roles` (
   `idpermissions` int(10) NOT NULL AUTO_INCREMENT,
-  `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `section` tinytext DEFAULT NULL,
-  `role` tinyblob DEFAULT NULL,
+  `users_idusers` int(10) NOT NULL,
+  `role_id` int(10) NOT NULL,
   PRIMARY KEY (`idpermissions`),
-  KEY `permissions_FKIndex1` (`users_idusers`)
+  KEY `user_roles_user_idx` (`users_idusers`),
+  KEY `user_roles_role_idx` (`role_id`)
 );
 
 CREATE TABLE `preferences` (

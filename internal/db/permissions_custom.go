@@ -10,24 +10,19 @@ import (
 type PermissionWithUser struct {
 	Idpermissions int32
 	UsersIdusers  int32
-	Section       sql.NullString
 	Role          sql.NullString
 	Username      sql.NullString
 	Email         sql.NullString
 }
 
 // GetPermissionsWithUsers returns all permissions joined with user details.
-func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user, section sql.NullString) ([]*PermissionWithUser, error) {
-	query := `SELECT p.idpermissions, p.users_idusers, p.section, p.level, u.username, u.email FROM permissions p JOIN users u ON u.idusers = p.users_idusers`
+func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user sql.NullString) ([]*PermissionWithUser, error) {
+	query := `SELECT ur.idpermissions, ur.users_idusers, r.name, u.username, u.email FROM user_roles ur JOIN users u ON u.idusers = ur.users_idusers JOIN roles r ON ur.role_id = r.id`
 	var args []interface{}
 	var cond []string
 	if user.Valid {
 		cond = append(cond, "u.username = ?")
 		args = append(args, user.String)
-	}
-	if section.Valid {
-		cond = append(cond, "p.section = ?")
-		args = append(args, section.String)
 	}
 	if len(cond) > 0 {
 		query += " WHERE " + strings.Join(cond, " AND ")
@@ -40,7 +35,7 @@ func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user, section sql
 	var items []*PermissionWithUser
 	for rows.Next() {
 		var i PermissionWithUser
-		if err := rows.Scan(&i.Idpermissions, &i.UsersIdusers, &i.Section, &i.Role, &i.Username, &i.Email); err != nil {
+		if err := rows.Scan(&i.Idpermissions, &i.UsersIdusers, &i.Role, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -54,15 +49,14 @@ func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user, section sql
 	return items, nil
 }
 
-// UpdatePermission modifies an existing permission's section and role.
+// UpdatePermission modifies an existing user's role.
 type UpdatePermissionParams struct {
-	ID      int32
-	Section sql.NullString
-	Role    sql.NullString
+	ID   int32
+	Role string
 }
 
 func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
-	const query = `UPDATE permissions SET section = ?, role = ? WHERE idpermissions = ?`
-	_, err := q.db.ExecContext(ctx, query, arg.Section, arg.Role, arg.ID)
+	const query = `UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE idpermissions = ?`
+	_, err := q.db.ExecContext(ctx, query, arg.Role, arg.ID)
 	return err
 }

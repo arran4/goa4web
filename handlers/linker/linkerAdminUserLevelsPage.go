@@ -16,7 +16,7 @@ import (
 
 func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type PermissionUser struct {
-		*db.Permission
+		*db.GetUserRolesRow
 		Username sql.NullString
 		Email    sql.NullString
 	}
@@ -33,7 +33,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	rows, err := queries.GetUsersPermissions(r.Context())
+	rows, err := queries.GetUserRoles(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -51,7 +51,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("GetUserById Error: %s", err)
 			continue
 		}
-		perms = append(perms, &PermissionUser{Permission: p, Username: row.Username, Email: row.Email})
+		perms = append(perms, &PermissionUser{GetUserRolesRow: p, Username: row.Username, Email: row.Email})
 	}
 
 	if data.Search != "" {
@@ -77,7 +77,6 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
-	where := r.PostFormValue("where")
 	level := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
 		return r == ',' || r == '\n' || r == '\r' || r == '\t' || r == ' '
@@ -91,10 +90,9 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("GetUserByUsername Error: %s", err)
 			continue
 		}
-		if err := queries.PermissionUserAllow(r.Context(), db.PermissionUserAllowParams{
+		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 			UsersIdusers: u.Idusers,
-			Section:      sql.NullString{String: where, Valid: true},
-			Role:         sql.NullString{String: level, Valid: true},
+			Name:         level,
 		}); err != nil {
 			log.Printf("permissionUserAllow Error: %s", err)
 		}
@@ -113,7 +111,7 @@ func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, idStr := range ids {
 		permid, _ := strconv.Atoi(idStr)
-		if err := queries.PermissionUserDisallow(r.Context(), int32(permid)); err != nil {
+		if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
 			log.Printf("permissionUserDisallow Error: %s", err)
 		}
 	}

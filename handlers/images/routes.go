@@ -20,7 +20,6 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/upload"
-	handlerspkg "github.com/arran4/goa4web/pkg/handlers"
 	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/disintegration/imaging"
@@ -63,7 +62,7 @@ func verify(data, tsStr, sig string) bool { return imagesign.Verify(data, tsStr,
 // RegisterRoutes attaches the image endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/images/upload/image", uploadHandler).Methods(http.MethodPost)
-	r.HandleFunc("/images/pasteimg.js", handlerspkg.PasteImageJS).Methods(http.MethodGet)
+	r.HandleFunc("/images/pasteimg.js", hcommon.PasteImageJS).Methods(http.MethodGet)
 	r.Handle("/images/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).Methods(http.MethodGet)
 	r.Handle("/images/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).Methods(http.MethodGet)
 }

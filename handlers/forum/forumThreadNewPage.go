@@ -61,7 +61,21 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	// TODO check if the user has the right right to topic
+	cd := r.Context().Value(hcommon.KeyCoreData).(*CoreData)
+	allowed := cd.HasRole("writer") || cd.HasRole("administrator")
+	if !allowed {
+		ok, err := canCreateThread(r.Context(), queries, int32(topicId), uid)
+		if err != nil {
+			log.Printf("Error: canCreateThread: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		allowed = ok
+	}
+	if !allowed {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 
 	threadId, err := queries.MakeThread(r.Context(), int32(topicId))
 	if err != nil {

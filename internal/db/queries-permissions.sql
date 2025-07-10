@@ -2,7 +2,7 @@
 -- This query returns the role for a user.
 -- Result:
 --   role (string)
-SELECT p.level AS role
+SELECT p.level AS user_role
 FROM permissions p
 WHERE p.users_idusers = ?
 LIMIT 1;

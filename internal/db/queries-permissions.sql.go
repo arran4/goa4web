@@ -347,7 +347,7 @@ func (q *Queries) GetPermissionsByUserIdAndSectionWritings(ctx context.Context) 
 }
 
 const getUserRole = `-- name: GetUserRole :one
-SELECT p.level AS role
+SELECT p.level AS user_role
 FROM permissions p
 WHERE p.users_idusers = ?
 LIMIT 1
@@ -359,9 +359,9 @@ LIMIT 1
 //	role (string)
 func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (sql.NullString, error) {
 	row := q.db.QueryRowContext(ctx, getUserRole, usersIdusers)
-	var role sql.NullString
-	err := row.Scan(&role)
-	return role, err
+	var user_role sql.NullString
+	err := row.Scan(&user_role)
+	return user_role, err
 }
 
 const getUsersPermissions = `-- name: GetUsersPermissions :many

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // SentMail records a delivered email message.
@@ -66,7 +66,7 @@ func (p *Provider) Send(_ context.Context, to mail.Address, rawEmailMessage []by
 	return nil
 }
 
-func providerFromConfig(runtimeconfig.RuntimeConfig) email.Provider { return &Provider{} }
+func providerFromConfig(config.RuntimeConfig) email.Provider { return &Provider{} }
 
 // Register registers the mock provider factory.
 func Register() { email.RegisterProvider("mock", providerFromConfig) }

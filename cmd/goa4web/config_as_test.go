@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestToEnvMapLoops(t *testing.T) {
-	cfg := runtimeconfig.RuntimeConfig{
+	cfg := config.RuntimeConfig{
 		EmailEnabled:         false,
 		NotificationsEnabled: false,
 		CSRFEnabled:          true,
@@ -18,7 +17,7 @@ func TestToEnvMapLoops(t *testing.T) {
 		StatsStartYear:       2020,
 	}
 
-	m, err := runtimeconfig.ToEnvMap(cfg, "")
+	m, err := config.ToEnvMap(cfg, "")
 	if err != nil {
 		t.Fatalf("ToEnvMap: %v", err)
 	}

@@ -1,10 +1,9 @@
-package runtimeconfig
+package config
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
 
@@ -14,21 +13,21 @@ import (
 func ToEnvMap(cfg RuntimeConfig, cfgPath string) (map[string]string, error) {
 	m := ValuesMap(cfg)
 
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
+	fileVals, err := LoadAppConfigFile(core.OSFS{}, cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("load config file: %w", err)
 	}
 
-	m[config.EnvConfigFile] = cfgPath
-	m[config.EnvSessionSecret] = os.Getenv(config.EnvSessionSecret)
-	sessionFile := fileVals[config.EnvSessionSecretFile]
+	m[EnvConfigFile] = cfgPath
+	m[EnvSessionSecret] = os.Getenv(EnvSessionSecret)
+	sessionFile := fileVals[EnvSessionSecretFile]
 	if sessionFile == "" {
-		sessionFile = os.Getenv(config.EnvSessionSecretFile)
+		sessionFile = os.Getenv(EnvSessionSecretFile)
 	}
 	if sessionFile == "" {
 		sessionFile = DefaultSessionSecretPath()
 	}
-	m[config.EnvSessionSecretFile] = sessionFile
+	m[EnvSessionSecretFile] = sessionFile
 
 	return m, nil
 }

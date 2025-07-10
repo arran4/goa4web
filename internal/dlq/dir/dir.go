@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/segmentio/ksuid"
 )
 
@@ -31,7 +31,7 @@ func (d *DLQ) Record(_ context.Context, message string) error {
 
 // Register registers the directory provider.
 func Register() {
-	dlq.RegisterProvider("dir", func(cfg runtimeconfig.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
+	dlq.RegisterProvider("dir", func(cfg config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
 		return &DLQ{Dir: cfg.DLQFile}
 	})
 }

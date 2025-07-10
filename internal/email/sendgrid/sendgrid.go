@@ -17,8 +17,8 @@ import (
 	sg "github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // Built indicates whether the SendGrid provider is compiled in.
@@ -90,7 +90,7 @@ func providerFromConfig(key string, from string) email.Provider {
 
 // Register registers the SendGrid provider factory.
 func Register() {
-	email.RegisterProvider("sendgrid", func(cfg runtimeconfig.RuntimeConfig) email.Provider {
+	email.RegisterProvider("sendgrid", func(cfg config.RuntimeConfig) email.Provider {
 		return providerFromConfig(cfg.EmailSendGridKey, cfg.EmailFrom)
 	})
 }

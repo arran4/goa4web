@@ -5,13 +5,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/arran4/goa4web/config"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestGetPageSize(t *testing.T) {
-	orig := runtimeconfig.AppRuntimeConfig
-	defer func() { runtimeconfig.AppRuntimeConfig = orig }()
+	orig := config.AppRuntimeConfig
+	defer func() { config.AppRuntimeConfig = orig }()
 
 	tests := []struct {
 		name string
@@ -26,9 +26,9 @@ func TestGetPageSize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			runtimeconfig.AppRuntimeConfig.PageSizeMin = 5
-			runtimeconfig.AppRuntimeConfig.PageSizeMax = 50
-			runtimeconfig.AppRuntimeConfig.PageSizeDefault = 15
+			config.AppRuntimeConfig.PageSizeMin = 5
+			config.AppRuntimeConfig.PageSizeMax = 50
+			config.AppRuntimeConfig.PageSizeDefault = 15
 
 			r := httptest.NewRequest("GET", "/", nil)
 			ctx := r.Context()

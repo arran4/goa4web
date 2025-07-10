@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/mail"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // Provider just logs emails for development purposes.
@@ -17,7 +17,7 @@ func (Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byt
 	return nil
 }
 
-func providerFromConfig(runtimeconfig.RuntimeConfig) email.Provider { return Provider{} }
+func providerFromConfig(config.RuntimeConfig) email.Provider { return Provider{} }
 
 // Register registers the log provider factory.
 func Register() { email.RegisterProvider("log", providerFromConfig) }

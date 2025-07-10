@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 
 	"github.com/arran4/goa4web/core"
 )
@@ -120,9 +120,9 @@ func TestCSRFDisabled(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}).Methods("POST")
 
-	orig := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.CSRFEnabled = false
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = orig })
+	orig := config.AppRuntimeConfig
+	config.AppRuntimeConfig.CSRFEnabled = false
+	t.Cleanup(func() { config.AppRuntimeConfig = orig })
 
 	var handler http.Handler = r
 	if CSRFEnabled() {

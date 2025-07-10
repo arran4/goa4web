@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/app"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 //go:embed templates/serve_usage.txt
@@ -28,7 +27,7 @@ type serveCmd struct {
 
 func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 	c := &serveCmd{rootCmd: parent}
-	fs := runtimeconfig.NewRuntimeFlagSet("serve")
+	fs := config.NewRuntimeFlagSet("serve")
 	fs.Usage = c.Usage
 	if err := fs.Parse(args); err != nil {
 		return nil, err
@@ -47,12 +46,12 @@ func (c *serveCmd) Run() error {
 		return fmt.Errorf("load config file: %w", err)
 	}
 	app.ConfigFile = c.rootCmd.ConfigFile
-	cfg := runtimeconfig.GenerateRuntimeConfig(c.fs, fileVals, os.Getenv)
-	secret, err := runtimeconfig.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	cfg := config.GenerateRuntimeConfig(c.fs, fileVals, os.Getenv)
+	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
-	signKey, err := runtimeconfig.LoadOrCreateSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile)
+	signKey, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("image sign secret: %w", err)
 	}

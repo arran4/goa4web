@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func TestNotificationsQueries(t *testing.T) {
@@ -70,13 +70,13 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	origCfg := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
-	runtimeconfig.AppRuntimeConfig.AdminNotify = true
-	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test"
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.AdminEmails = "a@test"
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	rows := sqlmock.NewRows([]string{
 		"idcomments", "forumthread_id", "users_idusers", "language_idlanguage",
 		"written", "text", "idusers", "email", "username",
@@ -104,13 +104,13 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	origCfg := runtimeconfig.AppRuntimeConfig
-	runtimeconfig.AppRuntimeConfig.EmailEnabled = true
-	runtimeconfig.AppRuntimeConfig.AdminNotify = true
-	runtimeconfig.AppRuntimeConfig.AdminEmails = "a@test"
-	runtimeconfig.AppRuntimeConfig.EmailFrom = "from@example.com"
-	runtimeconfig.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { runtimeconfig.AppRuntimeConfig = origCfg })
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.AdminEmails = "a@test"
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	mock.ExpectQuery("UserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))

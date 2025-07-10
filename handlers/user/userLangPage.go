@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	db "github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,7 @@ func saveUserLanguagePreference(r *http.Request, queries *db.Queries, uid int32)
 			return queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
 				LanguageIdlanguage: int32(langID),
 				UsersIdusers:       uid,
-				PageSize:           int32(runtimeconfig.AppRuntimeConfig.PageSizeDefault),
+				PageSize:           int32(config.AppRuntimeConfig.PageSizeDefault),
 			})
 		}
 		return err
@@ -122,7 +122,7 @@ func saveDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) error 
 	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			_, err = queries.DB().ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", langID, uid, runtimeconfig.AppRuntimeConfig.PageSizeDefault)
+			_, err = queries.DB().ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", langID, uid, config.AppRuntimeConfig.PageSizeDefault)
 			return err
 		}
 		return err

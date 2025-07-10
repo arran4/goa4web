@@ -21,7 +21,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/emailutil"
 
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
 )
 
 // ErrMailNotConfigured is returned when test mail has no provider configured.
@@ -151,11 +151,11 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	addr := emails[0].Email
 	base := "http://" + r.Host
-	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
+	if config.AppRuntimeConfig.HTTPHostname != "" {
+		base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
 	}
 	pageURL := base + r.URL.Path
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if provider == nil {
 		q := url.QueryEscape(ErrMailNotConfigured.Error())
 		// Display the error without redirecting so the POST isn't repeated.
@@ -195,8 +195,8 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0})
 	page := "http://" + r.Host + "/usr/email/verify?code=" + code
-	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+	if config.AppRuntimeConfig.HTTPHostname != "" {
+		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
 	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, common.TaskUserEmailVerification, nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
@@ -225,8 +225,8 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)})
 	page := "http://" + r.Host + "/usr/email/verify?code=" + code
-	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+	if config.AppRuntimeConfig.HTTPHostname != "" {
+		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
 	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, common.TaskUserEmailVerification, nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

@@ -15,8 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	awsS3 "github.com/aws/aws-sdk-go/service/s3"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/upload"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // Built indicates whether the S3 provider is compiled in.
@@ -35,7 +35,7 @@ type Provider struct {
 	Prefix string
 }
 
-func providerFromConfig(cfg runtimeconfig.RuntimeConfig) upload.Provider {
+func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
 	raw := cfg.ImageUploadS3URL
 	if raw == "" {
 		raw = cfg.ImageUploadDir

@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	admin "github.com/arran4/goa4web/handlers/admin"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // configReloadCmd implements "config reload".
@@ -35,7 +34,7 @@ func (c *configReloadCmd) Run() error {
 	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		return fmt.Errorf("load config file: %w", err)
 	}
-	admin.Srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
+	admin.Srv.Config = config.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
 	if c.rootCmd.Verbosity > 0 {
 		fmt.Println("configuration reloaded")
 	}

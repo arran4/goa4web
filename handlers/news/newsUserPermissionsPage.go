@@ -16,7 +16,7 @@ import (
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
-	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
+	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

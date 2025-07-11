@@ -23,10 +23,11 @@ import (
 )
 
 var rolePriority = map[string]int{
-	"reader":        1,
-	"writer":        2,
-	"moderator":     3,
-	"administrator": 4,
+	"anonymous":      1,
+	"normal user":    2,
+	"content writer": 2,
+	"moderator":      3,
+	"administrator":  4,
 }
 
 // handleDie responds with an internal server error.
@@ -77,7 +78,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		level := "reader"
+		level := "anonymous"
 		if uid != 0 {
 			perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
 			if err == nil {

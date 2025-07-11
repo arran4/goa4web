@@ -17,7 +17,7 @@ import (
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
-	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
+	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

@@ -25,7 +25,7 @@ func parseUserUpdateCmd(parent *userCmd, args []string) (*userUpdateCmd, error) 
 	fs, rest, err := parseFlags("update", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.Username, "username", "", "username")
 		fs.StringVar(&c.Email, "email", "", "email address")
-		fs.StringVar(&c.Role, "role", "", "set user role (administrator, writer, reader)")
+		fs.StringVar(&c.Role, "role", "", "set user role (administrator, normal user, content writer, anonymous)")
 	})
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (c *userUpdateCmd) Run() error {
 	}
 	if c.Role != "" {
 		switch c.Role {
-		case "administrator", "writer", "reader":
+		case "administrator", "normal user", "content writer", "moderator", "anonymous":
 		default:
 			return fmt.Errorf("invalid role %q", c.Role)
 		}
@@ -78,7 +78,7 @@ func (c *userUpdateCmd) Run() error {
 			if perm.Role == "administrator" && c.Role != "administrator" && c.rootCmd.Verbosity > 0 {
 				fmt.Printf("warning: removing administrator from %s\n", c.Username)
 			}
-			if c.Role == "reader" || perm.Role != c.Role {
+			if c.Role == "anonymous" || perm.Role != c.Role {
 				if err := queries.DeleteUserRole(ctx, perm.IduserRoles); err != nil {
 					return fmt.Errorf("update role: %w", err)
 				}
@@ -86,7 +86,7 @@ func (c *userUpdateCmd) Run() error {
 			}
 		}
 
-		if c.Role != "reader" && (perm == nil || perm.Role != c.Role) {
+		if c.Role != "anonymous" && (perm == nil || perm.Role != c.Role) {
 			if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
 				UsersIdusers: u.Idusers,
 				Name:         c.Role,

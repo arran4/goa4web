@@ -85,7 +85,7 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 	return val
 }
 
-var rolePriority = map[string]int{
+var RolePriority = map[string]int{
 	"reader":        1,
 	"writer":        2,
 	"moderator":     3,
@@ -93,7 +93,7 @@ var rolePriority = map[string]int{
 }
 
 func (cd *CoreData) HasRole(role string) bool {
-	return rolePriority[cd.Role()] >= rolePriority[role]
+	return RolePriority[cd.Role()] >= RolePriority[role]
 }
 
 // ContainsItem returns true if items includes an entry with the given name.
@@ -134,7 +134,7 @@ func (cd *CoreData) Role() string {
 	roles := cd.Roles()
 	best := "reader"
 	for _, r := range roles {
-		if rolePriority[r] > rolePriority[best] {
+		if RolePriority[r] > RolePriority[best] {
 			best = r
 		}
 	}

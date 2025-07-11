@@ -204,12 +204,29 @@ CREATE TABLE `roles` (
 );
 
 CREATE TABLE `user_roles` (
-  `idpermissions` int(10) NOT NULL AUTO_INCREMENT,
+  `iduser_roles` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL,
   `role_id` int(10) NOT NULL,
-  PRIMARY KEY (`idpermissions`),
+  PRIMARY KEY (`iduser_roles`),
   KEY `user_roles_user_idx` (`users_idusers`),
   KEY `user_roles_role_idx` (`role_id`)
+);
+
+CREATE TABLE `grants` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `user_id` int(10) DEFAULT NULL,
+  `role_id` int(10) DEFAULT NULL,
+  `section` varchar(64) NOT NULL,
+  `item` varchar(64) DEFAULT NULL,
+  `rule_type` varchar(32) NOT NULL,
+  `item_id` int(10) DEFAULT NULL,
+  `item_rule` varchar(64) DEFAULT NULL,
+  `action` varchar(64) NOT NULL,
+  `extra` varchar(64) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
 );
 
 CREATE TABLE `preferences` (
@@ -259,16 +276,16 @@ CREATE TABLE `site_news_search` (
   KEY `siteNews_has_searchwordlist_FKIndex2` (`searchwordlist_idsearchwordlist`)
 );
 
-CREATE TABLE `topicrestrictions` (
+CREATE TABLE `topic_permissions` (
   `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
-  `viewlevel` int(10) DEFAULT NULL,
-  `replylevel` int(10) DEFAULT NULL,
-  `newthreadlevel` int(10) DEFAULT NULL,
-  `seelevel` int(10) DEFAULT NULL,
-  `invitelevel` int(10) DEFAULT NULL,
-  `readlevel` int(10) DEFAULT NULL,
-  `modlevel` int(10) DEFAULT NULL,
-  `adminlevel` int(10) DEFAULT NULL,
+  `view_role_id` int(10) DEFAULT NULL,
+  `reply_role_id` int(10) DEFAULT NULL,
+  `newthread_role_id` int(10) DEFAULT NULL,
+  `see_role_id` int(10) DEFAULT NULL,
+  `invite_role_id` int(10) DEFAULT NULL,
+  `read_role_id` int(10) DEFAULT NULL,
+  `mod_role_id` int(10) DEFAULT NULL,
+  `admin_role_id` int(10) DEFAULT NULL,
   PRIMARY KEY (`forumtopic_idforumtopic`)
 );
 
@@ -312,10 +329,10 @@ CREATE TABLE `user_emails` (
   KEY `user_emails_user_idx` (`user_id`)
 );
 
-CREATE TABLE `userstopiclevel` (
+CREATE TABLE `user_topic_permissions` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
-  `level` int(10) DEFAULT NULL,
+  `role_id` int(10) DEFAULT NULL,
   `invitemax` int(10) DEFAULT NULL,
   `expires_at` datetime DEFAULT NULL,
   PRIMARY KEY (`users_idusers`,`forumtopic_idforumtopic`),
@@ -359,11 +376,11 @@ CREATE TABLE `writing_search` (
   KEY `searchwordlist_has_writing_FKIndex2` (`writing_id`)
 );
 
-CREATE TABLE `writing_approved_users` (
+CREATE TABLE `writing_user_permissions` (
   `writing_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `readdoc` tinyint(1) DEFAULT NULL,
-  `editdoc` tinyint(1) DEFAULT NULL,
+  `can_read` tinyint(1) DEFAULT NULL,
+  `can_edit` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`writing_id`,`users_idusers`),
   KEY `writing_has_users_FKIndex1` (`writing_id`),
   KEY `writing_has_users_FKIndex2` (`users_idusers`)

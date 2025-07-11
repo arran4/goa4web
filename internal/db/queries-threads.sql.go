@@ -31,13 +31,13 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 }
 
 const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.seelevel, u.level
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.see_role_id, u.role_id
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND th.idforumthread=?
+WHERE IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0) AND th.idforumthread=?
 ORDER BY t.lastaddition DESC
 `
 
@@ -55,8 +55,8 @@ type GetThreadLastPosterAndPermsRow struct {
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
 	Lastposterusername     sql.NullString
-	Seelevel               sql.NullInt32
-	Level                  sql.NullInt32
+	SeeRoleID              sql.NullInt32
+	RoleID                 sql.NullInt32
 }
 
 func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
@@ -71,8 +71,8 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 		&i.Lastaddition,
 		&i.Locked,
 		&i.Lastposterusername,
-		&i.Seelevel,
-		&i.Level,
+		&i.SeeRoleID,
+		&i.RoleID,
 	)
 	return &i, err
 }

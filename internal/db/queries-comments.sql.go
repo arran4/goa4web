@@ -113,10 +113,18 @@ SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN user_roles ur ON ur.users_idusers = ?
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.idcomments = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE c.idcomments = ? AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ur.users_idusers OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id = ur.role_id)
+)
 LIMIT 1
 `
 
@@ -204,11 +212,19 @@ SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN user_roles ur ON ur.users_idusers = ?
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
-WHERE c.Idcomments IN (/*SLICE:ids*/?)
+WHERE c.Idcomments IN (/*SLICE:ids*/?) AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ur.users_idusers OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id = ur.role_id)
+)
 ORDER BY c.written DESC
 `
 
@@ -286,10 +302,18 @@ SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN user_roles ur ON ur.users_idusers = ?
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.forumthread_id=? AND c.forumthread_id!=0 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE c.forumthread_id=? AND c.forumthread_id!=0 AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ur.users_idusers OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id = ur.role_id)
+)
 ORDER BY c.written
 `
 

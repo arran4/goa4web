@@ -79,7 +79,7 @@ func (c *userUpdateCmd) Run() error {
 				fmt.Printf("warning: removing administrator from %s\n", c.Username)
 			}
 			if c.Role == "reader" || perm.Role != c.Role {
-				if err := queries.DeleteUserRole(ctx, perm.Idpermissions); err != nil {
+				if err := queries.DeleteUserRole(ctx, perm.IduserRoles); err != nil {
 					return fmt.Errorf("update role: %w", err)
 				}
 				perm = nil

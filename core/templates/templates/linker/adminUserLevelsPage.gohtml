@@ -31,10 +31,7 @@
                 Usernames (space or comma separated):<br>
                 <textarea name="usernames" rows="2" cols="40"></textarea><br>
                 <select name="role">
-                    <option value="reader">reader</option>
-                    <option value="writer">writer</option>
-                    <option value="moderator">moderator</option>
-                    <option value="administrator">administrator</option>
+                    {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
                 </select>
             </td>
         </tr>

@@ -31,7 +31,7 @@ func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) 
 }
 
 const deleteTopicRestrictionsByForumTopicId = `-- name: DeleteTopicRestrictionsByForumTopicId :exec
-DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?
+DELETE FROM topic_permissions WHERE forumtopic_idforumtopic = ?
 `
 
 func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, forumtopicIdforumtopic int32) error {
@@ -41,20 +41,20 @@ func (q *Queries) DeleteTopicRestrictionsByForumTopicId(ctx context.Context, for
 
 const deleteUserRole = `-- name: DeleteUserRole :exec
 DELETE FROM user_roles
-WHERE idpermissions = ?
+WHERE iduser_roles = ?
 `
 
 // This query deletes a permission from the "permissions" table based on the provided "permid".
 // Parameters:
 //
 //	? - Permission ID to be deleted (int)
-func (q *Queries) DeleteUserRole(ctx context.Context, idpermissions int32) error {
-	_, err := q.db.ExecContext(ctx, deleteUserRole, idpermissions)
+func (q *Queries) DeleteUserRole(ctx context.Context, iduserRoles int32) error {
+	_, err := q.db.ExecContext(ctx, deleteUserRole, iduserRoles)
 	return err
 }
 
 const getAdministratorUserRole = `-- name: GetAdministratorUserRole :one
-SELECT ur.idpermissions, ur.users_idusers, ur.role_id
+SELECT ur.iduser_roles, ur.users_idusers, ur.role_id
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
 WHERE ur.users_idusers = ? AND r.name = 'administrator'
@@ -63,27 +63,27 @@ WHERE ur.users_idusers = ? AND r.name = 'administrator'
 func (q *Queries) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error) {
 	row := q.db.QueryRowContext(ctx, getAdministratorUserRole, usersIdusers)
 	var i UserRole
-	err := row.Scan(&i.Idpermissions, &i.UsersIdusers, &i.RoleID)
+	err := row.Scan(&i.IduserRoles, &i.UsersIdusers, &i.RoleID)
 	return &i, err
 }
 
 const getAllForumTopicRestrictionsWithForumTopicTitle = `-- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
-SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
+SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.view_role_id, r.reply_role_id, r.newthread_role_id, r.see_role_id, r.invite_role_id, r.read_role_id, r.mod_role_id, r.admin_role_id
 FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
 `
 
 type GetAllForumTopicRestrictionsWithForumTopicTitleRow struct {
 	Idforumtopic           int32
 	ForumtopicIdforumtopic sql.NullInt32
-	Viewlevel              sql.NullInt32
-	Replylevel             sql.NullInt32
-	Newthreadlevel         sql.NullInt32
-	Seelevel               sql.NullInt32
-	Invitelevel            sql.NullInt32
-	Readlevel              sql.NullInt32
-	Modlevel               sql.NullInt32
-	Adminlevel             sql.NullInt32
+	ViewRoleID             sql.NullInt32
+	ReplyRoleID            sql.NullInt32
+	NewthreadRoleID        sql.NullInt32
+	SeeRoleID              sql.NullInt32
+	InviteRoleID           sql.NullInt32
+	ReadRoleID             sql.NullInt32
+	ModRoleID              sql.NullInt32
+	AdminRoleID            sql.NullInt32
 }
 
 func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Context) ([]*GetAllForumTopicRestrictionsWithForumTopicTitleRow, error) {
@@ -98,14 +98,14 @@ func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Co
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.ForumtopicIdforumtopic,
-			&i.Viewlevel,
-			&i.Replylevel,
-			&i.Newthreadlevel,
-			&i.Seelevel,
-			&i.Invitelevel,
-			&i.Readlevel,
-			&i.Modlevel,
-			&i.Adminlevel,
+			&i.ViewRoleID,
+			&i.ReplyRoleID,
+			&i.NewthreadRoleID,
+			&i.SeeRoleID,
+			&i.InviteRoleID,
+			&i.ReadRoleID,
+			&i.ModRoleID,
+			&i.AdminRoleID,
 		); err != nil {
 			return nil, err
 		}
@@ -121,23 +121,23 @@ func (q *Queries) GetAllForumTopicRestrictionsWithForumTopicTitle(ctx context.Co
 }
 
 const getForumTopicRestrictionsByForumTopicId = `-- name: GetForumTopicRestrictionsByForumTopicId :many
-SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel
+SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.view_role_id, r.reply_role_id, r.newthread_role_id, r.see_role_id, r.invite_role_id, r.read_role_id, r.mod_role_id, r.admin_role_id
 FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?
 `
 
 type GetForumTopicRestrictionsByForumTopicIdRow struct {
 	Idforumtopic           int32
 	ForumtopicIdforumtopic sql.NullInt32
-	Viewlevel              sql.NullInt32
-	Replylevel             sql.NullInt32
-	Newthreadlevel         sql.NullInt32
-	Seelevel               sql.NullInt32
-	Invitelevel            sql.NullInt32
-	Readlevel              sql.NullInt32
-	Modlevel               sql.NullInt32
-	Adminlevel             sql.NullInt32
+	ViewRoleID             sql.NullInt32
+	ReplyRoleID            sql.NullInt32
+	NewthreadRoleID        sql.NullInt32
+	SeeRoleID              sql.NullInt32
+	InviteRoleID           sql.NullInt32
+	ReadRoleID             sql.NullInt32
+	ModRoleID              sql.NullInt32
+	AdminRoleID            sql.NullInt32
 }
 
 func (q *Queries) GetForumTopicRestrictionsByForumTopicId(ctx context.Context, idforumtopic int32) ([]*GetForumTopicRestrictionsByForumTopicIdRow, error) {
@@ -152,14 +152,14 @@ func (q *Queries) GetForumTopicRestrictionsByForumTopicId(ctx context.Context, i
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.ForumtopicIdforumtopic,
-			&i.Viewlevel,
-			&i.Replylevel,
-			&i.Newthreadlevel,
-			&i.Seelevel,
-			&i.Invitelevel,
-			&i.Readlevel,
-			&i.Modlevel,
-			&i.Adminlevel,
+			&i.ViewRoleID,
+			&i.ReplyRoleID,
+			&i.NewthreadRoleID,
+			&i.SeeRoleID,
+			&i.InviteRoleID,
+			&i.ReadRoleID,
+			&i.ModRoleID,
+			&i.AdminRoleID,
 		); err != nil {
 			return nil, err
 		}
@@ -194,21 +194,20 @@ func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, 
 }
 
 const getUserRoles = `-- name: GetUserRoles :many
-SELECT ur.idpermissions, ur.users_idusers, r.name AS role
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
 `
 
 type GetUserRolesRow struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	Role          string
+	IduserRoles  int32
+	UsersIdusers int32
+	Role         string
 }
 
 // This query selects permissions information for admin users.
-// Result:
 //
-//	idpermissions (int)
+//	iduser_roles (int)
 //	role (string)
 //	username (string)
 //	email (string)
@@ -221,7 +220,7 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 	var items []*GetUserRolesRow
 	for rows.Next() {
 		var i GetUserRolesRow
-		if err := rows.Scan(&i.Idpermissions, &i.UsersIdusers, &i.Role); err != nil {
+		if err := rows.Scan(&i.IduserRoles, &i.UsersIdusers, &i.Role); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -236,8 +235,8 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 }
 
 const getUsersTopicLevelByUserIdAndThreadId = `-- name: GetUsersTopicLevelByUserIdAndThreadId :one
-SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at
-FROM userstopiclevel utl
+SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.role_id, utl.invitemax, utl.expires_at
+FROM user_topic_permissions utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 `
 
@@ -246,13 +245,13 @@ type GetUsersTopicLevelByUserIdAndThreadIdParams struct {
 	ForumtopicIdforumtopic int32
 }
 
-func (q *Queries) GetUsersTopicLevelByUserIdAndThreadId(ctx context.Context, arg GetUsersTopicLevelByUserIdAndThreadIdParams) (*Userstopiclevel, error) {
+func (q *Queries) GetUsersTopicLevelByUserIdAndThreadId(ctx context.Context, arg GetUsersTopicLevelByUserIdAndThreadIdParams) (*UserTopicPermission, error) {
 	row := q.db.QueryRowContext(ctx, getUsersTopicLevelByUserIdAndThreadId, arg.UsersIdusers, arg.ForumtopicIdforumtopic)
-	var i Userstopiclevel
+	var i UserTopicPermission
 	err := row.Scan(
 		&i.UsersIdusers,
 		&i.ForumtopicIdforumtopic,
-		&i.Level,
+		&i.RoleID,
 		&i.Invitemax,
 		&i.ExpiresAt,
 	)
@@ -260,42 +259,42 @@ func (q *Queries) GetUsersTopicLevelByUserIdAndThreadId(ctx context.Context, arg
 }
 
 const upsertForumTopicRestrictions = `-- name: UpsertForumTopicRestrictions :exec
-INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
+INSERT INTO topic_permissions (forumtopic_idforumtopic, view_role_id, reply_role_id, newthread_role_id, see_role_id, invite_role_id, read_role_id, mod_role_id, admin_role_id)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
-    viewlevel = VALUES(viewlevel),
-    replylevel = VALUES(replylevel),
-    newthreadlevel = VALUES(newthreadlevel),
-    seelevel = VALUES(seelevel),
-    invitelevel = VALUES(invitelevel),
-    readlevel = VALUES(readlevel),
-    modlevel = VALUES(modlevel),
-    adminlevel = VALUES(adminlevel)
+    view_role_id = VALUES(view_role_id),
+    reply_role_id = VALUES(reply_role_id),
+    newthread_role_id = VALUES(newthread_role_id),
+    see_role_id = VALUES(see_role_id),
+    invite_role_id = VALUES(invite_role_id),
+    read_role_id = VALUES(read_role_id),
+    mod_role_id = VALUES(mod_role_id),
+    admin_role_id = VALUES(admin_role_id)
 `
 
 type UpsertForumTopicRestrictionsParams struct {
 	ForumtopicIdforumtopic int32
-	Viewlevel              sql.NullInt32
-	Replylevel             sql.NullInt32
-	Newthreadlevel         sql.NullInt32
-	Seelevel               sql.NullInt32
-	Invitelevel            sql.NullInt32
-	Readlevel              sql.NullInt32
-	Modlevel               sql.NullInt32
-	Adminlevel             sql.NullInt32
+	ViewRoleID             sql.NullInt32
+	ReplyRoleID            sql.NullInt32
+	NewthreadRoleID        sql.NullInt32
+	SeeRoleID              sql.NullInt32
+	InviteRoleID           sql.NullInt32
+	ReadRoleID             sql.NullInt32
+	ModRoleID              sql.NullInt32
+	AdminRoleID            sql.NullInt32
 }
 
 func (q *Queries) UpsertForumTopicRestrictions(ctx context.Context, arg UpsertForumTopicRestrictionsParams) error {
 	_, err := q.db.ExecContext(ctx, upsertForumTopicRestrictions,
 		arg.ForumtopicIdforumtopic,
-		arg.Viewlevel,
-		arg.Replylevel,
-		arg.Newthreadlevel,
-		arg.Seelevel,
-		arg.Invitelevel,
-		arg.Readlevel,
-		arg.Modlevel,
-		arg.Adminlevel,
+		arg.ViewRoleID,
+		arg.ReplyRoleID,
+		arg.NewthreadRoleID,
+		arg.SeeRoleID,
+		arg.InviteRoleID,
+		arg.ReadRoleID,
+		arg.ModRoleID,
+		arg.AdminRoleID,
 	)
 	return err
 }

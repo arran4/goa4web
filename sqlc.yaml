@@ -31,6 +31,7 @@ sql:
         - "internal/db/queries-password_resets.sql"
         - "internal/db/queries-dlq.sql"
         - "internal/db/queries-uploadimages.sql"
+        - "internal/db/queries-roles.sql"
       gen:
           go:
               package: "db"

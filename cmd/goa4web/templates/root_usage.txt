@@ -32,6 +32,7 @@ Examples:
   {{.Prog}} faq tree
   {{.Prog}} ipban list
   {{.Prog}} db migrate
+  {{.Prog}} db seed
   {{.Prog}} lang list
   {{.Prog}} config show
 

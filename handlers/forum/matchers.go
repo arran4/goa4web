@@ -114,7 +114,7 @@ func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
 			return false
 		}
 
-		return adminUser.Invitemax.Int32 >= targetUser.Level.Int32
+		return adminUser.Invitemax.Int32 >= targetUser.RoleID.Int32
 	}
 }
 

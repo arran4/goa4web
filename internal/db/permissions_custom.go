@@ -8,16 +8,16 @@ import (
 
 // PermissionWithUser combines a permission with the associated user's info.
 type PermissionWithUser struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	Role          sql.NullString
-	Username      sql.NullString
-	Email         sql.NullString
+	IduserRoles  int32
+	UsersIdusers int32
+	Role         sql.NullString
+	Username     sql.NullString
+	Email        sql.NullString
 }
 
 // GetPermissionsWithUsers returns all permissions joined with user details.
 func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user sql.NullString) ([]*PermissionWithUser, error) {
-	query := `SELECT ur.idpermissions, ur.users_idusers, r.name, u.username, u.email FROM user_roles ur JOIN users u ON u.idusers = ur.users_idusers JOIN roles r ON ur.role_id = r.id`
+	query := `SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username, u.email FROM user_roles ur JOIN users u ON u.idusers = ur.users_idusers JOIN roles r ON ur.role_id = r.id`
 	var args []interface{}
 	var cond []string
 	if user.Valid {
@@ -35,7 +35,7 @@ func (q *Queries) GetPermissionsWithUsers(ctx context.Context, user sql.NullStri
 	var items []*PermissionWithUser
 	for rows.Next() {
 		var i PermissionWithUser
-		if err := rows.Scan(&i.Idpermissions, &i.UsersIdusers, &i.Role, &i.Username, &i.Email); err != nil {
+		if err := rows.Scan(&i.IduserRoles, &i.UsersIdusers, &i.Role, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -56,7 +56,7 @@ type UpdatePermissionParams struct {
 }
 
 func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
-	const query = `UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE idpermissions = ?`
+	const query = `UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?`
 	_, err := q.db.ExecContext(ctx, query, arg.Role, arg.ID)
 	return err
 }

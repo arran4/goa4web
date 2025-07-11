@@ -20,52 +20,52 @@ UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 SELECT t.*, lu.username AS LastPosterUsername, u.expires_at
 FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumcategory_idforumcategory = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE t.forumcategory_idforumcategory = ? AND IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0)
 ORDER BY t.lastaddition DESC;
 
 -- name: GetAllForumTopicsForUser :many
-SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level, u.expires_at
+SELECT t.*, lu.username AS LastPosterUsername, r.see_role_id, u.role_id, u.expires_at
 FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0)
 ORDER BY t.lastaddition DESC;
 
 -- name: GetForumTopicByIdForUser :one
-SELECT t.*, lu.username AS LastPosterUsername, r.seelevel, u.level
+SELECT t.*, lu.username AS LastPosterUsername, r.see_role_id, u.role_id
 FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0) AND t.idforumtopic=?
+WHERE IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0) AND t.idforumtopic=?
 ORDER BY t.lastaddition DESC;
 
 -- name: DeleteUsersForumTopicLevelPermission :exec
-DELETE FROM userstopiclevel WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
+DELETE FROM user_topic_permissions WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
 
 -- name: UpsertUsersForumTopicLevelPermission :exec
-INSERT INTO userstopiclevel (forumtopic_idforumtopic, users_idusers, level, invitemax, expires_at)
+INSERT INTO user_topic_permissions (forumtopic_idforumtopic, users_idusers, role_id, invitemax, expires_at)
 VALUES (?, ?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE level = VALUES(level), invitemax = VALUES(invitemax), expires_at = VALUES(expires_at);
+ON DUPLICATE KEY UPDATE role_id = VALUES(role_id), invitemax = VALUES(invitemax), expires_at = VALUES(expires_at);
 
 -- name: GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic :many
 SELECT u.*, t.*, utl.*, tr.*
 FROM users u
-JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
+JOIN user_topic_permissions utl ON utl.users_idusers=u.idusers
 JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
-JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
+JOIN topic_permissions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
 WHERE u.idusers = ?;
 
 -- name: GetAllForumTopicsWithPermissionsAndTopic :many
 SELECT u.*, t.*, utl.*, tr.*
 FROM users u
-JOIN userstopiclevel utl ON utl.users_idusers=u.idusers
+JOIN user_topic_permissions utl ON utl.users_idusers=u.idusers
 JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN topicrestrictions tr ON t.idforumtopic = tr.forumtopic_idforumtopic;
+LEFT JOIN topic_permissions tr ON t.idforumtopic = tr.forumtopic_idforumtopic;
 
 -- name: GetAllForumCategories :many
 SELECT f.*
@@ -86,12 +86,12 @@ WHERE title=?;
 SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost=fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
-WHERE th.forumtopic_idforumtopic=? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE th.forumtopic_idforumtopic=? AND IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0)
 ORDER BY th.lastaddition DESC;
 
 -- name: RebuildAllForumTopicMetaColumns :exec

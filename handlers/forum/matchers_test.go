@@ -25,13 +25,13 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "seelevel", "level",
+			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "see_role_id", "role_id",
 		}).AddRow(2, 0, 0, 1, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
 
 	mock.ExpectQuery("SELECT t.idforumtopic").
 		WithArgs(int32(0), int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername", "seelevel", "level",
+			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername", "see_role_id", "role_id",
 		}).AddRow(1, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
@@ -73,13 +73,13 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2)).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "seelevel", "level",
+			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "see_role_id", "role_id",
 		}).AddRow(2, 0, 0, 3, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
 
 	mock.ExpectQuery("SELECT t.idforumtopic").
 		WithArgs(int32(0), int32(3)).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername", "seelevel", "level",
+			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername", "see_role_id", "role_id",
 		}).AddRow(3, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)

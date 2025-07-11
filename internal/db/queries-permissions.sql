@@ -10,12 +10,11 @@ LIMIT 1;
 
 -- name: GetUserRoles :many
 -- This query selects permissions information for admin users.
--- Result:
---   idpermissions (int)
+--   iduser_roles (int)
 --   role (string)
 --   username (string)
 --   email (string)
-SELECT ur.idpermissions, ur.users_idusers, r.name AS role
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
 ;
@@ -33,7 +32,7 @@ SELECT ?, r.id FROM roles r WHERE r.name = ?;
 -- Parameters:
 --   ? - Permission ID to be deleted (int)
 DELETE FROM user_roles
-WHERE idpermissions = ?;
+WHERE iduser_roles = ?;
 
 -- name: GetAdministratorUserRole :one
 SELECT ur.*
@@ -45,34 +44,34 @@ WHERE ur.users_idusers = ? AND r.name = 'administrator';
 
 -- name: GetUsersTopicLevelByUserIdAndThreadId :one
 SELECT utl.*
-FROM userstopiclevel utl
+FROM user_topic_permissions utl
 WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
 ;
 
 -- name: DeleteTopicRestrictionsByForumTopicId :exec
-DELETE FROM topicrestrictions WHERE forumtopic_idforumtopic = ?;
+DELETE FROM topic_permissions WHERE forumtopic_idforumtopic = ?;
 
 -- name: UpsertForumTopicRestrictions :exec
-INSERT INTO topicrestrictions (forumtopic_idforumtopic, viewlevel, replylevel, newthreadlevel, seelevel, invitelevel, readlevel, modlevel, adminlevel)
+INSERT INTO topic_permissions (forumtopic_idforumtopic, view_role_id, reply_role_id, newthread_role_id, see_role_id, invite_role_id, read_role_id, mod_role_id, admin_role_id)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
-    viewlevel = VALUES(viewlevel),
-    replylevel = VALUES(replylevel),
-    newthreadlevel = VALUES(newthreadlevel),
-    seelevel = VALUES(seelevel),
-    invitelevel = VALUES(invitelevel),
-    readlevel = VALUES(readlevel),
-    modlevel = VALUES(modlevel),
-    adminlevel = VALUES(adminlevel);
+    view_role_id = VALUES(view_role_id),
+    reply_role_id = VALUES(reply_role_id),
+    newthread_role_id = VALUES(newthread_role_id),
+    see_role_id = VALUES(see_role_id),
+    invite_role_id = VALUES(invite_role_id),
+    read_role_id = VALUES(read_role_id),
+    mod_role_id = VALUES(mod_role_id),
+    admin_role_id = VALUES(admin_role_id);
 
 -- name: GetForumTopicRestrictionsByForumTopicId :many
 SELECT t.idforumtopic, r.*
 FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
 WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
 SELECT t.idforumtopic, r.*
 FROM forumtopic t
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic;
+LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 

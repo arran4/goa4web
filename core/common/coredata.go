@@ -44,6 +44,7 @@ type CoreData struct {
 	pref         lazyValue[*db.Preference]
 	langs        lazyValue[[]*db.UserLanguage]
 	roles        lazyValue[[]string]
+	allRoles     lazyValue[[]*db.Role]
 	announcement lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 
 	event *eventbus.Event
@@ -86,10 +87,11 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 }
 
 var rolePriority = map[string]int{
-	"reader":        1,
-	"writer":        2,
-	"moderator":     3,
-	"administrator": 4,
+	"anonymous":      1,
+	"normal user":    2,
+	"content writer": 2,
+	"moderator":      3,
+	"administrator":  4,
 }
 
 func (cd *CoreData) HasRole(role string) bool {
@@ -110,11 +112,11 @@ func ContainsItem(items []IndexItem, name string) bool {
 func (cd *CoreData) Roles() []string {
 	roles, _ := cd.roles.load(func() ([]string, error) {
 		if cd.UserID == 0 || cd.queries == nil {
-			return []string{"reader"}, nil
+			return []string{"anonymous"}, nil
 		}
 		perms, err := cd.queries.GetPermissionsByUserID(cd.ctx, cd.UserID)
 		if err != nil {
-			return []string{"reader"}, nil
+			return []string{"anonymous"}, nil
 		}
 		var rs []string
 		for _, p := range perms {
@@ -123,7 +125,7 @@ func (cd *CoreData) Roles() []string {
 			}
 		}
 		if len(rs) == 0 {
-			rs = []string{"reader"}
+			rs = []string{"anonymous"}
 		}
 		return rs, nil
 	})
@@ -132,7 +134,7 @@ func (cd *CoreData) Roles() []string {
 
 func (cd *CoreData) Role() string {
 	roles := cd.Roles()
-	best := "reader"
+	best := "anonymous"
 	for _, r := range roles {
 		if rolePriority[r] > rolePriority[best] {
 			best = r
@@ -197,6 +199,16 @@ func (cd *CoreData) Languages() ([]*db.UserLanguage, error) {
 			return nil, nil
 		}
 		return cd.queries.GetUserLanguages(cd.ctx, cd.UserID)
+	})
+}
+
+// AllRoles returns every defined role loaded once from the database.
+func (cd *CoreData) AllRoles() ([]*db.Role, error) {
+	return cd.allRoles.load(func() ([]*db.Role, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.ListRoles(cd.ctx)
 	})
 }
 

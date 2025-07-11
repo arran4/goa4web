@@ -26,29 +26,29 @@ func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWriti
 }
 
 const createWritingApproval = `-- name: CreateWritingApproval :exec
-INSERT INTO writing_approved_users (writing_id, users_idusers, readdoc, editdoc)
+INSERT INTO writing_user_permissions (writing_id, users_idusers, can_read, can_edit)
 VALUES (?, ?, ?, ?)
 `
 
 type CreateWritingApprovalParams struct {
 	WritingID    int32
 	UsersIdusers int32
-	Readdoc      sql.NullBool
-	Editdoc      sql.NullBool
+	CanRead      sql.NullBool
+	CanEdit      sql.NullBool
 }
 
 func (q *Queries) CreateWritingApproval(ctx context.Context, arg CreateWritingApprovalParams) error {
 	_, err := q.db.ExecContext(ctx, createWritingApproval,
 		arg.WritingID,
 		arg.UsersIdusers,
-		arg.Readdoc,
-		arg.Editdoc,
+		arg.CanRead,
+		arg.CanEdit,
 	)
 	return err
 }
 
 const deleteWritingApproval = `-- name: DeleteWritingApproval :exec
-DELETE FROM writing_approved_users
+DELETE FROM writing_user_permissions
 WHERE writing_id = ? AND users_idusers = ?
 `
 
@@ -96,8 +96,8 @@ func (q *Queries) FetchAllCategories(ctx context.Context) ([]*WritingCategory, e
 }
 
 const getAllWritingApprovals = `-- name: GetAllWritingApprovals :many
-SELECT idusers, u.username, wau.writing_id, wau.users_idusers, wau.readdoc, wau.editdoc
-FROM writing_approved_users wau
+SELECT idusers, u.username, wau.writing_id, wau.users_idusers, wau.can_read, wau.can_edit
+FROM writing_user_permissions wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 `
 
@@ -106,8 +106,8 @@ type GetAllWritingApprovalsRow struct {
 	Username     sql.NullString
 	WritingID    int32
 	UsersIdusers int32
-	Readdoc      sql.NullBool
-	Editdoc      sql.NullBool
+	CanRead      sql.NullBool
+	CanEdit      sql.NullBool
 }
 
 func (q *Queries) GetAllWritingApprovals(ctx context.Context) ([]*GetAllWritingApprovalsRow, error) {
@@ -124,8 +124,8 @@ func (q *Queries) GetAllWritingApprovals(ctx context.Context) ([]*GetAllWritingA
 			&i.Username,
 			&i.WritingID,
 			&i.UsersIdusers,
-			&i.Readdoc,
-			&i.Editdoc,
+			&i.CanRead,
+			&i.CanEdit,
 		); err != nil {
 			return nil, err
 		}
@@ -426,7 +426,7 @@ const getWritingByIdForUserDescendingByPublishedDate = `-- name: GetWritingByIdF
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
+LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
 WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
 ORDER BY w.published DESC
 `
@@ -477,7 +477,7 @@ const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsBy
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
+LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
 WHERE w.idwriting IN (/*SLICE:writingids*/?) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
 ORDER BY w.published DESC
 `
@@ -627,22 +627,22 @@ func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) er
 }
 
 const updateWritingApproval = `-- name: UpdateWritingApproval :exec
-UPDATE writing_approved_users
-SET readdoc = ?, editdoc = ?
+UPDATE writing_user_permissions
+SET can_read = ?, can_edit = ?
 WHERE writing_id = ? AND users_idusers = ?
 `
 
 type UpdateWritingApprovalParams struct {
-	Readdoc      sql.NullBool
-	Editdoc      sql.NullBool
+	CanRead      sql.NullBool
+	CanEdit      sql.NullBool
 	WritingID    int32
 	UsersIdusers int32
 }
 
 func (q *Queries) UpdateWritingApproval(ctx context.Context, arg UpdateWritingApprovalParams) error {
 	_, err := q.db.ExecContext(ctx, updateWritingApproval,
-		arg.Readdoc,
-		arg.Editdoc,
+		arg.CanRead,
+		arg.CanEdit,
 		arg.WritingID,
 		arg.UsersIdusers,
 	)

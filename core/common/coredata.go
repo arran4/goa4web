@@ -86,16 +86,38 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 	return val
 }
 
-var rolePriority = map[string]int{
-	"anonymous":      1,
-	"user":           2,
-	"content writer": 2,
-	"moderator":      3,
-	"administrator":  4,
-}
-
+// HasRole reports whether the current user explicitly has the named role.
 func (cd *CoreData) HasRole(role string) bool {
-	return rolePriority[cd.Role()] >= rolePriority[role]
+	for _, r := range cd.Roles() {
+		if r == role {
+			return true
+		}
+	}
+	if cd.queries != nil {
+		for _, r := range cd.Roles() {
+			if _, err := cd.queries.CheckRoleGrant(cd.ctx, db.CheckRoleGrantParams{Name: r, Action: role}); err == nil {
+				return true
+			}
+		}
+	} else {
+		for _, r := range cd.Roles() {
+			switch r {
+			case "administrator":
+				if role == "moderator" || role == "content writer" || role == "user" {
+					return true
+				}
+			case "moderator":
+				if role == "user" {
+					return true
+				}
+			case "content writer":
+				if role == "user" {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // ContainsItem returns true if items includes an entry with the given name.
@@ -132,15 +154,13 @@ func (cd *CoreData) Roles() []string {
 	return roles
 }
 
+// Role returns the first loaded role or "anonymous" when none.
 func (cd *CoreData) Role() string {
 	roles := cd.Roles()
-	best := "anonymous"
-	for _, r := range roles {
-		if rolePriority[r] > rolePriority[best] {
-			best = r
-		}
+	if len(roles) == 0 {
+		return "anonymous"
 	}
-	return best
+	return roles[0]
 }
 
 // SetSession stores s on cd for later retrieval.

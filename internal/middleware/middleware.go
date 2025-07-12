@@ -24,7 +24,7 @@ import (
 
 var rolePriority = map[string]int{
 	"anonymous":      1,
-	"normal user":    2,
+	"user":           2,
 	"content writer": 2,
 	"moderator":      3,
 	"administrator":  4,

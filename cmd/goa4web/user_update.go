@@ -25,7 +25,7 @@ func parseUserUpdateCmd(parent *userCmd, args []string) (*userUpdateCmd, error) 
 	fs, rest, err := parseFlags("update", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.Username, "username", "", "username")
 		fs.StringVar(&c.Email, "email", "", "email address")
-		fs.StringVar(&c.Role, "role", "", "set user role (administrator, normal user, content writer, anonymous)")
+		fs.StringVar(&c.Role, "role", "", "set user role (administrator, user, content writer, anonymous)")
 	})
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (c *userUpdateCmd) Run() error {
 	}
 	if c.Role != "" {
 		switch c.Role {
-		case "administrator", "normal user", "content writer", "moderator", "anonymous":
+		case "administrator", "user", "content writer", "moderator", "anonymous":
 		default:
 			return fmt.Errorf("invalid role %q", c.Role)
 		}

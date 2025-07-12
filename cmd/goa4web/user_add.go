@@ -88,7 +88,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 	if !admin {
 		if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
 			UsersIdusers: int32(id),
-			Name:         "normal user",
+			Name:         "user",
 		}); err != nil {
 			return fmt.Errorf("grant role: %w", err)
 		}

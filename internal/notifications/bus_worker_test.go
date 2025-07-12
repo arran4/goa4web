@@ -39,7 +39,7 @@ func TestBuildPatterns(t *testing.T) {
 		"/x/y/":     {"reply:/x/y", "reply:/x/*", "reply:/*"},
 	}
 	for path, expected := range cases {
-		got := buildPatterns("Reply", path)
+		got := buildPatterns(namedTask{"Reply"}, path)
 		if len(got) != len(expected) {
 			t.Fatalf("%s len %d", path, len(got))
 		}

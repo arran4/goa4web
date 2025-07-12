@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+type namedTask struct{ name string }
+
+func (n namedTask) TaskName() string { return n.name }
+
 func recordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) {
 	if q != nil {
 		_ = q.Record(ctx, msg)
@@ -45,13 +49,14 @@ func isPow10(n int64) bool {
 }
 
 // BusWorker listens for events on the bus and sends notifications.
-func shouldNotify(ctx context.Context, q *dbpkg.Queries, task string) bool {
-	if _, ok := defaultTemplates[strings.ToLower(task)]; ok {
+func shouldNotify(ctx context.Context, q *dbpkg.Queries, task eventbus.NamedTask) bool {
+	name := strings.ToLower(task.TaskName())
+	if _, ok := defaultTemplates[name]; ok {
 		return true
 	}
 	if q != nil {
-		name := fmt.Sprintf("notify_%s", strings.ToLower(task))
-		if body, err := q.GetTemplateOverride(ctx, name); err == nil && body != "" {
+		tmpl := fmt.Sprintf("notify_%s", name)
+		if body, err := q.GetTemplateOverride(ctx, tmpl); err == nil && body != "" {
 			return true
 		}
 	}
@@ -59,19 +64,19 @@ func shouldNotify(ctx context.Context, q *dbpkg.Queries, task string) bool {
 }
 
 // buildPatterns expands the task/path pair into all matching subscription patterns.
-func buildPatterns(task, path string) []string {
-	task = strings.ToLower(task)
+func buildPatterns(task eventbus.NamedTask, path string) []string {
+	name := strings.ToLower(task.TaskName())
 	path = strings.Trim(path, "/")
 	if path == "" {
-		return []string{fmt.Sprintf("%s:/*", task)}
+		return []string{fmt.Sprintf("%s:/*", name)}
 	}
 	parts := strings.Split(path, "/")
-	patterns := []string{fmt.Sprintf("%s:/%s", task, path)}
+	patterns := []string{fmt.Sprintf("%s:/%s", name, path)}
 	for i := len(parts) - 1; i >= 1; i-- {
 		prefix := strings.Join(parts[:i], "/")
-		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", task, prefix))
+		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", name, prefix))
 	}
-	patterns = append(patterns, fmt.Sprintf("%s:/*", task))
+	patterns = append(patterns, fmt.Sprintf("%s:/*", name))
 	return patterns
 }
 
@@ -142,7 +147,7 @@ func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
 }
 
 func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ) {
-	if !shouldNotify(ctx, n.Queries, evt.Task) || evt.UserID == 0 || evt.Path == "" {
+	if !shouldNotify(ctx, n.Queries, namedTask{evt.Task}) || evt.UserID == 0 || evt.Path == "" {
 		return
 	}
 	if !hcommon.NotificationsEnabled() {
@@ -163,7 +168,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 			}
 		}
 		if auto {
-			pattern := buildPatterns(evt.Task, evt.Path)[0]
+			pattern := buildPatterns(namedTask{evt.Task}, evt.Path)[0]
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
 			if email {
 				ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
@@ -176,7 +181,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 		n.NotifyThreadSubscribers(ctx, targetID, evt.UserID, evt.Path)
 	}
 
-	patterns := buildPatterns(evt.Task, evt.Path)
+	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
 	subs := map[int32]map[string]func(context.Context) error{}
 	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
 	for _, p := range patterns {

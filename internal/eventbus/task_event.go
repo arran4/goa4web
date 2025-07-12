@@ -6,6 +6,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// NamedTask exposes the name of a task.
+type NamedTask interface{ TaskName() string }
+
 // TaskEvent describes an application action that may trigger notifications.
 type TaskEvent struct {
 	// Name is a short human readable name of the action.
@@ -19,6 +22,9 @@ type TaskEvent struct {
 	// Notification builds an EventNotification for the executed task.
 	Notification func(path string, userID int32, data map[string]any) EventNotification
 }
+
+// TaskName returns the task name.
+func (e TaskEvent) TaskName() string { return e.Name }
 
 // BuildNotification creates a basic EventNotification when a custom builder is
 // not supplied.

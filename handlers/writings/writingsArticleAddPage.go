@@ -81,7 +81,10 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
-			evt.Item = notif.WritingInfo{Title: title, Author: author}
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["writing"] = notif.WritingInfo{Title: title, Author: author}
 		}
 	}
 

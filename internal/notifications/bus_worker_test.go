@@ -39,7 +39,7 @@ func TestBuildPatterns(t *testing.T) {
 		"/x/y/":     {"reply:/x/y", "reply:/x/*", "reply:/*"},
 	}
 	for path, expected := range cases {
-		got := buildPatterns("Reply", path)
+		got := buildPatterns(namedTask{"Reply"}, path)
 		if len(got) != len(expected) {
 			t.Fatalf("%s len %d", path, len(got))
 		}
@@ -287,7 +287,7 @@ func TestBusWorker(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	bus.Publish(eventbus.Event{Path: "/", Task: hcommon.TaskRegister, UserID: 1, Item: SignupInfo{Username: "bob"}})
+	bus.Publish(eventbus.Event{Path: "/", Task: hcommon.TaskRegister, UserID: 1, Data: map[string]any{"signup": SignupInfo{Username: "bob"}}})
 	time.Sleep(200 * time.Millisecond)
 	cancel()
 	wg.Wait()

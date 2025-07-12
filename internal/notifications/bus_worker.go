@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+type namedTask struct{ name string }
+
+func (n namedTask) TaskName() string { return n.name }
+
 func recordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) {
 	if q != nil {
 		_ = q.Record(ctx, msg)
@@ -45,33 +49,34 @@ func isPow10(n int64) bool {
 }
 
 // BusWorker listens for events on the bus and sends notifications.
-func shouldNotify(task string) bool {
-	switch task {
-	case hcommon.TaskReply, hcommon.TaskTestMail,
-		hcommon.TaskSetUserLevel, hcommon.TaskUpdateUserLevel, hcommon.TaskDeleteUserLevel,
-		hcommon.TaskSetTopicRestriction, hcommon.TaskUpdateTopicRestriction, hcommon.TaskDeleteTopicRestriction,
-		hcommon.TaskCopyTopicRestriction, hcommon.TaskCreateThread, hcommon.TaskNewPost,
-		hcommon.TaskSubmitWriting, hcommon.TaskRegister:
+func shouldNotify(ctx context.Context, q *dbpkg.Queries, task eventbus.NamedTask) bool {
+	name := strings.ToLower(task.TaskName())
+	if _, ok := defaultTemplates[name]; ok {
 		return true
-	default:
-		return false
 	}
+	if q != nil {
+		tmpl := fmt.Sprintf("notify_%s", name)
+		if body, err := q.GetTemplateOverride(ctx, tmpl); err == nil && body != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // buildPatterns expands the task/path pair into all matching subscription patterns.
-func buildPatterns(task, path string) []string {
-	task = strings.ToLower(task)
+func buildPatterns(task eventbus.NamedTask, path string) []string {
+	name := strings.ToLower(task.TaskName())
 	path = strings.Trim(path, "/")
 	if path == "" {
-		return []string{fmt.Sprintf("%s:/*", task)}
+		return []string{fmt.Sprintf("%s:/*", name)}
 	}
 	parts := strings.Split(path, "/")
-	patterns := []string{fmt.Sprintf("%s:/%s", task, path)}
+	patterns := []string{fmt.Sprintf("%s:/%s", name, path)}
 	for i := len(parts) - 1; i >= 1; i-- {
 		prefix := strings.Join(parts[:i], "/")
-		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", task, prefix))
+		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", name, prefix))
 	}
-	patterns = append(patterns, fmt.Sprintf("%s:/*", task))
+	patterns = append(patterns, fmt.Sprintf("%s:/*", name))
 	return patterns
 }
 
@@ -142,7 +147,7 @@ func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
 }
 
 func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ) {
-	if !shouldNotify(evt.Task) || evt.UserID == 0 || evt.Path == "" {
+	if !shouldNotify(ctx, n.Queries, namedTask{evt.Task}) || evt.UserID == 0 || evt.Path == "" {
 		return
 	}
 	if !hcommon.NotificationsEnabled() {
@@ -163,7 +168,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 			}
 		}
 		if auto {
-			pattern := buildPatterns(evt.Task, evt.Path)[0]
+			pattern := buildPatterns(namedTask{evt.Task}, evt.Path)[0]
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
 			if email {
 				ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
@@ -171,29 +176,14 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 		}
 	}
 
-	if evt.Task == hcommon.TaskTestMail {
-		user, err := n.Queries.GetUserById(ctx, evt.UserID)
-		if err == nil && user.Email.Valid && user.Email.String != "" {
-			if err := emailutil.CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Item); err != nil {
-				recordAndNotify(ctx, q, n, fmt.Sprintf("notify change: %v", err))
-			}
-			_ = n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
-				UsersIdusers: evt.UserID,
-				Link:         sql.NullString{String: evt.Path, Valid: true},
-				Message:      sql.NullString{String: evt.Task, Valid: true},
-			})
-		}
-		return
-	}
-
 	itemType, targetID, ok := parseEvent(evt.Path)
 	if ok && itemType == "thread" {
 		n.NotifyThreadSubscribers(ctx, targetID, evt.UserID, evt.Path)
 	}
 
-	patterns := buildPatterns(evt.Task, evt.Path)
+	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
 	subs := map[int32]map[string]func(context.Context) error{}
-	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Item)
+	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
 	for _, p := range patterns {
 		for _, method := range []string{"email", "internal"} {
 			ids, err := n.Queries.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: p, Method: method})
@@ -216,7 +206,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 							notifyMissingEmail(c, n.Queries, uid)
 							return err
 						}
-						return emailutil.CreateEmailTemplateAndQueue(c, n.Queries, uid, user.Email.String, evt.Path, evt.Task, evt.Item)
+						return emailutil.CreateEmailTemplateAndQueue(c, n.Queries, uid, user.Email.String, evt.Path, evt.Task, evt.Data)
 					}
 				} else if method == "internal" && msg != "" {
 					uid := id

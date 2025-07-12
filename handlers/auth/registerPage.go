@@ -142,7 +142,10 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
-			evt.Item = notif.SignupInfo{Username: username}
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["signup"] = notif.SignupInfo{Username: username}
 		}
 	}
 

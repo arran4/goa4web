@@ -9,12 +9,12 @@ import (
 
 // Event represents a task or notification that occurred in the application.
 type Event struct {
-	Path   string    // Path or URI describing the event source
-	Task   string    // Name of the action/task performed
-	UserID int32     // ID of the user performing the action
-	Time   time.Time // Time the event occurred
-	Item   any       // Item impacted by the action
-	Admin  bool      // True when the event came from an admin action
+	Path   string         // Path or URI describing the event source
+	Task   string         // Name of the action/task performed
+	UserID int32          // ID of the user performing the action
+	Time   time.Time      // Time the event occurred
+	Data   map[string]any // Optional template data associated with the event
+	Admin  bool           // True when the event came from an admin action
 }
 
 // Bus provides a simple publish/subscribe mechanism for events.

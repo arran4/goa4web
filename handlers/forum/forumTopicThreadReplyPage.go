@@ -30,7 +30,10 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
-			evt.Item = notif.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["reply"] = notif.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
 		}
 	}
 

@@ -66,7 +66,10 @@ func TestTaskEventMiddleware(t *testing.T) {
 	itemHandler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
-				evt.Item = "info"
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["info"] = true
 			}
 		}
 		w.WriteHeader(http.StatusOK)
@@ -79,10 +82,11 @@ func TestTaskEventMiddleware(t *testing.T) {
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
-		if evt.Item != "info" {
-			t.Fatalf("missing item: %+v", evt)
+		val, ok := evt.Data["info"].(bool)
+		if evt.Data == nil || !ok || !val {
+			t.Fatalf("missing data: %+v", evt)
 		}
 	default:
-		t.Fatalf("expected event with item")
+		t.Fatalf("expected event with data")
 	}
 }

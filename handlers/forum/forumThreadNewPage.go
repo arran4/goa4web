@@ -87,7 +87,10 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
-			evt.Item = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["thread"] = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
 		}
 	}
 

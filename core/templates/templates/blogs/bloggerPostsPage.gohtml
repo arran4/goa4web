@@ -13,7 +13,7 @@
 					<tr>
 						<td>
                             {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]
-                                                        {{if and .EditUrl (or (canEditAny) .IsOwner)}} - [<a href="{{.EditUrl}}">EDIT</a>]{{end}}
+                                                        {{if .EditUrl}} - [<a href="{{.EditUrl}}">EDIT</a>]{{end}}
 						</td>
 					</tr>
 				{{end}}

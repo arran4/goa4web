@@ -70,13 +70,6 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return u + "?mode=admin"
 		},
-		"canEditAny": func() bool {
-			cd, _ := r.Context().Value(ContextValues("coreData")).(*CoreData)
-			if cd == nil {
-				return false
-			}
-			return cd.CanEditAny()
-		},
 		"LatestNews": func() (any, error) {
 			if LatestNews != nil {
 				return LatestNews, nil

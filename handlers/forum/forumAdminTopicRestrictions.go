@@ -19,12 +19,15 @@ func AdminTopicRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Restrictions []*db.GetForumTopicRestrictionsByForumTopicIdRow
+		Roles        []*db.Role
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
+	roles, _ := r.Context().Value(common.KeyCoreData).(*CoreData).AllRoles()
 	data := &Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		Roles:    roles,
 	}
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])

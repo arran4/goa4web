@@ -179,6 +179,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Topic       *db.Forumtopic
 		Restriction *db.GetForumTopicRestrictionsByForumTopicIdRow
 		Categories  []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		Roles       []*db.Role
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
@@ -195,7 +196,8 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		restrict = rrows[0]
 	}
 	cats, _ := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData), Topic: topic, Restriction: restrict, Categories: cats}
+	roles, _ := r.Context().Value(common.KeyCoreData).(*CoreData).AllRoles()
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData), Topic: topic, Restriction: restrict, Categories: cats, Roles: roles}
 	CustomForumIndex(data.CoreData, r)
 	if err := templates.RenderTemplate(w, "adminTopicEditPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -208,10 +210,12 @@ func TopicCreateFormPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		Roles      []*db.Role
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cats, _ := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData), Categories: cats}
+	roles, _ := r.Context().Value(common.KeyCoreData).(*CoreData).AllRoles()
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData), Categories: cats, Roles: roles}
 	CustomForumIndex(data.CoreData, r)
 	if err := templates.RenderTemplate(w, "adminTopicCreatePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

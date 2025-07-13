@@ -1,0 +1,20 @@
+{{ template "head" $ }}
+<h4>New Topic</h4>
+<form method="post" action="/forum/admin/topic">
+{{ csrfField }}
+Title: <input name="name"><br>
+Description:<br>
+<textarea name="desc"></textarea><br>
+Category: <select name="pcid"><option value="0">None</option>{{ range .Categories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>{{ end }}</select><br>
+<h5>Permissions</h5>
+<input type="number" name="view" value="0" size="8"> View level<br>
+<input type="number" name="reply" value="0" size="8"> Reply level<br>
+<input type="number" name="newthread" value="0" size="8"> New thread level<br>
+<input type="number" name="see" value="0" size="8"> See level<br>
+<input type="number" name="invite" value="0" size="8"> Invite level<br>
+<input type="number" name="read" value="0" size="8"> Read level<br>
+<input type="number" name="mod" value="0" size="8"> Moderator level<br>
+<input type="number" name="admin" value="0" size="8"> Administrator level<br>
+<input type="submit" name="task" value="Forum topic create">
+</form>
+{{ template "tail" $ }}

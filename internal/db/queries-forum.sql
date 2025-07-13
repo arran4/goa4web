@@ -82,6 +82,11 @@ SELECT *
 FROM forumtopic
 WHERE title=?;
 
+-- name: GetForumTopicById :one
+SELECT *
+FROM forumtopic
+WHERE idforumtopic = ?;
+
 -- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
 SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th

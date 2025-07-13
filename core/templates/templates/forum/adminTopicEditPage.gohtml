@@ -1,0 +1,20 @@
+{{ template "head" $ }}
+<h4>Edit Topic</h4>
+<form method="post" action="/forum/admin/topic/{{ .Topic.Idforumtopic }}/edit">
+{{ csrfField }}
+Title: <input name="name" value="{{ .Topic.Title.String }}"><br>
+Description:<br>
+<textarea name="desc">{{ .Topic.Description.String }}</textarea><br>
+Category: <select name="cid"><option value="0">None</option>{{ range .Categories }}<option value="{{.Idforumcategory}}" {{if eq $.Topic.ForumcategoryIdforumcategory .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select><br>
+<h5>Permissions</h5>
+<input type="number" name="view" value="{{ if .Restriction }}{{ .Restriction.ViewRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> View level<br>
+<input type="number" name="reply" value="{{ if .Restriction }}{{ .Restriction.ReplyRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> Reply level<br>
+<input type="number" name="newthread" value="{{ if .Restriction }}{{ .Restriction.NewthreadRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> New thread level<br>
+<input type="number" name="see" value="{{ if .Restriction }}{{ .Restriction.SeeRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> See level<br>
+<input type="number" name="invite" value="{{ if .Restriction }}{{ .Restriction.InviteRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> Invite level<br>
+<input type="number" name="read" value="{{ if .Restriction }}{{ .Restriction.ReadRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> Read level<br>
+<input type="number" name="mod" value="{{ if .Restriction }}{{ .Restriction.ModRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> Moderator level<br>
+<input type="number" name="admin" value="{{ if .Restriction }}{{ .Restriction.AdminRoleID.Int32 }}{{ else }}0{{ end }}" size="8"> Administrator level<br>
+<input type="submit" name="task" value="Forum topic change">
+</form>
+{{ template "tail" $ }}

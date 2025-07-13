@@ -630,6 +630,28 @@ func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndF
 	return items, nil
 }
 
+const getForumTopicById = `-- name: GetForumTopicById :one
+SELECT idforumtopic, lastposter, forumcategory_idforumcategory, title, description, threads, comments, lastaddition
+FROM forumtopic
+WHERE idforumtopic = ?
+`
+
+func (q *Queries) GetForumTopicById(ctx context.Context, idforumtopic int32) (*Forumtopic, error) {
+	row := q.db.QueryRowContext(ctx, getForumTopicById, idforumtopic)
+	var i Forumtopic
+	err := row.Scan(
+		&i.Idforumtopic,
+		&i.Lastposter,
+		&i.ForumcategoryIdforumcategory,
+		&i.Title,
+		&i.Description,
+		&i.Threads,
+		&i.Comments,
+		&i.Lastaddition,
+	)
+	return &i, err
+}
+
 const getForumTopicByIdForUser = `-- name: GetForumTopicByIdForUser :one
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername, r.see_role_id, u.role_id
 FROM forumtopic t

@@ -4,7 +4,7 @@ package eventbus
 // parties by the EventBus.
 type EventNotification struct {
 	// Source identifies the task that generated this notification.
-	Source string
+	Source TaskEvent
 	// Path is a URI describing where the event originated from.
 	Path string
 	// UserID identifies the user responsible for the event.

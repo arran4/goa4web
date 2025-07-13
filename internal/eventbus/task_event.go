@@ -57,7 +57,7 @@ func (e BasicTaskEvent) BuildNotification(path string, userID int32, data map[st
 		return e.Notification(path, userID, data)
 	}
 	return EventNotification{
-		Source:       e.EventName,
+		Source:       e,
 		Path:         path,
 		UserID:       userID,
 		TemplateData: data,

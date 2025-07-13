@@ -22,7 +22,7 @@ func RegisterRoutes(r *mux.Router) {
 	fr.HandleFunc("/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", TopicsPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread", ThreadNewPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}/thread", ThreadNewActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCreateThread))
+	fr.HandleFunc("/topic/{topic}/thread", ThreadNewActionPage).Methods("POST").MatcherFunc(CreateThreadTask.Matcher)
 	fr.HandleFunc("/topic/{topic}/thread", ThreadNewCancelPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(hcommon.TaskDoneAutoRefreshPage))).Methods("POST")

@@ -9,12 +9,10 @@ import (
 var ReplyTask = eventbus.TaskEvent{
 	Name:    hcommon.TaskReply,
 	Matcher: hcommon.TaskMatcher(hcommon.TaskReply),
-	Notification: func(path string, userID int32, data map[string]any) eventbus.EventNotification {
-		return eventbus.EventNotification{
-			Source:       hcommon.TaskReply,
-			Path:         path,
-			UserID:       userID,
-			TemplateData: data,
-		}
-	},
+}
+
+// CreateThreadTask describes creating a new forum thread.
+var CreateThreadTask = eventbus.TaskEvent{
+	Name:    hcommon.TaskCreateThread,
+	Matcher: hcommon.TaskMatcher(hcommon.TaskCreateThread),
 }

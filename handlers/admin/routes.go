@@ -3,7 +3,6 @@ package admin
 import (
 	"github.com/gorilla/mux"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	faq "github.com/arran4/goa4web/handlers/faq"
 	forum "github.com/arran4/goa4web/handlers/forum"
 	languages "github.com/arran4/goa4web/handlers/languages"
@@ -32,25 +31,25 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
-	ar.HandleFunc("/email/queue", AdminEmailQueueResendActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskResend))
-	ar.HandleFunc("/email/queue", AdminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDelete))
+	ar.HandleFunc("/email/queue", AdminEmailQueueResendActionPage).Methods("POST").MatcherFunc(ResendQueueTask.Matcher)
+	ar.HandleFunc("/email/queue", AdminEmailQueueDeleteActionPage).Methods("POST").MatcherFunc(DeleteQueueTask.Matcher)
 	ar.HandleFunc("/email/template", AdminEmailTemplatePage).Methods("GET")
-	ar.HandleFunc("/email/template", AdminEmailTemplateSaveActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUpdate))
-	ar.HandleFunc("/email/template", AdminEmailTemplateTestActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskTestMail))
+	ar.HandleFunc("/email/template", AdminEmailTemplateSaveActionPage).Methods("POST").MatcherFunc(SaveTemplateTask.Matcher)
+	ar.HandleFunc("/email/template", AdminEmailTemplateTestActionPage).Methods("POST").MatcherFunc(TestTemplateTask.Matcher)
 	ar.HandleFunc("/dlq", AdminDLQPage).Methods("GET")
-	ar.HandleFunc("/dlq", AdminDLQAction).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDelete))
+	ar.HandleFunc("/dlq", AdminDLQAction).Methods("POST").MatcherFunc(DeleteDLQTask.Matcher)
 	ar.HandleFunc("/notifications", AdminNotificationsPage).Methods("GET")
-	ar.HandleFunc("/notifications", AdminNotificationsMarkReadActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDismiss))
-	ar.HandleFunc("/notifications", AdminNotificationsPurgeActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskPurge))
-	ar.HandleFunc("/notifications", AdminNotificationsSendActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskNotify))
+	ar.HandleFunc("/notifications", AdminNotificationsMarkReadActionPage).Methods("POST").MatcherFunc(MarkReadTask.Matcher)
+	ar.HandleFunc("/notifications", AdminNotificationsPurgeActionPage).Methods("POST").MatcherFunc(PurgeNotificationsTask.Matcher)
+	ar.HandleFunc("/notifications", AdminNotificationsSendActionPage).Methods("POST").MatcherFunc(SendNotificationTask.Matcher)
 	ar.HandleFunc("/user", adminUserListPage).Methods("GET")
 	ar.HandleFunc("/user/{id}", adminUserProfilePage).Methods("GET")
 	ar.HandleFunc("/announcements", AdminAnnouncementsPage).Methods("GET")
-	ar.HandleFunc("/announcements", AdminAnnouncementsAddActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskAdd))
-	ar.HandleFunc("/announcements", AdminAnnouncementsDeleteActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDelete))
+	ar.HandleFunc("/announcements", AdminAnnouncementsAddActionPage).Methods("POST").MatcherFunc(AddAnnouncementTask.Matcher)
+	ar.HandleFunc("/announcements", AdminAnnouncementsDeleteActionPage).Methods("POST").MatcherFunc(DeleteAnnouncementTask.Matcher)
 	ar.HandleFunc("/ipbans", AdminIPBanPage).Methods("GET")
-	ar.HandleFunc("/ipbans", AdminIPBanAddActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskAdd))
-	ar.HandleFunc("/ipbans", AdminIPBanDeleteActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDelete))
+	ar.HandleFunc("/ipbans", AdminIPBanAddActionPage).Methods("POST").MatcherFunc(AddIPBanTask.Matcher)
+	ar.HandleFunc("/ipbans", AdminIPBanDeleteActionPage).Methods("POST").MatcherFunc(DeleteIPBanTask.Matcher)
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", AdminServerStatsPage).Methods("GET")
@@ -71,8 +70,8 @@ func RegisterRoutes(ar *mux.Router) {
 	// news admin
 	nar := ar.PathPrefix("/news").Subrouter()
 	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsPage).Methods("GET")
-	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskAllow))
-	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskRemoveLower))
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(NewsUserAllowTask.Matcher)
+	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(NewsUserRemoveTask.Matcher)
 
 	// writings admin
 	writings.RegisterAdminRoutes(ar)

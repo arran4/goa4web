@@ -3,7 +3,6 @@ package search
 import (
 	"github.com/gorilla/mux"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	news "github.com/arran4/goa4web/handlers/news"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -16,11 +15,11 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterAdminControlCenter("Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", Page).Methods("GET")
-	sr.HandleFunc("", SearchResultForumActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchForum))
-	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchNews))
-	sr.HandleFunc("", SearchResultLinkerActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchLinker))
-	sr.HandleFunc("", SearchResultBlogsActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchBlogs))
-	sr.HandleFunc("", SearchResultWritingsActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSearchWritings))
+	sr.HandleFunc("", SearchResultForumActionPage).Methods("POST").MatcherFunc(SearchForumTask.Matcher)
+	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(SearchNewsTask.Matcher)
+	sr.HandleFunc("", SearchResultLinkerActionPage).Methods("POST").MatcherFunc(SearchLinkerTask.Matcher)
+	sr.HandleFunc("", SearchResultBlogsActionPage).Methods("POST").MatcherFunc(SearchBlogsTask.Matcher)
+	sr.HandleFunc("", SearchResultWritingsActionPage).Methods("POST").MatcherFunc(SearchWritingsTask.Matcher)
 }
 
 // Register registers the search router module.

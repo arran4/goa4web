@@ -12,9 +12,9 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	nav.RegisterAdminControlCenter("Languages", "/admin/languages", SectionWeight)
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
 	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
-	ar.HandleFunc("/languages", adminLanguagesRenamePage).Methods("POST").MatcherFunc(RenameLanguageTask.Match)
-	ar.HandleFunc("/languages", adminLanguagesDeletePage).Methods("POST").MatcherFunc(DeleteLanguageTask.Match)
-	ar.HandleFunc("/languages", adminLanguagesCreatePage).Methods("POST").MatcherFunc(CreateLanguageTask.Match)
+	ar.HandleFunc("/languages", RenameLanguageTask.Action()).Methods("POST").MatcherFunc(RenameLanguageTask.Match)
+	ar.HandleFunc("/languages", DeleteLanguageTask.Action()).Methods("POST").MatcherFunc(DeleteLanguageTask.Match)
+	ar.HandleFunc("/languages", CreateLanguageTask.Action()).Methods("POST").MatcherFunc(CreateLanguageTask.Match)
 }
 
 // Register registers the languages router module.

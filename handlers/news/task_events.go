@@ -9,4 +9,5 @@ import (
 var NewPostTask = eventbus.BasicTaskEvent{
 	EventName: hcommon.TaskNewPost,
 	Match:     hcommon.TaskMatcher(hcommon.TaskNewPost),
+	ActionH:   NewsPostNewActionPage,
 }

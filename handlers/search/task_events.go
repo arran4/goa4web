@@ -1,16 +1,73 @@
 package search
 
-import hcommon "github.com/arran4/goa4web/handlers/common"
+import (
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	news "github.com/arran4/goa4web/handlers/news"
+	"github.com/arran4/goa4web/internal/eventbus"
+)
 
-var SearchForumTask = hcommon.NewTaskEvent(hcommon.TaskSearchForum)
-var SearchNewsTask = hcommon.NewTaskEvent(hcommon.TaskSearchNews)
-var SearchLinkerTask = hcommon.NewTaskEvent(hcommon.TaskSearchLinker)
-var SearchBlogsTask = hcommon.NewTaskEvent(hcommon.TaskSearchBlogs)
-var SearchWritingsTask = hcommon.NewTaskEvent(hcommon.TaskSearchWritings)
+var SearchForumTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskSearchForum,
+	Match:     hcommon.TaskMatcher(hcommon.TaskSearchForum),
+	ActionH:   SearchResultForumActionPage,
+}
 
-var RemakeCommentsTask = hcommon.NewTaskEvent("Remake comments search")
-var RemakeNewsTask = hcommon.NewTaskEvent("Remake news search")
-var RemakeBlogTask = hcommon.NewTaskEvent("Remake blog search")
-var RemakeLinkerTask = hcommon.NewTaskEvent("Remake linker search")
-var RemakeWritingTask = hcommon.NewTaskEvent("Remake writing search")
-var RemakeImageTask = hcommon.NewTaskEvent("Remake image search")
+var SearchNewsTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskSearchNews,
+	Match:     hcommon.TaskMatcher(hcommon.TaskSearchNews),
+	ActionH:   news.SearchResultNewsActionPage,
+}
+
+var SearchLinkerTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskSearchLinker,
+	Match:     hcommon.TaskMatcher(hcommon.TaskSearchLinker),
+	ActionH:   SearchResultLinkerActionPage,
+}
+
+var SearchBlogsTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskSearchBlogs,
+	Match:     hcommon.TaskMatcher(hcommon.TaskSearchBlogs),
+	ActionH:   SearchResultBlogsActionPage,
+}
+
+var SearchWritingsTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskSearchWritings,
+	Match:     hcommon.TaskMatcher(hcommon.TaskSearchWritings),
+	ActionH:   SearchResultWritingsActionPage,
+}
+
+var RemakeCommentsTask = eventbus.BasicTaskEvent{
+	EventName: "Remake comments search",
+	Match:     hcommon.TaskMatcher("Remake comments search"),
+	ActionH:   adminSearchRemakeCommentsSearchPage,
+}
+
+var RemakeNewsTask = eventbus.BasicTaskEvent{
+	EventName: "Remake news search",
+	Match:     hcommon.TaskMatcher("Remake news search"),
+	ActionH:   adminSearchRemakeNewsSearchPage,
+}
+
+var RemakeBlogTask = eventbus.BasicTaskEvent{
+	EventName: "Remake blog search",
+	Match:     hcommon.TaskMatcher("Remake blog search"),
+	ActionH:   adminSearchRemakeBlogSearchPage,
+}
+
+var RemakeLinkerTask = eventbus.BasicTaskEvent{
+	EventName: "Remake linker search",
+	Match:     hcommon.TaskMatcher("Remake linker search"),
+	ActionH:   adminSearchRemakeLinkerSearchPage,
+}
+
+var RemakeWritingTask = eventbus.BasicTaskEvent{
+	EventName: "Remake writing search",
+	Match:     hcommon.TaskMatcher("Remake writing search"),
+	ActionH:   adminSearchRemakeWritingSearchPage,
+}
+
+var RemakeImageTask = eventbus.BasicTaskEvent{
+	EventName: "Remake image search",
+	Match:     hcommon.TaskMatcher("Remake image search"),
+	ActionH:   adminSearchRemakeImageSearchPage,
+}

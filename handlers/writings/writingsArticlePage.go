@@ -141,9 +141,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.Languages = languageRows
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:  uid,
-		ForumthreadID: writing.ForumthreadID,
-		UserID:        sql.NullInt32{Int32: uid, Valid: uid != 0},
+		UsersIdusers:   uid,
+		UsersIdusers_2: uid,
+		ForumthreadID:  writing.ForumthreadID,
+		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -208,7 +209,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	for i, row := range commentRows {
 		editUrl := ""
 		editSaveUrl := ""
-		if data.CoreData.CanEditAny() || data.CoreData.CanEditOwn(row.UsersIdusers) {
+		if data.CoreData.CanEditAny() || row.IsOwner {
 			editUrl = fmt.Sprintf("/writings/article/%d?comment=%d#edit", writing.Idwriting, row.Idcomments)
 			editSaveUrl = fmt.Sprintf("/writings/article/%d/comment/%d", writing.Idwriting, row.Idcomments)
 			if editCommentId != 0 && int32(editCommentId) == row.Idcomments {
@@ -230,7 +231,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			ShowReply:                       data.CoreData.UserID != 0,
 			EditUrl:                         editUrl,
 			EditSaveUrl:                     editSaveUrl,
-			Editing:                         editCommentId != 0 && (data.CoreData.CanEditAny() || data.CoreData.CanEditOwn(row.UsersIdusers)) && int32(editCommentId) == row.Idcomments,
+			Editing:                         editCommentId != 0 && (data.CoreData.CanEditAny() || row.IsOwner) && int32(editCommentId) == row.Idcomments,
 			Offset:                          i + offset,
 			Languages:                       languageRows,
 			SelectedLanguageId:              row.LanguageIdlanguage,

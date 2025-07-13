@@ -7,7 +7,8 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.*, pu.Username
+SELECT c.*, pu.Username,
+       c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -49,7 +50,9 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.*, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
+SELECT c.*, pu.username AS posterusername,
+       c.users_idusers = ? AS is_owner,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -82,7 +85,8 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.*, pu.username AS posterusername
+SELECT c.*, pu.username AS posterusername,
+       c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic

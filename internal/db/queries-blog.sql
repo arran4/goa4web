@@ -13,7 +13,8 @@ SET forumthread_id = ?
 WHERE idblogs = ?;
 
 -- name: GetBlogEntriesForUserDescending :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = sqlc.arg(Viewer_idusers) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -23,7 +24,8 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetBlogEntriesForUserDescendingLanguages :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = sqlc.arg(Viewer_idusers) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -47,11 +49,12 @@ ORDER BY b.written DESC
 ;
 
 -- name: GetBlogEntryForUserById :one
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = sqlc.arg(Viewer_idusers) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE b.idblogs = ?
+WHERE b.idblogs = sqlc.arg(id)
 LIMIT 1;
 
 -- name: GetCountOfBlogPostsByUser :many

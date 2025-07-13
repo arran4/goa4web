@@ -251,8 +251,3 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 func (cd *CoreData) CanEditAny() bool {
 	return cd.HasRole("administrator") && cd.AdminMode
 }
-
-// CanEditOwn returns true if the item owner matches the logged in user.
-func (cd *CoreData) CanEditOwn(ownerID int32) bool {
-	return cd.UserID != 0 && cd.UserID == ownerID
-}

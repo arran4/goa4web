@@ -58,7 +58,10 @@ func (c *blogCommentsReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	b, err := queries.GetBlogEntryForUserById(ctx, int32(c.BlogID))
+	b, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
+		ViewerIdusers: 0,
+		ID:            int32(c.BlogID),
+	})
 	if err != nil {
 		return fmt.Errorf("get blog: %w", err)
 	}
@@ -68,9 +71,10 @@ func (c *blogCommentsReadCmd) Run() error {
 			threadID = b.ForumthreadID.Int32
 		}
 		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-			UsersIdusers:  0,
-			ForumthreadID: threadID,
-			UserID:        sql.NullInt32{},
+			UsersIdusers:   0,
+			UsersIdusers_2: 0,
+			ForumthreadID:  threadID,
+			UserID:         sql.NullInt32{},
 		})
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
@@ -84,9 +88,10 @@ func (c *blogCommentsReadCmd) Run() error {
 		return fmt.Errorf("comment id required")
 	}
 	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
-		UsersIdusers: 0,
-		Idcomments:   int32(c.CommentID),
-		UserID:       sql.NullInt32{},
+		UsersIdusers:   0,
+		UsersIdusers_2: 0,
+		Idcomments:     int32(c.CommentID),
+		UserID:         sql.NullInt32{},
 	})
 	if err != nil {
 		return fmt.Errorf("get comment: %w", err)

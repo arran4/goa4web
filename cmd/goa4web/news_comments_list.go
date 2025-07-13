@@ -51,9 +51,10 @@ func (c *newsCommentsListCmd) Run() error {
 		return fmt.Errorf("get news: %w", err)
 	}
 	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:  0,
-		ForumthreadID: n.ForumthreadID,
-		UserID:        sql.NullInt32{},
+		UsersIdusers:   0,
+		UsersIdusers_2: 0,
+		ForumthreadID:  n.ForumthreadID,
+		UserID:         sql.NullInt32{},
 	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)

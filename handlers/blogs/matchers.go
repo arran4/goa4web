@@ -32,7 +32,10 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 		}
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.GetBlogEntryForUserById(r.Context(), int32(blogID))
+		row, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
+			ViewerIdusers: uid,
+			ID:            int32(blogID),
+		})
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):

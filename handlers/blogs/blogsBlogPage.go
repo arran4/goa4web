@@ -69,7 +69,10 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(blogId))
+	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
+		ViewerIdusers: uid,
+		ID:            int32(blogId),
+	})
 	if err != nil {
 		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

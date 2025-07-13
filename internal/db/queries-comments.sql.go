@@ -117,7 +117,8 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.Username
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.Username,
+       c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -136,9 +137,10 @@ LIMIT 1
 `
 
 type GetCommentByIdForUserParams struct {
-	UsersIdusers int32
-	Idcomments   int32
-	UserID       sql.NullInt32
+	UsersIdusers   int32
+	UsersIdusers_2 int32
+	Idcomments     int32
+	UserID         sql.NullInt32
 }
 
 type GetCommentByIdForUserRow struct {
@@ -150,10 +152,16 @@ type GetCommentByIdForUserRow struct {
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
 	Username           sql.NullString
+	IsOwner            bool
 }
 
 func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getCommentByIdForUser, arg.UsersIdusers, arg.Idcomments, arg.UserID)
+	row := q.db.QueryRowContext(ctx, getCommentByIdForUser,
+		arg.UsersIdusers,
+		arg.UsersIdusers_2,
+		arg.Idcomments,
+		arg.UserID,
+	)
 	var i GetCommentByIdForUserRow
 	err := row.Scan(
 		&i.Idcomments,
@@ -164,6 +172,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		&i.Text,
 		&i.DeletedAt,
 		&i.Username,
+		&i.IsOwner,
 	)
 	return &i, err
 }
@@ -224,7 +233,9 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername,
+       c.users_idusers = ? AS is_owner,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -244,9 +255,10 @@ ORDER BY c.written DESC
 `
 
 type GetCommentsByIdsForUserWithThreadInfoParams struct {
-	UsersIdusers int32
-	Ids          []int32
-	UserID       sql.NullInt32
+	UsersIdusers   int32
+	UsersIdusers_2 int32
+	Ids            []int32
+	UserID         sql.NullInt32
 }
 
 type GetCommentsByIdsForUserWithThreadInfoRow struct {
@@ -258,6 +270,7 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
 	Posterusername     sql.NullString
+	IsOwner            bool
 	Idforumthread      sql.NullInt32
 	Idforumtopic       sql.NullInt32
 	ForumtopicTitle    sql.NullString
@@ -269,6 +282,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 	query := getCommentsByIdsForUserWithThreadInfo
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.UsersIdusers)
+	queryParams = append(queryParams, arg.UsersIdusers_2)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
 			queryParams = append(queryParams, v)
@@ -295,6 +309,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 			&i.Text,
 			&i.DeletedAt,
 			&i.Posterusername,
+			&i.IsOwner,
 			&i.Idforumthread,
 			&i.Idforumtopic,
 			&i.ForumtopicTitle,
@@ -323,7 +338,8 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername,
+       c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -342,9 +358,10 @@ ORDER BY c.written
 `
 
 type GetCommentsByThreadIdForUserParams struct {
-	UsersIdusers  int32
-	ForumthreadID int32
-	UserID        sql.NullInt32
+	UsersIdusers   int32
+	UsersIdusers_2 int32
+	ForumthreadID  int32
+	UserID         sql.NullInt32
 }
 
 type GetCommentsByThreadIdForUserRow struct {
@@ -356,10 +373,16 @@ type GetCommentsByThreadIdForUserRow struct {
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
 	Posterusername     sql.NullString
+	IsOwner            bool
 }
 
 func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser, arg.UsersIdusers, arg.ForumthreadID, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser,
+		arg.UsersIdusers,
+		arg.UsersIdusers_2,
+		arg.ForumthreadID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -376,6 +399,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.Text,
 			&i.DeletedAt,
 			&i.Posterusername,
+			&i.IsOwner,
 		); err != nil {
 			return nil, err
 		}

@@ -22,6 +22,7 @@ type commentForTest struct {
 	Editing            bool
 	Languages          []struct{}
 	SelectedLanguageId int32
+	IsOwner            bool
 }
 
 // Test that the comment template shows the edit form when Editing is true.

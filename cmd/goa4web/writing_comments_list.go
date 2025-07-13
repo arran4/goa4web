@@ -51,9 +51,10 @@ func (c *writingCommentsListCmd) Run() error {
 		return fmt.Errorf("get writing: %w", err)
 	}
 	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:  0,
-		ForumthreadID: w.ForumthreadID,
-		UserID:        sql.NullInt32{},
+		UsersIdusers:   0,
+		UsersIdusers_2: 0,
+		ForumthreadID:  w.ForumthreadID,
+		UserID:         sql.NullInt32{},
 	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)

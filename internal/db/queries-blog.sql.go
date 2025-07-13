@@ -235,7 +235,8 @@ func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []i
 }
 
 const getBlogEntriesForUserDescending = `-- name: GetBlogEntriesForUserDescending :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -246,6 +247,7 @@ LIMIT ? OFFSET ?
 `
 
 type GetBlogEntriesForUserDescendingParams struct {
+	ViewerIdusers      int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
 	Limit              int32
@@ -261,10 +263,12 @@ type GetBlogEntriesForUserDescendingRow struct {
 	Written            time.Time
 	Username           sql.NullString
 	Comments           int32
+	IsOwner            bool
 }
 
 func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBlogEntriesForUserDescendingParams) ([]*GetBlogEntriesForUserDescendingRow, error) {
 	rows, err := q.db.QueryContext(ctx, getBlogEntriesForUserDescending,
+		arg.ViewerIdusers,
 		arg.LanguageIdlanguage,
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
@@ -288,6 +292,7 @@ func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBl
 			&i.Written,
 			&i.Username,
 			&i.Comments,
+			&i.IsOwner,
 		); err != nil {
 			return nil, err
 		}
@@ -303,7 +308,8 @@ func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBl
 }
 
 const getBlogEntriesForUserDescendingLanguages = `-- name: GetBlogEntriesForUserDescendingLanguages :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -319,8 +325,8 @@ LIMIT ? OFFSET ?
 `
 
 type GetBlogEntriesForUserDescendingLanguagesParams struct {
-	UsersIdusers  int32
 	ViewerIdusers int32
+	UsersIdusers  int32
 	Limit         int32
 	Offset        int32
 }
@@ -334,10 +340,12 @@ type GetBlogEntriesForUserDescendingLanguagesRow struct {
 	Written            time.Time
 	Username           sql.NullString
 	Comments           int32
+	IsOwner            bool
 }
 
 func (q *Queries) GetBlogEntriesForUserDescendingLanguages(ctx context.Context, arg GetBlogEntriesForUserDescendingLanguagesParams) ([]*GetBlogEntriesForUserDescendingLanguagesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getBlogEntriesForUserDescendingLanguages,
+		arg.ViewerIdusers,
 		arg.UsersIdusers,
 		arg.UsersIdusers,
 		arg.ViewerIdusers,
@@ -361,6 +369,7 @@ func (q *Queries) GetBlogEntriesForUserDescendingLanguages(ctx context.Context, 
 			&i.Written,
 			&i.Username,
 			&i.Comments,
+			&i.IsOwner,
 		); err != nil {
 			return nil, err
 		}
@@ -376,13 +385,19 @@ func (q *Queries) GetBlogEntriesForUserDescendingLanguages(ctx context.Context, 
 }
 
 const getBlogEntryForUserById = `-- name: GetBlogEntryForUserById :one
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs = ?
 LIMIT 1
 `
+
+type GetBlogEntryForUserByIdParams struct {
+	ViewerIdusers int32
+	ID            int32
+}
 
 type GetBlogEntryForUserByIdRow struct {
 	Idblogs            int32
@@ -393,10 +408,11 @@ type GetBlogEntryForUserByIdRow struct {
 	Written            time.Time
 	Username           sql.NullString
 	Comments           int32
+	IsOwner            bool
 }
 
-func (q *Queries) GetBlogEntryForUserById(ctx context.Context, idblogs int32) (*GetBlogEntryForUserByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getBlogEntryForUserById, idblogs)
+func (q *Queries) GetBlogEntryForUserById(ctx context.Context, arg GetBlogEntryForUserByIdParams) (*GetBlogEntryForUserByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getBlogEntryForUserById, arg.ViewerIdusers, arg.ID)
 	var i GetBlogEntryForUserByIdRow
 	err := row.Scan(
 		&i.Idblogs,
@@ -407,6 +423,7 @@ func (q *Queries) GetBlogEntryForUserById(ctx context.Context, idblogs int32) (*
 		&i.Written,
 		&i.Username,
 		&i.Comments,
+		&i.IsOwner,
 	)
 	return &i, err
 }

@@ -15,11 +15,11 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterAdminControlCenter("Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", Page).Methods("GET")
-	sr.HandleFunc("", SearchResultForumActionPage).Methods("POST").MatcherFunc(SearchForumTask.Matcher)
-	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(SearchNewsTask.Matcher)
-	sr.HandleFunc("", SearchResultLinkerActionPage).Methods("POST").MatcherFunc(SearchLinkerTask.Matcher)
-	sr.HandleFunc("", SearchResultBlogsActionPage).Methods("POST").MatcherFunc(SearchBlogsTask.Matcher)
-	sr.HandleFunc("", SearchResultWritingsActionPage).Methods("POST").MatcherFunc(SearchWritingsTask.Matcher)
+	sr.HandleFunc("", SearchResultForumActionPage).Methods("POST").MatcherFunc(SearchForumTask.Match)
+	sr.HandleFunc("", news.SearchResultNewsActionPage).Methods("POST").MatcherFunc(SearchNewsTask.Match)
+	sr.HandleFunc("", SearchResultLinkerActionPage).Methods("POST").MatcherFunc(SearchLinkerTask.Match)
+	sr.HandleFunc("", SearchResultBlogsActionPage).Methods("POST").MatcherFunc(SearchBlogsTask.Match)
+	sr.HandleFunc("", SearchResultWritingsActionPage).Methods("POST").MatcherFunc(SearchWritingsTask.Match)
 }
 
 // Register registers the search router module.

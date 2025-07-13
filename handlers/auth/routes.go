@@ -12,11 +12,11 @@ import (
 func RegisterRoutes(r *mux.Router) {
 	rr := r.PathPrefix("/register").Subrouter()
 	rr.HandleFunc("", RegisterPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
-	rr.HandleFunc("", RegisterActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(RegisterTask.Matcher)
+	rr.HandleFunc("", RegisterActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(RegisterTask.Match)
 
 	lr := r.PathPrefix("/login").Subrouter()
 	lr.HandleFunc("", LoginUserPassPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
-	lr.HandleFunc("", LoginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(LoginTask.Matcher)
+	lr.HandleFunc("", LoginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(LoginTask.Match)
 	lr.HandleFunc("/verify", LoginVerifyPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSaveAll))
 
 	fr := r.PathPrefix("/forgot").Subrouter()

@@ -13,9 +13,9 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	ar.HandleFunc("/boards", AdminBoardsPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))
 	ar.HandleFunc("/boards", hcommon.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator"))
 	ar.HandleFunc("/board", AdminNewBoardPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))
-	ar.HandleFunc("/board", AdminNewBoardMakePage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(NewBoardTask.Matcher)
+	ar.HandleFunc("/board", AdminNewBoardMakePage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(NewBoardTask.Match)
 	ar.HandleFunc("/board", hcommon.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator"))
-	ar.HandleFunc("/board/{board}", AdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(ModifyBoardTask.Matcher)
-	ar.HandleFunc("/approve/{post}", AdminApprovePostPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(ApprovePostTask.Matcher)
+	ar.HandleFunc("/board/{board}", AdminBoardModifyBoardActionPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(ModifyBoardTask.Match)
+	ar.HandleFunc("/approve/{post}", AdminApprovePostPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(ApprovePostTask.Match)
 	ar.HandleFunc("/files", AdminFilesPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))
 }

@@ -6,13 +6,13 @@ import (
 )
 
 // ReplyTask describes posting a reply to a forum thread.
-var ReplyTask = eventbus.TaskEvent{
-	Name:    hcommon.TaskReply,
-	Matcher: hcommon.TaskMatcher(hcommon.TaskReply),
+var ReplyTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskReply,
+	Match:     hcommon.TaskMatcher(hcommon.TaskReply),
 }
 
 // CreateThreadTask describes creating a new forum thread.
-var CreateThreadTask = eventbus.TaskEvent{
-	Name:    hcommon.TaskCreateThread,
-	Matcher: hcommon.TaskMatcher(hcommon.TaskCreateThread),
+var CreateThreadTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskCreateThread,
+	Match:     hcommon.TaskMatcher(hcommon.TaskCreateThread),
 }

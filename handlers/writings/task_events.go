@@ -6,7 +6,7 @@ import (
 )
 
 // SubmitWritingTask represents submitting a new writing.
-var SubmitWritingTask = eventbus.TaskEvent{
-	Name:    hcommon.TaskSubmitWriting,
-	Matcher: hcommon.TaskMatcher(hcommon.TaskSubmitWriting),
+var SubmitWritingTask = eventbus.BasicTaskEvent{
+	EventName: hcommon.TaskSubmitWriting,
+	Match:     hcommon.TaskMatcher(hcommon.TaskSubmitWriting),
 }

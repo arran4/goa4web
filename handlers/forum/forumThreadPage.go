@@ -73,6 +73,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 		UsersIdusers:  uid,
 		ForumthreadID: threadRow.Idforumthread,
+		UserID:        sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -162,6 +163,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
 			UsersIdusers: uid,
 			Idcomments:   int32(commentId),
+			UserID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			log.Printf("getCommentByIdForUser Error: %s", err)

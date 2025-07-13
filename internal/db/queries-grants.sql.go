@@ -31,3 +31,38 @@ func (q *Queries) CheckRoleGrant(ctx context.Context, arg CheckRoleGrantParams) 
 	err := row.Scan(&column_1)
 	return column_1, err
 }
+
+const listEffectiveRoleIDsByUserID = `-- name: ListEffectiveRoleIDsByUserID :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT DISTINCT id FROM role_ids
+`
+
+func (q *Queries) ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, listEffectiveRoleIDsByUserID, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -49,7 +50,11 @@ func (c *newsCommentsListCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadID: n.ForumthreadID})
+	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+		UsersIdusers:  0,
+		ForumthreadID: n.ForumthreadID,
+		UserID:        sql.NullInt32{},
+	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}

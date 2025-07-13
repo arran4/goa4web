@@ -19,45 +19,45 @@ func TestUpsertForumTopicRestrictionsUpdates(t *testing.T) {
 
 	arg := UpsertForumTopicRestrictionsParams{
 		ForumtopicIdforumtopic: 1,
-		Viewlevel:              sql.NullInt32{Int32: 1, Valid: true},
-		Replylevel:             sql.NullInt32{Int32: 1, Valid: true},
-		Newthreadlevel:         sql.NullInt32{Int32: 1, Valid: true},
-		Seelevel:               sql.NullInt32{Int32: 1, Valid: true},
-		Invitelevel:            sql.NullInt32{Int32: 1, Valid: true},
-		Readlevel:              sql.NullInt32{Int32: 1, Valid: true},
-		Modlevel:               sql.NullInt32{Int32: 1, Valid: true},
-		Adminlevel:             sql.NullInt32{Int32: 1, Valid: true},
+		ViewRoleID:             sql.NullInt32{Int32: 1, Valid: true},
+		ReplyRoleID:            sql.NullInt32{Int32: 1, Valid: true},
+		NewthreadRoleID:        sql.NullInt32{Int32: 1, Valid: true},
+		SeeRoleID:              sql.NullInt32{Int32: 1, Valid: true},
+		InviteRoleID:           sql.NullInt32{Int32: 1, Valid: true},
+		ReadRoleID:             sql.NullInt32{Int32: 1, Valid: true},
+		ModRoleID:              sql.NullInt32{Int32: 1, Valid: true},
+		AdminRoleID:            sql.NullInt32{Int32: 1, Valid: true},
 	}
 
-	mock.ExpectExec("INSERT INTO topicrestrictions").
+	mock.ExpectExec("INSERT INTO topic_permissions").
 		WithArgs(
 			arg.ForumtopicIdforumtopic,
-			arg.Viewlevel,
-			arg.Replylevel,
-			arg.Newthreadlevel,
-			arg.Seelevel,
-			arg.Invitelevel,
-			arg.Readlevel,
-			arg.Modlevel,
-			arg.Adminlevel,
+			arg.ViewRoleID,
+			arg.ReplyRoleID,
+			arg.NewthreadRoleID,
+			arg.SeeRoleID,
+			arg.InviteRoleID,
+			arg.ReadRoleID,
+			arg.ModRoleID,
+			arg.AdminRoleID,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	if err := q.UpsertForumTopicRestrictions(context.Background(), arg); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 
-	arg.Viewlevel.Int32 = 2
-	mock.ExpectExec("INSERT INTO topicrestrictions").
+	arg.ViewRoleID.Int32 = 2
+	mock.ExpectExec("INSERT INTO topic_permissions").
 		WithArgs(
 			arg.ForumtopicIdforumtopic,
-			arg.Viewlevel,
-			arg.Replylevel,
-			arg.Newthreadlevel,
-			arg.Seelevel,
-			arg.Invitelevel,
-			arg.Readlevel,
-			arg.Modlevel,
-			arg.Adminlevel,
+			arg.ViewRoleID,
+			arg.ReplyRoleID,
+			arg.NewthreadRoleID,
+			arg.SeeRoleID,
+			arg.InviteRoleID,
+			arg.ReadRoleID,
+			arg.ModRoleID,
+			arg.AdminRoleID,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 2))
 	if err := q.UpsertForumTopicRestrictions(context.Background(), arg); err != nil {

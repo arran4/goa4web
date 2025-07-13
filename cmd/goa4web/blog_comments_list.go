@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -53,7 +54,11 @@ func (c *blogCommentsListCmd) Run() error {
 	if b.ForumthreadID.Valid {
 		threadID = b.ForumthreadID.Int32
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadID: threadID})
+	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+		UsersIdusers:  0,
+		ForumthreadID: threadID,
+		UserID:        sql.NullInt32{},
+	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}

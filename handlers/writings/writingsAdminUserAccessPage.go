@@ -85,8 +85,8 @@ func AdminUserAccessAddActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.CreateWritingApproval(r.Context(), db.CreateWritingApprovalParams{
 		WritingID:    int32(wid),
 		UsersIdusers: int32(u.Idusers),
-		Readdoc:      sql.NullBool{Valid: true, Bool: readdoc},
-		Editdoc:      sql.NullBool{Valid: true, Bool: editdoc},
+		CanRead:      sql.NullBool{Valid: true, Bool: readdoc},
+		CanEdit:      sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {
 		log.Printf("createWritingApproval Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -104,8 +104,8 @@ func AdminUserAccessUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	if err := queries.UpdateWritingApproval(r.Context(), db.UpdateWritingApprovalParams{
 		WritingID:    int32(wid),
 		UsersIdusers: int32(uid),
-		Readdoc:      sql.NullBool{Valid: true, Bool: readdoc},
-		Editdoc:      sql.NullBool{Valid: true, Bool: editdoc},
+		CanRead:      sql.NullBool{Valid: true, Bool: readdoc},
+		CanEdit:      sql.NullBool{Valid: true, Bool: editdoc},
 	}); err != nil {
 		log.Printf("createWritingApproval Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

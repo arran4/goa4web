@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -66,7 +67,11 @@ func (c *blogCommentsReadCmd) Run() error {
 		if b.ForumthreadID.Valid {
 			threadID = b.ForumthreadID.Int32
 		}
-		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadID: threadID})
+		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+			UsersIdusers:  0,
+			ForumthreadID: threadID,
+			UserID:        sql.NullInt32{},
+		})
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
 		}
@@ -78,7 +83,11 @@ func (c *blogCommentsReadCmd) Run() error {
 	if c.CommentID == 0 {
 		return fmt.Errorf("comment id required")
 	}
-	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{UsersIdusers: 0, Idcomments: int32(c.CommentID)})
+	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
+		UsersIdusers: 0,
+		Idcomments:   int32(c.CommentID),
+		UserID:       sql.NullInt32{},
+	})
 	if err != nil {
 		return fmt.Errorf("get comment: %w", err)
 	}

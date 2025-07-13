@@ -117,6 +117,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
 				UsersIdusers: uid,
 				Idcomments:   int32(commentId),
+				UserID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				log.Printf("getCommentByIdForUser Error: %s", err)
@@ -134,6 +135,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		rows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 			UsersIdusers:  uid,
 			ForumthreadID: pthid,
+			UserID:        sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			switch {
@@ -148,7 +150,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		for i, row := range rows {
 			editUrl := ""
 			editSaveUrl := ""
-			if uid == row.UsersIdusers {
+			if data.CoreData.CanEditAny() || data.CoreData.CanEditOwn(row.UsersIdusers) {
 				editUrl = fmt.Sprintf("/blogs/blog/%d/comments?comment=%d#edit", blog.Idblogs, row.Idcomments)
 				editSaveUrl = fmt.Sprintf("/blogs/blog/%d/comment/%d", blog.Idblogs, row.Idcomments)
 				if commentId != 0 && int32(commentId) == row.Idcomments {

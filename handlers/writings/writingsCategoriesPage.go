@@ -30,7 +30,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
-	data.IsWriter = data.CoreData.HasRole("writer") || data.IsAdmin
+	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
 	data.WritingCategoryID = 0

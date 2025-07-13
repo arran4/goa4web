@@ -20,7 +20,7 @@
                         [<a href="?comment={{.Idcomments}}&type=full#reply">FULL REPLY</a>]
                         [<a href="?comment={{.Idcomments}}#reply">PARAGRAPH REPLY</a>]
                     {{end}}
-                    {{if .EditUrl}}[<a href="{{.EditUrl}}">EDIT</a>]{{end}}
+                    {{if and .EditUrl (or (canEditAny) (canEditOwn .UsersIdusers))}}[<a href="{{.EditUrl}}">EDIT</a>]{{end}}
                 {{end}}
             </td>
         </tr>

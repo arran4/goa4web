@@ -22,13 +22,6 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-var rolePriority = map[string]int{
-	"reader":        1,
-	"writer":        2,
-	"moderator":     3,
-	"administrator": 4,
-}
-
 // handleDie responds with an internal server error.
 func handleDie(w http.ResponseWriter, message string) {
 	http.Error(w, message, http.StatusInternalServerError)
@@ -77,14 +70,18 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		level := "reader"
+		roles := []string{"anonymous"}
 		if uid != 0 {
 			perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
 			if err == nil {
+				roles = roles[:0]
 				for _, p := range perms {
-					if p.Role != "" && rolePriority[p.Role] > rolePriority[level] {
-						level = p.Role
+					if p.Role != "" {
+						roles = append(roles, p.Role)
 					}
+				}
+				if len(roles) == 0 {
+					roles = []string{"anonymous"}
 				}
 			}
 		}
@@ -104,7 +101,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd := common.NewCoreData(r.Context(), queries,
 			common.WithImageURLMapper(imagesign.MapURL),
 			common.WithSession(session))
-		cd.SetRoles([]string{level})
+		cd.SetRoles(roles)
 		cd.IndexItems = idx
 		cd.UserID = uid
 		cd.Title = "Arran's Site"

@@ -70,6 +70,20 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return u + "?mode=admin"
 		},
+		"canEditOwn": func(ownerID int32) bool {
+			cd, _ := r.Context().Value(ContextValues("coreData")).(*CoreData)
+			if cd == nil {
+				return false
+			}
+			return cd.CanEditOwn(ownerID)
+		},
+		"canEditAny": func() bool {
+			cd, _ := r.Context().Value(ContextValues("coreData")).(*CoreData)
+			if cd == nil {
+				return false
+			}
+			return cd.CanEditAny()
+		},
 		"LatestNews": func() (any, error) {
 			if LatestNews != nil {
 				return LatestNews, nil
@@ -110,7 +124,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				result = append(result, &Post{
 					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
 					ShowReply:    cd.UserID != 0,
-					ShowEdit:     (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("writer") && cd.UserID == post.UsersIdusers),
+					ShowEdit:     (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("content writer") && cd.UserID == post.UsersIdusers),
 					Editing:      editingId == int(post.Idsitenews),
 					Announcement: ann,
 					IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,

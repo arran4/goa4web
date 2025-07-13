@@ -17,7 +17,7 @@ import (
 
 func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
-	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
+	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
@@ -26,6 +26,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 		*CoreData
 		Rows   []*db.GetUserRolesRow
 		Filter string
+		Roles  []*db.Role
 	}
 
 	data := Data{
@@ -34,6 +35,9 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	if roles, err := cd.AllRoles(); err == nil {
+		data.Roles = roles
+	}
 
 	rows, err := queries.GetUserRoles(r.Context())
 	if err != nil {

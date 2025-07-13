@@ -34,3 +34,5 @@ When tackling bugs or missing features, check if the behaviour can be verified w
 Before committing, run `go mod tidy` followed by `go fmt ./...`, `go vet ./...`, and `golangci-lint` to match the CI checks. If `go mod tidy` fails, continue but mention the error in the PR summary.
 
 Do not add new global variables unless explicitly instructed or already well established.
+
+The permissions model is documented in specs/permissions.md. Keep this document in sync with any code or migration changes affecting permissions.

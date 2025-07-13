@@ -8,9 +8,9 @@
     Users: <input type="text" name="users" size="20"> (comma separated usernames)<br />
     Role: <select name="role">
         <option value="">Everyone</option>
-        <option value="writer">writer</option>
-        <option value="moderator">moderator</option>
-        <option value="administrator">administrator</option>
+        {{- range $.Roles }}
+        <option value="{{.Name}}">{{.Name}}</option>
+        {{- end }}
     </select>
     <input type="submit" name="task" value="Notify">
 </form>

@@ -89,6 +89,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 		UsersIdusers:  uid,
 		ForumthreadID: link.ForumthreadID,
+		UserID:        sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -121,7 +122,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	for i, row := range commentRows {
 		editUrl := ""
 		editSaveUrl := ""
-		if uid == row.UsersIdusers {
+		if data.CoreData.CanEditAny() || data.CoreData.CanEditOwn(row.UsersIdusers) {
 			editUrl = fmt.Sprintf("/linker/comments/%d?comment=%d#edit", link.Idlinker, row.Idcomments)
 			editSaveUrl = fmt.Sprintf("/linker/comments/%d/comment/%d", link.Idlinker, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {

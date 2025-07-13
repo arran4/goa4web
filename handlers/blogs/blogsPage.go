@@ -67,7 +67,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	for _, row := range rows {
 		editUrl := ""
-		if uid == row.UsersIdusers {
+		if data.CoreData.CanEditAny() || data.CoreData.CanEditOwn(row.UsersIdusers) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
@@ -122,7 +122,7 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 			Link: "/admin/blogs/user/permissions",
 		})
 	}
-	userHasWriter := data.HasRole("writer")
+	userHasWriter := data.HasRole("content writer")
 	if userHasWriter {
 		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
 			Name: "Write blog",

@@ -14,8 +14,8 @@
         {{ csrfField }}
                 <td><input type="hidden" name="wid" value="{{ .WritingID }}">
                 <td><input type="hidden" name="uid" value="{{ .UsersIdusers }}">{{ .Username.String }}
-                <td><input type="checkbox" name="readdoc"{{ if .Readdoc.Bool }} checked{{ end }}>
-                <td><input type="checkbox" name="editdoc"{{ if .Editdoc.Bool }} checked{{ end }}>
+                <td><input type="checkbox" name="readdoc"{{ if .CanRead.Bool }} checked{{ end }}>
+                <td><input type="checkbox" name="editdoc"{{ if .CanEdit.Bool }} checked{{ end }}>
                 <td>
                     <input type="submit" name="task" value="Update user approval">
                     <input type="submit" name="task" value="Delete user approval">

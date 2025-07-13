@@ -185,6 +185,22 @@ type Forumtopic struct {
 	Lastaddition                 sql.NullTime
 }
 
+type Grant struct {
+	ID        int32
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	UserID    sql.NullInt32
+	RoleID    sql.NullInt32
+	Section   string
+	Item      sql.NullString
+	RuleType  string
+	ItemID    sql.NullInt32
+	ItemRule  sql.NullString
+	Action    string
+	Extra     sql.NullString
+	Active    bool
+}
+
 type Imageboard struct {
 	Idimageboard           int32
 	ImageboardIdimageboard int32
@@ -364,16 +380,16 @@ type TemplateOverride struct {
 	UpdatedAt time.Time
 }
 
-type Topicrestriction struct {
+type TopicPermission struct {
 	ForumtopicIdforumtopic int32
-	Viewlevel              sql.NullInt32
-	Replylevel             sql.NullInt32
-	Newthreadlevel         sql.NullInt32
-	Seelevel               sql.NullInt32
-	Invitelevel            sql.NullInt32
-	Readlevel              sql.NullInt32
-	Modlevel               sql.NullInt32
-	Adminlevel             sql.NullInt32
+	ViewRoleID             sql.NullInt32
+	ReplyRoleID            sql.NullInt32
+	NewthreadRoleID        sql.NullInt32
+	SeeRoleID              sql.NullInt32
+	InviteRoleID           sql.NullInt32
+	ReadRoleID             sql.NullInt32
+	ModRoleID              sql.NullInt32
+	AdminRoleID            sql.NullInt32
 }
 
 type UploadedImage struct {
@@ -409,15 +425,15 @@ type UserLanguage struct {
 }
 
 type UserRole struct {
-	Idpermissions int32
-	UsersIdusers  int32
-	RoleID        int32
+	IduserRoles  int32
+	UsersIdusers int32
+	RoleID       int32
 }
 
-type Userstopiclevel struct {
+type UserTopicPermission struct {
 	UsersIdusers           int32
 	ForumtopicIdforumtopic int32
-	Level                  sql.NullInt32
+	RoleID                 sql.NullInt32
 	Invitemax              sql.NullInt32
 	ExpiresAt              sql.NullTime
 }
@@ -436,13 +452,6 @@ type Writing struct {
 	DeletedAt          sql.NullTime
 }
 
-type WritingApprovedUser struct {
-	WritingID    int32
-	UsersIdusers int32
-	Readdoc      sql.NullBool
-	Editdoc      sql.NullBool
-}
-
 type WritingCategory struct {
 	Idwritingcategory int32
 	WritingCategoryID int32
@@ -453,4 +462,11 @@ type WritingCategory struct {
 type WritingSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingID                      int32
+}
+
+type WritingUserPermission struct {
+	WritingID    int32
+	UsersIdusers int32
+	CanRead      sql.NullBool
+	CanEdit      sql.NullBool
 }

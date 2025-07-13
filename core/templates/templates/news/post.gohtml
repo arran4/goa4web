@@ -11,7 +11,7 @@
                 [<a href="?reply={{ .Idsitenews }}#reply">REPLY</a>]
             {{ end }}
 
-            {{ if .ShowEdit }}
+            {{ if and .ShowEdit (or (canEditAny) (canEditOwn .UsersIdusers)) }}
                 [<a href="/news/news/{{ .Idsitenews }}/edit">EDIT</a>]
             {{ end }}
             {{ if .IsAdmin }}

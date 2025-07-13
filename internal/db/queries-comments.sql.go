@@ -109,20 +109,36 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 }
 
 const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.Username
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.idcomments = ? AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE c.idcomments = ? AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
 LIMIT 1
 `
 
 type GetCommentByIdForUserParams struct {
 	UsersIdusers int32
 	Idcomments   int32
+	UserID       sql.NullInt32
 }
 
 type GetCommentByIdForUserRow struct {
@@ -137,7 +153,7 @@ type GetCommentByIdForUserRow struct {
 }
 
 func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getCommentByIdForUser, arg.UsersIdusers, arg.Idcomments)
+	row := q.db.QueryRowContext(ctx, getCommentByIdForUser, arg.UsersIdusers, arg.Idcomments, arg.UserID)
 	var i GetCommentByIdForUserRow
 	err := row.Scan(
 		&i.Idcomments,
@@ -200,21 +216,37 @@ func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment
 }
 
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername, th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
-WHERE c.Idcomments IN (/*SLICE:ids*/?)
+WHERE c.Idcomments IN (/*SLICE:ids*/?) AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
 ORDER BY c.written DESC
 `
 
 type GetCommentsByIdsForUserWithThreadInfoParams struct {
 	UsersIdusers int32
 	Ids          []int32
+	UserID       sql.NullInt32
 }
 
 type GetCommentsByIdsForUserWithThreadInfoRow struct {
@@ -245,6 +277,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -282,20 +315,36 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 }
 
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN userstopiclevel u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.forumthread_id=? AND c.forumthread_id!=0 AND IF(r.seelevel IS NOT NULL, r.seelevel , 0) <= IF(u.level IS NOT NULL, u.level, 0)
+WHERE c.forumthread_id=? AND c.forumthread_id!=0 AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
 ORDER BY c.written
 `
 
 type GetCommentsByThreadIdForUserParams struct {
 	UsersIdusers  int32
 	ForumthreadID int32
+	UserID        sql.NullInt32
 }
 
 type GetCommentsByThreadIdForUserRow struct {
@@ -310,7 +359,7 @@ type GetCommentsByThreadIdForUserRow struct {
 }
 
 func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser, arg.UsersIdusers, arg.ForumthreadID)
+	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser, arg.UsersIdusers, arg.ForumthreadID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}

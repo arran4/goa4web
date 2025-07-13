@@ -14,6 +14,7 @@ type commentForTest struct {
 	Written            struct{ Time time.Time }
 	Text               struct{ String string }
 	Posterusername     struct{ String string }
+	UsersIdusers       int32
 	Idcomments         int32
 	ShowReply          bool
 	EditUrl            string
@@ -32,6 +33,7 @@ func TestCommentTemplateEditing(t *testing.T) {
 	c.Written.Time = time.Now()
 	c.Text.String = "hello"
 	c.Posterusername.String = "user"
+	c.UsersIdusers = 1
 	c.Idcomments = 1
 	c.ShowReply = true
 	c.EditUrl = "/edit"

@@ -10,3 +10,8 @@ var SubmitWritingTask = eventbus.BasicTaskEvent{
 	EventName: hcommon.TaskSubmitWriting,
 	Match:     hcommon.TaskMatcher(hcommon.TaskSubmitWriting),
 }
+
+var ReplyTask = hcommon.NewTaskEvent(hcommon.TaskReply)
+var EditReplyTask = hcommon.NewTaskEvent(hcommon.TaskEditReply)
+var CancelTask = hcommon.NewTaskEvent(hcommon.TaskCancel)
+var UpdateWritingTask = hcommon.NewTaskEvent(hcommon.TaskUpdateWriting)

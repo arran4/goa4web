@@ -46,3 +46,30 @@ var CopyTopicRestrictionTask = eventbus.BasicTaskEvent{
 	EventName: hcommon.TaskCopyTopicRestriction,
 	Match:     hcommon.TaskMatcher(hcommon.TaskCopyTopicRestriction),
 }
+
+// RemakeThreadStatsTask refreshes forum thread statistics.
+var RemakeThreadStatsTask = hcommon.NewTaskEvent(hcommon.TaskRemakeStatisticInformationOnForumthread)
+
+// RemakeTopicStatsTask refreshes forum topic statistics.
+var RemakeTopicStatsTask = hcommon.NewTaskEvent(hcommon.TaskRemakeStatisticInformationOnForumtopic)
+
+// CategoryChangeTask updates a forum category name.
+var CategoryChangeTask = hcommon.NewTaskEvent(hcommon.TaskForumCategoryChange)
+
+// CategoryCreateTask creates a new forum category.
+var CategoryCreateTask = hcommon.NewTaskEvent(hcommon.TaskForumCategoryCreate)
+
+// DeleteCategoryTask removes a forum category.
+var DeleteCategoryTask = hcommon.NewTaskEvent(hcommon.TaskDeleteCategory)
+
+// ThreadDeleteTask removes a forum thread.
+var ThreadDeleteTask = hcommon.NewTaskEvent(hcommon.TaskForumThreadDelete)
+
+// TopicChangeTask updates a forum topic title.
+var TopicChangeTask = hcommon.NewTaskEvent(hcommon.TaskForumTopicChange)
+
+// TopicDeleteTask removes a forum topic.
+var TopicDeleteTask = hcommon.NewTaskEvent(hcommon.TaskForumTopicDelete)
+
+// TopicCreateTask creates a new forum topic.
+var TopicCreateTask = hcommon.NewTaskEvent(hcommon.TaskForumTopicCreate)

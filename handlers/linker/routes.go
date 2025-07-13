@@ -28,7 +28,7 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/comments/{link}", CommentsPage).Methods("GET")
 	lr.HandleFunc("/comments/{link}", CommentsReplyPage).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
 	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionPage))).Methods("POST").MatcherFunc(EditReplyTask.Match)
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.CancelTask.Match)
 	lr.HandleFunc("/show/{link}", ShowPage).Methods("GET")
 	lr.HandleFunc("/show/{link}", ShowReplyPage).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
 	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")

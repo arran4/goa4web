@@ -13,3 +13,11 @@ var SubscribeBlogsTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeBlogs)
 var SubscribeWritingsTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeWritings)
 var SubscribeNewsTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeNews)
 var SubscribeImagesTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeImages)
+
+// Permission management tasks used in the admin interface.
+var PermissionUserAllowTask = hcommon.NewTaskEvent(hcommon.TaskUserAllow)
+var PermissionUserDisallowTask = hcommon.NewTaskEvent(hcommon.TaskUserDisallow)
+var PermissionUpdateTask = hcommon.NewTaskEvent(hcommon.TaskUpdate)
+
+// DeleteTask removes a record such as a subscription.
+var DeleteTask = hcommon.NewTaskEvent(hcommon.TaskDelete)

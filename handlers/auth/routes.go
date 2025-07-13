@@ -17,11 +17,11 @@ func RegisterRoutes(r *mux.Router) {
 	lr := r.PathPrefix("/login").Subrouter()
 	lr.HandleFunc("", LoginUserPassPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
 	lr.HandleFunc("", LoginActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(LoginTask.Match)
-	lr.HandleFunc("/verify", LoginVerifyPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSaveAll))
+	lr.HandleFunc("/verify", LoginVerifyPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.SaveAllTask.Match)
 
 	fr := r.PathPrefix("/forgot").Subrouter()
 	fr.HandleFunc("", ForgotPasswordPage).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
-	fr.HandleFunc("", ForgotPasswordActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.TaskMatcher(hcommon.TaskAdd))
+	fr.HandleFunc("", ForgotPasswordActionPage).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(hcommon.AddTask.Match)
 }
 
 // Register registers the auth router module.

@@ -21,3 +21,14 @@ func NewTaskEventWithHandlers(name string, page, action http.HandlerFunc) eventb
 		ActionH:   action,
 	}
 }
+
+var (
+	// Generic task events used across multiple packages.
+	AddTask       = NewTaskEvent(TaskAdd)
+	CreateTask    = NewTaskEvent(TaskCreate)
+	SaveTask      = NewTaskEvent(TaskSave)
+	SaveAllTask   = NewTaskEvent(TaskSaveAll)
+	DeleteTask    = NewTaskEvent(TaskDelete)
+	CancelTask    = NewTaskEvent(TaskCancel)
+	EditReplyTask = NewTaskEvent(TaskEditReply)
+)

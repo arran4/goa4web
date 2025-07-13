@@ -5,7 +5,7 @@ import (
 )
 
 // RegisterTask represents user registration.
-var RegisterTask = hcommon.NewTaskEvent(hcommon.TaskRegister)
+var RegisterTask = hcommon.NewTaskEventWithHandlers(hcommon.TaskRegister, RegisterPage, RegisterActionPage)
 
 // LoginTask represents user login.
-var LoginTask = hcommon.NewTaskEvent(hcommon.TaskLogin)
+var LoginTask = hcommon.NewTaskEventWithHandlers(hcommon.TaskLogin, LoginUserPassPage, LoginActionPage)

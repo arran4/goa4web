@@ -192,14 +192,31 @@ func X2c(what string) byte {
 	return d1*16 + d2
 }
 
-// RequestLoggerMiddleware logs incoming requests and the associated user ID.
+// RequestLoggerMiddleware logs incoming requests along with the user and session IDs.
 func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		uid := int32(0)
+		sessID := ""
 		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*common.CoreData); ok && cd != nil {
 			uid = cd.UserID
+			if s := cd.Session(); s != nil {
+				sessID = s.ID
+			}
 		}
-		log.Printf("%s %s uid=%d", r.Method, r.URL.Path, uid)
+		log.Printf("%s %s uid=%d session=%s", r.Method, r.URL.Path, uid, sessID)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RecoverMiddleware logs panics from handlers and returns HTTP 500.
+func RecoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				log.Printf("panic: %v", rec)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
 		next.ServeHTTP(w, r)
 	})
 }

@@ -40,7 +40,8 @@ func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
 // LoginActionPage processes the submitted login form.
 func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("login attempt for %s", r.PostFormValue("username"))
+		sess, _ := core.GetSession(r)
+		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
 	}
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
@@ -132,7 +133,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("login success uid=%d", user.Idusers)
+		log.Printf("login success uid=%d session=%s", user.Idusers, session.ID)
 	}
 
 	if backURL != "" {

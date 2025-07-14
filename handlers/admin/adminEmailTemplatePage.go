@@ -17,8 +17,12 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
+
+type saveTemplateTask struct{ eventbus.BasicTaskEvent }
+type testTemplateTask struct{ eventbus.BasicTaskEvent }
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +60,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -69,7 +73,7 @@ func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
 }
 
-func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
+func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q

@@ -2,27 +2,25 @@ package linker
 
 import (
 	"github.com/gorilla/mux"
-
-	hcommon "github.com/arran4/goa4web/handlers/common"
 )
 
 // RegisterAdminRoutes attaches linker admin endpoints to ar.
 func RegisterAdminRoutes(ar *mux.Router) {
 	lar := ar.PathPrefix("/linker").Subrouter()
 	lar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
-	lar.HandleFunc("/categories", AdminCategoriesUpdatePage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUpdate))
-	lar.HandleFunc("/categories", AdminCategoriesRenamePage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskRenameCategory))
-	lar.HandleFunc("/categories", AdminCategoriesDeletePage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDeleteCategory))
-	lar.HandleFunc("/categories", AdminCategoriesCreatePage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCreateCategory))
+	lar.HandleFunc("/categories", UpdateCategoryTask.Action).Methods("POST").MatcherFunc(UpdateCategoryTask.Match)
+	lar.HandleFunc("/categories", RenameCategoryTask.Action).Methods("POST").MatcherFunc(RenameCategoryTask.Match)
+	lar.HandleFunc("/categories", DeleteCategoryTask.Action).Methods("POST").MatcherFunc(DeleteCategoryTask.Match)
+	lar.HandleFunc("/categories", CreateCategoryTask.Action).Methods("POST").MatcherFunc(CreateCategoryTask.Match)
 	lar.HandleFunc("/add", AdminAddPage).Methods("GET")
-	lar.HandleFunc("/add", AdminAddActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskAdd))
+	lar.HandleFunc("/add", AddTask.Action).Methods("POST").MatcherFunc(AddTask.Match)
 	lar.HandleFunc("/queue", AdminQueuePage).Methods("GET")
-	lar.HandleFunc("/queue", AdminQueueDeleteActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskDelete))
-	lar.HandleFunc("/queue", AdminQueueApproveActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskApprove))
-	lar.HandleFunc("/queue", AdminQueueUpdateActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUpdate))
-	lar.HandleFunc("/queue", AdminQueueBulkApproveActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskBulkApprove))
-	lar.HandleFunc("/queue", AdminQueueBulkDeleteActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskBulkDelete))
+	lar.HandleFunc("/queue", DeleteTask.Action).Methods("POST").MatcherFunc(DeleteTask.Match)
+	lar.HandleFunc("/queue", ApproveTask.Action).Methods("POST").MatcherFunc(ApproveTask.Match)
+	lar.HandleFunc("/queue", UpdateCategoryTask.Action).Methods("POST").MatcherFunc(UpdateCategoryTask.Match)
+	lar.HandleFunc("/queue", BulkApproveTask.Action).Methods("POST").MatcherFunc(BulkApproveTask.Match)
+	lar.HandleFunc("/queue", BulkDeleteTask.Action).Methods("POST").MatcherFunc(BulkDeleteTask.Match)
 	lar.HandleFunc("/users/levels", AdminUserLevelsPage).Methods("GET")
-	lar.HandleFunc("/users/levels", AdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUserAllow))
-	lar.HandleFunc("/users/levels", AdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskUserDisallow))
+	lar.HandleFunc("/users/levels", UserAllowTask.Action).Methods("POST").MatcherFunc(UserAllowTask.Match)
+	lar.HandleFunc("/users/levels", UserDisallowTask.Action).Methods("POST").MatcherFunc(UserDisallowTask.Match)
 }

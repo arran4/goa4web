@@ -391,7 +391,10 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
-				evt.Item = notif.BlogPostInfo{Author: u.Username.String}
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
 			}
 		}
 	}

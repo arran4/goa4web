@@ -26,13 +26,13 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	lr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
 	lr.HandleFunc("/comments/{link}", CommentsPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", CommentsReplyPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskEditReply))
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskCancel))
+	lr.HandleFunc("/comments/{link}", ReplyTaskEvent.Action).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionPage))).Methods("POST").MatcherFunc(EditReplyTask.Match)
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.CancelTask.Match)
 	lr.HandleFunc("/show/{link}", ShowPage).Methods("GET")
-	lr.HandleFunc("/show/{link}", ShowReplyPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskReply))
+	lr.HandleFunc("/show/{link}", ReplyTaskEvent.Action).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
 	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")
-	lr.HandleFunc("/suggest", SuggestActionPage).Methods("POST").MatcherFunc(hcommon.TaskMatcher(hcommon.TaskSuggest))
+	lr.HandleFunc("/suggest", SuggestTask.Action).Methods("POST").MatcherFunc(SuggestTask.Match)
 
 	if legacyRedirectsEnabled {
 		// legacy redirects

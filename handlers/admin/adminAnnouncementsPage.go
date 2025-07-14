@@ -11,7 +11,11 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
+
+type addAnnouncementTask struct{ eventbus.BasicTaskEvent }
+type deleteAnnouncementTask struct{ eventbus.BasicTaskEvent }
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -36,7 +40,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
+func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
@@ -50,7 +54,7 @@ func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

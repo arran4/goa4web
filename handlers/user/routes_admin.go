@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/handlers/common"
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -17,7 +16,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
 	ar.HandleFunc("/login/attempts", adminLoginAttemptsPage).Methods("GET")
 	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(common.TaskMatcher("User Allow"))
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(common.TaskMatcher("User Disallow"))
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsUpdatePage).Methods("POST").MatcherFunc(common.TaskMatcher("Update"))
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(PermissionUserAllowTask.Match)
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(PermissionUserDisallowTask.Match)
+	ar.HandleFunc("/users/permissions", adminUsersPermissionsUpdatePage).Methods("POST").MatcherFunc(PermissionUpdateTask.Match)
 }

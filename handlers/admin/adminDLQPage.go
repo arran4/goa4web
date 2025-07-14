@@ -10,7 +10,10 @@ import (
 
 	"github.com/arran4/goa4web/core/templates"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
+
+type deleteDLQTask struct{ eventbus.BasicTaskEvent }
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
@@ -33,7 +36,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminDLQAction(w http.ResponseWriter, r *http.Request) {
+func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

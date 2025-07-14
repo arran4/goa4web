@@ -13,7 +13,7 @@ func LogWorker(ctx context.Context, bus *Bus) {
 	for {
 		select {
 		case evt := <-ch:
-			log.Printf("event path=%s task=%s uid=%d item=%v", evt.Path, evt.Task, evt.UserID, evt.Item)
+			log.Printf("event path=%s task=%s uid=%d data=%v", evt.Path, evt.Task, evt.UserID, evt.Data)
 		case <-ctx.Done():
 			return
 		}

@@ -2,6 +2,8 @@
     {{ template "head" $ }}
         {{ range LatestNews }}
             {{ template "newsPost" . }}
+        {{ else }}
+            <p>There is no news.</p>
         {{ end }}
     {{ template "tail" $ }}
 {{ end }}

@@ -9,26 +9,19 @@ import (
 
 // UserCanCreateThread reports whether uid may create a thread in the topic.
 func UserCanCreateThread(ctx context.Context, q *db.Queries, topicID, uid int32) (bool, error) {
-	rows, err := q.GetForumTopicRestrictionsByForumTopicId(ctx, topicID)
-	if err != nil {
-		return false, err
-	}
-	var required int32
-	if len(rows) > 0 && rows[0].NewthreadRoleID.Valid {
-		required = rows[0].NewthreadRoleID.Int32
-	}
-
-	level, err := q.GetUsersTopicLevelByUserIdAndThreadId(ctx, db.GetUsersTopicLevelByUserIdAndThreadIdParams{
-		UsersIdusers:           uid,
-		ForumtopicIdforumtopic: topicID,
+	_, err := q.CheckGrant(ctx, db.CheckGrantParams{
+		ViewerID: uid,
+		Section:  "forum",
+		Item:     sql.NullString{String: "topic", Valid: true},
+		Action:   "post",
+		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
-	if err != nil && err != sql.ErrNoRows {
-		return false, err
+	if err == nil {
+		return true, nil
 	}
-	var have int32
-	if err == nil && level.RoleID.Valid {
-		have = level.RoleID.Int32
+	if err == sql.ErrNoRows {
+		return false, nil
 	}
-
-	return have >= required, nil
+	return false, err
 }

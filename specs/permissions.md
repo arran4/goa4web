@@ -89,10 +89,12 @@ If no matching grant is found, the action is denied unless the user has the
 
 Some features store per-object defaults using role identifiers:
 
-- `topic_permissions` – default required roles for forum topics
-- `user_topic_permissions` – user specific topic rules
 - `writing_user_permissions` – per writing user access
 - `imagebbs` boards are secured via grants in the `imagebbs` section using the `board` item type
+
+Legacy tables `topic_permissions` and `user_topic_permissions` were replaced by
+equivalent rows in the `grants` table. Forum access is now fully controlled via
+grants.
 
 These tables reference roles via `role_id` columns instead of legacy `level`
 fields.

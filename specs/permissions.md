@@ -33,7 +33,7 @@ columns are:
 | `created_at`, `updated_at` | Timestamps                                     |
 | `user_id`  | Optional user the rule targets                                 |
 | `role_id`  | Optional role the rule targets                                 |
-| `section`  | Permission area such as `forum`, `news`, `writing` or `role`   |
+| `section`  | Permission area such as `forum`, `news`, `writing`, `imagebbs` or `role`   |
 | `item`     | Optional item type (e.g. `topic`, `article`)                    |
 | `rule_type`| Type of rule, typically `allow` or `deny`                      |
 | `item_id`  | Optional item identifier                                       |
@@ -92,6 +92,7 @@ Some features store per-object defaults using role identifiers:
 - `topic_permissions` – default required roles for forum topics
 - `user_topic_permissions` – user specific topic rules
 - `writing_user_permissions` – per writing user access
+- `imagebbs` boards are secured via grants in the `imagebbs` section using the `board` item type
 
 These tables reference roles via `role_id` columns instead of legacy `level`
 fields.

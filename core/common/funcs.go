@@ -101,7 +101,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				switch {
 				case errors.Is(err, sql.ErrNoRows):
 				default:
-					return nil, fmt.Errorf("getNewsPostsWithWriterUsernameAndThreadCommentCountDescending: %w", err)
+					return nil, fmt.Errorf("getNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescending: %w", err)
 				}
 			}
 

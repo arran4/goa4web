@@ -16,14 +16,13 @@ type subscriptionOption struct {
 	Name    string
 	Pattern string
 	Path    string
-	Task    string
 }
 
 var userSubscriptionOptions = []subscriptionOption{
-	{Name: "New blog posts", Pattern: "post:/blog/*", Path: "blogs", Task: common.TaskSubscribeBlogs},
-	{Name: "New articles", Pattern: "post:/writing/*", Path: "writings", Task: common.TaskSubscribeWritings},
-	{Name: "New news posts", Pattern: "post:/news/*", Path: "news", Task: common.TaskSubscribeNews},
-	{Name: "New image board posts", Pattern: "post:/image/*", Path: "images", Task: common.TaskSubscribeImages},
+	{Name: "New blog posts", Pattern: "post:/blog/*", Path: "blogs"},
+	{Name: "New articles", Pattern: "post:/writing/*", Path: "writings"},
+	{Name: "New news posts", Pattern: "post:/news/*", Path: "news"},
+	{Name: "New image board posts", Pattern: "post:/image/*", Path: "images"},
 }
 
 func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
@@ -39,15 +38,22 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	subMap := make(map[string]bool)
+	for _, s := range rows {
+		key := s.Pattern + "|" + s.Method
+		subMap[key] = true
+	}
 	data := struct {
 		*common.CoreData
 		Subs    []*db.ListSubscriptionsByUserRow
 		Options []subscriptionOption
+		SubMap  map[string]bool
 		Error   string
 	}{
 		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Subs:     rows,
 		Options:  userSubscriptionOptions,
+		SubMap:   subMap,
 		Error:    r.URL.Query().Get("error"),
 	}
 	if err := templates.RenderTemplate(w, "subscriptions.gohtml", data, corecommon.NewFuncs(r)); err != nil {
@@ -57,7 +63,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func addSubscription(w http.ResponseWriter, r *http.Request, pattern string) {
+func userSubscriptionsUpdateAction(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -67,32 +73,39 @@ func addSubscription(w http.ResponseWriter, r *http.Request, pattern string) {
 		http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
 		return
 	}
-	methods := r.PostForm["method"]
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	for _, method := range methods {
-		if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method}); err != nil {
-			log.Printf("insert sub: %v", err)
-			http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
-			return
+	existing, err := queries.ListSubscriptionsByUser(r.Context(), uid)
+	if err != nil {
+		log.Printf("list subs: %v", err)
+		http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
+		return
+	}
+	have := make(map[string]bool)
+	for _, s := range existing {
+		have[s.Pattern+"|"+s.Method] = true
+	}
+	methods := []string{"internal", "email"}
+	for _, opt := range userSubscriptionOptions {
+		for _, m := range methods {
+			key := opt.Path + "_" + m
+			want := r.PostFormValue(key) != ""
+			hkey := opt.Pattern + "|" + m
+			if want && !have[hkey] {
+				if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m}); err != nil {
+					log.Printf("insert sub: %v", err)
+					http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
+					return
+				}
+			} else if !want && have[hkey] {
+				if err := queries.DeleteSubscription(r.Context(), db.DeleteSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m}); err != nil {
+					log.Printf("delete sub: %v", err)
+					http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
+					return
+				}
+			}
 		}
 	}
 	http.Redirect(w, r, "/usr/subscriptions", http.StatusSeeOther)
-}
-
-func userSubscriptionsAddBlogsAction(w http.ResponseWriter, r *http.Request) {
-	addSubscription(w, r, "post:/blog/*")
-}
-
-func userSubscriptionsAddWritingsAction(w http.ResponseWriter, r *http.Request) {
-	addSubscription(w, r, "post:/writing/*")
-}
-
-func userSubscriptionsAddNewsAction(w http.ResponseWriter, r *http.Request) {
-	addSubscription(w, r, "post:/news/*")
-}
-
-func userSubscriptionsAddImagesAction(w http.ResponseWriter, r *http.Request) {
-	addSubscription(w, r, "post:/image/*")
 }
 
 func userSubscriptionsDeleteAction(w http.ResponseWriter, r *http.Request) {

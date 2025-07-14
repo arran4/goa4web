@@ -9,10 +9,7 @@ var AddEmailTask = hcommon.NewTaskEvent(hcommon.TaskAdd)
 var DeleteEmailTask = hcommon.NewTaskEvent(hcommon.TaskDelete)
 var TestMailTask = hcommon.NewTaskEvent(TaskTestMail)
 var DismissTask = hcommon.NewTaskEvent(TaskDismiss)
-var SubscribeBlogsTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeBlogs)
-var SubscribeWritingsTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeWritings)
-var SubscribeNewsTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeNews)
-var SubscribeImagesTask = hcommon.NewTaskEvent(hcommon.TaskSubscribeImages)
+var UpdateSubscriptionsTask = hcommon.NewTaskEvent(hcommon.TaskUpdate)
 
 // Permission management tasks used in the admin interface.
 var PermissionUserAllowTask = hcommon.NewTaskEvent(hcommon.TaskUserAllow)

@@ -133,21 +133,19 @@ func ContainsItem(items []IndexItem, name string) bool {
 // Role returns the user role loaded lazily.
 func (cd *CoreData) Roles() []string {
 	roles, _ := cd.roles.load(func() ([]string, error) {
+		rs := []string{"anonymous"}
 		if cd.UserID == 0 || cd.queries == nil {
-			return []string{"anonymous"}, nil
+			return rs, nil
 		}
+		rs = append(rs, "user")
 		perms, err := cd.queries.GetPermissionsByUserID(cd.ctx, cd.UserID)
 		if err != nil {
-			return []string{"anonymous"}, nil
+			return rs, nil
 		}
-		var rs []string
 		for _, p := range perms {
 			if p.Role != "" {
 				rs = append(rs, p.Role)
 			}
-		}
-		if len(rs) == 0 {
-			rs = []string{"anonymous"}
 		}
 		return rs, nil
 	})

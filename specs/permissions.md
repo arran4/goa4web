@@ -17,6 +17,10 @@ modelled via entries in the `grants` table with `section = 'role'`. For example,
 `administrator` inherits `moderator` and `content writer` which in turn inherit
 `user`.
 
+The `user` role does not need to be explicitly assigned. Any authenticated
+account automatically gains the `user` role while the `anonymous` role applies
+to every connection regardless of login state.
+
 ## Grants Table
 
 All permission rules live in the `grants` table. A grant may apply to a specific

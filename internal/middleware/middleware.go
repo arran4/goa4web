@@ -72,16 +72,13 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		roles := []string{"anonymous"}
 		if uid != 0 {
+			roles = append(roles, "user")
 			perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
 			if err == nil {
-				roles = roles[:0]
 				for _, p := range perms {
 					if p.Role != "" {
 						roles = append(roles, p.Role)
 					}
-				}
-				if len(roles) == 0 {
-					roles = []string{"anonymous"}
 				}
 			}
 		}

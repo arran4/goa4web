@@ -38,7 +38,7 @@ VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 SELECT w.*, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = sqlc.arg(UserId)
+LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = sqlc.arg(UserId)
 WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(UserId))
 ORDER BY w.published DESC
 ;
@@ -47,7 +47,7 @@ ORDER BY w.published DESC
 SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_approved_users wau ON w.idwriting = wau.writing_id AND wau.users_idusers = sqlc.arg(userId)
+LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = sqlc.arg(userId)
 WHERE w.idwriting IN (sqlc.slice(writingIds)) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(userId))
 ORDER BY w.published DESC
 ;
@@ -72,21 +72,21 @@ FROM writing_category wc
 ;
 
 -- name: DeleteWritingApproval :exec
-DELETE FROM writing_approved_users
+DELETE FROM writing_user_permissions
 WHERE writing_id = ? AND users_idusers = ?;
 
 -- name: CreateWritingApproval :exec
-INSERT INTO writing_approved_users (writing_id, users_idusers, readdoc, editdoc)
+INSERT INTO writing_user_permissions (writing_id, users_idusers, can_read, can_edit)
 VALUES (?, ?, ?, ?);
 
 -- name: UpdateWritingApproval :exec
-UPDATE writing_approved_users
-SET readdoc = ?, editdoc = ?
+UPDATE writing_user_permissions
+SET can_read = ?, can_edit = ?
 WHERE writing_id = ? AND users_idusers = ?;
 
 -- name: GetAllWritingApprovals :many
 SELECT idusers, u.username, wau.*
-FROM writing_approved_users wau
+FROM writing_user_permissions wau
 LEFT JOIN users u ON idusers = wau.users_idusers
 ;
 

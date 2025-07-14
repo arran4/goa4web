@@ -14,8 +14,8 @@ func UserCanCreateThread(ctx context.Context, q *db.Queries, topicID, uid int32)
 		return false, err
 	}
 	var required int32
-	if len(rows) > 0 && rows[0].Newthreadlevel.Valid {
-		required = rows[0].Newthreadlevel.Int32
+	if len(rows) > 0 && rows[0].NewthreadRoleID.Valid {
+		required = rows[0].NewthreadRoleID.Int32
 	}
 
 	level, err := q.GetUsersTopicLevelByUserIdAndThreadId(ctx, db.GetUsersTopicLevelByUserIdAndThreadIdParams{
@@ -26,8 +26,8 @@ func UserCanCreateThread(ctx context.Context, q *db.Queries, topicID, uid int32)
 		return false, err
 	}
 	var have int32
-	if err == nil && level.Level.Valid {
-		have = level.Level.Int32
+	if err == nil && level.RoleID.Valid {
+		have = level.RoleID.Int32
 	}
 
 	return have >= required, nil

@@ -62,6 +62,11 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		AdminTopicEditFormPage(w, r)
+		return
+	}
+
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
@@ -89,11 +94,36 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update permissions if provided
+	view, _ := strconv.Atoi(r.PostFormValue("view"))
+	reply, _ := strconv.Atoi(r.PostFormValue("reply"))
+	newthread, _ := strconv.Atoi(r.PostFormValue("newthread"))
+	see, _ := strconv.Atoi(r.PostFormValue("see"))
+	invite, _ := strconv.Atoi(r.PostFormValue("invite"))
+	read, _ := strconv.Atoi(r.PostFormValue("read"))
+	mod, _ := strconv.Atoi(r.PostFormValue("mod"))
+	admin, _ := strconv.Atoi(r.PostFormValue("admin"))
+	_ = queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
+		ForumtopicIdforumtopic: int32(topicId),
+		ViewRoleID:             sql.NullInt32{Valid: true, Int32: int32(view)},
+		ReplyRoleID:            sql.NullInt32{Valid: true, Int32: int32(reply)},
+		NewthreadRoleID:        sql.NullInt32{Valid: true, Int32: int32(newthread)},
+		SeeRoleID:              sql.NullInt32{Valid: true, Int32: int32(see)},
+		InviteRoleID:           sql.NullInt32{Valid: true, Int32: int32(invite)},
+		ReadRoleID:             sql.NullInt32{Valid: true, Int32: int32(read)},
+		ModRoleID:              sql.NullInt32{Valid: true, Int32: int32(mod)},
+		AdminRoleID:            sql.NullInt32{Valid: true, Int32: int32(admin)},
+	})
+
 	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
 
 }
 
 func TopicCreatePage(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		TopicCreateFormPage(w, r)
+		return
+	}
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
@@ -103,7 +133,7 @@ func TopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	if _, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
+	tid, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -113,13 +143,85 @@ func TopicCreatePage(w http.ResponseWriter, r *http.Request) {
 			String: desc,
 		},
 		ForumcategoryIdforumcategory: int32(pcid),
-	}); err != nil {
+	})
+	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
+	view, _ := strconv.Atoi(r.PostFormValue("view"))
+	reply, _ := strconv.Atoi(r.PostFormValue("reply"))
+	newthread, _ := strconv.Atoi(r.PostFormValue("newthread"))
+	see, _ := strconv.Atoi(r.PostFormValue("see"))
+	invite, _ := strconv.Atoi(r.PostFormValue("invite"))
+	read, _ := strconv.Atoi(r.PostFormValue("read"))
+	mod, _ := strconv.Atoi(r.PostFormValue("mod"))
+	admin, _ := strconv.Atoi(r.PostFormValue("admin"))
+	_ = queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
+		ForumtopicIdforumtopic: int32(tid),
+		ViewRoleID:             sql.NullInt32{Valid: true, Int32: int32(view)},
+		ReplyRoleID:            sql.NullInt32{Valid: true, Int32: int32(reply)},
+		NewthreadRoleID:        sql.NullInt32{Valid: true, Int32: int32(newthread)},
+		SeeRoleID:              sql.NullInt32{Valid: true, Int32: int32(see)},
+		InviteRoleID:           sql.NullInt32{Valid: true, Int32: int32(invite)},
+		ReadRoleID:             sql.NullInt32{Valid: true, Int32: int32(read)},
+		ModRoleID:              sql.NullInt32{Valid: true, Int32: int32(mod)},
+		AdminRoleID:            sql.NullInt32{Valid: true, Int32: int32(admin)},
+	})
+
 	http.Redirect(w, r, "/forum/admin/topics", http.StatusTemporaryRedirect)
 
+}
+
+func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*CoreData
+		Topic       *db.Forumtopic
+		Restriction *db.GetForumTopicRestrictionsByForumTopicIdRow
+		Categories  []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		Roles       []*db.Role
+	}
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	vars := mux.Vars(r)
+	topicId, _ := strconv.Atoi(vars["topic"])
+
+	topic, err := queries.GetForumTopicById(r.Context(), int32(topicId))
+	if err != nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	rrows, _ := queries.GetForumTopicRestrictionsByForumTopicId(r.Context(), int32(topicId))
+	var restrict *db.GetForumTopicRestrictionsByForumTopicIdRow
+	if len(rrows) > 0 {
+		restrict = rrows[0]
+	}
+	cats, _ := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
+	roles, _ := r.Context().Value(common.KeyCoreData).(*CoreData).AllRoles()
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData), Topic: topic, Restriction: restrict, Categories: cats, Roles: roles}
+	CustomForumIndex(data.CoreData, r)
+	if err := templates.RenderTemplate(w, "adminTopicEditPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func TopicCreateFormPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*CoreData
+		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		Roles      []*db.Role
+	}
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cats, _ := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
+	roles, _ := r.Context().Value(common.KeyCoreData).(*CoreData).AllRoles()
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData), Categories: cats, Roles: roles}
+	CustomForumIndex(data.CoreData, r)
+	if err := templates.RenderTemplate(w, "adminTopicCreatePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {

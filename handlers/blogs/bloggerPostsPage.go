@@ -81,7 +81,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 
 	for _, row := range rows {
 		editUrl := ""
-		if uid == row.UsersIdusers {
+		if data.CoreData.CanEditAny() || row.IsOwner {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{

@@ -16,13 +16,14 @@ import (
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
-	if !(cd.HasRole("writer") || cd.HasRole("administrator")) {
+	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
 		*hcommon.CoreData
-		Rows []*db.GetUserRolesRow
+		Rows  []*db.GetUserRolesRow
+		Roles []*db.Role
 	}
 
 	data := Data{
@@ -30,6 +31,9 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	if roles, err := cd.AllRoles(); err == nil {
+		data.Roles = roles
+	}
 
 	rows, err := queries.GetUserRoles(r.Context())
 	if err != nil {

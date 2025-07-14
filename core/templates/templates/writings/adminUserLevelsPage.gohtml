@@ -9,14 +9,14 @@
         </tr>
         {{- range .UserLevels }}
         <tr>
-            <td>{{ .Idpermissions }}</td>
+            <td>{{ .IduserRoles }}</td>
             <td>{{ .Username.String }}</td>
             <td>{{ .Email.String }}</td>
             <td>{{ .Role }}</td>
             <td>
                 <form method="post">
         {{ csrfField }}
-                    <input type="hidden" name="permid" value="{{ .Idpermissions }}">
+                    <input type="hidden" name="permid" value="{{ .IduserRoles }}">
                     <input type="submit" name="task" value="User Disallow">
                 </form>
             </td>
@@ -30,10 +30,7 @@
                 <td>?</td>
                 <td>
                     <select name="role">
-                        <option value="reader">reader</option>
-                        <option value="writer">writer</option>
-                        <option value="moderator">moderator</option>
-                        <option value="administrator">administrator</option>
+                        {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
                     </select>
                 </td>
                 <td>

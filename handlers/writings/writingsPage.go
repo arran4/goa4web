@@ -75,7 +75,7 @@ func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
 			Link: "/writings/user/permissions",
 		})
 	}
-	userHasWriter := data.HasRole("writer")
+	userHasWriter := data.HasRole("content writer")
 	if userHasWriter || userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Write writings",

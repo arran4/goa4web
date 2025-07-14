@@ -64,10 +64,10 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	blogRows := sqlmock.NewRows([]string{
 		"idblogs", "forumthread_idforumthread", "users_idusers",
-		"language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)",
-	}).AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0)
+		"language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner",
+	}).AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0, true)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
-		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).
+		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).
 		WillReturnRows(blogRows)
 
 	rr := httptest.NewRecorder()
@@ -96,9 +96,9 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 			AddRow(1, "e", "bob"))
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
-		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_idforumthread", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)"}).
-			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0))
+		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1), int32(15), int32(0)).
+		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_idforumthread", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
+			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0, true))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
 	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
@@ -126,7 +126,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
-	cd.SetRoles([]string{"reader"})
+	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -139,7 +139,7 @@ func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
-	cd.SetRoles([]string{"reader"})
+	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -152,7 +152,7 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/blogs/user/permissions", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
-	cd.SetRoles([]string{"reader"})
+	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

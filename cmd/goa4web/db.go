@@ -43,6 +43,12 @@ func (c *dbCmd) Run() error {
 			return fmt.Errorf("restore: %w", err)
 		}
 		return cmd.Run()
+	case "seed":
+		cmd, err := parseDbSeedCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("seed: %w", err)
+		}
+		return cmd.Run()
 	default:
 		return fmt.Errorf("unknown db command %q", c.args[0])
 	}

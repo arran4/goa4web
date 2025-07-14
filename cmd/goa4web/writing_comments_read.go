@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -15,6 +16,7 @@ type writingCommentsReadCmd struct {
 	fs        *flag.FlagSet
 	WritingID int
 	CommentID int
+	UserID    int
 	All       bool
 	args      []string
 }
@@ -24,6 +26,7 @@ func parseWritingCommentsReadCmd(parent *writingCommentsCmd, args []string) (*wr
 	fs := flag.NewFlagSet("read", flag.ContinueOnError)
 	fs.IntVar(&c.WritingID, "id", 0, "writing id")
 	fs.IntVar(&c.CommentID, "comment", 0, "comment id")
+	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -57,12 +60,17 @@ func (c *writingCommentsReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	w, err := queries.GetWritingByIdForUserDescendingByPublishedDate(ctx, dbpkg.GetWritingByIdForUserDescendingByPublishedDateParams{Userid: 0, Idwriting: int32(c.WritingID)})
+	uid := int32(c.UserID)
+	w, err := queries.GetWritingByIdForUserDescendingByPublishedDate(ctx, dbpkg.GetWritingByIdForUserDescendingByPublishedDateParams{Userid: uid, Idwriting: int32(c.WritingID)})
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)
 	}
 	if c.All {
-		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{UsersIdusers: 0, ForumthreadID: w.ForumthreadID})
+		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+			ViewerID: uid,
+			ThreadID: w.ForumthreadID,
+			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		})
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
 		}
@@ -74,7 +82,11 @@ func (c *writingCommentsReadCmd) Run() error {
 	if c.CommentID == 0 {
 		return fmt.Errorf("comment id required")
 	}
-	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{UsersIdusers: 0, Idcomments: int32(c.CommentID)})
+	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
+		ViewerID: uid,
+		ID:       int32(c.CommentID),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		return fmt.Errorf("get comment: %w", err)
 	}

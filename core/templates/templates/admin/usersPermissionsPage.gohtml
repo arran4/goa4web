@@ -1,47 +1,43 @@
 {{ template "head" $ }}
     [<a href="/admin">Admin:</a> <a href="/admin/users/permissions">(This page/Refresh)</a>]<br />
-{{range .Sections}}
-<h3>{{.Section}}</h3>
-<table border="1" class="perm-table" data-section="{{.Section}}">
+<table border="1" class="perm-table">
     <thead>
         <tr>
             <th class="sortable">ID</th>
             <th class="sortable">User</th>
             <th class="sortable">Email</th>
             <th class="sortable">Role</th>
-            <th class="section" style="display:none">Section</th>
             <th>Edit</th>
             <th>Delete</th>
         </tr>
     </thead>
     <tbody>
         {{range .Rows}}
-        <tr data-id="{{.Idpermissions}}">
-            <td>{{.Idpermissions}}</td>
+        <tr data-id="{{.IduserRoles}}">
+            <td>{{.IduserRoles}}</td>
             <td class="username">{{.Username.String}}</td>
             <td class="email">{{.Email.String}}</td>
             <td class="level">{{.Role}}</td>
-            <td class="section" style="display:none">{{.Section.String}}</td>
-            <td><button class="edit-btn" data-id="{{.Idpermissions}}">Edit</button></td>
-            <td><button class="delete-btn" data-id="{{.Idpermissions}}">Delete</button></td>
+            <td><button class="edit-btn" data-id="{{.IduserRoles}}">Edit</button></td>
+            <td><button class="delete-btn" data-id="{{.IduserRoles}}">Delete</button></td>
         </tr>
         {{end}}
     </tbody>
 </table>
-{{end}}
 <h3>Add Permission</h3>
 <form id="add-permission-form">
     Username: <input name="username">
-    Section: <input name="where">
     Role:
     <select name="role">
-        <option value="reader">reader</option>
-        <option value="writer">writer</option>
-        <option value="moderator">moderator</option>
-        <option value="administrator">administrator</option>
+        {{- range $.Roles }}
+        <option value="{{.Name}}">{{.Name}}</option>
+        {{- end }}
     </select>
     <button type="submit">Add</button>
 </form>
+<template id="roleOptions">
+    {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
+</template>
 <script>
 (function(){
     function post(data){
@@ -61,12 +57,9 @@
             e.preventDefault();
             var tr = btn.closest('tr');
             var levelCell = tr.querySelector('.level');
-            var sectionCell = tr.querySelector('.section');
             var curLevel = levelCell.textContent.trim();
-            var curSection = sectionCell.textContent.trim();
-            levelCell.innerHTML = '<select><option value="reader">reader</option><option value="writer">writer</option><option value="moderator">moderator</option><option value="administrator">administrator</option></select>';
+            levelCell.innerHTML = document.getElementById('roleOptions').innerHTML;
             levelCell.querySelector('select').value = curLevel;
-            sectionCell.innerHTML = '<input value="'+curSection+'">';
             btn.textContent = 'Save';
             btn.addEventListener('click', function(ev){
                 ev.preventDefault();
@@ -74,7 +67,6 @@
                 data.set('task','Update permission');
                 data.set('permid',btn.dataset.id);
                 data.set('role',levelCell.querySelector('select').value);
-                data.set('where',sectionCell.querySelector('input').value);
                 post(data).then(function(){ location.reload(); });
             }, {once:true});
         }, {once:true});

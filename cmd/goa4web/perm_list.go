@@ -43,7 +43,7 @@ func (c *permListCmd) Run() error {
 		return fmt.Errorf("list permissions: %w", err)
 	}
 	for _, p := range rows {
-		fmt.Printf("%d\t%s\t%s\n", p.Idpermissions, p.Username.String, p.Role.String)
+		fmt.Printf("%d\t%s\t%s\n", p.IduserRoles, p.Username.String, p.Role.String)
 	}
 	return nil
 }

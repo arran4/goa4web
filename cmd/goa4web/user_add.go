@@ -85,7 +85,14 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 	if err := queries.InsertPassword(ctx, dbpkg.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
 		return fmt.Errorf("insert password: %w", err)
 	}
-	if admin {
+	if !admin {
+		if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
+			UsersIdusers: int32(id),
+			Name:         "user",
+		}); err != nil {
+			return fmt.Errorf("grant role: %w", err)
+		}
+	} else {
 		if _, err := queries.GetAdministratorUserRole(ctx, int32(id)); err == nil {
 			if root.Verbosity > 0 {
 				fmt.Printf("%s already administrator\n", username)

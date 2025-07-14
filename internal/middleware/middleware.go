@@ -70,13 +70,14 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		level := "reader"
+		roles := []string{"anonymous"}
 		if uid != 0 {
+			roles = append(roles, "user")
 			perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
 			if err == nil {
 				for _, p := range perms {
-					if p.Role != "" && common.RolePriority[p.Role] > common.RolePriority[level] {
-						level = p.Role
+					if p.Role != "" {
+						roles = append(roles, p.Role)
 					}
 				}
 			}
@@ -97,7 +98,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd := common.NewCoreData(r.Context(), queries,
 			common.WithImageURLMapper(imagesign.MapURL),
 			common.WithSession(session))
-		cd.SetRoles([]string{level})
+		cd.SetRoles(roles)
 		cd.IndexItems = idx
 		cd.UserID = uid
 		cd.Title = "Arran's Site"

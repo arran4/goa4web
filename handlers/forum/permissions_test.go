@@ -17,12 +17,12 @@ func TestUserCanCreateThread_Allowed(t *testing.T) {
 	defer sqldb.Close()
 
 	q := db.New(sqldb)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel FROM forumtopic t LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic WHERE idforumtopic = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.view_role_id, r.reply_role_id, r.newthread_role_id, r.see_role_id, r.invite_role_id, r.read_role_id, r.mod_role_id, r.admin_role_id FROM forumtopic t LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic WHERE idforumtopic = ?")).
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "forumtopic_idforumtopic", "viewlevel", "replylevel", "newthreadlevel", "seelevel", "invitelevel", "readlevel", "modlevel", "adminlevel"}).AddRow(1, 1, nil, nil, 2, nil, nil, nil, nil, nil))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at FROM userstopiclevel utl WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?")).
+		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "forumtopic_idforumtopic", "view_role_id", "reply_role_id", "newthread_role_id", "see_role_id", "invite_role_id", "read_role_id", "mod_role_id", "admin_role_id"}).AddRow(1, 1, nil, nil, 2, nil, nil, nil, nil, nil))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.role_id, utl.invitemax, utl.expires_at FROM user_topic_permissions utl WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?")).
 		WithArgs(int32(2), int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"users_idusers", "forumtopic_idforumtopic", "level", "invitemax", "expires_at"}).AddRow(2, 1, 3, nil, nil))
+		WillReturnRows(sqlmock.NewRows([]string{"users_idusers", "forumtopic_idforumtopic", "role_id", "invitemax", "expires_at"}).AddRow(2, 1, 3, nil, nil))
 
 	ok, err := UserCanCreateThread(context.Background(), q, 1, 2)
 	if err != nil {
@@ -44,12 +44,12 @@ func TestUserCanCreateThread_Denied(t *testing.T) {
 	defer sqldb.Close()
 
 	q := db.New(sqldb)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.viewlevel, r.replylevel, r.newthreadlevel, r.seelevel, r.invitelevel, r.readlevel, r.modlevel, r.adminlevel FROM forumtopic t LEFT JOIN topicrestrictions r ON t.idforumtopic = r.forumtopic_idforumtopic WHERE idforumtopic = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, r.forumtopic_idforumtopic, r.view_role_id, r.reply_role_id, r.newthread_role_id, r.see_role_id, r.invite_role_id, r.read_role_id, r.mod_role_id, r.admin_role_id FROM forumtopic t LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic WHERE idforumtopic = ?")).
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "forumtopic_idforumtopic", "viewlevel", "replylevel", "newthreadlevel", "seelevel", "invitelevel", "readlevel", "modlevel", "adminlevel"}).AddRow(1, 1, nil, nil, 3, nil, nil, nil, nil, nil))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.level, utl.invitemax, utl.expires_at FROM userstopiclevel utl WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?")).
+		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "forumtopic_idforumtopic", "view_role_id", "reply_role_id", "newthread_role_id", "see_role_id", "invite_role_id", "read_role_id", "mod_role_id", "admin_role_id"}).AddRow(1, 1, nil, nil, 3, nil, nil, nil, nil, nil))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT utl.users_idusers, utl.forumtopic_idforumtopic, utl.role_id, utl.invitemax, utl.expires_at FROM user_topic_permissions utl WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?")).
 		WithArgs(int32(2), int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"users_idusers", "forumtopic_idforumtopic", "level", "invitemax", "expires_at"}).AddRow(2, 1, 1, nil, nil))
+		WillReturnRows(sqlmock.NewRows([]string{"users_idusers", "forumtopic_idforumtopic", "role_id", "invitemax", "expires_at"}).AddRow(2, 1, 1, nil, nil))
 
 	ok, err := UserCanCreateThread(context.Background(), q, 1, 2)
 	if err != nil {

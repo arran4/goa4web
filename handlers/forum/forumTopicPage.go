@@ -80,8 +80,8 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
-		Seelevel:                     topicRow.Seelevel,
-		Level:                        topicRow.Level,
+		SeeRoleID:                    topicRow.SeeRoleID,
+		RoleID:                       topicRow.RoleID,
 		Edit:                         false,
 	}
 

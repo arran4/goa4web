@@ -44,6 +44,7 @@ type CoreData struct {
 	pref         lazyValue[*db.Preference]
 	langs        lazyValue[[]*db.UserLanguage]
 	roles        lazyValue[[]string]
+	allRoles     lazyValue[[]*db.Role]
 	announcement lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 
 	event *eventbus.Event
@@ -85,15 +86,38 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 	return val
 }
 
-var RolePriority = map[string]int{
-	"reader":        1,
-	"writer":        2,
-	"moderator":     3,
-	"administrator": 4,
-}
-
+// HasRole reports whether the current user explicitly has the named role.
 func (cd *CoreData) HasRole(role string) bool {
-	return RolePriority[cd.Role()] >= RolePriority[role]
+	for _, r := range cd.Roles() {
+		if r == role {
+			return true
+		}
+	}
+	if cd.queries != nil {
+		for _, r := range cd.Roles() {
+			if _, err := cd.queries.CheckRoleGrant(cd.ctx, db.CheckRoleGrantParams{Name: r, Action: role}); err == nil {
+				return true
+			}
+		}
+	} else {
+		for _, r := range cd.Roles() {
+			switch r {
+			case "administrator":
+				if role == "moderator" || role == "content writer" || role == "user" {
+					return true
+				}
+			case "moderator":
+				if role == "user" {
+					return true
+				}
+			case "content writer":
+				if role == "user" {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // ContainsItem returns true if items includes an entry with the given name.
@@ -109,36 +133,32 @@ func ContainsItem(items []IndexItem, name string) bool {
 // Role returns the user role loaded lazily.
 func (cd *CoreData) Roles() []string {
 	roles, _ := cd.roles.load(func() ([]string, error) {
+		rs := []string{"anonymous"}
 		if cd.UserID == 0 || cd.queries == nil {
-			return []string{"reader"}, nil
+			return rs, nil
 		}
+		rs = append(rs, "user")
 		perms, err := cd.queries.GetPermissionsByUserID(cd.ctx, cd.UserID)
 		if err != nil {
-			return []string{"reader"}, nil
+			return rs, nil
 		}
-		var rs []string
 		for _, p := range perms {
 			if p.Role != "" {
 				rs = append(rs, p.Role)
 			}
-		}
-		if len(rs) == 0 {
-			rs = []string{"reader"}
 		}
 		return rs, nil
 	})
 	return roles
 }
 
+// Role returns the first loaded role or "anonymous" when none.
 func (cd *CoreData) Role() string {
 	roles := cd.Roles()
-	best := "reader"
-	for _, r := range roles {
-		if RolePriority[r] > RolePriority[best] {
-			best = r
-		}
+	if len(roles) == 0 {
+		return "anonymous"
 	}
-	return best
+	return roles[0]
 }
 
 // SetSession stores s on cd for later retrieval.
@@ -200,6 +220,16 @@ func (cd *CoreData) Languages() ([]*db.UserLanguage, error) {
 	})
 }
 
+// AllRoles returns every defined role loaded once from the database.
+func (cd *CoreData) AllRoles() ([]*db.Role, error) {
+	return cd.allRoles.load(func() ([]*db.Role, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.ListRoles(cd.ctx)
+	})
+}
+
 // Announcement returns the active announcement row loaded lazily.
 func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 	ann, _ := cd.announcement.load(func() (*db.GetActiveAnnouncementWithNewsRow, error) {
@@ -213,4 +243,9 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 		return row, nil
 	})
 	return ann
+}
+
+// CanEditAny reports whether cd is in admin mode with administrator role.
+func (cd *CoreData) CanEditAny() bool {
+	return cd.HasRole("administrator") && cd.AdminMode
 }

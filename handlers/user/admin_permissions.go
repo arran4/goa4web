@@ -18,7 +18,8 @@ import (
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Rows []*db.PermissionWithUser
+		Rows  []*db.PermissionWithUser
+		Roles []*db.Role
 	}
 
 	data := Data{
@@ -26,6 +27,9 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	if roles, err := data.AllRoles(); err == nil {
+		data.Roles = roles
+	}
 
 	rows, err := queries.GetPermissionsWithUsers(r.Context(), sql.NullString{})
 	if err != nil {

@@ -24,11 +24,17 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Notifications []*db.Notification
 		Total         int
 		Unread        int
+		Roles         []*db.Role
 	}
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	roles, err := data.AllRoles()
+	if err != nil {
+		log.Printf("load roles: %v", err)
+	}
+	data.Roles = roles
 	items, err := queries.RecentNotifications(r.Context(), 50)
 	if err != nil {
 		log.Printf("recent notifications: %v", err)
@@ -94,7 +100,7 @@ func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
 			}
 			ids = append(ids, u.Idusers)
 		}
-	} else if role != "" && role != "reader" {
+	} else if role != "" && role != "anonymous" {
 		rows, err := queries.ListUserIDsByRole(r.Context(), role)
 		if err != nil {
 			log.Printf("list role: %v", err)

@@ -51,7 +51,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
-		if cd == nil || !cd.HasRole("writer") || row.UsersIdusers != uid {
+		if cd == nil || !cd.HasRole("content writer") || row.UsersIdusers != uid {
 			http.NotFound(w, r)
 			return
 		}

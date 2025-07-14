@@ -22,19 +22,19 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	}
 
 	cd = corecommon.NewCoreData(req.Context(), nil)
-	cd.SetRoles([]string{"writer"})
+	cd.SetRoles([]string{"content writer"})
 	CustomBlogIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") {
-		t.Errorf("writer should not see user permissions")
+		t.Errorf("content writer should not see user permissions")
 	}
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "Write blog") {
-		t.Errorf("writer should see write blog")
+		t.Errorf("content writer should see write blog")
 	}
 
 	cd = corecommon.NewCoreData(req.Context(), nil)
-	cd.SetRoles([]string{"reader"})
+	cd.SetRoles([]string{"anonymous"})
 	CustomBlogIndex(cd, req)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "User Permissions") || corecommon.ContainsItem(cd.CustomIndexItems, "Write blog") {
-		t.Errorf("reader should not see writer/admin items")
+		t.Errorf("anonymous should not see writer/admin items")
 	}
 }

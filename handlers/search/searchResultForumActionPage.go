@@ -96,8 +96,9 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 	}
 
 	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
-		UsersIdusers: uid,
-		Ids:          commentIds,
+		ViewerID: uid,
+		Ids:      commentIds,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -166,8 +167,9 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 	}
 
 	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
-		UsersIdusers: uid,
-		Ids:          commentIds,
+		ViewerID: uid,
+		Ids:      commentIds,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

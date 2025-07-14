@@ -71,8 +71,9 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:  uid,
-		ForumthreadID: threadRow.Idforumthread,
+		ViewerID: uid,
+		ThreadID: threadRow.Idforumthread,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -97,8 +98,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
-		Seelevel:                     topicRow.Seelevel,
-		Level:                        topicRow.Level,
+		SeeRoleID:                    topicRow.SeeRoleID,
+		RoleID:                       topicRow.RoleID,
 		Edit:                         false,
 	}
 
@@ -107,7 +108,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	for i, row := range commentRows {
 		editUrl := ""
 		editSaveUrl := ""
-		if uid == row.UsersIdusers {
+		if data.CoreData.CanEditAny() || row.IsOwner {
 			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadRow.Idforumthread, row.Idcomments)
 			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadRow.Idforumthread, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
@@ -138,8 +139,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
-		Seelevel:                     topicRow.Seelevel,
-		Level:                        topicRow.Level,
+		SeeRoleID:                    topicRow.SeeRoleID,
+		RoleID:                       topicRow.RoleID,
 		Edit:                         false,
 	}
 
@@ -160,8 +161,9 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 	if commentIdString != "" {
 		comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
-			UsersIdusers: uid,
-			Idcomments:   int32(commentId),
+			ViewerID: uid,
+			ID:       int32(commentId),
+			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			log.Printf("getCommentByIdForUser Error: %s", err)

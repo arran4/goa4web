@@ -18,12 +18,15 @@ func AdminTopicsRestrictionLevelPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Restrictions []*db.GetAllForumTopicRestrictionsWithForumTopicTitleRow
+		Roles        []*db.Role
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
+	roles, _ := r.Context().Value(common.KeyCoreData).(*CoreData).AllRoles()
 	data := &Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		Roles:    roles,
 	}
 
 	restrictions, err := queries.GetAllForumTopicRestrictionsWithForumTopicTitle(r.Context())
@@ -98,14 +101,14 @@ func AdminTopicsRestrictionLevelChangePage(w http.ResponseWriter, r *http.Reques
 
 	if err := queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
 		ForumtopicIdforumtopic: int32(ftid),
-		Viewlevel:              sql.NullInt32{Valid: true, Int32: int32(view)},
-		Replylevel:             sql.NullInt32{Valid: true, Int32: int32(reply)},
-		Newthreadlevel:         sql.NullInt32{Valid: true, Int32: int32(newthread)},
-		Seelevel:               sql.NullInt32{Valid: true, Int32: int32(see)},
-		Invitelevel:            sql.NullInt32{Valid: true, Int32: int32(invite)},
-		Readlevel:              sql.NullInt32{Valid: true, Int32: int32(read)},
-		Modlevel:               sql.NullInt32{Valid: true, Int32: int32(mod)},
-		Adminlevel:             sql.NullInt32{Valid: true, Int32: int32(admin)},
+		ViewRoleID:             sql.NullInt32{Valid: true, Int32: int32(view)},
+		ReplyRoleID:            sql.NullInt32{Valid: true, Int32: int32(reply)},
+		NewthreadRoleID:        sql.NullInt32{Valid: true, Int32: int32(newthread)},
+		SeeRoleID:              sql.NullInt32{Valid: true, Int32: int32(see)},
+		InviteRoleID:           sql.NullInt32{Valid: true, Int32: int32(invite)},
+		ReadRoleID:             sql.NullInt32{Valid: true, Int32: int32(read)},
+		ModRoleID:              sql.NullInt32{Valid: true, Int32: int32(mod)},
+		AdminRoleID:            sql.NullInt32{Valid: true, Int32: int32(admin)},
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -159,14 +162,14 @@ func AdminTopicsRestrictionLevelCopyPage(w http.ResponseWriter, r *http.Request)
 		row := src[0]
 		if err := queries.UpsertForumTopicRestrictions(r.Context(), db.UpsertForumTopicRestrictionsParams{
 			ForumtopicIdforumtopic: int32(toID),
-			Viewlevel:              row.Viewlevel,
-			Replylevel:             row.Replylevel,
-			Newthreadlevel:         row.Newthreadlevel,
-			Seelevel:               row.Seelevel,
-			Invitelevel:            row.Invitelevel,
-			Readlevel:              row.Readlevel,
-			Modlevel:               row.Modlevel,
-			Adminlevel:             row.Adminlevel,
+			ViewRoleID:             row.ViewRoleID,
+			ReplyRoleID:            row.ReplyRoleID,
+			NewthreadRoleID:        row.NewthreadRoleID,
+			SeeRoleID:              row.SeeRoleID,
+			InviteRoleID:           row.InviteRoleID,
+			ReadRoleID:             row.ReadRoleID,
+			ModRoleID:              row.ModRoleID,
+			AdminRoleID:            row.AdminRoleID,
 		}); err != nil {
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return

@@ -25,7 +25,7 @@ func (q *Queries) AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThis
 	return err
 }
 
-const createNewsPost = `-- name: CreateNewsPost :exec
+const createNewsPost = `-- name: CreateNewsPost :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
 VALUES (?, ?, NOW(), ?)
 `
@@ -36,9 +36,12 @@ type CreateNewsPostParams struct {
 	LanguageIdlanguage int32
 }
 
-func (q *Queries) CreateNewsPost(ctx context.Context, arg CreateNewsPostParams) error {
-	_, err := q.db.ExecContext(ctx, createNewsPost, arg.News, arg.UsersIdusers, arg.LanguageIdlanguage)
-	return err
+func (q *Queries) CreateNewsPost(ctx context.Context, arg CreateNewsPostParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createNewsPost, arg.News, arg.UsersIdusers, arg.LanguageIdlanguage)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const deactivateNewsPost = `-- name: DeactivateNewsPost :exec
@@ -70,12 +73,37 @@ func (q *Queries) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews i
 }
 
 const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
+
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
-WHERE s.idsiteNews = ?
+WHERE s.idsiteNews = ? AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = s.idsiteNews
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+LIMIT 1
 `
+
+type GetNewsPostByIdWithWriterIdAndThreadCommentCountParams struct {
+	ViewerID int32
+	ID       int32
+	UserID   sql.NullInt32
+}
 
 type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	Writername         sql.NullString
@@ -89,8 +117,8 @@ type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	Comments           sql.NullInt32
 }
 
-func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, idsitenews int32) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error) {
-	row := q.db.QueryRowContext(ctx, getNewsPostByIdWithWriterIdAndThreadCommentCount, idsitenews)
+func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostByIdWithWriterIdAndThreadCommentCountParams) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error) {
+	row := q.db.QueryRowContext(ctx, getNewsPostByIdWithWriterIdAndThreadCommentCount, arg.ViewerID, arg.ID, arg.UserID)
 	var i GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 	err := row.Scan(
 		&i.Writername,
@@ -107,12 +135,36 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 }
 
 const getNewsPostsByIdsWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostsByIdsWithWriterIdAndThreadCommentCount :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
-WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
+WHERE s.Idsitenews IN (/*SLICE:newsids*/?) AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = s.idsiteNews
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+ORDER BY s.occurred DESC
 `
+
+type GetNewsPostsByIdsWithWriterIdAndThreadCommentCountParams struct {
+	ViewerID int32
+	Newsids  []int32
+	UserID   sql.NullInt32
+}
 
 type GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow struct {
 	Writername         sql.NullString
@@ -126,17 +178,19 @@ type GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow struct {
 	Comments           sql.NullInt32
 }
 
-func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context.Context, newsids []int32) ([]*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, error) {
+func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostsByIdsWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, error) {
 	query := getNewsPostsByIdsWithWriterIdAndThreadCommentCount
 	var queryParams []interface{}
-	if len(newsids) > 0 {
-		for _, v := range newsids {
+	queryParams = append(queryParams, arg.ViewerID)
+	if len(arg.Newsids) > 0 {
+		for _, v := range arg.Newsids {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:newsids*/?", strings.Repeat(",?", len(newsids))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:newsids*/?", strings.Repeat(",?", len(arg.Newsids))[1:], 1)
 	} else {
 		query = strings.Replace(query, "/*SLICE:newsids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -170,17 +224,37 @@ func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context
 }
 
 const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = s.idsiteNews
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
 ORDER BY s.occurred DESC
 LIMIT ? OFFSET ?
 `
 
 type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams struct {
-	Limit  int32
-	Offset int32
+	ViewerID int32
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
 }
 
 type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
@@ -196,7 +270,12 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
 }
 
 func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getNewsPostsWithWriterUsernameAndThreadCommentCountDescending, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getNewsPostsWithWriterUsernameAndThreadCommentCountDescending,
+		arg.ViewerID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

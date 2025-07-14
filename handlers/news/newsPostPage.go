@@ -80,7 +80,11 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
+	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+		ViewerID: uid,
+		ID:       int32(pid),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -177,7 +181,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
 		ShowReply:    data.CoreData.UserID != 0,
-		ShowEdit:     canEditNewsPost(data.CoreData, post.UsersIdusers),
+		ShowEdit:     canEditNewsPost(data.CoreData, post.Idsitenews),
 		Editing:      editingId == int(post.Idsitenews),
 		Announcement: ann,
 		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,
@@ -211,9 +215,20 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+		ViewerID: uid,
+		ID:       int32(pid),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -271,7 +286,6 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-	uid, _ := session.Values["UID"].(int32)
 
 	base := "http://" + r.Host
 	if config.AppRuntimeConfig.HTTPHostname != "" {
@@ -348,6 +362,11 @@ func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
+	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	err = queries.UpdateNewsPost(r.Context(), db.UpdateNewsPostParams{
 		Idsitenews:         int32(postId),
 		LanguageIdlanguage: int32(languageId),
@@ -379,7 +398,11 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	err = queries.CreateNewsPost(r.Context(), db.CreateNewsPostParams{
+	if cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); !cd.HasGrant("news", "post", "post", 0) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	id, err := queries.CreateNewsPost(r.Context(), db.CreateNewsPostParams{
 		LanguageIdlanguage: int32(languageId),
 		News: sql.NullString{
 			String: text,
@@ -390,6 +413,21 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
+	}
+
+	// give the author edit rights on the new post
+	if _, err := queries.CreateGrant(r.Context(), db.CreateGrantParams{
+		UserID:   sql.NullInt32{Int32: uid, Valid: true},
+		RoleID:   sql.NullInt32{},
+		Section:  "news",
+		Item:     sql.NullString{String: "post", Valid: true},
+		RuleType: "allow",
+		ItemID:   sql.NullInt32{Int32: int32(id), Valid: true},
+		ItemRule: sql.NullString{},
+		Action:   "edit",
+		Extra:    sql.NullString{},
+	}); err != nil {
+		log.Printf("create grant: %v", err)
 	}
 
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {

@@ -76,6 +76,42 @@ func (q *Queries) CheckRoleGrant(ctx context.Context, arg CheckRoleGrantParams) 
 	return column_1, err
 }
 
+const createGrant = `-- name: CreateGrant :execlastid
+INSERT INTO grants (
+    created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
+) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+`
+
+type CreateGrantParams struct {
+	UserID   sql.NullInt32
+	RoleID   sql.NullInt32
+	Section  string
+	Item     sql.NullString
+	RuleType string
+	ItemID   sql.NullInt32
+	ItemRule sql.NullString
+	Action   string
+	Extra    sql.NullString
+}
+
+func (q *Queries) CreateGrant(ctx context.Context, arg CreateGrantParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createGrant,
+		arg.UserID,
+		arg.RoleID,
+		arg.Section,
+		arg.Item,
+		arg.RuleType,
+		arg.ItemID,
+		arg.ItemRule,
+		arg.Action,
+		arg.Extra,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const createUserRole = `-- name: CreateUserRole :exec
 INSERT INTO user_roles (users_idusers, role_id)
 SELECT ?, r.id FROM roles r WHERE r.name = ?
@@ -93,6 +129,15 @@ type CreateUserRoleParams struct {
 //	? - Role of the permission (string)
 func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) error {
 	_, err := q.db.ExecContext(ctx, createUserRole, arg.UsersIdusers, arg.Name)
+	return err
+}
+
+const deleteGrant = `-- name: DeleteGrant :exec
+DELETE FROM grants WHERE id = ?
+`
+
+func (q *Queries) DeleteGrant(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteGrant, id)
 	return err
 }
 
@@ -349,6 +394,47 @@ func (q *Queries) ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers
 			return nil, err
 		}
 		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGrants = `-- name: ListGrants :many
+SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants ORDER BY id
+`
+
+func (q *Queries) ListGrants(ctx context.Context) ([]*Grant, error) {
+	rows, err := q.db.QueryContext(ctx, listGrants)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Grant
+	for rows.Next() {
+		var i Grant
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.Section,
+			&i.Item,
+			&i.RuleType,
+			&i.ItemID,
+			&i.ItemRule,
+			&i.Action,
+			&i.Extra,
+			&i.Active,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

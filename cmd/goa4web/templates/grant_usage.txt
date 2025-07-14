@@ -1,0 +1,10 @@
+Usage:
+  {{.Prog}} grant <command> [<args>]
+
+Commands:
+  add      create a grant rule
+  delete   delete a grant rule
+  list     list grant rules
+
+Flags:
+{{template "flags" .Flags}}

@@ -17,14 +17,14 @@ func CustomNewsIndex(data *hcommon.CoreData, r *http.Request) {
 		Name: "RSS Feed",
 		Link: "/news.rss",
 	})
-	userHasAdmin := data.HasRole("administrator") && data.AdminMode
+	userHasAdmin := data.HasGrant("news", "post", "edit", 0) && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "User Permissions",
 			Link: "/admin/news/user/permissions",
 		})
 	}
-	userHasWriter := data.HasRole("content writer")
+	userHasWriter := data.HasGrant("news", "post", "post", 0)
 	if userHasWriter || userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "Add News",

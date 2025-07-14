@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -46,7 +47,11 @@ func (c *newsReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	row, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, int32(c.ID))
+	row, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, dbpkg.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+		ViewerID: 0,
+		ID:       int32(c.ID),
+		UserID:   sql.NullInt32{},
+	})
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}

@@ -2,6 +2,7 @@ package writings
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
@@ -38,6 +39,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 		row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 			Userid:    uid,
 			Idwriting: int32(writingID),
+			UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			log.Printf("Error: %s", err)

@@ -25,7 +25,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		WritingCategoryID   int32
 		IsAdmin             bool
 		IsWriter            bool
-		Abstracts           []*db.GetPublicWritingsInCategoryRow
+		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
 	}
 
 	data := Data{
@@ -44,7 +44,10 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	categoryRows, err := queries.FetchAllCategories(r.Context())
+	categoryRows, err := queries.FetchCategoriesForUser(r.Context(), db.FetchCategoriesForUserParams{
+		ViewerID: data.CoreData.UserID,
+		UserID:   sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -55,8 +58,10 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writingsRows, err := queries.GetPublicWritingsInCategory(r.Context(), db.GetPublicWritingsInCategoryParams{
+	writingsRows, err := queries.GetPublicWritingsInCategoryForUser(r.Context(), db.GetPublicWritingsInCategoryForUserParams{
+		ViewerID:          data.CoreData.UserID,
 		WritingCategoryID: data.CategoryId,
+		UserID:            sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
 		Limit:             15,
 		Offset:            0,
 	})
@@ -73,6 +78,9 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
+		if !data.CoreData.HasGrant("writing", "category", "see", cat.Idwritingcategory) {
+			continue
+		}
 		categoryMap[cat.Idwritingcategory] = cat
 		if cat.WritingCategoryID == data.CategoryId {
 			data.Categories = append(data.Categories, cat)
@@ -88,7 +96,12 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	slices.Reverse(data.CategoryBreadcrumbs)
-	data.Abstracts = writingsRows
+	for _, wrow := range writingsRows {
+		if !data.CoreData.HasGrant("writing", "article", "see", wrow.Idwriting) {
+			continue
+		}
+		data.Abstracts = append(data.Abstracts, wrow)
+	}
 
 	CustomWritingsIndex(data.CoreData, r)
 

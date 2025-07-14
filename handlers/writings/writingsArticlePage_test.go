@@ -50,7 +50,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting")).
-		WithArgs(int32(1), int32(1), int32(1)).
+		WithArgs(int32(1), int32(1), int32(1), int32(1), sqlmock.AnyArg()).
 		WillReturnError(sqlmock.ErrCancelled)
 
 	rr := httptest.NewRecorder()

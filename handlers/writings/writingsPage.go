@@ -38,7 +38,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	categoryRows, err := queries.GetAllWritingCategories(r.Context(), data.CategoryId)
+	categoryRows, err := queries.FetchCategoriesForUser(r.Context(), db.FetchCategoriesForUserParams{
+		ViewerID: data.CoreData.UserID,
+		UserID:   sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -49,7 +52,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.Categories = categoryRows
+	for _, cat := range categoryRows {
+		if !data.CoreData.HasGrant("writing", "category", "see", cat.Idwritingcategory) {
+			continue
+		}
+		data.Categories = append(data.Categories, cat)
+	}
 
 	CustomWritingsIndex(data.CoreData, r)
 

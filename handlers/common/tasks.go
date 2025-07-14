@@ -237,6 +237,9 @@ const (
 	// TaskUserResetPassword resets a user's password.
 	TaskUserResetPassword = "Password Reset"
 
+	// TaskPasswordVerify verifies a password reset code.
+	TaskPasswordVerify = "Password Verify"
+
 	// TaskUserEmailVerification verifies a user's email address.
 	TaskUserEmailVerification = "Email Verification"
 

@@ -2,6 +2,7 @@ package blogs
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -75,9 +76,15 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		ID:            int32(blogId),
 	})
 	if err != nil {
-		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			return
+		default:
+			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	if !data.CoreData.HasGrant("blogs", "entry", "view", blog.Idblogs) {
 		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)

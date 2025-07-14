@@ -37,9 +37,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	data := &Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
-		Admin:    true,
+		CoreData: cd,
+		Admin:    cd.CanEditAny(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {

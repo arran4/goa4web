@@ -402,54 +402,53 @@ type BloggerCountRow struct {
 
 // ListBloggers returns bloggers with the number of posts, ordered by username.
 type ListBloggersParams struct {
-	Limit  int32
-	Offset int32
+	ViewerID int32
+	Limit    int32
+	Offset   int32
 }
 
 func (q *Queries) ListBloggers(ctx context.Context, arg ListBloggersParams) ([]*BloggerCountRow, error) {
-	rows, err := q.db.QueryContext(ctx,
-		"SELECT u.username, COUNT(b.idblogs) FROM blogs b JOIN users u ON b.users_idusers = u.idusers GROUP BY u.idusers ORDER BY u.username LIMIT ? OFFSET ?",
-		arg.Limit, arg.Offset)
+	rows, err := q.ListBloggersForViewer(ctx, ListBloggersForViewerParams{
+		ViewerID: arg.ViewerID,
+		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+		Limit:    arg.Limit,
+		Offset:   arg.Offset,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var items []*BloggerCountRow
-	for rows.Next() {
-		var i BloggerCountRow
-		if err := rows.Scan(&i.Username, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
+	items := make([]*BloggerCountRow, 0, len(rows))
+	for _, r := range rows {
+		items = append(items, &BloggerCountRow{Username: r.Username, Count: r.Count})
 	}
-	return items, rows.Err()
+	return items, nil
 }
 
 // SearchBloggers finds bloggers by username or email with pagination.
 type SearchBloggersParams struct {
-	Query  string
-	Limit  int32
-	Offset int32
+	ViewerID int32
+	Query    string
+	Limit    int32
+	Offset   int32
 }
 
 func (q *Queries) SearchBloggers(ctx context.Context, arg SearchBloggersParams) ([]*BloggerCountRow, error) {
 	like := "%" + arg.Query + "%"
-	rows, err := q.db.QueryContext(ctx,
-		"SELECT u.username, COUNT(b.idblogs) FROM blogs b JOIN users u ON b.users_idusers = u.idusers WHERE LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?) GROUP BY u.idusers ORDER BY u.username LIMIT ? OFFSET ?",
-		like, like, arg.Limit, arg.Offset)
+	rows, err := q.SearchBloggersForViewer(ctx, SearchBloggersForViewerParams{
+		ViewerID: arg.ViewerID,
+		Query:    like,
+		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+		Limit:    arg.Limit,
+		Offset:   arg.Offset,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var items []*BloggerCountRow
-	for rows.Next() {
-		var i BloggerCountRow
-		if err := rows.Scan(&i.Username, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
+	items := make([]*BloggerCountRow, 0, len(rows))
+	for _, r := range rows {
+		items = append(items, &BloggerCountRow{Username: r.Username, Count: r.Count})
 	}
-	return items, rows.Err()
+	return items, nil
 }
 
 // RecentNotifications returns the newest notifications across all users limited by the provided count.

@@ -11,7 +11,11 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
+
+type addAnnouncementTask struct{ eventbus.BasicTaskEvent }
+type deleteAnnouncementTask struct{ eventbus.BasicTaskEvent }
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -37,10 +41,10 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
-	AddAnnouncementTask.Action()(w, r)
+	AddAnnouncementTask.Action(w, r)
 }
 
-func (addAnnouncementTask) action(w http.ResponseWriter, r *http.Request) {
+func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
@@ -55,10 +59,10 @@ func (addAnnouncementTask) action(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	DeleteAnnouncementTask.Action()(w, r)
+	DeleteAnnouncementTask.Action(w, r)
 }
 
-func (deleteAnnouncementTask) action(w http.ResponseWriter, r *http.Request) {
+func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

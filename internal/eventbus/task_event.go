@@ -16,8 +16,8 @@ type NamedTask interface{ TaskName() string }
 type TaskEvent interface {
 	NamedTask
 	Matcher() mux.MatcherFunc
-	Action() http.HandlerFunc
-	Page() http.HandlerFunc
+	Action(w http.ResponseWriter, r *http.Request)
+	Page(w http.ResponseWriter, r *http.Request)
 	BuildNotification(path string, userID int32, data map[string]any) EventNotification
 }
 
@@ -45,10 +45,18 @@ func (e BasicTaskEvent) Name() string { return e.EventName }
 func (e BasicTaskEvent) Matcher() mux.MatcherFunc { return e.Match }
 
 // Action implements TaskEvent.
-func (e BasicTaskEvent) Action() http.HandlerFunc { return e.ActionHandler }
+func (e BasicTaskEvent) Action(w http.ResponseWriter, r *http.Request) {
+	if e.ActionHandler != nil {
+		e.ActionHandler(w, r)
+	}
+}
 
 // Page implements TaskEvent.
-func (e BasicTaskEvent) Page() http.HandlerFunc { return e.PageHandler }
+func (e BasicTaskEvent) Page(w http.ResponseWriter, r *http.Request) {
+	if e.PageHandler != nil {
+		e.PageHandler(w, r)
+	}
+}
 
 // BuildNotification creates a basic EventNotification when a custom builder is
 // not supplied.

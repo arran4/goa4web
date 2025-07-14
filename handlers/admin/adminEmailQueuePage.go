@@ -6,6 +6,7 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"log"
 	"net/http"
 	"net/mail"
@@ -14,6 +15,9 @@ import (
 
 	"github.com/arran4/goa4web/core/templates"
 )
+
+type resendQueueTask struct{ eventbus.BasicTaskEvent }
+type deleteQueueTask struct{ eventbus.BasicTaskEvent }
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {
@@ -64,10 +68,10 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
-	ResendQueueTask.Action()(w, r)
+	ResendQueueTask.Action(w, r)
 }
 
-func (resendQueueTask) action(w http.ResponseWriter, r *http.Request) {
+func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
@@ -112,10 +116,10 @@ func (resendQueueTask) action(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	DeleteQueueTask.Action()(w, r)
+	DeleteQueueTask.Action(w, r)
 }
 
-func (deleteQueueTask) action(w http.ResponseWriter, r *http.Request) {
+func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

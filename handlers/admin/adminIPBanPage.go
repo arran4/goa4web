@@ -13,7 +13,11 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
+
+type addIPBanTask struct{ eventbus.BasicTaskEvent }
+type deleteIPBanTask struct{ eventbus.BasicTaskEvent }
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -37,10 +41,10 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
-	AddIPBanTask.Action()(w, r)
+	AddIPBanTask.Action(w, r)
 }
 
-func (addIPBanTask) action(w http.ResponseWriter, r *http.Request) {
+func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = netutil.NormalizeIPNet(ipNet)
@@ -63,10 +67,10 @@ func (addIPBanTask) action(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	DeleteIPBanTask.Action()(w, r)
+	DeleteIPBanTask.Action(w, r)
 }
 
-func (deleteIPBanTask) action(w http.ResponseWriter, r *http.Request) {
+func (deleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

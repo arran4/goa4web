@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
@@ -50,9 +52,15 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		ID:            int32(bid),
 	})
 	if err != nil {
-		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData))
+			return
+		default:
+			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	var pthid int32

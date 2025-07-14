@@ -34,6 +34,7 @@ func RegisterRoutes(r *mux.Router) {
 	ur.HandleFunc("/notifications", userNotificationEmailActionPage).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SaveAllTask.Match)
 	ur.HandleFunc("/notifications/dismiss", userNotificationsDismissActionPage).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(DismissTask.Match)
 	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
+	ur.HandleFunc("/notifications/gallery", userGalleryPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
 	ur.HandleFunc("/subscriptions", userSubscriptionsPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
 	ur.HandleFunc("/subscriptions/add/blogs", userSubscriptionsAddBlogsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SubscribeBlogsTask.Match)
 	ur.HandleFunc("/subscriptions/add/writings", userSubscriptionsAddWritingsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SubscribeWritingsTask.Match)

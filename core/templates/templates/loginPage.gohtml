@@ -1,4 +1,7 @@
 {{ template "head" $ }}
+    {{- if $.Error }}
+    <p style="color:red">{{ $.Error }}</p>
+    {{- end }}
     Login:<br>
     <form method="post">
         {{ csrfField }}

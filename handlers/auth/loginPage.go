@@ -17,21 +17,24 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 )
 
-// LoginUserPassPage serves the username/password login form.
-func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
+func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	type Data struct {
 		*corecommon.CoreData
+		Error string
 	}
-
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		Error:    errMsg,
 	}
-
 	if err := templates.RenderTemplate(w, "loginPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
 	}
+}
+
+// LoginUserPassPage serves the username/password login form.
+func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
+	renderLoginForm(w, r, r.URL.Query().Get("error"))
 }
 
 // LoginActionPage processes the submitted login form.
@@ -57,7 +60,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 				Username:  username,
 				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
 			})
-			http.Error(w, "No such user", http.StatusNotFound)
+			renderLoginForm(w, r, "No such user")
 			return
 		default:
 			log.Printf("query Error: %s", err)
@@ -84,7 +87,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 			Username:  username,
 			IpAddress: strings.Split(r.RemoteAddr, ":")[0],
 		})
-		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		renderLoginForm(w, r, "Invalid password")
 		return
 	}
 

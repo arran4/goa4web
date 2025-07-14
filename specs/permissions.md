@@ -87,7 +87,7 @@ Some features store per-object defaults using role identifiers:
 
 - `topic_permissions` – default required roles for forum topics
 - `user_topic_permissions` – user specific topic rules
-- `writing_user_permissions` – per writing user access
+- per-writing user access rules live in the `grants` table with `section = 'writing'`
 
 These tables reference roles via `role_id` columns instead of legacy `level`
 fields.

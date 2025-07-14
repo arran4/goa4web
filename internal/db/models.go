@@ -463,10 +463,3 @@ type WritingSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingID                      int32
 }
-
-type WritingUserPermission struct {
-	WritingID    int32
-	UsersIdusers int32
-	CanRead      sql.NullBool
-	CanEdit      sql.NullBool
-}

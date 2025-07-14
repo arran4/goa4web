@@ -115,8 +115,9 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, 
 	}
 
 	writings, err := queries.GetWritingsByIdsForUserDescendingByPublishedDate(r.Context(), db.GetWritingsByIdsForUserDescendingByPublishedDateParams{
-		Userid:     uid,
 		Writingids: writingsIds,
+		UserID:     uid,
+		ViewerID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

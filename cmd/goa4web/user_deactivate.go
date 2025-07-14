@@ -89,7 +89,11 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub comment: %w", err)
 		}
 	}
-	writings, err := qtx.GetAllWritingsByUser(ctx, u.Idusers)
+	writings, err := qtx.GetAllWritingsByUser(ctx, dbpkg.GetAllWritingsByUserParams{
+		AuthorID:      u.Idusers,
+		ViewerMatchID: u.Idusers,
+		ViewerID:      sql.NullInt32{Int32: u.Idusers, Valid: true},
+	})
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list writings: %w", err)

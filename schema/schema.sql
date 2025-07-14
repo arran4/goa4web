@@ -376,15 +376,6 @@ CREATE TABLE `writing_search` (
   KEY `searchwordlist_has_writing_FKIndex2` (`writing_id`)
 );
 
-CREATE TABLE `writing_user_permissions` (
-  `writing_id` int(10) NOT NULL DEFAULT 0,
-  `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `can_read` tinyint(1) DEFAULT NULL,
-  `can_edit` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`writing_id`,`users_idusers`),
-  KEY `writing_has_users_FKIndex1` (`writing_id`),
-  KEY `writing_has_users_FKIndex2` (`users_idusers`)
-);
 
 -- Track schema upgrades.
 CREATE TABLE IF NOT EXISTS `schema_version` (

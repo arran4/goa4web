@@ -25,43 +25,6 @@ func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWriti
 	return err
 }
 
-const createWritingApproval = `-- name: CreateWritingApproval :exec
-INSERT INTO writing_user_permissions (writing_id, users_idusers, can_read, can_edit)
-VALUES (?, ?, ?, ?)
-`
-
-type CreateWritingApprovalParams struct {
-	WritingID    int32
-	UsersIdusers int32
-	CanRead      sql.NullBool
-	CanEdit      sql.NullBool
-}
-
-func (q *Queries) CreateWritingApproval(ctx context.Context, arg CreateWritingApprovalParams) error {
-	_, err := q.db.ExecContext(ctx, createWritingApproval,
-		arg.WritingID,
-		arg.UsersIdusers,
-		arg.CanRead,
-		arg.CanEdit,
-	)
-	return err
-}
-
-const deleteWritingApproval = `-- name: DeleteWritingApproval :exec
-DELETE FROM writing_user_permissions
-WHERE writing_id = ? AND users_idusers = ?
-`
-
-type DeleteWritingApprovalParams struct {
-	WritingID    int32
-	UsersIdusers int32
-}
-
-func (q *Queries) DeleteWritingApproval(ctx context.Context, arg DeleteWritingApprovalParams) error {
-	_, err := q.db.ExecContext(ctx, deleteWritingApproval, arg.WritingID, arg.UsersIdusers)
-	return err
-}
-
 const fetchAllCategories = `-- name: FetchAllCategories :many
 SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description
 FROM writing_category wc
@@ -81,51 +44,6 @@ func (q *Queries) FetchAllCategories(ctx context.Context) ([]*WritingCategory, e
 			&i.WritingCategoryID,
 			&i.Title,
 			&i.Description,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllWritingApprovals = `-- name: GetAllWritingApprovals :many
-SELECT idusers, u.username, wau.writing_id, wau.users_idusers, wau.can_read, wau.can_edit
-FROM writing_user_permissions wau
-LEFT JOIN users u ON idusers = wau.users_idusers
-`
-
-type GetAllWritingApprovalsRow struct {
-	Idusers      sql.NullInt32
-	Username     sql.NullString
-	WritingID    int32
-	UsersIdusers int32
-	CanRead      sql.NullBool
-	CanEdit      sql.NullBool
-}
-
-func (q *Queries) GetAllWritingApprovals(ctx context.Context) ([]*GetAllWritingApprovalsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllWritingApprovals)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllWritingApprovalsRow
-	for rows.Next() {
-		var i GetAllWritingApprovalsRow
-		if err := rows.Scan(
-			&i.Idusers,
-			&i.Username,
-			&i.WritingID,
-			&i.UsersIdusers,
-			&i.CanRead,
-			&i.CanEdit,
 		); err != nil {
 			return nil, err
 		}
@@ -180,8 +98,24 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = ?
+  AND (
+      w.private = 0 OR w.users_idusers = ? OR EXISTS (
+          SELECT 1 FROM grants g
+          WHERE g.user_id = ?
+            AND g.section = 'writing'
+            AND g.item_id = w.idwriting
+            AND g.action = 'view'
+            AND g.active = 1
+      )
+  )
 ORDER BY w.published DESC
 `
+
+type GetAllWritingsByUserParams struct {
+	AuthorID      int32
+	ViewerMatchID int32
+	ViewerID      sql.NullInt32
+}
 
 type GetAllWritingsByUserRow struct {
 	Idwriting          int32
@@ -199,8 +133,8 @@ type GetAllWritingsByUserRow struct {
 	Comments           int64
 }
 
-func (q *Queries) GetAllWritingsByUser(ctx context.Context, usersIdusers int32) ([]*GetAllWritingsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllWritingsByUser, usersIdusers)
+func (q *Queries) GetAllWritingsByUser(ctx context.Context, arg GetAllWritingsByUserParams) ([]*GetAllWritingsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllWritingsByUser, arg.AuthorID, arg.ViewerMatchID, arg.ViewerID)
 	if err != nil {
 		return nil, err
 	}
@@ -426,13 +360,22 @@ const getWritingByIdForUserDescendingByPublishedDate = `-- name: GetWritingByIdF
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
-WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+WHERE (
+    w.private = 0 OR w.users_idusers = ? OR EXISTS (
+        SELECT 1 FROM grants g
+        WHERE g.user_id = ?
+          AND g.section = 'writing'
+          AND g.item_id = w.idwriting
+          AND g.action = 'view'
+          AND g.active = 1
+    )
+) AND w.idwriting = ?
 ORDER BY w.published DESC
 `
 
 type GetWritingByIdForUserDescendingByPublishedDateParams struct {
-	Userid    int32
+	UserID    int32
+	ViewerID  sql.NullInt32
 	Idwriting int32
 }
 
@@ -453,7 +396,7 @@ type GetWritingByIdForUserDescendingByPublishedDateRow struct {
 }
 
 func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Context, arg GetWritingByIdForUserDescendingByPublishedDateParams) (*GetWritingByIdForUserDescendingByPublishedDateRow, error) {
-	row := q.db.QueryRowContext(ctx, getWritingByIdForUserDescendingByPublishedDate, arg.Userid, arg.Idwriting, arg.Userid)
+	row := q.db.QueryRowContext(ctx, getWritingByIdForUserDescendingByPublishedDate, arg.UserID, arg.ViewerID, arg.Idwriting)
 	var i GetWritingByIdForUserDescendingByPublishedDateRow
 	err := row.Scan(
 		&i.Idwriting,
@@ -477,13 +420,22 @@ const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsBy
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
-WHERE w.idwriting IN (/*SLICE:writingids*/?) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+WHERE (
+    w.private = 0 OR w.users_idusers = ? OR EXISTS (
+        SELECT 1 FROM grants g
+        WHERE g.user_id = ?
+          AND g.section = 'writing'
+          AND g.item_id = w.idwriting
+          AND g.action = 'view'
+          AND g.active = 1
+    )
+) AND w.idwriting IN (/*SLICE:writingids*/?)
 ORDER BY w.published DESC
 `
 
 type GetWritingsByIdsForUserDescendingByPublishedDateParams struct {
-	Userid     int32
+	UserID     int32
+	ViewerID   sql.NullInt32
 	Writingids []int32
 }
 
@@ -506,7 +458,8 @@ type GetWritingsByIdsForUserDescendingByPublishedDateRow struct {
 func (q *Queries) GetWritingsByIdsForUserDescendingByPublishedDate(ctx context.Context, arg GetWritingsByIdsForUserDescendingByPublishedDateParams) ([]*GetWritingsByIdsForUserDescendingByPublishedDateRow, error) {
 	query := getWritingsByIdsForUserDescendingByPublishedDate
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.Userid)
+	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ViewerID)
 	if len(arg.Writingids) > 0 {
 		for _, v := range arg.Writingids {
 			queryParams = append(queryParams, v)
@@ -515,7 +468,6 @@ func (q *Queries) GetWritingsByIdsForUserDescendingByPublishedDate(ctx context.C
 	} else {
 		query = strings.Replace(query, "/*SLICE:writingids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.Userid)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -622,29 +574,6 @@ func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) er
 		arg.Private,
 		arg.LanguageIdlanguage,
 		arg.Idwriting,
-	)
-	return err
-}
-
-const updateWritingApproval = `-- name: UpdateWritingApproval :exec
-UPDATE writing_user_permissions
-SET can_read = ?, can_edit = ?
-WHERE writing_id = ? AND users_idusers = ?
-`
-
-type UpdateWritingApprovalParams struct {
-	CanRead      sql.NullBool
-	CanEdit      sql.NullBool
-	WritingID    int32
-	UsersIdusers int32
-}
-
-func (q *Queries) UpdateWritingApproval(ctx context.Context, arg UpdateWritingApprovalParams) error {
-	_, err := q.db.ExecContext(ctx, updateWritingApproval,
-		arg.CanRead,
-		arg.CanEdit,
-		arg.WritingID,
-		arg.UsersIdusers,
 	)
 	return err
 }

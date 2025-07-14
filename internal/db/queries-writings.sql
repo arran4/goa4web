@@ -38,8 +38,16 @@ VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 SELECT w.*, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = sqlc.arg(UserId)
-WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(UserId))
+WHERE (
+    w.private = 0 OR w.users_idusers = sqlc.arg(user_id) OR EXISTS (
+        SELECT 1 FROM grants g
+        WHERE g.user_id = sqlc.arg(viewer_id)
+          AND g.section = 'writing'
+          AND g.item_id = w.idwriting
+          AND g.action = 'view'
+          AND g.active = 1
+    )
+) AND w.idwriting = sqlc.arg(idwriting)
 ORDER BY w.published DESC
 ;
 
@@ -47,8 +55,16 @@ ORDER BY w.published DESC
 SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
-LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = sqlc.arg(userId)
-WHERE w.idwriting IN (sqlc.slice(writingIds)) AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = sqlc.arg(userId))
+WHERE (
+    w.private = 0 OR w.users_idusers = sqlc.arg(user_id) OR EXISTS (
+        SELECT 1 FROM grants g
+        WHERE g.user_id = sqlc.arg(viewer_id)
+          AND g.section = 'writing'
+          AND g.item_id = w.idwriting
+          AND g.action = 'view'
+          AND g.active = 1
+    )
+) AND w.idwriting IN (sqlc.slice(writingIds))
 ORDER BY w.published DESC
 ;
 
@@ -71,24 +87,6 @@ SELECT wc.*
 FROM writing_category wc
 ;
 
--- name: DeleteWritingApproval :exec
-DELETE FROM writing_user_permissions
-WHERE writing_id = ? AND users_idusers = ?;
-
--- name: CreateWritingApproval :exec
-INSERT INTO writing_user_permissions (writing_id, users_idusers, can_read, can_edit)
-VALUES (?, ?, ?, ?);
-
--- name: UpdateWritingApproval :exec
-UPDATE writing_user_permissions
-SET can_read = ?, can_edit = ?
-WHERE writing_id = ? AND users_idusers = ?;
-
--- name: GetAllWritingApprovals :many
-SELECT idusers, u.username, wau.*
-FROM writing_user_permissions wau
-LEFT JOIN users u ON idusers = wau.users_idusers
-;
 
 -- name: AssignWritingThisThreadId :exec
 UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;
@@ -99,5 +97,15 @@ SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
-WHERE w.users_idusers = ?
+WHERE w.users_idusers = sqlc.arg(author_id)
+  AND (
+      w.private = 0 OR w.users_idusers = sqlc.arg(viewer_match_id) OR EXISTS (
+          SELECT 1 FROM grants g
+          WHERE g.user_id = sqlc.arg(viewer_id)
+            AND g.section = 'writing'
+            AND g.item_id = w.idwriting
+            AND g.action = 'view'
+            AND g.active = 1
+      )
+  )
 ORDER BY w.published DESC;

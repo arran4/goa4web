@@ -2,6 +2,7 @@ package user
 
 import (
 	"archive/zip"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -57,7 +58,11 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		catMap[c.Idwritingcategory] = c.Title.String
 	}
 
-	writings, _ := queries.GetAllWritingsByUser(r.Context(), int32(uid))
+	writings, _ := queries.GetAllWritingsByUser(r.Context(), db.GetAllWritingsByUserParams{
+		AuthorID:      int32(uid),
+		ViewerMatchID: int32(uid),
+		ViewerID:      sql.NullInt32{Int32: int32(uid), Valid: true},
+	})
 	type writingExport struct {
 		*db.GetAllWritingsByUserRow
 		Category string `json:"category"`

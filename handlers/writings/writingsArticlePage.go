@@ -74,7 +74,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    uid,
+		UserID:    uid,
+		ViewerID:  sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Idwriting: int32(articleId),
 	})
 	if err != nil {
@@ -271,7 +272,8 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    uid,
+		UserID:    uid,
+		ViewerID:  sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Idwriting: int32(aid),
 	})
 	if err != nil {

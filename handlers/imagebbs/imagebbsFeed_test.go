@@ -9,7 +9,7 @@ import (
 )
 
 func TestImagebbsFeed(t *testing.T) {
-	rows := []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow{
+	rows := []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow{
 		{
 			Idimagepost:   1,
 			ForumthreadID: 2,

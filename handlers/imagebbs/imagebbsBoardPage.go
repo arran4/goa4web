@@ -33,7 +33,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
-		Posts       []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
+		Posts       []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow
 	}
 
 	vars := mux.Vars(r)
@@ -47,7 +47,16 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
-	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), int32(bid))
+	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
+		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		return
+	}
+
+	subBoardRows, err := queries.GetAllBoardsByParentBoardIdForUser(r.Context(), db.GetAllBoardsByParentBoardIdForUserParams{
+		ViewerID:     data.CoreData.UserID,
+		ParentID:     int32(bid),
+		ViewerUserID: sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -60,7 +69,11 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = subBoardRows
 
-	posts, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
+	posts, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
+		ViewerID:     data.CoreData.UserID,
+		BoardID:      int32(bid),
+		ViewerUserID: sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

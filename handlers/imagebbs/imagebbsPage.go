@@ -28,7 +28,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	subBoardRows, err := queries.GetAllBoardsByParentBoardId(r.Context(), 0)
+	subBoardRows, err := queries.GetAllBoardsByParentBoardIdForUser(r.Context(), db.GetAllBoardsByParentBoardIdForUserParams{
+		ViewerID:     data.CoreData.UserID,
+		ParentID:     0,
+		ViewerUserID: sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

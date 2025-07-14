@@ -36,7 +36,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		ForumThreadId      int
 		Comments           []*CommentPlus
 		BoardId            int
-		ImagePost          *db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
+		ImagePost          *db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserRow
 		Thread             *db.GetThreadLastPosterAndPermsRow
 		Offset             int
 		IsReplyable        bool
@@ -49,7 +49,8 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
+	var uid int32
+	uid, _ = session.Values["UID"].(int32)
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
@@ -57,6 +58,11 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		Replyable:     true,
 		BoardId:       bid,
 		ForumThreadId: thid,
+	}
+
+	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
+		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		return
 	}
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
@@ -122,7 +128,11 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
+	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
+		ViewerID:     uid,
+		ID:           int32(bid),
+		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		log.Printf("getAllBoardsByParentBoardId Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -148,8 +158,12 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var uid int32
+
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["boardno"])
+
+	uid, _ = session.Values["UID"].(int32)
 
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -163,7 +177,11 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
-	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(r.Context(), int32(bid))
+	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
+		ViewerID:     uid,
+		ID:           int32(bid),
+		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		log.Printf("getAllBoardsByParentBoardId Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -221,7 +239,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-	uid, _ := session.Values["UID"].(int32)
+	uid, _ = session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
 

@@ -17,7 +17,7 @@ import (
 func PosterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Posts    []*db.GetImagePostsByUserDescendingRow
+		Posts    []*db.GetImagePostsByUserDescendingForUserRow
 		Username string
 		IsOffset bool
 	}
@@ -39,8 +39,11 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetImagePostsByUserDescending(r.Context(), db.GetImagePostsByUserDescendingParams{
-		UsersIdusers: u.Idusers,
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	rows, err := queries.GetImagePostsByUserDescendingForUser(r.Context(), db.GetImagePostsByUserDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		UserID:       u.Idusers,
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:        15,
 		Offset:       int32(offset),
 	})
@@ -50,9 +53,11 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	filtered := rows
+
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
-		Posts:    rows,
+		CoreData: cd,
+		Posts:    filtered,
 		Username: username,
 		IsOffset: offset != 0,
 	}

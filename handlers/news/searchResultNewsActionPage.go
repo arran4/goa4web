@@ -113,7 +113,11 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 		}
 	}
 
-	news, err := queries.GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(r.Context(), newsIds)
+	news, err := queries.GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountParams{
+		ViewerID: uid,
+		Newsids:  newsIds,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -107,3 +107,16 @@ Comment-related CLI commands accept a `--user` flag to evaluate permissions for
 a specific viewer. The underlying queries now take a single `viewer_id` rather
 than separate user ID parameters.
 
+### Default News Grants
+
+The migrations seed baseline rules for the `news` section:
+
+| Role | Action | Item | Description |
+|------|-------|------|-------------|
+| `anonymous` | `see`, `view` | `post` | browse published news |
+| `user` | `comment`, `reply` | `post` | participate in discussions |
+| `content writer`, `administrator` | `post` | `post` | create new entries |
+| `administrator` | `edit` | `post` | modify any news post |
+
+When a writer publishes a post they automatically receive an `edit` grant tied to that post.
+

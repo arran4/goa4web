@@ -20,9 +20,12 @@ import (
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	uid := cd.UserID
 	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-		Limit:  15,
-		Offset: 0,
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		Limit:    15,
+		Offset:   0,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending: %s", err)

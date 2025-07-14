@@ -87,9 +87,15 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 
 			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
+			viewerID := int32(0)
+			if cd := r.Context().Value(ContextValues("coreData")).(*CoreData); cd != nil {
+				viewerID = cd.UserID
+			}
 			posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-				Limit:  15,
-				Offset: int32(offset),
+				ViewerID: viewerID,
+				UserID:   sql.NullInt32{Int32: viewerID, Valid: viewerID != 0},
+				Limit:    15,
+				Offset:   int32(offset),
 			})
 			if err != nil {
 				switch {
@@ -113,7 +119,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				result = append(result, &Post{
 					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
 					ShowReply:    cd.UserID != 0,
-					ShowEdit:     (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("content writer") && cd.UserID == post.UsersIdusers),
+					ShowEdit:     cd.HasGrant("news", "post", "edit", post.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
 					Editing:      editingId == int(post.Idsitenews),
 					Announcement: ann,
 					IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,

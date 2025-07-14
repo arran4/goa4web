@@ -18,13 +18,13 @@ func PostUpdateLocal(ctx context.Context, q *db.Queries, threadID, topicID int32
 	return nil
 }
 
-// canEditNewsPost returns true if cd has permission to edit a news post by authorID.
-func canEditNewsPost(cd *hcommon.CoreData, authorID int32) bool {
+// canEditNewsPost reports whether cd can modify the specified news post.
+func canEditNewsPost(cd *hcommon.CoreData, postID int32) bool {
 	if cd == nil {
 		return false
 	}
-	if cd.HasRole("administrator") && cd.AdminMode {
+	if cd.HasGrant("news", "post", "edit", postID) && (cd.AdminMode || cd.UserID != 0) {
 		return true
 	}
-	return cd.HasRole("content writer") && cd.UserID == authorID
+	return false
 }

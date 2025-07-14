@@ -115,3 +115,14 @@ WHERE g.section = sqlc.arg(section)
   AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
   AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LIMIT 1;
+
+-- name: CreateGrant :execlastid
+INSERT INTO grants (
+    created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
+) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 1);
+
+-- name: DeleteGrant :exec
+DELETE FROM grants WHERE id = ?;
+
+-- name: ListGrants :many
+SELECT * FROM grants ORDER BY id;

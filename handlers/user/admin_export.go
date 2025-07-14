@@ -2,6 +2,7 @@ package user
 
 import (
 	"archive/zip"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -51,7 +52,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		Permissions: perms,
 	}
 
-	cats, _ := queries.FetchAllCategories(r.Context())
+	cats, _ := queries.FetchAllCategoriesForUser(r.Context(), db.FetchAllCategoriesForUserParams{ViewerID: data.User.Idusers, UserID: sql.NullInt32{Int32: data.User.Idusers, Valid: data.User.Idusers != 0}})
 	catMap := make(map[int32]string)
 	for _, c := range cats {
 		catMap[c.Idwritingcategory] = c.Title.String

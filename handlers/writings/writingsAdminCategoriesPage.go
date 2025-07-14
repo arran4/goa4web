@@ -24,7 +24,11 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	categoryRows, err := queries.FetchAllCategories(r.Context())
+	uid := data.CoreData.UserID
+	categoryRows, err := queries.FetchAllCategoriesForUser(r.Context(), db.FetchAllCategoriesForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

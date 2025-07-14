@@ -74,12 +74,17 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    uid,
+		ViewerID:  uid,
 		Idwriting: int32(articleId),
+		UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if !data.CoreData.HasGrant("writing", "article", "view", writing.Idwriting) {
+		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -169,7 +174,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryRows, err := queries.FetchAllCategories(r.Context())
+	categoryRows, err := queries.FetchAllCategoriesForUser(r.Context(), db.FetchAllCategoriesForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -182,6 +190,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
+		if !data.CoreData.HasGrant("writing", "category", "see", cat.Idwritingcategory) {
+			continue
+		}
 		categoryMap[cat.Idwritingcategory] = cat
 		if cat.WritingCategoryID == data.CategoryId {
 			data.Categories = append(data.Categories, cat)
@@ -254,6 +265,8 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+
 	vars := mux.Vars(r)
 	aid, err := strconv.Atoi(vars["article"])
 
@@ -271,12 +284,17 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    uid,
+		ViewerID:  uid,
 		Idwriting: int32(aid),
+		UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		log.Printf("getArticlePost Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if !cd.HasGrant("writing", "article", "reply", post.Idwriting) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 

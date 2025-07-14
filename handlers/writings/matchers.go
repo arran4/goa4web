@@ -2,6 +2,7 @@ package writings
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
@@ -36,8 +37,9 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-			Userid:    uid,
+			ViewerID:  uid,
 			Idwriting: int32(writingID),
+			UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			log.Printf("Error: %s", err)
@@ -51,7 +53,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
-		if cd == nil || !cd.HasRole("content writer") || row.UsersIdusers != uid {
+		if cd == nil || !cd.HasRole("content writer") || row.UsersIdusers != uid || !cd.HasGrant("writing", "article", "edit", row.Idwriting) {
 			http.NotFound(w, r)
 			return
 		}

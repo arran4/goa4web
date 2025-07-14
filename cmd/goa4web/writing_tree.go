@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 
@@ -33,7 +34,7 @@ func (c *writingTreeCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.FetchAllCategories(ctx)
+	rows, err := queries.FetchAllCategoriesForUser(ctx, dbpkg.FetchAllCategoriesForUserParams{ViewerID: 0, UserID: sql.NullInt32{}})
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)
 	}

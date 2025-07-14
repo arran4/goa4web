@@ -44,7 +44,11 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	categoryRows, err := queries.FetchAllCategories(r.Context())
+	uid := data.CoreData.UserID
+	categoryRows, err := queries.FetchAllCategoriesForUser(r.Context(), db.FetchAllCategoriesForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -73,6 +77,9 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
+		if !data.CoreData.HasGrant("writing", "category", "see", cat.Idwritingcategory) {
+			continue
+		}
 		categoryMap[cat.Idwritingcategory] = cat
 		if cat.WritingCategoryID == data.CategoryId {
 			data.Categories = append(data.Categories, cat)
@@ -88,7 +95,11 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	slices.Reverse(data.CategoryBreadcrumbs)
-	data.Abstracts = writingsRows
+	for _, row := range writingsRows {
+		if data.CoreData.HasGrant("writing", "article", "see", row.Idwriting) {
+			data.Abstracts = append(data.Abstracts, row)
+		}
+	}
 
 	CustomWritingsIndex(data.CoreData, r)
 

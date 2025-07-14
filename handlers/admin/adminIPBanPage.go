@@ -40,10 +40,6 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
-	AddIPBanTask.Action(w, r)
-}
-
 func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
@@ -64,10 +60,6 @@ func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	common.TaskDoneAutoRefreshPage(w, r)
-}
-
-func AdminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	DeleteIPBanTask.Action(w, r)
 }
 
 func (deleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {

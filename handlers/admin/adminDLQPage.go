@@ -36,10 +36,6 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminDLQAction(w http.ResponseWriter, r *http.Request) {
-	DeleteDLQTask.Action(w, r)
-}
-
 func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {

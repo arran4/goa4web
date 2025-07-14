@@ -40,10 +40,6 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
-	AddAnnouncementTask.Action(w, r)
-}
-
 func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
@@ -56,10 +52,6 @@ func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 		log.Printf("create announcement: %v", err)
 	}
 	common.TaskDoneAutoRefreshPage(w, r)
-}
-
-func AdminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	DeleteAnnouncementTask.Action(w, r)
 }
 
 func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {

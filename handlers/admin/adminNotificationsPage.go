@@ -51,10 +51,6 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request) {
-	MarkReadTask.Action(w, r)
-}
-
 func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
@@ -69,20 +65,12 @@ func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
 	common.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
-	PurgeNotificationsTask.Action(w, r)
-}
-
 func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
 	common.TaskDoneAutoRefreshPage(w, r)
-}
-
-func AdminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
-	SendNotificationTask.Action(w, r)
 }
 
 func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {

@@ -67,10 +67,6 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminEmailQueueResendActionPage(w http.ResponseWriter, r *http.Request) {
-	ResendQueueTask.Action(w, r)
-}
-
 func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
@@ -113,10 +109,6 @@ func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	common.TaskDoneAutoRefreshPage(w, r)
-}
-
-func AdminEmailQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	DeleteQueueTask.Action(w, r)
 }
 
 func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {

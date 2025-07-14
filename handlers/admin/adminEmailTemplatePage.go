@@ -60,10 +60,6 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
-	SaveTemplateTask.Action(w, r)
-}
-
 func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -75,10 +71,6 @@ func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		log.Printf("db save template: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
-}
-
-func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
-	TestTemplateTask.Action(w, r)
 }
 
 func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {

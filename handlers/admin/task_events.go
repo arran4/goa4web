@@ -24,34 +24,34 @@ type deleteIPBanTask struct{ eventbus.BasicTaskEvent }
 type newsUserAllowTask struct{ eventbus.BasicTaskEvent }
 type newsUserRemoveTask struct{ eventbus.BasicTaskEvent }
 
-func (resendQueueTask) Action() http.HandlerFunc        { return ResendQueueTask.action }
-func (resendQueueTask) Page() http.HandlerFunc          { return nil }
-func (deleteQueueTask) Action() http.HandlerFunc        { return DeleteQueueTask.action }
-func (deleteQueueTask) Page() http.HandlerFunc          { return nil }
-func (saveTemplateTask) Action() http.HandlerFunc       { return SaveTemplateTask.action }
-func (saveTemplateTask) Page() http.HandlerFunc         { return nil }
-func (testTemplateTask) Action() http.HandlerFunc       { return TestTemplateTask.action }
-func (testTemplateTask) Page() http.HandlerFunc         { return nil }
-func (deleteDLQTask) Action() http.HandlerFunc          { return DeleteDLQTask.action }
-func (deleteDLQTask) Page() http.HandlerFunc            { return nil }
-func (markReadTask) Action() http.HandlerFunc           { return MarkReadTask.action }
-func (markReadTask) Page() http.HandlerFunc             { return nil }
-func (purgeNotificationsTask) Action() http.HandlerFunc { return PurgeNotificationsTask.action }
-func (purgeNotificationsTask) Page() http.HandlerFunc   { return nil }
-func (sendNotificationTask) Action() http.HandlerFunc   { return SendNotificationTask.action }
-func (sendNotificationTask) Page() http.HandlerFunc     { return nil }
-func (addAnnouncementTask) Action() http.HandlerFunc    { return AddAnnouncementTask.action }
-func (addAnnouncementTask) Page() http.HandlerFunc      { return nil }
-func (deleteAnnouncementTask) Action() http.HandlerFunc { return DeleteAnnouncementTask.action }
-func (deleteAnnouncementTask) Page() http.HandlerFunc   { return nil }
-func (addIPBanTask) Action() http.HandlerFunc           { return AddIPBanTask.action }
-func (addIPBanTask) Page() http.HandlerFunc             { return nil }
-func (deleteIPBanTask) Action() http.HandlerFunc        { return DeleteIPBanTask.action }
-func (deleteIPBanTask) Page() http.HandlerFunc          { return nil }
-func (newsUserAllowTask) Action() http.HandlerFunc      { return news.NewsAdminUserLevelsAllowActionPage }
-func (newsUserAllowTask) Page() http.HandlerFunc        { return nil }
-func (newsUserRemoveTask) Action() http.HandlerFunc     { return news.NewsAdminUserLevelsRemoveActionPage }
-func (newsUserRemoveTask) Page() http.HandlerFunc       { return nil }
+func (t resendQueueTask) Action() http.HandlerFunc        { return t.action }
+func (resendQueueTask) Page() http.HandlerFunc            { return nil }
+func (t deleteQueueTask) Action() http.HandlerFunc        { return t.action }
+func (deleteQueueTask) Page() http.HandlerFunc            { return nil }
+func (t saveTemplateTask) Action() http.HandlerFunc       { return t.action }
+func (saveTemplateTask) Page() http.HandlerFunc           { return nil }
+func (t testTemplateTask) Action() http.HandlerFunc       { return t.action }
+func (testTemplateTask) Page() http.HandlerFunc           { return nil }
+func (t deleteDLQTask) Action() http.HandlerFunc          { return t.action }
+func (deleteDLQTask) Page() http.HandlerFunc              { return nil }
+func (t markReadTask) Action() http.HandlerFunc           { return t.action }
+func (markReadTask) Page() http.HandlerFunc               { return nil }
+func (t purgeNotificationsTask) Action() http.HandlerFunc { return t.action }
+func (purgeNotificationsTask) Page() http.HandlerFunc     { return nil }
+func (t sendNotificationTask) Action() http.HandlerFunc   { return t.action }
+func (sendNotificationTask) Page() http.HandlerFunc       { return nil }
+func (t addAnnouncementTask) Action() http.HandlerFunc    { return t.action }
+func (addAnnouncementTask) Page() http.HandlerFunc        { return nil }
+func (t deleteAnnouncementTask) Action() http.HandlerFunc { return t.action }
+func (deleteAnnouncementTask) Page() http.HandlerFunc     { return nil }
+func (t addIPBanTask) Action() http.HandlerFunc           { return t.action }
+func (addIPBanTask) Page() http.HandlerFunc               { return nil }
+func (t deleteIPBanTask) Action() http.HandlerFunc        { return t.action }
+func (deleteIPBanTask) Page() http.HandlerFunc            { return nil }
+func (newsUserAllowTask) Action() http.HandlerFunc        { return news.NewsAdminUserLevelsAllowActionPage }
+func (newsUserAllowTask) Page() http.HandlerFunc          { return nil }
+func (newsUserRemoveTask) Action() http.HandlerFunc       { return news.NewsAdminUserLevelsRemoveActionPage }
+func (newsUserRemoveTask) Page() http.HandlerFunc         { return nil }
 
 var ResendQueueTask = resendQueueTask{
 	BasicTaskEvent: eventbus.BasicTaskEvent{

@@ -41,14 +41,16 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if data.Search != "" {
 		rows, err = queries.SearchBloggers(r.Context(), db.SearchBloggersParams{
-			Query:  data.Search,
-			Limit:  int32(pageSize + 1),
-			Offset: int32(offset),
+			ViewerID: data.UserID,
+			Query:    data.Search,
+			Limit:    int32(pageSize + 1),
+			Offset:   int32(offset),
 		})
 	} else {
 		rows, err = queries.ListBloggers(r.Context(), db.ListBloggersParams{
-			Limit:  int32(pageSize + 1),
-			Offset: int32(offset),
+			ViewerID: data.UserID,
+			Limit:    int32(pageSize + 1),
+			Offset:   int32(offset),
 		})
 	}
 	if err != nil {

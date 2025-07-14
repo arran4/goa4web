@@ -5,7 +5,7 @@
     <tr><th>ID</th><th>User</th><th>Email</th><th>Role</th></tr>
     {{ range .Rows }}
     <tr>
-        <td>{{ .Idpermissions }}</td>
+        <td>{{ .IduserRoles }}</td>
         <td>{{ .Username.String }}</td>
         <td>{{ .Email.String }}</td>
         <td>{{ .Role }}</td>

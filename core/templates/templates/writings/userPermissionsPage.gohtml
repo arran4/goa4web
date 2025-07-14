@@ -16,7 +16,7 @@
 					<td>
 						<form method="post">
         {{ csrfField }}
-							<input type="hidden" name="permid" value="{{.Idpermissions}}">
+                                                        <input type="hidden" name="permid" value="{{.IduserRoles}}">
 							<input type="submit" name="task" value="User Disallow">
 						</form>
 					</td>
@@ -29,11 +29,8 @@
 				<td>?
 				<td>
                                         <select name="role">
-						<option value="reader">reader
-						<option value="writer">writer
-						<option value="moderator">moderator
-						<option value="administrator">administrator
-					</select>
+                                                {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
+                                        </select>
 				</td>
 				<td>
 					<input type="submit" name="task" value="User Allow">

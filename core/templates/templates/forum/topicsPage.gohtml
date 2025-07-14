@@ -3,7 +3,8 @@
 
     {{ template "getAllForumCategories" $ }}
 
-    <a href="/forum/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a><br />
+    <a href="/forum/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a>
+    {{- if .CanEditAny }} | <a href="/forum/admin/topic/{{.Topic.Idforumtopic}}/edit">Edit Topic</a>{{ end }}<br />
 
     {{ template "topicThreads" $ }}
 {{ template "tail" $ }}

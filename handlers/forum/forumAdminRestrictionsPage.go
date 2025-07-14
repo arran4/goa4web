@@ -109,7 +109,7 @@ func AdminUsersRestrictionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.UpsertUsersForumTopicLevelPermission(r.Context(), db.UpsertUsersForumTopicLevelPermissionParams{
-		Level: sql.NullInt32{
+		RoleID: sql.NullInt32{
 			Valid: true,
 			Int32: int32(level),
 		},

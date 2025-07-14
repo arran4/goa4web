@@ -11,7 +11,7 @@ import (
 
 // GetPermissionsByUserID returns all roles for the given user.
 func (q *Queries) GetPermissionsByUserID(ctx context.Context, userID int32) ([]*GetUserRolesRow, error) {
-	rows, err := q.db.QueryContext(ctx, "SELECT ur.idpermissions, ur.users_idusers, r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ?", userID)
+	rows, err := q.db.QueryContext(ctx, "SELECT ur.iduser_roles, ur.users_idusers, r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ?", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -19,7 +19,7 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, userID int32) ([]*
 	var items []*GetUserRolesRow
 	for rows.Next() {
 		var p GetUserRolesRow
-		if err := rows.Scan(&p.Idpermissions, &p.UsersIdusers, &p.Role); err != nil {
+		if err := rows.Scan(&p.IduserRoles, &p.UsersIdusers, &p.Role); err != nil {
 			return nil, err
 		}
 		items = append(items, &p)

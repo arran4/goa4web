@@ -23,6 +23,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	uid, _ := session.Values["UID"].(int32)
 
 	if err := hcommon.ValidateForm(r, []string{"language", "replytext"}, []string{"language", "replytext"}); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -44,7 +45,10 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
-	blog, err := queries.GetBlogEntryForUserById(r.Context(), int32(bid))
+	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
+		ViewerIdusers: uid,
+		ID:            int32(bid),
+	})
 	if err != nil {
 		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -105,7 +109,6 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-	uid, _ := session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/blogs/blog/%d/comments", bid)
 

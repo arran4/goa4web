@@ -26,5 +26,5 @@ func canEditNewsPost(cd *hcommon.CoreData, authorID int32) bool {
 	if cd.HasRole("administrator") && cd.AdminMode {
 		return true
 	}
-	return cd.HasRole("writer") && cd.UserID == authorID
+	return cd.HasRole("content writer") && cd.UserID == authorID
 }

@@ -35,6 +35,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		NextLink string
 		PrevLink string
 		PageSize int
+		Roles    []*db.Role
 	}
 
 	data := Data{
@@ -47,6 +48,9 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	if roles, err := data.AllRoles(); err == nil {
+		data.Roles = roles
+	}
 
 	pageSize := data.PageSize
 	var rows []*db.User

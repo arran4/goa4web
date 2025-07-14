@@ -3,10 +3,9 @@
 Filter by role:
     <select name="role">
         <option value=""{{if eq .Filter ""}} selected{{end}}>all</option>
-        <option value="reader"{{if eq .Filter "reader"}} selected{{end}}>reader</option>
-        <option value="writer"{{if eq .Filter "writer"}} selected{{end}}>writer</option>
-        <option value="moderator"{{if eq .Filter "moderator"}} selected{{end}}>moderator</option>
-        <option value="administrator"{{if eq .Filter "administrator"}} selected{{end}}>administrator</option>
+        {{- range $.Roles }}
+        <option value="{{.Name}}"{{if eq $.Filter .Name}} selected{{end}}>{{.Name}}</option>
+        {{- end }}
     </select>
     <input type="submit" value="Filter">
 </form>
@@ -23,8 +22,8 @@ Filter by role:
         </tr>
         {{range .Rows}}
         <tr>
-            <td><input type="checkbox" name="permid" value="{{.Idpermissions}}"></td>
-            <td>{{.Idpermissions}}</td>
+            <td><input type="checkbox" name="permid" value="{{.IduserRoles}}"></td>
+            <td>{{.IduserRoles}}</td>
             <td>{{.Username.String}}</td>
             <td>{{.Email.String}}</td>
             <td>{{.Role}}</td>
@@ -36,10 +35,7 @@ Filter by role:
     <textarea name="usernames" rows="3" cols="40"></textarea><br>
     Role:
     <select name="role">
-        <option value="reader">reader</option>
-        <option value="writer">writer</option>
-        <option value="moderator">moderator</option>
-        <option value="administrator">administrator</option>
+        {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
     </select>
     <input type="submit" name="task" value="Users Allow">
 </form>

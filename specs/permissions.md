@@ -97,3 +97,9 @@ fields.
 The `seed.sql` file provides initial roles and establishes the role hierarchy.
 It also grants the `user` role to existing accounts lacking a role.
 
+## CLI Tools
+
+Comment-related CLI commands accept a `--user` flag to evaluate permissions for
+a specific viewer. The underlying queries now take a single `viewer_id` rather
+than separate user ID parameters.
+

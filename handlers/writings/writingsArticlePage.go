@@ -141,10 +141,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.Languages = languageRows
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:   uid,
-		UsersIdusers_2: uid,
-		ForumthreadID:  writing.ForumthreadID,
-		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID: uid,
+		ThreadID: writing.ForumthreadID,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

@@ -118,9 +118,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 
 		if commentIdString != "" {
 			comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
-				UsersIdusers: uid,
-				Idcomments:   int32(commentId),
-				UserID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
+				ViewerID: uid,
+				ID:       int32(commentId),
+				UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				log.Printf("getCommentByIdForUser Error: %s", err)
@@ -136,10 +136,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		rows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-			UsersIdusers:   uid,
-			UsersIdusers_2: uid,
-			ForumthreadID:  pthid,
-			UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
+			ViewerID: uid,
+			ThreadID: pthid,
+			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			switch {

@@ -61,10 +61,9 @@ func (c *blogCommentsListCmd) Run() error {
 		threadID = b.ForumthreadID.Int32
 	}
 	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:   uid,
-		UsersIdusers_2: uid,
-		ForumthreadID:  threadID,
-		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID: uid,
+		ThreadID: threadID,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)

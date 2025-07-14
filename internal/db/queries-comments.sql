@@ -1,6 +1,6 @@
 -- name: GetCommentByIdForUser :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT r2.id
     FROM role_ids ri
@@ -8,19 +8,19 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN roles r2 ON r2.name = g.action
 )
 SELECT c.*, pu.Username,
-       c.users_idusers = ? AS is_owner
+       c.users_idusers = sqlc.arg(viewer_id) AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.idcomments = ? AND EXISTS (
+WHERE c.idcomments = sqlc.arg(id) AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND g.item='topic'
       AND g.action='see'
       AND g.active=1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 LIMIT 1;
@@ -43,7 +43,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
 
 -- name: GetCommentsByIdsForUserWithThreadInfo :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT r2.id
     FROM role_ids ri
@@ -51,7 +51,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN roles r2 ON r2.name = g.action
 )
 SELECT c.*, pu.username AS posterusername,
-       c.users_idusers = ? AS is_owner,
+       c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -65,7 +65,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids')) AND EXISTS (
       AND g.action='see'
       AND g.active=1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 ORDER BY c.written DESC
@@ -78,7 +78,7 @@ VALUES (?, ?, ?, ?, NOW() )
 
 -- name: GetCommentsByThreadIdForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT r2.id
     FROM role_ids ri
@@ -86,19 +86,19 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN roles r2 ON r2.name = g.action
 )
 SELECT c.*, pu.username AS posterusername,
-       c.users_idusers = ? AS is_owner
+       c.users_idusers = sqlc.arg(viewer_id) AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.forumthread_id=? AND c.forumthread_id!=0 AND EXISTS (
+WHERE c.forumthread_id=sqlc.arg(thread_id) AND c.forumthread_id!=0 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND g.item='topic'
       AND g.action='see'
       AND g.active=1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 ORDER BY c.written;

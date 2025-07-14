@@ -31,9 +31,9 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
-			UsersIdusers: uid,
-			Idcomments:   int32(commentID),
-			UserID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
+			ViewerID: uid,
+			ID:       int32(commentID),
+			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			log.Printf("Error: %s", err)

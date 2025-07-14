@@ -67,10 +67,9 @@ func (c *newsCommentsReadCmd) Run() error {
 	}
 	if c.All {
 		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-			UsersIdusers:   uid,
-			UsersIdusers_2: uid,
-			ForumthreadID:  n.ForumthreadID,
-			UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
+			ViewerID: uid,
+			ThreadID: n.ForumthreadID,
+			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
@@ -84,10 +83,9 @@ func (c *newsCommentsReadCmd) Run() error {
 		return fmt.Errorf("comment id required")
 	}
 	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
-		UsersIdusers:   uid,
-		UsersIdusers_2: uid,
-		Idcomments:     int32(c.CommentID),
-		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID: uid,
+		ID:       int32(c.CommentID),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("get comment: %w", err)

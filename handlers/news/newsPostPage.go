@@ -91,10 +91,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:   uid,
-		UsersIdusers_2: uid,
-		ForumthreadID:  int32(post.ForumthreadID),
-		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID: uid,
+		ThreadID: int32(post.ForumthreadID),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

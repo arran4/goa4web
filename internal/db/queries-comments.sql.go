@@ -137,10 +137,9 @@ LIMIT 1
 `
 
 type GetCommentByIdForUserParams struct {
-	UsersIdusers   int32
-	UsersIdusers_2 int32
-	Idcomments     int32
-	UserID         sql.NullInt32
+	ViewerID int32
+	ID       int32
+	UserID   sql.NullInt32
 }
 
 type GetCommentByIdForUserRow struct {
@@ -157,9 +156,9 @@ type GetCommentByIdForUserRow struct {
 
 func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
 	row := q.db.QueryRowContext(ctx, getCommentByIdForUser,
-		arg.UsersIdusers,
-		arg.UsersIdusers_2,
-		arg.Idcomments,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ID,
 		arg.UserID,
 	)
 	var i GetCommentByIdForUserRow
@@ -255,10 +254,9 @@ ORDER BY c.written DESC
 `
 
 type GetCommentsByIdsForUserWithThreadInfoParams struct {
-	UsersIdusers   int32
-	UsersIdusers_2 int32
-	Ids            []int32
-	UserID         sql.NullInt32
+	ViewerID int32
+	Ids      []int32
+	UserID   sql.NullInt32
 }
 
 type GetCommentsByIdsForUserWithThreadInfoRow struct {
@@ -281,8 +279,8 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error) {
 	query := getCommentsByIdsForUserWithThreadInfo
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.UsersIdusers)
-	queryParams = append(queryParams, arg.UsersIdusers_2)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
 			queryParams = append(queryParams, v)
@@ -358,10 +356,9 @@ ORDER BY c.written
 `
 
 type GetCommentsByThreadIdForUserParams struct {
-	UsersIdusers   int32
-	UsersIdusers_2 int32
-	ForumthreadID  int32
-	UserID         sql.NullInt32
+	ViewerID int32
+	ThreadID int32
+	UserID   sql.NullInt32
 }
 
 type GetCommentsByThreadIdForUserRow struct {
@@ -378,9 +375,9 @@ type GetCommentsByThreadIdForUserRow struct {
 
 func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCommentsByThreadIdForUser,
-		arg.UsersIdusers,
-		arg.UsersIdusers_2,
-		arg.ForumthreadID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ThreadID,
 		arg.UserID,
 	)
 	if err != nil {

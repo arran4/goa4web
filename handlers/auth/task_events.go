@@ -9,3 +9,9 @@ var RegisterTask = hcommon.NewTaskEventWithHandlers(hcommon.TaskRegister, Regist
 
 // LoginTask represents user login.
 var LoginTask = hcommon.NewTaskEventWithHandlers(hcommon.TaskLogin, LoginUserPassPage, LoginActionPage)
+
+// ResetPasswordTask handles password reset requests.
+var ResetPasswordTask = hcommon.NewTaskEventWithHandlers(hcommon.TaskUserResetPassword, ForgotPasswordPage, ForgotPasswordActionPage)
+
+// VerifyPasswordTask handles password reset verification.
+var VerifyPasswordTask = hcommon.NewTaskEvent(hcommon.TaskPasswordVerify)

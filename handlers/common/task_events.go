@@ -31,4 +31,10 @@ var (
 	DeleteTask    = NewTaskEvent(TaskDelete)
 	CancelTask    = NewTaskEvent(TaskCancel)
 	EditReplyTask = NewTaskEvent(TaskEditReply)
+
+	// ResetPasswordTask handles password reset requests.
+	ResetPasswordTask = NewTaskEvent(TaskUserResetPassword)
+
+	// PasswordVerifyTask handles password reset verification.
+	PasswordVerifyTask = NewTaskEvent(TaskPasswordVerify)
 )

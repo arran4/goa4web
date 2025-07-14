@@ -20,10 +20,10 @@ type subscriptionOption struct {
 }
 
 var userSubscriptionOptions = []subscriptionOption{
-	{Name: "Blog posts", Pattern: "post:/blog/*", Path: "blogs", Task: common.TaskSubscribeBlogs},
-	{Name: "Writings", Pattern: "post:/writing/*", Path: "writings", Task: common.TaskSubscribeWritings},
-	{Name: "News posts", Pattern: "post:/news/*", Path: "news", Task: common.TaskSubscribeNews},
-	{Name: "Image board posts", Pattern: "post:/image/*", Path: "images", Task: common.TaskSubscribeImages},
+	{Name: "New blog posts", Pattern: "post:/blog/*", Path: "blogs", Task: common.TaskSubscribeBlogs},
+	{Name: "New articles", Pattern: "post:/writing/*", Path: "writings", Task: common.TaskSubscribeWritings},
+	{Name: "New news posts", Pattern: "post:/news/*", Path: "news", Task: common.TaskSubscribeNews},
+	{Name: "New image board posts", Pattern: "post:/image/*", Path: "images", Task: common.TaskSubscribeImages},
 }
 
 func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
@@ -67,12 +67,14 @@ func addSubscription(w http.ResponseWriter, r *http.Request, pattern string) {
 		http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
 		return
 	}
-	method := r.PostFormValue("method")
+	methods := r.PostForm["method"]
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method}); err != nil {
-		log.Printf("insert sub: %v", err)
-		http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
-		return
+	for _, method := range methods {
+		if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method}); err != nil {
+			log.Printf("insert sub: %v", err)
+			http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
+			return
+		}
 	}
 	http.Redirect(w, r, "/usr/subscriptions", http.StatusSeeOther)
 }

@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/mail"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 // DLQ sends DLQ messages to administrator emails using the configured provider.
@@ -24,8 +24,8 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 	if e.Provider == nil {
 		return fmt.Errorf("no email provider")
 	}
-	fromAddr := email.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom)
-	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {
+	fromAddr := email.ParseAddress(config.AppRuntimeConfig.EmailFrom)
+	if f, err := mail.ParseAddress(config.AppRuntimeConfig.EmailFrom); err == nil {
 		fromAddr = *f
 	}
 	for _, addrStr := range emailutil.GetAdminEmails(ctx, e.Queries) {
@@ -44,7 +44,7 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 
 // Register registers the email provider.
 func Register() {
-	dlq.RegisterProvider("email", func(cfg runtimeconfig.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
+	dlq.RegisterProvider("email", func(cfg config.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
 		p := email.ProviderFromConfig(cfg)
 		if p == nil {
 			return dlq.LogDLQ{}

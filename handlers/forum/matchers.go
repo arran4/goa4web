@@ -8,10 +8,10 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // RequireThreadAndTopic loads the thread and topic specified in the URL and
@@ -44,7 +44,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			Idforumthread: int32(threadID),
 		})
 		if err != nil {
-			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
+			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic thread uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
 			}
 			http.NotFound(w, r)
@@ -56,7 +56,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			Idforumtopic: threadRow.ForumtopicIdforumtopic,
 		})
 		if err != nil {
-			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
+			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic topic uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
 			}
 			http.NotFound(w, r)
@@ -64,7 +64,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 		}
 
 		if int(topicRow.Idforumtopic) != topicID {
-			if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAccess != 0 {
+			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic mismatch uid=%d urlTopic=%d threadTopic=%d", uid, topicID, topicRow.Idforumtopic)
 			}
 			http.NotFound(w, r)

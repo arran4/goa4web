@@ -11,8 +11,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
-	"github.com/arran4/goa4web/internal/migrate"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // autoMigrateEnabled reports whether automatic migrations should run.
@@ -27,7 +25,7 @@ func autoMigrateEnabled() bool {
 }
 
 // applyMigrations connects to the database and executes SQL migrations.
-func applyMigrations(ctx context.Context, cfg runtimeconfig.RuntimeConfig) error {
+func applyMigrations(ctx context.Context, cfg config.RuntimeConfig) error {
 	conn := cfg.DBConn
 	if conn == "" {
 		return fmt.Errorf("connection string required")
@@ -43,11 +41,11 @@ func applyMigrations(ctx context.Context, cfg runtimeconfig.RuntimeConfig) error
 		return err
 	}
 	fsys := os.DirFS("migrations")
-	return migrate.Apply(ctx, db, fsys, false)
+	return Apply(ctx, db, fsys, false)
 }
 
 // MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.
-func MaybeAutoMigrate(cfg runtimeconfig.RuntimeConfig) error {
+func MaybeAutoMigrate(cfg config.RuntimeConfig) error {
 	if !autoMigrateEnabled() {
 		return nil
 	}

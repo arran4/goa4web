@@ -7,15 +7,15 @@ import (
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/emailutil"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +112,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/blogs/blog/%d/comments", bid)
 
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadID: pthid,

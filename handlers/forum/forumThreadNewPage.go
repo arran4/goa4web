@@ -9,15 +9,15 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 )
 
@@ -31,7 +31,7 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*CoreData),
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
 	languageRows, err := queries.FetchLanguages(r.Context())
@@ -96,7 +96,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
 
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),

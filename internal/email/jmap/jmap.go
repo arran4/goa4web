@@ -11,7 +11,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // Provider sends mail via JMAP.
@@ -104,7 +103,7 @@ func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return nil
 }
 
-func providerFromConfig(cfg runtimeconfig.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
 	ep := cfg.EmailJMAPEndpoint
 	if ep == "" {
 		fmt.Printf("Email disabled: %s not set\n", config.EnvJMAPEndpoint)

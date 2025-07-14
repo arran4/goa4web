@@ -14,7 +14,6 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +31,7 @@ func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		log.Printf("load config file: %v", err)
 	}
-	Srv.Config = runtimeconfig.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
+	Srv.Config = config.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
 	if err := corelanguage.ValidateDefaultLanguage(r.Context(), db.New(DBPool), Srv.Config.DefaultLanguage); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	}

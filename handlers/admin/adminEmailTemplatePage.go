@@ -14,10 +14,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/emailutil"
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.
@@ -30,7 +30,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		var buf bytes.Buffer
 		tmpl.Execute(&buf, struct{ To, From, Subject, URL string }{
 			To:      "test@example.com",
-			From:    runtimeconfig.AppRuntimeConfig.EmailFrom,
+			From:    config.AppRuntimeConfig.EmailFrom,
 			Subject: "Website Update Notification",
 			URL:     "http://example.com/page",
 		})
@@ -70,7 +70,7 @@ func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
-	if email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig) == nil {
+	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q
 		common.TaskErrorAcknowledgementPage(w, r)
@@ -91,8 +91,8 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	base := "http://" + r.Host
-	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/")
+	if config.AppRuntimeConfig.HTTPHostname != "" {
+		base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
 	}
 	pageURL := base + r.URL.Path
 
@@ -104,12 +104,12 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	unsub := "/usr/subscriptions"
-	if runtimeconfig.AppRuntimeConfig.HTTPHostname != "" {
-		unsub = strings.TrimRight(runtimeconfig.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	if config.AppRuntimeConfig.HTTPHostname != "" {
+		unsub = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + unsub
 	}
 	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubURL string }{
 		To:       (&mail.Address{Name: urow.Username.String, Address: urow.Email.String}).String(),
-		From:     runtimeconfig.AppRuntimeConfig.EmailFrom,
+		From:     config.AppRuntimeConfig.EmailFrom,
 		Subject:  "Website Update Notification",
 		URL:      pageURL,
 		Action:   common.TaskTestMail,
@@ -125,10 +125,10 @@ func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
 	toAddr := mail.Address{Name: urow.Username.String, Address: urow.Email.String}
 	var fromAddr mail.Address
 
-	if f, err := mail.ParseAddress(runtimeconfig.AppRuntimeConfig.EmailFrom); err == nil {
+	if f, err := mail.ParseAddress(config.AppRuntimeConfig.EmailFrom); err == nil {
 		fromAddr = *f
 	} else {
-		fromAddr = mail.Address{Address: runtimeconfig.AppRuntimeConfig.EmailFrom}
+		fromAddr = mail.Address{Address: config.AppRuntimeConfig.EmailFrom}
 	}
 	msg, err := email.BuildMessage(fromAddr, toAddr, content.Subject, buf.String(), "")
 	if err != nil {

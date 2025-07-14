@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
-	"github.com/arran4/goa4web/internal/migrate"
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/internal/dbstart"
 )
 
 // openDB establishes a database connection without verifying the schema version.
-func openDB(cfg runtimeconfig.RuntimeConfig) (*sql.DB, error) {
+func openDB(cfg config.RuntimeConfig) (*sql.DB, error) {
 	conn := cfg.DBConn
 	if conn == "" {
 		return nil, fmt.Errorf("connection string required")
@@ -67,7 +67,7 @@ func (c *dbMigrateCmd) Run() error {
 	if c.rootCmd.Verbosity >= 0 {
 		fmt.Printf("applying migrations from %s\n", c.Dir)
 	}
-	if err := migrate.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0); err != nil {
+	if err := dbstart.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0); err != nil {
 		return err
 	}
 	return nil

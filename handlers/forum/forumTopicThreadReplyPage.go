@@ -7,16 +7,16 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/runtimeconfig"
 
-	"github.com/arran4/goa4web/internal/emailutil"
+	"github.com/arran4/goa4web/internal/utils/emailutil"
 
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 )
 
 func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +42,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-	provider := email.ProviderFromConfig(runtimeconfig.AppRuntimeConfig)
+	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 
 	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
 		ForumthreadID: threadRow.Idforumthread,

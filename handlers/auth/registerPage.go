@@ -11,11 +11,11 @@ import (
 
 	notif "github.com/arran4/goa4web/internal/notifications"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 // RegisterPage renders the user registration form.
@@ -37,7 +37,7 @@ func RegisterPage(w http.ResponseWriter, r *http.Request) {
 
 // RegisterActionPage handles user creation from the registration form.
 func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
-	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}
 	if err := r.ParseForm(); err != nil {
@@ -146,7 +146,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if runtimeconfig.AppRuntimeConfig.LogFlags&runtimeconfig.LogFlagAuth != 0 {
+	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration success uid=%d", lastInsertID)
 	}
 

@@ -9,7 +9,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"io"
 	"log"
 	"net/http"
@@ -23,8 +23,8 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/pkg/upload"
-	"github.com/arran4/goa4web/runtimeconfig"
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/upload"
 )
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
@@ -103,8 +103,8 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes))
-	if err := r.ParseMultipartForm(int64(runtimeconfig.AppRuntimeConfig.ImageMaxBytes)); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
+	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
 		http.Error(w, "bad upload", http.StatusBadRequest)
 		return
 	}
@@ -136,7 +136,7 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fname := shaHex + ext
-	if p := upload.ProviderFromConfig(runtimeconfig.AppRuntimeConfig); p != nil {
+	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			log.Printf("upload write: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

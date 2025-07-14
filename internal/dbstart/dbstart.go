@@ -10,12 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/middleware"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 var (
@@ -28,7 +28,7 @@ func GetDBPool() *sql.DB { return dbPool }
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
+func InitDB(cfg config.RuntimeConfig) *common.UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
 	conn := cfg.DBConn
@@ -55,7 +55,7 @@ func InitDB(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 }
 
 // PerformStartupChecks checks the database and upload directory configuration.
-func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
+func PerformStartupChecks(cfg config.RuntimeConfig) error {
 	if err := MaybeAutoMigrate(cfg); err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func PerformStartupChecks(cfg runtimeconfig.RuntimeConfig) error {
 }
 
 // CheckUploadDir verifies that the upload directory is accessible.
-func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
+func CheckUploadDir(cfg config.RuntimeConfig) *common.UserError {
 	if cfg.ImageUploadDir == "" {
 		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}
@@ -115,21 +115,9 @@ func CheckUploadDir(cfg runtimeconfig.RuntimeConfig) *common.UserError {
 
 // EnsureSchema creates core tables if they do not exist and inserts a version row.
 func EnsureSchema(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)"); err != nil {
-		return fmt.Errorf("create schema_version: %w", err)
-	}
-	var count int
-	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM schema_version").Scan(&count); err != nil {
-		return fmt.Errorf("count schema_version: %w", err)
-	}
-	if count == 0 {
-		if _, err := db.ExecContext(ctx, "INSERT INTO schema_version (version) VALUES (?)", 1); err != nil {
-			return fmt.Errorf("insert schema_version: %w", err)
-		}
-	}
-	var version int
-	if err := db.QueryRowContext(ctx, "SELECT version FROM schema_version").Scan(&version); err != nil {
-		return fmt.Errorf("select schema_version: %w", err)
+	version, err := ensureVersionTable(ctx, db)
+	if err != nil {
+		return err
 	}
 	if version != hcommon.ExpectedSchemaVersion {
 		msg := RenderSchemaMismatch(version, hcommon.ExpectedSchemaVersion)

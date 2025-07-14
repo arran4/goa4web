@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +28,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
-	base := runtimeconfig.AppRuntimeConfig.ImageUploadDir
+	base := config.AppRuntimeConfig.ImageUploadDir
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)

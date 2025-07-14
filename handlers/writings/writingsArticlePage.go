@@ -9,14 +9,14 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
 )
@@ -58,7 +58,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 		IsReplyable:        true,
 	}
 

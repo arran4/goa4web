@@ -11,7 +11,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/runtimeconfig"
 )
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +21,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
-		runtimeconfig.AppRuntimeConfig.FeedsEnabled = r.PostFormValue("feeds_enabled") != ""
+		config.AppRuntimeConfig.FeedsEnabled = r.PostFormValue("feeds_enabled") != ""
 		langID, _ := strconv.Atoi(r.PostFormValue("default_language"))
 		langs, _ := queries.FetchLanguages(r.Context())
 		name := ""
@@ -32,7 +31,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
-		runtimeconfig.AppRuntimeConfig.DefaultLanguage = name
+		config.AppRuntimeConfig.DefaultLanguage = name
 		if err := updateConfigKey(ConfigFile, config.EnvDefaultLanguage, name); err != nil {
 			log.Printf("config write error: %v", err)
 		}
@@ -48,9 +47,9 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, runtimeconfig.AppRuntimeConfig.DefaultLanguage),
+		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
 	}
-	data.CoreData.FeedsEnabled = runtimeconfig.AppRuntimeConfig.FeedsEnabled
+	data.CoreData.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 	if langs, err := queries.FetchLanguages(r.Context()); err == nil {
 		data.Languages = langs
 	}

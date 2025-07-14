@@ -11,7 +11,6 @@ import (
 	router "github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
-	pkghandlers "github.com/arran4/goa4web/pkg/handlers"
 )
 
 var legacyRedirectsEnabled = true
@@ -44,8 +43,8 @@ func RegisterRoutes(r *mux.Router) {
 
 	if legacyRedirectsEnabled {
 		// legacy redirects
-		r.Path("/writing").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/writing", "/writings"))
-		r.PathPrefix("/writing/").HandlerFunc(pkghandlers.RedirectPermanentPrefix("/writing", "/writings"))
+		r.Path("/writing").HandlerFunc(hcommon.RedirectPermanentPrefix("/writing", "/writings"))
+		r.PathPrefix("/writing/").HandlerFunc(hcommon.RedirectPermanentPrefix("/writing", "/writings"))
 	}
 }
 

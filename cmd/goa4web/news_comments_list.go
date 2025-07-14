@@ -13,15 +13,17 @@ import (
 // newsCommentsListCmd implements "news comments list".
 type newsCommentsListCmd struct {
 	*newsCommentsCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs     *flag.FlagSet
+	ID     int
+	UserID int
+	args   []string
 }
 
 func parseNewsCommentsListCmd(parent *newsCommentsCmd, args []string) (*newsCommentsListCmd, error) {
 	c := &newsCommentsListCmd{newsCommentsCmd: parent}
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	fs.IntVar(&c.ID, "id", 0, "news id")
+	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -46,15 +48,16 @@ func (c *newsCommentsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	uid := int32(c.UserID)
 	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}
 	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:   0,
-		UsersIdusers_2: 0,
+		UsersIdusers:   uid,
+		UsersIdusers_2: uid,
 		ForumthreadID:  n.ForumthreadID,
-		UserID:         sql.NullInt32{},
+		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)

@@ -16,6 +16,7 @@ type blogCommentsReadCmd struct {
 	fs        *flag.FlagSet
 	BlogID    int
 	CommentID int
+	UserID    int
 	All       bool
 	args      []string
 }
@@ -25,6 +26,7 @@ func parseBlogCommentsReadCmd(parent *blogCommentsCmd, args []string) (*blogComm
 	fs := flag.NewFlagSet("read", flag.ContinueOnError)
 	fs.IntVar(&c.BlogID, "id", 0, "blog id")
 	fs.IntVar(&c.CommentID, "comment", 0, "comment id")
+	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -58,8 +60,9 @@ func (c *blogCommentsReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	uid := int32(c.UserID)
 	b, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: 0,
+		ViewerIdusers: uid,
 		ID:            int32(c.BlogID),
 	})
 	if err != nil {
@@ -71,10 +74,10 @@ func (c *blogCommentsReadCmd) Run() error {
 			threadID = b.ForumthreadID.Int32
 		}
 		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-			UsersIdusers:   0,
-			UsersIdusers_2: 0,
+			UsersIdusers:   uid,
+			UsersIdusers_2: uid,
 			ForumthreadID:  threadID,
-			UserID:         sql.NullInt32{},
+			UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
@@ -88,10 +91,10 @@ func (c *blogCommentsReadCmd) Run() error {
 		return fmt.Errorf("comment id required")
 	}
 	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
-		UsersIdusers:   0,
-		UsersIdusers_2: 0,
+		UsersIdusers:   uid,
+		UsersIdusers_2: uid,
 		Idcomments:     int32(c.CommentID),
-		UserID:         sql.NullInt32{},
+		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("get comment: %w", err)

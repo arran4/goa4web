@@ -13,15 +13,17 @@ import (
 // writingCommentsListCmd implements "writing comments list".
 type writingCommentsListCmd struct {
 	*writingCommentsCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs     *flag.FlagSet
+	ID     int
+	UserID int
+	args   []string
 }
 
 func parseWritingCommentsListCmd(parent *writingCommentsCmd, args []string) (*writingCommentsListCmd, error) {
 	c := &writingCommentsListCmd{writingCommentsCmd: parent}
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	fs.IntVar(&c.ID, "id", 0, "writing id")
+	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -46,15 +48,16 @@ func (c *writingCommentsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	w, err := queries.GetWritingByIdForUserDescendingByPublishedDate(ctx, dbpkg.GetWritingByIdForUserDescendingByPublishedDateParams{Userid: 0, Idwriting: int32(c.ID)})
+	uid := int32(c.UserID)
+	w, err := queries.GetWritingByIdForUserDescendingByPublishedDate(ctx, dbpkg.GetWritingByIdForUserDescendingByPublishedDateParams{Userid: uid, Idwriting: int32(c.ID)})
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)
 	}
 	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-		UsersIdusers:   0,
-		UsersIdusers_2: 0,
+		UsersIdusers:   uid,
+		UsersIdusers_2: uid,
 		ForumthreadID:  w.ForumthreadID,
-		UserID:         sql.NullInt32{},
+		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)

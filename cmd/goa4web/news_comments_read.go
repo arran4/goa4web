@@ -16,6 +16,7 @@ type newsCommentsReadCmd struct {
 	fs        *flag.FlagSet
 	NewsID    int
 	CommentID int
+	UserID    int
 	All       bool
 	args      []string
 }
@@ -25,6 +26,7 @@ func parseNewsCommentsReadCmd(parent *newsCommentsCmd, args []string) (*newsComm
 	fs := flag.NewFlagSet("read", flag.ContinueOnError)
 	fs.IntVar(&c.NewsID, "id", 0, "news id")
 	fs.IntVar(&c.CommentID, "comment", 0, "comment id")
+	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -58,16 +60,17 @@ func (c *newsCommentsReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	uid := int32(c.UserID)
 	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, int32(c.NewsID))
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}
 	if c.All {
 		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-			UsersIdusers:   0,
-			UsersIdusers_2: 0,
+			UsersIdusers:   uid,
+			UsersIdusers_2: uid,
 			ForumthreadID:  n.ForumthreadID,
-			UserID:         sql.NullInt32{},
+			UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
@@ -81,10 +84,10 @@ func (c *newsCommentsReadCmd) Run() error {
 		return fmt.Errorf("comment id required")
 	}
 	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
-		UsersIdusers:   0,
-		UsersIdusers_2: 0,
+		UsersIdusers:   uid,
+		UsersIdusers_2: uid,
 		Idcomments:     int32(c.CommentID),
-		UserID:         sql.NullInt32{},
+		UserID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("get comment: %w", err)

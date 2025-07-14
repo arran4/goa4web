@@ -95,6 +95,62 @@ func (q *Queries) FetchAllCategories(ctx context.Context) ([]*WritingCategory, e
 	return items, nil
 }
 
+const fetchCategoriesForUser = `-- name: FetchCategoriesForUser :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description
+FROM writing_category wc
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='category'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = wc.idwritingcategory
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+`
+
+type FetchCategoriesForUserParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) FetchCategoriesForUser(ctx context.Context, arg FetchCategoriesForUserParams) ([]*WritingCategory, error) {
+	rows, err := q.db.QueryContext(ctx, fetchCategoriesForUser, arg.ViewerID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WritingCategory
+	for rows.Next() {
+		var i WritingCategory
+		if err := rows.Scan(
+			&i.Idwritingcategory,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllWritingApprovals = `-- name: GetAllWritingApprovals :many
 SELECT idusers, u.username, wau.writing_id, wau.users_idusers, wau.can_read, wau.can_edit
 FROM writing_user_permissions wau
@@ -353,6 +409,101 @@ func (q *Queries) GetPublicWritingsByUser(ctx context.Context, arg GetPublicWrit
 	return items, nil
 }
 
+const getPublicWritingsByUserForViewer = `-- name: GetPublicWritingsByUserForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.private = 0 AND w.users_idusers = ?
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='article'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = w.idwriting
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?
+`
+
+type GetPublicWritingsByUserForViewerParams struct {
+	ViewerID int32
+	AuthorID int32
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
+}
+
+type GetPublicWritingsByUserForViewerRow struct {
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	Username           sql.NullString
+	Comments           int64
+}
+
+func (q *Queries) GetPublicWritingsByUserForViewer(ctx context.Context, arg GetPublicWritingsByUserForViewerParams) ([]*GetPublicWritingsByUserForViewerRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPublicWritingsByUserForViewer,
+		arg.ViewerID,
+		arg.AuthorID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPublicWritingsByUserForViewerRow
+	for rows.Next() {
+		var i GetPublicWritingsByUserForViewerRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Published,
+			&i.Writing,
+			&i.Abstract,
+			&i.Private,
+			&i.DeletedAt,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPublicWritingsInCategory = `-- name: GetPublicWritingsInCategory :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
@@ -422,18 +573,132 @@ func (q *Queries) GetPublicWritingsInCategory(ctx context.Context, arg GetPublic
 	return items, nil
 }
 
+const getPublicWritingsInCategoryForUser = `-- name: GetPublicWritingsInCategoryForUser :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.Username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
+FROM writing w
+LEFT JOIN users u ON w.Users_Idusers=u.idusers
+WHERE w.private = 0 AND w.writing_category_id = ?
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='article'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = w.idwriting
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+ORDER BY w.published DESC
+LIMIT ? OFFSET ?
+`
+
+type GetPublicWritingsInCategoryForUserParams struct {
+	ViewerID          int32
+	WritingCategoryID int32
+	UserID            sql.NullInt32
+	Limit             int32
+	Offset            int32
+}
+
+type GetPublicWritingsInCategoryForUserRow struct {
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	Username           sql.NullString
+	Comments           int64
+}
+
+func (q *Queries) GetPublicWritingsInCategoryForUser(ctx context.Context, arg GetPublicWritingsInCategoryForUserParams) ([]*GetPublicWritingsInCategoryForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPublicWritingsInCategoryForUser,
+		arg.ViewerID,
+		arg.WritingCategoryID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPublicWritingsInCategoryForUserRow
+	for rows.Next() {
+		var i GetPublicWritingsInCategoryForUserRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Published,
+			&i.Writing,
+			&i.Abstract,
+			&i.Private,
+			&i.DeletedAt,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getWritingByIdForUserDescendingByPublishedDate = `-- name: GetWritingByIdForUserDescendingByPublishedDate :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 LEFT JOIN writing_user_permissions wau ON w.idwriting = wau.writing_id AND wau.users_idusers = ?
-WHERE w.idwriting = ? AND (w.private = 0 OR wau.readdoc = 1 OR w.users_idusers = ?)
+WHERE w.idwriting = ? AND (w.private = 0 OR wau.can_read = 1 OR w.users_idusers = ?)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='article'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = w.idwriting
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY w.published DESC
 `
 
 type GetWritingByIdForUserDescendingByPublishedDateParams struct {
 	Userid    int32
 	Idwriting int32
+	UserID    sql.NullInt32
 }
 
 type GetWritingByIdForUserDescendingByPublishedDateRow struct {
@@ -453,7 +718,13 @@ type GetWritingByIdForUserDescendingByPublishedDateRow struct {
 }
 
 func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Context, arg GetWritingByIdForUserDescendingByPublishedDateParams) (*GetWritingByIdForUserDescendingByPublishedDateRow, error) {
-	row := q.db.QueryRowContext(ctx, getWritingByIdForUserDescendingByPublishedDate, arg.Userid, arg.Idwriting, arg.Userid)
+	row := q.db.QueryRowContext(ctx, getWritingByIdForUserDescendingByPublishedDate,
+		arg.Userid,
+		arg.Userid,
+		arg.Idwriting,
+		arg.Userid,
+		arg.UserID,
+	)
 	var i GetWritingByIdForUserDescendingByPublishedDateRow
 	err := row.Scan(
 		&i.Idwriting,

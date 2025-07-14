@@ -30,7 +30,11 @@ func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
 		}
 	}
 
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	for _, row := range rows {
+		if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
+			continue
+		}
 		desc := row.Abstract.String
 		if desc == "" {
 			desc = row.Writing.String

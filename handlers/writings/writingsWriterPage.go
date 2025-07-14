@@ -17,7 +17,7 @@ import (
 func WriterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Abstracts []*db.GetPublicWritingsByUserRow
+		Abstracts []*db.GetPublicWritingsByUserForViewerRow
 		Username  string
 		IsOffset  bool
 	}
@@ -26,6 +26,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
@@ -39,10 +40,12 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetPublicWritingsByUser(r.Context(), db.GetPublicWritingsByUserParams{
-		UsersIdusers: u.Idusers,
-		Limit:        15,
-		Offset:       int32(offset),
+	rows, err := queries.GetPublicWritingsByUserForViewer(r.Context(), db.GetPublicWritingsByUserForViewerParams{
+		ViewerID: cd.UserID,
+		AuthorID: u.Idusers,
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:    15,
+		Offset:   int32(offset),
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("GetPublicWritingsByUser Error: %s", err)
@@ -51,10 +54,15 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:  r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
-		Abstracts: rows,
-		Username:  username,
-		IsOffset:  offset != 0,
+		CoreData: cd,
+		Username: username,
+		IsOffset: offset != 0,
+	}
+	for _, row := range rows {
+		if !data.CoreData.HasGrant("writing", "article", "see", row.Idwriting) {
+			continue
+		}
+		data.Abstracts = append(data.Abstracts, row)
 	}
 
 	CustomWritingsIndex(data.CoreData, r)

@@ -76,10 +76,16 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(articleId),
+		UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
+		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -273,6 +279,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		Userid:    uid,
 		Idwriting: int32(aid),
+		UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		log.Printf("getArticlePost Error: %s", err)

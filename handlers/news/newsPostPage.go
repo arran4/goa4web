@@ -86,9 +86,15 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
-		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			return
+		default:
+			log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
 		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)

@@ -463,6 +463,160 @@ func (q *Queries) GetCountOfBlogPostsByUser(ctx context.Context) ([]*GetCountOfB
 	return items, nil
 }
 
+const listBloggersForViewer = `-- name: ListBloggersForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT u.username, COUNT(b.idblogs) AS count
+FROM blogs b
+JOIN users u ON b.users_idusers = u.idusers
+WHERE (
+    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
+    OR b.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'blogs'
+      AND g.item = 'entry'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = b.idblogs
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+GROUP BY u.idusers
+ORDER BY u.username
+LIMIT ? OFFSET ?
+`
+
+type ListBloggersForViewerParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
+}
+
+type ListBloggersForViewerRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+func (q *Queries) ListBloggersForViewer(ctx context.Context, arg ListBloggersForViewerParams) ([]*ListBloggersForViewerRow, error) {
+	rows, err := q.db.QueryContext(ctx, listBloggersForViewer,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListBloggersForViewerRow
+	for rows.Next() {
+		var i ListBloggersForViewerRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchBloggersForViewer = `-- name: SearchBloggersForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT u.username, COUNT(b.idblogs) AS count
+FROM blogs b
+JOIN users u ON b.users_idusers = u.idusers
+WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))
+  AND (
+    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
+    OR b.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'blogs'
+      AND g.item = 'entry'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = b.idblogs
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+GROUP BY u.idusers
+ORDER BY u.username
+LIMIT ? OFFSET ?
+`
+
+type SearchBloggersForViewerParams struct {
+	ViewerID int32
+	Query    string
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
+}
+
+type SearchBloggersForViewerRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+func (q *Queries) SearchBloggersForViewer(ctx context.Context, arg SearchBloggersForViewerParams) ([]*SearchBloggersForViewerRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchBloggersForViewer,
+		arg.ViewerID,
+		arg.Query,
+		arg.Query,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SearchBloggersForViewerRow
+	for rows.Next() {
+		var i SearchBloggersForViewerRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateBlogEntry = `-- name: UpdateBlogEntry :exec
 UPDATE blogs
 SET language_idlanguage = ?, blog = ?

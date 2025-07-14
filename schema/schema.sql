@@ -276,18 +276,6 @@ CREATE TABLE `site_news_search` (
   KEY `siteNews_has_searchwordlist_FKIndex2` (`searchwordlist_idsearchwordlist`)
 );
 
-CREATE TABLE `topic_permissions` (
-  `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
-  `view_role_id` int(10) DEFAULT NULL,
-  `reply_role_id` int(10) DEFAULT NULL,
-  `newthread_role_id` int(10) DEFAULT NULL,
-  `see_role_id` int(10) DEFAULT NULL,
-  `invite_role_id` int(10) DEFAULT NULL,
-  `read_role_id` int(10) DEFAULT NULL,
-  `mod_role_id` int(10) DEFAULT NULL,
-  `admin_role_id` int(10) DEFAULT NULL,
-  PRIMARY KEY (`forumtopic_idforumtopic`)
-);
 
 CREATE TABLE `user_language` (
   `iduser_language` int(10) NOT NULL AUTO_INCREMENT,
@@ -329,16 +317,6 @@ CREATE TABLE `user_emails` (
   KEY `user_emails_user_idx` (`user_id`)
 );
 
-CREATE TABLE `user_topic_permissions` (
-  `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
-  `role_id` int(10) DEFAULT NULL,
-  `invitemax` int(10) DEFAULT NULL,
-  `expires_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`users_idusers`,`forumtopic_idforumtopic`),
-  KEY `users_has_forumtopic_FKIndex1` (`users_idusers`),
-  KEY `users_has_forumtopic_FKIndex2` (`forumtopic_idforumtopic`)
-);
 
 CREATE TABLE `writing` (
   `idwriting` int(10) NOT NULL AUTO_INCREMENT,

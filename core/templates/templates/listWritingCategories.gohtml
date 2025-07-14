@@ -1,6 +1,9 @@
 {{ define "listWritingCategories" }}
     <font size="4">{{ if $.WritingCategoryID }}Sub-{{ end }}Categories:</font><br>
     <table>
+        {{ if eq (len .Categories) 0 }}
+            <tr><td>There are no categories.</td></tr>
+        {{ end }}
         {{ range .Categories }}
             {{ $title := .Title.String }}
             {{ $description := .Description.String }}

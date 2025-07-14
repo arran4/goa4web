@@ -86,6 +86,10 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
+		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		return
+	}
 
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")

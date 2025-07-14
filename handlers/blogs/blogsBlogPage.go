@@ -5,6 +5,7 @@ import (
 	"fmt"
 	db "github.com/arran4/goa4web/internal/db"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	"log"
@@ -76,6 +77,10 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("getBlogEntryForUserById_comments Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if !data.CoreData.HasGrant("blogs", "entry", "view", blog.Idblogs) {
+		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 

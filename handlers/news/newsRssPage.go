@@ -19,6 +19,7 @@ import (
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
 	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
 		Limit:  15,
 		Offset: 0,
@@ -37,6 +38,9 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, row := range posts {
+		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+			continue
+		}
 		text := row.News.String
 		conv := a4code2html.New(imageshandler.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip

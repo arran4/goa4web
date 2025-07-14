@@ -32,7 +32,6 @@ sql:
         - "internal/db/queries-dlq.sql"
         - "internal/db/queries-uploadimages.sql"
         - "internal/db/queries-roles.sql"
-        - "internal/db/queries-grants.sql"
       gen:
           go:
               package: "db"

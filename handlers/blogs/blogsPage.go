@@ -66,6 +66,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, row := range rows {
+		if !data.CoreData.HasGrant("blogs", "entry", "see", row.Idblogs) {
+			continue
+		}
 		editUrl := ""
 		if data.CoreData.CanEditAny() || row.IsOwner {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)

@@ -103,6 +103,9 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 
 			cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
 			for _, post := range posts {
+				if !cd.HasGrant("news", "post", "see", post.Idsitenews) {
+					continue
+				}
 				ann, err := queries.GetLatestAnnouncementByNewsID(r.Context(), post.Idsitenews)
 				if err != nil && !errors.Is(err, sql.ErrNoRows) {
 					return nil, fmt.Errorf("getLatestAnnouncementByNewsID: %w", err)

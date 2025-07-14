@@ -6,19 +6,19 @@ import (
 )
 
 var RenameLanguageTask = eventbus.BasicTaskEvent{
-	EventName: "Rename Language",
-	Match:     hcommon.TaskMatcher("Rename Language"),
-	ActionH:   adminLanguagesRenamePage,
+	EventName:     "Rename Language",
+	Match:         hcommon.TaskMatcher("Rename Language"),
+	ActionHandler: adminLanguagesRenamePage,
 }
 
 var DeleteLanguageTask = eventbus.BasicTaskEvent{
-	EventName: "Delete Language",
-	Match:     hcommon.TaskMatcher("Delete Language"),
-	ActionH:   adminLanguagesDeletePage,
+	EventName:     "Delete Language",
+	Match:         hcommon.TaskMatcher("Delete Language"),
+	ActionHandler: adminLanguagesDeletePage,
 }
 
 var CreateLanguageTask = eventbus.BasicTaskEvent{
-	EventName: "Create Language",
-	Match:     hcommon.TaskMatcher("Create Language"),
-	ActionH:   adminLanguagesCreatePage,
+	EventName:     "Create Language",
+	Match:         hcommon.TaskMatcher("Create Language"),
+	ActionHandler: adminLanguagesCreatePage,
 }

@@ -35,10 +35,10 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
-		User:     r.URL.Query().Get("user"),
-		Action:   r.URL.Query().Get("action"),
-		PageSize: common.GetPageSize(r),
+		CoreData:      r.Context().Value(common.KeyCoreData).(*CoreData),
+		User:          r.URL.Query().Get("user"),
+               Action:        r.URL.Query().Get("action"),
+		PageSize:      common.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -54,10 +54,10 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := queries.ListAuditLogs(r.Context(), db.ListAuditLogsParams{
-		Username: sql.NullString{String: usernameFilter, Valid: true},
-		Action:   actionFilter,
-		Limit:    int32(data.PageSize + 1),
-		Offset:   int32(offset),
+		Username:      sql.NullString{String: usernameFilter, Valid: true},
+               Action:       actionFilter,
+		Limit:         int32(data.PageSize + 1),
+		Offset:        int32(offset),
 	})
 	if err != nil {
 		log.Printf("list audit logs: %v", err)

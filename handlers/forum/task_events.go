@@ -7,15 +7,15 @@ import (
 
 // ReplyTask describes posting a reply to a forum thread.
 var ReplyTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskReply,
-	Match:     hcommon.TaskMatcher(hcommon.TaskReply),
-	ActionH:   TopicThreadReplyPage,
+	EventName:     hcommon.TaskReply,
+	Match:         hcommon.TaskMatcher(hcommon.TaskReply),
+	ActionHandler: TopicThreadReplyPage,
 }
 
 // CreateThreadTask describes creating a new forum thread.
 var CreateThreadTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskCreateThread,
-	Match:     hcommon.TaskMatcher(hcommon.TaskCreateThread),
-	PageH:     ThreadNewPage,
-	ActionH:   ThreadNewActionPage,
+	EventName:     hcommon.TaskCreateThread,
+	Match:         hcommon.TaskMatcher(hcommon.TaskCreateThread),
+	PageHandler:   ThreadNewPage,
+	ActionHandler: ThreadNewActionPage,
 }

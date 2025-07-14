@@ -6,31 +6,31 @@ import (
 )
 
 var UploadImageTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskUploadImage,
-	Match:     hcommon.TaskMatcher(hcommon.TaskUploadImage),
-	ActionH:   BoardPostImageActionPage,
+	EventName:     hcommon.TaskUploadImage,
+	Match:         hcommon.TaskMatcher(hcommon.TaskUploadImage),
+	ActionHandler: BoardPostImageActionPage,
 }
 
 var ReplyTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskReply,
-	Match:     hcommon.TaskMatcher(hcommon.TaskReply),
-	ActionH:   BoardThreadReplyActionPage,
+	EventName:     hcommon.TaskReply,
+	Match:         hcommon.TaskMatcher(hcommon.TaskReply),
+	ActionHandler: BoardThreadReplyActionPage,
 }
 
 var NewBoardTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskNewBoard,
-	Match:     hcommon.TaskMatcher(hcommon.TaskNewBoard),
-	ActionH:   AdminNewBoardMakePage,
+	EventName:     hcommon.TaskNewBoard,
+	Match:         hcommon.TaskMatcher(hcommon.TaskNewBoard),
+	ActionHandler: AdminNewBoardMakePage,
 }
 
 var ModifyBoardTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskModifyBoard,
-	Match:     hcommon.TaskMatcher(hcommon.TaskModifyBoard),
-	ActionH:   AdminBoardModifyBoardActionPage,
+	EventName:     hcommon.TaskModifyBoard,
+	Match:         hcommon.TaskMatcher(hcommon.TaskModifyBoard),
+	ActionHandler: AdminBoardModifyBoardActionPage,
 }
 
 var ApprovePostTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskApprove,
-	Match:     hcommon.TaskMatcher(hcommon.TaskApprove),
-	ActionH:   AdminApprovePostPage,
+	EventName:     hcommon.TaskApprove,
+	Match:         hcommon.TaskMatcher(hcommon.TaskApprove),
+	ActionHandler: AdminApprovePostPage,
 }

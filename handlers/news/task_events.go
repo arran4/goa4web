@@ -7,7 +7,7 @@ import (
 
 // NewPostTask represents creating a new news post.
 var NewPostTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskNewPost,
-	Match:     hcommon.TaskMatcher(hcommon.TaskNewPost),
-	ActionH:   NewsPostNewActionPage,
+	EventName:     hcommon.TaskNewPost,
+	Match:         hcommon.TaskMatcher(hcommon.TaskNewPost),
+	ActionHandler: NewsPostNewActionPage,
 }

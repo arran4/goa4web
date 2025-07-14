@@ -27,10 +27,10 @@ type BasicTaskEvent struct {
 	EventName string
 	// Match restricts the route to requests specifying this task.
 	Match mux.MatcherFunc
-	// ActionH performs the task's logic.
-	ActionH http.HandlerFunc
-	// PageH is rendered once the task completes.
-	PageH http.HandlerFunc
+	// ActionHandler performs the task's logic.
+	ActionHandler http.HandlerFunc
+	// PageHandler is rendered once the task completes.
+	PageHandler http.HandlerFunc
 	// Notification builds an EventNotification for the executed task.
 	Notification func(path string, userID int32, data map[string]any) EventNotification
 }
@@ -45,10 +45,10 @@ func (e BasicTaskEvent) Name() string { return e.EventName }
 func (e BasicTaskEvent) Matcher() mux.MatcherFunc { return e.Match }
 
 // Action implements TaskEvent.
-func (e BasicTaskEvent) Action() http.HandlerFunc { return e.ActionH }
+func (e BasicTaskEvent) Action() http.HandlerFunc { return e.ActionHandler }
 
 // Page implements TaskEvent.
-func (e BasicTaskEvent) Page() http.HandlerFunc { return e.PageH }
+func (e BasicTaskEvent) Page() http.HandlerFunc { return e.PageHandler }
 
 // BuildNotification creates a basic EventNotification when a custom builder is
 // not supplied.

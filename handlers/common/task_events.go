@@ -15,10 +15,10 @@ func NewTaskEvent(name string) eventbus.BasicTaskEvent {
 // page and action handlers.
 func NewTaskEventWithHandlers(name string, page, action http.HandlerFunc) eventbus.BasicTaskEvent {
 	return eventbus.BasicTaskEvent{
-		EventName: name,
-		Match:     TaskMatcher(name),
-		PageH:     page,
-		ActionH:   action,
+		EventName:     name,
+		Match:         TaskMatcher(name),
+		PageHandler:   page,
+		ActionHandler: action,
 	}
 }
 

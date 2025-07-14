@@ -68,6 +68,31 @@ WHERE s.Idsitenews IN (sqlc.slice(newsIds)) AND EXISTS (
 )
 ORDER BY s.occurred DESC;
 
+-- name: GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT u.username AS writerName, u.idusers as writerId, s.*, th.comments as Comments
+FROM site_news s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
+WHERE s.Idsitenews IN (sqlc.slice(newsIds)) AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = s.idsiteNews
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+ORDER BY s.occurred DESC;
+
 -- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)

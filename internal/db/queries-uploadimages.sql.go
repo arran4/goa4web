@@ -56,3 +56,48 @@ func (q *Queries) GetUploadedImage(ctx context.Context, iduploadedimage int32) (
 	)
 	return &i, err
 }
+
+const listUploadedImagesByUser = `-- name: ListUploadedImagesByUser :many
+SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
+FROM uploaded_images
+WHERE users_idusers = ?
+ORDER BY uploaded DESC
+LIMIT ? OFFSET ?
+`
+
+type ListUploadedImagesByUserParams struct {
+	UsersIdusers int32
+	Limit        int32
+	Offset       int32
+}
+
+func (q *Queries) ListUploadedImagesByUser(ctx context.Context, arg ListUploadedImagesByUserParams) ([]*UploadedImage, error) {
+	rows, err := q.db.QueryContext(ctx, listUploadedImagesByUser, arg.UsersIdusers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UploadedImage
+	for rows.Next() {
+		var i UploadedImage
+		if err := rows.Scan(
+			&i.Iduploadedimage,
+			&i.UsersIdusers,
+			&i.Path,
+			&i.Width,
+			&i.Height,
+			&i.FileSize,
+			&i.Uploaded,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

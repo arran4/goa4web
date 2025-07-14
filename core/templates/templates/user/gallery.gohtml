@@ -1,0 +1,19 @@
+{{ template "head" $ }}
+<h2>Your Uploaded Images</h2>
+{{- if .Images }}
+<div class="gallery">
+    {{- range .Images }}
+    <div class="notification" style="display:inline-block;margin:0.5em;">
+        <a href="{{ .Full }}" target="_blank"><img src="{{ .Thumb }}" alt="image"></a><br>
+        <code>{{ .A4Code }}</code>
+    </div>
+    {{- end }}
+</div>
+<div>
+    {{- if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous {{ $.PageSize }}</a>{{ end }}
+    {{- if $.NextLink }} <a href="{{ $.NextLink }}">Next {{ $.PageSize }}</a>{{ end }}
+</div>
+{{- else }}
+<p>No images uploaded.</p>
+{{- end }}
+{{ template "tail" $ }}

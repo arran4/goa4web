@@ -27,11 +27,9 @@
     <form method="post" action="/usr/subscriptions/add/{{ .Path }}" style="display:inline">
         {{ csrfField }}
         <input type="hidden" name="task" value="{{ .Task }}">
-        Method:
-        <select name="method">
-            <option value="internal">Internal</option>
-            <option value="email">Email</option>
-        </select>
+        Notify via:
+        <label><input type="checkbox" name="method" value="internal" checked>Internal</label>
+        <label><input type="checkbox" name="method" value="email">Email</label>
         <input type="submit" value="Subscribe">
         {{ .Name }}
     </form>

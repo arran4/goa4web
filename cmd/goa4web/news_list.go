@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 
@@ -14,6 +15,7 @@ type newsListCmd struct {
 	fs     *flag.FlagSet
 	Limit  int
 	Offset int
+	UserID int
 	args   []string
 }
 
@@ -22,6 +24,7 @@ func parseNewsListCmd(parent *newsCmd, args []string) (*newsListCmd, error) {
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	fs.IntVar(&c.Limit, "limit", 10, "limit")
 	fs.IntVar(&c.Offset, "offset", 0, "offset")
+	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -37,9 +40,12 @@ func (c *newsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx, dbpkg.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-		Limit:  int32(c.Limit),
-		Offset: int32(c.Offset),
+	uid := int32(c.UserID)
+	rows, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescending(ctx, dbpkg.GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescendingParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		Limit:    int32(c.Limit),
+		Offset:   int32(c.Offset),
 	})
 	if err != nil {
 		return fmt.Errorf("list news: %w", err)

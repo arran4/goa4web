@@ -75,7 +75,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				return LatestNews, nil
 			}
 			type Post struct {
-				*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+				*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescendingRow
 				ShowReply    bool
 				ShowEdit     bool
 				Editing      bool
@@ -87,9 +87,11 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 
 			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-			posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-				Limit:  15,
-				Offset: int32(offset),
+			posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescendingParams{
+				ViewerID: cd.UserID,
+				UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+				Limit:    15,
+				Offset:   int32(offset),
 			})
 			if err != nil {
 				switch {
@@ -111,7 +113,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 					return nil, fmt.Errorf("getLatestAnnouncementByNewsID: %w", err)
 				}
 				result = append(result, &Post{
-					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
+					GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescendingRow: post,
 					ShowReply:    cd.UserID != 0,
 					ShowEdit:     (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("content writer") && cd.UserID == post.UsersIdusers),
 					Editing:      editingId == int(post.Idsitenews),

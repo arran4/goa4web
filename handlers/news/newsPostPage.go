@@ -44,7 +44,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Post struct {
-		*db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
+		*db.GetNewsPostByIdWithWriterIdAndThreadCommentCountForUserRow
 		ShowReply    bool
 		ShowEdit     bool
 		Editing      bool
@@ -80,7 +80,11 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
+	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ID:       int32(pid),
+	})
 	if err != nil {
 		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -175,7 +179,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("getLatestAnnouncementByNewsID: %v", err)
 	}
 	data.Post = &Post{
-		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
+		GetNewsPostByIdWithWriterIdAndThreadCommentCountForUserRow: post,
 		ShowReply:    data.CoreData.UserID != 0,
 		ShowEdit:     canEditNewsPost(data.CoreData, post.UsersIdusers),
 		Editing:      editingId == int(post.Idsitenews),
@@ -198,6 +202,8 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid, _ := session.Values["UID"].(int32)
+
 	vars := mux.Vars(r)
 	pid, err := strconv.Atoi(vars["post"])
 
@@ -213,7 +219,11 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
-	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), int32(pid))
+	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ID:       int32(pid),
+	})
 	if err != nil {
 		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -271,7 +281,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-	uid, _ := session.Values["UID"].(int32)
+	uid, _ = session.Values["UID"].(int32)
 
 	base := "http://" + r.Host
 	if config.AppRuntimeConfig.HTTPHostname != "" {

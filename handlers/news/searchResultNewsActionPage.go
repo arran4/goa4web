@@ -18,7 +18,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*hcommon.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
-		News               []*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow
+		News               []*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountForUserRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -65,7 +65,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
+func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountForUserRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
@@ -113,7 +113,11 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 		}
 	}
 
-	news, err := queries.GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(r.Context(), newsIds)
+	news, err := queries.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountForUser(r.Context(), db.GetNewsPostsByIdsWithWriterIdAndThreadCommentCountForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		Newsids:  newsIds,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

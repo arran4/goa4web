@@ -49,7 +49,11 @@ func (c *newsCommentsListCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	uid := int32(c.UserID)
-	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, int32(c.ID))
+	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser(ctx, dbpkg.GetNewsPostByIdWithWriterIdAndThreadCommentCountForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ID:       int32(c.ID),
+	})
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}

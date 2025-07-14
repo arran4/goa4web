@@ -20,12 +20,14 @@ import (
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
-	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-		Limit:  15,
-		Offset: 0,
+	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescendingParams{
+		ViewerID: cd.UserID,
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:    15,
+		Offset:   0,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending: %s", err)
+		log.Printf("GetNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescending: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

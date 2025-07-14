@@ -257,8 +257,14 @@ func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredPa
 		args = append(args, arg.Role)
 	}
 	if arg.Status != "" {
-		cond = append(cond, "u.status = ?")
-		args = append(args, arg.Status)
+		switch arg.Status {
+		case "pending":
+			cond = append(cond, "NOT EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected'))")
+		case "active":
+			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'user')")
+		case "rejected":
+			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'rejected')")
+		}
 	}
 	if len(cond) > 0 {
 		query += " WHERE " + strings.Join(cond, " AND ")
@@ -304,8 +310,14 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 	cond = append(cond, "(LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))")
 	args = append(args, like, like)
 	if arg.Status != "" {
-		cond = append(cond, "u.status = ?")
-		args = append(args, arg.Status)
+		switch arg.Status {
+		case "pending":
+			cond = append(cond, "NOT EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected'))")
+		case "active":
+			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'user')")
+		case "rejected":
+			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'rejected')")
+		}
 	}
 	query += " WHERE " + strings.Join(cond, " AND ")
 	query += " ORDER BY u.idusers LIMIT ? OFFSET ?"

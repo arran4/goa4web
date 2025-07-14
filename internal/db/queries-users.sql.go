@@ -137,6 +137,47 @@ func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]string, error)
 	return items, nil
 }
 
+const listPendingUsers = `-- name: ListPendingUsers :many
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+FROM users u
+WHERE NOT EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected')
+)
+ORDER BY u.idusers
+`
+
+type ListPendingUsersRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    string
+}
+
+func (q *Queries) ListPendingUsers(ctx context.Context) ([]*ListPendingUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPendingUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListPendingUsersRow
+	for rows.Next() {
+		var i ListPendingUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
 SELECT idblogs, forumthread_id, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM blogs t, users u, preferences p

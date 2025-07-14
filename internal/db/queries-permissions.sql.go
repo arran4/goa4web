@@ -485,3 +485,23 @@ func (q *Queries) UpsertForumTopicRestrictions(ctx context.Context, arg UpsertFo
 	)
 	return err
 }
+
+const userHasRole = `-- name: UserHasRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = ?
+LIMIT 1
+`
+
+type UserHasRoleParams struct {
+	UsersIdusers int32
+	Name         string
+}
+
+func (q *Queries) UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, userHasRole, arg.UsersIdusers, arg.Name)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}

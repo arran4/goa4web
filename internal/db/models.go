@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+type AdminUserComment struct {
+	ID           int32
+	UsersIdusers int32
+	Comment      string
+	CreatedAt    time.Time
+}
+
 type AuditLog struct {
 	ID           int32
 	UsersIdusers int32

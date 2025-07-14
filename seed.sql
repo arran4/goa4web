@@ -4,7 +4,8 @@ INSERT INTO roles (name) VALUES
   ('user'),
   ('content writer'),
   ('moderator'),
-  ('administrator')
+  ('administrator'),
+  ('rejected')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Grant user role to all users without any role

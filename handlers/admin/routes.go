@@ -44,6 +44,7 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/notifications", SendNotificationTask.Action).Methods("POST").MatcherFunc(SendNotificationTask.Match)
 	ar.HandleFunc("/user", adminUserListPage).Methods("GET")
 	ar.HandleFunc("/user/{id}", adminUserProfilePage).Methods("GET")
+	ar.HandleFunc("/user/{id}/comment", adminUserAddCommentPage).Methods("POST")
 	ar.HandleFunc("/announcements", AdminAnnouncementsPage).Methods("GET")
 	ar.HandleFunc("/announcements", AddAnnouncementTask.Action).Methods("POST").MatcherFunc(AddAnnouncementTask.Match)
 	ar.HandleFunc("/announcements", DeleteAnnouncementTask.Action).Methods("POST").MatcherFunc(DeleteAnnouncementTask.Match)

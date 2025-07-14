@@ -91,6 +91,16 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := queries.UserHasRole(r.Context(), db.UserHasRoleParams{UsersIdusers: row.Idusers, Name: "user"}); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			renderLoginForm(w, r, "approval is pending")
+		} else {
+			log.Printf("user role: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
 	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
 		newHash, newAlg, err := HashPassword(password)
 		if err == nil {

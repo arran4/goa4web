@@ -38,10 +38,11 @@ func Allowed(r *http.Request, roles ...string) bool {
 		return false
 	}
 	perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
-	if err != nil || len(perms) == 0 {
+	if err != nil {
 		return false
 	}
 	var rolesList []string
+	rolesList = append(rolesList, "anonymous", "user")
 	for _, p := range perms {
 		if p.Role != "" {
 			rolesList = append(rolesList, p.Role)

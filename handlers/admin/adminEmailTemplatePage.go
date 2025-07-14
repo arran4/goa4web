@@ -57,6 +57,10 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
+	SaveTemplateTask.Action()(w, r)
+}
+
+func (saveTemplateTask) action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -70,6 +74,10 @@ func AdminEmailTemplateSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminEmailTemplateTestActionPage(w http.ResponseWriter, r *http.Request) {
+	TestTemplateTask.Action()(w, r)
+}
+
+func (testTemplateTask) action(w http.ResponseWriter, r *http.Request) {
 	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q

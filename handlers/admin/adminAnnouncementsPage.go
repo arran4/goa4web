@@ -37,6 +37,10 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
+	AddAnnouncementTask.Action()(w, r)
+}
+
+func (addAnnouncementTask) action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
@@ -51,6 +55,10 @@ func AdminAnnouncementsAddActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminAnnouncementsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+	DeleteAnnouncementTask.Action()(w, r)
+}
+
+func (deleteAnnouncementTask) action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

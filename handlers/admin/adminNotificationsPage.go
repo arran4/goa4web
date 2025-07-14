@@ -47,6 +47,10 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request) {
+	MarkReadTask.Action()(w, r)
+}
+
+func (markReadTask) action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -61,6 +65,10 @@ func AdminNotificationsMarkReadActionPage(w http.ResponseWriter, r *http.Request
 }
 
 func AdminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
+	PurgeNotificationsTask.Action()(w, r)
+}
+
+func (purgeNotificationsTask) action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
@@ -69,6 +77,10 @@ func AdminNotificationsPurgeActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminNotificationsSendActionPage(w http.ResponseWriter, r *http.Request) {
+	SendNotificationTask.Action()(w, r)
+}
+
+func (sendNotificationTask) action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")

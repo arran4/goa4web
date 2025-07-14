@@ -37,6 +37,10 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
+	AddIPBanTask.Action()(w, r)
+}
+
+func (addIPBanTask) action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = netutil.NormalizeIPNet(ipNet)
@@ -59,6 +63,10 @@ func AdminIPBanAddActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminIPBanDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+	DeleteIPBanTask.Action()(w, r)
+}
+
+func (deleteIPBanTask) action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

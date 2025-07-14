@@ -126,3 +126,10 @@ DELETE FROM grants WHERE id = ?;
 
 -- name: ListGrants :many
 SELECT * FROM grants ORDER BY id;
+
+-- name: UserHasRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = ?
+LIMIT 1;

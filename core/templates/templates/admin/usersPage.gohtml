@@ -20,6 +20,7 @@
             <th>ID</th>
             <th>User</th>
             <th>Email</th>
+            <th>Latest Comment</th>
             <th>Options?</th>
         </tr>
         {{range $.Rows}}
@@ -27,6 +28,7 @@
                 <td>{{.Idusers}}</td>
                 <td>{{.Username.String}}</td>
                 <td>{{.Email.String}}</td>
+                <td>{{with $c := index $.Comments .Idusers}}{{ $c.CreatedAt.Format "2006-01-02" }} - {{$c.Comment}}{{end}}</td>
                 <td style="white-space:nowrap">
                     <a style="display:inline-block;margin:0 4px" href="/blogs/blogger/{{.Username.String}}">View Blog</a>
                     <form style="display:inline-block;margin:0 4px" method="get" action="/admin/users/edit">

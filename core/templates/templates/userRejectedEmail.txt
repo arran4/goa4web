@@ -1,0 +1,11 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [A4] {{.Subject}}
+
+Hello,
+
+Your account request was rejected.
+Reason: {{.Item.Reason}}
+
+Cheers,
+The A4Web Team

@@ -21,18 +21,16 @@
 <p>No subscriptions</p>
 {{ end }}
 
-<h3>Add Subscription</h3>
-{{ range .Options }}
-<div>
-    <form method="post" action="/usr/subscriptions/add/{{ .Path }}" style="display:inline">
-        {{ csrfField }}
-        <input type="hidden" name="task" value="{{ .Task }}">
-        Notify via:
-        <label><input type="checkbox" name="method" value="internal" checked>Internal</label>
-        <label><input type="checkbox" name="method" value="email">Email</label>
-        <input type="submit" value="Subscribe">
+<h3>Update Subscriptions</h3>
+<form method="post" action="/usr/subscriptions/update">
+    {{ csrfField }}
+    {{ range .Options }}
+    <div>
         {{ .Name }}
-    </form>
-</div>
-{{ end }}
+        <label><input type="checkbox" name="{{ .Path }}_internal" {{ if index $.SubMap (printf "%s|internal" .Pattern) }}checked{{ end }}>Internal</label>
+        <label><input type="checkbox" name="{{ .Path }}_email" {{ if index $.SubMap (printf "%s|email" .Pattern) }}checked{{ end }}>Email</label>
+    </div>
+    {{ end }}
+    <input type="submit" value="Update">
+</form>
 {{ template "tail" $ }}

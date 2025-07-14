@@ -36,10 +36,7 @@ func RegisterRoutes(r *mux.Router) {
 	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
 	ur.HandleFunc("/notifications/gallery", userGalleryPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
 	ur.HandleFunc("/subscriptions", userSubscriptionsPage).Methods(http.MethodGet).MatcherFunc(auth.RequiresAnAccount())
-	ur.HandleFunc("/subscriptions/add/blogs", userSubscriptionsAddBlogsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SubscribeBlogsTask.Match)
-	ur.HandleFunc("/subscriptions/add/writings", userSubscriptionsAddWritingsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SubscribeWritingsTask.Match)
-	ur.HandleFunc("/subscriptions/add/news", userSubscriptionsAddNewsAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SubscribeNewsTask.Match)
-	ur.HandleFunc("/subscriptions/add/images", userSubscriptionsAddImagesAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SubscribeImagesTask.Match)
+	ur.HandleFunc("/subscriptions/update", userSubscriptionsUpdateAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(UpdateSubscriptionsTask.Match)
 	ur.HandleFunc("/subscriptions/delete", userSubscriptionsDeleteAction).Methods(http.MethodPost).MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(DeleteTask.Match)
 
 	// legacy redirects

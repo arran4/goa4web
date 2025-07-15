@@ -39,11 +39,11 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	perms, _ := queries.GetPermissionsByUserID(r.Context(), int32(uid))
 
 	data := struct {
-		Note        string                `json:"note"`
-		User        *db.User              `json:"user"`
-		Preference  *db.Preference        `json:"preference,omitempty"`
-		Languages   []*db.UserLanguage    `json:"languages,omitempty"`
-               Permissions []*db.GetPermissionsByUserIDRow `json:"permissions,omitempty"`
+		Note        string                          `json:"note"`
+		User        *db.User                        `json:"user"`
+		Preference  *db.Preference                  `json:"preference,omitempty"`
+		Languages   []*db.UserLanguage              `json:"languages,omitempty"`
+		Permissions []*db.GetPermissionsByUserIDRow `json:"permissions,omitempty"`
 	}{
 		Note:        gdprExportNote,
 		User:        user,

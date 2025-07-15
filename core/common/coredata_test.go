@@ -109,3 +109,33 @@ func TestBookmarksLazy(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestUnreadNotificationCount(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{"cnt"}).AddRow(2)
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\)").WithArgs(int32(1)).WillReturnRows(rows)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+	cd.UserID = 1
+
+	if c, err := cd.UnreadNotificationCount(); err != nil || c != 2 {
+		t.Fatalf("count=%d err=%v", c, err)
+	}
+	if cd.NotificationCount != 2 {
+		t.Fatalf("NotificationCount=%d", cd.NotificationCount)
+	}
+	if c, err := cd.UnreadNotificationCount(); err != nil || c != 2 {
+		t.Fatalf("second count=%d err=%v", c, err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

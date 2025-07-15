@@ -69,10 +69,8 @@ func (c *writingListCmd) Run() error {
 		}
 		return nil
 	}
-	rows, err := queries.GetPublicWritings(ctx, dbpkg.GetPublicWritingsParams{
-		Limit:  int32(c.Limit),
-		Offset: int32(c.Offset),
-	})
+	cd := corecommon.NewCoreData(ctx, queries)
+	rows, err := cd.LatestWritings(nil)
 	if err != nil {
 		return fmt.Errorf("list writings: %w", err)
 	}

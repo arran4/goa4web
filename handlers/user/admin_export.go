@@ -50,7 +50,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	langs, err := cd.Languages()
+	langs, err := queries.GetUserLanguages(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("load languages: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

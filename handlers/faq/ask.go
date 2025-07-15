@@ -74,7 +74,27 @@ func AskActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO notify admin
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData); ok {
+		evt := cd.Event()
+		if evt == nil {
+			log.Printf("ask action: missing event")
+			if corecommon.Version == "dev" {
+				// TODO remove once TaskEventMiddleware always provides an event
+				http.Error(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			evt.Admin = true
+			evt.Path = "/admin/faq"
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["question"] = text
+		}
+	}
+
+	// The BusWorker sends notifications based on event metadata.
+	// Setting Admin=true signals administrators should be alerted.
 
 	http.Redirect(w, r, "/faq", http.StatusTemporaryRedirect)
 }

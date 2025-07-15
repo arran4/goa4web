@@ -23,16 +23,16 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(0), int32(2)).
+		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "see_role_id", "role_id",
-		}).AddRow(2, 0, 0, 1, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
+			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
+		}).AddRow(2, 0, 0, 1, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
 
 	mock.ExpectQuery("SELECT t.idforumtopic").
-		WithArgs(int32(0), int32(1)).
+		WithArgs(int32(0), int32(1), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername", "see_role_id", "role_id",
-		}).AddRow(1, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
+			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername",
+		}).AddRow(1, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}))
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
@@ -71,16 +71,16 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(0), int32(2)).
+		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "see_role_id", "role_id",
-		}).AddRow(2, 0, 0, 3, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
+			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
+		}).AddRow(2, 0, 0, 3, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
 
 	mock.ExpectQuery("SELECT t.idforumtopic").
-		WithArgs(int32(0), int32(3)).
+		WithArgs(int32(0), int32(3), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername", "see_role_id", "role_id",
-		}).AddRow(3, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}))
+			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername",
+		}).AddRow(3, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}))
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
@@ -116,7 +116,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(0), int32(2)).
+		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)

@@ -45,7 +45,7 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 		"idwriting", "users_idusers", "forumthread_idforumthread", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "WriterId", "WriterUsername",
 	}).AddRow(2, 1, 0, 1, 1, sql.NullString{}, sql.NullTime{}, sql.NullString{}, sql.NullString{}, sql.NullBool{}, sql.NullTime{}, 1, sql.NullString{})
 	mock.ExpectQuery("SELECT w.idwriting").
-		WithArgs(int32(1), int32(1), int32(2), int32(1), sqlmock.AnyArg()).
+		WithArgs(int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(rows)
 
 	called := false

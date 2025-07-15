@@ -98,8 +98,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
-		SeeRoleID:                    topicRow.SeeRoleID,
-		RoleID:                       topicRow.RoleID,
 		Edit:                         false,
 	}
 
@@ -139,8 +137,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
-		SeeRoleID:                    topicRow.SeeRoleID,
-		RoleID:                       topicRow.RoleID,
 		Edit:                         false,
 	}
 

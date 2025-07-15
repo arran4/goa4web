@@ -35,8 +35,9 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	comment := r.Context().Value(common.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		UsersIdusers:  uid,
-		Idforumthread: comment.ForumthreadID,
+		ViewerID:      uid,
+		ThreadID:      comment.ForumthreadID,
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

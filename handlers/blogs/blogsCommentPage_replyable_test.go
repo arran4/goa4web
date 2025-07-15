@@ -57,9 +57,9 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(1)).WillReturnRows(blogRows)
 
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "seelevel", "level"}).
-		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), true, "bob", 0, 0)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1)).WillReturnRows(threadRows)
+	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
+		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), true, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(threadRows)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
 		WithArgs(int32(2), int32(2), int32(1), sql.NullInt32{Int32: 2, Valid: true}).
@@ -97,9 +97,9 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(1)).WillReturnRows(blogRows)
 
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "seelevel", "level"}).
-		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob", 0, 0)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1)).WillReturnRows(threadRows)
+	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
+		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(threadRows)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
 		WithArgs(int32(2), int32(2), int32(1), sql.NullInt32{Int32: 2, Valid: true}).

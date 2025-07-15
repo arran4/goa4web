@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -46,8 +47,9 @@ func (c *writingReadCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(ctx, dbpkg.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    0,
-		Idwriting: int32(c.ID),
+		ViewerID:      0,
+		Idwriting:     int32(c.ID),
+		ViewerMatchID: sql.NullInt32{Valid: false},
 	})
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)

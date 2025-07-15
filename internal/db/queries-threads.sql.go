@@ -31,19 +31,35 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 }
 
 const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, r.see_role_id, u.role_id
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section='role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0) AND th.idforumthread=?
+WHERE th.idforumthread=?
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY t.lastaddition DESC
 `
 
 type GetThreadLastPosterAndPermsParams struct {
-	UsersIdusers  int32
-	Idforumthread int32
+	ViewerID      int32
+	ThreadID      int32
+	ViewerMatchID sql.NullInt32
 }
 
 type GetThreadLastPosterAndPermsRow struct {
@@ -55,12 +71,10 @@ type GetThreadLastPosterAndPermsRow struct {
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
 	Lastposterusername     sql.NullString
-	SeeRoleID              sql.NullInt32
-	RoleID                 sql.NullInt32
 }
 
 func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
-	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPerms, arg.UsersIdusers, arg.Idforumthread)
+	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPerms, arg.ViewerID, arg.ThreadID, arg.ViewerMatchID)
 	var i GetThreadLastPosterAndPermsRow
 	err := row.Scan(
 		&i.Idforumthread,
@@ -71,8 +85,6 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 		&i.Lastaddition,
 		&i.Locked,
 		&i.Lastposterusername,
-		&i.SeeRoleID,
-		&i.RoleID,
 	)
 	return &i, err
 }

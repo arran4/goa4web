@@ -16,8 +16,6 @@ type ForumtopicPlus struct {
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
 	Lastposterusername           sql.NullString
-	SeeRoleID                    sql.NullInt32
-	RoleID                       sql.NullInt32
 	Edit                         bool
 }
 

@@ -68,8 +68,9 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		UsersIdusers: uid,
-		Idforumtopic: int32(topicID),
+		ViewerID:      uid,
+		Idforumtopic:  int32(topicID),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -80,8 +81,9 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-		UsersIdusers:           uid,
-		ForumtopicIdforumtopic: int32(topicID),
+		ViewerID:      uid,
+		TopicID:       int32(topicID),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
@@ -108,8 +110,9 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		UsersIdusers: uid,
-		Idforumtopic: int32(topicID),
+		ViewerID:      uid,
+		Idforumtopic:  int32(topicID),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -120,8 +123,9 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-		UsersIdusers:           uid,
-		ForumtopicIdforumtopic: int32(topicID),
+		ViewerID:      uid,
+		TopicID:       int32(topicID),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)

@@ -37,9 +37,9 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 		uid, _ := session.Values["UID"].(int32)
 
 		row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-			Userid:    uid,
-			Idwriting: int32(writingID),
-			UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
+			ViewerID:      uid,
+			Idwriting:     int32(writingID),
+			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			log.Printf("Error: %s", err)

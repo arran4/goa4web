@@ -2,6 +2,7 @@ package writings
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -50,7 +51,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting")).
-		WithArgs(int32(1), int32(1), int32(1), int32(1), sqlmock.AnyArg()).
+		WithArgs(int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnError(sqlmock.ErrCancelled)
 
 	rr := httptest.NewRecorder()

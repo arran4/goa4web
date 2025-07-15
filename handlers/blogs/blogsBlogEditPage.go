@@ -46,8 +46,6 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	row := r.Context().Value(common.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 	data.Blog = row
 
-	CustomBlogIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "blogEditPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -26,8 +26,6 @@ func runTemplate(tmpl string) func(http.ResponseWriter, *http.Request) {
 			CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 		}
 
-		CustomNewsIndex(data.CoreData, r)
-
 		if err := templates.RenderTemplate(w, tmpl, data, corecommon.NewFuncs(r)); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -36,13 +34,7 @@ func runTemplate(tmpl string) func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-func AddNewsIndex(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
-		CustomNewsIndex(cd, r)
-		handler.ServeHTTP(w, r)
-	})
-}
+func AddNewsIndex(h http.Handler) http.Handler { return hcommon.IndexMiddleware(CustomNewsIndex)(h) }
 
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router) {

@@ -65,8 +65,6 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		data.Abstracts = append(data.Abstracts, row)
 	}
 
-	CustomWritingsIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "writerPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

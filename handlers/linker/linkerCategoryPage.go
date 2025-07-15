@@ -51,8 +51,6 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Links = linkerPosts
 
-	CustomLinkerIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "linkerCategoryPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

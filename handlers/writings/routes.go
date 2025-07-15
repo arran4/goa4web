@@ -13,6 +13,11 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
+// AddWritingsIndex injects writings index links into CoreData.
+func AddWritingsIndex(h http.Handler) http.Handler {
+	return hcommon.IndexMiddleware(CustomWritingsIndex)(h)
+}
+
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.
@@ -20,6 +25,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Writings", "/writings", SectionWeight)
 	nav.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()
+	wr.Use(AddWritingsIndex)
 	wr.HandleFunc("/rss", RssPage).Methods("GET")
 	wr.HandleFunc("/atom", AtomPage).Methods("GET")
 	wr.HandleFunc("", Page).Methods("GET")

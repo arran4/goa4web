@@ -11,6 +11,11 @@ import (
 	router "github.com/arran4/goa4web/internal/router"
 )
 
+// AddLinkerIndex injects linker index links into CoreData.
+func AddLinkerIndex(h http.Handler) http.Handler {
+	return hcommon.IndexMiddleware(CustomLinkerIndex)(h)
+}
+
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
@@ -18,6 +23,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Linker", "/linker", SectionWeight)
 	nav.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()
+	lr.Use(AddLinkerIndex)
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
 	lr.HandleFunc("/atom", AtomPage).Methods("GET")
 	lr.HandleFunc("", Page).Methods("GET")

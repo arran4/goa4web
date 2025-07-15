@@ -47,8 +47,6 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		g.Threads = append(g.Threads, row)
 	}
 
-	CustomForumIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "adminThreadsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -45,8 +45,6 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = subBoardRows
 
-	CustomImageBBSIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "imagebbsPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

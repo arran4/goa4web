@@ -62,8 +62,6 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		IsOffset: offset != 0,
 	}
 
-	CustomImageBBSIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "posterPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

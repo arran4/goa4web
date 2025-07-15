@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
@@ -16,11 +15,7 @@ import (
 
 func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
 	data := struct{ *corecommon.CoreData }{CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)}
-	if err := templates.RenderTemplate(w, "forgotPasswordPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "forgotPasswordPage.gohtml", data)
 }
 
 func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {

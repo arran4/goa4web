@@ -2,13 +2,11 @@ package admin
 
 import (
 	"context"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
 func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
@@ -30,9 +28,5 @@ func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

@@ -1,18 +1,17 @@
 package news
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	comments "github.com/arran4/goa4web/handlers/comments"
+	"github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -26,11 +25,7 @@ func runTemplate(tmpl string) func(http.ResponseWriter, *http.Request) {
 			CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 		}
 
-		if err := templates.RenderTemplate(w, tmpl, data, corecommon.NewFuncs(r)); err != nil {
-			log.Printf("Template Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		common.TemplateHandler(w, r, tmpl, data)
 	})
 }
 

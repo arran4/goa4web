@@ -9,7 +9,6 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 )
 
@@ -98,9 +97,5 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
 
-	if err := templates.RenderTemplate(w, "minePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "minePage.gohtml", data)
 }

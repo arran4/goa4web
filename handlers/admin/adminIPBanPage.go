@@ -3,16 +3,15 @@ package admin
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/netutil"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/utils/netutil"
+
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -33,11 +32,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	if err := templates.RenderTemplate(w, "iPBanPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "iPBanPage.gohtml", data)
 }
 
 func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {

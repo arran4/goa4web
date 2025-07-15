@@ -2,10 +2,6 @@ package admin
 
 import (
 	"bytes"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	userhandlers "github.com/arran4/goa4web/handlers/user"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/mail"
@@ -14,8 +10,11 @@ import (
 	"text/template"
 	"time"
 
+	common "github.com/arran4/goa4web/handlers/common"
+	userhandlers "github.com/arran4/goa4web/handlers/user"
+	db "github.com/arran4/goa4web/internal/db"
+
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
@@ -53,11 +52,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		Error:    r.URL.Query().Get("error"),
 	}
 
-	if err := templates.RenderTemplate(w, "emailTemplatePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "emailTemplatePage.gohtml", data)
 }
 
 func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {

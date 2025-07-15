@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/gorilla/sessions"
 
@@ -51,16 +52,18 @@ type CoreData struct {
 	ctx     context.Context
 	queries *db.Queries
 
-	user            lazyValue[*db.User]
-	perms           lazyValue[[]*db.GetPermissionsByUserIDRow]
-	pref            lazyValue[*db.Preference]
-	langs           lazyValue[[]*db.UserLanguage]
-	roles           lazyValue[[]string]
-	allRoles        lazyValue[[]*db.Role]
-	announcement    lazyValue[*db.GetActiveAnnouncementWithNewsRow]
-	forumCategories lazyValue[[]*db.Forumcategory]
-	latestNews      lazyValue[[]*NewsPost]
-	writeCats       lazyValue[[]*db.WritingCategory]
+	user              lazyValue[*db.User]
+	perms             lazyValue[[]*db.GetPermissionsByUserIDRow]
+	pref              lazyValue[*db.Preference]
+	langs             lazyValue[[]*db.UserLanguage]
+	roles             lazyValue[[]string]
+	allRoles          lazyValue[[]*db.Role]
+	announcement      lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	forumCategories   lazyValue[[]*db.Forumcategory]
+	latestNews        lazyValue[[]*NewsPost]
+	writeCats         lazyValue[[]*db.WritingCategory]
+	newsAnnouncements map[int32]*lazyValue[*db.SiteAnnouncement]
+	annMu             sync.Mutex
 	forumTopics     map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
 	unreadCount     lazyValue[int64]
 	writerWritings  map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
@@ -89,7 +92,7 @@ func WithEvent(evt *eventbus.Event) CoreOption { return func(cd *CoreData) { cd.
 
 // NewCoreData creates a CoreData with context and queries applied.
 func NewCoreData(ctx context.Context, q *db.Queries, opts ...CoreOption) *CoreData {
-	cd := &CoreData{ctx: ctx, queries: q}
+	cd := &CoreData{ctx: ctx, queries: q, newsAnnouncements: map[int32]*lazyValue[*db.SiteAnnouncement]{}}
 	for _, o := range opts {
 		o(cd)
 	}
@@ -263,6 +266,33 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 	return ann
 }
 
+// NewsAnnouncement returns the latest announcement for the given news post. The
+// result is cached so repeated lookups for the same id hit the database only
+// once.
+func (cd *CoreData) NewsAnnouncement(id int32) (*db.SiteAnnouncement, error) {
+	cd.annMu.Lock()
+	lv, ok := cd.newsAnnouncements[id]
+	if !ok {
+		lv = &lazyValue[*db.SiteAnnouncement]{}
+		cd.newsAnnouncements[id] = lv
+	}
+	cd.annMu.Unlock()
+
+	return lv.load(func() (*db.SiteAnnouncement, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, id)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return ann, nil
+	})
+}
+
 // ForumCategories loads all forum categories once.
 func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 	return cd.forumCategories.load(func() ([]*db.Forumcategory, error) {
@@ -295,7 +325,7 @@ func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
 			if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
 				continue
 			}
-			ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, row.Idsitenews)
+			ann, err := cd.NewsAnnouncement(row.Idsitenews)
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				return nil, err
 			}

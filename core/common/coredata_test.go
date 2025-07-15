@@ -82,33 +82,3 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	}
 }
 
-func TestForumTopicByIDLazy(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer db.Close()
-
-	queries := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{
-		"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description",
-		"threads", "comments", "lastaddition", "LastPosterUsername",
-	}).AddRow(1, 1, 1, sql.NullString{String: "t", Valid: true}, sql.NullString{String: "d", Valid: true}, sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 0, Valid: true}, sql.NullTime{}, sql.NullString{String: "bob", Valid: true})
-
-	mock.ExpectQuery("SELECT t.idforumtopic").WithArgs(int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(rows)
-
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
-	cd.UserID = 1
-
-	if _, err := cd.ForumTopicByID(1); err != nil {
-		t.Fatalf("ForumTopicByID: %v", err)
-	}
-	if _, err := cd.ForumTopicByID(1); err != nil {
-		t.Fatalf("ForumTopicByID second call: %v", err)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
-}

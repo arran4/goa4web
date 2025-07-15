@@ -62,6 +62,8 @@ type CoreData struct {
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
 	forumTopics     map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
+	unreadCount     lazyValue[int64]
+	writerWritings  map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
 
 	event *eventbus.Event
 }
@@ -358,7 +360,56 @@ func (cd *CoreData) ForumTopicByID(id int32) (*db.GetForumTopicByIdForUserRow, e
 	})
 }
 
+// WriterWritings returns public writings for the specified author respecting cd's permissions.
+func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.GetPublicWritingsByUserForViewerRow, error) {
+	if cd.writerWritings == nil {
+		cd.writerWritings = map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]{}
+	}
+	lv, ok := cd.writerWritings[userID]
+	if !ok {
+		lv = &lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]{}
+		cd.writerWritings[userID] = lv
+	}
+	return lv.load(func() ([]*db.GetPublicWritingsByUserForViewerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+		rows, err := cd.queries.GetPublicWritingsByUserForViewer(cd.ctx, db.GetPublicWritingsByUserForViewerParams{
+			ViewerID: cd.UserID,
+			AuthorID: userID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:    15,
+			Offset:   int32(offset),
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		var list []*db.GetPublicWritingsByUserForViewerRow
+		for _, row := range rows {
+			if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
+				continue
+			}
+			list = append(list, row)
+		}
+		return list, nil
+	})
+}
+
 // CanEditAny reports whether cd is in admin mode with administrator role.
 func (cd *CoreData) CanEditAny() bool {
 	return cd.HasRole("administrator") && cd.AdminMode
+}
+
+// UnreadNotificationCount returns the number of unread notifications for the
+// current user. The value is fetched lazily on the first call and cached for
+// subsequent calls.
+func (cd *CoreData) UnreadNotificationCount() int64 {
+	count, _ := cd.unreadCount.load(func() (int64, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return 0, nil
+		}
+		return cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
+	})
+	return count
 }

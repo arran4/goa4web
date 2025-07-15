@@ -3,6 +3,7 @@ package common_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -76,6 +77,61 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	}
 	if _, err := cd.WritingCategories(); err != nil {
 		t.Fatalf("WritingCategories second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestAnnouncementForNewsCaching(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+	now := time.Now()
+	annRows := sqlmock.NewRows([]string{"id", "site_news_id", "active", "created_at"}).
+		AddRow(1, 1, true, now)
+
+	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnRows(annRows)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+
+	if _, err := cd.AnnouncementForNews(1); err != nil {
+		t.Fatalf("AnnouncementForNews: %v", err)
+	}
+	if _, err := cd.AnnouncementForNews(1); err != nil {
+		t.Fatalf("AnnouncementForNews second: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestAnnouncementForNewsError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+
+	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrConnDone)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+
+	if _, err := cd.AnnouncementForNews(1); !errors.Is(err, sql.ErrConnDone) {
+		t.Fatalf("AnnouncementForNews error=%v", err)
+	}
+	if _, err := cd.AnnouncementForNews(1); !errors.Is(err, sql.ErrConnDone) {
+		t.Fatalf("AnnouncementForNews second=%v", err)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

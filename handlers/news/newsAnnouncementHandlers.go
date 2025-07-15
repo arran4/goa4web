@@ -46,7 +46,7 @@ func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 	ann, err := cd.NewsAnnouncement(int32(pid))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("getLatestAnnouncementByNewsID: %v", err)
+			log.Printf("announcementForNews: %v", err)
 		}
 		hcommon.TaskDoneAutoRefreshPage(w, r)
 		return

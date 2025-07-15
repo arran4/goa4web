@@ -70,6 +70,7 @@ type CoreData struct {
 	latestNews      lazyValue[[]*NewsPost]
 	latestWritings  lazyValue[[]*db.Writing]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	newsAnnouncements map[int32]*lazyValue[*db.SiteAnnouncement]
 	publicWritings  map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 	bloggers        lazyValue[[]*db.BloggerCountRow]
 	writers         lazyValue[[]*db.WriterCountRow]
@@ -294,6 +295,29 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 		return row, nil
 	})
 	return ann
+}
+
+// AnnouncementForNews fetches the latest announcement for the given news post
+// only once.
+func (cd *CoreData) AnnouncementForNews(id int32) (*db.SiteAnnouncement, error) {
+	if cd.newsAnnouncements == nil {
+		cd.newsAnnouncements = map[int32]*lazyValue[*db.SiteAnnouncement]{}
+	}
+	lv, ok := cd.newsAnnouncements[id]
+	if !ok {
+		lv = &lazyValue[*db.SiteAnnouncement]{}
+		cd.newsAnnouncements[id] = lv
+	}
+	return lv.load(func() (*db.SiteAnnouncement, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return ann, err
+	})
 }
 
 // NewsAnnouncement returns the latest announcement for the given news post. The

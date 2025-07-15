@@ -182,7 +182,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	ann, err := queries.GetLatestAnnouncementByNewsID(r.Context(), post.Idsitenews)
+	ann, err := data.CoreData.NewsAnnouncement(post.Idsitenews)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("getLatestAnnouncementByNewsID: %v", err)
 	}

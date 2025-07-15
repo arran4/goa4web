@@ -81,3 +81,34 @@ func TestWritingCategoriesLazy(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestNewsAnnouncementLazy(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{"id", "site_news_id", "active", "created_at"}).
+		AddRow(1, 1, false, now)
+
+	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").
+		WithArgs(int32(1)).
+		WillReturnRows(rows)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+
+	if _, err := cd.NewsAnnouncement(1); err != nil {
+		t.Fatalf("NewsAnnouncement: %v", err)
+	}
+	if _, err := cd.NewsAnnouncement(1); err != nil {
+		t.Fatalf("NewsAnnouncement second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

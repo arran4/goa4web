@@ -89,8 +89,9 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 		cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 		if uid != 0 && hcommon.NotificationsEnabled() {
-			c := cd.UnreadNotificationCount()
-			idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
+			if c := cd.UnreadNotificationCount(); c > 0 {
+				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
+			}
 		}
 		cd.IndexItems = idx
 		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)

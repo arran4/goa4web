@@ -4,13 +4,10 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
@@ -36,10 +33,5 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = templates.RenderTemplate(w, "forumWordListPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "forumWordListPage.gohtml", data)
 }

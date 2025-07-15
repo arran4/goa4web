@@ -1,14 +1,13 @@
 package admin
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
@@ -29,11 +28,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Errors = rows
 	}
-	if err := templates.RenderTemplate(w, "admin/dlqPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
 }
 
 func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {

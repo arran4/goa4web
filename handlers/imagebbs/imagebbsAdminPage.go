@@ -7,5 +7,6 @@ import (
 )
 
 func AdminPage(w http.ResponseWriter, r *http.Request) {
-	hcommon.TemplateHandler("imagebbsAdminPage").ServeHTTP(w, r)
+	data := struct{ *hcommon.CoreData }{r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)}
+	hcommon.TemplateHandler(w, r, "imagebbsAdminPage", data)
 }

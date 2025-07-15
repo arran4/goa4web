@@ -59,8 +59,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 }
 
 func TopicRssPage(w http.ResponseWriter, r *http.Request) {
-	_, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
 	vars := mux.Vars(r)
@@ -91,8 +90,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
-	_, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
 	vars := mux.Vars(r)

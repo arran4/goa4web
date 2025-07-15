@@ -67,7 +67,7 @@ func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	body := r.PostFormValue("body")
 	q := r.Context().Value(common.KeyQueries).(*db.Queries)
-	if err := q.SetTemplateOverride(r.Context(), "updateEmail", body); err != nil {
+	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail", Body: body}); err != nil {
 		log.Printf("db save template: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)

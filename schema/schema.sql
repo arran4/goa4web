@@ -584,3 +584,4 @@ CREATE TABLE IF NOT EXISTS `admin_user_comments` (
   PRIMARY KEY (`id`),
   KEY `admin_user_comments_user_idx` (`users_idusers`)
 );
+

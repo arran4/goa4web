@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -43,7 +44,7 @@ func (c *userListCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 
-	var rows []*dbpkg.UserInfoRow
+	var rows []*dbpkg.ListUserInfoRow
 	if c.showAdmin || c.showCreated || c.jsonOut {
 		rows, err = queries.ListUserInfo(ctx)
 	} else {
@@ -65,16 +66,16 @@ func (c *userListCmd) Run() error {
 		out := make([]map[string]interface{}, 0, len(rows))
 		for _, u := range rows {
 			item := map[string]interface{}{
-				"id":       u.ID,
+				"id":       u.Idusers,
 				"username": u.Username.String,
-				"email":    u.Email.String,
+				"email":    u.Email,
 			}
 			if c.showAdmin || c.jsonOut {
 				item["admin"] = u.Admin
 			}
 			if c.showCreated || c.jsonOut {
-				if u.CreatedAt.Valid {
-					item["created_at"] = u.CreatedAt.Time.Format(time.RFC3339)
+				if t, ok := u.CreatedAt.(sql.NullTime); ok && t.Valid {
+					item["created_at"] = t.Time.Format(time.RFC3339)
 				}
 			}
 			out = append(out, item)
@@ -85,13 +86,13 @@ func (c *userListCmd) Run() error {
 	}
 
 	for _, u := range rows {
-		fmt.Printf("%d\t%s\t%s", u.ID, u.Username.String, u.Email.String)
+		fmt.Printf("%d\t%s\t%s", u.Idusers, u.Username.String, u.Email)
 		if c.showAdmin {
 			fmt.Printf("\t%t", u.Admin)
 		}
 		if c.showCreated {
-			if u.CreatedAt.Valid {
-				fmt.Printf("\t%s", u.CreatedAt.Time.Format(time.RFC3339))
+			if t, ok := u.CreatedAt.(sql.NullTime); ok && t.Valid {
+				fmt.Printf("\t%s", t.Time.Format(time.RFC3339))
 			} else {
 				fmt.Printf("\t-")
 			}

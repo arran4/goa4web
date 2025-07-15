@@ -40,7 +40,7 @@ type CoreData struct {
 	queries *db.Queries
 
 	user         lazyValue[*db.User]
-	perms        lazyValue[[]*db.GetUserRolesRow]
+	perms        lazyValue[[]*db.GetPermissionsByUserIDRow]
 	pref         lazyValue[*db.Preference]
 	langs        lazyValue[[]*db.UserLanguage]
 	roles        lazyValue[[]string]
@@ -143,8 +143,8 @@ func (cd *CoreData) Roles() []string {
 			return rs, nil
 		}
 		for _, p := range perms {
-			if p.Role != "" {
-				rs = append(rs, p.Role)
+			if p.Name != "" {
+				rs = append(rs, p.Name)
 			}
 		}
 		return rs, nil
@@ -191,8 +191,8 @@ func (cd *CoreData) CurrentUser() (*db.User, error) {
 }
 
 // Permissions returns the user's permissions loaded on demand.
-func (cd *CoreData) Permissions() ([]*db.GetUserRolesRow, error) {
-	return cd.perms.load(func() ([]*db.GetUserRolesRow, error) {
+func (cd *CoreData) Permissions() ([]*db.GetPermissionsByUserIDRow, error) {
+	return cd.perms.load(func() ([]*db.GetPermissionsByUserIDRow, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}

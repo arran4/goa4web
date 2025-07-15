@@ -111,3 +111,36 @@ WHERE NOT EXISTS (
     WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected')
 )
 ORDER BY u.idusers;
+
+-- name: ListUsers :many
+SELECT u.idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       u.username
+FROM users u
+ORDER BY u.idusers
+LIMIT ? OFFSET ?;
+
+-- name: SearchUsers :many
+SELECT u.idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       u.username
+FROM users u
+WHERE LOWER(u.username) LIKE LOWER(sqlc.arg(pattern)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(pattern))
+ORDER BY u.idusers
+LIMIT ? OFFSET ?;
+
+-- name: ListUserIDsByRole :many
+SELECT u.idusers
+FROM users u
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE r.name = ?
+ORDER BY u.idusers;
+
+-- name: AllUserIDs :many
+SELECT idusers FROM users ORDER BY idusers;
+
+-- name: UsersByID :many
+SELECT idusers, username
+FROM users
+WHERE idusers IN (sqlc.slice('ids'));

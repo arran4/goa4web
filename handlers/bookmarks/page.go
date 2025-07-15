@@ -1,12 +1,10 @@
 package bookmarks
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 )
 
@@ -26,19 +24,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if uid == 0 {
-		if err := templates.RenderTemplate(w, "infoPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-			log.Printf("Template Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		common.TemplateHandler(w, r, "infoPage.gohtml", data)
 		return
 	}
 
-	if err := templates.RenderTemplate(w, "bookmarksPage", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "bookmarksPage", data)
 }
 
 func bookmarksCustomIndex(data *corecommon.CoreData) {

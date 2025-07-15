@@ -1,11 +1,9 @@
 package blogs
 
 import (
-	common "github.com/arran4/goa4web/handlers/common"
-	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
 func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
@@ -31,9 +29,5 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	//}
 	//data.Rows = rows
 
-	if err := templates.RenderTemplate(w, "bloggersBloggerPage.gohtml", data, common.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "bloggersBloggerPage.gohtml", data)
 }

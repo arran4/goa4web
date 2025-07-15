@@ -4,15 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	db "github.com/arran4/goa4web/internal/db"
 
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/handlers/common"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -90,9 +91,5 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := templates.RenderTemplate(w, "bloggerPostsPage.gohtml", data, common.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "bloggerPostsPage.gohtml", data)
 }

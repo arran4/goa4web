@@ -3,20 +3,20 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
-	blogs "github.com/arran4/goa4web/handlers/blogs"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"strconv"
 
+	corelanguage "github.com/arran4/goa4web/core/language"
+	blogs "github.com/arran4/goa4web/handlers/blogs"
+	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/gorilla/mux"
 )
@@ -44,11 +44,7 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 
 	blogs.CustomBlogIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "threadNewPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }
 
 func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {

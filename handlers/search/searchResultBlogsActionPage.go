@@ -2,16 +2,16 @@ package search
 
 import (
 	"database/sql"
-	corecommon "github.com/arran4/goa4web/core/common"
-	hblogs "github.com/arran4/goa4web/handlers/blogs"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 
+	hblogs "github.com/arran4/goa4web/handlers/blogs"
+	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func SearchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
@@ -58,11 +58,7 @@ func SearchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := templates.RenderTemplate(w, "resultBlogsActionPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "resultBlogsActionPage.gohtml", data)
 }
 
 func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.Blog, bool, bool, error) {

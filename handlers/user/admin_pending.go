@@ -3,11 +3,8 @@ package user
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
@@ -27,10 +24,7 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Rows:     rows,
 	}
-	if err := templates.RenderTemplate(w, "admin/pendingUsersPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
+	common.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
@@ -56,10 +50,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 			_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, id, u.Email.String, "", "user approved", nil)
 		}
 	}
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
@@ -90,8 +81,5 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 			_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, id, u.Email.String, "", "user rejected", item)
 		}
 	}
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

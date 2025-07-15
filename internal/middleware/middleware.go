@@ -84,13 +84,6 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
-		if uid != 0 && hcommon.NotificationsEnabled() {
-			if c, err := queries.CountUnreadNotifications(r.Context(), uid); err != nil {
-				log.Printf("count unread notifications: %v", err)
-			} else {
-				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
-			}
-		}
 		cd.IndexItems = idx
 		cd.Title = "Arran's Site"
 		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled

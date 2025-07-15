@@ -30,7 +30,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := corecommon.NewCoreData(r.Context(), queries)
+	cd = corecommon.NewCoreData(r.Context(), queries)
 	cd.UserID = int32(uid)
 
 	user, err := cd.CurrentUser()

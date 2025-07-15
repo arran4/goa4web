@@ -60,6 +60,7 @@ type CoreData struct {
 	announcement    lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
+	latestWritings  lazyValue[[]*db.Writing]
 	writeCats       lazyValue[[]*db.WritingCategory]
 
 	event *eventbus.Event
@@ -306,6 +307,32 @@ func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
 			})
 		}
 		return posts, nil
+	})
+}
+
+// LatestWritings returns recent public writings the user can view.
+func (cd *CoreData) LatestWritings() ([]*db.Writing, error) {
+	return cd.latestWritings.load(func() ([]*db.Writing, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetPublicWritings(cd.ctx, db.GetPublicWritingsParams{
+			Limit:  15,
+			Offset: 0,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		var ws []*db.Writing
+		for _, row := range rows {
+			if cd.HasGrant("writing", "article", "see", row.Idwriting) {
+				ws = append(ws, row)
+			}
+		}
+		return ws, nil
 	})
 }
 

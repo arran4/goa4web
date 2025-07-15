@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -358,7 +359,11 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO verify field names
+	if err := hcommon.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
+		hcommon.TaskErrorAcknowledgementPage(w, r)
+		return
+	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -371,7 +376,8 @@ func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
 	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
+		hcommon.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	err = queries.UpdateNewsPost(r.Context(), db.UpdateNewsPostParams{
@@ -391,7 +397,11 @@ func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
-	// TODO verify field names
+	if err := hcommon.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
+		hcommon.TaskErrorAcknowledgementPage(w, r)
+		return
+	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -406,7 +416,8 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	if cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); !cd.HasGrant("news", "post", "post", 0) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
+		hcommon.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	id, err := queries.CreateNewsPost(r.Context(), db.CreateNewsPostParams{

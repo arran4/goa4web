@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -61,6 +62,7 @@ type CoreData struct {
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	publicWritings  map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 
 	event *eventbus.Event
 }
@@ -332,6 +334,45 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 			}
 		}
 		return cats, nil
+	})
+}
+
+// PublicWritings returns public writings in a category, cached per category and offset.
+func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.GetPublicWritingsInCategoryForUserRow, error) {
+	if cd.publicWritings == nil {
+		cd.publicWritings = map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]{}
+	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	key := fmt.Sprintf("%d:%d", categoryID, offset)
+	lv, ok := cd.publicWritings[key]
+	if !ok {
+		lv = &lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]{}
+		cd.publicWritings[key] = lv
+	}
+	return lv.load(func() ([]*db.GetPublicWritingsInCategoryForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetPublicWritingsInCategoryForUser(cd.ctx, db.GetPublicWritingsInCategoryForUserParams{
+			ViewerID:          cd.UserID,
+			WritingCategoryID: categoryID,
+			UserID:            sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:             15,
+			Offset:            int32(offset),
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		var res []*db.GetPublicWritingsInCategoryForUserRow
+		for _, row := range rows {
+			if cd.HasGrant("writing", "article", "see", row.Idwriting) {
+				res = append(res, row)
+			}
+		}
+		return res, nil
 	})
 }
 

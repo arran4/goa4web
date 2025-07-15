@@ -61,6 +61,7 @@ type CoreData struct {
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	notifCount      lazyValue[int32]
 
 	event *eventbus.Event
 }
@@ -333,6 +334,22 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 		}
 		return cats, nil
 	})
+}
+
+// UnreadNotificationCount loads the number of unread notifications once.
+func (cd *CoreData) UnreadNotificationCount() (int32, error) {
+	count, err := cd.notifCount.load(func() (int32, error) {
+		if cd.UserID == 0 || cd.queries == nil {
+			return 0, nil
+		}
+		c, err := cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
+		if err != nil {
+			return 0, err
+		}
+		return int32(c), nil
+	})
+	cd.NotificationCount = count
+	return count, err
 }
 
 // CanEditAny reports whether cd is in admin mode with administrator role.

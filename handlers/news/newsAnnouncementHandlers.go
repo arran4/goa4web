@@ -19,9 +19,11 @@ func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
-	ann, err := cd.AnnouncementForNews(int32(pid))
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("announcementForNews: %v", err)
+	ann, err := cd.NewsAnnouncement(int32(pid))
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("getLatestAnnouncementByNewsID: %v", err)
+		}
 	}
 	if ann == nil {
 		if err := queries.CreateAnnouncement(r.Context(), int32(pid)); err != nil {
@@ -41,7 +43,7 @@ func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
-	ann, err := cd.AnnouncementForNews(int32(pid))
+	ann, err := cd.NewsAnnouncement(int32(pid))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("announcementForNews: %v", err)

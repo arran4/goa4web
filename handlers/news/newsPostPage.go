@@ -135,7 +135,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -182,7 +183,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	ann, err := data.CoreData.AnnouncementForNews(post.Idsitenews)
+	ann, err := data.CoreData.NewsAnnouncement(post.Idsitenews)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("announcementForNews: %v", err)
 	}

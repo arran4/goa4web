@@ -42,14 +42,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	writingsRows, err := queries.GetPublicWritingsInCategoryForUser(r.Context(), db.GetPublicWritingsInCategoryForUserParams{
-		ViewerID:          data.CoreData.UserID,
-		WritingCategoryID: 0,
-		UserID:            sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
-		Limit:             15,
-		Offset:            0,
-	})
+	writingsRows, err := data.CoreData.PublicWritings(0, r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

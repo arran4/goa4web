@@ -1,13 +1,10 @@
 package writings
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
-	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"io"
 	"log"
@@ -15,7 +12,7 @@ import (
 	"time"
 )
 
-func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
+func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 	feed := &feeds.Feed{
 		Title:       "Latest writings",
 		Link:        &feeds.Link{Href: r.URL.String()},
@@ -23,18 +20,12 @@ func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
 		Created:     time.Now(),
 	}
 
-	rows, err := queries.GetPublicWritings(r.Context(), db.GetPublicWritingsParams{Limit: 15, Offset: 0})
+	rows, err := cd.LatestWritings(r)
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
+		return nil, err
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	for _, row := range rows {
-		if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
-			continue
-		}
 		desc := row.Abstract.String
 		if desc == "" {
 			desc = row.Writing.String
@@ -66,8 +57,8 @@ func feedGen(r *http.Request, queries *db.Queries) (*feeds.Feed, error) {
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	feed, err := feedGen(r, queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -81,8 +72,8 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	feed, err := feedGen(r, queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

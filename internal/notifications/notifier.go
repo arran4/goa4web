@@ -100,3 +100,8 @@ func (n Notifier) NotifyThreadSubscribers(ctx context.Context, threadID, exclude
 		}
 	}
 }
+
+// NotifyWritingSubscribers informs subscribed users about a writing update.
+func (n Notifier) NotifyWritingSubscribers(ctx context.Context, writingID, excludeUser int32, page string) {
+	emailutil.NotifyWritingSubscribers(ctx, n.Queries, writingID, excludeUser, page)
+}

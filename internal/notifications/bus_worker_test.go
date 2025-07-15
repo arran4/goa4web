@@ -52,16 +52,21 @@ func TestBuildPatterns(t *testing.T) {
 }
 
 func TestParseEvent(t *testing.T) {
-	typ, id, ok := parseEvent("/forum/topic/23/thread/42")
+	evt := eventbus.Event{Data: map[string]any{"target": Target{Type: "thread", ID: 42}}}
+	typ, id, ok := parseEvent(evt)
 	if !ok || typ != "thread" || id != 42 {
 		t.Fatalf("thread parse got %s %d %v", typ, id, ok)
 	}
-	typ, id, ok = parseEvent("/news/news/9")
-	if !ok || typ != "news" || id != 9 {
-		t.Fatalf("news parse got %s %d %v", typ, id, ok)
+	evt = eventbus.Event{Data: map[string]any{"target": Target{Type: "writing", ID: 7}}}
+	typ, id, ok = parseEvent(evt)
+	if !ok || typ != "writing" || id != 7 {
+		t.Fatalf("writing parse got %s %d %v", typ, id, ok)
 	}
-	if _, _, ok := parseEvent("/bad/path"); ok {
+	if _, _, ok := parseEvent(eventbus.Event{Path: "/bad/path"}); ok {
 		t.Fatalf("unexpected match")
+	}
+	if _, _, ok := parseEvent(eventbus.Event{Path: "/news/news/9"}); ok {
+		t.Fatalf("unexpected match with path")
 	}
 }
 
@@ -227,6 +232,55 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: hcommon.TaskSetTopicRestriction, UserID: 1, Admin: true}, n, nil)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
+func TestProcessEventWritingSubscribers(t *testing.T) {
+	ctx := context.Background()
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.AdminNotify = true
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	mock.MatchExpectationsInOrder(false)
+	defer db.Close()
+	q := dbpkg.New(db)
+	n := Notifier{Queries: q}
+
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
+		AddRow(1, 1, 2, true, 15, true)
+	mock.ExpectQuery("preferences").WithArgs(int32(2)).WillReturnRows(prefRows)
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/writings/article/1", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectExec("INSERT INTO subscriptions").WithArgs(int32(2), "reply:/writings/article/1", "internal").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/writings/article/1", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectExec("INSERT INTO subscriptions").WithArgs(int32(2), "reply:/writings/article/1", "email").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/writings/article/1", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(1))
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/writings/article/1", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(2))
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+
+	rows := sqlmock.NewRows([]string{
+		"idwriting", "users_idusers", "forumthread_id", "language_idlanguage",
+		"writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at",
+		"idusers", "username", "deleted_at_2", "idpreferences", "language_idlanguage_2",
+		"users_idusers_2", "emailforumupdates", "page_size", "auto_subscribe_replies", "email",
+	}).AddRow(1, 2, 3, 1, 4, "t", nil, "w", "a", 0, nil, 2, "bob", nil, 1, 1, 2, 1, 10, true, "e@test")
+	mock.ExpectQuery("SELECT idwriting").WithArgs(int32(1), int32(2)).WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: hcommon.TaskReply, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, n, nil)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)

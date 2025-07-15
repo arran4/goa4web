@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
+	"strconv"
 
 	"github.com/gorilla/sessions"
 
@@ -18,6 +20,16 @@ type ContextValues string
 type IndexItem struct {
 	Name string
 	Link string
+}
+
+// NewsPost describes a news entry with access metadata.
+type NewsPost struct {
+	*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+	ShowReply    bool
+	ShowEdit     bool
+	Editing      bool
+	Announcement *db.SiteAnnouncement
+	IsAdmin      bool
 }
 
 type CoreData struct {
@@ -47,6 +59,8 @@ type CoreData struct {
 	allRoles        lazyValue[[]*db.Role]
 	announcement    lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 	forumCategories lazyValue[[]*db.Forumcategory]
+	latestNews      lazyValue[[]*NewsPost]
+	writeCats       lazyValue[[]*db.WritingCategory]
 
 	event *eventbus.Event
 }
@@ -253,6 +267,71 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 			return nil, nil
 		}
 		return cd.queries.GetAllForumCategories(cd.ctx)
+	})
+}
+
+// LatestNews returns recent news posts with permission data.
+func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
+	return cd.latestNews.load(func() ([]*NewsPost, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+		rows, err := cd.queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(cd.ctx, db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
+			ViewerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:    15,
+			Offset:   int32(offset),
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		editID, _ := strconv.Atoi(r.URL.Query().Get("reply"))
+		var posts []*NewsPost
+		for _, row := range rows {
+			if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+				continue
+			}
+			ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, row.Idsitenews)
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return nil, err
+			}
+			posts = append(posts, &NewsPost{
+				GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
+				ShowReply:    cd.UserID != 0,
+				ShowEdit:     cd.HasGrant("news", "post", "edit", row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
+				Editing:      editID == int(row.Idsitenews),
+				Announcement: ann,
+				IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,
+			})
+		}
+		return posts, nil
+	})
+}
+
+// WritingCategories returns the visible writing categories for the user.
+func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
+	return cd.writeCats.load(func() ([]*db.WritingCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.FetchCategoriesForUser(cd.ctx, db.FetchCategoriesForUserParams{
+			ViewerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		var cats []*db.WritingCategory
+		for _, row := range rows {
+			if cd.HasGrant("writing", "category", "see", row.Idwritingcategory) {
+				cats = append(cats, row)
+			}
+		}
+		return cats, nil
 	})
 }
 

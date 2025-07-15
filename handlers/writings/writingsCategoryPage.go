@@ -44,18 +44,11 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
-	categoryRows, err := queries.FetchCategoriesForUser(r.Context(), db.FetchCategoriesForUserParams{
-		ViewerID: data.CoreData.UserID,
-		UserID:   sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
-	})
+	categoryRows, err := data.CoreData.WritingCategories()
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllWritingCategories Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		log.Printf("writingCategories: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	writingsRows, err := queries.GetPublicWritingsInCategoryForUser(r.Context(), db.GetPublicWritingsInCategoryForUserParams{

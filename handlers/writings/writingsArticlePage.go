@@ -9,6 +9,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
@@ -347,23 +348,17 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["target"] = notifications.Target{Type: "writing", ID: int32(aid)}
+		}
+	}
+
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-
-	// TODO
-	//if rows, err := queries.SomethingNotifyArticle(r.Context(), SomethingNotifyArticlesParams{
-	//	Idusers: uid,
-	//	Idarticles: int32(bid),
-	//}); err != nil {
-	//	log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	//} else {
-	//	for _, row := range rows {
-	//		if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
-	//			log.Printf("Error: notifyChange: %s", err)
-	//
-	//		}
-	//	}
-	//}
 
 	if _, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),

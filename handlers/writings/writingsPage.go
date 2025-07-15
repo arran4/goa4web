@@ -1,8 +1,6 @@
 package writings
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
@@ -36,28 +34,13 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data.CategoryId = 0
 	data.WritingCategoryID = data.CategoryId
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
-	categoryRows, err := queries.FetchCategoriesForUser(r.Context(), db.FetchCategoriesForUserParams{
-		ViewerID: data.CoreData.UserID,
-		UserID:   sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
-	})
+	categoryRows, err := data.CoreData.WritingCategories()
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllWritingCategories Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		log.Printf("writingCategories: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
-
-	for _, cat := range categoryRows {
-		if !data.CoreData.HasGrant("writing", "category", "see", cat.Idwritingcategory) {
-			continue
-		}
-		data.Categories = append(data.Categories, cat)
-	}
+	data.Categories = append(data.Categories, categoryRows...)
 
 	if err := templates.RenderTemplate(w, "writingsPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

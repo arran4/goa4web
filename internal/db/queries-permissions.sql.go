@@ -169,6 +169,92 @@ func (q *Queries) GetAdministratorUserRole(ctx context.Context, usersIdusers int
 	return &i, err
 }
 
+const getPermissionsByUserID = `-- name: GetPermissionsByUserID :many
+SELECT ur.iduser_roles, ur.users_idusers, r.name
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ?
+`
+
+type GetPermissionsByUserIDRow struct {
+	IduserRoles  int32
+	UsersIdusers int32
+	Name         string
+}
+
+func (q *Queries) GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPermissionsByUserID, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPermissionsByUserIDRow
+	for rows.Next() {
+		var i GetPermissionsByUserIDRow
+		if err := rows.Scan(&i.IduserRoles, &i.UsersIdusers, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPermissionsWithUsers = `-- name: GetPermissionsWithUsers :many
+SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+FROM user_roles ur
+JOIN users u ON u.idusers = ur.users_idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE (? = '' OR u.username = ?)
+`
+
+type GetPermissionsWithUsersParams struct {
+	Username sql.NullString
+}
+
+type GetPermissionsWithUsersRow struct {
+	IduserRoles  int32
+	UsersIdusers int32
+	Name         string
+	Username     sql.NullString
+	Email        string
+}
+
+func (q *Queries) GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPermissionsWithUsers, arg.Username, arg.Username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPermissionsWithUsersRow
+	for rows.Next() {
+		var i GetPermissionsWithUsersRow
+		if err := rows.Scan(
+			&i.IduserRoles,
+			&i.UsersIdusers,
+			&i.Name,
+			&i.Username,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserRole = `-- name: GetUserRole :one
 SELECT r.name as role
 FROM user_roles ur
@@ -303,4 +389,38 @@ func (q *Queries) ListGrants(ctx context.Context) ([]*Grant, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updatePermission = `-- name: UpdatePermission :exec
+UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?
+`
+
+type UpdatePermissionParams struct {
+	Name        string
+	IduserRoles int32
+}
+
+func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
+	_, err := q.db.ExecContext(ctx, updatePermission, arg.Name, arg.IduserRoles)
+	return err
+}
+
+const userHasRole = `-- name: UserHasRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = ?
+LIMIT 1
+`
+
+type UserHasRoleParams struct {
+	UsersIdusers int32
+	Name         string
+}
+
+func (q *Queries) UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, userHasRole, arg.UsersIdusers, arg.Name)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }

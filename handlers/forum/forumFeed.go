@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
@@ -66,12 +67,8 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
-	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		ViewerID:      uid,
-		Idforumtopic:  int32(topicID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
@@ -80,11 +77,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-		ViewerID:      uid,
-		TopicID:       int32(topicID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	rows, err := cd.ForumThreads(int32(topicID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -108,12 +101,9 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 
-	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		ViewerID:      uid,
-		Idforumtopic:  int32(topicID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
@@ -122,11 +112,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-		ViewerID:      uid,
-		TopicID:       int32(topicID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	rows, err := cd.ForumThreads(int32(topicID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

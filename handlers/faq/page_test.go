@@ -10,14 +10,14 @@ func TestCustomFAQIndexRoles(t *testing.T) {
 	cd := corecommon.NewCoreData(nil, nil)
 	cd.SetRoles([]string{"administrator"})
 	cd.AdminMode = true
-	CustomFAQIndex(cd)
+	CustomFAQIndex(cd, nil)
 	if !corecommon.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("admin should see question controls")
 	}
 
 	cd = corecommon.NewCoreData(nil, nil)
 	cd.SetRoles([]string{"anonymous"})
-	CustomFAQIndex(cd)
+	CustomFAQIndex(cd, nil)
 	if corecommon.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("anonymous should not see admin items")
 	}

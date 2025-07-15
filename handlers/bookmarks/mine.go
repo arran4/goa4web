@@ -11,7 +11,6 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 type BookmarkEntry struct {
@@ -77,14 +76,13 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		Columns []*BookmarkColumn
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
-
-	bookmarks, err := queries.GetBookmarksForUser(r.Context(), uid)
+	_ = session
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -96,7 +94,7 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: cd,
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
 

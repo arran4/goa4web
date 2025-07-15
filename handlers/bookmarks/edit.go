@@ -24,14 +24,13 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:        r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
-
-	bookmarks, err := queries.GetBookmarksForUser(r.Context(), uid)
+	_ = session
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

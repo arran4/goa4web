@@ -92,19 +92,11 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-		ViewerID:      uid,
-		TopicID:       int32(topicId),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
+	threadRows, err := cd.ForumThreads(int32(topicId))
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("Error: ForumThreads: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
 	}
 	data.Threads = threadRows
 

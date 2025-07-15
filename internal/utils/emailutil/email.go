@@ -3,6 +3,7 @@ package emailutil
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/mail"
@@ -229,6 +230,37 @@ func NotifyNewsSubscribers(ctx context.Context, q *db.Queries, newsID, excludeUs
 	for _, row := range rows {
 		if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
 			log.Printf("Error: notifyChange: %v", err)
+		}
+	}
+}
+
+// NotifyWritingSubscribers queues update emails and notifications for users subscribed
+// to the specified writing.
+func NotifyWritingSubscribers(ctx context.Context, q *db.Queries, writingID, excludeUser int32, page string) {
+	if q == nil {
+		return
+	}
+	rows, err := q.ListUsersSubscribedToWriting(ctx, db.ListUsersSubscribedToWritingParams{
+		Idwriting: writingID,
+		Idusers:   excludeUser,
+	})
+	if err != nil {
+		log.Printf("Error: listUsersSubscribedToWriting: %v", err)
+		return
+	}
+	for _, row := range rows {
+		if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
+			log.Printf("Error: notifyChange: %v", err)
+		}
+		if hcommon.NotificationsEnabled() {
+			err := q.InsertNotification(ctx, db.InsertNotificationParams{
+				UsersIdusers: row.Idusers,
+				Link:         sql.NullString{String: page, Valid: page != ""},
+				Message:      sql.NullString{},
+			})
+			if err != nil {
+				log.Printf("insert notification: %v", err)
+			}
 		}
 	}
 }

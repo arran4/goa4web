@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -114,18 +113,14 @@ func renderMessage(ctx context.Context, q *dbpkg.Queries, action, path string, i
 
 // parseEvent identifies a subscription target from the request path.
 // It returns the item type and id if recognised.
-func parseEvent(path string) (string, int32, bool) {
-	parts := strings.Split(strings.Trim(path, "/"), "/")
-	if len(parts) >= 5 && parts[0] == "forum" && parts[1] == "topic" && parts[3] == "thread" {
-		id, err := strconv.Atoi(parts[4])
-		if err == nil {
-			return "thread", int32(id), true
-		}
+func parseEvent(evt eventbus.Event) (string, int32, bool) {
+	if evt.Data == nil {
+		return "", 0, false
 	}
-	if len(parts) >= 3 && parts[0] == "news" && parts[1] == "news" {
-		id, err := strconv.Atoi(parts[2])
-		if err == nil {
-			return "news", int32(id), true
+	if v, ok := evt.Data["target"]; ok {
+		if t, ok := v.(SubscriptionTarget); ok {
+			typ, id := t.SubscriptionTarget()
+			return typ, id, true
 		}
 	}
 	return "", 0, false
@@ -176,9 +171,14 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 		}
 	}
 
-	itemType, targetID, ok := parseEvent(evt.Path)
-	if ok && itemType == "thread" {
-		n.NotifyThreadSubscribers(ctx, targetID, evt.UserID, evt.Path)
+	itemType, targetID, ok := parseEvent(evt)
+	if ok {
+		switch itemType {
+		case "thread":
+			n.NotifyThreadSubscribers(ctx, targetID, evt.UserID, evt.Path)
+		case "writing":
+			n.NotifyWritingSubscribers(ctx, targetID, evt.UserID, evt.Path)
+		}
 	}
 
 	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)

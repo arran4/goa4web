@@ -26,8 +26,9 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
 	data := Data{
-		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
+		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
@@ -44,7 +45,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 	data.Writing = writing
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

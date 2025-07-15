@@ -27,6 +27,7 @@ func NewFuncs(r *http.Request) template.FuncMap {
 // Funcs returns template helpers configured with cd's ImageURLMapper.
 func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	var LatestNews any
+	var LatestWritings any
 	mapper := cd.ImageURLMapper
 	return map[string]any{
 		"now":       func() time.Time { return time.Now() },
@@ -76,6 +77,17 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			LatestNews = posts
 			return posts, nil
+		},
+		"LatestWritings": func() (any, error) {
+			if LatestWritings != nil {
+				return LatestWritings, nil
+			}
+			wrs, err := cd.LatestWritings(r)
+			if err != nil {
+				return nil, fmt.Errorf("latestWritings: %w", err)
+			}
+			LatestWritings = wrs
+			return wrs, nil
 		},
 	}
 }

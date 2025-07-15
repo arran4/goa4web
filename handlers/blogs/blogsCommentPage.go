@@ -61,7 +61,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl:            fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 	}
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := data.CoreData.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

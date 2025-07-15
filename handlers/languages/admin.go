@@ -28,9 +28,9 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
 
-	rows, err := queries.FetchLanguages(r.Context())
+	rows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

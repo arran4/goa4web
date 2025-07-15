@@ -59,15 +59,21 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		size = config.AppRuntimeConfig.PageSizeMax
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
-				LanguageIdlanguage: 0,
-				UsersIdusers:       uid,
-				PageSize:           int32(size),
-			})
-		}
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+
+	pref, err := cd.Preference()
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("preference load: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		err = queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
+			LanguageIdlanguage: 0,
+			UsersIdusers:       uid,
+			PageSize:           int32(size),
+		})
 	} else {
 		pref.PageSize = int32(size)
 		err = queries.UpdatePreference(r.Context(), db.UpdatePreferenceParams{

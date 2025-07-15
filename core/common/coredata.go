@@ -62,6 +62,7 @@ type CoreData struct {
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	forumThreads    map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
 	bookmarks       lazyValue[*db.GetBookmarksForUserRow]
 	newsAnnouncements map[int32]*lazyValue[*db.SiteAnnouncement]
 	annMu             sync.Mutex
@@ -302,6 +303,28 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 			return nil, nil
 		}
 		return cd.queries.GetAllForumCategories(cd.ctx)
+	})
+}
+
+// ForumThreads loads the threads for a forum topic once per topic.
+func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+	if cd.forumThreads == nil {
+		cd.forumThreads = make(map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow])
+	}
+	lv, ok := cd.forumThreads[topicID]
+	if !ok {
+		lv = &lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]{}
+		cd.forumThreads[topicID] = lv
+	}
+	return lv.load(func() ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(cd.ctx, db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
+			ViewerID:      cd.UserID,
+			TopicID:       topicID,
+			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
 	})
 }
 

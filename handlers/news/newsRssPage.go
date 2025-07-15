@@ -1,8 +1,6 @@
 package news
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -14,21 +12,13 @@ import (
 	"github.com/arran4/goa4web/a4code2html"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
-	uid := cd.UserID
-	posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-		ViewerID: uid,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-		Limit:    15,
-		Offset:   0,
-	})
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending: %s", err)
+	posts, err := cd.LatestNews(r)
+	if err != nil {
+		log.Printf("latestNews: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

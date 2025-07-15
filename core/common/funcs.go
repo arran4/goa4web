@@ -1,18 +1,14 @@
 package common
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/a4code2html"
-	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/csrf"
 )
 
@@ -74,59 +70,12 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			if LatestNews != nil {
 				return LatestNews, nil
 			}
-			type Post struct {
-				*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-				ShowReply    bool
-				ShowEdit     bool
-				Editing      bool
-				Announcement *db.SiteAnnouncement
-				IsAdmin      bool
-			}
-			var result []*Post
-			queries := r.Context().Value(ContextValues("queries")).(*db.Queries)
-
-			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-
-			viewerID := int32(0)
-			if cd := r.Context().Value(ContextValues("coreData")).(*CoreData); cd != nil {
-				viewerID = cd.UserID
-			}
-			posts, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(r.Context(), db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-				ViewerID: viewerID,
-				UserID:   sql.NullInt32{Int32: viewerID, Valid: viewerID != 0},
-				Limit:    15,
-				Offset:   int32(offset),
-			})
+			posts, err := cd.LatestNews(r)
 			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-				default:
-					return nil, fmt.Errorf("getNewsPostsWithWriterUsernameAndThreadCommentCountForUserDescending: %w", err)
-				}
+				return nil, fmt.Errorf("latestNews: %w", err)
 			}
-
-			editingId, _ := strconv.Atoi(r.URL.Query().Get("reply"))
-
-			cd := r.Context().Value(ContextValues("coreData")).(*CoreData)
-			for _, post := range posts {
-				if !cd.HasGrant("news", "post", "see", post.Idsitenews) {
-					continue
-				}
-				ann, err := queries.GetLatestAnnouncementByNewsID(r.Context(), post.Idsitenews)
-				if err != nil && !errors.Is(err, sql.ErrNoRows) {
-					return nil, fmt.Errorf("getLatestAnnouncementByNewsID: %w", err)
-				}
-				result = append(result, &Post{
-					GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: post,
-					ShowReply:    cd.UserID != 0,
-					ShowEdit:     cd.HasGrant("news", "post", "edit", post.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
-					Editing:      editingId == int(post.Idsitenews),
-					Announcement: ann,
-					IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,
-				})
-			}
-			LatestNews = result
-			return result, nil
+			LatestNews = posts
+			return posts, nil
 		},
 	}
 }

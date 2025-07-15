@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 
+	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -38,16 +38,12 @@ func (c *newsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx, dbpkg.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-		ViewerID: 0,
-		UserID:   sql.NullInt32{},
-		Limit:    int32(c.Limit),
-		Offset:   int32(c.Offset),
-	})
+	cd := common.NewCoreData(ctx, queries)
+	posts, err := cd.LatestNewsList(int32(c.Offset), int32(c.Limit))
 	if err != nil {
 		return fmt.Errorf("list news: %w", err)
 	}
-	for _, n := range rows {
+	for _, n := range posts {
 		fmt.Printf("%d\t%s\n", n.Idsitenews, n.News.String)
 	}
 	return nil

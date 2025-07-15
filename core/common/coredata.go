@@ -272,41 +272,51 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 
 // LatestNews returns recent news posts with permission data.
 func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	replyID, _ := strconv.Atoi(r.URL.Query().Get("reply"))
 	return cd.latestNews.load(func() ([]*NewsPost, error) {
-		if cd.queries == nil {
-			return nil, nil
+		return cd.fetchLatestNews(int32(offset), 15, replyID)
+	})
+}
+
+// LatestNewsList returns recent news posts without needing an HTTP request.
+func (cd *CoreData) LatestNewsList(offset, limit int32) ([]*NewsPost, error) {
+	return cd.fetchLatestNews(offset, limit, 0)
+}
+
+// fetchLatestNews loads news posts from the database with permission data.
+func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPost, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(cd.ctx, db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
+		ViewerID: cd.UserID,
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:    limit,
+		Offset:   offset,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	var posts []*NewsPost
+	for _, row := range rows {
+		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+			continue
 		}
-		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		rows, err := cd.queries.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(cd.ctx, db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
-			ViewerID: cd.UserID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-			Limit:    15,
-			Offset:   int32(offset),
-		})
+		ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, row.Idsitenews)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-		editID, _ := strconv.Atoi(r.URL.Query().Get("reply"))
-		var posts []*NewsPost
-		for _, row := range rows {
-			if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
-				continue
-			}
-			ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, row.Idsitenews)
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				return nil, err
-			}
-			posts = append(posts, &NewsPost{
-				GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
-				ShowReply:    cd.UserID != 0,
-				ShowEdit:     cd.HasGrant("news", "post", "edit", row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
-				Editing:      editID == int(row.Idsitenews),
-				Announcement: ann,
-				IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,
-			})
-		}
-		return posts, nil
-	})
+		posts = append(posts, &NewsPost{
+			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
+			ShowReply:    cd.UserID != 0,
+			ShowEdit:     cd.HasGrant("news", "post", "edit", row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
+			Editing:      replyID == int(row.Idsitenews),
+			Announcement: ann,
+			IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,
+		})
+	}
+	return posts, nil
 }
 
 // WritingCategories returns the visible writing categories for the user.

@@ -20,7 +20,8 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-func Page(w http.ResponseWriter, r *http.Request) {
+// IndexPage renders the public blog index listing.
+func IndexPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
 		*db.GetBlogEntriesForUserDescendingLanguagesRow
 		EditUrl string

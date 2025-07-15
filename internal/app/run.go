@@ -50,6 +50,7 @@ func init() {
 // RunWithConfig starts the application using the provided configuration and
 // session secret. The context controls the lifetime of the HTTP server.
 func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string) error {
+	log.Printf("application version %s starting", version)
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	core.Store = store
 	core.SessionName = sessionName
@@ -89,6 +90,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	routerpkg.RegisterRoutes(r)
 
 	handler := middleware.NewMiddlewareChain(
+		middleware.RecoverMiddleware,
 		middleware.DBAdderMiddleware,
 		middleware.CoreAdderMiddleware,
 		middleware.RequestLoggerMiddleware,
@@ -119,6 +121,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
 	}
+	log.Printf("application shutdown complete")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

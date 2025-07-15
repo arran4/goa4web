@@ -8,11 +8,18 @@ Commands:
   list        list users
   deactivate  deactivate a user
   activate    restore a deactivated user
+  approve     approve a pending user
+  reject      reject a pending user
+  comments    manage admin comments for a user
+  profile     show user profile information
 
 Examples:
   {{.Prog}} user add -username bob -password secret
   {{.Prog}} user deactivate -username bob
   {{.Prog}} user list
+  {{.Prog}} user approve -id 3
+  {{.Prog}} user reject -id 3 -reason spam
+  {{.Prog}} user comments list -id 3
 
 Flags:
 {{template "flags" .Flags}}

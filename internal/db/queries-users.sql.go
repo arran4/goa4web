@@ -8,8 +8,36 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 )
+
+const allUserIDs = `-- name: AllUserIDs :many
+SELECT idusers FROM users ORDER BY idusers
+`
+
+func (q *Queries) AllUserIDs(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, allUserIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var idusers int32
+		if err := rows.Scan(&idusers); err != nil {
+			return nil, err
+		}
+		items = append(items, idusers)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const allUsers = `-- name: AllUsers :many
 SELECT u.idusers, u.username,
@@ -127,6 +155,122 @@ func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]string, error)
 			return nil, err
 		}
 		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPendingUsers = `-- name: ListPendingUsers :many
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+FROM users u
+WHERE NOT EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected')
+)
+ORDER BY u.idusers
+`
+
+type ListPendingUsersRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    string
+}
+
+func (q *Queries) ListPendingUsers(ctx context.Context) ([]*ListPendingUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPendingUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListPendingUsersRow
+	for rows.Next() {
+		var i ListPendingUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserIDsByRole = `-- name: ListUserIDsByRole :many
+SELECT u.idusers
+FROM users u
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE r.name = ?
+ORDER BY u.idusers
+`
+
+func (q *Queries) ListUserIDsByRole(ctx context.Context, name string) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, listUserIDsByRole, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var idusers int32
+		if err := rows.Scan(&idusers); err != nil {
+			return nil, err
+		}
+		items = append(items, idusers)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT u.idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       u.username
+FROM users u
+ORDER BY u.idusers
+LIMIT ? OFFSET ?
+`
+
+type ListUsersParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type ListUsersRow struct {
+	Idusers  int32
+	Email    string
+	Username sql.NullString
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*ListUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListUsersRow
+	for rows.Next() {
+		var i ListUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Email, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -549,6 +693,56 @@ func (q *Queries) Login(ctx context.Context, username sql.NullString) (*LoginRow
 	return &i, err
 }
 
+const searchUsers = `-- name: SearchUsers :many
+SELECT u.idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       u.username
+FROM users u
+WHERE LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?)
+ORDER BY u.idusers
+LIMIT ? OFFSET ?
+`
+
+type SearchUsersParams struct {
+	Pattern string
+	Limit   int32
+	Offset  int32
+}
+
+type SearchUsersRow struct {
+	Idusers  int32
+	Email    string
+	Username sql.NullString
+}
+
+func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*SearchUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchUsers,
+		arg.Pattern,
+		arg.Pattern,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SearchUsersRow
+	for rows.Next() {
+		var i SearchUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Email, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUserEmail = `-- name: UpdateUserEmail :exec
 UPDATE user_emails SET email = ? WHERE user_id = ?
 `
@@ -602,4 +796,48 @@ func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (
 	var i UserByUsernameRow
 	err := row.Scan(&i.Idusers, &i.Email, &i.Username)
 	return &i, err
+}
+
+const usersByID = `-- name: UsersByID :many
+SELECT idusers, username
+FROM users
+WHERE idusers IN (/*SLICE:ids*/?)
+`
+
+type UsersByIDRow struct {
+	Idusers  int32
+	Username sql.NullString
+}
+
+func (q *Queries) UsersByID(ctx context.Context, ids []int32) ([]*UsersByIDRow, error) {
+	query := usersByID
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UsersByIDRow
+	for rows.Next() {
+		var i UsersByIDRow
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

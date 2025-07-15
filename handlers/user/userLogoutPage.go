@@ -12,7 +12,12 @@ import (
 )
 
 func userLogoutPage(w http.ResponseWriter, r *http.Request) {
-	log.Printf("logout request")
+	session, err := core.GetSession(r)
+	if err != nil {
+		core.SessionError(w, r, err)
+	}
+	uid, _ := session.Values["UID"].(int32)
+	log.Printf("logout request session=%s uid=%d", session.ID, uid)
 	type Data struct {
 		*common.CoreData
 	}
@@ -21,10 +26,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	session, err := core.GetSession(r)
-	if err != nil {
-		core.SessionError(w, r, err)
-	}
+	// session retrieved earlier
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")
@@ -39,7 +41,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("logout success")
+	log.Printf("logout success session=%s", session.ID)
 
 	data.CoreData.UserID = 0
 

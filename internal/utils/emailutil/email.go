@@ -31,6 +31,8 @@ var defaultEmailTemplates = map[string]emailTemplate{
 	strings.ToLower(hcommon.TaskRegister):              {text: defaultSignupEmailText, html: defaultSignupEmailHTML},
 	strings.ToLower(hcommon.TaskUserEmailVerification): {text: defaultVerificationEmailText, html: defaultVerificationEmailHTML},
 	strings.ToLower(hcommon.TaskUserResetPassword):     {text: defaultPasswordResetEmailText, html: defaultPasswordResetEmailHTML},
+	"user approved":                                    {text: defaultUserApprovedEmailText, html: defaultUserApprovedEmailHTML},
+	"user rejected":                                    {text: defaultUserRejectedEmailText, html: defaultUserRejectedEmailHTML},
 }
 
 func getEmailTemplates(ctx context.Context, action string) (string, string) {

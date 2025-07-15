@@ -4,15 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"log"
 	"net/http"
 	"strings"
-	"time"
-
-	notif "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
@@ -126,20 +123,6 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	session.Values["UID"] = int32(lastInsertID)
-	session.Values["LoginTime"] = time.Now().Unix()
-	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
-
-	if err := session.Save(r, w); err != nil {
-		log.Printf("session.Save Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -153,6 +136,6 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("registration success uid=%d", lastInsertID)
 	}
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	renderLoginForm(w, r, "approval is pending")
 
 }

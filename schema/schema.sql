@@ -565,3 +565,14 @@ CREATE TABLE IF NOT EXISTS `uploaded_images` (
   PRIMARY KEY (`iduploadedimage`),
   KEY `uploaded_images_user_idx` (`users_idusers`)
 );
+
+-- Comments from admins about users
+CREATE TABLE IF NOT EXISTS `admin_user_comments` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `comment` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `admin_user_comments_user_idx` (`users_idusers`)
+);
+

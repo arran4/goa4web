@@ -75,6 +75,30 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("activate: %w", err)
 		}
 		return cmd.Run()
+	case "approve":
+		cmd, err := parseUserApproveCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("approve: %w", err)
+		}
+		return cmd.Run()
+	case "reject":
+		cmd, err := parseUserRejectCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("reject: %w", err)
+		}
+		return cmd.Run()
+	case "comments":
+		cmd, err := parseUserCommentsCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("comments: %w", err)
+		}
+		return cmd.Run()
+	case "profile":
+		cmd, err := parseUserProfileCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("profile: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown user command %q", c.args[0])

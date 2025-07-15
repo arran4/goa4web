@@ -21,7 +21,7 @@ type deleteQueueTask struct{ eventbus.BasicTaskEvent }
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {
-		*db.PendingEmail
+		*db.ListUnsentPendingEmailsRow
 		Email   string
 		Subject string
 	}
@@ -58,7 +58,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {
 			subj = m.Header.Get("Subject")
 		}
-		data.Emails = append(data.Emails, EmailItem{PendingEmail: e, Email: emailStr, Subject: subj})
+		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
 	if err := templates.RenderTemplate(w, "emailQueuePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("template error: %v", err)
@@ -73,7 +73,7 @@ func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
-	var emails []*db.PendingEmail
+	var emails []*db.GetPendingEmailByIDRow
 	var ids []int32
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)

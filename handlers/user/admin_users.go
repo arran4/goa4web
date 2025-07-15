@@ -36,6 +36,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		PrevLink string
 		PageSize int
 		Roles    []*db.Role
+		Comments map[int32]*db.AdminUserComment
 	}
 
 	data := Data{
@@ -44,6 +45,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		Role:     r.URL.Query().Get("role"),
 		Status:   r.URL.Query().Get("status"),
 		PageSize: common.GetPageSize(r),
+		Comments: map[int32]*db.AdminUserComment{},
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -81,6 +83,11 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		rows = rows[:pageSize]
 	}
 	data.Rows = rows
+	for _, u := range rows {
+		if c, err := queries.LatestAdminUserComment(r.Context(), u.Idusers); err == nil {
+			data.Comments[u.Idusers] = c
+		}
+	}
 
 	params := url.Values{}
 	if data.Search != "" {

@@ -63,11 +63,11 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 	addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
 	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 		log.Printf("send queued mail: %v", err)
-		count, incErr := q.IncrementEmailError(ctx, e.ID)
-		if incErr != nil {
-			log.Printf("increment email error: %v", incErr)
+		if err := q.IncrementEmailError(ctx, e.ID); err != nil {
+			log.Printf("increment email error: %v", err)
 			return
 		}
+		count, _ := q.GetPendingEmailErrorCount(ctx, e.ID)
 		if count > 4 {
 			if dlqProvider != nil {
 				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, user.Email.String, err, e.Body)

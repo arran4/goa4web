@@ -51,8 +51,8 @@ Permission actions describe groups of related operations. The main verbs are:
 - **comment** – add a comment
 - **reply** – respond in an existing thread
 - **post** – create a new thread, blog post or article
-- **edit-own** – edit a resource the user created
-- **edit-any** – edit resources created by others
+- **edit** – update an item; writers receive an item-specific grant so they can update their own posts
+- **edit-any** – update items created by others
 - **delete-own** – remove a resource the user created
 - **delete-any** – remove resources created by others
 - **admin** – perform administrative tasks on the item
@@ -116,7 +116,83 @@ The migrations seed baseline rules for the `news` section:
 | `anonymous` | `see`, `view` | `post` | browse published news |
 | `user` | `comment`, `reply` | `post` | participate in discussions |
 | `content writer`, `administrator` | `post` | `post` | create new entries |
-| `administrator` | `edit` | `post` | modify any news post |
+| `content writer` | `edit` | `post` | update own news post via item-specific grant |
+| `administrator` | `edit` | `post` | update any news post |
 
-When a writer publishes a post they automatically receive an `edit` grant tied to that post.
+When a writer publishes a post they automatically receive an `edit` grant tied to that post, effectively granting them update rights for that item.
 
+Other content sections such as blogs and writings follow the same pattern: authors can post entries and receive item-scoped `edit` grants while administrators hold broader `edit` privileges.
+
+### SQL Query Filtering
+
+Many queries now filter results directly in SQL using `viewer_id` together with the viewer's effective roles. Each query matches against grants so only records the viewer may access are returned. The table below lists the combinations used for each section.
+
+| `section` | `item` | `action` | `grants.user_id` | `grants.role_id` | Applies when |
+|-----------|-------|---------|------------------|------------------|--------------|
+| `news` | `post` | `see` or `view` | `viewer_id` | `NULL` | grant specific to that user |
+| `news` | `post` | `see` or `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `news` | `post` | `see` or `view` | `NULL` | viewer role ID | role-based grant |
+| `news` | `post` | `see` or `view` | `NULL` | `NULL` | public grant for everyone |
+| `news` | `post` | `post` | `viewer_id` | `NULL` | grant specific to that user |
+| `news` | `post` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `news` | `post` | `post` | `NULL` | viewer role ID | role-based grant |
+| `news` | `post` | `post` | `NULL` | `NULL` | public grant for everyone |
+| `news` | `post` | `edit` | `viewer_id` | `NULL` | grant specific to that user |
+| `news` | `post` | `edit` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `news` | `post` | `edit` | `NULL` | viewer role ID | role-based grant |
+| `news` | `post` | `edit` | `NULL` | `NULL` | public grant for everyone |
+| `blogs` | `entry` | `see` | `viewer_id` | `NULL` | grant specific to that user |
+| `blogs` | `entry` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `blogs` | `entry` | `see` | `NULL` | viewer role ID | role-based grant |
+| `blogs` | `entry` | `see` | `NULL` | `NULL` | public grant for everyone |
+| `blogs` | `entry` | `post` | `viewer_id` | `NULL` | grant specific to that user |
+| `blogs` | `entry` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `blogs` | `entry` | `post` | `NULL` | viewer role ID | role-based grant |
+| `blogs` | `entry` | `post` | `NULL` | `NULL` | public grant for everyone |
+| `writing` | `article` | `see` or `view` | `viewer_id` | `NULL` | grant specific to that user |
+| `writing` | `article` | `see` or `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `writing` | `article` | `see` or `view` | `NULL` | viewer role ID | role-based grant |
+| `writing` | `article` | `see` or `view` | `NULL` | `NULL` | public grant for everyone |
+| `writing` | `article` | `post` | `viewer_id` | `NULL` | grant specific to that user |
+| `writing` | `article` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `writing` | `article` | `post` | `NULL` | viewer role ID | role-based grant |
+| `writing` | `article` | `post` | `NULL` | `NULL` | public grant for everyone |
+| `writing` | `article` | `edit` | `viewer_id` | `NULL` | grant specific to that user |
+| `writing` | `article` | `edit` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `writing` | `article` | `edit` | `NULL` | viewer role ID | role-based grant |
+| `writing` | `article` | `edit` | `NULL` | `NULL` | public grant for everyone |
+| `imagebbs` | `board` | `see` or `view` | `viewer_id` | `NULL` | grant specific to that user |
+| `imagebbs` | `board` | `see` or `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `imagebbs` | `board` | `see` or `view` | `NULL` | viewer role ID | role-based grant |
+| `imagebbs` | `board` | `see` or `view` | `NULL` | `NULL` | public grant for everyone |
+| `imagebbs` | `board` | `post` | `viewer_id` | `NULL` | grant specific to that user |
+| `imagebbs` | `board` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `imagebbs` | `board` | `post` | `NULL` | viewer role ID | role-based grant |
+| `imagebbs` | `board` | `post` | `NULL` | `NULL` | public grant for everyone |
+| `forum` | `topic` | `see` | `viewer_id` | `NULL` | grant specific to that user |
+| `forum` | `topic` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `forum` | `topic` | `see` | `NULL` | viewer role ID | role-based grant |
+| `forum` | `topic` | `see` | `NULL` | `NULL` | public grant for everyone |
+| `forum` | `topic` | `post` | `viewer_id` | `NULL` | grant specific to that user |
+| `forum` | `topic` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `forum` | `topic` | `post` | `NULL` | viewer role ID | role-based grant |
+| `forum` | `topic` | `post` | `NULL` | `NULL` | public grant for everyone |
+| `admin` | `page` | `view` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
+| `admin` | `page` | `view` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
+| `admin` | `page` | `view` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
+| `admin` | `page` | `view` | `NULL` | `NULL` | TODO – admin filtering in SQL |
+| `admin` | `page` | `edit` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
+| `admin` | `page` | `edit` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
+| `admin` | `page` | `edit` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
+| `admin` | `page` | `edit` | `NULL` | `NULL` | TODO – admin filtering in SQL |
+| `admin` | `page` | `admin` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
+| `admin` | `page` | `admin` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
+| `admin` | `page` | `admin` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
+| `admin` | `page` | `admin` | `NULL` | `NULL` | TODO – admin filtering in SQL |
+
+Listing pages and RSS feeds still invoke `HasGrant` on each row for extra safety.
+
+The same lookup pattern covers every action. Whether a user wants to `post`,
+`reply`, `comment`, `write` or `edit`, the query matches grants by `viewer_id`
+and roles using the unified action names above. This ensures consistent
+terminology across sections and avoids duplicated rules.

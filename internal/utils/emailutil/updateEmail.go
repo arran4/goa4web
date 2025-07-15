@@ -26,6 +26,10 @@ var (
 	defaultVerificationEmailHTML  = templates.VerificationEmailHTML
 	defaultPasswordResetEmailText = templates.PasswordResetEmailText
 	defaultPasswordResetEmailHTML = templates.PasswordResetEmailHTML
+	defaultUserApprovedEmailText  = templates.UserApprovedEmailText
+	defaultUserApprovedEmailHTML  = templates.UserApprovedEmailHTML
+	defaultUserRejectedEmailText  = templates.UserRejectedEmailText
+	defaultUserRejectedEmailHTML  = templates.UserRejectedEmailHTML
 )
 
 // getUpdateEmailText returns the update email template body, preferring a database

@@ -91,7 +91,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
-			log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
+			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -237,7 +237,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
-		log.Printf("getNewsPostByIdWithWriterIdAndThreadCommentCount Error: %s", err)
+		log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

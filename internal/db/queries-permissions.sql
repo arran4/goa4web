@@ -94,3 +94,27 @@ DELETE FROM grants WHERE id = ?;
 
 -- name: ListGrants :many
 SELECT * FROM grants ORDER BY id;
+
+-- name: UserHasRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = ?
+LIMIT 1;
+
+-- name: GetPermissionsByUserID :many
+SELECT ur.iduser_roles, ur.users_idusers, r.name
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ?;
+
+-- name: GetPermissionsWithUsers :many
+SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+FROM user_roles ur
+JOIN users u ON u.idusers = ur.users_idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE (sqlc.arg(username) = '' OR u.username = sqlc.arg(username));
+
+-- name: UpdatePermission :exec
+UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?;

@@ -76,8 +76,8 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
 			if err == nil {
 				for _, p := range perms {
-					if p.Role != "" {
-						roles = append(roles, p.Role)
+					if p.Name != "" {
+						roles = append(roles, p.Name)
 					}
 				}
 			}
@@ -91,7 +91,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if uid != 0 && hcommon.NotificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(r.Context(), uid)
 			if err == nil {
-				count = c
+				count = int32(c)
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
@@ -192,14 +192,31 @@ func X2c(what string) byte {
 	return d1*16 + d2
 }
 
-// RequestLoggerMiddleware logs incoming requests and the associated user ID.
+// RequestLoggerMiddleware logs incoming requests along with the user and session IDs.
 func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		uid := int32(0)
+		sessID := ""
 		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*common.CoreData); ok && cd != nil {
 			uid = cd.UserID
+			if s := cd.Session(); s != nil {
+				sessID = s.ID
+			}
 		}
-		log.Printf("%s %s uid=%d", r.Method, r.URL.Path, uid)
+		log.Printf("%s %s uid=%d session=%s", r.Method, r.URL.Path, uid, sessID)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RecoverMiddleware logs panics from handlers and returns HTTP 500.
+func RecoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				log.Printf("panic: %v", rec)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
 		next.ServeHTTP(w, r)
 	})
 }

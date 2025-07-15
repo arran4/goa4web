@@ -32,6 +32,11 @@ sql:
         - "internal/db/queries-dlq.sql"
         - "internal/db/queries-uploadimages.sql"
         - "internal/db/queries-roles.sql"
+        - "internal/db/queries-admin_user_comments.sql"
+        - "internal/db/queries-notifications.sql"
+        - "internal/db/queries-pending_emails.sql"
+        - "internal/db/queries-user_languages.sql"
+        - "internal/db/queries-stats.sql"
       gen:
           go:
               package: "db"

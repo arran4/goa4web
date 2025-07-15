@@ -40,7 +40,8 @@ func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
 // LoginActionPage processes the submitted login form.
 func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("login attempt for %s", r.PostFormValue("username"))
+		sess, _ := core.GetSession(r)
+		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
 	}
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
@@ -91,6 +92,16 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := queries.UserHasRole(r.Context(), db.UserHasRoleParams{UsersIdusers: row.Idusers, Name: "user"}); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			renderLoginForm(w, r, "approval is pending")
+		} else {
+			log.Printf("user role: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
 	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
 		newHash, newAlg, err := HashPassword(password)
 		if err == nil {
@@ -122,7 +133,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("login success uid=%d", user.Idusers)
+		log.Printf("login success uid=%d session=%s", user.Idusers, session.ID)
 	}
 
 	if backURL != "" {

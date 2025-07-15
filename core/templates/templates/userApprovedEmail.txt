@@ -1,0 +1,10 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [A4] {{.Subject}}
+
+Hello,
+
+Your account has been approved.
+
+Cheers,
+The A4Web Team

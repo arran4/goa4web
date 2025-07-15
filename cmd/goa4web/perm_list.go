@@ -37,13 +37,13 @@ func (c *permListCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	rows, err := queries.GetPermissionsWithUsers(ctx,
-		sql.NullString{String: c.User, Valid: c.User != ""},
+		dbpkg.GetPermissionsWithUsersParams{Username: sql.NullString{String: c.User, Valid: c.User != ""}},
 	)
 	if err != nil {
 		return fmt.Errorf("list permissions: %w", err)
 	}
 	for _, p := range rows {
-		fmt.Printf("%d\t%s\t%s\n", p.IduserRoles, p.Username.String, p.Role.String)
+		fmt.Printf("%d\t%s\t%s\n", p.IduserRoles, p.Username.String, p.Name)
 	}
 	return nil
 }

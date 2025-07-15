@@ -18,7 +18,7 @@ import (
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Rows  []*db.PermissionWithUser
+		Rows  []*db.GetPermissionsWithUsersRow
 		Roles []*db.Role
 	}
 
@@ -31,7 +31,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		data.Roles = roles
 	}
 
-	rows, err := queries.GetPermissionsWithUsers(r.Context(), sql.NullString{})
+	rows, err := queries.GetPermissionsWithUsers(r.Context(), db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -125,8 +125,8 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	if id, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
-		ID:   int32(id),
-		Role: level,
+		IduserRoles: int32(id),
+		Name:        level,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 	}

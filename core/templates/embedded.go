@@ -17,6 +17,8 @@ var (
 	faviconData []byte
 	//go:embed "assets/pasteimg.js"
 	pasteImageJSData []byte
+	//go:embed "assets/notifications.js"
+	notificationsJSData []byte
 )
 
 func GetCompiledTemplates(funcs template.FuncMap) *template.Template {
@@ -37,3 +39,7 @@ func GetFaviconData() []byte {
 func GetPasteImageJSData() []byte {
 	return pasteImageJSData
 }
+
+// GetNotificationsJSData returns the JavaScript used for real-time
+// notification updates.
+func GetNotificationsJSData() []byte { return notificationsJSData }

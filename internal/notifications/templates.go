@@ -18,6 +18,8 @@ var (
 	writingTemplate string
 	//go:embed templates/signup.txt
 	signupTemplate string
+	//go:embed templates/ask.txt
+	askTemplate string
 	//go:embed templates/set_user_level.txt
 	setUserLevelTemplate string
 	//go:embed templates/update_user_level.txt
@@ -40,6 +42,7 @@ var defaultTemplates = map[string]string{
 	strings.ToLower(hcommon.TaskNewPost):                blogTemplate,
 	strings.ToLower(hcommon.TaskSubmitWriting):          writingTemplate,
 	strings.ToLower(hcommon.TaskRegister):               signupTemplate,
+	strings.ToLower(hcommon.TaskAsk):                    askTemplate,
 	strings.ToLower(hcommon.TaskSetUserLevel):           setUserLevelTemplate,
 	strings.ToLower(hcommon.TaskUpdateUserLevel):        updateUserLevelTemplate,
 	strings.ToLower(hcommon.TaskDeleteUserLevel):        deleteUserLevelTemplate,

@@ -97,16 +97,18 @@ func saveUserLanguagePreference(r *http.Request, queries *db.Queries, uid int32)
 		return err
 	}
 
-	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
-				LanguageIdlanguage: int32(langID),
-				UsersIdusers:       uid,
-				PageSize:           int32(config.AppRuntimeConfig.PageSizeDefault),
-			})
-		}
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	pref, err := cd.Preference()
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
+			LanguageIdlanguage: int32(langID),
+			UsersIdusers:       uid,
+			PageSize:           int32(config.AppRuntimeConfig.PageSizeDefault),
+		})
 	}
 
 	pref.LanguageIdlanguage = int32(langID)
@@ -119,14 +121,18 @@ func saveUserLanguagePreference(r *http.Request, queries *db.Queries, uid int32)
 
 func saveDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) error {
 	langID, _ := strconv.Atoi(r.PostFormValue("defaultLanguage"))
-	pref, err := queries.GetPreferenceByUserID(r.Context(), uid)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			_, err = queries.DB().ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", langID, uid, config.AppRuntimeConfig.PageSizeDefault)
-			return err
-		}
+
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	pref, err := cd.Preference()
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		_, err = queries.DB().ExecContext(r.Context(), "INSERT INTO preferences (language_idlanguage, users_idusers, page_size) VALUES (?, ?, ?)", langID, uid, config.AppRuntimeConfig.PageSizeDefault)
+		return err
+	}
+
 	_, err = queries.DB().ExecContext(r.Context(), "UPDATE preferences SET language_idlanguage=?, page_size=? WHERE users_idusers=?", langID, pref.PageSize, uid)
 	return err
 }

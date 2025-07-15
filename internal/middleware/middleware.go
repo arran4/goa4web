@@ -64,35 +64,37 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		queries := r.Context().Value(hcommon.KeyQueries).(*dbpkg.Queries)
 		if session.ID != "" {
 			if uid != 0 {
-				_ = queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid})
+				if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
+					log.Printf("insert session: %v", err)
+				}
 			} else {
-				_ = queries.DeleteSessionByID(r.Context(), session.ID)
-			}
-		}
-
-		roles := []string{"anonymous"}
-		if uid != 0 {
-			roles = append(roles, "user")
-			perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
-			if err == nil {
-				for _, p := range perms {
-					if p.Name != "" {
-						roles = append(roles, p.Name)
-					}
+				if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
+					log.Printf("delete session: %v", err)
 				}
 			}
 		}
+
+		cd := common.NewCoreData(r.Context(), queries,
+			common.WithImageURLMapper(imagesign.MapURL),
+			common.WithSession(session))
+		cd.UserID = uid
+		_ = cd.Roles()
 
 		idx := nav.IndexItems()
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
-
-    cd := common.NewCoreData(r.Context(), queries,
-			common.WithImageURLMapper(imagesign.MapURL),
-			common.WithSession(session))
-		cd.SetRoles(roles)
-		cd.UserID = uid
+		var count int32
+		if uid != 0 && hcommon.NotificationsEnabled() {
+			c, err := queries.CountUnreadNotifications(r.Context(), uid)
+			if err != nil {
+				log.Printf("count unread notifications: %v", err)
+			} else {
+				count = int32(c)
+				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
+			}
+		}
+		cd.IndexItems = idx
 		cd.Title = "Arran's Site"
 		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 		cd.AdminMode = r.URL.Query().Get("mode") == "admin"

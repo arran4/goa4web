@@ -39,25 +39,9 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	pageSize := common.GetPageSize(r)
-	var rows []*db.WriterCountRow
-	var err error
-	if data.Search != "" {
-		rows, err = queries.SearchWriters(r.Context(), db.SearchWritersParams{
-			ViewerID: data.UserID,
-			Query:    data.Search,
-			Limit:    int32(pageSize + 1),
-			Offset:   int32(offset),
-		})
-	} else {
-		rows, err = queries.ListWriters(r.Context(), db.ListWritersParams{
-			ViewerID: data.UserID,
-			Limit:    int32(pageSize + 1),
-			Offset:   int32(offset),
-		})
-	}
+	rows, err := data.CoreData.Writers(r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

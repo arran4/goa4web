@@ -274,6 +274,8 @@ environment variables listed below.
 | `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
 | `CREATE_DIRS` | `--create-dirs` | No | `false` | Create missing directories on startup. |
 
+Paths using the `s3://` scheme must include a bucket name and may specify an optional prefix, e.g. `s3://mybucket/uploads`.
+
 ### Dead Letter Queue Providers
 
 The `DLQ_PROVIDER` setting selects how failed messages are recorded:

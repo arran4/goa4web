@@ -23,6 +23,24 @@ var (
 	dbLogVerbosity int
 )
 
+// parseS3Dir validates S3 paths in the form s3://bucket/prefix. The bucket
+// component is required while the prefix may be empty.
+func parseS3Dir(raw string) (bucket, prefix string, err error) {
+	p := strings.TrimPrefix(raw, "s3://")
+	if p == "" {
+		return "", "", fmt.Errorf("missing bucket")
+	}
+	parts := strings.SplitN(p, "/", 2)
+	bucket = parts[0]
+	if bucket == "" {
+		return "", "", fmt.Errorf("missing bucket")
+	}
+	if len(parts) == 2 {
+		prefix = strings.TrimPrefix(parts[1], "/")
+	}
+	return bucket, prefix, nil
+}
+
 // GetDBPool returns the active database connection pool.
 func GetDBPool() *sql.DB { return dbPool }
 
@@ -74,7 +92,9 @@ func CheckUploadDir(cfg config.RuntimeConfig) *common.UserError {
 		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}
 	if strings.HasPrefix(cfg.ImageUploadDir, "s3://") {
-		// TODO: validate S3 upload targets
+		if _, _, err := parseS3Dir(cfg.ImageUploadDir); err != nil {
+			return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
+		}
 		return nil
 	}
 	info, err := os.Stat(cfg.ImageUploadDir)

@@ -41,7 +41,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

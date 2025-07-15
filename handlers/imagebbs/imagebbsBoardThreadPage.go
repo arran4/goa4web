@@ -97,7 +97,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := data.CoreData.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

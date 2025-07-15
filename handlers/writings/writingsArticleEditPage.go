@@ -2,18 +2,19 @@ package writings
 
 import (
 	"database/sql"
-	corecommon "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"strconv"
 
+	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
+	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
@@ -52,11 +53,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	if err := templates.RenderTemplate(w, "articleEditPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "articleEditPage.gohtml", data)
 }
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {

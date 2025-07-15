@@ -1,13 +1,12 @@
 package user
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 
+	common "github.com/arran4/goa4web/handlers/common"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -45,9 +44,5 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	data.CoreData.UserID = 0
 
-	if err := templates.RenderTemplate(w, "logoutPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "logoutPage.gohtml", data)
 }

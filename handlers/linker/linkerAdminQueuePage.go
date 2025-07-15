@@ -4,17 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/core/templates"
+	corecommon "github.com/arran4/goa4web/core/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 )
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -113,11 +112,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := templates.RenderTemplate(w, "adminQueuePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	hcommon.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
 }
 
 func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {

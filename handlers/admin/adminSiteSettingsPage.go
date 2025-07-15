@@ -1,16 +1,15 @@
 package admin
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 
+	corelanguage "github.com/arran4/goa4web/core/language"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
@@ -55,9 +54,5 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 		data.Languages = langs
 	}
 
-	if err := templates.RenderTemplate(w, "siteSettingsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "siteSettingsPage.gohtml", data)
 }

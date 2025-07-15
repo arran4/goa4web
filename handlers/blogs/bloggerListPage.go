@@ -4,16 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	db "github.com/arran4/goa4web/internal/db"
 
-	common "github.com/arran4/goa4web/handlers/common"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
 // BloggerListPage shows all bloggers with their post counts.
@@ -79,9 +78,5 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := templates.RenderTemplate(w, "bloggerListPage.gohtml", data, common.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "bloggerListPage.gohtml", data)
 }

@@ -3,14 +3,14 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+
 	db "github.com/arran4/goa4web/internal/db"
 
-	corelanguage "github.com/arran4/goa4web/core/language"
-	"github.com/arran4/goa4web/core/templates"
-	common "github.com/arran4/goa4web/handlers/common"
-	"log"
 	"net/http"
 	"strconv"
+
+	corelanguage "github.com/arran4/goa4web/core/language"
+	common "github.com/arran4/goa4web/handlers/common"
 
 	"github.com/arran4/goa4web/config"
 )
@@ -46,11 +46,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	row := r.Context().Value(common.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 	data.Blog = row
 
-	if err := templates.RenderTemplate(w, "blogEditPage.gohtml", data, common.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "blogEditPage.gohtml", data)
 }
 
 func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {

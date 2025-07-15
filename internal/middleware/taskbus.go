@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	corecommon "github.com/arran4/goa4web/core/common"
@@ -18,6 +20,61 @@ type statusRecorder struct {
 	http.ResponseWriter
 	status int
 }
+
+// maxQueuedTaskEvents limits the number of task events stored while the event
+// bus is closed.
+const maxQueuedTaskEvents = 100
+
+// eventQueue stores events in memory until they can be published.
+type eventQueue struct {
+	mu       sync.Mutex
+	capacity int
+	events   []eventbus.Event
+}
+
+func newEventQueue(capacity int) *eventQueue {
+	return &eventQueue{capacity: capacity}
+}
+
+func (q *eventQueue) enqueue(evt eventbus.Event) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if len(q.events) >= q.capacity {
+		q.events = append(q.events[1:], evt)
+	} else {
+		q.events = append(q.events, evt)
+	}
+}
+
+func (q *eventQueue) flush(ctx context.Context) {
+	q.mu.Lock()
+	if len(q.events) == 0 {
+		q.mu.Unlock()
+		return
+	}
+	events := append([]eventbus.Event(nil), q.events...)
+	q.events = nil
+	q.mu.Unlock()
+	for i, e := range events {
+		if ctx.Err() != nil {
+			q.mu.Lock()
+			q.events = append(events[i:], q.events...)
+			q.mu.Unlock()
+			return
+		}
+		if err := eventbus.DefaultBus.Publish(e); err != nil {
+			if err == eventbus.ErrBusClosed {
+				q.mu.Lock()
+				q.events = append(events[i:], q.events...)
+				q.mu.Unlock()
+				return
+			}
+			log.Printf("flush queued events: %v", err)
+		}
+	}
+}
+
+var taskQueue = newEventQueue(maxQueuedTaskEvents)
 
 func (r *statusRecorder) WriteHeader(code int) {
 	r.status = code
@@ -47,9 +104,13 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(sr, r)
 		if task != "" && sr.status < http.StatusBadRequest {
 			if err := eventbus.DefaultBus.Publish(*evt); err != nil {
-				log.Printf("publish task event: %v", err)
-				// TODO: queue task events for resumption when the bus is closed
+				if err == eventbus.ErrBusClosed {
+					taskQueue.enqueue(*evt)
+				} else {
+					log.Printf("publish task event: %v", err)
+				}
 			}
 		}
+		taskQueue.flush(r.Context())
 	})
 }

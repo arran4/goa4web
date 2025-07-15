@@ -61,6 +61,8 @@ type CoreData struct {
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	imageBoards     map[int32]*lazyValue[[]*db.Imageboard]
+	imageBoardPosts map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
 
 	event *eventbus.Event
 }
@@ -338,4 +340,48 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 // CanEditAny reports whether cd is in admin mode with administrator role.
 func (cd *CoreData) CanEditAny() bool {
 	return cd.HasRole("administrator") && cd.AdminMode
+}
+
+// ImageBoards retrieves sub-boards under parentID lazily.
+func (cd *CoreData) ImageBoards(parentID int32) ([]*db.Imageboard, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	if cd.imageBoards == nil {
+		cd.imageBoards = make(map[int32]*lazyValue[[]*db.Imageboard])
+	}
+	lv, ok := cd.imageBoards[parentID]
+	if !ok {
+		lv = &lazyValue[[]*db.Imageboard]{}
+		cd.imageBoards[parentID] = lv
+	}
+	return lv.load(func() ([]*db.Imageboard, error) {
+		return cd.queries.GetAllBoardsByParentBoardIdForUser(cd.ctx, db.GetAllBoardsByParentBoardIdForUserParams{
+			ViewerID:     cd.UserID,
+			ParentID:     parentID,
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	})
+}
+
+// ImageBoardPosts retrieves approved posts for the board lazily.
+func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	if cd.imageBoardPosts == nil {
+		cd.imageBoardPosts = make(map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow])
+	}
+	lv, ok := cd.imageBoardPosts[boardID]
+	if !ok {
+		lv = &lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]{}
+		cd.imageBoardPosts[boardID] = lv
+	}
+	return lv.load(func() ([]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
+		return cd.queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(cd.ctx, db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
+			ViewerID:     cd.UserID,
+			BoardID:      boardID,
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	})
 }

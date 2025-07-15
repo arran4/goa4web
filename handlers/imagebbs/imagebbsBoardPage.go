@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"database/sql"
-	"errors"
 	"fmt"
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -45,43 +44,25 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 		BoardNumber: bid,
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
-	subBoardRows, err := queries.GetAllBoardsByParentBoardIdForUser(r.Context(), db.GetAllBoardsByParentBoardIdForUserParams{
-		ViewerID:     data.CoreData.UserID,
-		ParentID:     int32(bid),
-		ViewerUserID: sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
-	})
+	boards, err := data.CoreData.ImageBoards(int32(bid))
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		log.Printf("imageboards: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	data.Boards = subBoardRows
+	data.Boards = boards
 
-	posts, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-		ViewerID:     data.CoreData.UserID,
-		BoardID:      int32(bid),
-		ViewerUserID: sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
-	})
+	posts, err := data.CoreData.ImageBoardPosts(int32(bid))
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		log.Printf("imageboard posts: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	data.Posts = posts

@@ -61,6 +61,7 @@ type CoreData struct {
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	forumTopics     map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
 
 	event *eventbus.Event
 }
@@ -332,6 +333,28 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 			}
 		}
 		return cats, nil
+	})
+}
+
+// ForumTopicByID loads a forum topic once per ID using caching.
+func (cd *CoreData) ForumTopicByID(id int32) (*db.GetForumTopicByIdForUserRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	if cd.forumTopics == nil {
+		cd.forumTopics = make(map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow])
+	}
+	lv, ok := cd.forumTopics[id]
+	if !ok {
+		lv = &lazyValue[*db.GetForumTopicByIdForUserRow]{}
+		cd.forumTopics[id] = lv
+	}
+	return lv.load(func() (*db.GetForumTopicByIdForUserRow, error) {
+		return cd.queries.GetForumTopicByIdForUser(cd.ctx, db.GetForumTopicByIdForUserParams{
+			ViewerID:      cd.UserID,
+			Idforumtopic:  id,
+			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
 	})
 }
 

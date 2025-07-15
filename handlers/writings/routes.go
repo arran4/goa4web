@@ -26,6 +26,7 @@ func RegisterRoutes(r *mux.Router) {
 	wr.HandleFunc("/", Page).Methods("GET")
 	wr.HandleFunc("/writer/{username}", WriterPage).Methods("GET")
 	wr.HandleFunc("/writer/{username}/", WriterPage).Methods("GET")
+	wr.HandleFunc("/writers", WriterListPage).Methods("GET")
 	wr.HandleFunc("/user/permissions", UserPermissionsPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))
 	wr.HandleFunc("/users/permissions", UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(UserAllowTask.Match)
 	wr.HandleFunc("/users/permissions", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(UserDisallowTask.Match)

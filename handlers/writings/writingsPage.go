@@ -92,6 +92,11 @@ func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
 	}
 
 	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		Name: "Writers",
+		Link: "/writings/writers",
+	})
+
+	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Return to list",
 		Link: fmt.Sprintf("/writings?offset=%d", 0),
 	})

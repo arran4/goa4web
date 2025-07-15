@@ -81,3 +81,30 @@ func TestWritingCategoriesLazy(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestUnreadNotificationCountLazy(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{"cnt"}).AddRow(2)
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM notifications").WithArgs(int32(1)).WillReturnRows(rows)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+	cd.UserID = 1
+
+	if c := cd.UnreadNotificationCount(); c != 2 {
+		t.Fatalf("count=%d", c)
+	}
+	if c := cd.UnreadNotificationCount(); c != 2 {
+		t.Fatalf("second count=%d", c)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

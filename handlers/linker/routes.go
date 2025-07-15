@@ -23,7 +23,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Linker", "/linker", SectionWeight)
 	nav.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()
-	lr.Use(AddLinkerIndex)
+	lr.Use(hcommon.IndexMiddleware(CustomLinkerIndex))
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
 	lr.HandleFunc("/atom", AtomPage).Methods("GET")
 	lr.HandleFunc("", Page).Methods("GET")

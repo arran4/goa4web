@@ -83,6 +83,7 @@ type CoreData struct {
 	notifCount        lazyValue[int32]
 	unreadCount       lazyValue[int64]
 	writerWritings    map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
+	linkerCategories  lazyValue[[]*db.GetLinkerCategoryLinkCountsRow]
 
 	event *eventbus.Event
 }
@@ -415,9 +416,9 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-    if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
-      continue
-    }
+		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+			continue
+		}
 		posts = append(posts, &NewsPost{
 			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
 			ShowReply:    cd.UserID != 0,
@@ -698,4 +699,18 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		return cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
 	})
 	return count
+}
+
+// LinkerCategoryCounts lazily loads linker category statistics.
+func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
+	return cd.linkerCategories.load(func() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetLinkerCategoryLinkCounts(cd.ctx)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	})
 }

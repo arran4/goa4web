@@ -43,7 +43,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	if data.WritingCategories, err = queries.WritingCategoryCounts(r.Context()); err != nil {
 		log.Printf("writing category counts: %v", err)
 	}
-	if data.LinkerCategories, err = queries.GetLinkerCategoryLinkCounts(r.Context()); err != nil {
+	if data.LinkerCategories, err = data.LinkerCategoryCounts(); err != nil {
 		log.Printf("linker category counts: %v", err)
 	}
 	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err != nil {

@@ -23,9 +23,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
-	categoryRows, err := queries.GetLinkerCategoryLinkCounts(r.Context())
+	categoryRows, err := data.LinkerCategoryCounts()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -91,7 +89,8 @@ func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
-	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	rows, _ := cd.LinkerCategoryCounts()
 	for _, c := range rows {
 		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
 			http.Error(w, "Category in use", http.StatusBadRequest)
@@ -119,7 +118,8 @@ func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	title := r.PostFormValue("title")
-	rows, _ := queries.GetLinkerCategoryLinkCounts(r.Context())
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	rows, _ := cd.LinkerCategoryCounts()
 	pos := len(rows) + 1
 	if err := queries.CreateLinkerCategory(r.Context(), db.CreateLinkerCategoryParams{
 		Title:    sql.NullString{Valid: true, String: title},

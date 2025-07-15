@@ -82,3 +82,60 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	}
 }
 
+func TestImageBoardsLazy(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).
+		AddRow(1, 0, sql.NullString{String: "t", Valid: true}, sql.NullString{String: "d", Valid: true}, true)
+
+	mock.ExpectQuery("SELECT b.idimageboard").WithArgs(int32(1), int32(0), sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(rows)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+	cd.UserID = 1
+
+	if _, err := cd.ImageBoards(0); err != nil {
+		t.Fatalf("ImageBoards: %v", err)
+	}
+	if _, err := cd.ImageBoards(0); err != nil {
+		t.Fatalf("ImageBoards second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestImageBoardPostsLazy(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "username", "comments"}).
+		AddRow(1, 0, 1, 2, sql.NullTime{}, sql.NullString{}, sql.NullString{}, sql.NullString{}, 0, true, sql.NullTime{}, sql.NullString{}, sql.NullInt32{})
+
+	mock.ExpectQuery("SELECT i.idimagepost").WithArgs(int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(rows)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+	cd.UserID = 1
+
+	if _, err := cd.ImageBoardPosts(2); err != nil {
+		t.Fatalf("ImageBoardPosts: %v", err)
+	}
+	if _, err := cd.ImageBoardPosts(2); err != nil {
+		t.Fatalf("ImageBoardPosts second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

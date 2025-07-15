@@ -61,6 +61,7 @@ type CoreData struct {
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	bookmarks       lazyValue[*db.GetBookmarksForUserRow]
 
 	event *eventbus.Event
 }
@@ -332,6 +333,16 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 			}
 		}
 		return cats, nil
+	})
+}
+
+// Bookmarks returns the user's bookmark list loaded lazily.
+func (cd *CoreData) Bookmarks() (*db.GetBookmarksForUserRow, error) {
+	return cd.bookmarks.load(func() (*db.GetBookmarksForUserRow, error) {
+		if cd.UserID == 0 || cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetBookmarksForUser(cd.ctx, cd.UserID)
 	})
 }
 

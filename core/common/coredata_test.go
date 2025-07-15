@@ -81,3 +81,31 @@ func TestWritingCategoriesLazy(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestBookmarksLazy(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{"Idbookmarks", "list"}).AddRow(1, sql.NullString{String: "a", Valid: true})
+
+	mock.ExpectQuery("SELECT Idbookmarks").WithArgs(int32(1)).WillReturnRows(rows)
+
+	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
+	cd := NewCoreData(ctx, queries)
+	cd.UserID = 1
+
+	if _, err := cd.Bookmarks(); err != nil {
+		t.Fatalf("Bookmarks: %v", err)
+	}
+	if _, err := cd.Bookmarks(); err != nil {
+		t.Fatalf("Bookmarks second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

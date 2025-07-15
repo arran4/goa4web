@@ -52,16 +52,17 @@ type CoreData struct {
 	ctx     context.Context
 	queries *db.Queries
 
-	user              lazyValue[*db.User]
-	perms             lazyValue[[]*db.GetPermissionsByUserIDRow]
-	pref              lazyValue[*db.Preference]
-	langs             lazyValue[[]*db.UserLanguage]
-	roles             lazyValue[[]string]
-	allRoles          lazyValue[[]*db.Role]
-	announcement      lazyValue[*db.GetActiveAnnouncementWithNewsRow]
-	forumCategories   lazyValue[[]*db.Forumcategory]
-	latestNews        lazyValue[[]*NewsPost]
-	writeCats         lazyValue[[]*db.WritingCategory]
+	user            lazyValue[*db.User]
+	perms           lazyValue[[]*db.GetPermissionsByUserIDRow]
+	pref            lazyValue[*db.Preference]
+	langs           lazyValue[[]*db.UserLanguage]
+	roles           lazyValue[[]string]
+	allRoles        lazyValue[[]*db.Role]
+	announcement    lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	forumCategories lazyValue[[]*db.Forumcategory]
+	latestNews      lazyValue[[]*NewsPost]
+	writeCats       lazyValue[[]*db.WritingCategory]
+	bookmarks       lazyValue[*db.GetBookmarksForUserRow]
 	newsAnnouncements map[int32]*lazyValue[*db.SiteAnnouncement]
 	annMu             sync.Mutex
 	forumTopics     map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
@@ -369,22 +370,6 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 	})
 }
 
-// UnreadNotificationCount loads the number of unread notifications once.
-func (cd *CoreData) UnreadNotificationCount() (int32, error) {
-	count, err := cd.notifCount.load(func() (int32, error) {
-		if cd.UserID == 0 || cd.queries == nil {
-			return 0, nil
-		}
-		c, err := cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
-		if err != nil {
-			return 0, err
-		}
-		return int32(c), nil
-	})
-	cd.NotificationCount = count
-	return count, err
-}
-
 // ForumTopicByID loads a forum topic once per ID using caching.
 func (cd *CoreData) ForumTopicByID(id int32) (*db.GetForumTopicByIdForUserRow, error) {
 	if cd.queries == nil {
@@ -440,6 +425,16 @@ func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.GetPubl
 			list = append(list, row)
 		}
 		return list, nil
+	})
+}
+
+// Bookmarks returns the user's bookmark list loaded lazily.
+func (cd *CoreData) Bookmarks() (*db.GetBookmarksForUserRow, error) {
+	return cd.bookmarks.load(func() (*db.GetBookmarksForUserRow, error) {
+		if cd.UserID == 0 || cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetBookmarksForUser(cd.ctx, cd.UserID)
 	})
 }
 

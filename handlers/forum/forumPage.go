@@ -4,15 +4,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -125,11 +124,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.Back = true
 	}
 
-	if err := templates.RenderTemplate(w, "forumPage", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "forumPage", data)
 }
 
 func CustomForumIndex(data *CoreData, r *http.Request) {

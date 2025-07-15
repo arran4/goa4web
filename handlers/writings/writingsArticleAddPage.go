@@ -2,17 +2,18 @@ package writings
 
 import (
 	"database/sql"
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"strconv"
 
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -33,11 +34,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	if err := templates.RenderTemplate(w, "articleAddPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "articleAddPage.gohtml", data)
 }
 func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

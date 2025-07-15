@@ -1,12 +1,6 @@
 package common
 
-import (
-	"log"
-	"net/http"
-
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
-)
+import "net/http"
 
 // TaskErrorAcknowledgementPage renders a page displaying an error message.
 func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
@@ -23,9 +17,5 @@ func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
 	if data.Error == "" {
 		data.Error = r.PostFormValue("error")
 	}
-	if err := templates.RenderTemplate(w, "taskErrorAcknowledgementPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	TemplateHandler(w, r, "taskErrorAcknowledgementPage.gohtml", data)
 }

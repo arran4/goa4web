@@ -3,16 +3,16 @@ package search
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
+	"log"
+	"net/http"
+
+	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	hlinker "github.com/arran4/goa4web/handlers/linker"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
-	"log"
-	"net/http"
 
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
@@ -60,11 +60,7 @@ func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := templates.RenderTemplate(w, "resultLinkerActionPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "resultLinkerActionPage.gohtml", data)
 }
 
 func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {

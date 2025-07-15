@@ -4,12 +4,9 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -37,12 +34,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	err = templates.RenderTemplate(w, "languagesPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	hcommon.TemplateHandler(w, r, "languagesPage.gohtml", data)
 }
 
 func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
@@ -66,12 +58,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	hcommon.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
@@ -90,12 +77,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	hcommon.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
@@ -115,10 +97,5 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	hcommon.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

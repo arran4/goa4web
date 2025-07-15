@@ -3,13 +3,12 @@ package linker
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core/templates"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -37,9 +36,5 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categories
 
-	if err := templates.RenderTemplate(w, "categoriesPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }

@@ -58,11 +58,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		ViewerID:      uid,
-		Idforumtopic:  int32(topicId),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	topicRow, err := data.CoreData.ForumTopicByID(int32(topicId))
 	if err != nil {
 		log.Printf("showTableTopics Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

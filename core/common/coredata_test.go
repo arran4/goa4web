@@ -98,8 +98,8 @@ func TestAnnouncementForNewsCaching(t *testing.T) {
 
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnRows(annRows)
 
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 
 	if _, err := cd.AnnouncementForNews(1); err != nil {
 		t.Fatalf("AnnouncementForNews: %v", err)
@@ -124,8 +124,8 @@ func TestAnnouncementForNewsError(t *testing.T) {
 
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrConnDone)
 
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 
 	if _, err := cd.AnnouncementForNews(1); !errors.Is(err, sql.ErrConnDone) {
 		t.Fatalf("AnnouncementForNews error=%v", err)
@@ -163,11 +163,11 @@ func TestPublicWritingsLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
-	ctx = context.WithValue(ctx, ContextValues("coreData"), cd)
+	ctx = context.WithValue(ctx, common.ContextValues("coreData"), cd)
 	req = req.WithContext(ctx)
 
 	if _, err := cd.PublicWritings(0, req); err != nil {
@@ -207,12 +207,12 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 
-	req := httptest.NewRequest("GET", "/", nil).WithContext(context.WithValue(ctx, ContextValues("coreData"), cd))
+	req := httptest.NewRequest("GET", "/", nil).WithContext(context.WithValue(ctx, common.ContextValues("coreData"), cd))
 
 	if _, err := cd.LatestWritings(req); err != nil {
 		t.Fatalf("LatestWritings: %v", err)

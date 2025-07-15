@@ -7,7 +7,6 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	blogs "github.com/arran4/goa4web/handlers/blogs"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
@@ -170,8 +169,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 			data.Text = a4code.QuoteOfText(comment.Username.String, comment.Text.String)
 		}
 	}
-
-	blogs.CustomBlogIndex(data.CoreData, r)
 
 	if err := templates.RenderTemplate(w, "threadPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

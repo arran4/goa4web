@@ -28,12 +28,10 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	session, ok := core.GetSessionOrFail(w, r)
+	_, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 

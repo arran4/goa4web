@@ -71,7 +71,7 @@ func (c *writingListCmd) Run() error {
 		return nil
 	}
 	cd := corecommon.NewCoreData(ctx, queries)
-	rows, err := cd.LatestWritings()
+	rows, err := cd.LatestWritings(nil)
 	if err != nil {
 		return fmt.Errorf("list writings: %w", err)
 	}

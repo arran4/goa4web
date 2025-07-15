@@ -89,3 +89,9 @@ var (
 	// DefaultBus is the global event bus used across the application.
 	DefaultBus = NewBus()
 )
+
+// ReopenDefaultBus creates a new DefaultBus instance. Callers should publish
+// any queued events to the returned bus once subscribers are registered.
+func ReopenDefaultBus() {
+	DefaultBus = NewBus()
+}

@@ -90,3 +90,38 @@ func TestTaskEventMiddleware(t *testing.T) {
 		t.Fatalf("expected event with data")
 	}
 }
+
+func TestTaskEventQueue(t *testing.T) {
+	bus := eventbus.NewBus()
+	eventbus.DefaultBus = bus
+	defer func() { eventbus.DefaultBus = eventbus.NewBus() }()
+
+	taskQueue = newEventQueue(maxQueuedTaskEvents)
+
+	if err := bus.Shutdown(context.Background()); err != nil {
+		t.Fatalf("shutdown bus: %v", err)
+	}
+
+	handler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if len(taskQueue.events) != 1 {
+		t.Fatalf("expected queued event")
+	}
+
+	eventbus.ReopenDefaultBus()
+	ch := eventbus.DefaultBus.Subscribe()
+	taskQueue.flush(context.Background())
+
+	select {
+	case <-ch:
+	default:
+		t.Fatalf("expected flushed event")
+	}
+}

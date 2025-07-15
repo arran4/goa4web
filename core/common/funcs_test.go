@@ -1,4 +1,4 @@
-package common
+package common_test
 
 import (
 	"context"
@@ -9,12 +9,13 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 func TestTemplateFuncsFirstline(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	funcs := NewFuncs(r)
+	funcs := common.NewFuncs(r)
 	first := funcs["firstline"].(func(string) string)
 	if got := first("a\nb\n"); got != "a" {
 		t.Errorf("firstline=%q", got)
@@ -23,7 +24,7 @@ func TestTemplateFuncsFirstline(t *testing.T) {
 
 func TestTemplateFuncsLeft(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	funcs := NewFuncs(r)
+	funcs := common.NewFuncs(r)
 	left := funcs["left"].(func(int, string) string)
 	if got := left(3, "hello"); got != "hel" {
 		t.Errorf("left short=%q", got)
@@ -58,11 +59,11 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
-	ctx = context.WithValue(ctx, ContextValues("coreData"), cd)
+	ctx = context.WithValue(ctx, common.ContextValues("coreData"), cd)
 	req = req.WithContext(ctx)
 
 	funcs := cd.Funcs(req)

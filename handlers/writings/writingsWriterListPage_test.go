@@ -24,7 +24,8 @@ func TestWriterListPage_List(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/writings/writers", nil)
 	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
-	cd := &corecommon.CoreData{UserID: 1}
+	cd := corecommon.NewCoreData(ctx, q)
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -52,7 +53,8 @@ func TestWriterListPage_Search(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/writings/writers?search=bob", nil)
 	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
-	cd := &corecommon.CoreData{UserID: 1}
+	cd := corecommon.NewCoreData(ctx, q)
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

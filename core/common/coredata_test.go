@@ -1,4 +1,4 @@
-package common
+package common_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -31,11 +32,11 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
-	ctx = context.WithValue(ctx, ContextValues("coreData"), cd)
+	ctx = context.WithValue(ctx, common.ContextValues("coreData"), cd)
 	req = req.WithContext(ctx)
 
 	if _, err := cd.LatestNews(req); err != nil {
@@ -65,8 +66,8 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "category", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 
@@ -120,7 +121,7 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	}
 }
 
-func TestImageBoardsLazy(t *testing.T) {
+func TestBloggersLazy(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -128,20 +129,22 @@ func TestImageBoardsLazy(t *testing.T) {
 	defer db.Close()
 
 	queries := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).
-		AddRow(1, 0, sql.NullString{String: "t", Valid: true}, sql.NullString{String: "d", Valid: true}, true)
+	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
+	mock.ExpectQuery("SELECT u.username").
+		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).
+		WillReturnRows(rows)
 
-	mock.ExpectQuery("SELECT b.idimageboard").WithArgs(int32(1), int32(0), sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(rows)
-
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	req := httptest.NewRequest("GET", "/", nil)
+	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
+	req = req.WithContext(ctx)
 
-	if _, err := cd.ImageBoards(0); err != nil {
-		t.Fatalf("ImageBoards: %v", err)
+	if _, err := cd.Bloggers(req); err != nil {
+		t.Fatalf("Bloggers: %v", err)
 	}
-	if _, err := cd.ImageBoards(0); err != nil {
-		t.Fatalf("ImageBoards second call: %v", err)
+	if _, err := cd.Bloggers(req); err != nil {
+		t.Fatalf("Bloggers second call: %v", err)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -149,7 +152,8 @@ func TestImageBoardsLazy(t *testing.T) {
 	}
 }
 
-func TestImageBoardPostsLazy(t *testing.T) {
+func TestWritersLazy(t *testing.T) {
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -157,20 +161,22 @@ func TestImageBoardPostsLazy(t *testing.T) {
 	defer db.Close()
 
 	queries := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "username", "comments"}).
-		AddRow(1, 0, 1, 2, sql.NullTime{}, sql.NullString{}, sql.NullString{}, sql.NullString{}, 0, true, sql.NullTime{}, sql.NullString{}, sql.NullInt32{})
+	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
+	mock.ExpectQuery("SELECT u.username").
+		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).
+		WillReturnRows(rows)
 
-	mock.ExpectQuery("SELECT i.idimagepost").WithArgs(int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(rows)
-
-	ctx := context.WithValue(context.Background(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
+	req := httptest.NewRequest("GET", "/", nil)
+	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
+	req = req.WithContext(ctx)
 
-	if _, err := cd.ImageBoardPosts(2); err != nil {
-		t.Fatalf("ImageBoardPosts: %v", err)
+	if _, err := cd.Writers(req); err != nil {
+		t.Fatalf("Writers: %v", err)
 	}
-	if _, err := cd.ImageBoardPosts(2); err != nil {
-		t.Fatalf("ImageBoardPosts second call: %v", err)
+	if _, err := cd.Writers(req); err != nil {
+		t.Fatalf("Writers second call: %v", err)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

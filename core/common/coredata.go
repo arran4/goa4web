@@ -23,6 +23,12 @@ type IndexItem struct {
 	Link string
 }
 
+const (
+	defaultPageSize = 15
+	pageSizeMin     = 5
+	pageSizeMax     = 50
+)
+
 // NewsPost describes a news entry with access metadata.
 type NewsPost struct {
 	*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
@@ -63,6 +69,8 @@ type CoreData struct {
 	latestNews      lazyValue[[]*NewsPost]
 	latestWritings  lazyValue[[]*db.Writing]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	bloggers        lazyValue[[]*db.BloggerCountRow]
+	writers         lazyValue[[]*db.WriterCountRow]
 	imageBoards     map[int32]*lazyValue[[]*db.Imageboard]
 	imageBoardPosts map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
 	forumThreads    map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
@@ -155,6 +163,20 @@ func ContainsItem(items []IndexItem, name string) bool {
 		}
 	}
 	return false
+}
+
+func pageSize(r *http.Request) int {
+	size := defaultPageSize
+	if pref, _ := r.Context().Value(ContextValues("preference")).(*db.Preference); pref != nil && pref.PageSize != 0 {
+		size = int(pref.PageSize)
+	}
+	if size < pageSizeMin {
+		size = pageSizeMin
+	}
+	if size > pageSizeMax {
+		size = pageSizeMax
+	}
+	return size
 }
 
 // Role returns the user role loaded lazily.
@@ -418,6 +440,56 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 			}
 		}
 		return cats, nil
+	})
+}
+
+// Bloggers returns bloggers ordered by username with post counts.
+func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
+	return cd.bloggers.load(func() ([]*db.BloggerCountRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+		ps := pageSize(r)
+		search := r.URL.Query().Get("search")
+		if search != "" {
+			return cd.queries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
+				ViewerID: cd.UserID,
+				Query:    search,
+				Limit:    int32(ps + 1),
+				Offset:   int32(offset),
+			})
+		}
+		return cd.queries.ListBloggers(cd.ctx, db.ListBloggersParams{
+			ViewerID: cd.UserID,
+			Limit:    int32(ps + 1),
+			Offset:   int32(offset),
+		})
+	})
+}
+
+// Writers returns writers ordered by username with article counts.
+func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
+	return cd.writers.load(func() ([]*db.WriterCountRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+		ps := pageSize(r)
+		search := r.URL.Query().Get("search")
+		if search != "" {
+			return cd.queries.SearchWriters(cd.ctx, db.SearchWritersParams{
+				ViewerID: cd.UserID,
+				Query:    search,
+				Limit:    int32(ps + 1),
+				Offset:   int32(offset),
+			})
+		}
+		return cd.queries.ListWriters(cd.ctx, db.ListWritersParams{
+			ViewerID: cd.UserID,
+			Limit:    int32(ps + 1),
+			Offset:   int32(offset),
+		})
 	})
 }
 

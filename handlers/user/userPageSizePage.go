@@ -1,14 +1,12 @@
 package user
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	"log"
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/handlers/common"
+
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func userPageSizePage(w http.ResponseWriter, r *http.Request) {
@@ -33,11 +31,7 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max:      config.AppRuntimeConfig.PageSizeMax,
 		Default:  config.AppRuntimeConfig.PageSizeDefault,
 	}
-	if err := templates.RenderTemplate(w, "pageSizePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "pageSizePage.gohtml", data)
 }
 
 func userPageSizeSaveActionPage(w http.ResponseWriter, r *http.Request) {

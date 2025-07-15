@@ -6,8 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -51,11 +50,7 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM writing_search", &data.Stats.Writings)
 	count("SELECT COUNT(*) FROM imagepost_search", &data.Stats.Images)
 
-	if err := templates.RenderTemplate(w, "adminSearchPage", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "adminSearchPage", data)
 }
 
 func adminSearchRemakeCommentsSearchPage(w http.ResponseWriter, r *http.Request) {
@@ -76,11 +71,7 @@ func adminSearchRemakeCommentsSearchPage(w http.ResponseWriter, r *http.Request)
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeCommentsSearchInsert: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeNewsSearchPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
@@ -100,11 +91,7 @@ func adminSearchRemakeNewsSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeNewsSearchInsert: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeBlogSearchPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
@@ -124,11 +111,7 @@ func adminSearchRemakeBlogSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeBlogsSearchInsert: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeLinkerSearchPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
@@ -148,11 +131,7 @@ func adminSearchRemakeLinkerSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeLinkerSearchInsert: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
@@ -172,11 +151,7 @@ func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) 
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeWritingSearchInsert: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminSearchRemakeImageSearchPage(w http.ResponseWriter, r *http.Request) {
@@ -197,9 +172,5 @@ func adminSearchRemakeImageSearchPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeImagePostSearchInsert: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

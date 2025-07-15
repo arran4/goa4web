@@ -22,7 +22,6 @@ const gdprExportNote = "# Personal data export - handle according to GDPR"
 // admins. The user ID is provided via the "uid" query parameter.
 func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 
 	uid, err := strconv.Atoi(r.URL.Query().Get("uid"))
 	if err != nil {

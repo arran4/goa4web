@@ -3,15 +3,14 @@ package linker
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/core/templates"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
@@ -70,11 +69,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = perms
 
-	if err := templates.RenderTemplate(w, "adminUserLevelsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }
 
 func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {

@@ -2,14 +2,13 @@ package writings
 
 import (
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core/templates"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 var writingsPermissionsPageEnabled = true
@@ -42,11 +41,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Categories = append(data.Categories, categoryRows...)
 
-	if err := templates.RenderTemplate(w, "writingsPage", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "writingsPage", data)
 }
 func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
 

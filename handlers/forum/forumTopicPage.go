@@ -63,8 +63,9 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		UsersIdusers: uid,
-		Idforumtopic: int32(topicId),
+		ViewerID:      uid,
+		Idforumtopic:  int32(topicId),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		log.Printf("showTableTopics Error: %s", err)
@@ -81,8 +82,6 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
-		SeeRoleID:                    topicRow.SeeRoleID,
-		RoleID:                       topicRow.RoleID,
 		Edit:                         false,
 	}
 
@@ -98,8 +97,9 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	threadRows, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-		UsersIdusers:           uid,
-		ForumtopicIdforumtopic: int32(topicId),
+		ViewerID:      uid,
+		TopicID:       int32(topicId),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

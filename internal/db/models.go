@@ -387,18 +387,6 @@ type TemplateOverride struct {
 	UpdatedAt time.Time
 }
 
-type TopicPermission struct {
-	ForumtopicIdforumtopic int32
-	ViewRoleID             sql.NullInt32
-	ReplyRoleID            sql.NullInt32
-	NewthreadRoleID        sql.NullInt32
-	SeeRoleID              sql.NullInt32
-	InviteRoleID           sql.NullInt32
-	ReadRoleID             sql.NullInt32
-	ModRoleID              sql.NullInt32
-	AdminRoleID            sql.NullInt32
-}
-
 type UploadedImage struct {
 	Iduploadedimage int32
 	UsersIdusers    int32
@@ -437,14 +425,6 @@ type UserRole struct {
 	RoleID       int32
 }
 
-type UserTopicPermission struct {
-	UsersIdusers           int32
-	ForumtopicIdforumtopic int32
-	RoleID                 sql.NullInt32
-	Invitemax              sql.NullInt32
-	ExpiresAt              sql.NullTime
-}
-
 type Writing struct {
 	Idwriting          int32
 	UsersIdusers       int32
@@ -469,11 +449,4 @@ type WritingCategory struct {
 type WritingSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingID                      int32
-}
-
-type WritingUserPermission struct {
-	WritingID    int32
-	UsersIdusers int32
-	CanRead      sql.NullBool
-	CanEdit      sql.NullBool
 }

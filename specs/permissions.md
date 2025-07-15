@@ -87,10 +87,7 @@ If no matching grant is found, the action is denied unless the user has the
 
 ## Additional Tables
 
-Some features store per-object defaults using role identifiers:
-
-- `writing_user_permissions` – per writing user access
-- `imagebbs` boards are secured via grants in the `imagebbs` section using the `board` item type
+Some features store per-object defaults using role identifiers. Per-writing permissions are now represented using the `grants` table and no longer rely on a dedicated `writing_user_permissions` table. `imagebbs` boards are secured via grants in the `imagebbs` section using the `board` item type.
 
 Legacy tables `topic_permissions` and `user_topic_permissions` were replaced by
 equivalent rows in the `grants` table. Forum access is now fully controlled via

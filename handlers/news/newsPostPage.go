@@ -120,8 +120,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		UsersIdusers:  uid,
-		Idforumthread: int32(post.ForumthreadID),
+		ViewerID:      uid,
+		ThreadID:      int32(post.ForumthreadID),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

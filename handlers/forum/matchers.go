@@ -2,6 +2,7 @@ package forum
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
@@ -40,8 +41,9 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 		}
 
 		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-			UsersIdusers:  uid,
-			Idforumthread: int32(threadID),
+			ViewerID:      uid,
+			ThreadID:      int32(threadID),
+			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
@@ -52,8 +54,9 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 		}
 
 		topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-			UsersIdusers: uid,
-			Idforumtopic: threadRow.ForumtopicIdforumtopic,
+			ViewerID:      uid,
+			Idforumtopic:  threadRow.ForumtopicIdforumtopic,
+			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {

@@ -64,7 +64,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	var topicRows []*ForumtopicPlus
 	if categoryId == 0 {
-		rows, err := queries.GetAllForumTopicsForUser(r.Context(), uid)
+		rows, err := queries.GetAllForumTopicsForUser(r.Context(), db.GetAllForumTopicsForUserParams{
+			ViewerID:      uid,
+			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		})
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -88,8 +91,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		rows, err := queries.GetAllForumTopicsByCategoryIdForUserWithLastPosterName(r.Context(), db.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams{
-			UsersIdusers:                 uid,
-			ForumcategoryIdforumcategory: int32(categoryId),
+			ViewerID:      uid,
+			CategoryID:    int32(categoryId),
+			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			switch {

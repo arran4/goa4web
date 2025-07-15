@@ -18,54 +18,76 @@ GROUP BY t.idforumtopic;
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
-SELECT t.*, lu.username AS LastPosterUsername, u.expires_at
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section='role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
-LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE t.forumcategory_idforumcategory = ? AND IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0)
+WHERE t.forumcategory_idforumcategory = sqlc.arg(category_id)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY t.lastaddition DESC;
 
 -- name: GetAllForumTopicsForUser :many
-SELECT t.*, lu.username AS LastPosterUsername, r.see_role_id, u.role_id, u.expires_at
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section='role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
-LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY t.lastaddition DESC;
 
 -- name: GetForumTopicByIdForUser :one
-SELECT t.*, lu.username AS LastPosterUsername, r.see_role_id, u.role_id
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section='role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
-LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0) AND t.idforumtopic=?
+WHERE t.idforumtopic = sqlc.arg(idforumtopic)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY t.lastaddition DESC;
 
--- name: DeleteUsersForumTopicLevelPermission :exec
-DELETE FROM user_topic_permissions WHERE forumtopic_idforumtopic = ? AND users_idusers = ?;
-
--- name: UpsertUsersForumTopicLevelPermission :exec
-INSERT INTO user_topic_permissions (forumtopic_idforumtopic, users_idusers, role_id, invitemax, expires_at)
-VALUES (?, ?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE role_id = VALUES(role_id), invitemax = VALUES(invitemax), expires_at = VALUES(expires_at);
-
--- name: GetAllForumTopicsForUserWithPermissionsRestrictionsAndTopic :many
-SELECT u.*, t.*, utl.*, tr.*
-FROM users u
-JOIN user_topic_permissions utl ON utl.users_idusers=u.idusers
-JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
-JOIN topic_permissions tr ON t.idforumtopic = tr.forumtopic_idforumtopic
-WHERE u.idusers = ?;
-
--- name: GetAllForumTopicsWithPermissionsAndTopic :many
-SELECT u.*, t.*, utl.*, tr.*
-FROM users u
-JOIN user_topic_permissions utl ON utl.users_idusers=u.idusers
-JOIN forumtopic t ON utl.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN topic_permissions tr ON t.idforumtopic = tr.forumtopic_idforumtopic;
 
 -- name: GetAllForumCategories :many
 SELECT f.*
@@ -88,15 +110,30 @@ FROM forumtopic
 WHERE idforumtopic = ?;
 
 -- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section='role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
-LEFT JOIN user_topic_permissions u ON u.forumtopic_idforumtopic = t.idforumtopic AND u.users_idusers = ?
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost=fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
-WHERE th.forumtopic_idforumtopic=? AND IF(r.see_role_id IS NOT NULL, r.see_role_id , 0) <= IF(u.role_id IS NOT NULL, u.role_id, 0)
+WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND g.item='topic'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY th.lastaddition DESC;
 
 -- name: RebuildAllForumTopicMetaColumns :exec

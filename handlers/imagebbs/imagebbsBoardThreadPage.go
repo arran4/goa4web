@@ -81,8 +81,9 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		UsersIdusers:  uid,
-		Idforumthread: int32(thid),
+		ViewerID:      uid,
+		ThreadID:      int32(thid),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

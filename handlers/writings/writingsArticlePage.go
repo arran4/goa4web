@@ -74,9 +74,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    uid,
-		Idwriting: int32(articleId),
-		UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID:      uid,
+		Idwriting:     int32(articleId),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -168,8 +168,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		UsersIdusers:  uid,
-		Idforumthread: writing.ForumthreadID,
+		ViewerID:      uid,
+		ThreadID:      writing.ForumthreadID,
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -283,9 +284,9 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		Userid:    uid,
-		Idwriting: int32(aid),
-		UserID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID:      uid,
+		Idwriting:     int32(aid),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

@@ -102,8 +102,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		UsersIdusers:  uid,
-		Idforumthread: link.ForumthreadID,
+		ViewerID:      uid,
+		ThreadID:      link.ForumthreadID,
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

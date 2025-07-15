@@ -107,8 +107,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		data.Blog.IsReplyable = false
 	} else {
 		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-			UsersIdusers:  uid,
-			Idforumthread: blog.ForumthreadID.Int32,
+			ViewerID:      uid,
+			ThreadID:      blog.ForumthreadID.Int32,
+			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			if err != sql.ErrNoRows {

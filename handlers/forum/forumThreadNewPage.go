@@ -79,7 +79,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var topicTitle, author string
-	if trow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{UsersIdusers: uid, Idforumtopic: int32(topicId)}); err == nil {
+	if trow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{ViewerID: uid, Idforumtopic: int32(topicId), ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}}); err == nil {
 		topicTitle = trow.Title.String
 	}
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {

@@ -42,38 +42,6 @@ WHERE ur.users_idusers = ? AND r.name = 'administrator';
 
 
 
--- name: GetUsersTopicLevelByUserIdAndThreadId :one
-SELECT utl.*
-FROM user_topic_permissions utl
-WHERE utl.users_idusers = ? AND utl.forumtopic_idforumtopic = ?
-;
-
--- name: DeleteTopicRestrictionsByForumTopicId :exec
-DELETE FROM topic_permissions WHERE forumtopic_idforumtopic = ?;
-
--- name: UpsertForumTopicRestrictions :exec
-INSERT INTO topic_permissions (forumtopic_idforumtopic, view_role_id, reply_role_id, newthread_role_id, see_role_id, invite_role_id, read_role_id, mod_role_id, admin_role_id)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE
-    view_role_id = VALUES(view_role_id),
-    reply_role_id = VALUES(reply_role_id),
-    newthread_role_id = VALUES(newthread_role_id),
-    see_role_id = VALUES(see_role_id),
-    invite_role_id = VALUES(invite_role_id),
-    read_role_id = VALUES(read_role_id),
-    mod_role_id = VALUES(mod_role_id),
-    admin_role_id = VALUES(admin_role_id);
-
--- name: GetForumTopicRestrictionsByForumTopicId :many
-SELECT t.idforumtopic, r.*
-FROM forumtopic t
-LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic
-WHERE idforumtopic = ?;
-
--- name: GetAllForumTopicRestrictionsWithForumTopicTitle :many
-SELECT t.idforumtopic, r.*
-FROM forumtopic t
-LEFT JOIN topic_permissions r ON t.idforumtopic = r.forumtopic_idforumtopic;
 
 
 -- name: CheckRoleGrant :one

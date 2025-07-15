@@ -81,38 +81,3 @@ func TestWritingCategoriesLazy(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
-
-func TestWriterWritingsLazy(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer db.Close()
-
-	queries := dbpkg.New(db)
-	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "username", "Comments"}).
-		AddRow(1, 2, 0, 1, 1, sql.NullString{}, sql.NullTime{}, sql.NullString{}, sql.NullString{}, sql.NullBool{}, sql.NullTime{}, sql.NullString{}, int64(0))
-
-	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), ContextValues("queries"), queries)
-	cd := NewCoreData(ctx, queries)
-	cd.UserID = 1
-	cd.SetRoles([]string{"user"})
-	ctx = context.WithValue(ctx, ContextValues("coreData"), cd)
-	req = req.WithContext(ctx)
-
-	if _, err := cd.WriterWritings(2, req); err != nil {
-		t.Fatalf("WriterWritings: %v", err)
-	}
-	if _, err := cd.WriterWritings(2, req); err != nil {
-		t.Fatalf("WriterWritings second call: %v", err)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
-}

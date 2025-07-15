@@ -56,7 +56,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 				delete(session.Values, "UID")
 				delete(session.Values, "LoginTime")
 				delete(session.Values, "ExpiryTime")
-				redirectToLogin(w, r, session)
+				RedirectToLogin(w, r, session)
 				return
 			}
 		}
@@ -84,13 +84,11 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
-		var count int32
 		if uid != 0 && hcommon.NotificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(r.Context(), uid)
 			if err != nil {
 				log.Printf("count unread notifications: %v", err)
 			} else {
-				count = int32(c)
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
@@ -99,9 +97,8 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 		cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 		if uid != 0 && hcommon.NotificationsEnabled() {
-			if c, err := cd.UnreadNotificationCount(); err == nil {
-				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
-			}
+			c := cd.UnreadNotificationCount()
+			idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 		}
 		cd.IndexItems = idx
 		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)
@@ -220,7 +217,8 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func redirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
+// RedirectToLogin saves the current request details and redirects to the login page.
+func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
 	if session != nil {
 		backURL := r.URL.RequestURI()
 		session.Values["BackURL"] = backURL

@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/middleware"
 )
 
 func userPage(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +26,7 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		redirectToLogin(w, r, session)
+		middleware.RedirectToLogin(w, r, session)
 		return
 	}
 

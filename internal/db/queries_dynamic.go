@@ -345,3 +345,62 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 	}
 	return rows, nil
 }
+
+// WriterCountRow includes a username with the number of writings.
+type WriterCountRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+// ListWriters returns writers with the number of writings, ordered by username.
+// These wrappers provide a stable API around the generated sqlc queries.
+type ListWritersParams struct {
+	ViewerID int32
+	Limit    int32
+	Offset   int32
+}
+
+func (q *Queries) ListWriters(ctx context.Context, arg ListWritersParams) ([]*WriterCountRow, error) {
+	rows, err := q.ListWritersForViewer(ctx, ListWritersForViewerParams{
+		ViewerID: arg.ViewerID,
+		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+		Limit:    arg.Limit,
+		Offset:   arg.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*WriterCountRow, 0, len(rows))
+	for _, r := range rows {
+		items = append(items, &WriterCountRow{Username: r.Username, Count: r.Count})
+	}
+	return items, nil
+}
+
+// SearchWriters finds writers by username or email with pagination.
+// The query string is wrapped in % to match partial names.
+type SearchWritersParams struct {
+	ViewerID int32
+	Query    string
+	Limit    int32
+	Offset   int32
+}
+
+func (q *Queries) SearchWriters(ctx context.Context, arg SearchWritersParams) ([]*WriterCountRow, error) {
+	like := "%" + arg.Query + "%"
+	rows, err := q.SearchWritersForViewer(ctx, SearchWritersForViewerParams{
+		ViewerID: arg.ViewerID,
+		Query:    like,
+		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+		Limit:    arg.Limit,
+		Offset:   arg.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*WriterCountRow, 0, len(rows))
+	for _, r := range rows {
+		items = append(items, &WriterCountRow{Username: r.Username, Count: r.Count})
+	}
+	return items, nil
+}

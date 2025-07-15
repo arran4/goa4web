@@ -96,6 +96,10 @@ func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
 		Link: fmt.Sprintf("/writings?offset=%d", 0),
 	})
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		Name: "List writers",
+		Link: "/writings/writers",
+	})
 	if offset != 0 {
 		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 			Name: "The start",

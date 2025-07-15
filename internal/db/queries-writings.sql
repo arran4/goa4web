@@ -212,3 +212,67 @@ WHERE w.users_idusers = sqlc.arg(author_id)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC;
+-- name: ListWritersForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT u.username, COUNT(w.idwriting) AS count
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+WHERE (
+    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id))
+    OR w.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+)
+AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='article'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = w.idwriting
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+GROUP BY u.idusers
+ORDER BY u.username
+LIMIT ? OFFSET ?;
+
+-- name: SearchWritersForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT u.username, COUNT(w.idwriting) AS count
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(query)))
+  AND (
+    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id))
+    OR w.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='article'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = w.idwriting
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+GROUP BY u.idusers
+ORDER BY u.username
+LIMIT ? OFFSET ?;

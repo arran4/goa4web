@@ -823,6 +823,160 @@ func (q *Queries) InsertWritingCategory(ctx context.Context, arg InsertWritingCa
 	return err
 }
 
+const listWritersForViewer = `-- name: ListWritersForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT u.username, COUNT(w.idwriting) AS count
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+WHERE (
+    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
+    OR w.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='article'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = w.idwriting
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+GROUP BY u.idusers
+ORDER BY u.username
+LIMIT ? OFFSET ?
+`
+
+type ListWritersForViewerParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
+}
+
+type ListWritersForViewerRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+func (q *Queries) ListWritersForViewer(ctx context.Context, arg ListWritersForViewerParams) ([]*ListWritersForViewerRow, error) {
+	rows, err := q.db.QueryContext(ctx, listWritersForViewer,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListWritersForViewerRow
+	for rows.Next() {
+		var i ListWritersForViewerRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchWritersForViewer = `-- name: SearchWritersForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT u.username, COUNT(w.idwriting) AS count
+FROM writing w
+JOIN users u ON w.users_idusers = u.idusers
+WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))
+  AND (
+    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
+    OR w.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND g.item='article'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = w.idwriting
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+GROUP BY u.idusers
+ORDER BY u.username
+LIMIT ? OFFSET ?
+`
+
+type SearchWritersForViewerParams struct {
+	ViewerID int32
+	Query    string
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
+}
+
+type SearchWritersForViewerRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+func (q *Queries) SearchWritersForViewer(ctx context.Context, arg SearchWritersForViewerParams) ([]*SearchWritersForViewerRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchWritersForViewer,
+		arg.ViewerID,
+		arg.Query,
+		arg.Query,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SearchWritersForViewerRow
+	for rows.Next() {
+		var i SearchWritersForViewerRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateWriting = `-- name: UpdateWriting :exec
 UPDATE writing
 SET title = ?, abstract = ?, writing = ?, private = ?, language_idlanguage = ?

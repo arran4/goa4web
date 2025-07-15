@@ -135,7 +135,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

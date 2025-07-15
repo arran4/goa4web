@@ -26,9 +26,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := data.CoreData.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

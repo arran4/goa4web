@@ -69,7 +69,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

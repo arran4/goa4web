@@ -156,6 +156,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
@@ -204,6 +205,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -253,6 +255,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

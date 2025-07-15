@@ -93,12 +93,14 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+
 	updates := r.PostFormValue("emailupdates") != ""
 	auto := r.PostFormValue("autosubscribe") != ""
 
-	_, err := queries.GetPreferenceByUserID(r.Context(), uid)
+	_, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("GetPreferenceByUserID Error: %s", err)
+		log.Printf("preference load: %v", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

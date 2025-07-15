@@ -8,8 +8,6 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
-
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
@@ -64,11 +62,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	CustomFAQIndex(data.CoreData)
 
-	if err := templates.RenderTemplate(w, "faqPage", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "faqPage", data)
 }
 
 func CustomFAQIndex(data *corecommon.CoreData) {

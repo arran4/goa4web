@@ -19,9 +19,10 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/core/templates"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/upload"
@@ -88,11 +89,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	CustomImageBBSIndex(data.CoreData, r)
 
-	if err := templates.RenderTemplate(w, "boardPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	hcommon.TemplateHandler(w, r, "boardPage.gohtml", data)
 }
 
 func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {

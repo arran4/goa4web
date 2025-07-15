@@ -45,6 +45,8 @@ type CoreData struct {
 	langs        lazyValue[[]*db.UserLanguage]
 	roles        lazyValue[[]string]
 	allRoles     lazyValue[[]*db.Role]
+	allLanguages lazyValue[[]*db.Language]
+	userRoles    lazyValue[[]*db.GetUserRolesRow]
 	announcement lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 
 	event *eventbus.Event
@@ -210,8 +212,8 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 	})
 }
 
-// Languages returns the user's language selections loaded on demand.
-func (cd *CoreData) Languages() ([]*db.UserLanguage, error) {
+// UserLanguages returns the user's language selections loaded on demand.
+func (cd *CoreData) UserLanguages() ([]*db.UserLanguage, error) {
 	return cd.langs.load(func() ([]*db.UserLanguage, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
@@ -227,6 +229,26 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 			return nil, nil
 		}
 		return cd.queries.ListRoles(cd.ctx)
+	})
+}
+
+// Languages lists all defined languages once.
+func (cd *CoreData) Languages() ([]*db.Language, error) {
+	return cd.allLanguages.load(func() ([]*db.Language, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.AllLanguages(cd.ctx)
+	})
+}
+
+// UserRoles fetches the user role assignments once.
+func (cd *CoreData) UserRoles() ([]*db.GetUserRolesRow, error) {
+	return cd.userRoles.load(func() ([]*db.GetUserRolesRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetUserRoles(cd.ctx)
 	})
 }
 

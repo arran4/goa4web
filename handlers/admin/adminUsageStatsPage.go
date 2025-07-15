@@ -1,14 +1,13 @@
 package admin
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -54,9 +53,5 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.StartYear = config.AppRuntimeConfig.StatsStartYear
 
-	if err := templates.RenderTemplate(w, "usageStatsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "usageStatsPage.gohtml", data)
 }

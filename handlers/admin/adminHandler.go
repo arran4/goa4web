@@ -3,14 +3,13 @@ package admin
 import (
 	"database/sql"
 	_ "embed"
+	"log"
+	"net/http"
+
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	"log"
-	"net/http"
-
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func AdminPage(w http.ResponseWriter, r *http.Request) {
@@ -49,10 +48,5 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)
 	count("SELECT COUNT(*) FROM writing", &data.Stats.Writings)
 
-	err := templates.RenderTemplate(w, "adminPage", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "adminPage", data)
 }

@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/handlers/common"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
@@ -64,11 +63,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		LanguageOptions: opts,
 	}
 
-	if err := templates.RenderTemplate(w, "langPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "langPage.gohtml", data)
 }
 func saveUserLanguages(r *http.Request, cd *common.CoreData, queries *db.Queries, uid int32) error {
 	// Clear existing language selections for the user.

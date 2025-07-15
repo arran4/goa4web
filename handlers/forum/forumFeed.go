@@ -59,14 +59,11 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 }
 
 func TopicRssPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
@@ -93,14 +90,11 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 
 	topic, err := cd.ForumTopicByID(int32(topicID))

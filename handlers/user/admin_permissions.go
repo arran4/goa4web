@@ -4,13 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"sort"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -45,12 +42,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	})
 	data.Rows = rows
 
-	err = templates.RenderTemplate(w, "usersPermissionsPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "usersPermissionsPage.gohtml", data)
 }
 
 func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
@@ -74,12 +66,7 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
@@ -99,12 +86,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r))
-	if err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
@@ -131,9 +113,5 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

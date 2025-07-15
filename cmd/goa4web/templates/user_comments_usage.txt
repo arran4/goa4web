@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} user comments <command> [<args>]
+
+Commands:
+  list        list admin comments for a user
+  add         add an admin comment to a user
+
+Examples:
+  {{.Prog}} user comments list -id 3
+  {{.Prog}} user comments add -id 3 -comment "needs review"
+
+Flags:
+{{template "flags" .Flags}}

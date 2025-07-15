@@ -1,8 +1,6 @@
 package imagebbs
 
 import (
-	"database/sql"
-	"errors"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -26,24 +24,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		BoardNumber: 0,
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
-	subBoardRows, err := queries.GetAllBoardsByParentBoardIdForUser(r.Context(), db.GetAllBoardsByParentBoardIdForUserParams{
-		ViewerID:     data.CoreData.UserID,
-		ParentID:     0,
-		ViewerUserID: sql.NullInt32{Int32: data.CoreData.UserID, Valid: data.CoreData.UserID != 0},
-	})
+	boards, err := data.CoreData.ImageBoards(0)
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		log.Printf("imageboards: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	data.Boards = subBoardRows
+	data.Boards = boards
 
 	if err := templates.RenderTemplate(w, "imagebbsPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

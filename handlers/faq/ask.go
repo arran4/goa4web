@@ -23,12 +23,13 @@ func AskPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:           cd,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
 	}
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

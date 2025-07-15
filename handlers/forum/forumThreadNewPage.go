@@ -29,12 +29,13 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(hcommon.KeyCoreData).(*CoreData)
 	data := Data{
-		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*CoreData),
+		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

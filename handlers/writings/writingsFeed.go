@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func feedGen(r *http.Request) (*feeds.Feed, error) {
+func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 	feed := &feeds.Feed{
 		Title:       "Latest writings",
 		Link:        &feeds.Link{Href: r.URL.String()},
@@ -20,15 +20,12 @@ func feedGen(r *http.Request) (*feeds.Feed, error) {
 		Created:     time.Now(),
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	rows, err := cd.LatestWritings()
+	rows, err := cd.LatestWritings(r)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, row := range rows {
-		if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
-			continue
-		}
 		desc := row.Abstract.String
 		if desc == "" {
 			desc = row.Writing.String
@@ -60,7 +57,8 @@ func feedGen(r *http.Request) (*feeds.Feed, error) {
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	feed, err := feedGen(r)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -74,7 +72,8 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	feed, err := feedGen(r)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -40,15 +40,9 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetPublicWritingsByUserForViewer(r.Context(), db.GetPublicWritingsByUserForViewerParams{
-		ViewerID: cd.UserID,
-		AuthorID: u.Idusers,
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		Limit:    15,
-		Offset:   int32(offset),
-	})
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("GetPublicWritingsByUser Error: %s", err)
+	rows, err := cd.WriterWritings(u.Idusers, r)
+	if err != nil {
+		log.Printf("WriterWritings: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

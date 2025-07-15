@@ -87,7 +87,8 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
-		cd := common.NewCoreData(r.Context(), queries,
+
+    cd := common.NewCoreData(r.Context(), queries,
 			common.WithImageURLMapper(imagesign.MapURL),
 			common.WithSession(session))
 		cd.SetRoles(roles)

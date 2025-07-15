@@ -26,7 +26,8 @@ func NewFuncs(r *http.Request) template.FuncMap {
 
 // Funcs returns template helpers configured with cd's ImageURLMapper.
 func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
-	var LatestNews any
+	// newsCache memoizes LatestNews results for a single template execution.
+	var newsCache any
 	var LatestWritings any
 	mapper := cd.ImageURLMapper
 	return map[string]any{
@@ -68,14 +69,14 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			return u + "?mode=admin"
 		},
 		"LatestNews": func() (any, error) {
-			if LatestNews != nil {
-				return LatestNews, nil
+			if newsCache != nil {
+				return newsCache, nil
 			}
 			posts, err := cd.LatestNews(r)
 			if err != nil {
 				return nil, fmt.Errorf("latestNews: %w", err)
 			}
-			LatestNews = posts
+			newsCache = posts
 			return posts, nil
 		},
 		"LatestWritings": func() (any, error) {

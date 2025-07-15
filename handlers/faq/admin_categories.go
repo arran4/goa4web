@@ -36,8 +36,6 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	CustomFAQIndex(data.CoreData)
-
 	if err := templates.RenderTemplate(w, "adminCategoriesPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

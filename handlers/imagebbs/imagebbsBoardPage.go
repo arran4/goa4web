@@ -86,8 +86,6 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Posts = posts
 
-	CustomImageBBSIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "boardPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

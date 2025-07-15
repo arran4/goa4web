@@ -62,7 +62,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.FAQ = append(data.FAQ, &currentCategoryFAQs)
 	}
 
-	CustomFAQIndex(data.CoreData)
+	// index links provided via middleware
 
 	if err := templates.RenderTemplate(w, "faqPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

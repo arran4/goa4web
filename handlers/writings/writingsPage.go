@@ -59,16 +59,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.Categories = append(data.Categories, cat)
 	}
 
-	CustomWritingsIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "writingsPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
-
 func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
+
 	data.CustomIndexItems = append(data.CustomIndexItems,
 		corecommon.IndexItem{Name: "Atom Feed", Link: "/writings/atom"},
 		corecommon.IndexItem{Name: "RSS Feed", Link: "/writings/rss"},

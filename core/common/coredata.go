@@ -39,13 +39,14 @@ type CoreData struct {
 	ctx     context.Context
 	queries *db.Queries
 
-	user         lazyValue[*db.User]
-	perms        lazyValue[[]*db.GetPermissionsByUserIDRow]
-	pref         lazyValue[*db.Preference]
-	langs        lazyValue[[]*db.UserLanguage]
-	roles        lazyValue[[]string]
-	allRoles     lazyValue[[]*db.Role]
-	announcement lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	user            lazyValue[*db.User]
+	perms           lazyValue[[]*db.GetPermissionsByUserIDRow]
+	pref            lazyValue[*db.Preference]
+	langs           lazyValue[[]*db.UserLanguage]
+	roles           lazyValue[[]string]
+	allRoles        lazyValue[[]*db.Role]
+	announcement    lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	forumCategories lazyValue[[]*db.Forumcategory]
 
 	event *eventbus.Event
 }
@@ -243,6 +244,16 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 		return row, nil
 	})
 	return ann
+}
+
+// ForumCategories loads all forum categories once.
+func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
+	return cd.forumCategories.load(func() ([]*db.Forumcategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetAllForumCategories(cd.ctx)
+	})
 }
 
 // CanEditAny reports whether cd is in admin mode with administrator role.

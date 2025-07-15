@@ -52,15 +52,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.CopyDataToSubCategories = copyDataToSubCategories
 
-	categoryRows, err := queries.GetAllForumCategories(r.Context())
+	categoryRows, err := data.CoreData.ForumCategories()
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllForumCategories Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
+		log.Printf("getAllForumCategories Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
 	}
 	var topicRows []*ForumtopicPlus
 	if categoryId == 0 {
@@ -128,8 +124,6 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(categoryId))
 		data.Back = true
 	}
-
-	CustomForumIndex(data.CoreData, r)
 
 	if err := templates.RenderTemplate(w, "forumPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

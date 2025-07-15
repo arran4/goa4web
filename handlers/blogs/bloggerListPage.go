@@ -95,8 +95,6 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	CustomBlogIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "bloggerListPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -50,8 +50,6 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	CustomLinkerIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "adminAddPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

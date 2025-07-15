@@ -195,8 +195,6 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,
 	}
 
-	CustomNewsIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "postPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

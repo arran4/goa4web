@@ -40,8 +40,6 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = rows
 
-	CustomWritingsIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "adminUserLevelsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

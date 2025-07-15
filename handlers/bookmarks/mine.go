@@ -99,7 +99,6 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
-	bookmarksCustomIndex(data.CoreData)
 
 	if err := templates.RenderTemplate(w, "minePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

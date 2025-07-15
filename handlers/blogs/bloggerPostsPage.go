@@ -89,7 +89,6 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 			EditUrl: editUrl,
 		})
 	}
-	CustomBlogIndex(data.CoreData, r)
 
 	if err := templates.RenderTemplate(w, "bloggerPostsPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)

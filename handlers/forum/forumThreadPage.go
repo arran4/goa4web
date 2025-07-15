@@ -140,15 +140,11 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Edit:                         false,
 	}
 
-	categoryRows, err := queries.GetAllForumCategories(r.Context())
+	categoryRows, err := data.CoreData.ForumCategories()
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllForumCategories Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
+		log.Printf("getAllForumCategories Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
 	}
 
 	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})

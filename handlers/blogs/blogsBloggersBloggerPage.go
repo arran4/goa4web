@@ -31,8 +31,6 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	//}
 	//data.Rows = rows
 
-	CustomBlogIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "bloggersBloggerPage.gohtml", data, common.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

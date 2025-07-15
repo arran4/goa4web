@@ -39,8 +39,6 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM forumtopic", &data.Stats.Topics)
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.Threads)
 
-	CustomForumIndex(data.CoreData, r)
-
 	if err := templates.RenderTemplate(w, "forumAdminPage", data, corecommon.NewFuncs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

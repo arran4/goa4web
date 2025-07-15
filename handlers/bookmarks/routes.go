@@ -1,6 +1,8 @@
 package bookmarks
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
@@ -10,10 +12,18 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
+// AddBookmarksIndex injects bookmark index links into CoreData.
+func AddBookmarksIndex(h http.Handler) http.Handler {
+	return hcommon.IndexMiddleware(func(cd *hcommon.CoreData, r *http.Request) {
+		bookmarksCustomIndex(cd)
+	})(h)
+}
+
 // RegisterRoutes attaches the bookmarks endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
+	br.Use(AddBookmarksIndex)
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(auth.RequiresAnAccount())
 	br.HandleFunc("/edit", SaveTask.Page).Methods("GET").MatcherFunc(auth.RequiresAnAccount())

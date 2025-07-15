@@ -55,6 +55,7 @@ type CoreData struct {
 	perms           lazyValue[[]*db.GetPermissionsByUserIDRow]
 	pref            lazyValue[*db.Preference]
 	langs           lazyValue[[]*db.UserLanguage]
+	languageList    lazyValue[[]*db.Language]
 	roles           lazyValue[[]string]
 	allRoles        lazyValue[[]*db.Role]
 	announcement    lazyValue[*db.GetActiveAnnouncementWithNewsRow]
@@ -225,13 +226,23 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 	})
 }
 
-// Languages returns the user's language selections loaded on demand.
-func (cd *CoreData) Languages() ([]*db.UserLanguage, error) {
+// UserLanguages returns the user's language selections loaded on demand.
+func (cd *CoreData) UserLanguages() ([]*db.UserLanguage, error) {
 	return cd.langs.load(func() ([]*db.UserLanguage, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}
 		return cd.queries.GetUserLanguages(cd.ctx, cd.UserID)
+	})
+}
+
+// Languages returns the available languages loaded once.
+func (cd *CoreData) Languages() ([]*db.Language, error) {
+	return cd.languageList.load(func() ([]*db.Language, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.FetchLanguages(cd.ctx)
 	})
 }
 

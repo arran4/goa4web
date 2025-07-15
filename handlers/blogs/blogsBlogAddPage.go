@@ -36,7 +36,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 		Mode:               "Add",
 	}
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

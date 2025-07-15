@@ -15,6 +15,7 @@ import (
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
@@ -23,7 +24,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 		}
 		config.AppRuntimeConfig.FeedsEnabled = r.PostFormValue("feeds_enabled") != ""
 		langID, _ := strconv.Atoi(r.PostFormValue("default_language"))
-		langs, _ := queries.FetchLanguages(r.Context())
+		langs, _ := cd.Languages()
 		name := ""
 		for _, l := range langs {
 			if int(l.Idlanguage) == langID {
@@ -50,7 +51,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
 	}
 	data.CoreData.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
-	if langs, err := queries.FetchLanguages(r.Context()); err == nil {
+	if langs, err := cd.Languages(); err == nil {
 		data.Languages = langs
 	}
 

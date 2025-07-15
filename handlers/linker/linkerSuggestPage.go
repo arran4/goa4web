@@ -29,6 +29,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
+	cd := data.CoreData
 
 	categoryRows, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {
@@ -43,7 +44,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -59,6 +59,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		BoardId:       bid,
 		ForumThreadId: thid,
 	}
+	cd := data.CoreData
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
@@ -97,7 +98,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

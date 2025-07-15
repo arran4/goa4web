@@ -34,7 +34,7 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := data.CoreData.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

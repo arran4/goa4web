@@ -44,7 +44,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 	data.Writing = writing
 
-	languageRows, err := queries.FetchLanguages(r.Context())
+	languageRows, err := data.CoreData.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

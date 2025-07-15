@@ -43,7 +43,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	languageRows, err := data.CoreData.Languages()
+	languageRows, err := data.CoreData.AllLanguages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

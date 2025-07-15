@@ -84,13 +84,11 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if uid != 0 {
 			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
 		}
-		var count int32
 		if uid != 0 && hcommon.NotificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(r.Context(), uid)
 			if err != nil {
 				log.Printf("count unread notifications: %v", err)
 			} else {
-				count = int32(c)
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
@@ -99,9 +97,8 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 		cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 		if uid != 0 && hcommon.NotificationsEnabled() {
-			if c, err := cd.UnreadNotificationCount(); err == nil {
-				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
-			}
+			c := cd.UnreadNotificationCount()
+			idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 		}
 		cd.IndexItems = idx
 		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)

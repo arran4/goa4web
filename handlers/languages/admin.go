@@ -30,7 +30,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
 
-	rows, err := cd.Languages()
+	rows, err := cd.AllLanguages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

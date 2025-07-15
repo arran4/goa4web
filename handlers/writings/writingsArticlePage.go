@@ -145,7 +145,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.CanEdit = (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("content writer") && data.IsAuthor)
 	data.CategoryId = writing.WritingCategoryID
 
-	languageRows, err := cd.Languages()
+	languageRows, err := cd.AllLanguages()
 	if err != nil {
 		log.Printf("FetchLanguages Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

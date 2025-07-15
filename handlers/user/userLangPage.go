@@ -36,7 +36,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	pref, _ := cd.Preference()
 	userLangs, _ := queries.GetUserLanguages(r.Context(), cd.UserID)
 
-	langs, err := cd.Languages()
+	langs, err := cd.AllLanguages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -76,7 +76,7 @@ func saveUserLanguages(r *http.Request, cd *common.CoreData, queries *db.Queries
 		return err
 	}
 
-	langs, err := cd.Languages()
+	langs, err := cd.AllLanguages()
 	if err != nil {
 		return err
 	}

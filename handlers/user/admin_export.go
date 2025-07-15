@@ -31,7 +31,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := corecommon.NewCoreData(r.Context(), queries)
+	cd = corecommon.NewCoreData(r.Context(), queries)
 	cd.UserID = int32(uid)
 
 	user, err := cd.CurrentUser()
@@ -51,9 +51,9 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	langs, err := cd.Languages()
+	langs, err := queries.GetUserLanguages(r.Context(), cd.UserID)
 	if err != nil {
-		log.Printf("load languages: %v", err)
+		log.Printf("load user languages: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

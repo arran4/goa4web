@@ -62,7 +62,7 @@ type CoreData struct {
 	user              lazyValue[*db.User]
 	perms             lazyValue[[]*db.GetPermissionsByUserIDRow]
 	pref              lazyValue[*db.Preference]
-	langs             lazyValue[[]*db.Language]
+	languagesAll      lazyValue[[]*db.Language]
 	roles             lazyValue[[]string]
 	allRoles          lazyValue[[]*db.Role]
 	announcement      lazyValue[*db.GetActiveAnnouncementWithNewsRow]
@@ -261,9 +261,9 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 	})
 }
 
-// Languages returns the list of available languages loaded on demand.
-func (cd *CoreData) Languages() ([]*db.Language, error) {
-	return cd.langs.load(func() ([]*db.Language, error) {
+// AllLanguages returns every defined language loaded once from the database.
+func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
+	return cd.languagesAll.load(func() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -415,9 +415,9 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-    if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
-      continue
-    }
+		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+			continue
+		}
 		posts = append(posts, &NewsPost{
 			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
 			ShowReply:    cd.UserID != 0,

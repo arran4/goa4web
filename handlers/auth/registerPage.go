@@ -54,7 +54,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -119,7 +119,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

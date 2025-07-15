@@ -29,7 +29,7 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing fields", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -57,7 +57,7 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if row.Email != "" {
 		page := r.URL.Scheme + "://" + r.Host + "/login"
-		_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, common.TaskUserResetPassword, code)
+		_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, hcommon.TaskUserResetPassword, code)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

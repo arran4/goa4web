@@ -186,20 +186,24 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 			},
 		)
 	}
-	if threadId != "" && topicId != "" { // TODO Permissions system
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: "Write Reply",
-				Link: fmt.Sprintf("/forum/topic/%s/thread/%s/reply", topicId, threadId),
-			},
-		)
+	if threadId != "" && topicId != "" {
+		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "reply", int32(tid)) {
+			data.CustomIndexItems = append(data.CustomIndexItems,
+				IndexItem{
+					Name: "Write Reply",
+					Link: fmt.Sprintf("/forum/topic/%s/thread/%s/reply", topicId, threadId),
+				},
+			)
+		}
 	}
-	if categoryId != "" && topicId != "" { // TODO Permissions system
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: "Create Thread",
-				Link: fmt.Sprintf("/forum/topic/%s/new", topicId),
-			},
-		)
+	if categoryId != "" && topicId != "" {
+		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "post", int32(tid)) {
+			data.CustomIndexItems = append(data.CustomIndexItems,
+				IndexItem{
+					Name: "Create Thread",
+					Link: fmt.Sprintf("/forum/topic/%s/new", topicId),
+				},
+			)
+		}
 	}
 }

@@ -1,19 +1,17 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/config"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/eventbus"
 	"log"
 	"net/http"
 	"net/mail"
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/config"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 type resendQueueTask struct{ eventbus.BasicTaskEvent }
@@ -60,11 +58,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
-	if err := templates.RenderTemplate(w, "emailQueuePage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
 }
 
 func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {

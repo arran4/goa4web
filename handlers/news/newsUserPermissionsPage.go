@@ -4,12 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -46,11 +44,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	if err := templates.RenderTemplate(w, "userPermissionsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "userPermissionsPage.gohtml", data)
 }
 
 func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
@@ -75,11 +69,7 @@ func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
 
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func NewsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
@@ -99,9 +89,5 @@ func NewsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

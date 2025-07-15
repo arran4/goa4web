@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,8 +12,9 @@ import (
 	"strings"
 	"time"
 
+	common "github.com/arran4/goa4web/handlers/common"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/internal/email"
@@ -70,11 +69,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		data.UserPreferences.AutoSubscribeReplies = true
 	}
 
-	if err := templates.RenderTemplate(w, "emailPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("user email page: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "emailPage.gohtml", data)
 }
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

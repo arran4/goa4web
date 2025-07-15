@@ -10,8 +10,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
@@ -100,9 +98,5 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		PageSize: size,
 	}
 
-	if err := templates.RenderTemplate(w, "gallery.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "gallery.gohtml", data)
 }

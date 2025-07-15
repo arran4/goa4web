@@ -4,13 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"log"
 	"net/http"
 	"strconv"
+
+	corecommon "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -150,11 +152,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Languages = languageRows
 
-	if err := templates.RenderTemplate(w, "boardThreadPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
 }
 
 func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {

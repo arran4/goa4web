@@ -8,16 +8,12 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-// TemplateHandler renders tmpl using only CoreData from the request context.
-func TemplateHandler(tmpl string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data := struct{ *CoreData }{r.Context().Value(KeyCoreData).(*CoreData)}
-		if err := templates.RenderTemplate(w, tmpl, data, corecommon.NewFuncs(r)); err != nil {
-			log.Printf("Template Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	})
+// TemplateHandler renders the template and handles any template error.
+func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data any) {
+	if err := templates.RenderTemplate(w, tmpl, data, corecommon.NewFuncs(r)); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 // IndexMiddleware injects custom index items via fn before executing the next handler.

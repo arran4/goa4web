@@ -103,6 +103,7 @@ WHERE ur.users_idusers = ? AND r.name = ?
 LIMIT 1;
 
 -- name: GetPermissionsByUserID :many
+-- Lists the role names granted to a user.
 SELECT ur.iduser_roles, ur.users_idusers, r.name
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id

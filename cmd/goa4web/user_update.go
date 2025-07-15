@@ -69,16 +69,16 @@ func (c *userUpdateCmd) Run() error {
 			return fmt.Errorf("check role: %w", err)
 		}
 
-		var perm *dbpkg.GetUserRolesRow
+		var perm *dbpkg.GetPermissionsByUserIDRow
 		if len(perms) > 0 {
 			perm = perms[0]
 		}
 
-		if perm != nil && perm.Role != "" {
-			if perm.Role == "administrator" && c.Role != "administrator" && c.rootCmd.Verbosity > 0 {
+		if perm != nil && perm.Name != "" {
+			if perm.Name == "administrator" && c.Role != "administrator" && c.rootCmd.Verbosity > 0 {
 				fmt.Printf("warning: removing administrator from %s\n", c.Username)
 			}
-			if c.Role == "anonymous" || perm.Role != c.Role {
+			if c.Role == "anonymous" || perm.Name != c.Role {
 				if err := queries.DeleteUserRole(ctx, perm.IduserRoles); err != nil {
 					return fmt.Errorf("update role: %w", err)
 				}
@@ -86,7 +86,7 @@ func (c *userUpdateCmd) Run() error {
 			}
 		}
 
-		if c.Role != "anonymous" && (perm == nil || perm.Role != c.Role) {
+		if c.Role != "anonymous" && (perm == nil || perm.Name != c.Role) {
 			if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
 				UsersIdusers: u.Idusers,
 				Name:         c.Role,

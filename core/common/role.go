@@ -44,8 +44,8 @@ func Allowed(r *http.Request, roles ...string) bool {
 	var rolesList []string
 	rolesList = append(rolesList, "anonymous", "user")
 	for _, p := range perms {
-		if p.Role != "" {
-			rolesList = append(rolesList, p.Role)
+		if p.Name != "" {
+			rolesList = append(rolesList, p.Name)
 		}
 	}
 	cd = NewCoreData(r.Context(), queries)

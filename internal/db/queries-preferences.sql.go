@@ -10,6 +10,26 @@ import (
 	"database/sql"
 )
 
+const getPreferenceByUserID = `-- name: GetPreferenceByUserID :one
+SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+FROM preferences
+WHERE users_idusers = ?
+`
+
+func (q *Queries) GetPreferenceByUserID(ctx context.Context, usersIdusers int32) (*Preference, error) {
+	row := q.db.QueryRowContext(ctx, getPreferenceByUserID, usersIdusers)
+	var i Preference
+	err := row.Scan(
+		&i.Idpreferences,
+		&i.LanguageIdlanguage,
+		&i.UsersIdusers,
+		&i.Emailforumupdates,
+		&i.PageSize,
+		&i.AutoSubscribeReplies,
+	)
+	return &i, err
+}
+
 const insertEmailPreference = `-- name: InsertEmailPreference :exec
 INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers)
 VALUES (?, ?, ?)
@@ -23,6 +43,22 @@ type InsertEmailPreferenceParams struct {
 
 func (q *Queries) InsertEmailPreference(ctx context.Context, arg InsertEmailPreferenceParams) error {
 	_, err := q.db.ExecContext(ctx, insertEmailPreference, arg.Emailforumupdates, arg.AutoSubscribeReplies, arg.UsersIdusers)
+	return err
+}
+
+const insertPreference = `-- name: InsertPreference :exec
+INSERT INTO preferences (language_idlanguage, users_idusers, page_size)
+VALUES (?, ?, ?)
+`
+
+type InsertPreferenceParams struct {
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	PageSize           int32
+}
+
+func (q *Queries) InsertPreference(ctx context.Context, arg InsertPreferenceParams) error {
+	_, err := q.db.ExecContext(ctx, insertPreference, arg.LanguageIdlanguage, arg.UsersIdusers, arg.PageSize)
 	return err
 }
 
@@ -55,5 +91,20 @@ type UpdateEmailForumUpdatesByUserIDParams struct {
 
 func (q *Queries) UpdateEmailForumUpdatesByUserID(ctx context.Context, arg UpdateEmailForumUpdatesByUserIDParams) error {
 	_, err := q.db.ExecContext(ctx, updateEmailForumUpdatesByUserID, arg.Emailforumupdates, arg.UsersIdusers)
+	return err
+}
+
+const updatePreference = `-- name: UpdatePreference :exec
+UPDATE preferences SET language_idlanguage = ?, page_size = ? WHERE users_idusers = ?
+`
+
+type UpdatePreferenceParams struct {
+	LanguageIdlanguage int32
+	PageSize           int32
+	UsersIdusers       int32
+}
+
+func (q *Queries) UpdatePreference(ctx context.Context, arg UpdatePreferenceParams) error {
+	_, err := q.db.ExecContext(ctx, updatePreference, arg.LanguageIdlanguage, arg.PageSize, arg.UsersIdusers)
 	return err
 }

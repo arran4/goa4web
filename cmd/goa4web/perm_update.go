@@ -41,8 +41,8 @@ func (c *permUpdateCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	if err := queries.UpdatePermission(ctx, dbpkg.UpdatePermissionParams{
-		ID:   int32(c.ID),
-		Role: c.Role,
+		IduserRoles: int32(c.ID),
+		Name:        c.Role,
 	}); err != nil {
 		return fmt.Errorf("update permission: %w", err)
 	}

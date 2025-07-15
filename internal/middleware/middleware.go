@@ -76,8 +76,8 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			perms, err := queries.GetPermissionsByUserID(r.Context(), uid)
 			if err == nil {
 				for _, p := range perms {
-					if p.Role != "" {
-						roles = append(roles, p.Role)
+					if p.Name != "" {
+						roles = append(roles, p.Name)
 					}
 				}
 			}
@@ -91,7 +91,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		if uid != 0 && hcommon.NotificationsEnabled() {
 			c, err := queries.CountUnreadNotifications(r.Context(), uid)
 			if err == nil {
-				count = c
+				count = int32(c)
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}

@@ -14,12 +14,12 @@ import (
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
-		ForumTopics       []*db.BoardPostCountRow
-		ForumCategories   []*db.CategoryCountRow
-		WritingCategories []*db.CategoryCountRow
+		ForumTopics       []*db.ForumTopicThreadCountsRow
+		ForumCategories   []*db.ForumCategoryThreadCountsRow
+		WritingCategories []*db.WritingCategoryCountsRow
 		LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
-		Imageboards       []*db.BoardPostCountRow
-		Users             []*db.UserPostCountRow
+		Imageboards       []*db.ImageboardPostCountsRow
+		Users             []*db.UserPostCountsRow
 		Monthly           []*db.MonthlyUsageRow
 		UserMonthly       []*db.UserMonthlyUsageRow
 		StartYear         int

@@ -49,7 +49,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Boards = append(data.Boards, &BoardRow{
 			Imageboard: b,
-			Threads:    threads,
+			Threads:    int32(threads),
 			ModLevel:   0,
 			Visible:    true,
 			Nsfw:       false,

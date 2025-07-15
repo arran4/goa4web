@@ -16,7 +16,7 @@ func TestTemplateOverride(t *testing.T) {
 	q := New(db)
 
 	mock.ExpectExec("INSERT INTO template_overrides").WithArgs("t", "body").WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.SetTemplateOverride(context.Background(), "t", "body"); err != nil {
+	if err := q.SetTemplateOverride(context.Background(), SetTemplateOverrideParams{Name: "t", Body: "body"}); err != nil {
 		t.Fatalf("set: %v", err)
 	}
 

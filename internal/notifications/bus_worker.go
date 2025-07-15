@@ -252,7 +252,7 @@ func notifyMissingEmail(ctx context.Context, q *dbpkg.Queries, userID int32) {
 	if q == nil || userID == 0 {
 		return
 	}
-	last, err := q.LastNotificationByMessage(ctx, dbpkg.LastNotificationByMessageParams{UsersIdusers: userID, Message: "missing email address"})
+	last, err := q.LastNotificationByMessage(ctx, dbpkg.LastNotificationByMessageParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}})
 	if err == nil && time.Since(last.CreatedAt) < 7*24*time.Hour {
 		return
 	}

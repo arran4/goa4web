@@ -66,12 +66,8 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
-	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		ViewerID:      uid,
-		Idforumtopic:  int32(topicID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
@@ -108,12 +104,9 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 
-	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		ViewerID:      uid,
-		Idforumtopic:  int32(topicID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)

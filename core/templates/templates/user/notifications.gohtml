@@ -1,6 +1,7 @@
 {{ template "head" $ }}
+<div id="notifications-list">
 {{ range .Notifications }}
-    <div class="notification">
+    <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
         {{ if .Link.Valid }}<a href="{{ .Link.String }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
         <form method="post" action="/usr/notifications/dismiss" style="display:inline">
             {{ csrfField }}
@@ -9,8 +10,9 @@
         </form>
     </div>
 {{ else }}
-    No notifications
+    <div id="notifications-empty">No notifications</div>
 {{ end }}
+</div>
 <form method="post" action="/usr/notifications">
     {{ csrfField }}
     <select name="email_id">

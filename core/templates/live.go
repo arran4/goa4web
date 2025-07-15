@@ -37,3 +37,11 @@ func GetPasteImageJSData() []byte {
 	}
 	return b
 }
+
+func GetNotificationsJSData() []byte {
+	b, err := os.ReadFile("core/templates/assets/notifications.js")
+	if err != nil {
+		panic(err)
+	}
+	return b
+}

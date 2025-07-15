@@ -4,15 +4,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	db "github.com/arran4/goa4web/internal/db"
+
+	"log"
+	"net/http"
+	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
-	"log"
-	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -182,9 +184,5 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := templates.RenderTemplate(w, "commentPage.gohtml", data, common.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "commentPage.gohtml", data)
 }

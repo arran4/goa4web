@@ -1,14 +1,13 @@
 package forum
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+
 	"github.com/gorilla/mux"
 )
 
@@ -47,11 +46,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		g.Threads = append(g.Threads, row)
 	}
 
-	if err := templates.RenderTemplate(w, "adminThreadsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "adminThreadsPage.gohtml", data)
 }
 
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {

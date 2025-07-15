@@ -5,10 +5,6 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"io"
 	"log"
 	"net/http"
@@ -16,6 +12,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	corecommon "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -67,11 +69,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Posts = posts
 
-	if err := templates.RenderTemplate(w, "boardPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "boardPage.gohtml", data)
 }
 
 func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {

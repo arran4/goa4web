@@ -3,12 +3,13 @@ package auth
 import (
 	"database/sql"
 	"errors"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -26,10 +27,7 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 		Error:    errMsg,
 	}
-	if err := templates.RenderTemplate(w, "loginPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
+	common.TemplateHandler(w, r, "loginPage.gohtml", data)
 }
 
 // LoginUserPassPage serves the username/password login form.
@@ -79,9 +77,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 			}
 			session.Values["PendingResetID"] = reset.ID
 			_ = session.Save(r, w)
-			if err := templates.RenderTemplate(w, "passwordVerifyPage.gohtml", struct{ *corecommon.CoreData }{r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)}, corecommon.NewFuncs(r)); err != nil {
-				log.Printf("template: %v", err)
-			}
+			common.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *corecommon.CoreData }{r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)})
 			return
 		}
 		_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{

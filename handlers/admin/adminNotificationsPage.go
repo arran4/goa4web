@@ -2,15 +2,14 @@ package admin
 
 import (
 	"database/sql"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -50,11 +49,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	if err := templates.RenderTemplate(w, "notificationsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "notificationsPage.gohtml", data)
 }
 
 func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {

@@ -3,15 +3,14 @@ package forum
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/handlers/common"
+	db "github.com/arran4/goa4web/internal/db"
+
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -28,12 +27,9 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 
@@ -96,9 +92,5 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Threads = threadRows
 
-	if err := templates.RenderTemplate(w, "topicsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "topicsPage.gohtml", data)
 }

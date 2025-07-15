@@ -4,8 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -24,11 +22,7 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Sessions = items
-	if err := templates.RenderTemplate(w, "sessionsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "sessionsPage.gohtml", data)
 }
 
 func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
@@ -49,9 +43,5 @@ func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}
-	if err := templates.RenderTemplate(w, "runTaskPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("template error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

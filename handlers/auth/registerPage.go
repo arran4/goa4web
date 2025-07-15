@@ -7,15 +7,25 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arran4/goa4web/config"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
+
+	"github.com/arran4/goa4web/config"
+	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
 // RegisterPage renders the user registration form.
 func RegisterPage(w http.ResponseWriter, r *http.Request) {
-	hcommon.TemplateHandler("registerPage.gohtml").ServeHTTP(w, r)
+	type Data struct {
+		*corecommon.CoreData
+	}
+
+	data := Data{
+		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+	}
+
+	common.TemplateHandler(w, r, "registerPage.gohtml", data)
 }
 
 // RegisterActionPage handles user creation from the registration form.

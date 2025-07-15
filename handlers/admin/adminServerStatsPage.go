@@ -1,13 +1,10 @@
 package admin
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	"log"
 	"net/http"
 	"runtime"
 
-	"github.com/arran4/goa4web/core/templates"
+	common "github.com/arran4/goa4web/handlers/common"
 )
 
 func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -42,9 +39,5 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err := templates.RenderTemplate(w, "serverStatsPage.gohtml", data, corecommon.NewFuncs(r)); err != nil {
-		log.Printf("Template Error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	common.TemplateHandler(w, r, "serverStatsPage.gohtml", data)
 }

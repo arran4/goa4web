@@ -61,6 +61,8 @@ type CoreData struct {
 	forumCategories lazyValue[[]*db.Forumcategory]
 	latestNews      lazyValue[[]*NewsPost]
 	writeCats       lazyValue[[]*db.WritingCategory]
+	// newsAnnouncements caches announcements by news ID.
+	newsAnnouncements map[int32]*lazyValue[*db.SiteAnnouncement]
 
 	event *eventbus.Event
 }
@@ -260,6 +262,29 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 	return ann
 }
 
+// AnnouncementForNews fetches the latest announcement for the given news post
+// only once.
+func (cd *CoreData) AnnouncementForNews(id int32) (*db.SiteAnnouncement, error) {
+	if cd.newsAnnouncements == nil {
+		cd.newsAnnouncements = map[int32]*lazyValue[*db.SiteAnnouncement]{}
+	}
+	lv, ok := cd.newsAnnouncements[id]
+	if !ok {
+		lv = &lazyValue[*db.SiteAnnouncement]{}
+		cd.newsAnnouncements[id] = lv
+	}
+	return lv.load(func() (*db.SiteAnnouncement, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return ann, err
+	})
+}
+
 // ForumCategories loads all forum categories once.
 func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 	return cd.forumCategories.load(func() ([]*db.Forumcategory, error) {
@@ -292,8 +317,8 @@ func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
 			if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
 				continue
 			}
-			ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, row.Idsitenews)
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			ann, err := cd.AnnouncementForNews(row.Idsitenews)
+			if err != nil {
 				return nil, err
 			}
 			posts = append(posts, &NewsPost{

@@ -1,8 +1,6 @@
 package writings
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
 	"github.com/arran4/goa4web/handlers/common"
@@ -24,9 +22,7 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 
 	rows, err := cd.LatestWritings(r)
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	for _, row := range rows {

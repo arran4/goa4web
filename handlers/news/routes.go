@@ -14,6 +14,8 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
+func AddNewsIndex(h http.Handler) http.Handler { return hcommon.IndexMiddleware(CustomNewsIndex)(h) }
+
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("News", "/", SectionWeight)

@@ -12,7 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 )
 
 // RegisterPage renders the user registration form.
@@ -22,10 +22,10 @@ func RegisterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	common.TemplateHandler(w, r, "registerPage.gohtml", data)
+	hcommon.TemplateHandler(w, r, "registerPage.gohtml", data)
 }
 
 // RegisterActionPage handles user creation from the registration form.

@@ -63,7 +63,7 @@ type CoreData struct {
 	perms             lazyValue[[]*db.GetPermissionsByUserIDRow]
 	pref              lazyValue[*db.Preference]
 	langs             lazyValue[[]*db.Language]
-	roles             lazyValue[[]string]
+	userRoles         lazyValue[[]string]
 	allRoles          lazyValue[[]*db.Role]
 	announcement      lazyValue[*db.GetActiveAnnouncementWithNewsRow]
 	forumCategories   lazyValue[[]*db.Forumcategory]
@@ -88,8 +88,8 @@ type CoreData struct {
 	event *eventbus.Event
 }
 
-// SetRole preloads the current role value.
-func (cd *CoreData) SetRoles(r []string) { cd.roles.set(r) }
+// SetRoles preloads the current user roles value.
+func (cd *CoreData) SetRoles(r []string) { cd.userRoles.set(r) }
 
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)
@@ -182,9 +182,9 @@ func pageSize(r *http.Request) int {
 	return size
 }
 
-// Role returns the user role loaded lazily.
+// Roles returns the user roles loaded lazily.
 func (cd *CoreData) Roles() []string {
-	roles, _ := cd.roles.load(func() ([]string, error) {
+	roles, _ := cd.userRoles.load(func() ([]string, error) {
 		rs := []string{"anonymous"}
 		if cd.UserID == 0 || cd.queries == nil {
 			return rs, nil

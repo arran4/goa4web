@@ -1,11 +1,12 @@
 package blogs
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 	"net/http"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
-	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -34,11 +35,11 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("/blog/{blog}", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	br.HandleFunc("/blog/{blog}/comments", CommentPage).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/reply", ReplyBlogTask.Action).Methods("POST").MatcherFunc(ReplyBlogTask.Match)
-	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostPage))).Methods("POST").MatcherFunc(hcommon.EditReplyTask.Match)
-	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostCancelPage))).Methods("POST").MatcherFunc(hcommon.CancelTask.Match)
+	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostPage))).Methods("POST").MatcherFunc(tasks.EditReplyTask.Match)
+	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostCancelPage))).Methods("POST").MatcherFunc(tasks.CancelTask.Match)
 	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(EditBlogTask.Page))).Methods("GET").MatcherFunc(auth.RequiredAccess("content writer", "administrator"))
 	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(EditBlogTask.Action))).Methods("POST").MatcherFunc(auth.RequiredAccess("content writer", "administrator")).MatcherFunc(EditBlogTask.Match)
-	br.HandleFunc("/blog/{blog}/edit", hcommon.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(hcommon.CancelTask.Match)
+	br.HandleFunc("/blog/{blog}/edit", hcommon.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(tasks.CancelTask.Match)
 
 	// Admin endpoints for blogs
 	br.HandleFunc("/user/permissions", GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))

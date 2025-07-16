@@ -1,103 +1,102 @@
 package admin
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/handlers/news"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 var ResendQueueTask = resendQueueTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskResend,
-		Match:     hcommon.TaskMatcher(hcommon.TaskResend),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskResend,
+		Match:     tasks.HasTask(tasks.TaskResend),
 	},
 }
 
 var DeleteQueueTask = deleteQueueTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskDelete,
+		Match:     tasks.HasTask(tasks.TaskDelete),
 	},
 }
 
 var SaveTemplateTask = saveTemplateTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskUpdate,
-		Match:     hcommon.TaskMatcher(hcommon.TaskUpdate),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskUpdate,
+		Match:     tasks.HasTask(tasks.TaskUpdate),
 	},
 }
 
 var TestTemplateTask = testTemplateTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskTestMail,
-		Match:     hcommon.TaskMatcher(hcommon.TaskTestMail),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskTestMail,
+		Match:     tasks.HasTask(tasks.TaskTestMail),
 	},
 }
 
 var DeleteDLQTask = deleteDLQTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskDelete,
+		Match:     tasks.HasTask(tasks.TaskDelete),
 	},
 }
 
 var MarkReadTask = markReadTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDismiss,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDismiss),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskDismiss,
+		Match:     tasks.HasTask(tasks.TaskDismiss),
 	},
 }
 
 var PurgeNotificationsTask = purgeNotificationsTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskPurge,
-		Match:     hcommon.TaskMatcher(hcommon.TaskPurge),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskPurge,
+		Match:     tasks.HasTask(tasks.TaskPurge),
 	},
 }
 
 var SendNotificationTask = sendNotificationTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskNotify,
-		Match:     hcommon.TaskMatcher(hcommon.TaskNotify),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskNotify,
+		Match:     tasks.HasTask(tasks.TaskNotify),
 	},
 }
 
 var AddAnnouncementTask = addAnnouncementTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskAdd,
-		Match:     hcommon.TaskMatcher(hcommon.TaskAdd),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskAdd,
+		Match:     tasks.HasTask(tasks.TaskAdd),
 	},
 }
 
 var DeleteAnnouncementTask = deleteAnnouncementTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskDelete,
+		Match:     tasks.HasTask(tasks.TaskDelete),
 	},
 }
 
 var AddIPBanTask = addIPBanTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskAdd,
-		Match:     hcommon.TaskMatcher(hcommon.TaskAdd),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskAdd,
+		Match:     tasks.HasTask(tasks.TaskAdd),
 	},
 }
 
 var DeleteIPBanTask = deleteIPBanTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: tasks.TaskDelete,
+		Match:     tasks.HasTask(tasks.TaskDelete),
 	},
 }
 
-var NewsUserAllowTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskAllow,
-	Match:         hcommon.TaskMatcher(hcommon.TaskAllow),
+var NewsUserAllowTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskAllow,
+	Match:         tasks.HasTask(tasks.TaskAllow),
 	ActionHandler: news.NewsAdminUserLevelsAllowActionPage,
 }
 
-var NewsUserRemoveTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskRemoveLower,
-	Match:         hcommon.TaskMatcher(hcommon.TaskRemoveLower),
+var NewsUserRemoveTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskRemoveLower,
+	Match:         tasks.HasTask(tasks.TaskRemoveLower),
 	ActionHandler: news.NewsAdminUserLevelsRemoveActionPage,
 }

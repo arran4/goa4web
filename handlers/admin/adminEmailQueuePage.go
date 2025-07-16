@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/mail"
@@ -11,11 +12,10 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type resendQueueTask struct{ eventbus.BasicTaskEvent }
-type deleteQueueTask struct{ eventbus.BasicTaskEvent }
+type resendQueueTask struct{ tasks.BasicTaskEvent }
+type deleteQueueTask struct{ tasks.BasicTaskEvent }
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {

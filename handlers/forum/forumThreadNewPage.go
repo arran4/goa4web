@@ -119,6 +119,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO move to searchworker that is automatically activated by a event.
 	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return

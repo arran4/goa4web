@@ -1,20 +1,22 @@
 package user
 
-import hcommon "github.com/arran4/goa4web/handlers/common"
+import (
+	"github.com/arran4/goa4web/internal/tasks"
+)
 
-var SaveLanguagesTask = hcommon.NewTaskEvent(TaskSaveLanguages)
-var SaveLanguageTask = hcommon.NewTaskEvent(TaskSaveLanguage)
-var SaveAllTask = hcommon.NewTaskEvent(TaskSaveAll)
-var AddEmailTask = hcommon.NewTaskEvent(hcommon.TaskAdd)
-var DeleteEmailTask = hcommon.NewTaskEvent(hcommon.TaskDelete)
-var TestMailTask = hcommon.NewTaskEvent(TaskTestMail)
-var DismissTask = hcommon.NewTaskEvent(TaskDismiss)
-var UpdateSubscriptionsTask = hcommon.NewTaskEvent(hcommon.TaskUpdate)
+var SaveLanguagesTask = tasks.NewTaskEvent(TaskSaveLanguages)
+var SaveLanguageTask = tasks.NewTaskEvent(TaskSaveLanguage)
+var SaveAllTask = tasks.NewTaskEvent(TaskSaveAll)
+var AddEmailTask = tasks.NewTaskEvent(tasks.TaskAdd)
+var DeleteEmailTask = tasks.NewTaskEvent(tasks.TaskDelete)
+var TestMailTask = tasks.NewTaskEvent(TaskTestMail)
+var DismissTask = tasks.NewTaskEvent(TaskDismiss)
+var UpdateSubscriptionsTask = tasks.NewTaskEvent(tasks.TaskUpdate)
 
 // Permission management tasks used in the admin interface.
-var PermissionUserAllowTask = hcommon.NewTaskEvent(hcommon.TaskUserAllow)
-var PermissionUserDisallowTask = hcommon.NewTaskEvent(hcommon.TaskUserDisallow)
-var PermissionUpdateTask = hcommon.NewTaskEvent(hcommon.TaskUpdate)
+var PermissionUserAllowTask = tasks.NewTaskEvent(tasks.TaskUserAllow)
+var PermissionUserDisallowTask = tasks.NewTaskEvent(tasks.TaskUserDisallow)
+var PermissionUpdateTask = tasks.NewTaskEvent(tasks.TaskUpdate)
 
 // DeleteTask removes a record such as a subscription.
-var DeleteTask = hcommon.NewTaskEvent(hcommon.TaskDelete)
+var DeleteTask = tasks.NewTaskEvent(tasks.TaskDelete)

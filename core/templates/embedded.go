@@ -9,8 +9,14 @@ import (
 )
 
 var (
-	//go:embed "templates/*.gohtml" "templates/*/*.gohtml"
-	templateFS embed.FS
+	//go:embed "site/*.gohtml" "site/*/*.gohtml"
+	siteTemplatesFS embed.FS
+	//go:embed "notifications/*.txt"
+	notificationTemplatesFS embed.FS
+	//go:embed "email/*.html"
+	emailHtmlTemplatesFS embed.FS
+	//go:embed "email/*.txt"
+	emailTextTemplatesFS embed.FS
 	//go:embed "assets/main.css"
 	mainCSSData []byte
 	//go:embed "assets/favicon.svg"
@@ -21,9 +27,20 @@ var (
 	notificationsJSData []byte
 )
 
-func GetCompiledTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(templateFS,
-		"templates/*.gohtml", "templates/*/*.gohtml"))
+func GetCompiledSiteTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(siteTemplatesFS, "site/*.gohtml", "site/*/*.gohtml"))
+}
+
+func GetCompiledNotificationTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(notificationTemplatesFS, "notifications/*.txt"))
+}
+
+func GetCompiledEmailHtmlTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(emailHtmlTemplatesFS, "email/*.html"))
+}
+
+func GetCompiledEmailTextTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(emailTextTemplatesFS, "email/*.txt"))
 }
 
 func GetMainCSSData() []byte {

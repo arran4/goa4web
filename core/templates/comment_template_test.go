@@ -29,7 +29,7 @@ type commentForTest struct {
 func TestCommentTemplateEditing(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	cd := &corecommon.CoreData{}
-	tmpl := GetCompiledTemplates(cd.Funcs(r))
+	tmpl := GetCompiledSiteTemplates(cd.Funcs(r))
 
 	c := commentForTest{}
 	c.Written.Time = time.Now()

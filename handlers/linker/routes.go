@@ -1,9 +1,10 @@
 package linker
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
-	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/gorilla/mux"
 
@@ -34,7 +35,7 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/comments/{link}", CommentsPage).Methods("GET")
 	lr.HandleFunc("/comments/{link}", ReplyTaskEvent.Action).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
 	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionPage))).Methods("POST").MatcherFunc(EditReplyTask.Match)
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.CancelTask.Match)
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(tasks.CancelTask.Match)
 	lr.HandleFunc("/show/{link}", ShowPage).Methods("GET")
 	lr.HandleFunc("/show/{link}", ReplyTaskEvent.Action).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
 	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")

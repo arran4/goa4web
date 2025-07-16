@@ -1,21 +1,20 @@
 package forum
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // ReplyTask describes posting a reply to a forum thread.
-var ReplyTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskReply,
-	Match:         hcommon.TaskMatcher(hcommon.TaskReply),
+var ReplyTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskReply,
+	Match:         tasks.HasTask(tasks.TaskReply),
 	ActionHandler: TopicThreadReplyPage,
 }
 
 // CreateThreadTask describes creating a new forum thread.
-var CreateThreadTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskCreateThread,
-	Match:         hcommon.TaskMatcher(hcommon.TaskCreateThread),
+var CreateThreadTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskCreateThread,
+	Match:         tasks.HasTask(tasks.TaskCreateThread),
 	PageHandler:   ThreadNewPage,
 	ActionHandler: ThreadNewActionPage,
 }

@@ -2,39 +2,38 @@ package notifications
 
 import (
 	_ "embed"
+	hcommon "github.com/arran4/goa4web/internal/tasks"
 	"strings"
-
-	hcommon "github.com/arran4/goa4web/handlers/common"
 )
 
 var (
-	//go:embed templates/reply.txt
+	//go:embed ../../core/templates/notifications/reply.txt
 	replyTemplate string
-	//go:embed templates/thread.txt
+	//go:embed ../../core/templates/notifications/thread.txt
 	threadTemplate string
-	//go:embed templates/blog.txt
+	//go:embed ../../core/templates/notifications/blog.txt
 	blogTemplate string
-	//go:embed templates/writing.txt
+	//go:embed ../../core/templates/notifications/writing.txt
 	writingTemplate string
-	//go:embed templates/signup.txt
+	//go:embed ../../core/templates/notifications/signup.txt
 	signupTemplate string
-	//go:embed templates/ask.txt
+	//go:embed ../../core/templates/notifications/ask.txt
 	askTemplate string
-	//go:embed templates/set_user_level.txt
+	//go:embed ../../core/templates/notifications/set_user_level.txt
 	setUserLevelTemplate string
-	//go:embed templates/update_user_level.txt
+	//go:embed ../../core/templates/notifications/update_user_level.txt
 	updateUserLevelTemplate string
-	//go:embed templates/delete_user_level.txt
+	//go:embed ../../core/templates/notifications/delete_user_level.txt
 	deleteUserLevelTemplate string
-	//go:embed templates/set_topic_restriction.txt
+	//go:embed ../../core/templates/notifications/set_topic_restriction.txt
 	setTopicRestrictionTemplate string
-	//go:embed templates/update_topic_restriction.txt
+	//go:embed ../../core/templates/notifications/update_topic_restriction.txt
 	updateTopicRestrictionTemplate string
-	//go:embed templates/delete_topic_restriction.txt
+	//go:embed ../../core/templates/notifications/delete_topic_restriction.txt
 	deleteTopicRestrictionTemplate string
-	//go:embed templates/copy_topic_restriction.txt
+	//go:embed ../../core/templates/notifications/copy_topic_restriction.txt
 	copyTopicRestrictionTemplate string
-	//go:embed templates/password_reset.txt
+	//go:embed ../../core/templates/notifications/password_reset.txt
 	passwordResetTemplate string
 )
 

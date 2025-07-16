@@ -1,13 +1,12 @@
 package news
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // NewPostTask represents creating a new news post.
-var NewPostTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskNewPost,
-	Match:         hcommon.TaskMatcher(hcommon.TaskNewPost),
+var NewPostTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskNewPost,
+	Match:         tasks.HasTask(tasks.TaskNewPost),
 	ActionHandler: NewsPostNewActionPage,
 }

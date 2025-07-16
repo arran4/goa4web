@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,10 +10,9 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type deleteDLQTask struct{ eventbus.BasicTaskEvent }
+type deleteDLQTask struct{ tasks.BasicTaskEvent }
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {

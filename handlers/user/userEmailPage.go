@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -195,7 +196,7 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.HTTPHostname != "" {
 		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
-	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, common.TaskUserEmailVerification, nil)
+	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, tasks.TaskUserEmailVerification, nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -225,7 +226,7 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.HTTPHostname != "" {
 		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
-	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, common.TaskUserEmailVerification, nil)
+	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, tasks.TaskUserEmailVerification, nil)
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 

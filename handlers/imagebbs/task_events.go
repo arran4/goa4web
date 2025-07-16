@@ -1,36 +1,35 @@
 package imagebbs
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var UploadImageTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskUploadImage,
-	Match:         hcommon.TaskMatcher(hcommon.TaskUploadImage),
+var UploadImageTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskUploadImage,
+	Match:         tasks.HasTask(tasks.TaskUploadImage),
 	ActionHandler: BoardPostImageActionPage,
 }
 
-var ReplyTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskReply,
-	Match:         hcommon.TaskMatcher(hcommon.TaskReply),
+var ReplyTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskReply,
+	Match:         tasks.HasTask(tasks.TaskReply),
 	ActionHandler: BoardThreadReplyActionPage,
 }
 
-var NewBoardTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskNewBoard,
-	Match:         hcommon.TaskMatcher(hcommon.TaskNewBoard),
+var NewBoardTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskNewBoard,
+	Match:         tasks.HasTask(tasks.TaskNewBoard),
 	ActionHandler: AdminNewBoardMakePage,
 }
 
-var ModifyBoardTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskModifyBoard,
-	Match:         hcommon.TaskMatcher(hcommon.TaskModifyBoard),
+var ModifyBoardTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskModifyBoard,
+	Match:         tasks.HasTask(tasks.TaskModifyBoard),
 	ActionHandler: AdminBoardModifyBoardActionPage,
 }
 
-var ApprovePostTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskApprove,
-	Match:         hcommon.TaskMatcher(hcommon.TaskApprove),
+var ApprovePostTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskApprove,
+	Match:         tasks.HasTask(tasks.TaskApprove),
 	ActionHandler: AdminApprovePostPage,
 }

@@ -3,18 +3,17 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
 
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type addAnnouncementTask struct{ eventbus.BasicTaskEvent }
-type deleteAnnouncementTask struct{ eventbus.BasicTaskEvent }
+type addAnnouncementTask struct{ tasks.BasicTaskEvent }
+type deleteAnnouncementTask struct{ tasks.BasicTaskEvent }
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/emailqueue"
 	"log"
 	"net/http"
 	"os"
@@ -16,7 +19,6 @@ import (
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -24,9 +26,6 @@ import (
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/server"
-	startup "github.com/arran4/goa4web/internal/startup"
-	emailutil "github.com/arran4/goa4web/internal/utils/emailutil"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -62,7 +61,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	}
 	common.Version = version
 
-	if err := startup.PerformChecks(cfg); err != nil {
+	if err := PerformChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
@@ -108,7 +107,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
 	emailProvider := email.ProviderFromConfig(cfg)
-	if emailutil.EmailSendingEnabled() && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
+	if config.EmailSendingEnabled() && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
 	}
 
@@ -149,7 +148,7 @@ func safeGo(fn func()) {
 func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg config.RuntimeConfig) {
 	log.Printf("Starting email worker")
 	safeGo(func() {
-		emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
+		emailqueue.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
 	})
 	log.Printf("Starting notification purger worker")
 	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
@@ -159,9 +158,6 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqP
 	safeGo(func() { eventbus.AuditWorker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
 	log.Printf("Starting notification bus worker")
 	safeGo(func() {
-		notifications.BusWorker(ctx, eventbus.DefaultBus, notifications.Notifier{
-			EmailProvider: provider,
-			Queries:       dbpkg.New(db),
-		}, dlqProvider)
+		notifications.BusWorker(ctx, eventbus.DefaultBus, provider, dbpkg.New(db), dlqProvider)
 	})
 }

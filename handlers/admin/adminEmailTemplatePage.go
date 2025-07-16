@@ -2,6 +2,7 @@ package admin
 
 import (
 	"bytes"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/mail"
@@ -16,12 +17,11 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
-type saveTemplateTask struct{ eventbus.BasicTaskEvent }
-type testTemplateTask struct{ eventbus.BasicTaskEvent }
+type saveTemplateTask struct{ tasks.BasicTaskEvent }
+type testTemplateTask struct{ tasks.BasicTaskEvent }
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +111,7 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		From:     config.AppRuntimeConfig.EmailFrom,
 		Subject:  "Website Update Notification",
 		URL:      pageURL,
-		Action:   common.TaskTestMail,
+		Action:   tasks.TaskTestMail,
 		Path:     r.URL.Path,
 		Time:     time.Now().Format(time.RFC822),
 		UnsubURL: unsub,

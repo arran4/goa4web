@@ -8,10 +8,20 @@ import (
 	"os"
 )
 
-func GetCompiledTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(
-		template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/templates"),
-			"*.gohtml", "*/*.gohtml"))
+func GetCompiledSiteTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/site"), "*.gohtml", "*/*.gohtml"))
+}
+
+func GetCompiledNotificationTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/notifications"), "*.txt")) // TODO rename to gotxt
+}
+
+func GetCompiledEmailHtmlTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.html")) // TODO rename to gohtml
+}
+
+func GetCompiledEmailTextTemplates(funcs template.FuncMap) *template.Template {
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.txt")) // TODO rename to gotxt
 }
 
 func GetMainCSSData() []byte {

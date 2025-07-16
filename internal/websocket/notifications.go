@@ -5,6 +5,7 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+	hcommon "github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strings"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	routerpkg "github.com/arran4/goa4web/internal/router"

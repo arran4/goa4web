@@ -90,7 +90,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
@@ -99,7 +99,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
-		_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -320,7 +320,8 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	emailutil.NotifyNewsSubscribers(r.Context(), queries, int32(pid), uid, endUrl)
+	// TODO this should be automatic through the event bus -> notification system
+	notfications.NotifyNewsSubscribers(r.Context(), queries, int32(pid), uid, endUrl)
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
@@ -343,6 +344,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO move to searchworker that is automatically activated by a event.
 	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return

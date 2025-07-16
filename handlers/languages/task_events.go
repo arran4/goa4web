@@ -1,24 +1,23 @@
 package languages
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var RenameLanguageTask = eventbus.BasicTaskEvent{
+var RenameLanguageTask = tasks.BasicTaskEvent{
 	EventName:     "Rename Language",
-	Match:         hcommon.TaskMatcher("Rename Language"),
+	Match:         tasks.HasTask("Rename Language"),
 	ActionHandler: adminLanguagesRenamePage,
 }
 
-var DeleteLanguageTask = eventbus.BasicTaskEvent{
+var DeleteLanguageTask = tasks.BasicTaskEvent{
 	EventName:     "Delete Language",
-	Match:         hcommon.TaskMatcher("Delete Language"),
+	Match:         tasks.HasTask("Delete Language"),
 	ActionHandler: adminLanguagesDeletePage,
 }
 
-var CreateLanguageTask = eventbus.BasicTaskEvent{
+var CreateLanguageTask = tasks.BasicTaskEvent{
 	EventName:     "Create Language",
-	Match:         hcommon.TaskMatcher("Create Language"),
+	Match:         tasks.HasTask("Create Language"),
 	ActionHandler: adminLanguagesCreatePage,
 }

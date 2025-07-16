@@ -6,5 +6,5 @@ import (
 )
 
 func RenderTemplate(w http.ResponseWriter, name string, data interface{}, funcs template.FuncMap) error {
-	return GetCompiledTemplates(funcs).ExecuteTemplate(w, name, data)
+	return GetCompiledSiteTemplates(funcs).ExecuteTemplate(w, name, data)
 }

@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strings"
@@ -11,12 +12,10 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/utils/netutil"
-
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type addIPBanTask struct{ eventbus.BasicTaskEvent }
-type deleteIPBanTask struct{ eventbus.BasicTaskEvent }
+type addIPBanTask struct{ tasks.BasicTaskEvent }
+type deleteIPBanTask struct{ tasks.BasicTaskEvent }
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -12,11 +13,50 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
+// TODO this is the template for ALL actions going forwards.
+
+type ForgotPasswordTask struct {
+	tasks.TaskString
+}
+
+var _ tasks.Task = (*ForgotPasswordTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*ForgotPasswordTask)(nil)
+
+// ForgotPasswordTask handles password reset requests.
+var forgotPasswordTask = &ForgotPasswordTask{
+	TaskString: TaskUserResetPassword,
+}
+
+func (f ForgotPasswordTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return &notif.EmailTemplates{
+		Text: "adminNotificationUserRequestPasswordResetEmail.txt",
+		HTML: "adminNotificationUserRequestPasswordResetEmail.html",
+	}
+}
+
+func (f ForgotPasswordTask) AdminInternalNotificationTemplate() *string {
+	v := "adminNotificationUserRequestPasswordResetEmail.txt"
+	return &v
+}
+
+func (f ForgotPasswordTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return &notif.EmailTemplates{
+		Text: "userRequestPasswordResetEmail.txt",
+		HTML: "userRequestPasswordResetEmail.html",
+	}
+}
+
+func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
+	s := "password_reset.txt"
+	return &s
+}
+
+func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	hcommon.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(hcommon.KeyCoreData))
 }
 
-func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
+func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return

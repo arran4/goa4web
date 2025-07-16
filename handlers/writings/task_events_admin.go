@@ -1,11 +1,13 @@
 package writings
 
-import hcommon "github.com/arran4/goa4web/handlers/common"
+import (
+	"github.com/arran4/goa4web/internal/tasks"
+)
 
-var UserAllowTask = hcommon.NewTaskEvent(hcommon.TaskUserAllow)
-var UserDisallowTask = hcommon.NewTaskEvent(hcommon.TaskUserDisallow)
-var AddApprovalTask = hcommon.NewTaskEvent(hcommon.TaskAddApproval)
-var UpdateApprovalTask = hcommon.NewTaskEvent(hcommon.TaskUpdateUserApproval)
-var DeleteApprovalTask = hcommon.NewTaskEvent(hcommon.TaskDeleteUserApproval)
-var WritingCategoryChangeTask = hcommon.NewTaskEvent(hcommon.TaskWritingCategoryChange)
-var WritingCategoryCreateTask = hcommon.NewTaskEvent(hcommon.TaskWritingCategoryCreate)
+var UserAllowTask = tasks.NewTaskEvent(tasks.TaskUserAllow)
+var UserDisallowTask = tasks.NewTaskEvent(tasks.TaskUserDisallow)
+var AddApprovalTask = tasks.NewTaskEvent(tasks.TaskAddApproval)
+var UpdateApprovalTask = tasks.NewTaskEvent(tasks.TaskUpdateUserApproval)
+var DeleteApprovalTask = tasks.NewTaskEvent(tasks.TaskDeleteUserApproval)
+var WritingCategoryChangeTask = tasks.NewTaskEvent(tasks.TaskWritingCategoryChange)
+var WritingCategoryCreateTask = tasks.NewTaskEvent(tasks.TaskWritingCategoryCreate)

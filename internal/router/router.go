@@ -26,7 +26,7 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !corecommon.Allowed(r, roles...) {
 				cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
-				err := templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+				err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 				if err != nil {
 					log.Printf("Template Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)

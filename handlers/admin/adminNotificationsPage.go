@@ -2,6 +2,7 @@ package admin
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,13 +10,11 @@ import (
 
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type markReadTask struct{ eventbus.BasicTaskEvent }
-type purgeNotificationsTask struct{ eventbus.BasicTaskEvent }
-type sendNotificationTask struct{ eventbus.BasicTaskEvent }
+type markReadTask struct{ tasks.BasicTaskEvent }
+type purgeNotificationsTask struct{ tasks.BasicTaskEvent }
+type sendNotificationTask struct{ tasks.BasicTaskEvent }
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

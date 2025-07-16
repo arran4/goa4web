@@ -1,12 +1,12 @@
 package writings
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/comments"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 	"net/http"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
-	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 

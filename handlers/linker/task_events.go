@@ -1,90 +1,89 @@
 package linker
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var ReplyTaskEvent = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskReply,
-	Match:         hcommon.TaskMatcher(hcommon.TaskReply),
+var ReplyTaskEvent = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskReply,
+	Match:         tasks.HasTask(tasks.TaskReply),
 	ActionHandler: CommentsReplyPage,
 }
 
-var EditReplyTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskEditReply,
-	Match:         hcommon.TaskMatcher(hcommon.TaskEditReply),
+var EditReplyTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskEditReply,
+	Match:         tasks.HasTask(tasks.TaskEditReply),
 	ActionHandler: CommentEditActionPage,
 }
 
-var SuggestTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskSuggest,
-	Match:         hcommon.TaskMatcher(hcommon.TaskSuggest),
+var SuggestTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskSuggest,
+	Match:         tasks.HasTask(tasks.TaskSuggest),
 	ActionHandler: SuggestActionPage,
 }
 
-var UpdateCategoryTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskUpdate,
-	Match:         hcommon.TaskMatcher(hcommon.TaskUpdate),
+var UpdateCategoryTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskUpdate,
+	Match:         tasks.HasTask(tasks.TaskUpdate),
 	ActionHandler: AdminCategoriesUpdatePage,
 }
 
-var RenameCategoryTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskRenameCategory,
-	Match:         hcommon.TaskMatcher(hcommon.TaskRenameCategory),
+var RenameCategoryTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskRenameCategory,
+	Match:         tasks.HasTask(tasks.TaskRenameCategory),
 	ActionHandler: AdminCategoriesRenamePage,
 }
 
-var DeleteCategoryTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskDeleteCategory,
-	Match:         hcommon.TaskMatcher(hcommon.TaskDeleteCategory),
+var DeleteCategoryTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskDeleteCategory,
+	Match:         tasks.HasTask(tasks.TaskDeleteCategory),
 	ActionHandler: AdminCategoriesDeletePage,
 }
 
-var CreateCategoryTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskCreateCategory,
-	Match:         hcommon.TaskMatcher(hcommon.TaskCreateCategory),
+var CreateCategoryTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskCreateCategory,
+	Match:         tasks.HasTask(tasks.TaskCreateCategory),
 	ActionHandler: AdminCategoriesCreatePage,
 }
 
-var AddTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskAdd,
-	Match:         hcommon.TaskMatcher(hcommon.TaskAdd),
+var AddTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskAdd,
+	Match:         tasks.HasTask(tasks.TaskAdd),
 	ActionHandler: AdminAddActionPage,
 }
 
-var DeleteTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskDelete,
-	Match:         hcommon.TaskMatcher(hcommon.TaskDelete),
+var DeleteTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskDelete,
+	Match:         tasks.HasTask(tasks.TaskDelete),
 	ActionHandler: AdminQueueDeleteActionPage,
 }
 
-var ApproveTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskApprove,
-	Match:         hcommon.TaskMatcher(hcommon.TaskApprove),
+var ApproveTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskApprove,
+	Match:         tasks.HasTask(tasks.TaskApprove),
 	ActionHandler: AdminQueueApproveActionPage,
 }
 
-var BulkApproveTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskBulkApprove,
-	Match:         hcommon.TaskMatcher(hcommon.TaskBulkApprove),
+var BulkApproveTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskBulkApprove,
+	Match:         tasks.HasTask(tasks.TaskBulkApprove),
 	ActionHandler: AdminQueueBulkApproveActionPage,
 }
 
-var BulkDeleteTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskBulkDelete,
-	Match:         hcommon.TaskMatcher(hcommon.TaskBulkDelete),
+var BulkDeleteTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskBulkDelete,
+	Match:         tasks.HasTask(tasks.TaskBulkDelete),
 	ActionHandler: AdminQueueBulkDeleteActionPage,
 }
 
-var UserAllowTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskUserAllow,
-	Match:         hcommon.TaskMatcher(hcommon.TaskUserAllow),
+var UserAllowTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskUserAllow,
+	Match:         tasks.HasTask(tasks.TaskUserAllow),
 	ActionHandler: AdminUserLevelsAllowActionPage,
 }
 
-var UserDisallowTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskUserDisallow,
-	Match:         hcommon.TaskMatcher(hcommon.TaskUserDisallow),
+var UserDisallowTask = tasks.BasicTaskEvent{
+	EventName:     tasks.TaskUserDisallow,
+	Match:         tasks.HasTask(tasks.TaskUserDisallow),
 	ActionHandler: AdminUserLevelsRemoveActionPage,
 }

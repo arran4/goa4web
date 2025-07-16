@@ -1,75 +1,74 @@
 package forum
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // SetUserLevelTask updates a user's forum access level.
-var SetUserLevelTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskSetUserLevel,
-	Match:     hcommon.TaskMatcher(hcommon.TaskSetUserLevel),
+var SetUserLevelTask = tasks.BasicTaskEvent{
+	EventName: tasks.TaskSetUserLevel,
+	Match:     tasks.HasTask(tasks.TaskSetUserLevel),
 }
 
 // UpdateUserLevelTask modifies a user's access level.
-var UpdateUserLevelTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskUpdateUserLevel,
-	Match:     hcommon.TaskMatcher(hcommon.TaskUpdateUserLevel),
+var UpdateUserLevelTask = tasks.BasicTaskEvent{
+	EventName: tasks.TaskUpdateUserLevel,
+	Match:     tasks.HasTask(tasks.TaskUpdateUserLevel),
 }
 
 // DeleteUserLevelTask removes a user's access level.
-var DeleteUserLevelTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskDeleteUserLevel,
-	Match:     hcommon.TaskMatcher(hcommon.TaskDeleteUserLevel),
+var DeleteUserLevelTask = tasks.BasicTaskEvent{
+	EventName: tasks.TaskDeleteUserLevel,
+	Match:     tasks.HasTask(tasks.TaskDeleteUserLevel),
 }
 
 // SetTopicRestrictionTask adds a topic restriction.
-var SetTopicRestrictionTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskSetTopicRestriction,
-	Match:     hcommon.TaskMatcher(hcommon.TaskSetTopicRestriction),
+var SetTopicRestrictionTask = tasks.BasicTaskEvent{
+	EventName: tasks.TaskSetTopicRestriction,
+	Match:     tasks.HasTask(tasks.TaskSetTopicRestriction),
 }
 
 // UpdateTopicRestrictionTask updates a topic restriction.
-var UpdateTopicRestrictionTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskUpdateTopicRestriction,
-	Match:     hcommon.TaskMatcher(hcommon.TaskUpdateTopicRestriction),
+var UpdateTopicRestrictionTask = tasks.BasicTaskEvent{
+	EventName: tasks.TaskUpdateTopicRestriction,
+	Match:     tasks.HasTask(tasks.TaskUpdateTopicRestriction),
 }
 
 // DeleteTopicRestrictionTask deletes a topic restriction.
-var DeleteTopicRestrictionTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskDeleteTopicRestriction,
-	Match:     hcommon.TaskMatcher(hcommon.TaskDeleteTopicRestriction),
+var DeleteTopicRestrictionTask = tasks.BasicTaskEvent{
+	EventName: tasks.TaskDeleteTopicRestriction,
+	Match:     tasks.HasTask(tasks.TaskDeleteTopicRestriction),
 }
 
 // CopyTopicRestrictionTask copies topic restrictions between topics.
-var CopyTopicRestrictionTask = eventbus.BasicTaskEvent{
-	EventName: hcommon.TaskCopyTopicRestriction,
-	Match:     hcommon.TaskMatcher(hcommon.TaskCopyTopicRestriction),
+var CopyTopicRestrictionTask = tasks.BasicTaskEvent{
+	EventName: tasks.TaskCopyTopicRestriction,
+	Match:     tasks.HasTask(tasks.TaskCopyTopicRestriction),
 }
 
 // RemakeThreadStatsTask refreshes forum thread statistics.
-var RemakeThreadStatsTask = hcommon.NewTaskEvent(hcommon.TaskRemakeStatisticInformationOnForumthread)
+var RemakeThreadStatsTask = tasks.NewTaskEvent(tasks.TaskRemakeStatisticInformationOnForumthread)
 
 // RemakeTopicStatsTask refreshes forum topic statistics.
-var RemakeTopicStatsTask = hcommon.NewTaskEvent(hcommon.TaskRemakeStatisticInformationOnForumtopic)
+var RemakeTopicStatsTask = tasks.NewTaskEvent(tasks.TaskRemakeStatisticInformationOnForumtopic)
 
 // CategoryChangeTask updates a forum category name.
-var CategoryChangeTask = hcommon.NewTaskEvent(hcommon.TaskForumCategoryChange)
+var CategoryChangeTask = tasks.NewTaskEvent(tasks.TaskForumCategoryChange)
 
 // CategoryCreateTask creates a new forum category.
-var CategoryCreateTask = hcommon.NewTaskEvent(hcommon.TaskForumCategoryCreate)
+var CategoryCreateTask = tasks.NewTaskEvent(tasks.TaskForumCategoryCreate)
 
 // DeleteCategoryTask removes a forum category.
-var DeleteCategoryTask = hcommon.NewTaskEvent(hcommon.TaskDeleteCategory)
+var DeleteCategoryTask = tasks.NewTaskEvent(tasks.TaskDeleteCategory)
 
 // ThreadDeleteTask removes a forum thread.
-var ThreadDeleteTask = hcommon.NewTaskEvent(hcommon.TaskForumThreadDelete)
+var ThreadDeleteTask = tasks.NewTaskEvent(tasks.TaskForumThreadDelete)
 
 // TopicChangeTask updates a forum topic title.
-var TopicChangeTask = hcommon.NewTaskEvent(hcommon.TaskForumTopicChange)
+var TopicChangeTask = tasks.NewTaskEvent(tasks.TaskForumTopicChange)
 
 // TopicDeleteTask removes a forum topic.
-var TopicDeleteTask = hcommon.NewTaskEvent(hcommon.TaskForumTopicDelete)
+var TopicDeleteTask = tasks.NewTaskEvent(tasks.TaskForumTopicDelete)
 
 // TopicCreateTask creates a new forum topic.
-var TopicCreateTask = hcommon.NewTaskEvent(hcommon.TaskForumTopicCreate)
+var TopicCreateTask = tasks.NewTaskEvent(tasks.TaskForumTopicCreate)

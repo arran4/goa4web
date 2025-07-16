@@ -21,7 +21,7 @@ func stubFuncs() template.FuncMap {
 }
 
 func TestPageTemplatesRender(t *testing.T) {
-	tmpl := templates.GetCompiledTemplates(stubFuncs())
+	tmpl := templates.GetCompiledSiteTemplates(stubFuncs())
 
 	type adminStats struct {
 		Users        int64

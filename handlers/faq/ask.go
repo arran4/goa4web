@@ -70,15 +70,7 @@ func AskActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData); ok {
-		evt := cd.Event()
-		if evt == nil {
-			log.Printf("ask action: missing event")
-			if corecommon.Version == "dev" {
-				// TODO remove once TaskEventMiddleware always provides an event
-				http.Error(w, "internal error", http.StatusInternalServerError)
-				return
-			}
-		} else {
+		if evt := cd.Event(); evt != nil {
 			evt.Admin = true
 			evt.Path = "/admin/faq"
 			if evt.Data == nil {

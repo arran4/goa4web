@@ -90,7 +90,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
@@ -99,7 +99,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
-		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 

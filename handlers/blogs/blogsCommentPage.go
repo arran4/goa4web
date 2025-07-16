@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -54,9 +54,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -83,7 +83,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
@@ -184,5 +184,5 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	common.TemplateHandler(w, r, "commentPage.gohtml", data)
+	hcommon.TemplateHandler(w, r, "commentPage.gohtml", data)
 }

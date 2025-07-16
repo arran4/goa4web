@@ -14,7 +14,8 @@ import (
 
 func stubFuncs() template.FuncMap {
 	req := httptest.NewRequest("GET", "/", nil)
-	m := corecommon.NewFuncs(req)
+	cd := &corecommon.CoreData{}
+	m := cd.Funcs(req)
 	m["LatestNews"] = func() (any, error) { return nil, nil }
 	return m
 }

@@ -15,11 +15,18 @@ import (
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
-		Categories []*db.WritingCategory
+		Categories          []*db.WritingCategory
+		CategoryBreadcrumbs []*db.WritingCategory
+		IsAdmin             bool
+		IsWriter            bool
+		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
+		WritingCategoryID   int32
 	}
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
+	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
+	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
 
 	categoryRows, err := data.CoreData.WritingCategories()
 	if err != nil {

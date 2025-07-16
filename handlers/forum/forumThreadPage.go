@@ -10,6 +10,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code"
 	corelanguage "github.com/arran4/goa4web/core/language"
+	blogs "github.com/arran4/goa4web/handlers/blogs"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 

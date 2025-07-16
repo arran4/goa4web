@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -54,7 +53,8 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData))
+			cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+			_ = templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
 			log.Printf("getBlogEntryForUserById_comments Error: %s", err)

@@ -84,7 +84,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
@@ -94,7 +94,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
-		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -288,7 +288,8 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData))
+			cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+			_ = templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
 			log.Printf("getArticlePost Error: %s", err)

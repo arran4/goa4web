@@ -59,40 +59,39 @@ type CoreData struct {
 	ctx     context.Context
 	queries *db.Queries
 
-	user                     lazyValue[*db.User]
-	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
-	pref                     lazyValue[*db.Preference]
-	langs                    lazyValue[[]*db.Language]
-	languagesAll             lazyValue[[]*db.Language]
-	roles                    lazyValue[[]string]
 	allRoles                 lazyValue[[]*db.Role]
 	announcement             lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	annMu                    sync.Mutex
+	bloggers                 lazyValue[[]*db.BloggerCountRow]
+	bookmarks                lazyValue[*db.GetBookmarksForUserRow]
+	event                    *eventbus.Event
 	forumCategories          lazyValue[[]*db.Forumcategory]
+	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
+	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
+	imageBoards              lazyValue[[]*db.Imageboard]
+	languagesAll             lazyValue[[]*db.Language]
+	langs                    lazyValue[[]*db.Language]
 	latestNews               lazyValue[[]*NewsPost]
 	latestWritings           lazyValue[[]*db.Writing]
-	visibleWritingCategories lazyValue[[]*db.WritingCategory]
-	writingCategories        lazyValue[[]*db.WritingCategory]
-	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
-	bloggers                 lazyValue[[]*db.BloggerCountRow]
-	writers                  lazyValue[[]*db.WriterCountRow]
-	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
-	imageBoards              lazyValue[[]*db.Imageboard]
-	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
-	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
-	bookmarks                lazyValue[*db.GetBookmarksForUserRow]
-	newsAnnouncements        map[int32]*lazyValue[*db.SiteAnnouncement]
-	annMu                    sync.Mutex
-	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
-	notifCount               lazyValue[int32]
-	unreadCount              lazyValue[int64]
-	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
 	linkerCategories         lazyValue[[]*db.GetLinkerCategoryLinkCountsRow]
-
-	event *eventbus.Event
+	newsAnnouncements        map[int32]*lazyValue[*db.SiteAnnouncement]
+	notifCount               lazyValue[int32]
+	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
+	pref                     lazyValue[*db.Preference]
+	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
+	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
+	unreadCount              lazyValue[int64]
+	user                     lazyValue[*db.User]
+	userRoles                lazyValue[[]string]
+	visibleWritingCategories lazyValue[[]*db.WritingCategory]
+	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
+	writers                  lazyValue[[]*db.WriterCountRow]
+	writingCategories        lazyValue[[]*db.WritingCategory]
 }
 
-// SetRole preloads the current role value.
-func (cd *CoreData) SetRoles(r []string) { cd.roles.set(r) }
+// SetRoles preloads the current user roles.
+func (cd *CoreData) SetRoles(r []string) { cd.userRoles.set(r) }
 
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)
@@ -129,19 +128,19 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 
 // HasRole reports whether the current user explicitly has the named role.
 func (cd *CoreData) HasRole(role string) bool {
-	for _, r := range cd.Roles() {
+	for _, r := range cd.UserRoles() {
 		if r == role {
 			return true
 		}
 	}
 	if cd.queries != nil {
-		for _, r := range cd.Roles() {
+		for _, r := range cd.UserRoles() {
 			if _, err := cd.queries.CheckRoleGrant(cd.ctx, db.CheckRoleGrantParams{Name: r, Action: role}); err == nil {
 				return true
 			}
 		}
 	} else {
-		for _, r := range cd.Roles() {
+		for _, r := range cd.UserRoles() {
 			switch r {
 			case "administrator":
 				if role == "moderator" || role == "content writer" || role == "user" {
@@ -185,9 +184,9 @@ func pageSize(r *http.Request) int {
 	return size
 }
 
-// Role returns the user role loaded lazily.
-func (cd *CoreData) Roles() []string {
-	roles, _ := cd.roles.load(func() ([]string, error) {
+// UserRoles returns the user roles loaded lazily.
+func (cd *CoreData) UserRoles() []string {
+	roles, _ := cd.userRoles.load(func() ([]string, error) {
 		rs := []string{"anonymous"}
 		if cd.UserID == 0 || cd.queries == nil {
 			return rs, nil
@@ -209,7 +208,7 @@ func (cd *CoreData) Roles() []string {
 
 // Role returns the first loaded role or "anonymous" when none.
 func (cd *CoreData) Role() string {
-	roles := cd.Roles()
+	roles := cd.UserRoles()
 	if len(roles) == 0 {
 		return "anonymous"
 	}

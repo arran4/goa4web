@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -63,7 +62,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -139,7 +138,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
@@ -188,7 +187,8 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData))
+			cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+			_ = templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)

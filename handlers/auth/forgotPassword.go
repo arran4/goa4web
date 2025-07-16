@@ -54,7 +54,7 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if row.Email != "" {
-		if cd, ok := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData); ok {
+		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}

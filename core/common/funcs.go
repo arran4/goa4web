@@ -15,16 +15,6 @@ import (
 
 var Version = "dev"
 
-// NewFuncs returns template helpers for the current request context.
-// Deprecated: prefer (*CoreData).Funcs.
-func NewFuncs(r *http.Request) template.FuncMap {
-	cd, _ := r.Context().Value(ContextValues("coreData")).(*CoreData)
-	if cd == nil {
-		cd = &CoreData{}
-	}
-	return cd.Funcs(r)
-}
-
 // Funcs returns template helpers configured with cd's ImageURLMapper.
 func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	// newsCache memoizes LatestNews results for a single template execution.

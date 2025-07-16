@@ -46,7 +46,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
-	if diff := cmp.Diff(want, cd.Roles()); diff != "" {
+	if diff := cmp.Diff(want, cd.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 
@@ -82,7 +82,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
-	if diff := cmp.Diff(want, cd.Roles()); diff != "" {
+	if diff := cmp.Diff(want, cd.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 

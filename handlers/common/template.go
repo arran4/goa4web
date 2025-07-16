@@ -9,10 +9,31 @@ import (
 )
 
 // TemplateHandler renders the template and handles any template error.
+// Example usage:
+//
+//	type Data struct{ *CoreData }
+//	TemplateHandler(w, r, "page.gohtml", Data{cd})
+//
+// Template helpers are provided via data.CoreData.Funcs(r).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data any) {
-	if err := templates.RenderTemplate(w, tmpl, data, corecommon.NewFuncs(r)); err != nil {
+	cd, _ := r.Context().Value(KeyCoreData).(*CoreData)
+	if cd == nil {
+		cd = &corecommon.CoreData{}
+	}
+	if err := templates.RenderTemplate(w, tmpl, data, cd.Funcs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		errData := struct {
+			*CoreData
+			Error   string
+			BackURL string
+		}{
+			CoreData: cd,
+			Error:    err.Error(),
+			BackURL:  r.Referer(),
+		}
+		if err2 := templates.RenderTemplate(w, "taskErrorAcknowledgementPage.gohtml", errData, cd.Funcs(r)); err2 != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 	}
 }
 

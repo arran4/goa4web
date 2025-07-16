@@ -28,7 +28,8 @@ type commentForTest struct {
 // Test that the comment template shows the edit form when Editing is true.
 func TestCommentTemplateEditing(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	tmpl := GetCompiledTemplates(corecommon.NewFuncs(r))
+	cd := &corecommon.CoreData{}
+	tmpl := GetCompiledTemplates(cd.Funcs(r))
 
 	c := commentForTest{}
 	c.Written.Time = time.Now()

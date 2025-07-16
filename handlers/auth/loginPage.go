@@ -150,7 +150,8 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 			Method:   backMethod,
 			Values:   vals,
 		}
-		if err := templates.GetCompiledTemplates(corecommon.NewFuncs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
+		cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+		if err := templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}

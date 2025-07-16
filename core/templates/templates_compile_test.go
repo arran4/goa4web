@@ -16,7 +16,8 @@ var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	template.Must(template.New("").Funcs(corecommon.NewFuncs(r)).ParseFS(testTemplates,
+	cd := &corecommon.CoreData{}
+	template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
 		"templates/*.gohtml", "templates/*/*.gohtml", "templates/*.html"))
 }
 
@@ -30,7 +31,8 @@ func TestParseEachTemplate(t *testing.T) {
 		}
 		t.Run(filepath.Base(path), func(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
-			if _, err := template.New("").Funcs(corecommon.NewFuncs(r)).ParseFS(testTemplates, path); err != nil {
+			cd := &corecommon.CoreData{}
+			if _, err := template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates, path); err != nil {
 				t.Errorf("failed to parse %s: %v", path, err)
 			}
 		})

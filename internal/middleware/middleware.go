@@ -78,7 +78,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			common.WithImageURLMapper(imagesign.MapURL),
 			common.WithSession(session))
 		cd.UserID = uid
-		_ = cd.Roles()
+		_ = cd.UserRoles()
 
 		idx := nav.IndexItems()
 		if uid != 0 {

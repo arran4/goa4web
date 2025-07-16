@@ -7,7 +7,6 @@ import (
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	comments "github.com/arran4/goa4web/handlers/comments"
-	"github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -16,17 +15,23 @@ import (
 
 func AddNewsIndex(h http.Handler) http.Handler { return hcommon.IndexMiddleware(CustomNewsIndex)(h) }
 
+func runTemplate(name string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		hcommon.TemplateHandler(w, r, name, r.Context().Value(hcommon.KeyCoreData))
+	}
+}
+
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("News", "/", SectionWeight)
 	nav.RegisterAdminControlCenter("News", "/admin/news/users/levels", SectionWeight)
 	r.Use(hcommon.IndexMiddleware(CustomNewsIndex))
-	r.HandleFunc("/", runTemplate("newsPage")).Methods("GET")
+	r.HandleFunc("/", runTemplate("newsPage.gohtml")).Methods("GET")
 	r.HandleFunc("/", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	r.HandleFunc("/news.rss", NewsRssPage).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(hcommon.IndexMiddleware(CustomNewsIndex))
-	nr.Handle("", hcommon.TemplateHandler("newsPage")).Methods("GET")
+	nr.HandleFunc("", runTemplate("newsPage.gohtml")).Methods("GET")
 	nr.HandleFunc("", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", ReplyTask.Action).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(ReplyTask.Match)

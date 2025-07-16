@@ -51,7 +51,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	boards, err := data.CoreData.ImageBoards(int32(bid))
+	boards, err := data.CoreData.SubImageBoards(int32(bid))
 	if err != nil {
 		log.Printf("imageboards: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

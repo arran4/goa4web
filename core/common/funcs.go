@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -83,7 +84,8 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			if LatestWritings != nil {
 				return LatestWritings, nil
 			}
-			wrs, err := cd.LatestWritings(r)
+			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+			wrs, err := cd.LatestWritings(WithWritingsOffset(int32(offset)))
 			if err != nil {
 				return nil, fmt.Errorf("latestWritings: %w", err)
 			}

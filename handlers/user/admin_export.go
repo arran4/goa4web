@@ -30,7 +30,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd = corecommon.NewCoreData(r.Context(), queries)
+	cd := corecommon.NewCoreData(r.Context(), queries)
 	cd.UserID = int32(uid)
 
 	user, err := cd.CurrentUser()
@@ -67,7 +67,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		Note        string                          `json:"note"`
 		User        *db.User                        `json:"user"`
 		Preference  *db.Preference                  `json:"preference,omitempty"`
-		Languages   []*db.Language                  `json:"languages,omitempty"`
+		Languages   []*db.UserLanguage              `json:"languages,omitempty"`
 		Permissions []*db.GetPermissionsByUserIDRow `json:"permissions,omitempty"`
 	}{
 		Note:        gdprExportNote,
@@ -77,7 +77,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		Permissions: perms,
 	}
 
-	cats, err := queries.FetchAllCategories(r.Context())
+	cats, err := cd.WritingCategories()
 	if err != nil {
 		log.Printf("fetch categories: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

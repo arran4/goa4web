@@ -185,7 +185,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categoryRows, err := queries.FetchAllCategories(r.Context())
+	categoryRows, err := data.CoreData.WritingCategories()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

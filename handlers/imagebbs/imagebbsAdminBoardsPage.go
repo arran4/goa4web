@@ -27,8 +27,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
-	boardRows, err := queries.GetAllImageBoards(r.Context())
+	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -59,31 +59,34 @@ type CoreData struct {
 	ctx     context.Context
 	queries *db.Queries
 
-	user              lazyValue[*db.User]
-	perms             lazyValue[[]*db.GetPermissionsByUserIDRow]
-	pref              lazyValue[*db.Preference]
-	langs             lazyValue[[]*db.Language]
-	roles             lazyValue[[]string]
-	allRoles          lazyValue[[]*db.Role]
-	announcement      lazyValue[*db.GetActiveAnnouncementWithNewsRow]
-	forumCategories   lazyValue[[]*db.Forumcategory]
-	latestNews        lazyValue[[]*NewsPost]
-	latestWritings    lazyValue[[]*db.Writing]
-	writingCategories lazyValue[[]*db.WritingCategory]
-	publicWritings    map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
-	bloggers          lazyValue[[]*db.BloggerCountRow]
-	writers           lazyValue[[]*db.WriterCountRow]
-	imageBoards       map[int32]*lazyValue[[]*db.Imageboard]
-	imageBoardPosts   map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
-	forumThreads      map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
-	bookmarks         lazyValue[*db.GetBookmarksForUserRow]
-	newsAnnouncements map[int32]*lazyValue[*db.SiteAnnouncement]
-	annMu             sync.Mutex
-	forumTopics       map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
-	notifCount        lazyValue[int32]
-	unreadCount       lazyValue[int64]
-	writerWritings    map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
-	linkerCategories  lazyValue[[]*db.GetLinkerCategoryLinkCountsRow]
+	user                     lazyValue[*db.User]
+	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
+	pref                     lazyValue[*db.Preference]
+	langs                    lazyValue[[]*db.Language]
+	languagesAll             lazyValue[[]*db.Language]
+	roles                    lazyValue[[]string]
+	allRoles                 lazyValue[[]*db.Role]
+	announcement             lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	forumCategories          lazyValue[[]*db.Forumcategory]
+	latestNews               lazyValue[[]*NewsPost]
+	latestWritings           lazyValue[[]*db.Writing]
+	visibleWritingCategories lazyValue[[]*db.WritingCategory]
+	writingCategories        lazyValue[[]*db.WritingCategory]
+	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
+	bloggers                 lazyValue[[]*db.BloggerCountRow]
+	writers                  lazyValue[[]*db.WriterCountRow]
+	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
+	imageBoards              lazyValue[[]*db.Imageboard]
+	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
+	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	bookmarks                lazyValue[*db.GetBookmarksForUserRow]
+	newsAnnouncements        map[int32]*lazyValue[*db.SiteAnnouncement]
+	annMu                    sync.Mutex
+	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
+	notifCount               lazyValue[int32]
+	unreadCount              lazyValue[int64]
+	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
+	linkerCategories         lazyValue[[]*db.GetLinkerCategoryLinkCountsRow]
 
 	event *eventbus.Event
 }
@@ -272,6 +275,16 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 	})
 }
 
+// AllLanguages returns all languages cached once.
+func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
+	return cd.languagesAll.load(func() ([]*db.Language, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.FetchLanguages(cd.ctx)
+	})
+}
+
 // AllRoles returns every defined role loaded once from the database.
 func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 	return cd.allRoles.load(func() ([]*db.Role, error) {
@@ -432,16 +445,28 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 }
 
 // LatestWritings returns recent public writings with permission data.
-func (cd *CoreData) LatestWritings(r *http.Request) ([]*db.Writing, error) {
+type LatestWritingsOption func(*db.GetPublicWritingsParams)
+
+// WithWritingsOffset sets the query offset.
+func WithWritingsOffset(o int32) LatestWritingsOption {
+	return func(p *db.GetPublicWritingsParams) { p.Offset = o }
+}
+
+// WithWritingsLimit sets the query limit.
+func WithWritingsLimit(l int32) LatestWritingsOption {
+	return func(p *db.GetPublicWritingsParams) { p.Limit = l }
+}
+
+func (cd *CoreData) LatestWritings(opts ...LatestWritingsOption) ([]*db.Writing, error) {
 	return cd.latestWritings.load(func() ([]*db.Writing, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		rows, err := cd.queries.GetPublicWritings(cd.ctx, db.GetPublicWritingsParams{
-			Limit:  15,
-			Offset: int32(offset),
-		})
+		params := db.GetPublicWritingsParams{Limit: 15}
+		for _, o := range opts {
+			o(&params)
+		}
+		rows, err := cd.queries.GetPublicWritings(cd.ctx, params)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -457,8 +482,8 @@ func (cd *CoreData) LatestWritings(r *http.Request) ([]*db.Writing, error) {
 }
 
 // WritingCategories returns the visible writing categories for userID.
-func (cd *CoreData) WritingCategories(userID int32) ([]*db.WritingCategory, error) {
-	return cd.writingCategories.load(func() ([]*db.WritingCategory, error) {
+func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategory, error) {
+	return cd.visibleWritingCategories.load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -479,6 +504,16 @@ func (cd *CoreData) WritingCategories(userID int32) ([]*db.WritingCategory, erro
 			}
 		}
 		return cats, nil
+	})
+}
+
+// WritingCategories returns all writing categories cached once.
+func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
+	return cd.writingCategories.load(func() ([]*db.WritingCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.FetchAllCategories(cd.ctx)
 	})
 }
 
@@ -645,17 +680,17 @@ func (cd *CoreData) CanEditAny() bool {
 }
 
 // ImageBoards retrieves sub-boards under parentID lazily.
-func (cd *CoreData) ImageBoards(parentID int32) ([]*db.Imageboard, error) {
+func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
-	if cd.imageBoards == nil {
-		cd.imageBoards = make(map[int32]*lazyValue[[]*db.Imageboard])
+	if cd.subImageBoards == nil {
+		cd.subImageBoards = make(map[int32]*lazyValue[[]*db.Imageboard])
 	}
-	lv, ok := cd.imageBoards[parentID]
+	lv, ok := cd.subImageBoards[parentID]
 	if !ok {
 		lv = &lazyValue[[]*db.Imageboard]{}
-		cd.imageBoards[parentID] = lv
+		cd.subImageBoards[parentID] = lv
 	}
 	return lv.load(func() ([]*db.Imageboard, error) {
 		return cd.queries.GetAllBoardsByParentBoardIdForUser(cd.ctx, db.GetAllBoardsByParentBoardIdForUserParams{
@@ -663,6 +698,16 @@ func (cd *CoreData) ImageBoards(parentID int32) ([]*db.Imageboard, error) {
 			ParentID:     parentID,
 			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
+	})
+}
+
+// ImageBoards returns all image boards cached once.
+func (cd *CoreData) ImageBoards() ([]*db.Imageboard, error) {
+	return cd.imageBoards.load(func() ([]*db.Imageboard, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetAllImageBoards(cd.ctx)
 	})
 }
 

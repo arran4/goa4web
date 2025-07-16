@@ -42,7 +42,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	data.CategoryId = int32(categoryId)
 	data.WritingCategoryID = data.CategoryId
 
-	categoryRows, err := data.CoreData.WritingCategories(data.CoreData.UserID)
+	categoryRows, err := data.CoreData.VisibleWritingCategories(data.CoreData.UserID)
 	if err != nil {
 		log.Printf("writingCategories: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

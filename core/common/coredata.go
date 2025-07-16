@@ -69,7 +69,7 @@ type CoreData struct {
 	forumCategories   lazyValue[[]*db.Forumcategory]
 	latestNews        lazyValue[[]*NewsPost]
 	latestWritings    lazyValue[[]*db.Writing]
-	writeCats         lazyValue[[]*db.WritingCategory]
+	writingCategories lazyValue[[]*db.WritingCategory]
 	publicWritings    map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 	bloggers          lazyValue[[]*db.BloggerCountRow]
 	writers           lazyValue[[]*db.WriterCountRow]
@@ -83,6 +83,7 @@ type CoreData struct {
 	notifCount        lazyValue[int32]
 	unreadCount       lazyValue[int64]
 	writerWritings    map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
+	linkerCategories  lazyValue[[]*db.GetLinkerCategoryLinkCountsRow]
 
 	event *eventbus.Event
 }
@@ -415,9 +416,9 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-    if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
-      continue
-    }
+		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+			continue
+		}
 		posts = append(posts, &NewsPost{
 			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
 			ShowReply:    cd.UserID != 0,
@@ -455,15 +456,15 @@ func (cd *CoreData) LatestWritings(r *http.Request) ([]*db.Writing, error) {
 	})
 }
 
-// WritingCategories returns the visible writing categories for the user.
-func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
-	return cd.writeCats.load(func() ([]*db.WritingCategory, error) {
+// WritingCategories returns the visible writing categories for userID.
+func (cd *CoreData) WritingCategories(userID int32) ([]*db.WritingCategory, error) {
+	return cd.writingCategories.load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		rows, err := cd.queries.FetchCategoriesForUser(cd.ctx, db.FetchCategoriesForUserParams{
 			ViewerID: cd.UserID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -698,4 +699,18 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		return cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
 	})
 	return count
+}
+
+// LinkerCategoryCounts lazily loads linker category statistics.
+func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
+	return cd.linkerCategories.load(func() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetLinkerCategoryLinkCounts(cd.ctx)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	})
 }

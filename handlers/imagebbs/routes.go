@@ -24,7 +24,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterAdminControlCenter("ImageBBS", "/admin/imagebbs", SectionWeight)
 	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
-	ibr.Use(AddImageBBSIndex)
+	ibr.Use(hcommon.IndexMiddleware(CustomImageBBSIndex))
 	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(config.AppRuntimeConfig.ImageUploadDir))))
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
 	r.HandleFunc("/imagebbs.atom", AtomPage).Methods("GET")

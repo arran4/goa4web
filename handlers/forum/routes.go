@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	blogs "github.com/arran4/goa4web/handlers/blogs"
 	comments "github.com/arran4/goa4web/handlers/comments"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
@@ -19,7 +20,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Forum", "/forum", SectionWeight)
 	nav.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
-	fr.Use(AddForumIndex)
+	fr.Use(hcommon.IndexMiddleware(CustomForumIndex))
 	fr.HandleFunc("/topic/{topic}.rss", TopicRssPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.atom", TopicAtomPage).Methods("GET")
 	fr.HandleFunc("", Page).Methods("GET")

@@ -44,7 +44,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		data.WritingCategories = rows
 	}
 	if data.Section == "" || data.Section == "linker" {
-		rows, err := queries.GetLinkerCategoryLinkCounts(r.Context())
+		rows, err := data.LinkerCategoryCounts()
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("adminCategories linker: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

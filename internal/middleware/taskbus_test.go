@@ -125,3 +125,22 @@ func TestTaskEventQueue(t *testing.T) {
 		t.Fatalf("expected flushed event")
 	}
 }
+
+func TestTaskEventMiddleware_EventProvided(t *testing.T) {
+	handler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+		if cd == nil || cd.Event() == nil {
+			t.Fatalf("missing event")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &hcommon.CoreData{})
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status=%d", rec.Code)
+	}
+}

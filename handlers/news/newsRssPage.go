@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/feeds"
 
-	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/a4code/a4code2html"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 )

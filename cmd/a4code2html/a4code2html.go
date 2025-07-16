@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/a4code/a4code2html"
 )
 
 // multiFlag collects repeated -f flag values.

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/gorilla/csrf"
 )
 

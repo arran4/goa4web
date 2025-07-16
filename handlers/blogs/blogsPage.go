@@ -16,7 +16,7 @@ import (
 
 	common "github.com/arran4/goa4web/handlers/common"
 
-	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 	"github.com/gorilla/feeds"

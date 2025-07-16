@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/arran4/goa4web/a4code2html"
+	"github.com/arran4/goa4web/a4code/a4code2html"
 )
 
 // AnchorLink returns an anchor tag linking to the given section.

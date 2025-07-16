@@ -69,7 +69,7 @@ type CoreData struct {
 	forumCategories   lazyValue[[]*db.Forumcategory]
 	latestNews        lazyValue[[]*NewsPost]
 	latestWritings    lazyValue[[]*db.Writing]
-	writeCats         lazyValue[[]*db.WritingCategory]
+	writingCategories lazyValue[[]*db.WritingCategory]
 	publicWritings    map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 	bloggers          lazyValue[[]*db.BloggerCountRow]
 	writers           lazyValue[[]*db.WriterCountRow]
@@ -456,15 +456,15 @@ func (cd *CoreData) LatestWritings(r *http.Request) ([]*db.Writing, error) {
 	})
 }
 
-// WritingCategories returns the visible writing categories for the user.
-func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
-	return cd.writeCats.load(func() ([]*db.WritingCategory, error) {
+// WritingCategories returns the visible writing categories for userID.
+func (cd *CoreData) WritingCategories(userID int32) ([]*db.WritingCategory, error) {
+	return cd.writingCategories.load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		rows, err := cd.queries.FetchCategoriesForUser(cd.ctx, db.FetchCategoriesForUserParams{
 			ViewerID: cd.UserID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

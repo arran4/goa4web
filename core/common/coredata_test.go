@@ -72,10 +72,10 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 
-	if _, err := cd.WritingCategories(); err != nil {
+	if _, err := cd.WritingCategories(cd.UserID); err != nil {
 		t.Fatalf("WritingCategories: %v", err)
 	}
-	if _, err := cd.WritingCategories(); err != nil {
+	if _, err := cd.WritingCategories(cd.UserID); err != nil {
 		t.Fatalf("WritingCategories second call: %v", err)
 	}
 

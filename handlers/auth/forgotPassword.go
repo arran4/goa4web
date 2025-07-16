@@ -10,7 +10,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
@@ -56,8 +56,15 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if row.Email != "" {
-		page := r.URL.Scheme + "://" + r.Host + "/login"
-		_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, hcommon.TaskUserResetPassword, code)
+		if cd, ok := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
+			}
+		}
+		// OLD _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, hcommon.TaskUserResetPassword, code)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

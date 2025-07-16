@@ -184,6 +184,26 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
 	subs := map[int32]map[string]func(context.Context) error{}
 	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
+
+	if evt.Task == hcommon.TaskUserResetPassword && n.Queries != nil {
+		user, err := n.Queries.GetUserById(ctx, evt.UserID)
+		if err != nil || !user.Email.Valid || user.Email.String == "" {
+			notifyMissingEmail(ctx, n.Queries, evt.UserID)
+		} else {
+			if err := emailutil.CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Data); err != nil {
+				recordAndNotify(ctx, q, n, fmt.Sprintf("deliver self email to %d: %v", evt.UserID, err))
+			}
+		}
+		if msg != "" {
+			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+				UsersIdusers: evt.UserID,
+				Link:         sql.NullString{String: evt.Path, Valid: true},
+				Message:      sql.NullString{String: msg, Valid: true},
+			}); err != nil {
+				recordAndNotify(ctx, q, n, fmt.Sprintf("deliver self note to %d: %v", evt.UserID, err))
+			}
+		}
+	}
 	for _, p := range patterns {
 		for _, method := range []string{"email", "internal"} {
 			ids, err := n.Queries.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: p, Method: method})

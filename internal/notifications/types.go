@@ -32,6 +32,12 @@ type SignupInfo struct {
 	Username string
 }
 
+// PasswordResetInfo holds details for a password reset email.
+type PasswordResetInfo struct {
+	Username string
+	Code     string
+}
+
 // SubscriptionTarget exposes a subscribeable object.
 type SubscriptionTarget interface {
 	// SubscriptionTarget returns the item type and id used when building

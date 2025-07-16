@@ -34,6 +34,8 @@ var (
 	deleteTopicRestrictionTemplate string
 	//go:embed templates/copy_topic_restriction.txt
 	copyTopicRestrictionTemplate string
+	//go:embed templates/password_reset.txt
+	passwordResetTemplate string
 )
 
 var defaultTemplates = map[string]string{
@@ -50,4 +52,5 @@ var defaultTemplates = map[string]string{
 	strings.ToLower(hcommon.TaskUpdateTopicRestriction): updateTopicRestrictionTemplate,
 	strings.ToLower(hcommon.TaskDeleteTopicRestriction): deleteTopicRestrictionTemplate,
 	strings.ToLower(hcommon.TaskCopyTopicRestriction):   copyTopicRestrictionTemplate,
+	strings.ToLower(hcommon.TaskUserResetPassword):      passwordResetTemplate,
 }

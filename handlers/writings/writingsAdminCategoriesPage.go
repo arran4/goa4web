@@ -18,13 +18,11 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*corecommon.CoreData
 		Categories []*db.WritingCategory
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-
 	data := Data{
 		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	categoryRows, err := queries.FetchAllCategories(r.Context())
+	categoryRows, err := data.CoreData.WritingCategories()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

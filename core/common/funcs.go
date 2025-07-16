@@ -83,7 +83,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			if LatestWritings != nil {
 				return LatestWritings, nil
 			}
-			wrs, err := cd.LatestWritings(r)
+			wrs, err := cd.LatestWritings()
 			if err != nil {
 				return nil, fmt.Errorf("latestWritings: %w", err)
 			}

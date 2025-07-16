@@ -59,30 +59,31 @@ type CoreData struct {
 	ctx     context.Context
 	queries *db.Queries
 
-	user              lazyValue[*db.User]
-	perms             lazyValue[[]*db.GetPermissionsByUserIDRow]
-	pref              lazyValue[*db.Preference]
-	langs             lazyValue[[]*db.Language]
-	roles             lazyValue[[]string]
-	allRoles          lazyValue[[]*db.Role]
-	announcement      lazyValue[*db.GetActiveAnnouncementWithNewsRow]
-	forumCategories   lazyValue[[]*db.Forumcategory]
-	latestNews        lazyValue[[]*NewsPost]
-	latestWritings    lazyValue[[]*db.Writing]
-	writeCats         lazyValue[[]*db.WritingCategory]
-	publicWritings    map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
-	bloggers          lazyValue[[]*db.BloggerCountRow]
-	writers           lazyValue[[]*db.WriterCountRow]
-	imageBoards       map[int32]*lazyValue[[]*db.Imageboard]
-	imageBoardPosts   map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
-	forumThreads      map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
-	bookmarks         lazyValue[*db.GetBookmarksForUserRow]
-	newsAnnouncements map[int32]*lazyValue[*db.SiteAnnouncement]
-	annMu             sync.Mutex
-	forumTopics       map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
-	notifCount        lazyValue[int32]
-	unreadCount       lazyValue[int64]
-	writerWritings    map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
+	user                     lazyValue[*db.User]
+	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
+	pref                     lazyValue[*db.Preference]
+	langs                    lazyValue[[]*db.Language]
+	roles                    lazyValue[[]string]
+	allRoles                 lazyValue[[]*db.Role]
+	announcement             lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	forumCategories          lazyValue[[]*db.Forumcategory]
+	latestNews               lazyValue[[]*NewsPost]
+	latestWritings           lazyValue[[]*db.Writing]
+	writingCategories        lazyValue[[]*db.WritingCategory]
+	visibleWritingCategories lazyValue[[]*db.WritingCategory]
+	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
+	bloggers                 lazyValue[[]*db.BloggerCountRow]
+	writers                  lazyValue[[]*db.WriterCountRow]
+	imageBoards              map[int32]*lazyValue[[]*db.Imageboard]
+	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
+	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	bookmarks                lazyValue[*db.GetBookmarksForUserRow]
+	newsAnnouncements        map[int32]*lazyValue[*db.SiteAnnouncement]
+	annMu                    sync.Mutex
+	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
+	notifCount               lazyValue[int32]
+	unreadCount              lazyValue[int64]
+	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
 
 	event *eventbus.Event
 }
@@ -415,9 +416,6 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-    if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
-      continue
-    }
 		posts = append(posts, &NewsPost{
 			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
 			ShowReply:    cd.UserID != 0,
@@ -431,15 +429,29 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 }
 
 // LatestWritings returns recent public writings with permission data.
-func (cd *CoreData) LatestWritings(r *http.Request) ([]*db.Writing, error) {
+type LatestWritingsOption func(*latestWritingsOpts)
+
+type latestWritingsOpts struct {
+	Offset int32
+}
+
+// WithLatestOffset sets the query offset when fetching writings.
+func WithLatestOffset(off int32) LatestWritingsOption {
+	return func(o *latestWritingsOpts) { o.Offset = off }
+}
+
+func (cd *CoreData) LatestWritings(opts ...LatestWritingsOption) ([]*db.Writing, error) {
+	var o latestWritingsOpts
+	for _, opt := range opts {
+		opt(&o)
+	}
 	return cd.latestWritings.load(func() ([]*db.Writing, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 		rows, err := cd.queries.GetPublicWritings(cd.ctx, db.GetPublicWritingsParams{
 			Limit:  15,
-			Offset: int32(offset),
+			Offset: o.Offset,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -455,9 +467,19 @@ func (cd *CoreData) LatestWritings(r *http.Request) ([]*db.Writing, error) {
 	})
 }
 
-// WritingCategories returns the visible writing categories for the user.
+// WritingCategories loads all writing categories once.
 func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
-	return cd.writeCats.load(func() ([]*db.WritingCategory, error) {
+	return cd.writingCategories.load(func() ([]*db.WritingCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.FetchAllCategories(cd.ctx)
+	})
+}
+
+// VisibleWritingCategories returns the writing categories visible to the user.
+func (cd *CoreData) VisibleWritingCategories() ([]*db.WritingCategory, error) {
+	return cd.visibleWritingCategories.load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}

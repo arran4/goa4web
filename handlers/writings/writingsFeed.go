@@ -20,7 +20,7 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 		Created:     time.Now(),
 	}
 
-	rows, err := cd.LatestWritings(r)
+	rows, err := cd.LatestWritings()
 	if err != nil {
 		return nil, err
 	}

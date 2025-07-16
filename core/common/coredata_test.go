@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -72,10 +73,10 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 
-	if _, err := cd.WritingCategories(cd.UserID); err != nil {
+	if _, err := cd.VisibleWritingCategories(cd.UserID); err != nil {
 		t.Fatalf("WritingCategories: %v", err)
 	}
-	if _, err := cd.WritingCategories(cd.UserID); err != nil {
+	if _, err := cd.VisibleWritingCategories(cd.UserID); err != nil {
 		t.Fatalf("WritingCategories second call: %v", err)
 	}
 
@@ -213,11 +214,11 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	cd.SetRoles([]string{"user"})
 
 	req := httptest.NewRequest("GET", "/", nil).WithContext(context.WithValue(ctx, common.ContextValues("coreData"), cd))
-
-	if _, err := cd.LatestWritings(req); err != nil {
+	offset, _ := strconv.Atoi(req.URL.Query().Get("offset"))
+	if _, err := cd.LatestWritings(common.WithWritingsOffset(int32(offset))); err != nil {
 		t.Fatalf("LatestWritings: %v", err)
 	}
-	if _, err := cd.LatestWritings(req); err != nil {
+	if _, err := cd.LatestWritings(common.WithWritingsOffset(int32(offset))); err != nil {
 		t.Fatalf("LatestWritings second call: %v", err)
 	}
 

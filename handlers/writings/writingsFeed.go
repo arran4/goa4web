@@ -3,12 +3,14 @@ package writings
 import (
 	"fmt"
 	"github.com/arran4/goa4web/a4code2html"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 	"github.com/gorilla/feeds"
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -20,7 +22,8 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 		Created:     time.Now(),
 	}
 
-	rows, err := cd.LatestWritings(r)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	rows, err := cd.LatestWritings(corecommon.WithWritingsOffset(int32(offset)))
 	if err != nil {
 		return nil, err
 	}

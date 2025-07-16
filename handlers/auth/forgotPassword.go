@@ -7,15 +7,13 @@ import (
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
-	data := struct{ *corecommon.CoreData }{CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)}
-	common.TemplateHandler(w, r, "forgotPasswordPage.gohtml", data)
+	hcommon.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(hcommon.KeyCoreData))
 }
 
 func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {

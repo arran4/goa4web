@@ -35,7 +35,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		data.ForumCategories = rows
 	}
 	if data.Section == "" || data.Section == "writings" {
-		rows, err := queries.FetchAllCategories(r.Context())
+		rows, err := data.CoreData.WritingCategories()
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("adminCategories writings: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

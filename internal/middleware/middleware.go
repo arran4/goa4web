@@ -56,7 +56,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 				delete(session.Values, "UID")
 				delete(session.Values, "LoginTime")
 				delete(session.Values, "ExpiryTime")
-				redirectToLogin(w, r, session)
+				RedirectToLogin(w, r, session)
 				return
 			}
 		}
@@ -210,7 +210,8 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func redirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
+// RedirectToLogin stores the current URL then redirects to the login page.
+func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
 	if session != nil {
 		backURL := r.URL.RequestURI()
 		session.Values["BackURL"] = backURL

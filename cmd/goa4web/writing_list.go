@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -70,7 +71,7 @@ func (c *writingListCmd) Run() error {
 		return nil
 	}
 	cd := corecommon.NewCoreData(ctx, queries)
-	rows, err := cd.LatestWritings(nil)
+	rows, err := cd.LatestWritings(corecommon.WithWritingsOffset(int32(c.Offset)), corecommon.WithWritingsLimit(int32(c.Limit)))
 	if err != nil {
 		return fmt.Errorf("list writings: %w", err)
 	}

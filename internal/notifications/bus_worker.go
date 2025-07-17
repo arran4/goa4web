@@ -32,7 +32,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) 
 		if dbq, ok := q.(dbdlq.DLQ); ok {
 			if count, err := dbq.Queries.CountDeadLetters(ctx); err == nil {
 				if isPow10(count) {
-					n.NotifyAdmins(ctx, "/admin/dlq")
+					NotifyAdmins(ctx, n, "/admin/dlq")
 				}
 			}
 		}
@@ -90,20 +90,22 @@ func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
 	for {
 		select {
 		case evt := <-ch:
-			processEvent(ctx, evt, n, q)
+			if err := processEvent(ctx, evt, n, q); err != nil {
+				log.Printf("process event: %v", err)
+			}
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ) {
+func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ) error {
 	if !handlers.NotificationsEnabled() {
-		return
+		return nil
 	}
 
 	if evt.Task == nil {
-		return
+		return nil
 	}
 
 	emailHtmlTemplates := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
@@ -112,20 +114,29 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
 		if err := notifyAdmins(ctx, evt, n, tp, emailHtmlTemplates, emailTextTemplates, notificationTemplates); err != nil {
-			dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", err))
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", err)); dlqErr != nil {
+				return dlqErr
+			}
+			return err
 		}
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
 		if err := notifySelf(ctx, evt, n, tp); err != nil {
-			dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err))
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err)); dlqErr != nil {
+				return dlqErr
+			}
+			return err
 		}
 
 	}
 
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
 		if err := notifySubscribers(ctx, evt, n); err != nil {
-			dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err))
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err)); dlqErr != nil {
+				return dlqErr
+			}
+			return err
 		}
 
 	}
@@ -134,6 +145,8 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 		handleAutoSubscribe(ctx, evt, n)
 
 	}
+
+	return nil
 }
 
 func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNotificationTemplateProvider) error {

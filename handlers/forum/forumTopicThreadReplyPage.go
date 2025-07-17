@@ -111,9 +111,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO remove and replace with proper eventbus notification
-	notif.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), threadRow.Idforumthread, uid, endUrl)
-
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
 

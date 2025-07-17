@@ -111,7 +111,9 @@ func TestProcessEventDLQ(t *testing.T) {
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(1))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
-	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, dlqRec)
+	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, dlqRec); err == nil {
+		t.Fatal("expected error")
+	}
 	if dlqRec.msg == "" {
 		t.Fatal("expected dlq message")
 	}
@@ -152,7 +154,9 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 
-	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, nil)
+	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, nil); err != nil {
+		t.Fatalf("process: %v", err)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)
@@ -178,7 +182,9 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 		AddRow(1, 1, 1, true, 15, false)
 	mock.ExpectQuery("preferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 
-	processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, nil)
+	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskReply, UserID: 1}, n, nil); err != nil {
+		t.Fatalf("process: %v", err)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)
@@ -209,7 +215,9 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: hcommon.TaskSetTopicRestriction, UserID: 1, Admin: true}, n, nil)
+	if err := processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: hcommon.TaskSetTopicRestriction, UserID: 1, Admin: true}, n, nil); err != nil {
+		t.Fatalf("process: %v", err)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)
@@ -258,7 +266,9 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: hcommon.TaskReply, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, n, nil)
+	if err := processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: hcommon.TaskReply, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, n, nil); err != nil {
+		t.Fatalf("process: %v", err)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)

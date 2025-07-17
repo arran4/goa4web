@@ -5,6 +5,7 @@ import (
 	"log"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // LogWorker listens on the bus and logs all received events.
@@ -29,12 +30,16 @@ func AuditWorker(ctx context.Context, bus *Bus, q *dbpkg.Queries) {
 	for {
 		select {
 		case evt := <-ch:
-			if evt.UserID == 0 || evt.Task == "" || !evt.Admin {
+			named, ok := evt.Task.(tasks.Name)
+			if evt.UserID == 0 || !ok {
+				continue
+			}
+			if admin, ok := evt.Task.(tasks.AdminTask); !ok || !admin.IsAdminTask() {
 				continue
 			}
 			if err := q.InsertAuditLog(ctx, dbpkg.InsertAuditLogParams{
 				UsersIdusers: evt.UserID,
-				Action:       evt.Task,
+				Action:       named.Name(),
 			}); err != nil {
 				log.Printf("insert audit log: %v", err)
 			}

@@ -18,6 +18,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestAskActionPage_InvalidForms(t *testing.T) {
@@ -94,8 +95,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	evt := &eventbus.Event{Path: "/faq/ask", Task: TaskAsk, UserID: 1}
-	cd := &common.CoreData{}
+	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
+	cd := &corecommon.CoreData{}
 	cd.SetEvent(evt)
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)

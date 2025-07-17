@@ -11,14 +11,14 @@ import (
 	"testing"
 )
 
-//go:embed site/*.gohtml site/*/*.gohtml email/*.html
+//go:embed site/*.gohtml site/*/*.gohtml email/*.gohtml
 var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	cd := &corecommon.CoreData{}
 	template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
-		"site/*.gohtml", "site/*/*.gohtml", "email/*.html"))
+		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))
 }
 
 func TestParseEachTemplate(t *testing.T) {
@@ -26,7 +26,7 @@ func TestParseEachTemplate(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() || !(strings.HasSuffix(path, ".gohtml") || strings.HasSuffix(path, ".html")) {
+		if d.IsDir() || !strings.HasSuffix(path, ".gohtml") {
 			return nil
 		}
 		t.Run(filepath.Base(path), func(t *testing.T) {

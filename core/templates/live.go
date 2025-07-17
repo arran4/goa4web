@@ -13,15 +13,15 @@ func GetCompiledSiteTemplates(funcs template.FuncMap) *template.Template {
 }
 
 func GetCompiledNotificationTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/notifications"), "*.txt")) // TODO rename to gotxt
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/notifications"), "*.gotxt"))
 }
 
 func GetCompiledEmailHtmlTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.html")) // TODO rename to gohtml
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gohtml"))
 }
 
 func GetCompiledEmailTextTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.txt")) // TODO rename to gotxt
+	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gotxt"))
 }
 
 func GetMainCSSData() []byte {

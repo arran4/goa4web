@@ -77,16 +77,14 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			evt.Admin = true
-			evt.Path = "/admin/faq"
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["question"] = text
-		}
+	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	evt := cd.Event()
+	evt.Admin = true
+	evt.Path = "/admin/faq"
+	if evt.Data == nil {
+		evt.Data = map[string]any{}
 	}
+	evt.Data["question"] = text
 
 	// The BusWorker sends notifications based on event metadata.
 	// Setting Admin=true signals administrators should be alerted.

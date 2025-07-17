@@ -85,10 +85,13 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
 		uid := int32(0)
-		cd, _ := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
-		if cd != nil {
-			uid = cd.UserID
+		cd, ok := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+		if !ok || cd == nil {
+			log.Printf("task event middleware: missing core data")
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
 		}
+		uid = cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")
 		evt := &eventbus.Event{
 			Path:   r.URL.Path,
@@ -97,9 +100,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 			Time:   time.Now(),
 			Admin:  admin,
 		}
-		if cd != nil {
-			cd.SetEvent(evt)
-		}
+		cd.SetEvent(evt)
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sr, r)
 		if task != "" && sr.status < http.StatusBadRequest {

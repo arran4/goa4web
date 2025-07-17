@@ -17,6 +17,7 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/middleware"
 )
 
 func TestAskActionPage_InvalidForms(t *testing.T) {
@@ -93,16 +94,15 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	evt := &eventbus.Event{Path: "/faq/ask", Task: TaskAsk, UserID: 1}
-	cd := &handlers.CoreData{}
-	cd.SetEvent(evt)
+	cd := &hcommon.CoreData{}
 
 	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
 	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
+	handler := middleware.TaskEventMiddleware(http.HandlerFunc(AskActionPage))
 	rr := httptest.NewRecorder()
-	askTask.Action(rr, req)
+	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
@@ -110,6 +110,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	if loc := rr.Header().Get("Location"); loc != "/faq" {
 		t.Fatalf("location=%q", loc)
 	}
+	evt := cd.Event()
 	if !evt.Admin || evt.Path != "/admin/faq" {
 		t.Fatalf("event %+v", evt)
 	}

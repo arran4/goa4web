@@ -122,7 +122,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
-		if err := notifySelf(ctx, evt, n, tp); err != nil {
+		if err := notifySelf(ctx, evt, n, tp, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -132,7 +132,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
-		if err := notifySubscribers(ctx, evt, n); err != nil {
+		if err := notifySubscribers(ctx, evt, n, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err)); dlqErr != nil {
 				return dlqErr
 			}

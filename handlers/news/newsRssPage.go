@@ -2,21 +2,21 @@ package news
 
 import (
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"io"
 	"log"
 	"net/http"
 	"time"
 
+	common "github.com/arran4/goa4web/core/common"
+
 	"github.com/gorilla/feeds"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	handlers "github.com/arran4/goa4web/handlers"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	posts, err := cd.LatestNews(r)
 	if err != nil {
 		log.Printf("latestNews: %v", err)

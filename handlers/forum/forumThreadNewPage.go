@@ -3,10 +3,11 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
@@ -35,8 +36,8 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -55,7 +56,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	session, ok := core.GetSessionOrFail(w, r)
@@ -89,7 +90,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -125,7 +126,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

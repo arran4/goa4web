@@ -3,6 +3,7 @@ package blogs
 import (
 	"net/http"
 
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 )
 
@@ -13,10 +14,10 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 
-	//queries := r.Context().Name(handlers.KeyQueries).(*db.Queries)
+	//queries := r.Context().Name(common.KeyQueries).(*db.Queries)
 	//
 	//rows, err := queries.GetCountOfBlogPostsByUser(r.Context())
 	//if err != nil {

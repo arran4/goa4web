@@ -29,9 +29,9 @@ func setupCommentRequest(t *testing.T, queries *db.Queries, store *sessions.Cook
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	cd := handlers.NewCoreData(ctx, queries, handlers.WithSession(sess))
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess
 }

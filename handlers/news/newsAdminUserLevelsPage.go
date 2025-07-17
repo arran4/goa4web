@@ -20,10 +20,10 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -43,7 +43,7 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
@@ -66,7 +66,7 @@ func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func NewsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid, err := strconv.Atoi(r.PostFormValue("permid"))
 	if err != nil {
 		log.Printf("strconv.Atoi(permid) Error: %s", err)

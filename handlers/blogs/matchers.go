@@ -12,7 +12,6 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -25,7 +24,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)
@@ -47,9 +46,9 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			}
 			return
 		}
-		cd, _ := r.Context().Value(handlers.KeyCoreData).(*common.CoreData)
+		cd, _ := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 		if cd != nil && cd.HasRole("administrator") {
-			ctx := context.WithValue(r.Context(), handlers.KeyBlogEntry, row)
+			ctx := context.WithValue(r.Context(), common.KeyBlogEntry, row)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -57,7 +56,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		ctx := context.WithValue(r.Context(), handlers.KeyBlogEntry, row)
+		ctx := context.WithValue(r.Context(), common.KeyBlogEntry, row)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

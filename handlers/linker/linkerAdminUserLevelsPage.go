@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -22,18 +22,18 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		UserLevels []*PermissionUser
 		Search     string
 		Roles      []*db.Role
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -83,7 +83,7 @@ var UserAllowTask = userAllowTask{
 }
 
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
 	level := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
@@ -118,7 +118,7 @@ var UserDisallowTask = userDisallowTask{
 }
 
 func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	r.ParseForm()
 	ids := r.Form["permids"]
 	if len(ids) == 0 {

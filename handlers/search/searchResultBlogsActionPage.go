@@ -2,9 +2,10 @@ package search
 
 import (
 	"database/sql"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	handlers "github.com/arran4/goa4web/handlers"
 	hblogs "github.com/arran4/goa4web/handlers/blogs"
@@ -21,7 +22,7 @@ var searchBlogsTask = &SearchBlogsTask{TaskString: TaskSearchBlogs}
 
 func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		Blogs              []*db.Blog
 		CommentsNoResults  bool
@@ -31,9 +32,9 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

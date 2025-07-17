@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
@@ -45,8 +46,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
 	data := Data{
 		CoreData:           cd,
 		Offset:             offset,
@@ -61,8 +62,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

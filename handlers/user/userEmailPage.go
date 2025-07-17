@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	handlers "github.com/arran4/goa4web/handlers"
 
@@ -42,7 +43,7 @@ var ErrMailNotConfigured = errors.New("mail isn't configured")
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		UserData        *db.User
 		Verified        []*db.UserEmail
 		Unverified      []*db.UserEmail
@@ -53,8 +54,8 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		Error string
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	user, _ := cd.CurrentUser()
 	pref, _ := cd.Preference()
 
@@ -68,7 +69,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := Data{
-		CoreData:   r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData:   r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		UserData:   user,
 		Verified:   verified,
 		Unverified: unverified,
@@ -101,8 +102,8 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 
 	updates := r.PostFormValue("emailupdates") != ""
 	auto := r.PostFormValue("autosubscribe") != ""
@@ -144,13 +145,13 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
-	queries, _ := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries, _ := r.Context().Value(common.KeyQueries).(*db.Queries)
 	var emails []*db.UserEmail
 	var err error
 	if queries != nil {
@@ -195,7 +196,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
 		return
@@ -224,7 +225,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
@@ -254,7 +255,7 @@ func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err == nil && ue.UserID == uid {
 		_ = queries.DeleteUserEmail(r.Context(), int32(id))
@@ -273,7 +274,7 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	val, _ := queries.GetMaxNotificationPriority(r.Context(), uid)
 	var maxPr int32
 	switch v := val.(type) {
@@ -292,7 +293,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ue, err := queries.GetUserEmailByCode(r.Context(), sql.NullString{String: code, Valid: true})
 	if err != nil || (ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now())) {
 		http.Error(w, "invalid code", http.StatusBadRequest)

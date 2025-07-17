@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -25,15 +25,15 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*CoreData
-		AdminLinks []corecommon.IndexItem
+		AdminLinks []common.IndexItem
 		Stats      Stats
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData:   r.Context().Value(common.KeyCoreData).(*CoreData),
 		AdminLinks: nav.AdminLinks(),
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	ctx := r.Context()
 	count := func(query string, dest *int64) {
 		if err := queries.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {

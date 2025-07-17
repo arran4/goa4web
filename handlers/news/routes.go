@@ -1,9 +1,11 @@
 package news
 
 import (
+	"net/http"
+
+	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 
 	"github.com/gorilla/mux"
 
@@ -17,7 +19,7 @@ func AddNewsIndex(h http.Handler) http.Handler { return handlers.IndexMiddleware
 
 func runTemplate(name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		handlers.TemplateHandler(w, r, name, r.Context().Value(handlers.KeyCoreData))
+		handlers.TemplateHandler(w, r, name, r.Context().Value(common.KeyCoreData))
 	}
 }
 

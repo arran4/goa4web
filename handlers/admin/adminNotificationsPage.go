@@ -2,11 +2,13 @@ package admin
 
 import (
 	"database/sql"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -25,9 +27,9 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Roles         []*db.Role
 	}
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	roles, err := data.AllRoles()
 	if err != nil {
 		log.Printf("load roles: %v", err)
@@ -52,7 +54,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -66,7 +68,7 @@ func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
@@ -74,7 +76,7 @@ func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")
 	role := r.PostFormValue("role")

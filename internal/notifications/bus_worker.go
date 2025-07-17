@@ -142,7 +142,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(AutoSubscribeProvider); ok {
-		handleAutoSubscribe(ctx, evt, n)
+		handleAutoSubscribe(ctx, evt, n, tp)
 
 	}
 
@@ -223,7 +223,7 @@ func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier) erro
 	return nil
 }
 
-func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier) {
+func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier, tp AutoSubscribeProvider) {
 	auto := true
 	email := false
 	if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
@@ -233,8 +233,11 @@ func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier) {
 		}
 	}
 	if auto {
-		pattern := buildPatterns(namedTask{evt.Task}, evt.Path)[0]
-		ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
+		task, path := tp.AutoSubscribePath()
+		pattern := buildPatterns(task, path)[0]
+		if internalNotification {
+			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
+		}
 		if email {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
 		}

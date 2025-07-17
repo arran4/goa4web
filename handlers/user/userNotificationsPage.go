@@ -5,14 +5,19 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
+type DismissTask struct{ tasks.TaskString }
+
+var dismissTask = &DismissTask{TaskString: tasks.TaskString(TaskDismiss)}
+
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
-	if !common.NotificationsEnabled() {
+	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return
 	}
@@ -21,7 +26,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err != nil {
 		log.Printf("get notifications: %v", err)
@@ -36,21 +41,21 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := struct {
-		*common.CoreData
+		*handlers.CoreData
 		Notifications []*db.Notification
 		Emails        []*db.UserEmail
 		MaxPriority   int32
 	}{
-		CoreData:      r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:      r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Notifications: notifs,
 		Emails:        emails,
 		MaxPriority:   maxPr,
 	}
-	common.TemplateHandler(w, r, "notifications.gohtml", data)
+	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
 }
 
-func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) {
-	if !common.NotificationsEnabled() {
+func (DismissTask) Action(w http.ResponseWriter, r *http.Request) {
+	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return
 	}
@@ -64,7 +69,7 @@ func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	n, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err == nil {
 		for _, no := range n {
@@ -78,7 +83,7 @@ func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
-	if !common.NotificationsEnabled() {
+	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return
 	}
@@ -87,7 +92,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err != nil {
 		log.Printf("notify feed: %v", err)
@@ -114,7 +119,7 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	idStr := r.FormValue("email_id")
 	id, _ := strconv.Atoi(idStr)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	val, _ := queries.GetMaxNotificationPriority(r.Context(), uid)
 	var maxPr int32
 	switch v := val.(type) {

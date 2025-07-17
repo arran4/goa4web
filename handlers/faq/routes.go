@@ -4,42 +4,16 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
 
 // AddFAQIndex injects FAQ index links into CoreData.
 func AddFAQIndex(h http.Handler) http.Handler {
-	return hcommon.IndexMiddleware(func(cd *hcommon.CoreData, r *http.Request) {
+	return handlers.IndexMiddleware(func(cd *handlers.CoreData, r *http.Request) {
 		CustomFAQIndex(cd, r)
 	})(h)
-}
-
-// Task constants mirror the values used by the main package.
-const (
-	// TaskAsk submits a new question to the FAQ system.
-	TaskAsk = "Ask"
-	// TaskAnswer submits an answer in the FAQ admin interface.
-	TaskAnswer = "Answer"
-	// TaskRemoveRemove removes an item, typically from a list.
-	TaskRemoveRemove = "Remove"
-	// TaskRenameCategory renames a category.
-	TaskRenameCategory = "Rename Category"
-	// TaskDeleteCategory removes a category.
-	TaskDeleteCategory = "Delete Category"
-	// TaskCreateCategory creates a new category entry.
-	TaskCreateCategory = "Create Category"
-	// TaskEdit modifies an existing item.
-	TaskEdit = "Edit"
-	// TaskCreate indicates creation of an object.
-	TaskCreate = "Create"
-)
-
-func taskMatcher(taskName string) mux.MatcherFunc {
-	return func(r *http.Request, match *mux.RouteMatch) bool {
-		return r.PostFormValue("task") == taskName
-	}
 }
 
 func noTask() mux.MatcherFunc {
@@ -53,27 +27,27 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("FAQ", "/faq", SectionWeight)
 	nav.RegisterAdminControlCenter("FAQ", "/admin/faq/categories", SectionWeight)
 	faqr := r.PathPrefix("/faq").Subrouter()
-	faqr.Use(hcommon.IndexMiddleware(CustomFAQIndex))
+	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	faqr.HandleFunc("", Page).Methods("GET", "POST")
-	faqr.HandleFunc("/ask", AskPage).Methods("GET")
-	faqr.HandleFunc("/ask", AskActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskAsk))
+	faqr.HandleFunc("/ask", askTask.Page).Methods("GET")
+	faqr.HandleFunc("/ask", askTask.Action).Methods("POST").MatcherFunc(askTask.Match)
 }
 
 // RegisterAdminRoutes attaches the admin FAQ endpoints to the router.
 func RegisterAdminRoutes(ar *mux.Router) {
 	farq := ar.PathPrefix("/faq").Subrouter()
-	farq.Use(hcommon.IndexMiddleware(CustomFAQIndex))
+	farq.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	farq.HandleFunc("/answer", AdminAnswerPage).Methods("GET", "POST").MatcherFunc(noTask())
-	farq.HandleFunc("/answer", AnswerAnswerActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskAnswer))
-	farq.HandleFunc("/answer", AnswerRemoveActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskRemoveRemove))
+	farq.HandleFunc("/answer", answerTask.Action).Methods("POST").MatcherFunc(answerTask.Match)
+	farq.HandleFunc("/answer", removeQuestionTask.Action).Methods("POST").MatcherFunc(removeQuestionTask.Match)
 	farq.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
-	farq.HandleFunc("/categories", CategoriesRenameActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskRenameCategory))
-	farq.HandleFunc("/categories", CategoriesDeleteActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskDeleteCategory))
-	farq.HandleFunc("/categories", CategoriesCreateActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskCreateCategory))
+	farq.HandleFunc("/categories", renameCategoryTask.Action).Methods("POST").MatcherFunc(renameCategoryTask.Match)
+	farq.HandleFunc("/categories", deleteCategoryTask.Action).Methods("POST").MatcherFunc(deleteCategoryTask.Match)
+	farq.HandleFunc("/categories", createCategoryTask.Action).Methods("POST").MatcherFunc(createCategoryTask.Match)
 	farq.HandleFunc("/questions", AdminQuestionsPage).Methods("GET", "POST").MatcherFunc(noTask())
-	farq.HandleFunc("/questions", QuestionsEditActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskEdit))
-	farq.HandleFunc("/questions", QuestionsDeleteActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskRemoveRemove))
-	farq.HandleFunc("/questions", QuestionsCreateActionPage).Methods("POST").MatcherFunc(taskMatcher(TaskCreate))
+	farq.HandleFunc("/questions", editQuestionTask.Action).Methods("POST").MatcherFunc(editQuestionTask.Match)
+	farq.HandleFunc("/questions", deleteQuestionTask.Action).Methods("POST").MatcherFunc(deleteQuestionTask.Match)
+	farq.HandleFunc("/questions", createQuestionTask.Action).Methods("POST").MatcherFunc(createQuestionTask.Match)
 }
 
 // Register registers the faq router module.

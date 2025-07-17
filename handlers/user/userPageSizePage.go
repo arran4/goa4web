@@ -4,10 +4,15 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+type PageSizeSaveTask struct{ tasks.TaskString }
+
+var pageSizeSaveTask = &PageSizeSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
 
 func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -21,19 +26,19 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*common.CoreData
+		*handlers.CoreData
 		Min     int
 		Max     int
 		Default int
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Min:      config.AppRuntimeConfig.PageSizeMin,
 		Max:      config.AppRuntimeConfig.PageSizeMax,
 		Default:  config.AppRuntimeConfig.PageSizeDefault,
 	}
-	common.TemplateHandler(w, r, "pageSizePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "pageSizePage.gohtml", data)
 }
 
-func userPageSizeSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (PageSizeSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	userPageSizePage(w, r)
 }

@@ -8,10 +8,9 @@ import (
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -26,8 +25,8 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		UserId             int32
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -43,7 +42,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(handlers.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 	data.Writing = writing
 
 	languageRows, err := cd.Languages()
@@ -53,12 +52,12 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "articleEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "articleEditPage.gohtml", data)
 }
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.
-	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(handlers.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
@@ -66,7 +65,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},

@@ -9,13 +9,22 @@ import (
 
 	"github.com/gorilla/mux"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+type announcementAddTask struct{ tasks.TaskString }
+
+var announcementAddTask = &announcementAddTask{TaskString: TaskAdd}
+
+type announcementDeleteTask struct{ tasks.TaskString }
+
+var announcementDeleteTask = &announcementDeleteTask{TaskString: TaskDelete}
+
+func (announcementAddTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -34,12 +43,12 @@ func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 			log.Printf("activate announcement: %v", err)
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+func (announcementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -48,7 +57,7 @@ func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("announcementForNews: %v", err)
 		}
-		hcommon.TaskDoneAutoRefreshPage(w, r)
+		handlers.TaskDoneAutoRefreshPage(w, r)
 		return
 	}
 	if ann != nil && ann.Active {
@@ -56,5 +65,5 @@ func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 			log.Printf("deactivate announcement: %v", err)
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

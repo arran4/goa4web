@@ -9,7 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -60,11 +60,11 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	mock.ExpectExec("INSERT IGNORE INTO linker_search").WithArgs(int32(1), int32(2)).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &corecommon.CoreData{})
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+	ctx = context.WithValue(ctx, handlers.KeyCoreData, &corecommon.CoreData{})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	AdminQueueApproveActionPage(rr, req)
+	ApproveTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

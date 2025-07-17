@@ -6,15 +6,15 @@ import (
 	"strconv"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 )
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*CoreData)
 
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
@@ -54,5 +54,5 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 		data.Languages = langs
 	}
 
-	common.TemplateHandler(w, r, "siteSettingsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "siteSettingsPage.gohtml", data)
 }

@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -26,8 +26,8 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -59,5 +59,5 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		data.Abstracts = append(data.Abstracts, row)
 	}
 
-	common.TemplateHandler(w, r, "writerPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "writerPage.gohtml", data)
 }

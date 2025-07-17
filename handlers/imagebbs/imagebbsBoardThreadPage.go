@@ -8,15 +8,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
+
+// ReplyTask posts a reply within a thread.
+type ReplyTask struct{ tasks.TaskString }
+
+var replyTask = &ReplyTask{TaskString: TaskReply}
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
@@ -30,7 +35,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Replyable          bool
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -53,16 +58,16 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	var uid int32
 	uid, _ = session.Values["UID"].(int32)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:      r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData:      r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Replyable:     true,
 		BoardId:       bid,
 		ForumThreadId: thid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -138,7 +143,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
@@ -151,10 +156,10 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
 }
 
-func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -177,7 +182,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
 		ViewerID:     uid,
@@ -187,7 +192,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+			cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
@@ -281,7 +286,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := hcommon.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
+	if err := handlers.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

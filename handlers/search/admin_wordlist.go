@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -25,7 +25,7 @@ type WordCount struct {
 
 func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 		Rows       []WordCount
 		NextLink   string
 		PrevLink   string
@@ -35,11 +35,11 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 	}
 
-	letters := make([]string, len(common.Alphabet))
-	for i, c := range common.Alphabet {
+	letters := make([]string, len(handlers.Alphabet))
+	for i, c := range handlers.Alphabet {
 		letters[i] = strings.ToUpper(string(c))
 	}
 	data.Letters = letters
@@ -58,7 +58,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * pageSize
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	if r.URL.Query().Get("download") != "" {
 		rows, err := queries.CompleteWordList(r.Context())
@@ -140,12 +140,12 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		data.PrevLink = base + "?" + vals.Encode()
 	}
 
-	common.TemplateHandler(w, r, "searchWordListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "searchWordListPage.gohtml", data)
 }
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	rows, err := queries.CompleteWordList(r.Context())
 	if err != nil {

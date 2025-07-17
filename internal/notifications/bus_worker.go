@@ -12,7 +12,7 @@ import (
 	"strings"
 	"text/template"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
@@ -67,38 +67,6 @@ func buildPatterns(task tasks.NamedTask, path string) []string {
 	return patterns
 }
 
-func renderMessage(ctx context.Context, q *dbpkg.Queries, action, path string, item interface{}) string {
-	name := fmt.Sprintf("notify_%s", strings.ToLower(action))
-	tmplText := ""
-	if q != nil {
-		if body, err := q.GetTemplateOverride(ctx, name); err == nil && body != "" {
-			tmplText = body
-		}
-	}
-	if tmplText == "" {
-		if d, ok := defaultTemplates[strings.ToLower(action)]; ok {
-			tmplText = d
-		}
-	}
-	if tmplText == "" {
-		return ""
-	}
-	t, err := template.New("msg").Parse(tmplText)
-	if err != nil {
-		log.Printf("parse template %s: %v", name, err)
-		return ""
-	}
-	var buf bytes.Buffer
-	_ = t.Execute(&buf, struct {
-		Action string
-		Path   string
-		Item   interface{}
-	}{Action: action, Path: path, Item: item})
-	msg := buf.String()
-	msg = strings.TrimSuffix(msg, "\n")
-	return msg
-}
-
 // parseEvent identifies a subscription target from the request path.
 // It returns the item type and id if recognised.
 func parseEvent(evt eventbus.Event) (string, int32, bool) {
@@ -130,7 +98,7 @@ func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
 }
 
 func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ) {
-	if !hcommon.NotificationsEnabled() {
+	if !handlers.NotificationsEnabled() {
 		return
 	}
 

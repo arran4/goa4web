@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -14,7 +15,16 @@ import (
 )
 
 // CommentEditActionPage updates a comment then refreshes thread metadata.
-func CommentEditActionPage(w http.ResponseWriter, r *http.Request) {
+type editReplyTask struct{ tasks.BasicTaskEvent }
+
+var EditReplyTask = editReplyTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskEditReply,
+		Match:     tasks.HasTask(TaskEditReply),
+	},
+}
+
+func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -22,7 +32,7 @@ func CommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -33,7 +43,7 @@ func CommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(hcommon.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(handlers.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,

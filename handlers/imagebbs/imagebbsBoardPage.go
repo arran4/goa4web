@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -27,9 +27,14 @@ import (
 	"github.com/arran4/goa4web/internal/upload"
 )
 
+// UploadImageTask handles uploading an image to a board.
+type UploadImageTask struct{ tasks.TaskString }
+
+var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
+
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
@@ -40,13 +45,13 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(vars["boardno"])
 
 	data := Data{
-		CoreData:    r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData:    r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -68,10 +73,10 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Posts = posts
 
-	common.TemplateHandler(w, r, "boardPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "boardPage.gohtml", data)
 }
 
-func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
+func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 
 	vars := mux.Vars(r)
@@ -83,7 +88,7 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {
@@ -177,5 +182,5 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

@@ -1,4 +1,4 @@
-package common
+package handlers
 
 import common "github.com/arran4/goa4web/core/common"
 

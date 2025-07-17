@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -24,7 +24,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -35,7 +35,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(hcommon.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(handlers.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
@@ -57,7 +57,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := hcommon.PostUpdate(r.Context(), queries, thread.Idforumthread, thread.ForumtopicIdforumtopic); err != nil {
+	if err := handlers.PostUpdate(r.Context(), queries, thread.Idforumthread, thread.ForumtopicIdforumtopic); err != nil {
 		log.Printf("Error: postUpdate: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

@@ -5,7 +5,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
@@ -20,15 +20,15 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	if uid == 0 {
-		common.TemplateHandler(w, r, "infoPage.gohtml", data)
+		handlers.TemplateHandler(w, r, "infoPage.gohtml", data)
 		return
 	}
 
-	common.TemplateHandler(w, r, "bookmarksPage", data)
+	handlers.TemplateHandler(w, r, "bookmarksPage", data)
 }
 
 func bookmarksCustomIndex(data *corecommon.CoreData) {

@@ -8,7 +8,7 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
@@ -23,7 +23,7 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	cd := corecommon.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -49,7 +49,7 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	cd := corecommon.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -75,7 +75,7 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	cd := corecommon.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -101,7 +101,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	cd := corecommon.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").

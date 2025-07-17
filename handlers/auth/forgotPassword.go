@@ -8,12 +8,10 @@ import (
 	"log"
 	"net/http"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
-
-// TODO this is the template for ALL actions going forwards.
 
 type ForgotPasswordTask struct {
 	tasks.TaskString
@@ -53,7 +51,7 @@ func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
 }
 
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
-	hcommon.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(hcommon.KeyCoreData))
+	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(handlers.KeyCoreData))
 }
 
 func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +65,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing fields", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -94,7 +92,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if row.Email != "" {
-		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -102,7 +100,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
 			}
 		}
-		// OLD _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, hcommon.TaskUserResetPassword, code)
+		// OLD _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, handlers.TaskUserResetPassword, code)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

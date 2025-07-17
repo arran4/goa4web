@@ -7,23 +7,28 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
+type PagingSaveTask struct{ tasks.TaskString }
+
+var pagingSaveTask = &PagingSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
+
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	pref, _ := cd.Preference()
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
 	}
 	data := struct {
-		*common.CoreData
+		*handlers.CoreData
 		Size int
 		Min  int
 		Max  int
@@ -33,10 +38,10 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 		Min:      config.AppRuntimeConfig.PageSizeMin,
 		Max:      config.AppRuntimeConfig.PageSizeMax,
 	}
-	common.TemplateHandler(w, r, "pagingPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "pagingPage.gohtml", data)
 }
 
-func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/paging", http.StatusSeeOther)
 		return
@@ -53,8 +58,8 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	if size > config.AppRuntimeConfig.PageSizeMax {
 		size = config.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

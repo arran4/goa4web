@@ -4,17 +4,17 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 		Sessions []*db.ListSessionsRow
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)}
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	items, err := queries.ListSessions(r.Context())
 	if err != nil {
 		log.Printf("list sessions: %v", err)
@@ -22,26 +22,26 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Sessions = items
-	common.TemplateHandler(w, r, "sessionsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "sessionsPage.gohtml", data)
 }
 
 func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 	sid := r.PostFormValue("sid")
 	data := struct {
-		*common.CoreData
+		*handlers.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Back:     "/admin/sessions",
 	}
 	if sid == "" {
 		data.Errors = append(data.Errors, "missing sid")
 	} else {
-		if err := r.Context().Value(common.KeyQueries).(*db.Queries).DeleteSessionByID(r.Context(), sid); err != nil {
+		if err := r.Context().Value(handlers.KeyQueries).(*db.Queries).DeleteSessionByID(r.Context(), sid); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

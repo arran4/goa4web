@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -19,14 +19,14 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		Nsfw     bool
 	}
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 		Boards []*BoardRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {
 		switch {
@@ -53,5 +53,5 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	common.TemplateHandler(w, r, "adminBoardsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminBoardsPage.gohtml", data)
 }

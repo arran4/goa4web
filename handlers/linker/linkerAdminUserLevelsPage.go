@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
@@ -28,11 +29,11 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Search:   r.URL.Query().Get("search"),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -69,11 +70,20 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = perms
 
-	common.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }
 
-func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+type userAllowTask struct{ tasks.BasicTaskEvent }
+
+var UserAllowTask = userAllowTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskUserAllow,
+		Match:     tasks.HasTask(TaskUserAllow),
+	},
+}
+
+func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
 	level := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
@@ -95,11 +105,20 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("permissionUserAllow Error: %s", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+type userDisallowTask struct{ tasks.BasicTaskEvent }
+
+var UserDisallowTask = userDisallowTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskUserDisallow,
+		Match:     tasks.HasTask(TaskUserDisallow),
+	},
+}
+
+func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	r.ParseForm()
 	ids := r.Form["permids"]
 	if len(ids) == 0 {
@@ -113,5 +132,5 @@ func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("permissionUserDisallow Error: %s", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

@@ -3,7 +3,7 @@ package user
 import (
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/middleware"
 
 	"github.com/arran4/goa4web/core"
@@ -11,11 +11,11 @@ import (
 
 func userPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 	}
 
 	if data.CoreData.UserID == 0 {
@@ -28,5 +28,5 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TemplateHandler(w, r, "userPage", data)
+	handlers.TemplateHandler(w, r, "userPage", data)
 }

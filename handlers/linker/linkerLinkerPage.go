@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -26,7 +26,7 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -51,11 +51,11 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:  r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:  r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Links:     rows,
 		Username:  username,
 		HasOffset: offset != 0,
 	}
 
-	common.TemplateHandler(w, r, "linkerPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "linkerPage.gohtml", data)
 }

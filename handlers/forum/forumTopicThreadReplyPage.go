@@ -10,25 +10,32 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
 
-	"github.com/arran4/goa4web/internal/utils/emailutil"
+	emailutil "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
+// ReplyTask handles replying to an existing thread.
+type ReplyTask struct{ tasks.TaskString }
+
+var replyTask = &ReplyTask{TaskString: TaskReply}
+
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -37,7 +44,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
@@ -112,8 +119,8 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

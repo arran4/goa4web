@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -168,14 +168,12 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
-		return
-	}
+	// publish search indexing event
+	_ = eventbus.DefaultBus.Publish(eventbus.Event{Path: r.URL.Path, Data: map[string]any{
+		"search_text":  text,
+		"search_table": "image",
+		"search_id":    pid,
+	}})
 
 	hcommon.TaskDoneAutoRefreshPage(w, r)
 }

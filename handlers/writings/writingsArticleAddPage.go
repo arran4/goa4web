@@ -10,8 +10,8 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -86,13 +86,10 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 		title,
 		body,
 	} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-
-		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, articleId) {
-			return
-		}
+		_ = eventbus.DefaultBus.Publish(eventbus.Event{Path: r.URL.Path, Data: map[string]any{
+			"search_text":  text,
+			"search_table": "writing",
+			"search_id":    articleId,
+		}})
 	}
 }

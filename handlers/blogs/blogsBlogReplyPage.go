@@ -8,8 +8,8 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -170,15 +170,12 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
-	}
+	// publish search indexing event
+	_ = eventbus.DefaultBus.Publish(eventbus.Event{Path: r.URL.Path, Data: map[string]any{
+		"search_text":  text,
+		"search_table": "forum",
+		"search_id":    cid,
+	}})
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 

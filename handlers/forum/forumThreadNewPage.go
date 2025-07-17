@@ -12,8 +12,8 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -119,15 +119,12 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
-	}
+	// publish search indexing event
+	_ = eventbus.DefaultBus.Publish(eventbus.Event{Path: r.URL.Path, Data: map[string]any{
+		"search_text":  text,
+		"search_table": "forum",
+		"search_id":    cid,
+	}})
 
 	// TODO remove and replace with proper eventbus notification
 	notif.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), int32(threadId), uid, endUrl)

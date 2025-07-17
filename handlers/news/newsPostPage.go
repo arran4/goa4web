@@ -22,9 +22,9 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 )
 
 type NewsPost struct {
@@ -344,14 +344,12 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
-	}
+	// publish search indexing event
+	_ = eventbus.DefaultBus.Publish(eventbus.Event{Path: r.URL.Path, Data: map[string]any{
+		"search_text":  text,
+		"search_table": "forum",
+		"search_id":    cid,
+	}})
 
 	hcommon.TaskDoneAutoRefreshPage(w, r)
 }

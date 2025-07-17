@@ -13,7 +13,7 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -125,15 +125,13 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-
-	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: cid, Text: text}
+		}
 	}
 
 	// TODO remove and replace with proper eventbus notification

@@ -602,6 +602,15 @@ func (q *Queries) SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx cont
 	return result.LastInsertId()
 }
 
+const setLinkerLastIndex = `-- name: SetLinkerLastIndex :exec
+UPDATE linker SET last_index = NOW() WHERE idlinker = ?
+`
+
+func (q *Queries) SetLinkerLastIndex(ctx context.Context, idlinker int32) error {
+	_, err := q.db.ExecContext(ctx, setLinkerLastIndex, idlinker)
+	return err
+}
+
 const updateLinkerCategorySortOrder = `-- name: UpdateLinkerCategorySortOrder :exec
 UPDATE linker_category SET sortorder = ? WHERE idlinkerCategory = ?
 `

@@ -719,6 +719,15 @@ func (q *Queries) GetImagePostsByUserDescendingForUser(ctx context.Context, arg 
 	return items, nil
 }
 
+const setImagePostLastIndex = `-- name: SetImagePostLastIndex :exec
+UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?
+`
+
+func (q *Queries) SetImagePostLastIndex(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, setImagePostLastIndex, idimagepost)
+	return err
+}
+
 const updateImageBoard = `-- name: UpdateImageBoard :exec
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?
 `

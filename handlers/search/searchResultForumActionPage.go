@@ -11,9 +11,14 @@ import (
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func SearchResultForumActionPage(w http.ResponseWriter, r *http.Request) {
+type SearchForumTask struct{ tasks.TaskString }
+
+var searchForumTask = &SearchForumTask{TaskString: TaskSearchForum}
+
+func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*handlers.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow

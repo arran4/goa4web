@@ -14,6 +14,8 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +117,16 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
 }
 
-func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+type deleteTask struct{ tasks.BasicTaskEvent }
+
+var DeleteTask = deleteTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskDelete,
+		Match:     tasks.HasTask(TaskDelete),
+	},
+}
+
+func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
@@ -147,7 +158,16 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
+type approveTask struct{ tasks.BasicTaskEvent }
+
+var ApproveTask = approveTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskApprove,
+		Match:     tasks.HasTask(TaskApprove),
+	},
+}
+
+func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
@@ -176,7 +196,16 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+type bulkDeleteTask struct{ tasks.BasicTaskEvent }
+
+var BulkDeleteTask = bulkDeleteTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskBulkDelete,
+		Match:     tasks.HasTask(TaskBulkDelete),
+	},
+}
+
+func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
@@ -190,7 +219,16 @@ func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
+type bulkApproveTask struct{ tasks.BasicTaskEvent }
+
+var BulkApproveTask = bulkApproveTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskBulkApprove,
+		Match:     tasks.HasTask(TaskBulkApprove),
+	},
+}
+
+func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)

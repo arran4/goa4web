@@ -148,7 +148,16 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "commentsPage.gohtml", data)
 }
 
-func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
+type replyTask struct{ tasks.BasicTaskEvent }
+
+var ReplyTaskEvent = replyTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskReply,
+		Match:     tasks.HasTask(TaskReply),
+	},
+}
+
+func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

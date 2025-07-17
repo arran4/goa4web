@@ -5,19 +5,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"strings"
 	"text/template"
+	"time"
 
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"time"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 type namedTask struct{ name string }
@@ -65,6 +65,41 @@ func buildPatterns(task tasks.Name, path string) []string {
 	}
 	patterns = append(patterns, fmt.Sprintf("%s:/*", name))
 	return patterns
+}
+
+// collectSubscribers returns a set of user IDs subscribed to any of the
+// patterns using the specified delivery method.
+func collectSubscribers(ctx context.Context, q *dbpkg.Queries, patterns []string, method string) (map[int32]struct{}, error) {
+	subs := map[int32]struct{}{}
+	for _, p := range patterns {
+		ids, err := q.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: p, Method: method})
+		if err != nil {
+			return nil, fmt.Errorf("list subscribers: %w", err)
+		}
+		for _, id := range ids {
+			subs[id] = struct{}{}
+		}
+	}
+	return subs, nil
+}
+
+// sendSubscriberEmail queues an email notification for a subscriber.
+func sendSubscriberEmail(ctx context.Context, n Notifier, userID int32, evt eventbus.Event) error {
+	user, err := n.Queries.GetUserById(ctx, userID)
+	if err != nil || !user.Email.Valid || user.Email.String == "" {
+		notifyMissingEmail(ctx, n.Queries, userID)
+		return err
+	}
+	return CreateEmailTemplateAndQueue(ctx, n.Queries, userID, user.Email.String, evt.Path, evt.Task, evt.Data)
+}
+
+// sendInternalNotification stores an internal notification for the user.
+func sendInternalNotification(ctx context.Context, q *dbpkg.Queries, userID int32, path, msg string) error {
+	return q.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+		UsersIdusers: userID,
+		Link:         sql.NullString{String: path, Valid: path != ""},
+		Message:      sql.NullString{String: msg, Valid: msg != ""},
+	})
 }
 
 // parseEvent identifies a subscription target from the request path.
@@ -173,53 +208,35 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 
 func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier) error {
 	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
-	subs := map[int32]map[string]func(context.Context) error{}
+
+	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
+	if err != nil {
+		return err
+	}
+	internalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "internal")
+	if err != nil {
+		return err
+	}
+
+	delete(emailSubs, evt.UserID)
+	delete(internalSubs, evt.UserID)
+
 	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
 
-	for _, p := range patterns {
-		for _, method := range []string{"email", "internal"} {
-			ids, err := n.Queries.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: p, Method: method})
-			if err != nil {
-				return fmt.Errorf("list subscribers: %w", err)
-			}
-			for _, id := range ids {
-				if id == evt.UserID {
-					continue
-				}
-				if subs[id] == nil {
-					subs[id] = map[string]func(context.Context) error{}
-				}
-				if method == "email" {
-					uid := id
-					subs[id][method] = func(c context.Context) error {
-						user, err := n.Queries.GetUserById(c, uid)
-						if err != nil || !user.Email.Valid || user.Email.String == "" {
-							notifyMissingEmail(c, n.Queries, uid)
-							return err
-						}
-						return CreateEmailTemplateAndQueue(c, n.Queries, uid, user.Email.String, evt.Path, evt.Task, evt.Data)
-					}
-				} else if method == "internal" && msg != "" {
-					uid := id
-					subs[id][method] = func(c context.Context) error {
-						return n.Queries.InsertNotification(c, dbpkg.InsertNotificationParams{
-							UsersIdusers: uid,
-							Link:         sql.NullString{String: evt.Path, Valid: true},
-							Message:      sql.NullString{String: msg, Valid: true},
-						})
-					}
-				}
+	for id := range emailSubs {
+		if err := sendSubscriberEmail(ctx, n, id, evt); err != nil {
+			return fmt.Errorf("deliver email to %d: %w", id, err)
+		}
+	}
+
+	if msg != "" {
+		for id := range internalSubs {
+			if err := sendInternalNotification(ctx, n.Queries, id, evt.Path, msg); err != nil {
+				return fmt.Errorf("deliver internal to %d: %w", id, err)
 			}
 		}
 	}
 
-	for id, methods := range subs {
-		for typ, fn := range methods {
-			if err := fn(ctx); err != nil {
-				return fmt.Errorf("deliver %s to %d: %w", typ, id, err)
-			}
-		}
-	}
 	return nil
 }
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 type BookmarkEntry struct {
@@ -80,7 +80,7 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
@@ -97,5 +97,5 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
 
-	common.TemplateHandler(w, r, "minePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "minePage.gohtml", data)
 }

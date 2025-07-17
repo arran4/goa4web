@@ -6,8 +6,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
+	handlers "github.com/arran4/goa4web/handlers"
 	auth "github.com/arran4/goa4web/handlers/auth"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -15,7 +15,7 @@ import (
 
 // AddImageBBSIndex injects image board index links into CoreData.
 func AddImageBBSIndex(h http.Handler) http.Handler {
-	return hcommon.IndexMiddleware(CustomImageBBSIndex)(h)
+	return handlers.IndexMiddleware(CustomImageBBSIndex)(h)
 }
 
 // RegisterRoutes attaches the public image board endpoints to r.
@@ -24,7 +24,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterAdminControlCenter("ImageBBS", "/admin/imagebbs", SectionWeight)
 	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
-	ibr.Use(hcommon.IndexMiddleware(CustomImageBBSIndex))
+	ibr.Use(handlers.IndexMiddleware(CustomImageBBSIndex))
 	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(config.AppRuntimeConfig.ImageUploadDir))))
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
 	r.HandleFunc("/imagebbs.atom", AtomPage).Methods("GET")

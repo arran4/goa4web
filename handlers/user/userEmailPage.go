@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
@@ -29,7 +29,7 @@ var ErrMailNotConfigured = errors.New("mail isn't configured")
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 		UserData        *db.User
 		Verified        []*db.UserEmail
 		Unverified      []*db.UserEmail
@@ -40,8 +40,8 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		Error string
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	user, _ := cd.CurrentUser()
 	pref, _ := cd.Preference()
 
@@ -55,7 +55,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := Data{
-		CoreData:   r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:   r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		UserData:   user,
 		Verified:   verified,
 		Unverified: unverified,
@@ -70,7 +70,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		data.UserPreferences.AutoSubscribeReplies = true
 	}
 
-	common.TemplateHandler(w, r, "emailPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "emailPage.gohtml", data)
 }
 func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
@@ -88,8 +88,8 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 
 	updates := r.PostFormValue("emailupdates") != ""
 	auto := r.PostFormValue("autosubscribe") != ""
@@ -131,13 +131,13 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
-	queries, _ := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries, _ := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	var emails []*db.UserEmail
 	var err error
 	if queries != nil {
@@ -158,7 +158,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 		q := url.QueryEscape(ErrMailNotConfigured.Error())
 		// Display the error without redirecting so the POST isn't repeated.
 		r.URL.RawQuery = "error=" + q
-		common.TaskErrorAcknowledgementPage(w, r)
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, user.Idusers, addr, pageURL, "update", nil); err != nil {
@@ -182,7 +182,7 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
 		return
@@ -211,7 +211,7 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
@@ -241,7 +241,7 @@ func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err == nil && ue.UserID == uid {
 		_ = queries.DeleteUserEmail(r.Context(), int32(id))
@@ -260,7 +260,7 @@ func userEmailNotifyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	val, _ := queries.GetMaxNotificationPriority(r.Context(), uid)
 	var maxPr int32
 	switch v := val.(type) {
@@ -279,7 +279,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	ue, err := queries.GetUserEmailByCode(r.Context(), sql.NullString{String: code, Valid: true})
 	if err != nil || (ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now())) {
 		http.Error(w, "invalid code", http.StatusBadRequest)

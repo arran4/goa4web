@@ -7,7 +7,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -23,10 +23,10 @@ func TestWriterListPage_List(t *testing.T) {
 	mock.ExpectQuery(".*").WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/writings/writers", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	cd := corecommon.NewCoreData(ctx, q)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -52,10 +52,10 @@ func TestWriterListPage_Search(t *testing.T) {
 	mock.ExpectQuery(".*").WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/writings/writers?search=bob", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	cd := corecommon.NewCoreData(ctx, q)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 )
@@ -25,7 +25,7 @@ func getEmailTemplates(ctx context.Context, action string) (string, string) {
 	name := "email_" + strings.ToLower(action)
 	nameHTML := name + "_html"
 	var text, html string
-	if q, ok := ctx.Value(hcommon.KeyQueries).(*db.Queries); ok && q != nil {
+	if q, ok := ctx.Value(handlers.KeyQueries).(*db.Queries); ok && q != nil {
 		if body, err := q.GetTemplateOverride(ctx, name); err == nil && body != "" {
 			text = body
 		}

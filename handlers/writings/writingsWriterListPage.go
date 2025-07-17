@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -29,16 +29,16 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:   r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Search:     r.URL.Query().Get("search"),
-		PageSize:   common.GetPageSize(r),
+		PageSize:   handlers.GetPageSize(r),
 		IsAdmin:    false,
 		CategoryId: 0,
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	pageSize := common.GetPageSize(r)
+	pageSize := handlers.GetPageSize(r)
 	rows, err := data.CoreData.Writers(r)
 	if err != nil {
 		switch {
@@ -82,5 +82,5 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	common.TemplateHandler(w, r, "writerListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "writerListPage.gohtml", data)
 }

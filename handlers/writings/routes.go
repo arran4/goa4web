@@ -6,8 +6,8 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	handlers "github.com/arran4/goa4web/handlers"
 	auth "github.com/arran4/goa4web/handlers/auth"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -15,7 +15,7 @@ import (
 
 // AddWritingsIndex injects writings index links into CoreData.
 func AddWritingsIndex(h http.Handler) http.Handler {
-	return hcommon.IndexMiddleware(CustomWritingsIndex)(h)
+	return handlers.IndexMiddleware(CustomWritingsIndex)(h)
 }
 
 var legacyRedirectsEnabled = true
@@ -25,7 +25,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Writings", "/writings", SectionWeight)
 	nav.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()
-	wr.Use(hcommon.IndexMiddleware(CustomWritingsIndex))
+	wr.Use(handlers.IndexMiddleware(CustomWritingsIndex))
 	wr.HandleFunc("/rss", RssPage).Methods("GET")
 	wr.HandleFunc("/atom", AtomPage).Methods("GET")
 	wr.HandleFunc("", Page).Methods("GET")
@@ -50,8 +50,8 @@ func RegisterRoutes(r *mux.Router) {
 
 	if legacyRedirectsEnabled {
 		// legacy redirects
-		r.Path("/writing").HandlerFunc(hcommon.RedirectPermanentPrefix("/writing", "/writings"))
-		r.PathPrefix("/writing/").HandlerFunc(hcommon.RedirectPermanentPrefix("/writing", "/writings"))
+		r.Path("/writing").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
+		r.PathPrefix("/writing/").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
 	}
 }
 

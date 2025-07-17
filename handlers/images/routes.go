@@ -17,7 +17,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/upload"
@@ -62,7 +62,7 @@ func verify(data, tsStr, sig string) bool { return imagesign.Verify(data, tsStr,
 // RegisterRoutes attaches the image endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/images/upload/image", uploadHandler).Methods(http.MethodPost)
-	r.HandleFunc("/images/pasteimg.js", hcommon.PasteImageJS).Methods(http.MethodGet)
+	r.HandleFunc("/images/pasteimg.js", handlers.PasteImageJS).Methods(http.MethodGet)
 	r.Handle("/images/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).Methods(http.MethodGet)
 	r.Handle("/images/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).Methods(http.MethodGet)
 }
@@ -162,9 +162,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	url := path.Join("/uploads", sub1, sub2, fname)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	uid := int32(0)
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData); ok && cd != nil {
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok && cd != nil {
 		uid = cd.UserID
 	}
 	_, err = queries.CreateUploadedImage(r.Context(), db.CreateUploadedImageParams{

@@ -59,7 +59,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
-	common.Version = version
+	handlers.Version = version
 
 	if err := PerformChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)

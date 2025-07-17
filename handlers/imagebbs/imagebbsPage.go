@@ -5,20 +5,20 @@ import (
 	"net/http"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
 	}
 
 	data := Data{
-		CoreData:    r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:    r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		IsSubBoard:  false,
 		BoardNumber: 0,
 	}
@@ -32,10 +32,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = boards
 
-	common.TemplateHandler(w, r, "imagebbsPage", data)
+	handlers.TemplateHandler(w, r, "imagebbsPage", data)
 }
 
-func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
+func CustomImageBBSIndex(data *handlers.CoreData, r *http.Request) {
 
 	if data.FeedsEnabled {
 		data.RSSFeedUrl = "/imagebbs/rss"

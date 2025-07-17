@@ -11,7 +11,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 func TestNotificationsQueries(t *testing.T) {
@@ -88,7 +87,7 @@ func TestNotifyThreadSubscribers(t *testing.T) {
 		WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
-	emailutil.NotifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
+	NotifyThreadSubscribers(context.Background(), rec, q, 2, 1, "/p")
 	if rec.to != "" {
 		t.Fatalf("expected no direct mail got %s", rec.to)
 	}

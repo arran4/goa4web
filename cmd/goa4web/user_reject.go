@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // userRejectCmd rejects a pending user account.
@@ -60,7 +60,7 @@ func (c *userRejectCmd) Run() error {
 	}
 	if u, err := queries.GetUserById(ctx, int32(c.ID)); err == nil && u.Email.Valid {
 		item := struct{ Reason string }{Reason: c.Reason}
-		_ = emailutil.CreateEmailTemplateAndQueue(ctx, queries, int32(c.ID), u.Email.String, "", "user rejected", item)
+		_ = notif.CreateEmailTemplateAndQueue(ctx, queries, int32(c.ID), u.Email.String, "", "user rejected", item)
 	}
 	if c.rootCmd.Verbosity > 0 {
 		fmt.Printf("rejected user %d\n", c.ID)

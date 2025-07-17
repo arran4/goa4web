@@ -23,8 +23,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 )
 
 type NewsPost struct {
@@ -314,14 +313,14 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, action, nil); err != nil {
+			if err := notif.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, action, nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
 	}
 
 	// TODO this should be automatic through the event bus -> notification system
-	notfications.NotifyNewsSubscribers(r.Context(), queries, int32(pid), uid, endUrl)
+	notif.NotifyNewsSubscribers(r.Context(), queries, int32(pid), uid, endUrl)
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
@@ -345,11 +344,11 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := searchworker.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if searchworker.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

@@ -10,13 +10,11 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
 
-	"github.com/arran4/goa4web/internal/utils/emailutil"
-
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 )
 
 func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +52,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
+			if err := notif.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 			}
 		}
@@ -67,7 +65,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: listUsersSubscribedToThread: %s", err)
 	} else if provider != nil {
 		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
+			if err := notif.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %s", err)
 
 			}
@@ -96,12 +94,12 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := searchworker.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if searchworker.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

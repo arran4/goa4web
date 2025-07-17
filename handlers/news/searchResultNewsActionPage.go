@@ -9,8 +9,8 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+       db "github.com/arran4/goa4web/internal/db"
+       searchworker "github.com/arran4/goa4web/internal/searchworker"
 )
 
 func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+       searchWords := searchworker.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
 	if len(searchWords) == 0 {
@@ -127,7 +127,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 }
 
 func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+       searchWords := searchworker.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
 	if len(searchWords) == 0 {

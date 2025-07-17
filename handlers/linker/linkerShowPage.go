@@ -12,11 +12,11 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
+	emailutil "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -194,12 +194,12 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := searchworker.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
+	if searchworker.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
 		return
 	}
 

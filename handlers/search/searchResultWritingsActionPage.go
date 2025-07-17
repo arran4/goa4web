@@ -10,7 +10,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	hwritings "github.com/arran4/goa4web/handlers/writings"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/core"
 )
@@ -63,7 +63,7 @@ func SearchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetWritingsByIdsForUserDescendingByPublishedDateRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := searchworker.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 
 	if len(searchWords) == 0 {

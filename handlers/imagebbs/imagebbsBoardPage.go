@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -168,12 +168,12 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
+	wordIds, done := searchworker.SearchWordIdsFromText(w, r, text, queries)
 	if done {
 		return
 	}
 
-	if searchutil.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
+	if searchworker.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
 		return
 	}
 

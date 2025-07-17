@@ -11,7 +11,7 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -92,12 +92,12 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		title,
 		body,
 	} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := searchworker.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
 
-		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(writing.Idwriting)) {
+		if searchworker.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(writing.Idwriting)) {
 			return
 		}
 	}

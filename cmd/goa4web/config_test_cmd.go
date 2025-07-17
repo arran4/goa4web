@@ -11,10 +11,10 @@ import (
 
 	coretemplates "github.com/arran4/goa4web/core/templates"
 
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 //go:embed templates/config_test_usage.txt
@@ -101,7 +101,7 @@ func (c *configTestEmailCmd) Run() error {
 		q = dbpkg.New(db)
 	}
 	ctx := context.Background()
-	emails := emailutil.GetAdminEmails(ctx, q)
+	emails := config.GetAdminEmails(ctx, q)
 	if len(emails) == 0 {
 		return fmt.Errorf("no administrator emails configured")
 	}

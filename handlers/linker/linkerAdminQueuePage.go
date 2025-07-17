@@ -13,7 +13,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 )
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -165,11 +165,11 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
+		wordIds, done := searchworker.SearchWordIdsFromText(w, r, text, queries)
 		if done {
 			return
 		}
-		if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+		if searchworker.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 			return
 		}
 	}
@@ -208,11 +208,11 @@ func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
+			wordIds, done := searchworker.SearchWordIdsFromText(w, r, text, queries)
 			if done {
 				return
 			}
-			if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
+			if searchworker.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
 				return
 			}
 		}

@@ -64,7 +64,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	ctx = context.WithValue(ctx, handlers.KeyCoreData, &corecommon.CoreData{})
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	AdminQueueApproveActionPage(rr, req)
+	ApproveTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

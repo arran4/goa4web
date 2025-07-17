@@ -12,6 +12,8 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
@@ -52,7 +54,17 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TemplateHandler(w, r, "adminAddPage.gohtml", data)
 }
-func AdminAddActionPage(w http.ResponseWriter, r *http.Request) {
+
+type addTask struct{ tasks.BasicTaskEvent }
+
+var AddTask = addTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskAdd,
+		Match:     tasks.HasTask(TaskAdd),
+	},
+}
+
+func (addTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)

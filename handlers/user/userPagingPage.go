@@ -11,9 +11,14 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 )
+
+type PagingSaveTask struct{ tasks.TaskString }
+
+var pagingSaveTask = &PagingSaveTask{TaskString: TaskSaveAll}
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
@@ -36,7 +41,7 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "pagingPage.gohtml", data)
 }
 
-func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/paging", http.StatusSeeOther)
 		return

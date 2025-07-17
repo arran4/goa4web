@@ -27,6 +27,22 @@ import (
 // ErrMailNotConfigured is returned when test mail has no provider configured.
 var ErrMailNotConfigured = errors.New("mail isn't configured")
 
+type EmailSaveTask struct{ tasks.TaskString }
+type EmailTestTask struct{ tasks.TaskString }
+type EmailAddTask struct{ tasks.TaskString }
+type EmailResendTask struct{ tasks.TaskString }
+type EmailDeleteTask struct{ tasks.TaskString }
+type EmailNotifyTask struct{ tasks.TaskString }
+
+var (
+	emailSaveTask   = &EmailSaveTask{TaskString: TaskSaveAll}
+	emailTestTask   = &EmailTestTask{TaskString: TaskTestMail}
+	emailAddTask    = &EmailAddTask{TaskString: TaskAdd}
+	emailResendTask = &EmailResendTask{TaskString: TaskAdd}
+	emailDeleteTask = &EmailDeleteTask{TaskString: TaskDelete}
+	emailNotifyTask = &EmailNotifyTask{TaskString: TaskAdd}
+)
+
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*handlers.CoreData
@@ -72,7 +88,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TemplateHandler(w, r, "emailPage.gohtml", data)
 }
-func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (EmailSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -130,7 +146,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
+func (EmailTestTask) Action(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
@@ -167,7 +183,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
+func (EmailAddTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -200,7 +216,7 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
+func (EmailResendTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -230,7 +246,7 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func (EmailDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -249,7 +265,7 @@ func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailNotifyActionPage(w http.ResponseWriter, r *http.Request) {
+func (EmailNotifyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

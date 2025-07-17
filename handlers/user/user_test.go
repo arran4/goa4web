@@ -167,7 +167,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	config.AppRuntimeConfig.PageSizeDefault = 15
 	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(config.AppRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	userLangSaveAllActionPage(rr, req)
+	saveLangAllTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -214,7 +214,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	userLangSaveLanguagesActionPage(rr, req)
+	saveLanguagesTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -264,7 +264,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(config.AppRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	userLangSaveLanguagePreferenceActionPage(rr, req)
+	saveLanguageTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

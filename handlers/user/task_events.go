@@ -4,19 +4,19 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var SaveLanguagesTask = tasks.NewTaskEvent(TaskSaveLanguages)
-var SaveLanguageTask = tasks.NewTaskEvent(TaskSaveLanguage)
-var SaveAllTask = tasks.NewTaskEvent(TaskSaveAll)
-var AddEmailTask = tasks.NewTaskEvent(TaskAdd)
-var DeleteEmailTask = tasks.NewTaskEvent(TaskDelete)
-var TestMailTask = tasks.NewTaskEvent(TaskTestMail)
-var DismissTask = tasks.NewTaskEvent(TaskDismiss)
-var UpdateSubscriptionsTask = tasks.NewTaskEvent(TaskUpdate)
+var SaveLanguagesEvent = tasks.NewTaskEvent(TaskSaveLanguages)
+var SaveLanguageEvent = tasks.NewTaskEvent(TaskSaveLanguage)
+var SaveAllEvent = tasks.NewTaskEvent(TaskSaveAll)
+var AddEmailEvent = tasks.NewTaskEvent(TaskAdd)
+var DeleteEmailEvent = tasks.NewTaskEvent(TaskDelete)
+var TestMailEvent = tasks.NewTaskEvent(TaskTestMail)
+var DismissEvent = tasks.NewTaskEvent(TaskDismiss)
+var UpdateSubscriptionsEvent = tasks.NewTaskEvent(TaskUpdate)
 
 // Permission management tasks used in the admin interface.
-var PermissionUserAllowTask = tasks.NewTaskEvent(TaskUserAllow)
-var PermissionUserDisallowTask = tasks.NewTaskEvent(TaskUserDisallow)
-var PermissionUpdateTask = tasks.NewTaskEvent(TaskUpdate)
+var PermissionUserAllowEvent = tasks.NewTaskEvent(TaskUserAllow)
+var PermissionUserDisallowEvent = tasks.NewTaskEvent(TaskUserDisallow)
+var PermissionUpdateEvent = tasks.NewTaskEvent(TaskUpdate)
 
 // DeleteTask removes a record such as a subscription.
-var DeleteTask = tasks.NewTaskEvent(TaskDelete)
+var DeleteEvent = tasks.NewTaskEvent(TaskDelete)

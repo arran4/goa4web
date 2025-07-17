@@ -9,6 +9,15 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+)
+
+type NotificationDismissTask struct{ tasks.TaskString }
+type NotificationEmailTask struct{ tasks.TaskString }
+
+var (
+	notificationDismissTask = &NotificationDismissTask{TaskString: TaskDismiss}
+	notificationEmailTask   = &NotificationEmailTask{TaskString: TaskSaveAll}
 )
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +58,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
 }
 
-func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) {
+func (NotificationDismissTask) Action(w http.ResponseWriter, r *http.Request) {
 	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return
@@ -102,7 +111,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
+func (NotificationEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

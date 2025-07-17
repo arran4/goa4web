@@ -10,6 +10,17 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+)
+
+type PermissionUserAllowTask struct{ tasks.TaskString }
+type PermissionUserDisallowTask struct{ tasks.TaskString }
+type PermissionUpdateTask struct{ tasks.TaskString }
+
+var (
+	permissionUserAllowTask    = &PermissionUserAllowTask{TaskString: TaskUserAllow}
+	permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
+	permissionUpdateTask       = &PermissionUpdateTask{TaskString: TaskUpdate}
 )
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +56,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "usersPermissionsPage.gohtml", data)
 }
 
-func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
+func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
@@ -69,7 +80,7 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
+func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
@@ -89,7 +100,7 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
+func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	level := r.PostFormValue("role")

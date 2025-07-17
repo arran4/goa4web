@@ -20,7 +20,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
 	ar.HandleFunc("/login/attempts", adminLoginAttemptsPage).Methods("GET")
 	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(PermissionUserAllowTask.Match)
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsDisallowPage).Methods("POST").MatcherFunc(PermissionUserDisallowTask.Match)
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsUpdatePage).Methods("POST").MatcherFunc(PermissionUpdateTask.Match)
+	ar.HandleFunc("/users/permissions", permissionUserAllowTask.Action).Methods("POST").MatcherFunc(PermissionUserAllowEvent.Match)
+	ar.HandleFunc("/users/permissions", permissionUserDisallowTask.Action).Methods("POST").MatcherFunc(PermissionUserDisallowEvent.Match)
+	ar.HandleFunc("/users/permissions", permissionUpdateTask.Action).Methods("POST").MatcherFunc(PermissionUpdateEvent.Match)
 }

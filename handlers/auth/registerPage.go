@@ -11,8 +11,8 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/tasks"
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // RegisterTask encapsulates rendering and processing of the registration form.

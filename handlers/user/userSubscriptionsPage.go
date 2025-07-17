@@ -9,6 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 type subscriptionOption struct {
@@ -23,6 +24,14 @@ var userSubscriptionOptions = []subscriptionOption{
 	{Name: "New news posts", Pattern: "post:/news/*", Path: "news"},
 	{Name: "New image board posts", Pattern: "post:/image/*", Path: "images"},
 }
+
+type SubscriptionsUpdateTask struct{ tasks.TaskString }
+type SubscriptionsDeleteTask struct{ tasks.TaskString }
+
+var (
+	subscriptionsUpdateTask = &SubscriptionsUpdateTask{TaskString: TaskUpdate}
+	subscriptionsDeleteTask = &SubscriptionsDeleteTask{TaskString: TaskDelete}
+)
 
 func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
@@ -58,7 +67,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "subscriptions.gohtml", data)
 }
 
-func userSubscriptionsUpdateAction(w http.ResponseWriter, r *http.Request) {
+func (SubscriptionsUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -103,7 +112,7 @@ func userSubscriptionsUpdateAction(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/subscriptions", http.StatusSeeOther)
 }
 
-func userSubscriptionsDeleteAction(w http.ResponseWriter, r *http.Request) {
+func (SubscriptionsDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

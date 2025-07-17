@@ -15,8 +15,8 @@ import (
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/internal/tasks"
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // LoginTask handles rendering and processing of the login form.

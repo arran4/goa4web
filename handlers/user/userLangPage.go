@@ -12,8 +12,19 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
+)
+
+type SaveLanguagesTask struct{ tasks.TaskString }
+type SaveLanguageTask struct{ tasks.TaskString }
+type SaveLangAllTask struct{ tasks.TaskString }
+
+var (
+	saveLanguagesTask = &SaveLanguagesTask{TaskString: TaskSaveLanguages}
+	saveLanguageTask  = &SaveLanguageTask{TaskString: TaskSaveLanguage}
+	saveLangAllTask   = &SaveLangAllTask{TaskString: TaskSaveAll}
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +143,7 @@ func saveDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) error 
 	return err
 }
 
-func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
+func (SaveLanguagesTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -156,7 +167,7 @@ func userLangSaveLanguagesActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Request) {
+func (SaveLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -179,7 +190,7 @@ func userLangSaveLanguagePreferenceActionPage(w http.ResponseWriter, r *http.Req
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func userLangSaveAllActionPage(w http.ResponseWriter, r *http.Request) {
+func (SaveLangAllTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

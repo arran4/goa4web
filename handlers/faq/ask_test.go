@@ -3,7 +3,6 @@ package faq
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -52,7 +51,7 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		AskActionPage(rr, req)
+		askTask.Action(rr, req)
 		if rr.Code != http.StatusBadRequest {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
@@ -103,7 +102,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	AskActionPage(rr, req)
+	askTask.Action(rr, req)
 
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)

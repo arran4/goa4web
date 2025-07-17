@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -29,7 +29,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
@@ -38,7 +38,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
 	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
 	if err != nil {
@@ -66,7 +66,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categories
 
-	common.TemplateHandler(w, r, "linkerPage", data)
+	handlers.TemplateHandler(w, r, "linkerPage", data)
 }
 
 func CustomLinkerIndex(data *corecommon.CoreData, r *http.Request) {

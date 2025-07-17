@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +16,7 @@ func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
 		Back:     "/admin",
 	}
 
@@ -28,5 +28,5 @@ func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

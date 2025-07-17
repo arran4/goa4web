@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -29,10 +29,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	var currentCategoryFAQs CategoryFAQs
 
@@ -63,7 +63,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	// index links provided via middleware
 
-	common.TemplateHandler(w, r, "faqPage", data)
+	handlers.TemplateHandler(w, r, "faqPage", data)
 }
 
 func CustomFAQIndex(data *corecommon.CoreData, r *http.Request) {

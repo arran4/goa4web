@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
@@ -58,7 +58,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
 	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -73,7 +73,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
 	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

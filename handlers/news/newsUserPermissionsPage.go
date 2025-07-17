@@ -7,19 +7,19 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Rows  []*db.GetUserRolesRow
 		Roles []*db.Role
 	}
@@ -28,7 +28,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -44,20 +44,20 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	common.TemplateHandler(w, r, "userPermissionsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "userPermissionsPage.gohtml", data)
 }
 
 func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	data := struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Back:     "/news",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -69,19 +69,19 @@ func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
 
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func NewsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Back:     "/news",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
@@ -89,5 +89,5 @@ func NewsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

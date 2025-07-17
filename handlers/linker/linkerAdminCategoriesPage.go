@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -19,7 +19,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	categoryRows, err := data.LinkerCategoryCounts()
@@ -35,11 +35,11 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	common.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }
 
 func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -61,11 +61,11 @@ func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -78,13 +78,13 @@ func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	for _, c := range rows {
 		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
@@ -107,13 +107,13 @@ func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	title := r.PostFormValue("title")
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	pos := len(rows) + 1
 	if err := queries.CreateLinkerCategory(r.Context(), db.CreateLinkerCategoryParams{
@@ -124,5 +124,5 @@ func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

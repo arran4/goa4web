@@ -8,9 +8,8 @@ import (
 	"strconv"
 
 	corelanguage "github.com/arran4/goa4web/core/language"
+	handlers "github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
@@ -28,8 +27,8 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -44,11 +43,11 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 
 	blogs.CustomBlogIndex(data.CoreData, r)
 
-	common.TemplateHandler(w, r, "threadNewPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }
 
 func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	session, ok := core.GetSessionOrFail(w, r)
@@ -82,7 +81,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
@@ -23,8 +23,8 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		UserMonthly       []*db.UserMonthlyUsageRow
 		StartYear         int
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	var err error
 	if data.ForumTopics, err = queries.ForumTopicThreadCounts(r.Context()); err != nil {
@@ -53,5 +53,5 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.StartYear = config.AppRuntimeConfig.StatsStartYear
 
-	common.TemplateHandler(w, r, "usageStatsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "usageStatsPage.gohtml", data)
 }

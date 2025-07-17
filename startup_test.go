@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func TestEnsureSchemaVersionMatch(t *testing.T) {
@@ -20,7 +20,7 @@ func TestEnsureSchemaVersionMatch(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)")).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
-		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(hcommon.ExpectedSchemaVersion))
+		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion))
 
 	if err := dbstart2.EnsureSchema(context.Background(), db); err != nil {
 		t.Fatalf("ensureSchema: %v", err)
@@ -40,13 +40,13 @@ func TestEnsureSchemaVersionMismatch(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)")).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
-		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(hcommon.ExpectedSchemaVersion - 1))
+		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion - 1))
 
 	err = dbstart2.EnsureSchema(context.Background(), db)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
-	expected := dbstart2.RenderSchemaMismatch(hcommon.ExpectedSchemaVersion-1, hcommon.ExpectedSchemaVersion)
+	expected := dbstart2.RenderSchemaMismatch(handlers.ExpectedSchemaVersion-1, handlers.ExpectedSchemaVersion)
 	if err.Error() != expected {
 		t.Fatalf("unexpected error: %v", err)
 	}

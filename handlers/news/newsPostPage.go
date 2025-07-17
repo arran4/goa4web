@@ -18,8 +18,8 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
 	emailutil "github.com/arran4/goa4web/internal/notifications"
@@ -54,7 +54,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		IsAdmin      bool
 	}
 	type Data struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Post               *Post
 		Languages          []*db.Language
 		SelectedLanguageId int32
@@ -67,9 +67,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ReplyText          string
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData:           r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
@@ -90,7 +90,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
@@ -99,7 +99,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -136,7 +136,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -197,7 +197,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,
 	}
 
-	common.TemplateHandler(w, r, "postPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "postPage.gohtml", data)
 }
 
 func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
@@ -221,8 +221,8 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -353,13 +353,13 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
-	if err := hcommon.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
-		hcommon.TaskErrorAcknowledgementPage(w, r)
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
@@ -368,14 +368,14 @@ func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
-		hcommon.TaskErrorAcknowledgementPage(w, r)
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	err = queries.UpdateNewsPost(r.Context(), db.UpdateNewsPostParams{
@@ -391,13 +391,13 @@ func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
-	if err := hcommon.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
-		hcommon.TaskErrorAcknowledgementPage(w, r)
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
@@ -406,16 +406,16 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); !cd.HasGrant("news", "post", "post", 0) {
+	if cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); !cd.HasGrant("news", "post", "post", 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
-		hcommon.TaskErrorAcknowledgementPage(w, r)
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	id, err := queries.CreateNewsPost(r.Context(), db.CreateNewsPostParams{
@@ -447,7 +447,7 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
-		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -457,5 +457,5 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

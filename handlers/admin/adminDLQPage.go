@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -19,20 +19,20 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Errors []*db.DeadLetter
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	rows, err := queries.ListDeadLetters(r.Context(), 100)
 	if err != nil {
 		log.Printf("list dead letters: %v", err)
 	} else {
 		data.Errors = rows
 	}
-	common.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
 }
 
 func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -59,5 +59,5 @@ func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("purge errors: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

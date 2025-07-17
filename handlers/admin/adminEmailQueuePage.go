@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/config"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 )
@@ -28,9 +28,9 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		Emails []EmailItem
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	rows, err := queries.ListUnsentPendingEmails(r.Context())
 	if err != nil {
 		log.Printf("list pending emails: %v", err)
@@ -58,11 +58,11 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
-	common.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
 }
 
 func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -102,11 +102,11 @@ func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("mark sent: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -116,5 +116,5 @@ func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("delete email: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

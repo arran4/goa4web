@@ -1,4 +1,4 @@
-package common
+package handlers
 
 const (
 	// Alphabet lists letters for search navigation.

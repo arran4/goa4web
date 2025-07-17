@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -29,7 +29,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
@@ -87,5 +87,5 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		data.Abstracts = append(data.Abstracts, wrow)
 	}
 
-	common.TemplateHandler(w, r, "writingsCategoryPage", data)
+	handlers.TemplateHandler(w, r, "writingsCategoryPage", data)
 }

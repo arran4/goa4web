@@ -7,7 +7,7 @@ import (
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
@@ -64,7 +64,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -95,7 +95,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {

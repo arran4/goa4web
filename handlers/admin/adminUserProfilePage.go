@@ -8,14 +8,14 @@ import (
 	"github.com/gorilla/mux"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(idStr)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	user, err := queries.GetUserById(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
@@ -29,12 +29,12 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		Emails   []*db.UserEmail
 		Comments []*db.AdminUserComment
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
 		Emails:   emails,
 		Comments: comments,
 	}
-	common.TemplateHandler(w, r, "admin/userProfile.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/userProfile.gohtml", data)
 }
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +45,7 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/user/" + idStr,
 	}
 	comment := r.PostFormValue("comment")
@@ -54,10 +54,10 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	} else if strings.TrimSpace(comment) == "" {
 		data.Errors = append(data.Errors, "empty comment")
 	} else {
-		queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 		if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: int32(id), Comment: comment}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}
-	common.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
 }

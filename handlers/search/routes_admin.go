@@ -8,12 +8,12 @@ import (
 func RegisterAdminRoutes(ar *mux.Router) {
 	sr := ar.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", adminSearchPage).Methods("GET")
-	sr.HandleFunc("", RemakeCommentsTask.Action).Methods("POST").MatcherFunc(RemakeCommentsTask.Match)
-	sr.HandleFunc("", RemakeNewsTask.Action).Methods("POST").MatcherFunc(RemakeNewsTask.Match)
-	sr.HandleFunc("", RemakeBlogTask.Action).Methods("POST").MatcherFunc(RemakeBlogTask.Match)
-	sr.HandleFunc("", RemakeLinkerTask.Action).Methods("POST").MatcherFunc(RemakeLinkerTask.Match)
-	sr.HandleFunc("", RemakeWritingTask.Action).Methods("POST").MatcherFunc(RemakeWritingTask.Match)
-	sr.HandleFunc("", RemakeImageTask.Action).Methods("POST").MatcherFunc(RemakeImageTask.Match)
+	sr.HandleFunc("", remakeCommentsTask.Action).Methods("POST").MatcherFunc(remakeCommentsTask.Match)
+	sr.HandleFunc("", remakeNewsTask.Action).Methods("POST").MatcherFunc(remakeNewsTask.Match)
+	sr.HandleFunc("", remakeBlogTask.Action).Methods("POST").MatcherFunc(remakeBlogTask.Match)
+	sr.HandleFunc("", remakeLinkerTask.Action).Methods("POST").MatcherFunc(remakeLinkerTask.Match)
+	sr.HandleFunc("", remakeWritingTask.Action).Methods("POST").MatcherFunc(remakeWritingTask.Match)
+	sr.HandleFunc("", remakeImageTask.Action).Methods("POST").MatcherFunc(remakeImageTask.Match)
 	sr.HandleFunc("/list", adminSearchWordListPage).Methods("GET")
 	sr.HandleFunc("/list.txt", adminSearchWordListDownloadPage).Methods("GET")
 }

@@ -12,9 +12,14 @@ import (
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
+type SearchLinkerTask struct{ tasks.TaskString }
+
+var searchLinkerTask = &SearchLinkerTask{TaskString: TaskSearchLinker}
+
+func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*handlers.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow

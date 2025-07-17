@@ -39,6 +39,7 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 }
 
 // AdminCheckerMiddleware ensures the requester has administrator rights.
+// Roles are loaded via the GetPermissionsByUserID query before this check.
 func AdminCheckerMiddleware(next http.Handler) http.Handler {
 	return RoleCheckerMiddleware("administrator")(next)
 }

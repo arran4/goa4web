@@ -37,7 +37,7 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	LoginActionPage(rr, req)
+	loginTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -75,7 +75,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	LoginActionPage(rr, req)
+	loginTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

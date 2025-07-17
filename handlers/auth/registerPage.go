@@ -12,16 +12,25 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
+// RegisterTask encapsulates rendering and processing of the registration form.
+type RegisterTask struct {
+	tasks.TaskString
+}
+
+// registerTask handles user registration.
+var registerTask = &RegisterTask{TaskString: TaskRegister}
+
 // RegisterPage renders the user registration form.
-func RegisterPage(w http.ResponseWriter, r *http.Request) {
+func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(hcommon.KeyCoreData)
 	hcommon.TemplateHandler(w, r, "registerPage.gohtml", cd)
 }
 
 // RegisterActionPage handles user creation from the registration form.
-func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
+func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}

@@ -16,7 +16,22 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// LoginTask handles rendering and processing of the login form.
+type LoginTask struct {
+	tasks.TaskString
+}
+
+var loginTask = &LoginTask{TaskString: TaskLogin}
+
+// VerifyPasswordTask verifies reset codes during login.
+type VerifyPasswordTask struct {
+	tasks.TaskString
+}
+
+var verifyPasswordTask = &VerifyPasswordTask{TaskString: TaskPasswordVerify}
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	type Data struct {
@@ -31,12 +46,12 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 }
 
 // LoginUserPassPage serves the username/password login form.
-func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
+func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 	renderLoginForm(w, r, r.URL.Query().Get("error"))
 }
 
 // LoginActionPage processes the submitted login form.
-func LoginActionPage(w http.ResponseWriter, r *http.Request) {
+func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		sess, _ := core.GetSession(r)
 		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
@@ -161,7 +176,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func LoginVerifyPage(w http.ResponseWriter, r *http.Request) {
+func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

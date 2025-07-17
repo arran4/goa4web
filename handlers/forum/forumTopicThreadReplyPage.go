@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-
 	"github.com/arran4/goa4web/config"
 
 	"github.com/arran4/goa4web/core"
@@ -49,7 +47,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+
+  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      threadRow.Idforumthread,

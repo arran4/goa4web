@@ -32,7 +32,12 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) 
 		if dbq, ok := q.(dbdlq.DLQ); ok {
 			if count, err := dbq.Queries.CountDeadLetters(ctx); err == nil {
 				if isPow10(count) {
-					NotifyAdmins(ctx, n, "/admin/dlq")
+					evt := eventbus.Event{
+						Path: "/admin/dlq",
+						Task: dlqAlertTask{tasks.TaskString("DLQ Alert")},
+						Data: map[string]any{"Count": count},
+					}
+					_ = eventbus.DefaultBus.Publish(evt)
 				}
 			}
 		}

@@ -93,12 +93,12 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		}
 		uid = cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")
+		_ = admin
 		evt := &eventbus.Event{
 			Path:   r.URL.Path,
-			Task:   task,
+			Task:   tasks.TaskString(task),
 			UserID: uid,
 			Time:   time.Now(),
-			Admin:  admin,
 		}
 		cd.SetEvent(evt)
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}

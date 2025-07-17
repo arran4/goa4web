@@ -5,7 +5,7 @@ import (
 )
 
 // SaveTask represents saving bookmark edits.
-var SaveTask = tasks.NewTaskEventWithHandlers(tasks.TaskSave, EditPage, EditSaveActionPage)
+var SaveTask = tasks.NewTaskEventWithHandlers(TaskSave, EditPage, EditSaveActionPage)
 
 // CreateTask represents creating a bookmark.
-var CreateTask = tasks.NewTaskEventWithHandlers(tasks.TaskCreate, EditPage, EditCreateActionPage)
+var CreateTask = tasks.NewTaskEventWithHandlers(TaskCreate, EditPage, EditCreateActionPage)

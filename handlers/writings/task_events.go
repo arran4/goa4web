@@ -6,11 +6,11 @@ import (
 
 // SubmitWritingTask represents submitting a new writing.
 var SubmitWritingTask = tasks.BasicTaskEvent{
-	EventName: tasks.TaskSubmitWriting,
-	Match:     tasks.HasTask(tasks.TaskSubmitWriting),
+	EventName: TaskSubmitWriting,
+	Match:     tasks.HasTask(TaskSubmitWriting),
 }
 
-var ReplyTask = tasks.NewTaskEvent(tasks.TaskReply)
-var EditReplyTask = tasks.NewTaskEvent(tasks.TaskEditReply)
-var CancelTask = tasks.NewTaskEvent(tasks.TaskCancel)
-var UpdateWritingTask = tasks.NewTaskEvent(tasks.TaskUpdateWriting)
+var ReplyTask = tasks.NewTaskEvent(TaskReply)
+var EditReplyTask = tasks.NewTaskEvent(TaskEditReply)
+var CancelTask = tasks.NewTaskEvent(TaskCancel)
+var UpdateWritingTask = tasks.NewTaskEvent(TaskUpdateWriting)

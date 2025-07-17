@@ -12,4 +12,22 @@ const (
 	TaskTestMail = "Test mail"
 	// TaskDismiss marks a notification as read.
 	TaskDismiss = "Dismiss"
+
+	// TaskAdd represents the "Add" action.
+	TaskAdd = "Add"
+
+	// TaskDelete removes an existing item.
+	TaskDelete = "Delete"
+
+	// TaskUpdate updates an existing item.
+	TaskUpdate = "Update"
+
+	// TaskUserAllow grants a user a permission or level.
+	TaskUserAllow = "User Allow"
+
+	// TaskUserDisallow removes a user's permission or level.
+	TaskUserDisallow = "User Disallow"
+
+	// TaskUserEmailVerification verifies a user's email address.
+	TaskUserEmailVerification = "Email Verification"
 )

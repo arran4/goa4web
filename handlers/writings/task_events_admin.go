@@ -4,10 +4,10 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var UserAllowTask = tasks.NewTaskEvent(tasks.TaskUserAllow)
-var UserDisallowTask = tasks.NewTaskEvent(tasks.TaskUserDisallow)
-var AddApprovalTask = tasks.NewTaskEvent(tasks.TaskAddApproval)
-var UpdateApprovalTask = tasks.NewTaskEvent(tasks.TaskUpdateUserApproval)
-var DeleteApprovalTask = tasks.NewTaskEvent(tasks.TaskDeleteUserApproval)
-var WritingCategoryChangeTask = tasks.NewTaskEvent(tasks.TaskWritingCategoryChange)
-var WritingCategoryCreateTask = tasks.NewTaskEvent(tasks.TaskWritingCategoryCreate)
+var UserAllowTask = tasks.NewTaskEvent(TaskUserAllow)
+var UserDisallowTask = tasks.NewTaskEvent(TaskUserDisallow)
+var AddApprovalTask = tasks.NewTaskEvent(TaskAddApproval)
+var UpdateApprovalTask = tasks.NewTaskEvent(TaskUpdateUserApproval)
+var DeleteApprovalTask = tasks.NewTaskEvent(TaskDeleteUserApproval)
+var WritingCategoryChangeTask = tasks.NewTaskEvent(TaskWritingCategoryChange)
+var WritingCategoryCreateTask = tasks.NewTaskEvent(TaskWritingCategoryCreate)

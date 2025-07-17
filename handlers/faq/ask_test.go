@@ -94,7 +94,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskAsk, UserID: 1}
+	evt := &eventbus.Event{Path: "/faq/ask", Task: TaskAsk, UserID: 1}
 	cd := &hcommon.CoreData{}
 	cd.SetEvent(evt)
 

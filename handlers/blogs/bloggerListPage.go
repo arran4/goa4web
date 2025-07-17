@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 // BloggerListPage shows all bloggers with their post counts.
@@ -27,14 +27,14 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
 		Search:   r.URL.Query().Get("search"),
-		PageSize: common.GetPageSize(r),
+		PageSize: handlers.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	pageSize := common.GetPageSize(r)
+	pageSize := handlers.GetPageSize(r)
 	rows, err := data.CoreData.Bloggers(r)
 	if err != nil {
 		switch {
@@ -78,5 +78,5 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	common.TemplateHandler(w, r, "bloggerListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "bloggerListPage.gohtml", data)
 }

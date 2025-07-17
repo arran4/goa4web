@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -21,8 +21,8 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 		Announcements []*db.ListAnnouncementsWithNewsRow
 		NewsID        string
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	rows, err := queries.ListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list announcements: %v", err)
@@ -31,25 +31,25 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Announcements = rows
 	data.NewsID = r.FormValue("news_id")
-	common.TemplateHandler(w, r, "announcementsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "announcementsPage.gohtml", data)
 }
 
 func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
 		log.Printf("news id: %v", err)
-		common.TaskDoneAutoRefreshPage(w, r)
+		handlers.TaskDoneAutoRefreshPage(w, r)
 		return
 	}
 	if err := queries.CreateAnnouncement(r.Context(), int32(nid)); err != nil {
 		log.Printf("create announcement: %v", err)
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -59,5 +59,5 @@ func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("delete announcement: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

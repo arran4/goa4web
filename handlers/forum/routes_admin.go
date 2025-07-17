@@ -3,7 +3,7 @@ package forum
 import (
 	"github.com/gorilla/mux"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 // RegisterAdminRoutes attaches forum admin endpoints to ar.
@@ -16,11 +16,11 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	far.HandleFunc("/logs", AdminForumModeratorLogsPage).Methods("GET")
 	far.HandleFunc("/list", AdminForumWordListPage).Methods("GET")
 	far.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
-	far.HandleFunc("/categories", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
+	far.HandleFunc("/categories", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	far.HandleFunc("/category/{category}", AdminCategoryEditPage).Methods("POST").MatcherFunc(CategoryChangeTask.Match)
 	far.HandleFunc("/category", AdminCategoryCreatePage).Methods("POST").MatcherFunc(CategoryCreateTask.Match)
 	far.HandleFunc("/category/delete", AdminCategoryDeletePage).Methods("POST").MatcherFunc(DeleteCategoryTask.Match)
-	far.HandleFunc("/topics", hcommon.TaskDoneAutoRefreshPage).Methods("POST")
+	far.HandleFunc("/topics", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	far.HandleFunc("/conversations", AdminThreadsPage).Methods("GET")
 	far.HandleFunc("/thread/{thread}/delete", AdminThreadDeletePage).Methods("POST").MatcherFunc(ThreadDeleteTask.Match)
 }

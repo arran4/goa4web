@@ -5,7 +5,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -14,7 +14,7 @@ import (
 
 // AddLinkerIndex injects linker index links into CoreData.
 func AddLinkerIndex(h http.Handler) http.Handler {
-	return hcommon.IndexMiddleware(CustomLinkerIndex)(h)
+	return handlers.IndexMiddleware(CustomLinkerIndex)(h)
 }
 
 var legacyRedirectsEnabled = true
@@ -24,7 +24,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Linker", "/linker", SectionWeight)
 	nav.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()
-	lr.Use(hcommon.IndexMiddleware(CustomLinkerIndex))
+	lr.Use(handlers.IndexMiddleware(CustomLinkerIndex))
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
 	lr.HandleFunc("/atom", AtomPage).Methods("GET")
 	lr.HandleFunc("", Page).Methods("GET")
@@ -43,8 +43,8 @@ func RegisterRoutes(r *mux.Router) {
 
 	if legacyRedirectsEnabled {
 		// legacy redirects
-		r.Path("/links").HandlerFunc(hcommon.RedirectPermanentPrefix("/links", "/linker"))
-		r.PathPrefix("/links/").HandlerFunc(hcommon.RedirectPermanentPrefix("/links", "/linker"))
+		r.Path("/links").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
+		r.PathPrefix("/links/").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
 	}
 }
 

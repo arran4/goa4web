@@ -12,7 +12,7 @@ import (
 	"strings"
 	"text/template"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
@@ -130,7 +130,7 @@ func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
 }
 
 func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ) {
-	if !hcommon.NotificationsEnabled() {
+	if !handlers.NotificationsEnabled() {
 		return
 	}
 
@@ -289,7 +289,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 
 		// thread 2nd
 
-		if n.Queries == nil || !common.NotificationsEnabled() {
+		if n.Queries == nil || !handlers.NotificationsEnabled() {
 			return
 		}
 		rows, err := n.Queries.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
@@ -345,7 +345,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 			if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
 				log.Printf("Error: notifyChange: %v", err)
 			}
-			if hcommon.NotificationsEnabled() {
+			if handlers.NotificationsEnabled() {
 				err := q.InsertNotification(ctx, db.InsertNotificationParams{
 					UsersIdusers: row.Idusers,
 					Link:         sql.NullString{String: page, Valid: page != ""},

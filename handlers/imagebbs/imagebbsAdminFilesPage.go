@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
 )
@@ -21,7 +21,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		IsDir bool
 	}
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 		Path    string
 		Parent  string
 		Entries []Entry
@@ -50,7 +50,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Path:     cleaned,
 	}
 	if cleaned != "/" {
@@ -68,5 +68,5 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	common.TemplateHandler(w, r, "adminFilesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminFilesPage.gohtml", data)
 }

@@ -5,39 +5,39 @@ import (
 	"fmt"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	emailutil "github.com/arran4/goa4web/internal/notifications"
 )
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	rows, err := queries.ListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data := struct {
-		*common.CoreData
+		*handlers.CoreData
 		Rows []*db.ListPendingUsersRow
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Rows:     rows,
 	}
-	common.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*common.CoreData
+		*handlers.CoreData
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {
@@ -50,21 +50,21 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 			_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, id, u.Email.String, "", "user approved", nil)
 		}
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	reason := r.PostFormValue("reason")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*common.CoreData
+		*handlers.CoreData
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {
@@ -81,5 +81,5 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 			_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, id, u.Email.String, "", "user rejected", item)
 		}
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

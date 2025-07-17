@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
@@ -24,10 +24,10 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 		Error string
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Error:    errMsg,
 	}
-	common.TemplateHandler(w, r, "loginPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "loginPage.gohtml", data)
 }
 
 // LoginUserPassPage serves the username/password login form.
@@ -48,7 +48,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	//
 	//hashedPassword := hex.EncodeToString(sum[:])
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
@@ -77,7 +77,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 			}
 			session.Values["PendingResetID"] = reset.ID
 			_ = session.Save(r, w)
-			common.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *corecommon.CoreData }{r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)})
+			handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *corecommon.CoreData }{r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)})
 			return
 		}
 		_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
@@ -145,12 +145,12 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 			Values  url.Values
 		}
 		data := Data{
-			CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+			CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 			BackURL:  backURL,
 			Method:   backMethod,
 			Values:   vals,
 		}
-		cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+		cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 		if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -176,7 +176,7 @@ func LoginVerifyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	code := r.FormValue("code")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	reset, err := queries.GetPasswordResetByCode(r.Context(), code)
 	if err != nil || reset.ID != id {
 		http.Error(w, "invalid code", http.StatusUnauthorized)

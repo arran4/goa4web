@@ -2,7 +2,7 @@ package imagebbs
 
 import (
 	"database/sql"
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 	"log"
@@ -17,7 +17,7 @@ func AdminBoardModifyBoardActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["board"])
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	err := queries.UpdateImageBoard(r.Context(), db.UpdateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),

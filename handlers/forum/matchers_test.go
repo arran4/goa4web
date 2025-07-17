@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
@@ -36,14 +36,14 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	called := false
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
-		if r.Context().Value(common.KeyThread) == nil || r.Context().Value(common.KeyTopic) == nil {
+		if r.Context().Value(handlers.KeyThread) == nil || r.Context().Value(handlers.KeyTopic) == nil {
 			t.Errorf("context values missing")
 		}
 		w.WriteHeader(http.StatusOK)
@@ -84,7 +84,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	called := false
@@ -121,7 +121,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	called := false

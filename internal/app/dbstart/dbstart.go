@@ -12,7 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/middleware"
@@ -46,24 +46,24 @@ func GetDBPool() *sql.DB { return dbPool }
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg config.RuntimeConfig) *common.UserError {
+func InitDB(cfg config.RuntimeConfig) *handlers.UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
 	conn := cfg.DBConn
 	if conn == "" {
-		return &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
+		return &handlers.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
 	}
 	c, err := dbdrivers.Connector(cfg.DBDriver, conn)
 	if err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
+		return &handlers.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
 	var connector driver.Connector = db.NewLoggingConnector(c)
 	dbPool = sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
+		return &handlers.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
 	if err := EnsureSchema(context.Background(), dbPool); err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
+		return &handlers.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
 	middleware.SetDBPool(dbPool, dbLogVerbosity)
 	if dbLogVerbosity > 0 {
@@ -87,29 +87,29 @@ func PerformStartupChecks(cfg config.RuntimeConfig) error {
 }
 
 // CheckUploadDir verifies that the upload directory is accessible.
-func CheckUploadDir(cfg config.RuntimeConfig) *common.UserError {
+func CheckUploadDir(cfg config.RuntimeConfig) *handlers.UserError {
 	if cfg.ImageUploadDir == "" {
-		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
+		return &handlers.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}
 	if strings.HasPrefix(cfg.ImageUploadDir, "s3://") {
 		if _, _, err := parseS3Dir(cfg.ImageUploadDir); err != nil {
-			return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
+			return &handlers.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
 		}
 		return nil
 	}
 	info, err := os.Stat(cfg.ImageUploadDir)
 	if (err != nil || !info.IsDir()) && cfg.CreateDirs {
 		if err := os.MkdirAll(cfg.ImageUploadDir, 0o755); err != nil {
-			return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
+			return &handlers.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
 		}
 		info, err = os.Stat(cfg.ImageUploadDir)
 	}
 	if err != nil || !info.IsDir() {
-		return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
+		return &handlers.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
 	}
 	test := filepath.Join(cfg.ImageUploadDir, ".check")
 	if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "image upload directory not writable"}
+		return &handlers.UserError{Err: err, ErrorMessage: "image upload directory not writable"}
 	}
 	os.Remove(test)
 
@@ -117,16 +117,16 @@ func CheckUploadDir(cfg config.RuntimeConfig) *common.UserError {
 		info, err := os.Stat(cfg.ImageCacheDir)
 		if (err != nil || !info.IsDir()) && cfg.CreateDirs {
 			if err := os.MkdirAll(cfg.ImageCacheDir, 0o755); err != nil {
-				return &common.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
+				return &handlers.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
 			}
 			info, err = os.Stat(cfg.ImageCacheDir)
 		}
 		if err != nil || !info.IsDir() {
-			return &common.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
+			return &handlers.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
 		}
 		test := filepath.Join(cfg.ImageCacheDir, ".check")
 		if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
-			return &common.UserError{Err: err, ErrorMessage: "image cache directory not writable"}
+			return &handlers.UserError{Err: err, ErrorMessage: "image cache directory not writable"}
 		}
 		os.Remove(test)
 	}
@@ -139,8 +139,8 @@ func EnsureSchema(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	if version != hcommon.ExpectedSchemaVersion {
-		msg := RenderSchemaMismatch(version, hcommon.ExpectedSchemaVersion)
+	if version != handlers.ExpectedSchemaVersion {
+		msg := RenderSchemaMismatch(version, handlers.ExpectedSchemaVersion)
 		return fmt.Errorf(msg)
 	}
 	return nil

@@ -25,6 +25,7 @@ import (
 	emailutil "github.com/arran4/goa4web/internal/notifications"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 type NewsPost struct {
@@ -33,6 +34,18 @@ type NewsPost struct {
 	// the writer, moderator or administrator role are permitted to edit.
 	ShowEdit bool
 }
+
+type replyTask struct{ tasks.TaskString }
+
+var replyTask = &replyTask{TaskString: TaskReply}
+
+type editTask struct{ tasks.TaskString }
+
+var editTask = &editTask{TaskString: TaskEdit}
+
+type newPostTask struct{ tasks.TaskString }
+
+var newPostTask = &newPostTask{TaskString: TaskNewPost}
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
@@ -200,7 +213,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)
 }
 
-func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -356,7 +369,7 @@ func NewsPostReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
+func (editTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
 		handlers.TaskErrorAcknowledgementPage(w, r)
@@ -394,7 +407,7 @@ func NewsPostEditActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
+func (newPostTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
 		handlers.TaskErrorAcknowledgementPage(w, r)

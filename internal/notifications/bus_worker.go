@@ -67,38 +67,6 @@ func buildPatterns(task tasks.NamedTask, path string) []string {
 	return patterns
 }
 
-func renderMessage(ctx context.Context, q *dbpkg.Queries, action, path string, item interface{}) string {
-	name := fmt.Sprintf("notify_%s", strings.ToLower(action))
-	tmplText := ""
-	if q != nil {
-		if body, err := q.GetTemplateOverride(ctx, name); err == nil && body != "" {
-			tmplText = body
-		}
-	}
-	if tmplText == "" {
-		if d, ok := defaultTemplates[strings.ToLower(action)]; ok {
-			tmplText = d
-		}
-	}
-	if tmplText == "" {
-		return ""
-	}
-	t, err := template.New("msg").Parse(tmplText)
-	if err != nil {
-		log.Printf("parse template %s: %v", name, err)
-		return ""
-	}
-	var buf bytes.Buffer
-	_ = t.Execute(&buf, struct {
-		Action string
-		Path   string
-		Item   interface{}
-	}{Action: action, Path: path, Item: item})
-	msg := buf.String()
-	msg = strings.TrimSuffix(msg, "\n")
-	return msg
-}
-
 // parseEvent identifies a subscription target from the request path.
 // It returns the item type and id if recognised.
 func parseEvent(evt eventbus.Event) (string, int32, bool) {
@@ -143,240 +111,156 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	notificationTemplates := templates.GetCompiledNotificationTemplates(map[string]any{})
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		// TODO Make this into a private function
-		// TODO use this as the basis for the other functions
-		if !config.AdminNotificationsEnabled() {
-			exit if
+		if err := notifyAdmins(ctx, evt, n, tp, emailHtmlTemplates, emailTextTemplates, notificationTemplates); err != nil {
+			dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", err))
 		}
-		for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
-			var uid int32
-			if n.Queries != nil {
-				u, err := n.Queries.UserByEmail(ctx, addr)
-				if err != nil {
-					log.Printf("user by email %s: %v", addr, err)
-				} else {
-					uid = u.Idusers
-				}
-			}
-			var notiTemplFilename = tp.AdminInternalNotificationTemplate()
-			var emailTmpl = tp.AdminEmailTemplate()
-
-			if emailTmpl != nil {
-
-				emailHtmlBody := bytes.Buffer{}
-				if err := emailHtmlTemplates.ExecuteTemplate(emailHtmlBody, *notiTemplFilename, evt.Data); err != nil {
-					TODO return error
-				}
-				eamilTextBody := bytes.Buffer{}
-				if err := emailTextTemplates.ExecuteTemplate(eamilTextBody, *notiTemplFilename, evt.Data); err != nil {
-					TODO return error
-				}
-
-				if err := CreateEmailTemplateAndQueue(ctx, emailHtml.String(), eamilTextBody.String(), n.Queries, userID, emailAddr, page, action, item); err != nil {
-					break
-				}
-			}
-			if notiTemplFilename != nil {
-				notiBody := bytes.Buffer{}
-				if err := notificationTemplates.ExecuteTemplate(notiBody, *notiTemplFilename, evt.Data); err != nil {
-					TODO return error
-				}
-				err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
-					UsersIdusers: adminAccount.Idusers,
-					Link:         evt.Link,
-					Message:      notiBody.String(),
-				})
-				if err != nil {
-					log.Printf("insert notification: %v", err)
-				}
-			}
-
-		}
-
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
-		user, err := n.Queries.GetUserById(ctx, evt.UserID)
-		if err != nil || !user.Email.Valid || user.Email.String == "" {
-			notifyMissingEmail(ctx, n.Queries, evt.UserID)
-		} else {
-			if err := CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Data); err != nil {
-				dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self email to %d: %v", evt.UserID, err))
-			}
-		}
-		if msg != "" {
-			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
-				UsersIdusers: evt.UserID,
-				Link:         sql.NullString{String: evt.Path, Valid: true},
-				Message:      sql.NullString{String: msg, Valid: true},
-			}); err != nil {
-				dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self note to %d: %v", evt.UserID, err))
-			}
+		if err := notifySelf(ctx, evt, n, tp); err != nil {
+			dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err))
 		}
 
 	}
 
-
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
-		// TODO consolidate this to make it make sense.
-		patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
-		subs := map[int32]map[string]func(context.Context) error{}
-		msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
-
-		for _, p := range patterns {
-			for _, method := range []string{"email", "internal"} {
-				ids, err := n.Queries.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: p, Method: method})
-				if err != nil {
-					dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("list subscribers: %v", err))
-					continue
-				}
-				for _, id := range ids {
-					if id == evt.UserID {
-						continue
-					}
-					if subs[id] == nil {
-						subs[id] = map[string]func(context.Context) error{}
-					}
-					if method == "email" {
-						uid := id
-						subs[id][method] = func(c context.Context) error {
-							user, err := n.Queries.GetUserById(c, uid)
-							if err != nil || !user.Email.Valid || user.Email.String == "" {
-								notifyMissingEmail(c, n.Queries, uid)
-								return err
-							}
-							return CreateEmailTemplateAndQueue(c, n.Queries, uid, user.Email.String, evt.Path, evt.Task, evt.Data)
-						}
-					} else if method == "internal" && msg != "" {
-						uid := id
-						subs[id][method] = func(c context.Context) error {
-							return n.Queries.InsertNotification(c, dbpkg.InsertNotificationParams{
-								UsersIdusers: uid,
-								Link:         sql.NullString{String: evt.Path, Valid: true},
-								Message:      sql.NullString{String: msg, Valid: true},
-							})
-						}
-					}
-				}
-			}
-		}
-
-		for id, methods := range subs {
-			for typ, fn := range methods {
-				if err := fn(ctx); err != nil {
-					dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver %s to %d: %v", typ, id, err))
-				}
-			}
-		}
-
-		// thread
-		if q == nil {
-			return
-		}
-		rows, err := q.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
-			ForumthreadID: threadID,
-			Idusers:       excludeUser,
-		})
-		if err != nil {
-			log.Printf("Error: listUsersSubscribedToThread: %s", err)
-			return
-		}
-		for _, row := range rows {
-			if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
-				log.Printf("Error: queue: %s", err)
-			}
-		}
-
-		// thread 2nd
-
-		if n.Queries == nil || !handlers.NotificationsEnabled() {
-			return
-		}
-		rows, err := n.Queries.ListUsersSubscribedToThread(ctx, db.ListUsersSubscribedToThreadParams{
-			ForumthreadID: threadID,
-			Idusers:       excludeUser,
-		})
-		if err != nil {
-			log.Printf("list subscribers: %v", err)
-			return
-		}
-		for _, row := range rows {
-			if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
-				UsersIdusers: row.UsersIdusers,
-				Link:         sql.NullString{String: page, Valid: page != ""},
-				Message:      sql.NullString{},
-			}); err != nil {
-				log.Printf("insert notification: %v", err)
-			}
-		}
-
-		// news
-		if q == nil {
-			return
-		}
-		rows, err := q.ListUsersSubscribedToNews(ctx, db.ListUsersSubscribedToNewsParams{
-			Idsitenews: newsID,
-			Idusers:    excludeUser,
-		})
-		if err != nil {
-			log.Printf("Error: listUsersSubscribedToNews: %v", err)
-			return
-		}
-		for _, row := range rows {
-			if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %v", err)
-			}
-		}
-
-		// writings
-
-		if q == nil {
-			return
-		}
-		rows, err := q.ListUsersSubscribedToWriting(ctx, db.ListUsersSubscribedToWritingParams{
-			Idwriting: writingID,
-			Idusers:   excludeUser,
-		})
-		if err != nil {
-			log.Printf("Error: listUsersSubscribedToWriting: %v", err)
-			return
-		}
-		for _, row := range rows {
-			if err := CreateEmailTemplateAndQueue(ctx, q, row.Idusers, row.Email, page, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %v", err)
-			}
-			if handlers.NotificationsEnabled() {
-				err := q.InsertNotification(ctx, db.InsertNotificationParams{
-					UsersIdusers: row.Idusers,
-					Link:         sql.NullString{String: page, Valid: page != ""},
-					Message:      sql.NullString{},
-				})
-				if err != nil {
-					log.Printf("insert notification: %v", err)
-				}
-			}
+		if err := notifySubscribers(ctx, evt, n); err != nil {
+			dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err))
 		}
 
 	}
 
 	if tp, ok := evt.Task.(AutoSubscribeProvider); ok {
-		auto := true
-		email := false
-		if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
-			auto = pref.AutoSubscribeReplies
-			if pref.Emailforumupdates.Valid {
-				email = pref.Emailforumupdates.Bool
-			}
-		}
-		if auto {
-			pattern := buildPatterns(namedTask{evt.Task}, evt.Path)[0]
-			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
-			if email {
-				ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
-			}
-		}
+		handleAutoSubscribe(ctx, evt, n)
 
 	}
+}
+
+func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNotificationTemplateProvider) error {
+	user, err := n.Queries.GetUserById(ctx, evt.UserID)
+	if err != nil || !user.Email.Valid || user.Email.String == "" {
+		notifyMissingEmail(ctx, n.Queries, evt.UserID)
+	} else {
+		if err := CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Data); err != nil {
+			return err
+		}
+	}
+	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
+	if msg != "" {
+		if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+			UsersIdusers: evt.UserID,
+			Link:         sql.NullString{String: evt.Path, Valid: true},
+			Message:      sql.NullString{String: msg, Valid: true},
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier) error {
+	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
+	subs := map[int32]map[string]func(context.Context) error{}
+	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
+
+	for _, p := range patterns {
+		for _, method := range []string{"email", "internal"} {
+			ids, err := n.Queries.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: p, Method: method})
+			if err != nil {
+				return fmt.Errorf("list subscribers: %w", err)
+			}
+			for _, id := range ids {
+				if id == evt.UserID {
+					continue
+				}
+				if subs[id] == nil {
+					subs[id] = map[string]func(context.Context) error{}
+				}
+				if method == "email" {
+					uid := id
+					subs[id][method] = func(c context.Context) error {
+						user, err := n.Queries.GetUserById(c, uid)
+						if err != nil || !user.Email.Valid || user.Email.String == "" {
+							notifyMissingEmail(c, n.Queries, uid)
+							return err
+						}
+						return CreateEmailTemplateAndQueue(c, n.Queries, uid, user.Email.String, evt.Path, evt.Task, evt.Data)
+					}
+				} else if method == "internal" && msg != "" {
+					uid := id
+					subs[id][method] = func(c context.Context) error {
+						return n.Queries.InsertNotification(c, dbpkg.InsertNotificationParams{
+							UsersIdusers: uid,
+							Link:         sql.NullString{String: evt.Path, Valid: true},
+							Message:      sql.NullString{String: msg, Valid: true},
+						})
+					}
+				}
+			}
+		}
+	}
+
+	for id, methods := range subs {
+		for typ, fn := range methods {
+			if err := fn(ctx); err != nil {
+				return fmt.Errorf("deliver %s to %d: %w", typ, id, err)
+			}
+		}
+	}
+	return nil
+}
+
+func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier) {
+	auto := true
+	email := false
+	if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
+		auto = pref.AutoSubscribeReplies
+		if pref.Emailforumupdates.Valid {
+			email = pref.Emailforumupdates.Bool
+		}
+	}
+	if auto {
+		pattern := buildPatterns(namedTask{evt.Task}, evt.Path)[0]
+		ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
+		if email {
+			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
+		}
+	}
+}
+
+func notifyAdmins(ctx context.Context, evt eventbus.Event, n Notifier, tp AdminEmailTemplateProvider, htmlTmpls, textTmpls, noteTmpls *template.Template) error {
+	if !config.AdminNotificationsEnabled() {
+		return nil
+	}
+	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
+		var uid int32
+		if n.Queries != nil {
+			if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
+				uid = u.Idusers
+			} else {
+				log.Printf("user by email %s: %v", addr, err)
+			}
+		}
+		if et := tp.AdminEmailTemplate(); et != nil {
+			if err := CreateEmailTemplateAndQueue(ctx, n.Queries, uid, addr, evt.Path, evt.Task, evt.Data); err != nil {
+				return err
+			}
+		}
+		if nt := tp.AdminInternalNotificationTemplate(); nt != nil && n.Queries != nil {
+			var buf bytes.Buffer
+			if err := noteTmpls.ExecuteTemplate(&buf, *nt, evt.Data); err != nil {
+				return err
+			}
+			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+				UsersIdusers: uid,
+				Link:         sql.NullString{String: evt.Path, Valid: evt.Path != ""},
+				Message:      sql.NullString{String: buf.String(), Valid: buf.Len() > 0},
+			}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pattern, method string) {

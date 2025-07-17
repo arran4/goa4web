@@ -6,7 +6,7 @@ import (
 
 // NewPostTask represents creating a new news post.
 var NewPostTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskNewPost,
-	Match:         tasks.HasTask(tasks.TaskNewPost),
+	EventName:     TaskNewPost,
+	Match:         tasks.HasTask(TaskNewPost),
 	ActionHandler: NewsPostNewActionPage,
 }

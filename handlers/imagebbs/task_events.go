@@ -5,31 +5,31 @@ import (
 )
 
 var UploadImageTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskUploadImage,
-	Match:         tasks.HasTask(tasks.TaskUploadImage),
+	EventName:     TaskUploadImage,
+	Match:         tasks.HasTask(TaskUploadImage),
 	ActionHandler: BoardPostImageActionPage,
 }
 
 var ReplyTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskReply,
-	Match:         tasks.HasTask(tasks.TaskReply),
+	EventName:     TaskReply,
+	Match:         tasks.HasTask(TaskReply),
 	ActionHandler: BoardThreadReplyActionPage,
 }
 
 var NewBoardTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskNewBoard,
-	Match:         tasks.HasTask(tasks.TaskNewBoard),
+	EventName:     TaskNewBoard,
+	Match:         tasks.HasTask(TaskNewBoard),
 	ActionHandler: AdminNewBoardMakePage,
 }
 
 var ModifyBoardTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskModifyBoard,
-	Match:         tasks.HasTask(tasks.TaskModifyBoard),
+	EventName:     TaskModifyBoard,
+	Match:         tasks.HasTask(TaskModifyBoard),
 	ActionHandler: AdminBoardModifyBoardActionPage,
 }
 
 var ApprovePostTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskApprove,
-	Match:         tasks.HasTask(tasks.TaskApprove),
+	EventName:     TaskApprove,
+	Match:         tasks.HasTask(TaskApprove),
 	ActionHandler: AdminApprovePostPage,
 }

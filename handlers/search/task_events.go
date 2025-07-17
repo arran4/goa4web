@@ -6,32 +6,32 @@ import (
 )
 
 var SearchForumTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskSearchForum,
-	Match:         tasks.HasTask(tasks.TaskSearchForum),
+	EventName:     TaskSearchForum,
+	Match:         tasks.HasTask(TaskSearchForum),
 	ActionHandler: SearchResultForumActionPage,
 }
 
 var SearchNewsTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskSearchNews,
-	Match:         tasks.HasTask(tasks.TaskSearchNews),
+	EventName:     TaskSearchNews,
+	Match:         tasks.HasTask(TaskSearchNews),
 	ActionHandler: news.SearchResultNewsActionPage,
 }
 
 var SearchLinkerTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskSearchLinker,
-	Match:         tasks.HasTask(tasks.TaskSearchLinker),
+	EventName:     TaskSearchLinker,
+	Match:         tasks.HasTask(TaskSearchLinker),
 	ActionHandler: SearchResultLinkerActionPage,
 }
 
 var SearchBlogsTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskSearchBlogs,
-	Match:         tasks.HasTask(tasks.TaskSearchBlogs),
+	EventName:     TaskSearchBlogs,
+	Match:         tasks.HasTask(TaskSearchBlogs),
 	ActionHandler: SearchResultBlogsActionPage,
 }
 
 var SearchWritingsTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskSearchWritings,
-	Match:         tasks.HasTask(tasks.TaskSearchWritings),
+	EventName:     TaskSearchWritings,
+	Match:         tasks.HasTask(TaskSearchWritings),
 	ActionHandler: SearchResultWritingsActionPage,
 }
 

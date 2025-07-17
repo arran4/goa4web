@@ -6,15 +6,15 @@ import (
 
 // ReplyTask describes posting a reply to a forum thread.
 var ReplyTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskReply,
-	Match:         tasks.HasTask(tasks.TaskReply),
+	EventName:     TaskReply,
+	Match:         tasks.HasTask(TaskReply),
 	ActionHandler: TopicThreadReplyPage,
 }
 
 // CreateThreadTask describes creating a new forum thread.
 var CreateThreadTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskCreateThread,
-	Match:         tasks.HasTask(tasks.TaskCreateThread),
+	EventName:     TaskCreateThread,
+	Match:         tasks.HasTask(TaskCreateThread),
 	PageHandler:   ThreadNewPage,
 	ActionHandler: ThreadNewActionPage,
 }

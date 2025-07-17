@@ -5,26 +5,26 @@ import (
 )
 
 var ReplyTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskReply,
-	Match:         tasks.HasTask(tasks.TaskReply),
+	EventName:     TaskReply,
+	Match:         tasks.HasTask(TaskReply),
 	ActionHandler: NewsPostReplyActionPage,
 }
 
 var EditTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskEdit,
-	Match:         tasks.HasTask(tasks.TaskEdit),
+	EventName:     TaskEdit,
+	Match:         tasks.HasTask(TaskEdit),
 	ActionHandler: NewsPostEditActionPage,
 }
 
 var AnnouncementAddTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskAdd,
-	Match:         tasks.HasTask(tasks.TaskAdd),
+	EventName:     TaskAdd,
+	Match:         tasks.HasTask(TaskAdd),
 	ActionHandler: NewsAnnouncementActivateActionPage,
 }
 
 var AnnouncementDeleteTask = tasks.BasicTaskEvent{
-	EventName:     tasks.TaskDelete,
-	Match:         tasks.HasTask(tasks.TaskDelete),
+	EventName:     TaskDelete,
+	Match:         tasks.HasTask(TaskDelete),
 	ActionHandler: NewsAnnouncementDeactivateActionPage,
 }
 

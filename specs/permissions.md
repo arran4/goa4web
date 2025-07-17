@@ -177,18 +177,18 @@ Many queries now filter results directly in SQL using `viewer_id` together with 
 | `forum` | `topic` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `forum` | `topic` | `post` | `NULL` | viewer role ID | role-based grant |
 | `forum` | `topic` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `admin` | `page` | `view` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `view` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `view` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `view` | `NULL` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `NULL` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `NULL` | `NULL` | TODO – admin filtering in SQL |
+| `admin` | `page` | `view` | `viewer_id` | `NULL` | requires `administrator` role |
+| `admin` | `page` | `view` | `viewer_id` | viewer role ID | requires `administrator` role |
+| `admin` | `page` | `view` | `NULL` | viewer role ID | requires `administrator` role |
+| `admin` | `page` | `view` | `NULL` | `NULL` | requires `administrator` role |
+| `admin` | `page` | `edit` | `viewer_id` | `NULL` | requires `administrator` role |
+| `admin` | `page` | `edit` | `viewer_id` | viewer role ID | requires `administrator` role |
+| `admin` | `page` | `edit` | `NULL` | viewer role ID | requires `administrator` role |
+| `admin` | `page` | `edit` | `NULL` | `NULL` | requires `administrator` role |
+| `admin` | `page` | `admin` | `viewer_id` | `NULL` | requires `administrator` role |
+| `admin` | `page` | `admin` | `viewer_id` | viewer role ID | requires `administrator` role |
+| `admin` | `page` | `admin` | `NULL` | viewer role ID | requires `administrator` role |
+| `admin` | `page` | `admin` | `NULL` | `NULL` | requires `administrator` role |
 
 Listing pages and RSS feeds still invoke `HasGrant` on each row for extra safety.
 

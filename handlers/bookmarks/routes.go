@@ -26,9 +26,9 @@ func RegisterRoutes(r *mux.Router) {
 	br.Use(AddBookmarksIndex)
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(auth.RequiresAnAccount())
-	br.HandleFunc("/edit", SaveTask.Page).Methods("GET").MatcherFunc(auth.RequiresAnAccount())
-	br.HandleFunc("/edit", SaveTask.Action).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SaveTask.Match)
-	br.HandleFunc("/edit", CreateTask.Action).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(CreateTask.Match)
+	br.HandleFunc("/edit", saveTask.Page).Methods("GET").MatcherFunc(auth.RequiresAnAccount())
+	br.HandleFunc("/edit", saveTask.Action).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(saveTask.Match)
+	br.HandleFunc("/edit", createTask.Action).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(createTask.Match)
 	br.HandleFunc("/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(auth.RequiresAnAccount())
 }
 

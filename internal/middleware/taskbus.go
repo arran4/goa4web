@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strings"
@@ -85,7 +86,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
 		uid := int32(0)
-		cd, ok := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+		cd, ok := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
 		if !ok || cd == nil {
 			log.Printf("task event middleware: missing core data")
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -96,7 +97,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		_ = admin
 		evt := &eventbus.Event{
 			Path:   r.URL.Path,
-			Task:   tasks.TaskString(task),
+			Task:   tasks.TaskString(task), // TODO determined by router
 			UserID: uid,
 			Time:   time.Now(),
 		}

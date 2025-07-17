@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 
 	handlers "github.com/arran4/goa4web/handlers"
-	auth "github.com/arran4/goa4web/handlers/auth"
 	router "github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -25,11 +24,11 @@ func RegisterRoutes(r *mux.Router) {
 	br := r.PathPrefix("/bookmarks").Subrouter()
 	br.Use(AddBookmarksIndex)
 	br.HandleFunc("", Page).Methods("GET")
-	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(auth.RequiresAnAccount())
-	br.HandleFunc("/edit", SaveTask.Page).Methods("GET").MatcherFunc(auth.RequiresAnAccount())
-	br.HandleFunc("/edit", SaveTask.Action).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(SaveTask.Match)
-	br.HandleFunc("/edit", CreateTask.Action).Methods("POST").MatcherFunc(auth.RequiresAnAccount()).MatcherFunc(CreateTask.Match)
-	br.HandleFunc("/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(auth.RequiresAnAccount())
+	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
+	br.HandleFunc("/edit", saveTask.Page).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
+	br.HandleFunc("/edit", saveTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Match)
+	br.HandleFunc("/edit", createTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Match)
+	br.HandleFunc("/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(handlers.RequiresAnAccount())
 }
 
 // Register registers the bookmarks router module.

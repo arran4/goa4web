@@ -9,7 +9,13 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// NewBoardTask creates a new image board.
+type NewBoardTask struct{ tasks.TaskString }
+
+var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -36,7 +42,7 @@ func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminNewBoardPage.gohtml", data)
 }
 
-func AdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
+func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))

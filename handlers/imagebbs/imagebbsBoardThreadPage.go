@@ -8,15 +8,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
+
+// ReplyTask posts a reply within a thread.
+type ReplyTask struct{ tasks.TaskString }
+
+var replyTask = &ReplyTask{TaskString: TaskReply}
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
@@ -154,7 +159,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
 }
 
-func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

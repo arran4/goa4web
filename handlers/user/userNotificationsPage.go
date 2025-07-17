@@ -9,7 +9,12 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+type DismissTask struct{ tasks.TaskString }
+
+var dismissTask = &DismissTask{TaskString: tasks.TaskString(TaskDismiss)}
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	if !handlers.NotificationsEnabled() {
@@ -49,7 +54,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
 }
 
-func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) {
+func (DismissTask) Action(w http.ResponseWriter, r *http.Request) {
 	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return

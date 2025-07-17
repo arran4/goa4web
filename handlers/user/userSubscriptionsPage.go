@@ -9,6 +9,15 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+)
+
+type UpdateSubscriptionsTask struct{ tasks.TaskString }
+type DeleteTask struct{ tasks.TaskString }
+
+var (
+	updateSubscriptionsTask = &UpdateSubscriptionsTask{TaskString: tasks.TaskString(TaskUpdate)}
+	deleteTask              = &DeleteTask{TaskString: tasks.TaskString(TaskDelete)}
 )
 
 type subscriptionOption struct {
@@ -58,7 +67,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "subscriptions.gohtml", data)
 }
 
-func userSubscriptionsUpdateAction(w http.ResponseWriter, r *http.Request) {
+func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -103,7 +112,7 @@ func userSubscriptionsUpdateAction(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/subscriptions", http.StatusSeeOther)
 }
 
-func userSubscriptionsDeleteAction(w http.ResponseWriter, r *http.Request) {
+func (DeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

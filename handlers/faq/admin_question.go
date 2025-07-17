@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -37,16 +37,16 @@ func (CreateQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Categories []*db.FaqCategory
 		Rows       []*db.Faq
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	catrows, err := queries.GetAllFAQCategories(r.Context())
 	if err != nil {
@@ -80,7 +80,7 @@ func (DeleteQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
 		log.Printf("Error: %s", err)
@@ -106,7 +106,7 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.UpdateFAQQuestionAnswer(r.Context(), db.UpdateFAQQuestionAnswerParams{
 		Answer:                       sql.NullString{Valid: true, String: answer},
@@ -131,7 +131,7 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

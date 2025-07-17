@@ -3,10 +3,11 @@ package user
 import (
 	"database/sql"
 	"errors"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	handlers "github.com/arran4/goa4web/handlers"
 
@@ -22,14 +23,14 @@ type PagingSaveTask struct{ tasks.TaskString }
 var pagingSaveTask = &PagingSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	pref, _ := cd.Preference()
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
 	}
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Size int
 		Min  int
 		Max  int
@@ -59,8 +60,8 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if size > config.AppRuntimeConfig.PageSizeMax {
 		size = config.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

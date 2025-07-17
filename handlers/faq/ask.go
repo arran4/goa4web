@@ -7,7 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -25,13 +25,13 @@ func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int32
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
@@ -58,7 +58,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -77,9 +77,8 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Admin = true
 	evt.Path = "/admin/faq"
 	if evt.Data == nil {
 		evt.Data = map[string]any{}

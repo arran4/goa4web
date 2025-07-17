@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 )
 
@@ -71,7 +71,7 @@ func preprocessBookmarks(bookmarks string) []*BookmarkColumn {
 
 func MinePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Columns []*BookmarkColumn
 	}
 
@@ -80,7 +80,7 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {

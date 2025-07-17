@@ -6,13 +6,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 )
 
 // RequiredAccess ensures the requestor has one of the provided access levels.
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		return corecommon.Allowed(request, accessLevels...)
+		return common.Allowed(request, accessLevels...)
 	}
 }
 

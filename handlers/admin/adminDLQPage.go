@@ -1,11 +1,13 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	handlers "github.com/arran4/goa4web/handlers"
 
@@ -19,9 +21,9 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Errors []*db.DeadLetter
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.ListDeadLetters(r.Context(), 100)
 	if err != nil {
 		log.Printf("list dead letters: %v", err)
@@ -32,7 +34,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

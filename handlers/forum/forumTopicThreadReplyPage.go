@@ -3,7 +3,6 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/config"
 
 	"github.com/arran4/goa4web/core"
-	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
@@ -30,10 +28,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -42,7 +40,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
@@ -50,7 +48,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      threadRow.Idforumthread,
@@ -70,7 +68,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -83,8 +81,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

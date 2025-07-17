@@ -7,23 +7,23 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func UserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Rows  []*db.GetUserRolesRow
 		Roles []*db.Role
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -43,16 +43,16 @@ func UserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/writings",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -68,15 +68,15 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 }
 
 func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/writings",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -35,7 +35,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Writing             *db.GetWritingByIdForUserDescendingByPublishedDateRow
 		CanEdit             bool
 		IsAuthor            bool
@@ -54,8 +54,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		ReplyText           string
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -73,7 +73,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
-	queries = r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries = r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		ViewerID:      uid,
@@ -83,7 +83,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(common.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
@@ -93,7 +93,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(common.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -276,7 +276,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
@@ -287,7 +287,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+			cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
@@ -346,7 +346,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -377,7 +377,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

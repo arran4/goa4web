@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -18,7 +18,7 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Offset      int
 		HasOffset   bool
 		CatId       int
@@ -29,7 +29,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
@@ -38,7 +38,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
 	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
 	if err != nil {
@@ -69,7 +69,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "linkerPage", data)
 }
 
-func CustomLinkerIndex(data *corecommon.CoreData, r *http.Request) {
+func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 	if r.URL.Path == "/linker" || strings.HasPrefix(r.URL.Path, "/linker/category/") {
 		data.RSSFeedUrl = "/linker/rss"
 		data.AtomFeedUrl = "/linker/atom"

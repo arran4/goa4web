@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -18,15 +18,15 @@ import (
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Writing            *db.GetWritingByIdForUserDescendingByPublishedDateRow
 		UserId             int32
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -42,7 +42,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	writing := r.Context().Value(handlers.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(common.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 	data.Writing = writing
 
 	languageRows, err := cd.Languages()
@@ -57,7 +57,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.
-	writing := r.Context().Value(handlers.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(common.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
@@ -65,7 +65,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},

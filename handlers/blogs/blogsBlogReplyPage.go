@@ -4,6 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
@@ -11,9 +15,6 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/gorilla/mux"
-	"log"
-	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/config"
 )
@@ -43,7 +44,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
 		ViewerIdusers: uid,
@@ -52,7 +53,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(handlers.KeyCoreData).(*common.CoreData)
+			cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
@@ -139,7 +140,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

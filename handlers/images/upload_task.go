@@ -11,11 +11,9 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/config"
-	corecommon "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
@@ -91,9 +89,9 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	url := path.Join("/uploads", sub1, sub2, fname)
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid := int32(0)
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok && cd != nil {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok && cd != nil {
 		uid = cd.UserID
 	}
 	_, err = queries.CreateUploadedImage(r.Context(), db.CreateUploadedImageParams{

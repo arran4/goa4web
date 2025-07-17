@@ -15,8 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
+	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	logProv "github.com/arran4/goa4web/internal/email/log"
 )
@@ -51,10 +50,10 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -82,10 +81,10 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -106,10 +105,10 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -154,10 +153,10 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
 	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -203,10 +202,10 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
@@ -253,10 +252,10 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).

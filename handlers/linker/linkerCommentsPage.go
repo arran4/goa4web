@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 
@@ -32,7 +33,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
 		CanReply           bool
 		Languages          []*db.Language
@@ -47,8 +48,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -65,7 +66,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries = r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	languageRows, err := cd.Languages()
 	if err != nil {
@@ -174,7 +175,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
 	if err != nil {
@@ -238,7 +239,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)
 
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      pthid,
@@ -258,7 +259,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

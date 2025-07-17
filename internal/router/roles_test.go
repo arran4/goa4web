@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/arran4/goa4web/core/common"
 	corecommon "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/middleware"
 )
 
@@ -15,7 +15,7 @@ func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.SetRoles([]string{"administrator"})
-	ctx := context.WithValue(req.Context(), handlers.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	called := false
@@ -40,7 +40,7 @@ func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), handlers.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	called := false

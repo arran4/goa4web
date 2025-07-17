@@ -14,11 +14,11 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestAskActionPage_InvalidForms(t *testing.T) {
@@ -48,8 +48,8 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-		ctx = context.WithValue(ctx, handlers.KeyCoreData, &corecommon.CoreData{})
+		ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+		ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -95,12 +95,12 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	evt := &eventbus.Event{Path: "/faq/ask", Task: TaskAsk, UserID: 1}
+	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
 	cd := &corecommon.CoreData{}
 	cd.SetEvent(evt)
 
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	handler := middleware.TaskEventMiddleware(http.HandlerFunc(AskActionPage))

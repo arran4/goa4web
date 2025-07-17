@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -20,15 +20,15 @@ import (
 
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Categories         []*db.LinkerCategory
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
@@ -65,7 +65,7 @@ var AddTask = addTask{
 }
 
 func (addTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

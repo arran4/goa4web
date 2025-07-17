@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -33,14 +34,14 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		User:     r.URL.Query().Get("user"),
 		Action:   r.URL.Query().Get("action"),
 		PageSize: handlers.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	usernameFilter := "%"
 	if strings.TrimSpace(data.User) != "" {

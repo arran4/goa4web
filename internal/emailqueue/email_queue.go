@@ -3,6 +3,7 @@ package emailqueue
 import (
 	"context"
 	"fmt"
+	"github.com/arran4/goa4web/config"
 	"log"
 	"net/mail"
 	"time"
@@ -35,7 +36,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 	if q == nil || provider == nil {
 		return
 	}
-	if !EmailSendingEnabled() {
+	if !config.EmailSendingEnabled() {
 		return
 	}
 	if provider == nil {

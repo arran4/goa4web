@@ -1,10 +1,10 @@
 package admin
 
 import corecommon "github.com/arran4/goa4web/core/common"
-import hcommon "github.com/arran4/goa4web/handlers/common"
+import handlers "github.com/arran4/goa4web/handlers"
 
 // IndexItem exposes the navigation item type.
 type IndexItem = corecommon.IndexItem
 
-// CoreData exposes the common.CoreData type for handlers.
-type CoreData = hcommon.CoreData
+// CoreData exposes the handlers.CoreData type for handlers.
+type CoreData = handlers.CoreData

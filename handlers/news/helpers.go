@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -19,7 +19,7 @@ func PostUpdateLocal(ctx context.Context, q *db.Queries, threadID, topicID int32
 }
 
 // canEditNewsPost reports whether cd can modify the specified news post.
-func canEditNewsPost(cd *hcommon.CoreData, postID int32) bool {
+func canEditNewsPost(cd *handlers.CoreData, postID int32) bool {
 	if cd == nil {
 		return false
 	}

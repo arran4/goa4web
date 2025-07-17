@@ -7,18 +7,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*handlers.CoreData
 		Boards []*db.Imageboard
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 	}
 	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {
@@ -33,7 +33,7 @@ func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = boardRows
 
-	common.TemplateHandler(w, r, "adminNewBoardPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminNewBoardPage.gohtml", data)
 }
 
 func AdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +41,7 @@ func AdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	err := queries.CreateImageBoard(r.Context(), db.CreateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),

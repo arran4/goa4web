@@ -7,15 +7,15 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
 )
 
 func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		News               []*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
 		CommentsNoResults  bool
@@ -25,9 +25,9 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -57,7 +57,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	common.TemplateHandler(w, r, "resultNewsActionPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "resultNewsActionPage.gohtml", data)
 }
 
 func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, bool, bool, error) {

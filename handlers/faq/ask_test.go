@@ -15,7 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
@@ -47,8 +47,8 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+		ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -95,11 +95,11 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		req.AddCookie(c)
 	}
 	evt := &eventbus.Event{Path: "/faq/ask", Task: TaskAsk, UserID: 1}
-	cd := &hcommon.CoreData{}
+	cd := &handlers.CoreData{}
 	cd.SetEvent(evt)
 
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

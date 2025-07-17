@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -44,8 +44,8 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+		ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -90,8 +90,8 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+		ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()

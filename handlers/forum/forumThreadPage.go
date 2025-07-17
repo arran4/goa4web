@@ -10,8 +10,8 @@ import (
 
 	"github.com/arran4/goa4web/a4code"
 	corelanguage "github.com/arran4/goa4web/core/language"
+	handlers "github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
-	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
@@ -45,8 +45,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*CoreData)
 	data := Data{
 		CoreData:           cd,
 		Offset:             offset,
@@ -61,8 +61,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -172,5 +172,5 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	blogs.CustomBlogIndex(data.CoreData, r)
 
-	common.TemplateHandler(w, r, "threadPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "threadPage.gohtml", data)
 }

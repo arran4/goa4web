@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -33,7 +33,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*CoreData)
 	data := &Data{
 		CoreData: cd,
 		Admin:    cd.CanEditAny(),
@@ -92,5 +92,5 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Threads = threadRows
 
-	common.TemplateHandler(w, r, "topicsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "topicsPage.gohtml", data)
 }

@@ -8,12 +8,12 @@ import (
 func RegisterAdminRoutes(ar *mux.Router) {
 	war := ar.PathPrefix("/writings").Subrouter()
 	war.HandleFunc("/user/permissions", UserPermissionsPage).Methods("GET")
-	war.HandleFunc("/users/permissions", UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(UserAllowTask.Match)
-	war.HandleFunc("/users/permissions", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(UserDisallowTask.Match)
+	war.HandleFunc("/users/permissions", userAllowTask.Action).Methods("POST").MatcherFunc(userAllowTask.Match)
+	war.HandleFunc("/users/permissions", userDisallowTask.Action).Methods("POST").MatcherFunc(userDisallowTask.Match)
 	war.HandleFunc("/users/levels", AdminUserLevelsPage).Methods("GET")
-	war.HandleFunc("/users/levels", AdminUserLevelsAllowActionPage).Methods("POST").MatcherFunc(UserAllowTask.Match)
-	war.HandleFunc("/users/levels", AdminUserLevelsRemoveActionPage).Methods("POST").MatcherFunc(UserDisallowTask.Match)
+	war.HandleFunc("/users/levels", userAllowTask.Action).Methods("POST").MatcherFunc(userAllowTask.Match)
+	war.HandleFunc("/users/levels", userDisallowTask.Action).Methods("POST").MatcherFunc(userDisallowTask.Match)
 	war.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
-	war.HandleFunc("/categories", AdminCategoriesModifyPage).Methods("POST").MatcherFunc(WritingCategoryChangeTask.Match)
-	war.HandleFunc("/categories", AdminCategoriesCreatePage).Methods("POST").MatcherFunc(WritingCategoryCreateTask.Match)
+	war.HandleFunc("/categories", writingCategoryChangeTask.Action).Methods("POST").MatcherFunc(writingCategoryChangeTask.Match)
+	war.HandleFunc("/categories", writingCategoryCreateTask.Action).Methods("POST").MatcherFunc(writingCategoryCreateTask.Match)
 }

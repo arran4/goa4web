@@ -10,7 +10,29 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
+
+type RenameCategoryTask struct{ tasks.TaskString }
+type DeleteCategoryTask struct{ tasks.TaskString }
+type CreateCategoryTask struct{ tasks.TaskString }
+
+var renameCategoryTask = &RenameCategoryTask{TaskString: TaskRenameCategory}
+var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
+var createCategoryTask = &CreateCategoryTask{TaskString: TaskCreateCategory}
+
+func (RenameCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskRenameCategory)(r, m)
+}
+
+func (DeleteCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskDeleteCategory)(r, m)
+}
+
+func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskCreateCategory)(r, m)
+}
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -38,7 +60,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
 }
 
-func CategoriesRenameActionPage(w http.ResponseWriter, r *http.Request) {
+func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("cname")
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
@@ -63,7 +85,7 @@ func CategoriesRenameActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func CategoriesDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		log.Printf("Error: %s", err)
@@ -81,7 +103,7 @@ func CategoriesDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func CategoriesCreateActionPage(w http.ResponseWriter, r *http.Request) {
+func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("cname")
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
@@ -64,7 +65,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 
 	// ensure handlers can attach event data
 	itemHandler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
+		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -78,7 +79,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	ctx := context.WithValue(req.Context(), handlers.KeyCoreData, &handlers.CoreData{})
+	ctx := context.WithValue(req.Context(), handlers.KeyCoreData, &corecommon.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
@@ -128,7 +129,7 @@ func TestTaskEventQueue(t *testing.T) {
 
 func TestTaskEventMiddleware_EventProvided(t *testing.T) {
 	handler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+		cd, _ := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 		if cd == nil || cd.Event() == nil {
 			t.Fatalf("missing event")
 		}
@@ -136,7 +137,7 @@ func TestTaskEventMiddleware_EventProvided(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	ctx := context.WithValue(req.Context(), handlers.KeyCoreData, &handlers.CoreData{})
+	ctx := context.WithValue(req.Context(), handlers.KeyCoreData, &corecommon.CoreData{})
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req.WithContext(ctx))
 

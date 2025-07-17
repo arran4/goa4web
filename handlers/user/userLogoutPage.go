@@ -1,6 +1,7 @@
 package user
 
 import (
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 
@@ -18,11 +19,11 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	log.Printf("logout request session=%s uid=%d", session.ID, uid)
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	// session retrieved earlier

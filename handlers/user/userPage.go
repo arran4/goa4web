@@ -1,6 +1,7 @@
 package user
 
 import (
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 
 	handlers "github.com/arran4/goa4web/handlers"
@@ -11,11 +12,11 @@ import (
 
 func userPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	if data.CoreData.UserID == 0 {

@@ -2,32 +2,24 @@ package handlers
 
 import common "github.com/arran4/goa4web/core/common"
 
-// TODO refactor out
-// ContextKey maps to core.ContextValues.
-type ContextKey = common.ContextValues
-
-// TODO refactor out
-// CoreData maps to core.CoreData for handler use.
-type CoreData = common.CoreData
-
 // Common context keys used across handlers.
 const (
 	// KeyCoreData provides access to CoreData.
-	KeyCoreData ContextKey = "coreData"
+	KeyCoreData common.ContextValues = "coreData"
 	// KeyQueries holds the db.Queries pointer.
-	KeyQueries ContextKey = "queries"
+	KeyQueries common.ContextValues = "queries"
 	// KeySQLDB exposes the *sql.DB handle.
-	KeySQLDB ContextKey = "sql.DB"
+	KeySQLDB common.ContextValues = "sql.DB"
 	// KeyThread holds the current thread information.
-	KeyThread ContextKey = "thread"
+	KeyThread common.ContextValues = "thread"
 	// KeyTopic holds the current topic information.
-	KeyTopic ContextKey = "topic"
+	KeyTopic common.ContextValues = "topic"
 	// KeyBlogEntry holds a fetched blog entry row.
-	KeyBlogEntry ContextKey = "blogEntry"
+	KeyBlogEntry common.ContextValues = "blogEntry"
 	// KeyComment stores the current comment row.
-	KeyComment ContextKey = "comment"
+	KeyComment common.ContextValues = "comment"
 	// KeyNewsPost holds the news post row.
-	KeyNewsPost ContextKey = "newsPost"
+	KeyNewsPost common.ContextValues = "newsPost"
 	// KeyWriting contains the writing row.
-	KeyWriting ContextKey = "writing"
+	KeyWriting common.ContextValues = "writing"
 )

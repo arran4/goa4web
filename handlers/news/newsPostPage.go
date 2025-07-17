@@ -67,7 +67,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		IsAdmin      bool
 	}
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Post               *Post
 		Languages          []*db.Language
 		SelectedLanguageId int32
@@ -82,7 +82,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData:           r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
@@ -149,7 +149,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -235,7 +235,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -385,7 +385,7 @@ func (editTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
@@ -426,7 +426,7 @@ func (newPostTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); !cd.HasGrant("news", "post", "post", 0) {
+	if cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); !cd.HasGrant("news", "post", "post", 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
@@ -460,7 +460,7 @@ func (newPostTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
-		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
+		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}

@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -41,7 +42,7 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			return
 		}
 
-		cd, _ := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+		cd, _ := r.Context().Value(handlers.KeyCoreData).(*common.CoreData)
 		if row.UsersIdusers != uid && (cd == nil || !cd.HasRole("administrator")) {
 			http.NotFound(w, r)
 			return

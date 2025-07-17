@@ -1,6 +1,7 @@
 package user
 
 import (
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 
@@ -10,10 +11,10 @@ import (
 
 func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Sessions []*db.ListSessionsRow
 	}
-	data := Data{CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)}
+	data := Data{CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)}
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	items, err := queries.ListSessions(r.Context())
 	if err != nil {
@@ -28,12 +29,12 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 	sid := r.PostFormValue("sid")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/sessions",
 	}
 	if sid == "" {

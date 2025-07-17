@@ -2,6 +2,7 @@ package search
 
 import (
 	"database/sql"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 
@@ -20,7 +21,7 @@ var searchBlogsTask = &SearchBlogsTask{TaskString: TaskSearchBlogs}
 
 func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		Blogs              []*db.Blog
 		CommentsNoResults  bool
@@ -30,7 +31,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)

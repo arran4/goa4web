@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 
 	handlers "github.com/arran4/goa4web/handlers"
@@ -17,12 +18,12 @@ var remakeBlogTask = &RemakeBlogTask{TaskString: TaskRemakeBlogSearch}
 func (RemakeBlogTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteBlogsSearch(r.Context()); err != nil {

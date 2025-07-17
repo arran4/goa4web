@@ -3,6 +3,7 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,7 +16,7 @@ import (
 
 func PosterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Posts    []*db.GetImagePostsByUserDescendingForUserRow
 		Username string
 		IsOffset bool
@@ -38,7 +39,7 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	rows, err := queries.GetImagePostsByUserDescendingForUser(r.Context(), db.GetImagePostsByUserDescendingForUserParams{
 		ViewerID:     cd.UserID,
 		UserID:       u.Idusers,

@@ -186,7 +186,7 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		uid := int32(0)
 		sessID := ""
-		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok && cd != nil {
+		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*common.CoreData); ok && cd != nil {
 			uid = cd.UserID
 			if s := cd.Session(); s != nil {
 				sessID = s.ID

@@ -3,6 +3,7 @@ package writings
 import (
 	"context"
 	"database/sql"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -47,7 +48,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	}
 
 	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-	ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
+	ctx = context.WithValue(ctx, handlers.KeyCoreData, &corecommon.CoreData{})
 	req = req.WithContext(ctx)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting")).

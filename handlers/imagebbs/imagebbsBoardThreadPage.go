@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -35,7 +36,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Replyable          bool
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -60,14 +61,14 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:      r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData:      r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Replyable:     true,
 		BoardId:       bid,
 		ForumThreadId: thid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -143,7 +144,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
@@ -192,7 +193,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+			cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:

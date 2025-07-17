@@ -1,6 +1,7 @@
 package user
 
 import (
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -41,12 +42,12 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Notifications []*db.Notification
 		Emails        []*db.UserEmail
 		MaxPriority   int32
 	}{
-		CoreData:      r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData:      r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Notifications: notifs,
 		Emails:        emails,
 		MaxPriority:   maxPr,

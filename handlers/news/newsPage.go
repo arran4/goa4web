@@ -8,10 +8,9 @@ import (
 	"github.com/gorilla/mux"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
 )
 
-func CustomNewsIndex(data *handlers.CoreData, r *http.Request) {
+func CustomNewsIndex(data *corecommon.CoreData, r *http.Request) {
 	data.RSSFeedUrl = "/news.rss"
 	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "RSS Feed",

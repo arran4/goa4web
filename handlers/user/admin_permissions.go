@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 	"sort"
 	"strconv"
@@ -14,13 +15,13 @@ import (
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Rows  []*db.GetPermissionsWithUsersRow
 		Roles []*db.Role
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
@@ -50,12 +51,12 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -73,12 +74,12 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
@@ -95,12 +96,12 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	level := r.PostFormValue("role")
 
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -13,7 +14,7 @@ import (
 
 // AddBookmarksIndex injects bookmark index links into CoreData.
 func AddBookmarksIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(func(cd *handlers.CoreData, r *http.Request) {
+	return handlers.IndexMiddleware(func(cd *common.CoreData, r *http.Request) {
 		bookmarksCustomIndex(cd)
 	})(h)
 }

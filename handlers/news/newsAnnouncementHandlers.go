@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -24,7 +25,7 @@ var announcementDeleteTask = &announcementDeleteTask{TaskString: TaskDelete}
 
 func (announcementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -48,7 +49,7 @@ func (announcementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 
 func (announcementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 

@@ -3,6 +3,7 @@ package search
 import (
 	"database/sql"
 	"errors"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 
@@ -21,7 +22,7 @@ var searchLinkerTask = &SearchLinkerTask{TaskString: TaskSearchLinker}
 
 func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		Links              []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 		CommentsNoResults  bool
@@ -32,7 +33,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)

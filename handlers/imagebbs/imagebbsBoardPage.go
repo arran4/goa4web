@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"io"
 	"log"
 	"net/http"
@@ -34,7 +35,7 @@ var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
@@ -45,13 +46,13 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(vars["boardno"])
 
 	data := Data{
-		CoreData:    r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData:    r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 

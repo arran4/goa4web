@@ -2,6 +2,7 @@ package news
 
 import (
 	"context"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -45,7 +46,7 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 			req.AddCookie(c)
 		}
 		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-		ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
+		ctx = context.WithValue(ctx, handlers.KeyCoreData, &corecommon.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -91,7 +92,7 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 			req.AddCookie(c)
 		}
 		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-		ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
+		ctx = context.WithValue(ctx, handlers.KeyCoreData, &corecommon.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()

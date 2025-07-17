@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 	"strconv"
 
@@ -17,15 +18,15 @@ func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
 
 func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Rows []*db.Language
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 
 	rows, err := cd.Languages()
 	if err != nil {
@@ -42,12 +43,12 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	cid := r.PostFormValue("cid")
 	cname := r.PostFormValue("cname")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
@@ -64,12 +65,12 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cid := r.PostFormValue("cid")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
@@ -83,12 +84,12 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cname := r.PostFormValue("cname")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/languages",
 	}
 	if err := queries.CreateLanguage(r.Context(), sql.NullString{

@@ -12,6 +12,8 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
@@ -53,7 +55,16 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "suggestPage.gohtml", data)
 }
 
-func SuggestActionPage(w http.ResponseWriter, r *http.Request) {
+type suggestTask struct{ tasks.BasicTaskEvent }
+
+var SuggestTask = suggestTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskSuggest,
+		Match:     tasks.HasTask(TaskSuggest),
+	},
+}
+
+func (suggestTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)

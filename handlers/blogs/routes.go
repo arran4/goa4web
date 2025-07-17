@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	handlers "github.com/arran4/goa4web/handlers"
-	auth "github.com/arran4/goa4web/handlers/auth"
 	router "github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -26,8 +25,8 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("/atom", AtomPage).Methods("GET")
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/", Page).Methods("GET")
-	br.HandleFunc("/add", AddBlogTask.Page).Methods("GET").MatcherFunc(auth.RequiredAccess("content writer", "administrator"))
-	br.HandleFunc("/add", AddBlogTask.Action).Methods("POST").MatcherFunc(auth.RequiredAccess("content writer", "administrator")).MatcherFunc(AddBlogTask.Match)
+	br.HandleFunc("/add", AddBlogTask.Page).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
+	br.HandleFunc("/add", AddBlogTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(AddBlogTask.Match)
 	br.HandleFunc("/bloggers", BloggerListPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}", BloggerPostsPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}/", BloggerPostsPage).Methods("GET")
@@ -37,16 +36,16 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("/blog/{blog}/reply", ReplyBlogTask.Action).Methods("POST").MatcherFunc(ReplyBlogTask.Match)
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostPage))).Methods("POST").MatcherFunc(tasks.EditReplyTask.Match)
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditPostCancelPage))).Methods("POST").MatcherFunc(tasks.CancelTask.Match)
-	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(EditBlogTask.Page))).Methods("GET").MatcherFunc(auth.RequiredAccess("content writer", "administrator"))
-	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(EditBlogTask.Action))).Methods("POST").MatcherFunc(auth.RequiredAccess("content writer", "administrator")).MatcherFunc(EditBlogTask.Match)
+	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(EditBlogTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
+	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(EditBlogTask.Action))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(EditBlogTask.Match)
 	br.HandleFunc("/blog/{blog}/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(tasks.CancelTask.Match)
 
 	// Admin endpoints for blogs
-	br.HandleFunc("/user/permissions", GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))
-	br.HandleFunc("/users/permissions", UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(UserAllowTask.Match)
-	br.HandleFunc("/users/permissions", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(UserDisallowTask.Match)
-	br.HandleFunc("/users/permissions", UsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(UsersAllowTask.Match)
-	br.HandleFunc("/users/permissions", UsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(UsersDisallowTask.Match)
+	br.HandleFunc("/user/permissions", GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	br.HandleFunc("/users/permissions", UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(UserAllowTask.Match)
+	br.HandleFunc("/users/permissions", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(UserDisallowTask.Match)
+	br.HandleFunc("/users/permissions", UsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(UsersAllowTask.Match)
+	br.HandleFunc("/users/permissions", UsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(UsersDisallowTask.Match)
 }
 
 // Register registers the blogs router module.

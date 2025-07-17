@@ -10,7 +10,23 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
+
+type AnswerTask struct{ tasks.TaskString }
+type RemoveQuestionTask struct{ tasks.TaskString }
+
+var answerTask = &AnswerTask{TaskString: TaskAnswer}
+var removeQuestionTask = &RemoveQuestionTask{TaskString: TaskRemoveRemove}
+
+func (AnswerTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskAnswer)(r, m)
+}
+
+func (RemoveQuestionTask) Match(req *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskRemoveRemove)(req, m)
+}
 
 func AdminAnswerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -50,7 +66,7 @@ func AdminAnswerPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminAnswerPage.gohtml", data)
 }
 
-func AnswerAnswerActionPage(w http.ResponseWriter, r *http.Request) {
+func (AnswerTask) Action(w http.ResponseWriter, r *http.Request) {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
 	category, err := strconv.Atoi(r.PostFormValue("category"))
@@ -81,7 +97,7 @@ func AnswerAnswerActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AnswerRemoveActionPage(w http.ResponseWriter, r *http.Request) {
+func (RemoveQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 	faq, err := strconv.Atoi(r.PostFormValue("faq"))
 	if err != nil {
 		log.Printf("Error: %s", err)

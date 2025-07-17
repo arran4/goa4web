@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -14,7 +15,16 @@ import (
 )
 
 // CommentEditActionPage updates a comment then refreshes thread metadata.
-func CommentEditActionPage(w http.ResponseWriter, r *http.Request) {
+type editReplyTask struct{ tasks.BasicTaskEvent }
+
+var EditReplyTask = editReplyTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskEditReply,
+		Match:     tasks.HasTask(TaskEditReply),
+	},
+}
+
+func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

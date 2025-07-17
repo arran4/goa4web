@@ -10,6 +10,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +39,16 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }
 
-func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
+type updateCategoryTask struct{ tasks.BasicTaskEvent }
+
+var UpdateCategoryTask = updateCategoryTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskUpdate,
+		Match:     tasks.HasTask(TaskUpdate),
+	},
+}
+
+func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
@@ -64,7 +74,16 @@ func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
+type renameCategoryTask struct{ tasks.BasicTaskEvent }
+
+var RenameCategoryTask = renameCategoryTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskRenameCategory,
+		Match:     tasks.HasTask(TaskRenameCategory),
+	},
+}
+
+func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
@@ -81,7 +100,16 @@ func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
+type deleteCategoryTask struct{ tasks.BasicTaskEvent }
+
+var DeleteCategoryTask = deleteCategoryTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskDeleteCategory,
+		Match:     tasks.HasTask(TaskDeleteCategory),
+	},
+}
+
+func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
@@ -110,7 +138,16 @@ func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
+type createCategoryTask struct{ tasks.BasicTaskEvent }
+
+var CreateCategoryTask = createCategoryTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskCreateCategory,
+		Match:     tasks.HasTask(TaskCreateCategory),
+	},
+}
+
+func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	title := r.PostFormValue("title")
 	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)

@@ -11,9 +11,18 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) {
+type announcementAddTask struct{ tasks.TaskString }
+
+var announcementAddTask = &announcementAddTask{TaskString: TaskAdd}
+
+type announcementDeleteTask struct{ tasks.TaskString }
+
+var announcementDeleteTask = &announcementDeleteTask{TaskString: TaskDelete}
+
+func (announcementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	vars := mux.Vars(r)
@@ -37,7 +46,7 @@ func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
+func (announcementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	vars := mux.Vars(r)

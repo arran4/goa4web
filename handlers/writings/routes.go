@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	handlers "github.com/arran4/goa4web/handlers"
-	auth "github.com/arran4/goa4web/handlers/auth"
 	router "github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -33,20 +32,20 @@ func RegisterRoutes(r *mux.Router) {
 	wr.HandleFunc("/writer/{username}", WriterPage).Methods("GET")
 	wr.HandleFunc("/writer/{username}/", WriterPage).Methods("GET")
 	wr.HandleFunc("/writers", WriterListPage).Methods("GET")
-	wr.HandleFunc("/user/permissions", UserPermissionsPage).Methods("GET").MatcherFunc(auth.RequiredAccess("administrator"))
-	wr.HandleFunc("/users/permissions", userAllowTask.Action).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Match)
-	wr.HandleFunc("/users/permissions", userDisallowTask.Action).Methods("POST").MatcherFunc(auth.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Match)
+	wr.HandleFunc("/user/permissions", UserPermissionsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	wr.HandleFunc("/users/permissions", userAllowTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Match)
+	wr.HandleFunc("/users/permissions", userDisallowTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Match)
 	wr.HandleFunc("/article/{article}", ArticlePage).Methods("GET")
 	wr.HandleFunc("/article/{article}", replyTask.Action).Methods("POST").MatcherFunc(replyTask.Match)
 	wr.HandleFunc("/article/{article}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(editReplyTask.Action)).ServeHTTP).Methods("POST").MatcherFunc(editReplyTask.Match)
 	wr.HandleFunc("/article/{article}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(cancelTask.Action)).ServeHTTP).Methods("POST").MatcherFunc(cancelTask.Match)
-	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(ArticleEditPage))).Methods("GET").MatcherFunc(auth.RequiredAccess("content writer", "administrator"))
-	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(updateWritingTask.Action))).Methods("POST").MatcherFunc(auth.RequiredAccess("content writer", "administrator")).MatcherFunc(updateWritingTask.Match)
+	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(ArticleEditPage))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
+	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(updateWritingTask.Action))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(updateWritingTask.Match)
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
-	wr.HandleFunc("/category/{category}/add", ArticleAddPage).Methods("GET").MatcherFunc(auth.RequiredAccess("content writer", "administrator"))
-	wr.HandleFunc("/category/{category}/add", submitWritingTask.Action).Methods("POST").MatcherFunc(auth.RequiredAccess("content writer", "administrator")).MatcherFunc(submitWritingTask.Match)
+	wr.HandleFunc("/category/{category}/add", ArticleAddPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
+	wr.HandleFunc("/category/{category}/add", submitWritingTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(submitWritingTask.Match)
 
 	if legacyRedirectsEnabled {
 		// legacy redirects

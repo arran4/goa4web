@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/handlers"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -26,6 +26,11 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/upload"
 )
+
+// UploadImageTask handles uploading an image to a board.
+type UploadImageTask struct{ tasks.TaskString }
+
+var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -71,7 +76,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "boardPage.gohtml", data)
 }
 
-func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
+func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 
 	vars := mux.Vars(r)

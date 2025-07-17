@@ -396,6 +396,15 @@ func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(
 	return items, nil
 }
 
+const setSiteNewsLastIndex = `-- name: SetSiteNewsLastIndex :exec
+UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?
+`
+
+func (q *Queries) SetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error {
+	_, err := q.db.ExecContext(ctx, setSiteNewsLastIndex, idsitenews)
+	return err
+}
+
 const updateNewsPost = `-- name: UpdateNewsPost :exec
 UPDATE site_news SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?
 `

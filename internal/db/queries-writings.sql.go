@@ -977,6 +977,15 @@ func (q *Queries) SearchWritersForViewer(ctx context.Context, arg SearchWritersF
 	return items, nil
 }
 
+const setWritingLastIndex = `-- name: SetWritingLastIndex :exec
+UPDATE writing SET last_index = NOW() WHERE idwriting = ?
+`
+
+func (q *Queries) SetWritingLastIndex(ctx context.Context, idwriting int32) error {
+	_, err := q.db.ExecContext(ctx, setWritingLastIndex, idwriting)
+	return err
+}
+
 const updateWriting = `-- name: UpdateWriting :exec
 UPDATE writing
 SET title = ?, abstract = ?, writing = ?, private = ?, language_idlanguage = ?

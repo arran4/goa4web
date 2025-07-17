@@ -617,6 +617,15 @@ func (q *Queries) SearchBloggersForViewer(ctx context.Context, arg SearchBlogger
 	return items, nil
 }
 
+const setBlogLastIndex = `-- name: SetBlogLastIndex :exec
+UPDATE blogs SET last_index = NOW() WHERE idblogs = ?
+`
+
+func (q *Queries) SetBlogLastIndex(ctx context.Context, idblogs int32) error {
+	_, err := q.db.ExecContext(ctx, setBlogLastIndex, idblogs)
+	return err
+}
+
 const updateBlogEntry = `-- name: UpdateBlogEntry :exec
 UPDATE blogs
 SET language_idlanguage = ?, blog = ?

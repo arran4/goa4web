@@ -110,3 +110,7 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 WHERE c.users_idusers = ?
 ORDER BY c.written;
+
+-- name: SetCommentLastIndex :exec
+UPDATE comments SET last_index = NOW() WHERE idcomments = ?;
+

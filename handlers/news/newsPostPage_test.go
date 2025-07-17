@@ -49,7 +49,7 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		NewsPostNewActionPage(rr, req)
+		newPostTask.Action(rr, req)
 		if rr.Code != http.StatusOK {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
@@ -95,7 +95,7 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		NewsPostEditActionPage(rr, req)
+		editTask.Action(rr, req)
 		if rr.Code != http.StatusOK {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}

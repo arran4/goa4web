@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	emailutil "github.com/arran4/goa4web/internal/notifications"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/gorilla/mux"
 	"log"
@@ -17,7 +16,6 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/email"
 )
 
 func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
@@ -120,35 +118,6 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
 	endUrl := fmt.Sprintf("/blogs/blog/%d/comments", bid)
-
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: pthid,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToBlogs(r.Context(), db.ListUsersSubscribedToBlogsParams{
-		Idusers: uid,
-		Idblogs: int32(bid),
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),

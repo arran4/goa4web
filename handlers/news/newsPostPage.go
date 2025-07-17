@@ -333,9 +333,6 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO this should be automatic through the event bus -> notification system
-	notfications.NotifyNewsSubscribers(r.Context(), queries, int32(pid), uid, endUrl)
-
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,

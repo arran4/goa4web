@@ -18,11 +18,8 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/handlers"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	email "github.com/arran4/goa4web/internal/email"
-	emailutil "github.com/arran4/goa4web/internal/notifications"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -310,7 +307,6 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	endUrl := base + fmt.Sprintf("/news/news/%d", pid)
 
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	var author string
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
@@ -318,19 +314,6 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	action := "comment"
 	if author != "" {
 		action = fmt.Sprintf("comment by %s", author)
-	}
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: pthid,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, action, nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
 	}
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{

@@ -3,6 +3,7 @@ package news
 import (
 	"database/sql"
 	"errors"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 
@@ -15,7 +16,7 @@ import (
 
 func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		News               []*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
 		CommentsNoResults  bool
@@ -25,7 +26,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)

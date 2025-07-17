@@ -11,14 +11,14 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
 	}
 
 	data := Data{
-		CoreData:    r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData:    r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		IsSubBoard:  false,
 		BoardNumber: 0,
 	}
@@ -35,7 +35,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "imagebbsPage", data)
 }
 
-func CustomImageBBSIndex(data *handlers.CoreData, r *http.Request) {
+func CustomImageBBSIndex(data *corecommon.CoreData, r *http.Request) {
 
 	if data.FeedsEnabled {
 		data.RSSFeedUrl = "/imagebbs/rss"

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -37,11 +38,11 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		LanguageOptions []LanguageOption
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	pref, _ := cd.Preference()
@@ -77,7 +78,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TemplateHandler(w, r, "langPage.gohtml", data)
 }
-func saveUserLanguages(r *http.Request, cd *handlers.CoreData, queries *db.Queries, uid int32) error {
+func saveUserLanguages(r *http.Request, cd *corecommon.CoreData, queries *db.Queries, uid int32) error {
 	// Clear existing language selections for the user.
 	if _, err := queries.DB().ExecContext(r.Context(), "DELETE FROM user_language WHERE users_idusers = ?", uid); err != nil {
 		return err
@@ -104,7 +105,7 @@ func saveUserLanguagePreference(r *http.Request, queries *db.Queries, uid int32)
 		return err
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -129,7 +130,7 @@ func saveUserLanguagePreference(r *http.Request, queries *db.Queries, uid int32)
 func saveDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) error {
 	langID, _ := strconv.Atoi(r.PostFormValue("defaultLanguage"))
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -155,7 +156,7 @@ func (SaveLanguagesTask) Action(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
@@ -202,7 +203,7 @@ func (SaveAllTask) Action(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 

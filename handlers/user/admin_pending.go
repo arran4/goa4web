@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 
 	handlers "github.com/arran4/goa4web/handlers"
@@ -18,10 +19,10 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Rows []*db.ListPendingUsersRow
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Rows:     rows,
 	}
 	handlers.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
@@ -33,11 +34,11 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {
@@ -60,11 +61,11 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {

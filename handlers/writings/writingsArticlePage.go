@@ -287,7 +287,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+			cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
@@ -346,7 +346,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

@@ -11,6 +11,7 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/config"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -120,7 +121,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

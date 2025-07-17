@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func feedGen(r *http.Request, cd *handlers.CoreData) (*feeds.Feed, error) {
+func feedGen(r *http.Request, cd *corecommon.CoreData) (*feeds.Feed, error) {
 	feed := &feeds.Feed{
 		Title:       "Latest writings",
 		Link:        &feeds.Link{Href: r.URL.String()},
@@ -60,7 +60,7 @@ func feedGen(r *http.Request, cd *handlers.CoreData) (*feeds.Feed, error) {
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
@@ -75,7 +75,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)

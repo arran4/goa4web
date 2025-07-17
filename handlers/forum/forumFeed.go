@@ -64,7 +64,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {

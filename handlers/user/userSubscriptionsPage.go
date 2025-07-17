@@ -1,6 +1,7 @@
 package user
 
 import (
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -52,13 +53,13 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		subMap[key] = true
 	}
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Subs    []*db.ListSubscriptionsByUserRow
 		Options []subscriptionOption
 		SubMap  map[string]bool
 		Error   string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Subs:     rows,
 		Options:  userSubscriptionOptions,
 		SubMap:   subMap,

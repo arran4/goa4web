@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 	"strconv"
 
@@ -22,13 +23,13 @@ type userDisallowTask struct{ tasks.TaskString }
 var userDisallowTask = &userDisallowTask{TaskString: TaskUserDisallow}
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Rows  []*db.GetUserRolesRow
 		Roles []*db.Role
 	}
@@ -61,12 +62,12 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/news",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -85,12 +86,12 @@ func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/news",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

@@ -3,6 +3,7 @@ package writings
 import (
 	"context"
 	"database/sql"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -47,7 +48,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			return
 		}
 
-		cd, _ := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+		cd, _ := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 		if cd != nil && cd.HasRole("administrator") {
 			ctx := context.WithValue(r.Context(), handlers.KeyWriting, row)
 			next.ServeHTTP(w, r.WithContext(ctx))

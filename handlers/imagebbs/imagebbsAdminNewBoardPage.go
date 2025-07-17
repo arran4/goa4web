@@ -3,6 +3,7 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -19,12 +20,12 @@ var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Boards []*db.Imageboard
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {

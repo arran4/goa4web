@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -41,7 +42,7 @@ var ErrMailNotConfigured = errors.New("mail isn't configured")
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		UserData        *db.User
 		Verified        []*db.UserEmail
 		Unverified      []*db.UserEmail
@@ -52,7 +53,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		Error string
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	user, _ := cd.CurrentUser()
 	pref, _ := cd.Preference()
@@ -67,7 +68,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := Data{
-		CoreData:   r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData:   r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		UserData:   user,
 		Verified:   verified,
 		Unverified: unverified,
@@ -101,7 +102,7 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 
 	updates := r.PostFormValue("emailupdates") != ""
 	auto := r.PostFormValue("autosubscribe") != ""
@@ -143,7 +144,7 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)

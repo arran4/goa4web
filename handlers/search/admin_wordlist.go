@@ -3,6 +3,7 @@ package search
 import (
 	"database/sql"
 	_ "embed"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -25,7 +26,7 @@ type WordCount struct {
 
 func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Rows       []WordCount
 		NextLink   string
 		PrevLink   string
@@ -35,7 +36,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	letters := make([]string, len(handlers.Alphabet))

@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -46,7 +47,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			}
 			return
 		}
-		cd, _ := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
+		cd, _ := r.Context().Value(handlers.KeyCoreData).(*common.CoreData)
 		if cd != nil && cd.HasRole("administrator") {
 			ctx := context.WithValue(r.Context(), handlers.KeyBlogEntry, row)
 			next.ServeHTTP(w, r.WithContext(ctx))

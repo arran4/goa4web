@@ -3,6 +3,7 @@ package search
 import (
 	"database/sql"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 
@@ -24,12 +25,12 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Stats Stats
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)

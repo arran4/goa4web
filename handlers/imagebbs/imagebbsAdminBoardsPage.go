@@ -3,6 +3,7 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 
@@ -19,12 +20,12 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		Nsfw     bool
 	}
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Boards []*BoardRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	boardRows, err := data.CoreData.ImageBoards()

@@ -25,7 +25,7 @@ func cloneValues(v url.Values) url.Values {
 
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Rows     []*db.User
 		Search   string
 		Role     string
@@ -38,7 +38,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		Role:     r.URL.Query().Get("role"),
 		Status:   r.URL.Query().Get("status"),
@@ -122,12 +122,12 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	uid := r.PostFormValue("uid")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users",
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
@@ -148,10 +148,10 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 	user := &db.User{Idusers: urow.Idusers, Username: urow.Username}
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		User *db.User
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		User:     user,
 	}
 	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
@@ -163,12 +163,12 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users",
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
@@ -183,13 +183,13 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	data := struct {
-		*handlers.CoreData
+		*corecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 		Password string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users",
 	}
 	var buf [8]byte

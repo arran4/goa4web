@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -35,7 +36,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
-	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData); ok {
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

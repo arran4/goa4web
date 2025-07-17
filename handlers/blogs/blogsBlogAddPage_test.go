@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -44,7 +45,7 @@ func TestBlogAddActionPage_InvalidForms(t *testing.T) {
 			req.AddCookie(c)
 		}
 		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
-		ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
+		ctx = context.WithValue(ctx, handlers.KeyCoreData, &corecommon.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()

@@ -7,20 +7,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*handlers.CoreData
+		*common.CoreData
 		UserLevels []*db.GetUserRolesRow
 		Roles      []*db.Role
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*common.CoreData),
 	}
 
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)

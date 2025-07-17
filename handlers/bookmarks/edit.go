@@ -31,7 +31,7 @@ var createTask = CreateTask{
 	},
 }
 
-func (saveTask) Page(w http.ResponseWriter, r *http.Request) {
+func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		BookmarkContent string
@@ -65,7 +65,7 @@ func (saveTask) Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "editPage.gohtml", data)
 }
 
-func (saveTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
@@ -89,7 +89,7 @@ func (saveTask) Action(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (createTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CreateTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)

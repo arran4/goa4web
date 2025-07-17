@@ -79,7 +79,6 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Admin = true
 	evt.Path = "/admin/faq"
 	if evt.Data == nil {
 		evt.Data = map[string]any{}

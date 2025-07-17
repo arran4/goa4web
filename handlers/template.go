@@ -16,14 +16,14 @@ import (
 //
 // Template helpers are provided via data.CoreData.Funcs(r).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data any) {
-	cd, _ := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd, _ := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	if cd == nil {
 		cd = &common.CoreData{}
 	}
 	if err := templates.RenderTemplate(w, tmpl, data, cd.Funcs(r)); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {
-			*CoreData
+			*common.CoreData
 			Error   string
 			BackURL string
 		}{
@@ -38,10 +38,10 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data a
 }
 
 // IndexMiddleware injects custom index items via fn before executing the next handler.
-func IndexMiddleware(fn func(*CoreData, *http.Request)) func(http.Handler) http.Handler {
+func IndexMiddleware(fn func(*common.CoreData, *http.Request)) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if cd, ok := r.Context().Value(common.KeyCoreData).(*CoreData); ok && cd != nil {
+			if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok && cd != nil {
 				fn(cd, r)
 			}
 			next.ServeHTTP(w, r)

@@ -51,8 +51,8 @@ func isPow10(n int64) bool {
 }
 
 // buildPatterns expands the task/path pair into all matching subscription patterns.
-func buildPatterns(task tasks.NamedTask, path string) []string {
-	name := strings.ToLower(task.TaskName())
+func buildPatterns(task tasks.Name, path string) []string {
+	name := strings.ToLower(task.Name())
 	path = strings.Trim(path, "/")
 	if path == "" {
 		return []string{fmt.Sprintf("%s:/*", name)}

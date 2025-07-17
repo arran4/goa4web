@@ -13,8 +13,6 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-// TODO this is the template for ALL actions going forwards.
-
 type ForgotPasswordTask struct {
 	tasks.TaskString
 }

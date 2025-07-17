@@ -26,6 +26,7 @@ import (
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/searchworker"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -160,4 +161,6 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqP
 	safeGo(func() {
 		notifications.BusWorker(ctx, eventbus.DefaultBus, provider, dbpkg.New(db), dlqProvider)
 	})
+	log.Printf("Starting search index worker")
+	safeGo(func() { searchworker.BusWorker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
 }

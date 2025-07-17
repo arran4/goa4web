@@ -1,3 +1,4 @@
+package blogs
 
 // The following constants define the allowed values of the "task" form field.
 // Each HTML form includes a hidden or submit input named "task" whose value

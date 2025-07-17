@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -16,7 +16,7 @@ import (
 
 func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Links     []*db.GetLinkerItemsByUserDescendingRow
 		Username  string
 		HasOffset bool
@@ -26,7 +26,7 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -51,7 +51,7 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:  r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData:  r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Links:     rows,
 		Username:  username,
 		HasOffset: offset != 0,

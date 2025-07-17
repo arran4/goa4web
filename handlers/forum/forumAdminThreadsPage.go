@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -22,7 +23,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		Order  []int32
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetAllForumThreadsWithTopic(r.Context())
 	if err != nil {
@@ -32,7 +33,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Groups:   make(map[int32]*Group),
 	}
 
@@ -60,7 +61,7 @@ func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := ThreadDelete(r.Context(), queries, int32(threadID), int32(topicID)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

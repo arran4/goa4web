@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -36,15 +36,15 @@ func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Rows []*db.GetFAQCategoriesWithQuestionCountRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
 	if err != nil {
@@ -68,7 +68,7 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.RenameFAQCategory(r.Context(), db.RenameFAQCategoryParams{
 		Name: sql.NullString{
@@ -92,7 +92,7 @@ func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.DeleteFAQCategory(r.Context(), int32(cid)); err != nil {
 		log.Printf("Error: %s", err)
@@ -105,7 +105,7 @@ func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 
 func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("cname")
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.CreateFAQCategory(r.Context(), sql.NullString{
 		String: text,

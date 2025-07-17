@@ -2,8 +2,9 @@ package search
 
 import (
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"net/http"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -16,14 +17,14 @@ type RemakeImageTask struct{ tasks.TaskString }
 var remakeImageTask = &RemakeImageTask{TaskString: TaskRemakeImageSearch}
 
 func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteImagePostSearch(r.Context()); err != nil {

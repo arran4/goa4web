@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"io"
 	"log"
 	"net/http"
@@ -13,6 +12,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -35,7 +36,7 @@ var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
@@ -46,13 +47,13 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(vars["boardno"])
 
 	data := Data{
-		CoreData:    r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData:    r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(common.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -89,7 +90,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {

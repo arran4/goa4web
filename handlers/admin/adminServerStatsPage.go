@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"runtime"
 
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 )
 
@@ -27,7 +28,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,

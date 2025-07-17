@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	auth "github.com/arran4/goa4web/handlers/auth"
 	db "github.com/arran4/goa4web/internal/db"
@@ -25,7 +25,7 @@ func cloneValues(v url.Values) url.Values {
 
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Rows     []*db.User
 		Search   string
 		Role     string
@@ -38,7 +38,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		Role:     r.URL.Query().Get("role"),
 		Status:   r.URL.Query().Get("status"),
@@ -47,7 +47,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -101,7 +101,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		nextVals := cloneValues(params)
 		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
 		data.NextLink = "/admin/users?" + nextVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: data.NextLink,
 		})
@@ -110,7 +110,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		prevVals := cloneValues(params)
 		prevVals.Set("offset", strconv.Itoa(offset-pageSize))
 		data.PrevLink = "/admin/users?" + prevVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: data.PrevLink,
 		})
@@ -122,24 +122,24 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	uid := r.PostFormValue("uid")
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users",
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := r.Context().Value(handlers.KeyQueries).(*db.Queries).DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
+	} else if _, err := r.Context().Value(common.KeyQueries).(*db.Queries).DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
 	urow, err := queries.GetUserById(r.Context(), int32(uid))
 	if err != nil {
@@ -148,27 +148,27 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 	user := &db.User{Idusers: urow.Idusers, Username: urow.Username}
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		User *db.User
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		User:     user,
 	}
 	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
 }
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users",
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
@@ -180,16 +180,16 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 		Password string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users",
 	}
 	var buf [8]byte

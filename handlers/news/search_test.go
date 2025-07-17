@@ -11,7 +11,7 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	handlers "github.com/arran4/goa4web/handlers"
+	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -40,7 +40,7 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 	form := url.Values{"searchwords": {"foo"}}
 	req := httptest.NewRequest("POST", "/", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

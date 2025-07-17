@@ -5,16 +5,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	"html/template"
+
+	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/forum"
 	db "github.com/arran4/goa4web/internal/db"
-	"html/template"
 )
 
 func stubFuncs() template.FuncMap {
 	req := httptest.NewRequest("GET", "/", nil)
-	cd := &corecommon.CoreData{}
+	cd := &common.CoreData{}
 	m := cd.Funcs(req)
 	m["LatestNews"] = func() (any, error) { return nil, nil }
 	return m
@@ -37,56 +38,56 @@ func TestPageTemplatesRender(t *testing.T) {
 		name string
 		data any
 	}{
-		{"newsPage", struct{ *corecommon.CoreData }{&corecommon.CoreData{}}},
+		{"newsPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"faqPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			FAQ any
-		}{&corecommon.CoreData{}, nil}},
-		{"userPage", struct{ *corecommon.CoreData }{&corecommon.CoreData{}}},
+		}{&common.CoreData{}, nil}},
+		{"userPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"linkerPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Categories any
 			Links      any
 			HasOffset  bool
 			CatId      int32
-		}{&corecommon.CoreData{}, nil, nil, false, 0}},
+		}{&common.CoreData{}, nil, nil, false, 0}},
 		{"forumPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Categories          []*forum.ForumcategoryPlus
 			CategoryBreadcrumbs []*forum.ForumcategoryPlus
 			Category            *forum.ForumcategoryPlus
 			Admin               bool
-		}{&corecommon.CoreData{}, nil, nil, nil, false}},
-		{"bookmarksPage", struct{ *corecommon.CoreData }{&corecommon.CoreData{}}},
+		}{&common.CoreData{}, nil, nil, nil, false}},
+		{"bookmarksPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"imagebbsPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Boards any
-		}{&corecommon.CoreData{}, nil}},
+		}{&common.CoreData{}, nil}},
 		{"blogsPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Rows     any
 			IsOffset bool
 			UID      string
 			Blogs    []struct{ Username string }
-		}{&corecommon.CoreData{}, nil, false, "", []struct{ Username string }{{"test"}}}},
+		}{&common.CoreData{}, nil, false, "", []struct{ Username string }{{"test"}}}},
 		{"writingsPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Categories        []*db.WritingCategory
 			WritingCategoryID int32
 			CategoryId        int32
 			IsAdmin           bool
-		}{&corecommon.CoreData{}, nil, 0, 0, false}},
+		}{&common.CoreData{}, nil, 0, 0, false}},
 		{"linkerCategoryPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Offset      int
 			HasOffset   bool
 			CatId       int
 			CommentOnId int
 			ReplyToId   int
 			Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
-		}{&corecommon.CoreData{}, 0, false, 0, 0, 0, nil}},
+		}{&common.CoreData{}, 0, false, 0, 0, 0, nil}},
 		{"writingsCategoryPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Categories          []*db.WritingCategory
 			CategoryBreadcrumbs []*db.WritingCategory
 			EditingCategoryId   int32
@@ -95,25 +96,25 @@ func TestPageTemplatesRender(t *testing.T) {
 			IsAdmin             bool
 			IsWriter            bool
 			Abstracts           []*db.GetPublicWritingsInCategoryRow
-		}{&corecommon.CoreData{}, nil, nil, 0, 0, 0, false, false, nil}},
+		}{&common.CoreData{}, nil, nil, 0, 0, 0, false, false, nil}},
 		{"searchPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			SearchWords string
-		}{&corecommon.CoreData{}, ""}},
+		}{&common.CoreData{}, ""}},
 		{"adminSearchPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Stats struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }
-		}{&corecommon.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
+		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
 		{"adminPage", struct {
-			*corecommon.CoreData
-			AdminLinks []corecommon.IndexItem
+			*common.CoreData
+			AdminLinks []common.IndexItem
 			Stats      adminStats
-		}{&corecommon.CoreData{}, nil, adminStats{}}},
+		}{&common.CoreData{}, nil, adminStats{}}},
 		{"forumAdminPage", struct {
-			*corecommon.CoreData
+			*common.CoreData
 			Stats struct{ Categories, Topics, Threads int64 }
-		}{&corecommon.CoreData{}, struct{ Categories, Topics, Threads int64 }{}}},
-		{"imagebbsAdminPage", struct{ *corecommon.CoreData }{&corecommon.CoreData{}}},
+		}{&common.CoreData{}, struct{ Categories, Topics, Threads int64 }{}}},
+		{"imagebbsAdminPage", struct{ *common.CoreData }{&common.CoreData{}}},
 	}
 
 	for _, p := range pages {

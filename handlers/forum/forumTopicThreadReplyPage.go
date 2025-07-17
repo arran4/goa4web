@@ -17,9 +17,16 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
+// ReplyTask handles replying to an existing thread.
+type ReplyTask struct{ tasks.TaskString }
+
+var replyTask = &ReplyTask{TaskString: TaskReply}
+
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

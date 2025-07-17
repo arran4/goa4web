@@ -14,13 +14,20 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/searchworker"
 
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/gorilla/mux"
 )
 
-func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
+// CreateThreadTask handles creating a new forum thread.
+type CreateThreadTask struct{ tasks.TaskString }
+
+var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+
+func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData
 		Languages          []*db.Language
@@ -46,7 +53,7 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }
 
-func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
+func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])

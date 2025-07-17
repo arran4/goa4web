@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/netutil"
 )
 
 type addIPBanTask struct{ tasks.BasicTaskEvent }
@@ -22,8 +21,8 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Bans []*db.BannedIp
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)
@@ -31,13 +30,13 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	common.TemplateHandler(w, r, "iPBanPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "iPBanPage.gohtml", data)
 }
 
 func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
-	ipNet = netutil.NormalizeIPNet(ipNet)
+	ipNet = NormalizeIPNet(ipNet)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
 	expiresStr := strings.TrimSpace(r.PostFormValue("expires"))
 	var expires sql.NullTime
@@ -53,19 +52,19 @@ func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt: expires,
 		})
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func (deleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
 	for _, ip := range r.Form["ip"] {
-		ipNet := netutil.NormalizeIPNet(ip)
+		ipNet := NormalizeIPNet(ip)
 		if err := queries.CancelBannedIp(r.Context(), ipNet); err != nil {
 			log.Printf("cancel banned ip %s: %v", ipNet, err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

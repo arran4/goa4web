@@ -2,28 +2,36 @@ package faq
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
+	corelanguage "github.com/arran4/goa4web/core/language"
+	handlers "github.com/arran4/goa4web/handlers"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
 
-func AskPage(w http.ResponseWriter, r *http.Request) {
+type AskTask struct{ tasks.TaskString }
+
+var askTask = &AskTask{TaskString: TaskAsk}
+
+func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskAsk)(r, m)
+}
+
+func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*corecommon.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
@@ -36,11 +44,11 @@ func AskPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "askPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "askPage.gohtml", data)
 }
 
-func AskActionPage(w http.ResponseWriter, r *http.Request) {
-	if err := common.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
+	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -50,7 +58,7 @@ func AskActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

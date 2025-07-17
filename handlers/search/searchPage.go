@@ -3,19 +3,18 @@ package search
 import (
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		SearchWords string
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 	}
 
-	common.TemplateHandler(w, r, "searchPage", data)
+	handlers.TemplateHandler(w, r, "searchPage", data)
 }

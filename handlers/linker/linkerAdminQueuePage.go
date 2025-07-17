@@ -11,9 +11,11 @@ import (
 	"strings"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -32,14 +34,14 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),
 		Offset:   offset,
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	queue, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context())
 	if err != nil {
@@ -71,7 +73,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		filtered = append(filtered, &QueueRow{q, FetchPageTitle(r.Context(), q.Url.String)})
 	}
 
-	pageSize := hcommon.GetPageSize(r)
+	pageSize := handlers.GetPageSize(r)
 	if data.Offset < 0 {
 		data.Offset = 0
 	}
@@ -112,22 +114,31 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	hcommon.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
 }
 
-func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type deleteTask struct{ tasks.BasicTaskEvent }
+
+var DeleteTask = deleteTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskDelete,
+		Match:     tasks.HasTask(TaskDelete),
+	},
+}
+
+func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
 	URL := r.URL.Query().Get("URL")
@@ -144,11 +155,20 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type approveTask struct{ tasks.BasicTaskEvent }
+
+var ApproveTask = approveTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskApprove,
+		Match:     tasks.HasTask(TaskApprove),
+	},
+}
+
+func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
@@ -173,11 +193,20 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type bulkDeleteTask struct{ tasks.BasicTaskEvent }
+
+var BulkDeleteTask = bulkDeleteTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskBulkDelete,
+		Match:     tasks.HasTask(TaskBulkDelete),
+	},
+}
+
+func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -187,11 +216,20 @@ func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("deleteLinkerQueuedItem Error: %s", err)
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type bulkApproveTask struct{ tasks.BasicTaskEvent }
+
+var BulkApproveTask = bulkApproveTask{
+	BasicTaskEvent: tasks.BasicTaskEvent{
+		EventName: TaskBulkApprove,
+		Match:     tasks.HasTask(TaskBulkApprove),
+	},
+}
+
+func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -217,5 +255,5 @@ func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

@@ -4,10 +4,10 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var AddBlogTask = tasks.NewTaskEventWithHandlers(tasks.TaskAdd, BlogAddPage, BlogAddActionPage)
-var ReplyBlogTask = tasks.NewTaskEventWithHandlers(tasks.TaskReply, nil, BlogReplyPostPage)
-var EditBlogTask = tasks.NewTaskEventWithHandlers(tasks.TaskEdit, BlogEditPage, BlogEditActionPage)
-var UserAllowTask = tasks.NewTaskEvent(tasks.TaskUserAllow)
-var UserDisallowTask = tasks.NewTaskEvent(tasks.TaskUserDisallow)
-var UsersAllowTask = tasks.NewTaskEvent(tasks.TaskUsersAllow)
-var UsersDisallowTask = tasks.NewTaskEvent(tasks.TaskUsersDisallow)
+var AddBlogTask = tasks.NewTaskEventWithHandlers(TaskAdd, BlogAddPage, BlogAddActionPage)
+var ReplyBlogTask = tasks.NewTaskEventWithHandlers(TaskReply, nil, BlogReplyPostPage)
+var EditBlogTask = tasks.NewTaskEventWithHandlers(TaskEdit, BlogEditPage, BlogEditActionPage)
+var UserAllowTask = tasks.NewTaskEvent(TaskUserAllow)
+var UserDisallowTask = tasks.NewTaskEvent(TaskUserDisallow)
+var UsersAllowTask = tasks.NewTaskEvent(TaskUsersAllow)
+var UsersDisallowTask = tasks.NewTaskEvent(TaskUsersDisallow)

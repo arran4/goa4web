@@ -25,9 +25,12 @@ type IndexItem struct {
 }
 
 const (
+	// defaultPageSize is used when a user-supplied value is missing.
 	defaultPageSize = 15
-	pageSizeMin     = 5
-	pageSizeMax     = 50
+	// pageSizeMin is the lowest allowed page size.
+	pageSizeMin = 5
+	// pageSizeMax is the largest allowed page size.
+	pageSizeMax = 50
 )
 
 // NewsPost describes a news entry with access metadata.

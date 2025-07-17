@@ -15,8 +15,23 @@ import (
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// LoginTask handles rendering and processing of the login form.
+type LoginTask struct {
+	tasks.TaskString
+}
+
+var loginTask = &LoginTask{TaskString: TaskLogin}
+
+// VerifyPasswordTask verifies reset codes during login.
+type VerifyPasswordTask struct {
+	tasks.TaskString
+}
+
+var verifyPasswordTask = &VerifyPasswordTask{TaskString: TaskPasswordVerify}
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	type Data struct {
@@ -24,19 +39,19 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 		Error string
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 		Error:    errMsg,
 	}
-	common.TemplateHandler(w, r, "loginPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "loginPage.gohtml", data)
 }
 
 // LoginUserPassPage serves the username/password login form.
-func LoginUserPassPage(w http.ResponseWriter, r *http.Request) {
+func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 	renderLoginForm(w, r, r.URL.Query().Get("error"))
 }
 
 // LoginActionPage processes the submitted login form.
-func LoginActionPage(w http.ResponseWriter, r *http.Request) {
+func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		sess, _ := core.GetSession(r)
 		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
@@ -48,7 +63,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	//
 	//hashedPassword := hex.EncodeToString(sum[:])
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
@@ -77,7 +92,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 			}
 			session.Values["PendingResetID"] = reset.ID
 			_ = session.Save(r, w)
-			common.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *corecommon.CoreData }{r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)})
+			handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *corecommon.CoreData }{r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)})
 			return
 		}
 		_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
@@ -145,12 +160,12 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 			Values  url.Values
 		}
 		data := Data{
-			CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+			CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 			BackURL:  backURL,
 			Method:   backMethod,
 			Values:   vals,
 		}
-		cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+		cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
 		if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -161,7 +176,7 @@ func LoginActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func LoginVerifyPage(w http.ResponseWriter, r *http.Request) {
+func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -176,7 +191,7 @@ func LoginVerifyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	code := r.FormValue("code")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	reset, err := queries.GetPasswordResetByCode(r.Context(), code)
 	if err != nil || reset.ID != id {
 		http.Error(w, "invalid code", http.StatusUnauthorized)

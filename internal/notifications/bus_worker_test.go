@@ -70,28 +70,6 @@ func TestParseEvent(t *testing.T) {
 	}
 }
 
-func TestRenderMessage(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	mock.MatchExpectationsInOrder(false)
-	mock.MatchExpectationsInOrder(false)
-	defer db.Close()
-	q := dbpkg.New(db)
-	mock.ExpectQuery("SELECT body FROM template_overrides").WithArgs("notify_reply").WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow("Hello {{.Path}}"))
-	msg := renderMessage(context.Background(), q, "Reply", "/p", nil)
-	if msg != "Hello /p" {
-		t.Fatalf("override message %s", msg)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
-	if msg := renderMessage(context.Background(), nil, "Reply", "/p", nil); msg != "New reply in \"/p\" by " {
-		t.Fatalf("default msg %q", msg)
-	}
-}
-
 type errProvider struct{}
 
 func (errProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {

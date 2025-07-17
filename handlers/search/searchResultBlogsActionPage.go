@@ -5,18 +5,22 @@ import (
 	"log"
 	"net/http"
 
+	handlers "github.com/arran4/goa4web/handlers"
 	hblogs "github.com/arran4/goa4web/handlers/blogs"
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func SearchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
+type SearchBlogsTask struct{ tasks.TaskString }
+
+var searchBlogsTask = &SearchBlogsTask{TaskString: TaskSearchBlogs}
+
+func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*handlers.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		Blogs              []*db.Blog
 		CommentsNoResults  bool
@@ -26,9 +30,9 @@ func SearchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData),
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -58,7 +62,7 @@ func SearchResultBlogsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	common.TemplateHandler(w, r, "resultBlogsActionPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "resultBlogsActionPage.gohtml", data)
 }
 
 func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.Blog, bool, bool, error) {

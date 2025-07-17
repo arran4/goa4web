@@ -3,7 +3,6 @@ package faq
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,7 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
@@ -48,12 +47,12 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+		ctx = context.WithValue(ctx, handlers.KeyCoreData, &handlers.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		AskActionPage(rr, req)
+		askTask.Action(rr, req)
 		if rr.Code != http.StatusBadRequest {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
@@ -97,8 +96,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	}
 	cd := &hcommon.CoreData{}
 
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), handlers.KeyQueries, queries)
+	ctx = context.WithValue(ctx, handlers.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	handler := middleware.TaskEventMiddleware(http.HandlerFunc(AskActionPage))

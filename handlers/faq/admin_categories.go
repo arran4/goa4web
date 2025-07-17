@@ -8,9 +8,31 @@ import (
 	"strconv"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
+
+type RenameCategoryTask struct{ tasks.TaskString }
+type DeleteCategoryTask struct{ tasks.TaskString }
+type CreateCategoryTask struct{ tasks.TaskString }
+
+var renameCategoryTask = &RenameCategoryTask{TaskString: TaskRenameCategory}
+var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
+var createCategoryTask = &CreateCategoryTask{TaskString: TaskCreateCategory}
+
+func (RenameCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskRenameCategory)(r, m)
+}
+
+func (DeleteCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskDeleteCategory)(r, m)
+}
+
+func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskCreateCategory)(r, m)
+}
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -19,10 +41,10 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
 	if err != nil {
@@ -35,10 +57,10 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	common.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
 }
 
-func CategoriesRenameActionPage(w http.ResponseWriter, r *http.Request) {
+func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("cname")
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
@@ -46,7 +68,7 @@ func CategoriesRenameActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	if err := queries.RenameFAQCategory(r.Context(), db.RenameFAQCategoryParams{
 		Name: sql.NullString{
@@ -60,17 +82,17 @@ func CategoriesRenameActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func CategoriesDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	if err := queries.DeleteFAQCategory(r.Context(), int32(cid)); err != nil {
 		log.Printf("Error: %s", err)
@@ -78,12 +100,12 @@ func CategoriesDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func CategoriesCreateActionPage(w http.ResponseWriter, r *http.Request) {
+func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("cname")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
 
 	if err := queries.CreateFAQCategory(r.Context(), sql.NullString{
 		String: text,
@@ -94,5 +116,5 @@ func CategoriesCreateActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

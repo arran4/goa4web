@@ -3,10 +3,10 @@ package imagebbs
 import (
 	"net/http"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func AdminPage(w http.ResponseWriter, r *http.Request) {
-	data := struct{ *hcommon.CoreData }{r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)}
-	hcommon.TemplateHandler(w, r, "imagebbsAdminPage", data)
+	data := struct{ *handlers.CoreData }{r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)}
+	handlers.TemplateHandler(w, r, "imagebbsAdminPage", data)
 }

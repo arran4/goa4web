@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/migrations"
 )
 
@@ -32,7 +32,7 @@ func TestExpectedSchemaVersionMatchesMigrations(t *testing.T) {
 			max = n
 		}
 	}
-	if max != hcommon.ExpectedSchemaVersion {
-		t.Fatalf("schema version constant %d does not match latest migration %d", hcommon.ExpectedSchemaVersion, max)
+	if max != handlers.ExpectedSchemaVersion {
+		t.Fatalf("schema version constant %d does not match latest migration %d", handlers.ExpectedSchemaVersion, max)
 	}
 }

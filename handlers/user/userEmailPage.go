@@ -24,6 +24,18 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
+type SaveEmailTask struct{ tasks.TaskString }
+type AddEmailTask struct{ tasks.TaskString }
+type DeleteEmailTask struct{ tasks.TaskString }
+type TestMailTask struct{ tasks.TaskString }
+
+var (
+	saveEmailTask   = &SaveEmailTask{TaskString: tasks.TaskString(TaskSaveAll)}
+	addEmailTask    = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
+	deleteEmailTask = &DeleteEmailTask{TaskString: tasks.TaskString(TaskDelete)}
+	testMailTask    = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
+)
+
 // ErrMailNotConfigured is returned when test mail has no provider configured.
 var ErrMailNotConfigured = errors.New("mail isn't configured")
 
@@ -72,7 +84,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TemplateHandler(w, r, "emailPage.gohtml", data)
 }
-func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -130,7 +142,7 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
+func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(handlers.KeyCoreData).(*handlers.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
@@ -167,7 +179,7 @@ func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
+func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -200,7 +212,7 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
+func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -230,7 +242,7 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -249,7 +261,7 @@ func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailNotifyActionPage(w http.ResponseWriter, r *http.Request) {
+func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

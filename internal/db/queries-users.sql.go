@@ -282,7 +282,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*ListUs
 }
 
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
-SELECT idblogs, forumthread_id, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+SELECT idblogs, forumthread_id, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, last_index, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM blogs t, users u, preferences p
 WHERE t.idblogs=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -301,6 +301,7 @@ type ListUsersSubscribedToBlogsRow struct {
 	Blog                 sql.NullString
 	Written              time.Time
 	DeletedAt            sql.NullTime
+	LastIndex            sql.NullTime
 	Idusers              int32
 	Username             sql.NullString
 	DeletedAt_2          sql.NullTime
@@ -330,6 +331,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 			&i.Blog,
 			&i.Written,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Idusers,
 			&i.Username,
 			&i.DeletedAt_2,
@@ -355,7 +357,7 @@ func (q *Queries) ListUsersSubscribedToBlogs(ctx context.Context, arg ListUsersS
 }
 
 const listUsersSubscribedToLinker = `-- name: ListUsersSubscribedToLinker :many
-SELECT idlinker, t.language_idlanguage, t.users_idusers, linker_category_id, forumthread_id, title, url, description, listed, t.deleted_at, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+SELECT idlinker, t.language_idlanguage, t.users_idusers, linker_category_id, forumthread_id, title, url, description, listed, t.deleted_at, last_index, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM linker t, users u, preferences p
 WHERE t.idlinker=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -377,6 +379,7 @@ type ListUsersSubscribedToLinkerRow struct {
 	Description          sql.NullString
 	Listed               sql.NullTime
 	DeletedAt            sql.NullTime
+	LastIndex            sql.NullTime
 	Idusers              int32
 	Username             sql.NullString
 	DeletedAt_2          sql.NullTime
@@ -409,6 +412,7 @@ func (q *Queries) ListUsersSubscribedToLinker(ctx context.Context, arg ListUsers
 			&i.Description,
 			&i.Listed,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Idusers,
 			&i.Username,
 			&i.DeletedAt_2,
@@ -582,7 +586,7 @@ func (q *Queries) ListUsersSubscribedToThread(ctx context.Context, arg ListUsers
 }
 
 const listUsersSubscribedToWriting = `-- name: ListUsersSubscribedToWriting :many
-SELECT idwriting, t.users_idusers, forumthread_id, t.language_idlanguage, writing_category_id, title, published, writing, abstract, private, t.deleted_at, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+SELECT idwriting, t.users_idusers, forumthread_id, t.language_idlanguage, writing_category_id, title, published, writing, abstract, private, t.deleted_at, last_index, idusers, username, u.deleted_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM writing t, users u, preferences p
 WHERE t.idwriting=? AND u.idusers=p.users_idusers AND p.emailforumupdates=1 AND u.idusers=t.users_idusers AND u.idusers!=?
 GROUP BY u.idusers
@@ -605,6 +609,7 @@ type ListUsersSubscribedToWritingRow struct {
 	Abstract             sql.NullString
 	Private              sql.NullBool
 	DeletedAt            sql.NullTime
+	LastIndex            sql.NullTime
 	Idusers              int32
 	Username             sql.NullString
 	DeletedAt_2          sql.NullTime
@@ -638,6 +643,7 @@ func (q *Queries) ListUsersSubscribedToWriting(ctx context.Context, arg ListUser
 			&i.Abstract,
 			&i.Private,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Idusers,
 			&i.Username,
 			&i.DeletedAt_2,

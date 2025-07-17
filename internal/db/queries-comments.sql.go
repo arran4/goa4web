@@ -37,7 +37,7 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (i
 }
 
 const getAllCommentsByUser = `-- name: GetAllCommentsByUser :many
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, th.forumtopic_idforumtopic
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, th.forumtopic_idforumtopic
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 WHERE c.users_idusers = ?
@@ -52,6 +52,7 @@ type GetAllCommentsByUserRow struct {
 	Written                sql.NullTime
 	Text                   sql.NullString
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 	ForumtopicIdforumtopic sql.NullInt32
 }
 
@@ -72,6 +73,7 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 			&i.Written,
 			&i.Text,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.ForumtopicIdforumtopic,
 		); err != nil {
 			return nil, err
@@ -88,7 +90,7 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 }
 
 const getCommentById = `-- name: GetCommentById :one
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index
 FROM comments c
 WHERE c.Idcomments=?
 `
@@ -104,6 +106,7 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 		&i.Written,
 		&i.Text,
 		&i.DeletedAt,
+		&i.LastIndex,
 	)
 	return &i, err
 }
@@ -117,7 +120,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.Username,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.Username,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -150,6 +153,7 @@ type GetCommentByIdForUserRow struct {
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
 	Username           sql.NullString
 	IsOwner            bool
 }
@@ -170,6 +174,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		&i.Written,
 		&i.Text,
 		&i.DeletedAt,
+		&i.LastIndex,
 		&i.Username,
 		&i.IsOwner,
 	)
@@ -177,7 +182,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 }
 
 const getCommentsByIds = `-- name: GetCommentsByIds :many
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index
 FROM comments c
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
 `
@@ -209,6 +214,7 @@ func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment
 			&i.Written,
 			&i.Text,
 			&i.DeletedAt,
+			&i.LastIndex,
 		); err != nil {
 			return nil, err
 		}
@@ -232,7 +238,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
@@ -267,6 +273,7 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
 	Posterusername     sql.NullString
 	IsOwner            bool
 	Idforumthread      sql.NullInt32
@@ -306,6 +313,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 			&i.Written,
 			&i.Text,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Posterusername,
 			&i.IsOwner,
 			&i.Idforumthread,
@@ -336,7 +344,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -369,6 +377,7 @@ type GetCommentsByThreadIdForUserRow struct {
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
 	Posterusername     sql.NullString
 	IsOwner            bool
 }
@@ -395,6 +404,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.Written,
 			&i.Text,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Posterusername,
 			&i.IsOwner,
 		); err != nil {

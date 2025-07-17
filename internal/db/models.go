@@ -40,6 +40,7 @@ type Blog struct {
 	Blog               sql.NullString
 	Written            time.Time
 	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
 }
 
 type BlogsSearch struct {
@@ -61,6 +62,7 @@ type Comment struct {
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
 }
 
 type CommentsSearch struct {
@@ -228,6 +230,7 @@ type Imagepost struct {
 	FileSize               int32
 	Approved               bool
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 }
 
 type ImagepostSearch struct {
@@ -251,6 +254,7 @@ type Linker struct {
 	Description        sql.NullString
 	Listed             sql.NullTime
 	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
 }
 
 type LinkerCategory struct {
@@ -366,6 +370,7 @@ type SiteNews struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	LastIndex          sql.NullTime
 }
 
 type SiteNewsSearch struct {
@@ -437,6 +442,7 @@ type Writing struct {
 	Abstract           sql.NullString
 	Private            sql.NullBool
 	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
 }
 
 type WritingCategory struct {

@@ -82,7 +82,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.last_index, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -114,6 +114,7 @@ type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	LastIndex          sql.NullTime
 	Comments           sql.NullInt32
 }
 
@@ -129,6 +130,7 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 		&i.UsersIdusers,
 		&i.News,
 		&i.Occurred,
+		&i.LastIndex,
 		&i.Comments,
 	)
 	return &i, err
@@ -143,7 +145,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.last_index, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -175,6 +177,7 @@ type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	LastIndex          sql.NullTime
 	Comments           sql.NullInt32
 }
 
@@ -208,6 +211,7 @@ func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx 
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
+			&i.LastIndex,
 			&i.Comments,
 		); err != nil {
 			return nil, err
@@ -232,7 +236,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.last_index, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -264,6 +268,7 @@ type GetNewsPostsByIdsWithWriterIdAndThreadCommentCountRow struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	LastIndex          sql.NullTime
 	Comments           sql.NullInt32
 }
 
@@ -297,6 +302,7 @@ func (q *Queries) GetNewsPostsByIdsWithWriterIdAndThreadCommentCount(ctx context
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
+			&i.LastIndex,
 			&i.Comments,
 		); err != nil {
 			return nil, err
@@ -321,7 +327,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsitenews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.last_index, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -355,6 +361,7 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	LastIndex          sql.NullTime
 	Comments           sql.NullInt32
 }
 
@@ -381,6 +388,7 @@ func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
+			&i.LastIndex,
 			&i.Comments,
 		); err != nil {
 			return nil, err

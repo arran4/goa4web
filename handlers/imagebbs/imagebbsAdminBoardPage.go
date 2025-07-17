@@ -4,13 +4,19 @@ import (
 	"database/sql"
 	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
 )
 
-func AdminBoardModifyBoardActionPage(w http.ResponseWriter, r *http.Request) {
+// ModifyBoardTask updates an existing board's settings.
+type ModifyBoardTask struct{ tasks.TaskString }
+
+var modifyBoardTask = &ModifyBoardTask{TaskString: TaskModifyBoard}
+
+func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))

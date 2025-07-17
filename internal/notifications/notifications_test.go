@@ -11,7 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
+	emailutil "github.com/arran4/goa4web/internal/notifications"
 )
 
 func TestNotificationsQueries(t *testing.T) {

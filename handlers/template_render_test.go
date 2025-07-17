@@ -1,13 +1,13 @@
-package handlers
+package handlers_test
 
 import (
 	"bytes"
+	"github.com/arran4/goa4web/handlers/forum"
 	"net/http/httptest"
 	"testing"
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/handlers/forum"
 	db "github.com/arran4/goa4web/internal/db"
 	"html/template"
 )

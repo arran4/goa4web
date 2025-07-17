@@ -2,7 +2,6 @@ package writings
 
 import (
 	"github.com/arran4/goa4web/handlers/forum/comments"
-	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 	"net/http"
 

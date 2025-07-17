@@ -71,7 +71,7 @@ func preprocessBookmarks(bookmarks string) []*BookmarkColumn {
 
 func MinePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Columns []*BookmarkColumn
 	}
 
@@ -80,7 +80,7 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {

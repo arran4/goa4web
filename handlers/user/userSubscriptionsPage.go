@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 
 	"github.com/arran4/goa4web/core"
@@ -30,7 +31,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	rows, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)
@@ -43,13 +44,13 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		subMap[key] = true
 	}
 	data := struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Subs    []*db.ListSubscriptionsByUserRow
 		Options []subscriptionOption
 		SubMap  map[string]bool
 		Error   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 		Subs:     rows,
 		Options:  userSubscriptionOptions,
 		SubMap:   subMap,
@@ -68,7 +69,7 @@ func userSubscriptionsUpdateAction(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	existing, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)
@@ -114,7 +115,7 @@ func userSubscriptionsDeleteAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idStr := r.PostFormValue("id")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	if idStr == "" {
 		http.Redirect(w, r, "/usr/subscriptions?error=missing id", http.StatusSeeOther)
 		return

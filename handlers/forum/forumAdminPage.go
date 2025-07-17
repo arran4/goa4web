@@ -22,10 +22,10 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	ctx := r.Context()
 	count := func(q string, dest *int64) {
 		if err := queries.DB().QueryRowContext(ctx, q).Scan(dest); err != nil && err != sql.ErrNoRows {

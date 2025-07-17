@@ -2,8 +2,9 @@ package notifications
 
 import (
 	_ "embed"
-	hcommon "github.com/arran4/goa4web/internal/tasks"
 	"strings"
+
+	hcommon "github.com/arran4/goa4web/internal/tasks"
 )
 
 var (

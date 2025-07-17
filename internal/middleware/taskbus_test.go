@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -64,7 +63,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 
 	// ensure handlers can attach event data
 	itemHandler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if cd, ok := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -78,7 +77,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &hcommon.CoreData{})
+	ctx := context.WithValue(req.Context(), corecorecommon.KeyCoreData, &corecorecommon.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:

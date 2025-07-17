@@ -3,8 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
-	dbstart2 "github.com/arran4/goa4web/internal/app/dbstart"
 	"os"
+
+	dbstart2 "github.com/arran4/goa4web/internal/app/dbstart"
 
 	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"

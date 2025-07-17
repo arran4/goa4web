@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -85,7 +83,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
 		uid := int32(0)
-		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+		cd, _ := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 		if cd != nil {
 			uid = cd.UserID
 		}

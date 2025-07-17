@@ -10,7 +10,7 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
@@ -20,7 +20,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
 	if uid == 0 {
@@ -31,7 +31,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	common.TemplateHandler(w, r, "bookmarksPage", data)
 }
 
-func bookmarksCustomIndex(data *corecommon.CoreData) {
+func bookmarksCustomIndex(data *corecorecommon.CoreData) {
 	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Show",
 		Link: "/bookmarks/mine",

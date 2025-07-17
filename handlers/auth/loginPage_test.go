@@ -12,7 +12,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -31,9 +30,9 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), corecommon.KeyQueries, queries)
 	cd := corecommon.NewCoreData(ctx, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, corecommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -69,9 +68,9 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), corecommon.KeyQueries, queries)
 	cd := corecommon.NewCoreData(ctx, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, corecommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

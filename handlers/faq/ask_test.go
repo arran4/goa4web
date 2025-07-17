@@ -3,19 +3,19 @@ package faq
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
@@ -47,8 +47,8 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), corecorecommon.KeyQueries, queries)
+		ctx = context.WithValue(ctx, corecorecommon.KeyCoreData, &corecorecommon.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -95,11 +95,11 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		req.AddCookie(c)
 	}
 	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskAsk, UserID: 1}
-	cd := &hcommon.CoreData{}
+	cd := &corecorecommon.CoreData{}
 	cd.SetEvent(evt)
 
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), corecorecommon.KeyQueries, queries)
+	ctx = context.WithValue(ctx, corecorecommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

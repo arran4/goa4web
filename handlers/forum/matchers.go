@@ -11,7 +11,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -32,7 +31,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 
 		session, _ := core.GetSession(r)
 		var uid int32
@@ -74,8 +73,8 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), hcommon.KeyThread, threadRow)
-		ctx = context.WithValue(ctx, hcommon.KeyTopic, topicRow)
+		ctx := context.WithValue(r.Context(), corecorecommon.KeyThread, threadRow)
+		ctx = context.WithValue(ctx, corecorecommon.KeyTopic, topicRow)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -14,16 +14,16 @@ import (
 
 func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		UserLevels []*db.GetUserRolesRow
 		Roles      []*db.Role
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -43,7 +43,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
@@ -65,7 +65,7 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	permidi, err := strconv.Atoi(permid)
 	if err != nil {

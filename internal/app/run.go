@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/internal/app/dbstart"
-	"github.com/arran4/goa4web/internal/app/server"
-	"github.com/arran4/goa4web/internal/emailqueue"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/emailqueue"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"

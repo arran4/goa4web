@@ -1,8 +1,9 @@
 package user
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	auth "github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/handlers/common"

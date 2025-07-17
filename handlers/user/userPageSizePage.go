@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 
 	"github.com/arran4/goa4web/config"
@@ -21,12 +22,12 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Min     int
 		Max     int
 		Default int
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 		Min:      config.AppRuntimeConfig.PageSizeMin,
 		Max:      config.AppRuntimeConfig.PageSizeMax,
 		Default:  config.AppRuntimeConfig.PageSizeDefault,

@@ -3,11 +3,13 @@ package admin
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	corecommon "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -22,8 +24,8 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		*CoreData
 		Bans []*db.BannedIp
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(corecommon.KeyCoreData).(*CoreData)}
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)
@@ -35,7 +37,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = netutil.NormalizeIPNet(ipNet)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
@@ -57,7 +59,7 @@ func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (deleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

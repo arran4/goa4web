@@ -4,19 +4,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/feeds"
-	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/a4code/a4code2html"
+	"github.com/arran4/goa4web/core"
+	corecommon "github.com/arran4/goa4web/core/common"
+	imageshandler "github.com/arran4/goa4web/handlers/images"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/gorilla/feeds"
+	"github.com/gorilla/mux"
 )
 
 func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
@@ -64,7 +64,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -95,7 +95,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData)
 
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {

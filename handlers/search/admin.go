@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -25,15 +24,15 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Stats Stats
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	ctx := r.Context()
 	count := func(query string, dest *int64) {
 		if err := queries.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
@@ -54,14 +53,14 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminSearchRemakeCommentsSearchPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteCommentsSearch(r.Context()); err != nil {
@@ -74,14 +73,14 @@ func adminSearchRemakeCommentsSearchPage(w http.ResponseWriter, r *http.Request)
 	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeNewsSearchPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteSiteNewsSearch(r.Context()); err != nil {
@@ -94,14 +93,14 @@ func adminSearchRemakeNewsSearchPage(w http.ResponseWriter, r *http.Request) {
 	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeBlogSearchPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteBlogsSearch(r.Context()); err != nil {
@@ -114,14 +113,14 @@ func adminSearchRemakeBlogSearchPage(w http.ResponseWriter, r *http.Request) {
 	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeLinkerSearchPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteLinkerSearch(r.Context()); err != nil {
@@ -134,14 +133,14 @@ func adminSearchRemakeLinkerSearchPage(w http.ResponseWriter, r *http.Request) {
 	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteWritingSearch(r.Context()); err != nil {
@@ -155,14 +154,14 @@ func adminSearchRemakeWritingSearchPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func adminSearchRemakeImageSearchPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteImagePostSearch(r.Context()); err != nil {

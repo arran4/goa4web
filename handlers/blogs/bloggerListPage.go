@@ -27,7 +27,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*CoreData),
 		Search:   r.URL.Query().Get("search"),
 		PageSize: common.GetPageSize(r),
 	}

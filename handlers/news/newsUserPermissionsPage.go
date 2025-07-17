@@ -8,18 +8,17 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	cd := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Rows  []*db.GetUserRolesRow
 		Roles []*db.Role
 	}
@@ -28,7 +27,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -48,16 +47,16 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/news",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -73,15 +72,15 @@ func NewsUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.
 }
 
 func NewsUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Back:     "/news",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"testing/fstest"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestApply(t *testing.T) {

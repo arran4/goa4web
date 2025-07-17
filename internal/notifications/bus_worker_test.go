@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	hcommon "github.com/arran4/goa4web/internal/tasks"
 	"net/mail"
 	"regexp"
 	"sync"
 	"testing"
 	"time"
+
+	hcommon "github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"

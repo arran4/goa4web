@@ -13,15 +13,15 @@ import (
 
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Categories []*db.LinkerCategory
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 
 	categories, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {

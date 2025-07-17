@@ -13,12 +13,12 @@ import (
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Boards []*db.Imageboard
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 	}
 	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {
@@ -41,7 +41,7 @@ func AdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 
 	err := queries.CreateImageBoard(r.Context(), db.CreateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),

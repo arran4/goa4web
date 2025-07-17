@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -21,7 +20,7 @@ const gdprExportNote = "# Personal data export - handle according to GDPR"
 // adminUsersExportPage streams all data for a single user in a zip archive for
 // admins. The user ID is provided via the "uid" query parameter.
 func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 
 	uid, err := strconv.Atoi(r.URL.Query().Get("uid"))
 	if err != nil {

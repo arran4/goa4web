@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	dbpkg "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	dbpkg "github.com/arran4/goa4web/internal/db"
+	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 )
 
 func TestIsAlphanumericOrPunctuation(t *testing.T) {

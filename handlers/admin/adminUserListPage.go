@@ -9,17 +9,17 @@ import (
 )
 
 func adminUserListPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	users, err := queries.AllUsers(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data := struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Users []*db.AllUsersRow
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Users:    users,
 	}
 	common.TemplateHandler(w, r, "admin/userList.gohtml", data)

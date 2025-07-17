@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"log"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 )

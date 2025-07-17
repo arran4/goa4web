@@ -5,39 +5,40 @@ import (
 	"fmt"
 	"net/http"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	rows, err := queries.ListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data := struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Rows []*db.ListPendingUsersRow
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 		Rows:     rows,
 	}
 	common.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {
@@ -54,17 +55,17 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	reason := r.PostFormValue("reason")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {

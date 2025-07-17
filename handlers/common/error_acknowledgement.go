@@ -1,6 +1,10 @@
 package common
 
-import "net/http"
+import (
+	"net/http"
+
+	corecommon "github.com/arran4/goa4web/core/common"
+)
 
 // TaskErrorAcknowledgementPage renders a page displaying an error message.
 func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
@@ -10,7 +14,7 @@ func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
 		BackURL string
 	}
 	data := Data{
-		CoreData: r.Context().Value(ContextKey("coreData")).(*CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*CoreData),
 		Error:    r.URL.Query().Get("error"),
 		BackURL:  r.Referer(),
 	}

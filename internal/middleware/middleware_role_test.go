@@ -9,7 +9,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
@@ -34,13 +33,13 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), corecorecommon.KeyQueries, q)
 	ctx = context.WithValue(ctx, corecommon.ContextValues("session"), session)
 	req = req.WithContext(ctx)
 
-	var cd *corecommon.CoreData
+	var cd *corecorecommon.CoreData
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ = r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+		cd, _ = r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 	})
 
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
@@ -70,13 +69,13 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), corecorecommon.KeyQueries, q)
 	ctx = context.WithValue(ctx, corecommon.ContextValues("session"), session)
 	req = req.WithContext(ctx)
 
-	var cd *corecommon.CoreData
+	var cd *corecorecommon.CoreData
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ = r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+		cd, _ = r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 	})
 
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)

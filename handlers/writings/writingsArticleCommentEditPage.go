@@ -24,7 +24,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -35,7 +35,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(hcommon.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(corecorecommon.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,

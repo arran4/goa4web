@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	common "github.com/arran4/goa4web/handlers/common"
 
 	"github.com/arran4/goa4web/core"
@@ -16,14 +17,14 @@ import (
 )
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
 	pref, _ := cd.Preference()
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
 	}
 	data := struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Size int
 		Min  int
 		Max  int
@@ -53,8 +54,8 @@ func userPagingSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	if size > config.AppRuntimeConfig.PageSizeMax {
 		size = config.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

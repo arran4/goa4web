@@ -14,13 +14,13 @@ import (
 
 func EditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		BookmarkContent string
 		Bid             interface{}
 	}
 
 	data := Data{
-		CoreData:        r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:        r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
 	}
 	session, ok := core.GetSessionOrFail(w, r)
@@ -28,7 +28,7 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
@@ -48,7 +48,7 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 
 func EditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -72,7 +72,7 @@ func EditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 func EditCreateActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

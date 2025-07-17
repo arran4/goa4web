@@ -14,12 +14,12 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Categories []*db.GetLinkerCategoryLinkCountsRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
 	categoryRows, err := data.LinkerCategoryCounts()
@@ -39,7 +39,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -65,7 +65,7 @@ func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -82,9 +82,9 @@ func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	for _, c := range rows {
 		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
@@ -111,9 +111,9 @@ func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	title := r.PostFormValue("title")
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	pos := len(rows) + 1
 	if err := queries.CreateLinkerCategory(r.Context(), db.CreateLinkerCategoryParams{

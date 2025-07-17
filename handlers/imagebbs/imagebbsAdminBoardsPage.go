@@ -19,14 +19,14 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		Nsfw     bool
 	}
 	type Data struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Boards []*BoardRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {
 		switch {

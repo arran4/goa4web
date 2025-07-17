@@ -61,7 +61,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		queries := r.Context().Value(hcommon.KeyQueries).(*dbpkg.Queries)
+		queries := r.Context().Value(corecorecommon.KeyQueries).(*dbpkg.Queries)
 		if session.ID != "" {
 			if uid != 0 {
 				if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
@@ -94,7 +94,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		cd.IndexItems = idx
-		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)
+		ctx := context.WithValue(r.Context(), corecorecommon.KeyCoreData, cd)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -115,8 +115,8 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			log.Printf("db pool stats: %+v", DBPool.Stats())
 		}
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, hcommon.KeySQLDB, DBPool)
-		ctx = context.WithValue(ctx, hcommon.KeyQueries, dbpkg.New(DBPool))
+		ctx = context.WithValue(ctx, corecorecommon.KeySQLDB, DBPool)
+		ctx = context.WithValue(ctx, corecorecommon.KeyQueries, dbpkg.New(DBPool))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -186,7 +186,7 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		uid := int32(0)
 		sessID := ""
-		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*common.CoreData); ok && cd != nil {
+		if cd, ok := r.Context().Value(corecorecommon.KeyCoreData).(*corecommon.CoreData); ok && cd != nil {
 			uid = cd.UserID
 			if s := cd.Session(); s != nil {
 				sessID = s.ID

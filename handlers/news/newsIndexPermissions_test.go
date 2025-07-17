@@ -30,7 +30,7 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	ctx := context.WithValue(req.Context(), corecommon.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), corecorecommon.KeyQueries, q)
 	cd = corecommon.NewCoreData(ctx, q)
 	cd.SetRoles([]string{"content writer", "administrator"})
 	CustomNewsIndex(cd, req.WithContext(ctx))

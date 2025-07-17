@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/common"
 
 	"github.com/arran4/goa4web/config"
@@ -21,7 +22,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		IsDir bool
 	}
 	type Data struct {
-		*common.CoreData
+		*corecommon.CoreData
 		Path    string
 		Parent  string
 		Entries []Entry
@@ -50,7 +51,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData),
 		Path:     cleaned,
 	}
 	if cleaned != "/" {

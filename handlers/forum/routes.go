@@ -1,10 +1,11 @@
 package forum
 
 import (
+	"net/http"
+
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
-	"net/http"
 
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	router "github.com/arran4/goa4web/internal/router"

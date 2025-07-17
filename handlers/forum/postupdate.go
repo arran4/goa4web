@@ -3,6 +3,7 @@ package forum
 import (
 	"context"
 	"fmt"
+
 	db "github.com/arran4/goa4web/internal/db"
 )
 

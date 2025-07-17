@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -46,8 +45,8 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+	ctx := context.WithValue(req.Context(), corecorecommon.KeyQueries, queries)
+	ctx = context.WithValue(ctx, corecorecommon.KeyCoreData, &corecorecommon.CoreData{})
 	req = req.WithContext(ctx)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting")).

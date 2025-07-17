@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	corecommon "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -13,8 +14,8 @@ import (
 )
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*CoreData)
 
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {

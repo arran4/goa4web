@@ -1,8 +1,9 @@
 package faq
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -11,7 +12,7 @@ import (
 
 // AddFAQIndex injects FAQ index links into CoreData.
 func AddFAQIndex(h http.Handler) http.Handler {
-	return hcommon.IndexMiddleware(func(cd *hcommon.CoreData, r *http.Request) {
+	return hcommon.IndexMiddleware(func(cd *corecorecommon.CoreData, r *http.Request) {
 		CustomFAQIndex(cd, r)
 	})(h)
 }

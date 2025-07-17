@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -22,7 +21,7 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)
@@ -41,12 +40,12 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			return
 		}
 
-		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+		cd, _ := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 		if row.UsersIdusers != uid && (cd == nil || !cd.HasRole("administrator")) {
 			http.NotFound(w, r)
 			return
 		}
-		ctx := context.WithValue(r.Context(), hcommon.KeyComment, row)
+		ctx := context.WithValue(r.Context(), corecorecommon.KeyComment, row)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

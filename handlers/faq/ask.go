@@ -17,13 +17,13 @@ import (
 
 func AskPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
@@ -50,7 +50,7 @@ func AskActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -69,7 +69,7 @@ func AskActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData); ok {
+	if cd, ok := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData); ok {
 		evt := cd.Event()
 		if evt == nil {
 			log.Printf("ask action: missing event")

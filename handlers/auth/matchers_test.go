@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
 )
 
 func TestRequiredAccessAllowed(t *testing.T) {
@@ -16,7 +15,7 @@ func TestRequiredAccessAllowed(t *testing.T) {
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.UserID = 1
 	cd.SetRoles([]string{"content writer"})
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), corecommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if !RequiredAccess("content writer")(req, &mux.RouteMatch{}) {
@@ -29,7 +28,7 @@ func TestRequiredAccessDenied(t *testing.T) {
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.UserID = 1
 	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), corecommon.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if RequiredAccess("content writer")(req, &mux.RouteMatch{}) {

@@ -14,7 +14,7 @@ import (
 
 // AddBookmarksIndex injects bookmark index links into CoreData.
 func AddBookmarksIndex(h http.Handler) http.Handler {
-	return hcommon.IndexMiddleware(func(cd *hcommon.CoreData, r *http.Request) {
+	return hcommon.IndexMiddleware(func(cd *corecorecommon.CoreData, r *http.Request) {
 		bookmarksCustomIndex(cd)
 	})(h)
 }

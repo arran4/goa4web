@@ -18,15 +18,15 @@ import (
 
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Categories         []*db.LinkerCategory
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:           r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
@@ -53,7 +53,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	common.TemplateHandler(w, r, "adminAddPage.gohtml", data)
 }
 func AdminAddActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

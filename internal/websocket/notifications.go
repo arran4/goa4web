@@ -5,16 +5,16 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
-	hcommon "github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strings"
+
+	hcommon "github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	routerpkg "github.com/arran4/goa4web/internal/router"
@@ -65,7 +65,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queries, ok := r.Context().Value(corecommon.KeyQueries).(*dbpkg.Queries)
+	queries, ok := r.Context().Value(corecorecommon.KeyQueries).(*dbpkg.Queries)
 	if !ok || queries == nil {
 		http.Error(w, "db unavailable", http.StatusInternalServerError)
 		return

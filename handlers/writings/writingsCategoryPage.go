@@ -17,7 +17,7 @@ import (
 
 func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Categories          []*db.WritingCategory
 		CategoryBreadcrumbs []*db.WritingCategory
 		EditingCategoryId   int32
@@ -29,7 +29,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
 	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode

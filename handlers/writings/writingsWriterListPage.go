@@ -17,7 +17,7 @@ import (
 // WriterListPage shows all writers with their article counts.
 func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Rows                []*db.WriterCountRow
 		Search              string
 		NextLink            string
@@ -29,7 +29,7 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:   r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 		Search:     r.URL.Query().Get("search"),
 		PageSize:   common.GetPageSize(r),
 		IsAdmin:    false,

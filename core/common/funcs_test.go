@@ -15,7 +15,7 @@ import (
 
 func TestTemplateFuncsFirstline(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{}
+	cd := &corecommon.CoreData{}
 	funcs := cd.Funcs(r)
 	first := funcs["firstline"].(func(string) string)
 	if got := first("a\nb\n"); got != "a" {
@@ -25,7 +25,7 @@ func TestTemplateFuncsFirstline(t *testing.T) {
 
 func TestTemplateFuncsLeft(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{}
+	cd := &corecommon.CoreData{}
 	funcs := cd.Funcs(r)
 	left := funcs["left"].(func(int, string) string)
 	if got := left(3, "hello"); got != "hel" {

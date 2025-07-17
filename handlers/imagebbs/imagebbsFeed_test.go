@@ -2,10 +2,11 @@ package imagebbs
 
 import (
 	"database/sql"
-	db "github.com/arran4/goa4web/internal/db"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func TestImagebbsFeed(t *testing.T) {

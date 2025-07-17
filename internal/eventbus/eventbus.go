@@ -3,9 +3,10 @@ package eventbus
 import (
 	"context"
 	"errors"
-	"github.com/arran4/goa4web/internal/tasks"
 	"sync"
 	"time"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Event represents a task or notification that occurred in the application.

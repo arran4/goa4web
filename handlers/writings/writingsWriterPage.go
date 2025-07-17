@@ -16,7 +16,7 @@ import (
 
 func WriterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Abstracts []*db.GetPublicWritingsByUserForViewerRow
 		Username  string
 		IsOffset  bool
@@ -26,8 +26,8 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {

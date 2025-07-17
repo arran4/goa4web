@@ -16,7 +16,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
-	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	router "github.com/arran4/goa4web/internal/router"
@@ -162,9 +161,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	url := path.Join("/uploads", sub1, sub2, fname)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	uid := int32(0)
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData); ok && cd != nil {
+	if cd, ok := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData); ok && cd != nil {
 		uid = cd.UserID
 	}
 	_, err = queries.CreateUploadedImage(r.Context(), db.CreateUploadedImageParams{

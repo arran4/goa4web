@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	hwritings "github.com/arran4/goa4web/handlers/writings"
 	db "github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
@@ -17,7 +16,7 @@ import (
 
 func SearchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*corecorecommon.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		Writings           []*db.GetWritingsByIdsForUserDescendingByPublishedDateRow
 		CommentsNoResults  bool
@@ -27,9 +26,9 @@ func SearchResultWritingsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

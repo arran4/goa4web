@@ -16,7 +16,7 @@ import (
 )
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(corecommon.KeyCoreData).(*CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -29,7 +29,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		Mode               string
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -43,7 +43,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	row := r.Context().Value(common.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
+	row := r.Context().Value(corecommon.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 	data.Blog = row
 
 	common.TemplateHandler(w, r, "blogEditPage.gohtml", data)
@@ -56,8 +56,8 @@ func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	row := r.Context().Value(common.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
+	row := r.Context().Value(corecommon.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 
 	err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
 		Idblogs:            row.Idblogs,

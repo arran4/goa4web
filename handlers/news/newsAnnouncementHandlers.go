@@ -14,8 +14,8 @@ import (
 )
 
 func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -38,8 +38,8 @@ func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 

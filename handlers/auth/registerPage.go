@@ -16,7 +16,7 @@ import (
 
 // RegisterPage renders the user registration form.
 func RegisterPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(hcommon.KeyCoreData)
+	cd := r.Context().Value(corecorecommon.KeyCoreData)
 	hcommon.TemplateHandler(w, r, "registerPage.gohtml", cd)
 }
 
@@ -46,7 +46,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -111,7 +111,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+	if cd, ok := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

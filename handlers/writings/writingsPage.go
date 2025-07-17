@@ -15,7 +15,7 @@ var writingsPermissionsPageEnabled = true
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		Categories        []*db.WritingCategory
 		EditingCategoryId int32
 		CategoryId        int32
@@ -24,7 +24,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
 	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
@@ -43,7 +43,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	common.TemplateHandler(w, r, "writingsPage", data)
 }
-func CustomWritingsIndex(data *corecommon.CoreData, r *http.Request) {
+func CustomWritingsIndex(data *corecorecommon.CoreData, r *http.Request) {
 
 	data.CustomIndexItems = append(data.CustomIndexItems,
 		corecommon.IndexItem{Name: "Atom Feed", Link: "/writings/atom"},

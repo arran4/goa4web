@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -32,7 +31,7 @@ func TestSessionMiddlewareBadSession(t *testing.T) {
 	})
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, dbpkg.New(nil))
+	ctx := context.WithValue(req.Context(), corecommon.KeyQueries, dbpkg.New(nil))
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)

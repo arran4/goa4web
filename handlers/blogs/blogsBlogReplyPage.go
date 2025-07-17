@@ -4,6 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	hcommon "github.com/arran4/goa4web/handlers/common"
@@ -11,9 +15,6 @@ import (
 	"github.com/arran4/goa4web/internal/utils/emailutil"
 	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 	"github.com/gorilla/mux"
-	"log"
-	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
@@ -44,7 +45,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecorecommon.KeyQueries).(*db.Queries)
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
 		ViewerIdusers: uid,
@@ -53,7 +54,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+			cd := r.Context().Value(corecorecommon.KeyCoreData).(*corecorecommon.CoreData)
 			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:

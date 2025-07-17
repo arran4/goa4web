@@ -24,15 +24,15 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*corecommon.CoreData
+		*corecorecommon.CoreData
 		FAQ []*CategoryFAQs
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(corecommon.KeyCoreData).(*corecorecommon.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(corecommon.KeyQueries).(*db.Queries)
 
 	var currentCategoryFAQs CategoryFAQs
 
@@ -66,7 +66,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	common.TemplateHandler(w, r, "faqPage", data)
 }
 
-func CustomFAQIndex(data *corecommon.CoreData, r *http.Request) {
+func CustomFAQIndex(data *corecorecommon.CoreData, r *http.Request) {
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
 		Name: "Ask",

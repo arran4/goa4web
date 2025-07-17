@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"testing"
 
+	"strings"
+
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
@@ -20,7 +22,6 @@ import (
 	sesProv "github.com/arran4/goa4web/internal/email/ses"
 	smtpProv "github.com/arran4/goa4web/internal/email/smtp"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
-	"strings"
 )
 
 func init() {

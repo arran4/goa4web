@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	corecommon "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -33,7 +34,7 @@ func TestGetPageSize(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 			ctx := r.Context()
 			if tt.pref != nil {
-				ctx = context.WithValue(ctx, ContextKey("preference"), tt.pref)
+				ctx = context.WithValue(ctx, corecommon.ContextValues("preference"), tt.pref)
 			}
 			r = r.WithContext(ctx)
 

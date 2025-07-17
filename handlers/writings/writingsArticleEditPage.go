@@ -11,7 +11,7 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	"github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -87,18 +87,12 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, text := range []string{
-		abstract,
-		title,
-		body,
-	} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-
-		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(writing.Idwriting)) {
-			return
+	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["index"] = searchworker.IndexRequest{Type: searchworker.IndexWriting, ID: int64(writing.Idwriting), Text: abstract + " " + title + " " + body}
 		}
 	}
 }

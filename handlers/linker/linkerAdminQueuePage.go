@@ -13,7 +13,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	"github.com/arran4/goa4web/internal/searchworker"
 )
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -164,13 +164,12 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-		if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-			return
+	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["index"] = searchworker.IndexRequest{Type: searchworker.IndexLinker, ID: int64(lid), Text: link.Title.String + " " + link.Description.String}
 		}
 	}
 	hcommon.TaskDoneAutoRefreshPage(w, r)
@@ -207,13 +206,12 @@ func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("getLinkerItemById Error: %s", err)
 			continue
 		}
-		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-			if done {
-				return
-			}
-			if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-				return
+		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["index"] = searchworker.IndexRequest{Type: searchworker.IndexLinker, ID: int64(lid), Text: link.Title.String + " " + link.Description.String}
 			}
 		}
 	}

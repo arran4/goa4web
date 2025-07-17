@@ -45,59 +45,51 @@ func BreakupTextToWords(input string) []string {
 // SearchWordIdsFromText inserts new search words and returns their ids.
 // It redirects on error and returns true when a redirect has been issued.
 func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, queries *db.Queries) ([]int64, bool) {
-	words := map[string]int32{}
-	for _, word := range BreakupTextToWords(text) {
-		words[strings.ToLower(word)] = 0
+	ids, err := SearchWordIDs(r.Context(), text, queries)
+	if err != nil {
+		log.Printf("Error: createSearchWord: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return nil, true
 	}
-	wordIds := make([]int64, 0, len(words))
-	for word := range words {
-		id, err := queries.CreateSearchWord(r.Context(), strings.ToLower(word))
-		if err != nil {
-			log.Printf("Error: createSearchWord: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil, true
-		}
-		wordIds = append(wordIds, id)
-	}
-	return wordIds, false
+	return ids, false
 }
 
 // InsertWordsToLinkerSearch associates search words with a linker post.
 func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, lid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
-		return queries.AddToLinkerSearch(ctx, db.AddToLinkerSearchParams{
-			LinkerID:                       int32(lid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		})
-	})
+	if err := InsertWordsToLinkerSearchCtx(r.Context(), wordIds, queries, lid); err != nil {
+		log.Printf("insert linker search: %v", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return true
+	}
+	return false
 }
 
 // InsertWordsToImageSearch associates search words with an image post.
 func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, pid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
-		return queries.AddToImagePostSearch(ctx, db.AddToImagePostSearchParams{
-			ImagePostID:                    int32(pid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		})
-	})
+	if err := InsertWordsToImageSearchCtx(r.Context(), wordIds, queries, pid); err != nil {
+		log.Printf("insert image search: %v", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return true
+	}
+	return false
 }
 
 // InsertWordsToWritingSearch associates search words with a writing post.
 func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, wacid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
-		return queries.AddToForumWritingSearch(ctx, db.AddToForumWritingSearchParams{
-			WritingID:                      int32(wacid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		})
-	})
+	if err := InsertWordsToWritingSearchCtx(r.Context(), wordIds, queries, wacid); err != nil {
+		log.Printf("insert writing search: %v", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return true
+	}
+	return false
 }
 
 // InsertWordsToForumSearch associates search words with a forum comment.
 func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, cid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
-		return queries.AddToForumCommentSearch(ctx, db.AddToForumCommentSearchParams{
-			CommentID:                      int32(cid),
-			SearchwordlistIdsearchwordlist: int32(wid),
-		})
-	})
+	if err := InsertWordsToForumSearchCtx(r.Context(), wordIds, queries, cid); err != nil {
+		log.Printf("insert forum search: %v", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return true
+	}
+	return false
 }

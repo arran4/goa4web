@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"net/http"
@@ -27,7 +28,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Search:   r.URL.Query().Get("search"),
 		PageSize: handlers.GetPageSize(r),
 	}

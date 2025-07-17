@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
@@ -16,20 +17,20 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 	}
 	handlers.TemplateHandler(w, r, "forumPage", data)
 }
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := struct {
 		*CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/admin/forum",
 	}
 
@@ -47,14 +48,14 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := struct {
 		*CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
 		Back:     "/admin/forum",
 	}
 

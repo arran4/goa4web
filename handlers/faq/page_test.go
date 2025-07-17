@@ -3,22 +3,22 @@ package faq
 import (
 	"testing"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 )
 
 func TestCustomFAQIndexRoles(t *testing.T) {
-	cd := corecommon.NewCoreData(nil, nil)
+	cd := common.NewCoreData(nil, nil)
 	cd.SetRoles([]string{"administrator"})
 	cd.AdminMode = true
 	CustomFAQIndex(cd, nil)
-	if !corecommon.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
+	if !common.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("admin should see question controls")
 	}
 
-	cd = corecommon.NewCoreData(nil, nil)
+	cd = common.NewCoreData(nil, nil)
 	cd.SetRoles([]string{"anonymous"})
 	CustomFAQIndex(cd, nil)
-	if corecommon.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
+	if common.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("anonymous should not see admin items")
 	}
 }

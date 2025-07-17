@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
 
 // CommentEditActionPage updates a comment then refreshes thread metadata.
@@ -32,7 +33,7 @@ func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -43,7 +44,7 @@ func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(handlers.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(common.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,

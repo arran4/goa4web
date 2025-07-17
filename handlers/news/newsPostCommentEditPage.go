@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	handlers "github.com/arran4/goa4web/handlers"
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -21,7 +21,7 @@ func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -32,7 +32,7 @@ func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(handlers.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(common.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,

@@ -4,9 +4,10 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/internal/tasks"
 
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
@@ -52,7 +53,7 @@ func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
 }
 
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
-	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(handlers.KeyCoreData))
+	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(common.KeyCoreData))
 }
 
 func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +67,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing fields", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -93,7 +94,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if row.Email != "" {
-		if cd, ok := r.Context().Value(handlers.KeyCoreData).(*common.CoreData); ok {
+		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}

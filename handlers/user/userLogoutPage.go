@@ -1,9 +1,10 @@
 package user
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	handlers "github.com/arran4/goa4web/handlers"
 
@@ -19,18 +20,18 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	log.Printf("logout request session=%s uid=%d", session.ID, uid)
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	// session retrieved earlier
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if session.ID != "" {
 		_ = queries.DeleteSessionByID(r.Context(), session.ID)
 	}

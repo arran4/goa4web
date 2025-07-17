@@ -1,11 +1,11 @@
 package blogs
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 )
 
 // IndexItem exposes the navigation item type.
-type IndexItem = corecommon.IndexItem
+type IndexItem = common.IndexItem
 
 // CoreData exposes the common.CoreData type for handlers.
-type CoreData = corecommon.CoreData
+type CoreData = common.CoreData

@@ -3,12 +3,13 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	common "github.com/arran4/goa4web/core/common"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/gorilla/mux"
 )
 
 func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
@@ -19,9 +20,9 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
-	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
 	err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{
@@ -47,8 +48,8 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(handlers.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(handlers.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

@@ -1,9 +1,10 @@
 package user
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -11,11 +12,11 @@ import (
 
 func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Sessions []*db.ListSessionsRow
 	}
-	data := Data{CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)}
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	items, err := queries.ListSessions(r.Context())
 	if err != nil {
 		log.Printf("list sessions: %v", err)
@@ -29,18 +30,18 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 	sid := r.PostFormValue("sid")
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/sessions",
 	}
 	if sid == "" {
 		data.Errors = append(data.Errors, "missing sid")
 	} else {
-		if err := r.Context().Value(handlers.KeyQueries).(*db.Queries).DeleteSessionByID(r.Context(), sid); err != nil {
+		if err := r.Context().Value(common.KeyQueries).(*db.Queries).DeleteSessionByID(r.Context(), sid); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}

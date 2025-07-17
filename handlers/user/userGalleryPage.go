@@ -1,13 +1,14 @@
 package user
 
 import (
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	common "github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -28,7 +29,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(handlers.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	pageStr := r.URL.Query().Get("p")
 	page, _ := strconv.Atoi(pageStr)
@@ -36,7 +37,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	cd := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {
 		size = int(pref.PageSize)
@@ -86,7 +87,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Images   []galleryImage
 		NextLink string
 		PrevLink string

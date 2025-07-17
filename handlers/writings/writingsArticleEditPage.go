@@ -11,7 +11,7 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"

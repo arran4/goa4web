@@ -10,7 +10,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	hwritings "github.com/arran4/goa4web/handlers/writings"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/core"
 )

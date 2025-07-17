@@ -7,7 +7,7 @@ import (
 
 	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
+	emailutil "github.com/arran4/goa4web/internal/notifications"
 )
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {

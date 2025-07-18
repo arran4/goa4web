@@ -113,7 +113,7 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		From:     config.AppRuntimeConfig.EmailFrom,
 		Subject:  "Website Update Notification",
 		URL:      pageURL,
-		Action:   TaskTestMail,
+		Action:   string(TaskTestMail),
 		Path:     r.URL.Path,
 		Time:     time.Now().Format(time.RFC822),
 		UnsubURL: unsub,

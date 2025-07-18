@@ -21,19 +21,6 @@ type EditReplyTask struct{ tasks.TaskString }
 var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
-	NewsPostCommentEditActionPage(w, r)
-}
-
-// CancelTask cancels comment editing.
-type CancelTask struct{ tasks.TaskString }
-
-var cancelTask = &CancelTask{TaskString: TaskCancel}
-
-func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
-	NewsPostCommentEditActionCancelPage(w, r)
-}
-
-func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -85,7 +72,12 @@ func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
 }
 
-func NewsPostCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
+// CancelTask cancels comment editing.
+type CancelTask struct{ tasks.TaskString }
+
+var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)

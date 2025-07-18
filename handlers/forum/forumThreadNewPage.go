@@ -21,7 +21,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/internal/email"
 	"github.com/gorilla/mux"
 )
 
@@ -115,8 +114,6 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
-
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),

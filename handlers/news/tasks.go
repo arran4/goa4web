@@ -22,4 +22,9 @@ const (
 	TaskUserAllow = "User Allow"
 	// TaskUserDisallow removes a permission level from a user.
 	TaskUserDisallow = "User Disallow"
+
+	// TaskEditReply edits an existing comment.
+	TaskEditReply tasks.TaskString = "Edit Reply"
+	// TaskCancel aborts an in-progress action.
+	TaskCancel tasks.TaskString = "Cancel"
 )

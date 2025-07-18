@@ -72,10 +72,9 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	})
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "usersPermissionsPage.gohtml", data)
-}
+var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
-func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
+func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
@@ -99,7 +98,12 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
+// permissionUserDisallowTask removes a user's permission level.
+type PermissionUserDisallowTask struct{ tasks.TaskString }
+
+var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
+
+func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
@@ -119,7 +123,12 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
+// permissionUpdateTask updates an existing permission record.
+type PermissionUpdateTask struct{ tasks.TaskString }
+
+var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
+
+func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	level := r.PostFormValue("role")
@@ -144,4 +153,37 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+}
+
+func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*common.CoreData
+		Rows  []*db.GetPermissionsWithUsersRow
+		Roles []*db.Role
+	}
+
+	data := Data{
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+	}
+
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	if roles, err := data.AllRoles(); err == nil {
+		data.Roles = roles
+	}
+
+	rows, err := queries.GetPermissionsWithUsers(r.Context(), db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].Username.String < rows[j].Username.String
+	})
+	data.Rows = rows
+
+	handlers.TemplateHandler(w, r, "usersPermissionsPage.gohtml", data)
 }

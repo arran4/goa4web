@@ -2,20 +2,17 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/workers"
-	"github.com/arran4/goa4web/workers/emailqueue"
-	"log"
-	"net/http"
-	"os"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	dbpkg "github.com/arran4/goa4web/internal/db"
@@ -24,13 +21,8 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
-	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	imagesign "github.com/arran4/goa4web/pkg/images"
-	"github.com/arran4/goa4web/workers/auditworker"
-	"github.com/arran4/goa4web/workers/logworker"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -64,7 +56,6 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
-	handlers.Version = version
 
 	if err := PerformChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)

@@ -34,13 +34,13 @@ func RegisterRoutes(r *mux.Router) {
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", replyTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
-	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(NewsPostCommentEditActionPage))).Methods("POST").MatcherFunc(editReplyTask.Matcher())    // TODO create task
-	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(NewsPostCommentEditActionCancelPage))).Methods("POST").MatcherFunc(cancelTask.Matcher()) // TODO create task
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(editReplyTask.Action))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(cancelTask.Action))).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{post}", editTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editTask.Matcher())
 	nr.HandleFunc("/news/{post}", newPostTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(newPostTask.Matcher())
 	nr.HandleFunc("/news/{post}/announcement", announcementAddTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementAddTask.Matcher())
 	nr.HandleFunc("/news/{post}/announcement", announcementDeleteTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementDeleteTask.Matcher())
-	nr.HandleFunc("/news/{post}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher()) // TODO create task
+	nr.HandleFunc("/news/{post}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{post}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/user/permissions", NewsUserPermissionsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 	nr.HandleFunc("/users/permissions", userAllowTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Matcher())

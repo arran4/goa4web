@@ -81,7 +81,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		nextVals := copyValues(params)
 		nextVals.Set("offset", strconv.Itoa(offset+data.PageSize))
 		data.NextLink = "/admin/audit?" + nextVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next " + strconv.Itoa(data.PageSize),
 			Link: data.NextLink,
 		})
@@ -90,7 +90,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		prevVals := copyValues(params)
 		prevVals.Set("offset", strconv.Itoa(offset-data.PageSize))
 		data.PrevLink = "/admin/audit?" + prevVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Previous " + strconv.Itoa(data.PageSize),
 			Link: data.PrevLink,
 		})

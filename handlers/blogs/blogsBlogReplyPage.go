@@ -13,11 +13,10 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 	"github.com/gorilla/mux"
-
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // ReplyBlogTask posts a comment reply on a blog.

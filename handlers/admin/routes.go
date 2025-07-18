@@ -46,11 +46,11 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/user/{id}", adminUserProfilePage).Methods("GET")
 	ar.HandleFunc("/user/{id}/comment", adminUserAddCommentPage).Methods("POST")
 	ar.HandleFunc("/announcements", AdminAnnouncementsPage).Methods("GET")
-	ar.HandleFunc("/announcements", AddAnnouncementTask.Action).Methods("POST").MatcherFunc(AddAnnouncementTask.Match)
-	ar.HandleFunc("/announcements", DeleteAnnouncementTask.Action).Methods("POST").MatcherFunc(DeleteAnnouncementTask.Match)
+	ar.HandleFunc("/announcements", AddAnnouncementTask.Action).Methods("POST").MatcherFunc(AddAnnouncementTask.Matcher())
+	ar.HandleFunc("/announcements", DeleteAnnouncementTask.Action).Methods("POST").MatcherFunc(DeleteAnnouncementTask.Matcher())
 	ar.HandleFunc("/ipbans", AdminIPBanPage).Methods("GET")
-	ar.HandleFunc("/ipbans", AddIPBanTask.Action).Methods("POST").MatcherFunc(AddIPBanTask.Match)
-	ar.HandleFunc("/ipbans", DeleteIPBanTask.Action).Methods("POST").MatcherFunc(DeleteIPBanTask.Match)
+	ar.HandleFunc("/ipbans", AddIPBanTask.Action).Methods("POST").MatcherFunc(AddIPBanTask.Matcher())
+	ar.HandleFunc("/ipbans", DeleteIPBanTask.Action).Methods("POST").MatcherFunc(DeleteIPBanTask.Matcher())
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", AdminServerStatsPage).Methods("GET")
@@ -71,8 +71,8 @@ func RegisterRoutes(ar *mux.Router) {
 	// news admin
 	nar := ar.PathPrefix("/news").Subrouter()
 	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsPage).Methods("GET")
-	nar.HandleFunc("/users/levels", NewsUserAllowTask.Action).Methods("POST").MatcherFunc(NewsUserAllowTask.Match)
-	nar.HandleFunc("/users/levels", NewsUserRemoveTask.Action).Methods("POST").MatcherFunc(NewsUserRemoveTask.Match)
+	nar.HandleFunc("/users/levels", NewsUserAllowTask.Action).Methods("POST").MatcherFunc(NewsUserAllowTask.Matcher())
+	nar.HandleFunc("/users/levels", NewsUserRemoveTask.Action).Methods("POST").MatcherFunc(NewsUserRemoveTask.Matcher())
 
 	// writings admin
 	writings.RegisterAdminRoutes(ar)

@@ -3,7 +3,6 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 

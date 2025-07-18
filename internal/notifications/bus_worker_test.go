@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	hcommon "github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/internal/tasks"
+	"net/http"
 	"net/mail"
 	"regexp"
 	"sync"
@@ -39,7 +40,7 @@ func TestBuildPatterns(t *testing.T) {
 		"/x/y/":     {"reply:/x/y", "reply:/x/*", "reply:/*"},
 	}
 	for path, expected := range cases {
-		got := buildPatterns(hcommon.TaskString("Reply"), path)
+		got := buildPatterns(tasks.TaskString("Reply"), path)
 		if len(got) != len(expected) {
 			t.Fatalf("%s len %d", path, len(got))
 		}
@@ -68,6 +69,16 @@ func TestParseEvent(t *testing.T) {
 	if _, _, ok := parseEvent(eventbus.Event{Path: "/news/news/9"}); ok {
 		t.Fatalf("unexpected match with path")
 	}
+}
+
+const TaskTest = tasks.TaskString("TaskTest")
+
+type TestTask struct {
+	TaskString tasks.TaskString
+}
+
+func (t TestTask) Action(w http.ResponseWriter, r *http.Request) {
+
 }
 
 type errProvider struct{}
@@ -111,7 +122,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(1))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
-	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskString(hcommon.TaskReply), UserID: 1}, n, dlqRec); err == nil {
+	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, n, dlqRec); err == nil {
 		t.Fatal("expected error")
 	}
 	if dlqRec.msg == "" {
@@ -154,7 +165,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskString(hcommon.TaskReply), UserID: 1}, n, nil); err != nil {
+	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, n, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -182,7 +193,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 		AddRow(1, 1, 1, true, 15, false)
 	mock.ExpectQuery("preferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: hcommon.TaskString(hcommon.TaskReply), UserID: 1}, n, nil); err != nil {
+	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, n, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -215,7 +226,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: hcommon.TaskString(hcommon.TaskSetTopicRestriction), UserID: 1}, n, nil); err != nil {
+	if err := processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: TaskTest, UserID: 1}, n, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -266,7 +277,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: hcommon.TaskString(hcommon.TaskReply), UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, n, nil); err != nil {
+	if err := processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, n, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -329,7 +340,7 @@ func TestBusWorker(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	bus.Publish(eventbus.Event{Path: "/", Task: hcommon.TaskString(hcommon.TaskRegister), UserID: 1, Data: map[string]any{"signup": SignupInfo{Username: "bob"}}})
+	bus.Publish(eventbus.Event{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"signup": SignupInfo{Username: "bob"}}})
 	time.Sleep(200 * time.Millisecond)
 	cancel()
 	wg.Wait()

@@ -77,9 +77,9 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	config.AppRuntimeConfig.NotificationsEnabled = true
 	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 
-	mock.ExpectExec("INSERT INTO faq").
-		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1)).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO faq"). // TODO complete sql expression
+						WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1)).
+						WillReturnResult(sqlmock.NewResult(1, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -113,7 +113,6 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	if loc := rr.Header().Get("Location"); loc != "/faq" {
 		t.Fatalf("location=%q", loc)
 	}
-	evt := cd.Event()
 	named, ok := evt.Task.(tasks.Name)
 	if !ok || named.Name() != TaskAsk || evt.Path != "/admin/faq" {
 		t.Fatalf("event %+v", evt)

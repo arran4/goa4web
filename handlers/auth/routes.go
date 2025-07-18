@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/arran4/goa4web/handlers"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
 
@@ -10,17 +11,17 @@ import (
 // RegisterRoutes attaches the login and registration endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	rr := r.PathPrefix("/register").Subrouter()
-	rr.HandleFunc("", registerTask.Page).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
-	rr.HandleFunc("", registerTask.Action).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(registerTask.Matcher())
+	rr.HandleFunc("", registerTask.Page).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))
+	rr.HandleFunc("", registerTask.Action).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(registerTask.Matcher())
 
 	lr := r.PathPrefix("/login").Subrouter()
-	lr.HandleFunc("", loginTask.Page).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
-	lr.HandleFunc("", loginTask.Action).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(loginTask.Matcher())
-	lr.HandleFunc("/verify", verifyPasswordTask.Action).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(verifyPasswordTask.Matcher())
+	lr.HandleFunc("", loginTask.Page).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))
+	lr.HandleFunc("", loginTask.Action).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(loginTask.Matcher())
+	lr.HandleFunc("/verify", verifyPasswordTask.Action).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(verifyPasswordTask.Matcher())
 
 	fr := r.PathPrefix("/forgot").Subrouter()
-	fr.HandleFunc("", forgotPasswordTask.Page).Methods("GET").MatcherFunc(Not(RequiresAnAccount()))
-	fr.HandleFunc("", forgotPasswordTask.Action).Methods("POST").MatcherFunc(Not(RequiresAnAccount())).MatcherFunc(forgotPasswordTask.Matcher())
+	fr.HandleFunc("", forgotPasswordTask.Page).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))
+	fr.HandleFunc("", forgotPasswordTask.Action).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(forgotPasswordTask.Matcher())
 }
 
 // Register registers the auth router module.

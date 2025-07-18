@@ -15,15 +15,15 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-type announcementAddTask struct{ tasks.TaskString }
+type AnnouncementAddTask struct{ tasks.TaskString }
 
-var announcementAddTask = &announcementAddTask{TaskString: TaskAdd}
+var announcementAddTask = &AnnouncementAddTask{TaskString: TaskAdd}
 
-type announcementDeleteTask struct{ tasks.TaskString }
+type AnnouncementDeleteTask struct{ tasks.TaskString }
 
-var announcementDeleteTask = &announcementDeleteTask{TaskString: TaskDelete}
+var announcementDeleteTask = &AnnouncementDeleteTask{TaskString: TaskDelete}
 
-func (announcementAddTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
@@ -47,7 +47,7 @@ func (announcementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (announcementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)

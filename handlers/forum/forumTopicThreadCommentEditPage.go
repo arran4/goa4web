@@ -9,7 +9,7 @@ import (
 
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
-	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
 

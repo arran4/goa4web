@@ -14,8 +14,8 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
-	searchworker "github.com/arran4/goa4web/internal/searchworker"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/internal/tasks"
 

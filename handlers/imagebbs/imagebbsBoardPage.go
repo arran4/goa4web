@@ -17,8 +17,8 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"

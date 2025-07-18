@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func LinkerPage(w http.ResponseWriter, r *http.Request) {
+func UserPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Links     []*db.GetLinkerItemsByUserDescendingRow

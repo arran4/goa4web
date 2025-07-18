@@ -27,6 +27,9 @@ func (t TaskString) Name() string {
 	return string(t)
 }
 
+// Action implements the Task interface. TODO: evaluate if this is required.
+func (t TaskString) Action(http.ResponseWriter, *http.Request) {}
+
 func (t TaskString) Matcher() mux.MatcherFunc {
 	return HasTask(string(t))
 }

@@ -5,9 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"html/template"
 	"log"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/arran4/goa4web/config"
@@ -22,7 +22,7 @@ import (
 
 type namedTask struct{ name string }
 
-func (n namedTask) TaskName() string { return n.name }
+func (n namedTask) Name() string { return n.name }
 
 func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) error {
 	if q == nil {
@@ -84,13 +84,20 @@ func collectSubscribers(ctx context.Context, q *dbpkg.Queries, patterns []string
 }
 
 // sendSubscriberEmail queues an email notification for a subscriber.
-func sendSubscriberEmail(ctx context.Context, n Notifier, userID int32, evt eventbus.Event) error {
+func sendSubscriberEmail(ctx context.Context, n Notifier, userID int32, evt eventbus.Event, et *EmailTemplates) error {
 	user, err := n.Queries.GetUserById(ctx, userID)
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
 		notifyMissingEmail(ctx, n.Queries, userID)
 		return err
 	}
-	return CreateEmailTemplateAndQueue(ctx, n.Queries, userID, user.Email.String, evt.Path, evt.Task, evt.Data)
+	if et != nil {
+		return QueueEmailFromTemplates(ctx, n.Queries, userID, user.Email.String, et, evt.Data)
+	}
+	name := ""
+	if tn, ok := evt.Task.(tasks.Name); ok {
+		name = tn.Name()
+	}
+	return CreateEmailTemplateAndQueue(ctx, n.Queries, userID, user.Email.String, evt.Path, name, evt.Data)
 }
 
 // sendInternalNotification stores an internal notification for the user.
@@ -157,7 +164,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
-		if err := notifySelf(ctx, evt, n, tp, tp); err != nil {
+		if err := notifySelf(ctx, evt, n, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -189,8 +196,18 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
 		notifyMissingEmail(ctx, n.Queries, evt.UserID)
 	} else {
-		if err := CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Data); err != nil {
-			return err
+		if et := tp.SelfEmailTemplate(); et != nil {
+			if err := QueueEmailFromTemplates(ctx, n.Queries, evt.UserID, user.Email.String, et, evt.Data); err != nil {
+				return err
+			}
+		} else {
+			name := ""
+			if tn, ok := evt.Task.(tasks.Name); ok {
+				name = tn.Name()
+			}
+			if err := CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, name, evt.Data); err != nil {
+				return err
+			}
 		}
 	}
 	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
@@ -206,8 +223,12 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 	return nil
 }
 
-func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier) error {
-	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
+func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp SubscribersNotificationTemplateProvider) error {
+	name := ""
+	if tn, ok := evt.Task.(tasks.Name); ok {
+		name = tn.Name()
+	}
+	patterns := buildPatterns(namedTask{name}, evt.Path)
 
 	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
 	if err != nil {
@@ -221,10 +242,20 @@ func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier) erro
 	delete(emailSubs, evt.UserID)
 	delete(internalSubs, evt.UserID)
 
-	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
+	var msg string
+	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
+		var buf bytes.Buffer
+		noteTmpls := templates.GetCompiledNotificationTemplates(map[string]any{})
+		if err := noteTmpls.ExecuteTemplate(&buf, *nt, evt.Data); err == nil {
+			msg = buf.String()
+		}
+	} else {
+		msg = renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
+	}
 
+	et := tp.SubscribedEmailTemplate()
 	for id := range emailSubs {
-		if err := sendSubscriberEmail(ctx, n, id, evt); err != nil {
+		if err := sendSubscriberEmail(ctx, n, id, evt, et); err != nil {
 			return fmt.Errorf("deliver email to %d: %w", id, err)
 		}
 	}
@@ -251,8 +282,8 @@ func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier, tp
 	}
 	if auto {
 		task, path := tp.AutoSubscribePath()
-		pattern := buildPatterns(task, path)[0]
-		if internalNotification {
+		pattern := buildPatterns(namedTask{task}, path)[0]
+		if config.AppRuntimeConfig.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
 		}
 		if email {
@@ -275,7 +306,7 @@ func notifyAdmins(ctx context.Context, evt eventbus.Event, n Notifier, tp AdminE
 			}
 		}
 		if et := tp.AdminEmailTemplate(); et != nil {
-			if err := CreateEmailTemplateAndQueue(ctx, n.Queries, uid, addr, evt.Path, evt.Task, evt.Data); err != nil {
+			if err := QueueEmailFromTemplates(ctx, n.Queries, uid, addr, et, evt.Data); err != nil {
 				return err
 			}
 		}
@@ -311,6 +342,20 @@ func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pat
 	if err := q.InsertSubscription(ctx, dbpkg.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {
 		log.Printf("insert subscription: %v", err)
 	}
+}
+
+func renderMessage(ctx context.Context, q *dbpkg.Queries, task tasks.Task, path string, data any) string {
+	tmpl := templates.GetCompiledNotificationTemplates(map[string]any{})
+	name := ""
+	if tn, ok := task.(tasks.Name); ok {
+		name = strings.ToLower(tn.Name()) + ".gotxt"
+	}
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {
+		log.Printf("render message %s: %v", name, err)
+		return ""
+	}
+	return buf.String()
 }
 
 func notifyMissingEmail(ctx context.Context, q *dbpkg.Queries, userID int32) {

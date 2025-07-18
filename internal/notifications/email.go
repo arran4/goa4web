@@ -18,9 +18,9 @@ import (
 )
 
 func getEmailTemplates(ctx context.Context, action string) (string, string) {
-
-	templates.GetCompiledEmailHtmlTemplates()
-	templates.GetCompiledEmailTextTemplates()
+	// Compile embedded templates so overrides work.
+	_ = templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+	_ = templates.GetCompiledEmailTextTemplates(map[string]any{})
 
 	name := "email_" + strings.ToLower(action)
 	nameHTML := name + "_html"
@@ -36,6 +36,7 @@ func getEmailTemplates(ctx context.Context, action string) (string, string) {
 	return text, html
 }
 
+// TODO: consider making this private and replacing with EmailTemplates.CreateEmail.
 func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, item interface{}) ([]byte, mail.Address, error) {
 	if emailAddr == "" {
 		return nil, mail.Address{}, fmt.Errorf("no email specified")
@@ -108,6 +109,7 @@ func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, it
 	return msg, toAddr, nil
 }
 
+// TODO: make private once call sites are updated.
 func CreateEmailTemplateAndQueue(ctx context.Context, q *db.Queries, userID int32, emailAddr, page, action string, item interface{}) error {
 	if q == nil {
 		return fmt.Errorf("no query")
@@ -115,6 +117,81 @@ func CreateEmailTemplateAndQueue(ctx context.Context, q *db.Queries, userID int3
 	msg, _, err := CreateEmailTemplate(ctx, emailAddr, page, action, item)
 	if err != nil {
 		return err
+	}
+	return queueEmail(ctx, q, userID, msg)
+}
+
+// QueueEmailFromTemplates renders the provided templates and queues the result.
+// QueueEmailFromTemplates renders the provided templates and queues the result.
+// TODO: make private and unify call sites.
+func QueueEmailFromTemplates(ctx context.Context, q *db.Queries, userID int32, emailAddr string, et *EmailTemplates, data interface{}) error {
+	if q == nil {
+		return fmt.Errorf("no query")
+	}
+	msg, err := RenderEmailFromTemplates(emailAddr, et, data)
+	if err != nil {
+		return err
+	}
+	return queueEmail(ctx, q, userID, msg)
+}
+
+// RenderEmailFromTemplates returns the rendered email message using the provided templates.
+// RenderEmailFromTemplates returns the rendered email message using the provided templates.
+// TODO: evaluate exposing this via EmailTemplates.CreateEmail instead.
+func RenderEmailFromTemplates(emailAddr string, et *EmailTemplates, data interface{}) ([]byte, error) {
+	if et == nil || emailAddr == "" {
+		return nil, fmt.Errorf("invalid args")
+	}
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+
+	prefix := config.AppRuntimeConfig.EmailSubjectPrefix
+	if prefix == "" {
+		prefix = "goa4web"
+	}
+
+	content := struct {
+		To            string
+		From          string
+		SubjectPrefix string
+		Item          interface{}
+	}{
+		To:            emailAddr,
+		From:          config.AppRuntimeConfig.EmailFrom,
+		SubjectPrefix: prefix,
+		Item:          data,
+	}
+
+	var textBody, htmlBody, subject string
+	if et.Text != "" {
+		var buf bytes.Buffer
+		if err := textTmpls.ExecuteTemplate(&buf, et.Text, content); err != nil {
+			return nil, err
+		}
+		textBody = buf.String()
+	}
+	if et.HTML != "" {
+		var buf bytes.Buffer
+		if err := htmlTmpls.ExecuteTemplate(&buf, et.HTML, content); err != nil {
+			return nil, err
+		}
+		htmlBody = buf.String()
+	}
+	if et.Subject != "" {
+		var buf bytes.Buffer
+		if err := textTmpls.ExecuteTemplate(&buf, et.Subject, content); err != nil {
+			return nil, err
+		}
+		subject = strings.TrimSpace(buf.String())
+	}
+	from := email.ParseAddress(config.AppRuntimeConfig.EmailFrom)
+	to := email.ParseAddress(emailAddr)
+	return email.BuildMessage(from, to, subject, textBody, htmlBody)
+}
+
+func queueEmail(ctx context.Context, q *db.Queries, userID int32, msg []byte) error {
+	if q == nil {
+		return fmt.Errorf("no query")
 	}
 	return q.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: userID, Body: string(msg)})
 }

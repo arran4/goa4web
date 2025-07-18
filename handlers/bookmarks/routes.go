@@ -12,18 +12,13 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
-// AddBookmarksIndex injects bookmark index links into CoreData.
-func AddBookmarksIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(func(cd *common.CoreData, r *http.Request) {
-		bookmarksCustomIndex(cd)
-	})(h)
-}
-
 // RegisterRoutes attaches the bookmarks endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
-	br.Use(AddBookmarksIndex)
+	br.Use(handlers.IndexMiddleware(func(cd *common.CoreData, r *http.Request) {
+		bookmarksCustomIndex(cd)
+	}))
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
 	br.HandleFunc("/edit", saveTask.Page).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())

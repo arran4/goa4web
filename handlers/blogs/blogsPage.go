@@ -19,7 +19,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
+	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/gorilla/feeds"
 )
 
@@ -238,7 +238,7 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 	for _, row := range rows {
 		u := r.URL
 		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(imagesign.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)
 		out, _ := io.ReadAll(conv.Process())

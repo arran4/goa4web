@@ -12,11 +12,6 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
-// AddImageBBSIndex injects image board index links into CoreData.
-func AddImageBBSIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(CustomImageBBSIndex)(h)
-}
-
 // RegisterRoutes attaches the public image board endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("ImageBBS", "/imagebbs", SectionWeight)

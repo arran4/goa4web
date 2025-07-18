@@ -12,6 +12,7 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -288,10 +289,13 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := handlers.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+		}
 	}
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {

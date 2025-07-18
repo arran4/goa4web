@@ -77,19 +77,19 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "User Permissions",
 			Link: "/admin/linker/users/levels",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Category Controls",
 			Link: "/admin/linker/categories",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Approve links",
 			Link: "/admin/linker/queue",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Add link",
 			Link: "/admin/linker/add",
 		})
@@ -98,23 +98,23 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 	categoryId := vars["category"]
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	if categoryId == "" {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next 15",
 			Link: fmt.Sprintf("/linker?offset=%d", offset+15),
 		})
 		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 				Name: "Previous 15",
 				Link: fmt.Sprintf("/linker?offset=%d", offset-15),
 			})
 		}
 	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next 15",
 			Link: fmt.Sprintf("/linker/category/%s?offset=%d", categoryId, offset+15),
 		})
 		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 				Name: "Previous 15",
 				Link: fmt.Sprintf("/linker/category/%s?offset=%d", categoryId, offset-15),
 			})

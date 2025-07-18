@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -73,10 +74,13 @@ func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, thread.Idforumthread, thread.ForumtopicIdforumtopic); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
+		}
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/linker/comments/%d", linkId), http.StatusTemporaryRedirect)

@@ -7,16 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/email"
-
-	emailutil "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/internal/tasks"
@@ -53,36 +49,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: threadRow.Idforumthread,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		Idusers:       uid,
-		ForumthreadID: threadRow.Idforumthread,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
-
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      threadRow.Idforumthread,
@@ -97,17 +64,20 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, threadRow.Idforumthread, topicRow.Idforumtopic); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+		}
 	}
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: cid, Text: text}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
 		}
 	}
 

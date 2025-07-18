@@ -27,9 +27,6 @@ func handleDie(w http.ResponseWriter, message string) {
 	http.Error(w, message, http.StatusInternalServerError)
 }
 
-// IndexItem exposes the core/common navigation item type.
-type IndexItem = common.IndexItem
-
 // CoreAdderMiddleware populates request context with CoreData for templates.
 func CoreAdderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

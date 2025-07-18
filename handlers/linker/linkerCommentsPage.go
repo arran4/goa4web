@@ -12,12 +12,11 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/email"
-	emailutil "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -241,36 +240,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)
 
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: pthid,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToLinker(r.Context(), db.ListUsersSubscribedToLinkerParams{
-		Idusers:  uid,
-		Idlinker: int32(linkId),
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
-
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      pthid,
@@ -285,17 +255,20 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+		}
 	}
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: cid, Text: text}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
 		}
 	}
 

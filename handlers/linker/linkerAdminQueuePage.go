@@ -103,12 +103,12 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		next = "?offset=%d"
 	}
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: fmt.Sprintf("Next %d", pageSize),
 		Link: baseURL + fmt.Sprintf(next, data.Offset+pageSize),
 	})
 	if data.Offset > 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: baseURL + fmt.Sprintf(next, data.Offset-pageSize),
 		})

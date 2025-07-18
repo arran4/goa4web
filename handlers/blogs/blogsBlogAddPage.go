@@ -12,10 +12,19 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
+
+// AddBlogTask encapsulates creating a blog entry.
+type AddBlogTask struct{ tasks.TaskString }
+
+var addBlogTask = &AddBlogTask{TaskString: TaskAdd}
+
+func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(w, r) }
+func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogAddActionPage(w, r) }
 
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)

@@ -13,7 +13,44 @@ import (
 	"strings"
 
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// UserAllowTask grants a user a permission.
+type UserAllowTask struct{ tasks.TaskString }
+
+var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
+
+func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+	UsersPermissionsPermissionUserAllowPage(w, r)
+}
+
+// UserDisallowTask removes a user's permission.
+type UserDisallowTask struct{ tasks.TaskString }
+
+var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
+
+func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+	UsersPermissionsDisallowPage(w, r)
+}
+
+// UsersAllowTask grants multiple users permissions.
+type UsersAllowTask struct{ tasks.TaskString }
+
+var usersAllowTask = &UsersAllowTask{TaskString: TaskUsersAllow}
+
+func (UsersAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+	UsersPermissionsBulkAllowPage(w, r)
+}
+
+// UsersDisallowTask removes permissions from multiple users.
+type UsersDisallowTask struct{ tasks.TaskString }
+
+var usersDisallowTask = &UsersDisallowTask{TaskString: TaskUsersDisallow}
+
+func (UsersDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+	UsersPermissionsBulkDisallowPage(w, r)
+}
 
 func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)

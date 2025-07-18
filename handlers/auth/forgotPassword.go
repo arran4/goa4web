@@ -29,10 +29,7 @@ var forgotPasswordTask = &ForgotPasswordTask{
 }
 
 func (f ForgotPasswordTask) AdminEmailTemplate() *notif.EmailTemplates {
-	return &notif.EmailTemplates{
-		Text: "adminNotificationUserRequestPasswordResetEmail.gotxt",
-		HTML: "adminNotificationUserRequestPasswordResetEmail.gohtml",
-	}
+	return notif.NewEmailTemplates("adminNotificationUserRequestPasswordResetEmail")
 }
 
 func (f ForgotPasswordTask) AdminInternalNotificationTemplate() *string {
@@ -41,10 +38,7 @@ func (f ForgotPasswordTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (f ForgotPasswordTask) SelfEmailTemplate() *notif.EmailTemplates {
-	return &notif.EmailTemplates{
-		Text: "userRequestPasswordResetEmail.gotxt",
-		HTML: "userRequestPasswordResetEmail.gohtml",
-	}
+	return notif.NewEmailTemplates("passwordResetEmail")
 }
 
 func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {

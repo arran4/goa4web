@@ -63,8 +63,9 @@ func buildPatterns(task tasks.Name, path string) []string {
 	return patterns
 }
 
-// renderMessage loads the template for the action and populates it with data.
-func renderMessage(ctx context.Context, q *dbpkg.Queries, tmpls *template.Template, tmplName, path string, item interface{}, uid int32) (string, error) {
+// renderTemplate loads tmplName from tmpls or the database and populates it with data.
+// The rendered string is returned without a trailing newline.
+func renderTemplate(ctx context.Context, q *dbpkg.Queries, tmpls *template.Template, tmplName string, data interface{}) (string, error) {
 	var t *template.Template
 	if q != nil {
 		if body, err := q.GetTemplateOverride(ctx, tmplName); err == nil && body != "" {
@@ -82,15 +83,21 @@ func renderMessage(ctx context.Context, q *dbpkg.Queries, tmpls *template.Templa
 		t = tmpls
 	}
 	var buf bytes.Buffer
-	data := struct {
-		Path   string
-		Item   interface{}
-		UserID int32
-	}{Path: path, Item: item, UserID: uid}
 	if err := t.ExecuteTemplate(&buf, tmplName, data); err != nil {
 		return "", fmt.Errorf("execute template %s: %w", tmplName, err)
 	}
 	return strings.TrimSuffix(buf.String(), "\n"), nil
+}
+
+// renderNotification renders the notification template associated with task.
+// Database overrides are respected when present.
+func renderNotification(ctx context.Context, q *dbpkg.Queries, task tasks.Name, data interface{}) (string, error) {
+	if task == nil {
+		return "", nil
+	}
+	name := strings.ToLower(task.Name()) + ".gotxt"
+	tmpls := templates.GetCompiledNotificationTemplates(map[string]any{})
+	return renderTemplate(ctx, q, tmpls, name, data)
 }
 
 // collectSubscribers returns a set of user IDs subscribed to any of the
@@ -237,8 +244,11 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 		}
 	}
 	if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
-		name, _ := evt.Task.(tasks.Name)
-		msg, err := renderMessage(ctx, n.Queries, noteTmpls, *nt, evt.Path, evt.Data, evt.UserID)
+		data := struct {
+			eventbus.Event
+			Item interface{}
+		}{Event: evt, Item: evt.Data}
+		msg, err := renderTemplate(ctx, n.Queries, noteTmpls, *nt, data)
 		if err != nil {
 			return err
 		}
@@ -256,12 +266,11 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 }
 
 func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp SubscribersNotificationTemplateProvider, noteTmpls *template.Template) error {
-	patterns := buildPatterns(named, evt.Path)
 	name := ""
 	if tn, ok := evt.Task.(tasks.Name); ok {
 		name = tn.Name()
 	}
-	patterns := buildPatterns(namedTask{name}, evt.Path)
+	patterns := buildPatterns(tasks.TaskString(name), evt.Path)
 
 	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
 	if err != nil {
@@ -276,14 +285,18 @@ func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp S
 	delete(internalSubs, evt.UserID)
 
 	var msg string
+	data := struct {
+		eventbus.Event
+		Item interface{}
+	}{Event: evt, Item: evt.Data}
 	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
-		var buf bytes.Buffer
-		noteTmpls := templates.GetCompiledNotificationTemplates(map[string]any{})
-		if err := noteTmpls.ExecuteTemplate(&buf, *nt, evt.Data); err == nil {
-			msg = buf.String()
+		var err error
+		msg, err = renderTemplate(ctx, n.Queries, noteTmpls, *nt, data)
+		if err != nil {
+			return err
 		}
-	} else {
-		msg = renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
+	} else if tn, ok := evt.Task.(tasks.Name); ok {
+		msg, _ = renderNotification(ctx, n.Queries, tn, data)
 	}
 
 	et := tp.SubscribedEmailTemplate()
@@ -315,7 +328,7 @@ func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier, tp
 	}
 	if auto {
 		task, path := tp.AutoSubscribePath()
-		pattern := buildPatterns(namedTask{task}, path)[0]
+		pattern := buildPatterns(tasks.TaskString(task), path)[0]
 		if config.AppRuntimeConfig.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
 		}
@@ -344,14 +357,18 @@ func notifyAdmins(ctx context.Context, evt eventbus.Event, n Notifier, tp AdminE
 			}
 		}
 		if nt := tp.AdminInternalNotificationTemplate(); nt != nil && n.Queries != nil {
-			var buf bytes.Buffer
-			if err := noteTmpls.ExecuteTemplate(&buf, *nt, evt.Data); err != nil {
+			data := struct {
+				eventbus.Event
+				Item interface{}
+			}{Event: evt, Item: evt.Data}
+			msg, err := renderTemplate(ctx, n.Queries, noteTmpls, *nt, data)
+			if err != nil {
 				return err
 			}
 			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
 				UsersIdusers: uid,
 				Link:         sql.NullString{String: evt.Path, Valid: evt.Path != ""},
-				Message:      sql.NullString{String: buf.String(), Valid: buf.Len() > 0},
+				Message:      sql.NullString{String: msg, Valid: msg != ""},
 			}); err != nil {
 				return err
 			}
@@ -375,20 +392,6 @@ func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pat
 	if err := q.InsertSubscription(ctx, dbpkg.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {
 		log.Printf("insert subscription: %v", err)
 	}
-}
-
-func renderMessage(ctx context.Context, q *dbpkg.Queries, task tasks.Task, path string, data any) string {
-	tmpl := templates.GetCompiledNotificationTemplates(map[string]any{})
-	name := ""
-	if tn, ok := task.(tasks.Name); ok {
-		name = strings.ToLower(tn.Name()) + ".gotxt"
-	}
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {
-		log.Printf("render message %s: %v", name, err)
-		return ""
-	}
-	return buf.String()
 }
 
 func notifyMissingEmail(ctx context.Context, q *dbpkg.Queries, userID int32) {

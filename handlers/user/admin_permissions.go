@@ -15,33 +15,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// PermissionUserAllowTask grants a user permission.
-type PermissionUserAllowTask struct{ tasks.TaskString }
-
-var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
-
-func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	adminUsersPermissionsPermissionUserAllowPage(w, r)
-}
-
-// PermissionUserDisallowTask removes a user's permission.
-type PermissionUserDisallowTask struct{ tasks.TaskString }
-
-var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
-
-func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	adminUsersPermissionsDisallowPage(w, r)
-}
-
-// PermissionUpdateTask updates an existing permission entry.
-type PermissionUpdateTask struct{ tasks.TaskString }
-
-var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
-
-func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
-	adminUsersPermissionsUpdatePage(w, r)
-}
-
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
@@ -71,6 +44,10 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		return rows[i].Username.String < rows[j].Username.String
 	})
 	data.Rows = rows
+}
+
+// PermissionUserAllowTask grants a user permission.
+type PermissionUserAllowTask struct{ tasks.TaskString }
 
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
@@ -98,7 +75,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-// permissionUserDisallowTask removes a user's permission level.
+// PermissionUserDisallowTask removes a user's permission.
 type PermissionUserDisallowTask struct{ tasks.TaskString }
 
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
@@ -123,7 +100,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-// permissionUpdateTask updates an existing permission record.
+// PermissionUpdateTask updates an existing permission entry.
 type PermissionUpdateTask struct{ tasks.TaskString }
 
 var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
@@ -153,37 +130,4 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
-}
-
-func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-		Rows  []*db.GetPermissionsWithUsersRow
-		Roles []*db.Role
-	}
-
-	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
-	}
-
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	if roles, err := data.AllRoles(); err == nil {
-		data.Roles = roles
-	}
-
-	rows, err := queries.GetPermissionsWithUsers(r.Context(), db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-	sort.Slice(rows, func(i, j int) bool {
-		return rows[i].Username.String < rows[j].Username.String
-	})
-	data.Rows = rows
-
-	handlers.TemplateHandler(w, r, "usersPermissionsPage.gohtml", data)
 }

@@ -19,7 +19,7 @@ import (
 // BloggerListPage shows all bloggers with their post counts.
 func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows     []*db.BloggerCountRow
 		Search   string
 		NextLink string

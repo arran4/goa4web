@@ -2,7 +2,6 @@ package linker
 
 import (
 	"github.com/arran4/goa4web/handlers/forum/comments"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	handlers "github.com/arran4/goa4web/handlers"
@@ -27,14 +26,14 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/linker/{username}/", UserPage).Methods("GET")
 	lr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	lr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", replyTaskEvent.Page).Methods("GET")
+	lr.HandleFunc("/comments/{link}", replyTaskEvent.Page).Methods("GET") // TODO implement replyTaskEvent
 	lr.HandleFunc("/comments/{link}", replyTaskEvent.Action).Methods("POST").MatcherFunc(replyTaskEvent.Matcher())
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(commentEditAction.Page))).Methods("POST").MatcherFunc(commentEditAction.Matcher())
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(commentEditActionCancel.Page))).Methods("POST").MatcherFunc(commentEditActionCancel.Matcher())
-	lr.HandleFunc("/show/{link}", replyTaskEvent.Page).Methods("GET")
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(commentEditAction.Page))).Methods("POST").MatcherFunc(commentEditAction.Matcher())             // todo implement commentEditAction
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(commentEditActionCancel.Page))).Methods("POST").MatcherFunc(commentEditActionCancel.Matcher()) // TODO implement commentEditActionCancel
+	lr.HandleFunc("/show/{link}", replyTaskEvent.Page).Methods("GET")                                                                                                                             // TODO implement replyTaskEvent
 	lr.HandleFunc("/show/{link}", replyTaskEvent.Action).Methods("POST").MatcherFunc(replyTaskEvent.Matcher())
 	lr.HandleFunc("/suggest", suggestTask.Page).Methods("GET")
-	lr.HandleFunc("/suggest", suggestTask.Action).Methods("POST").MatcherFunc(suggestTask.Matcher())
+	lr.HandleFunc("/suggest", suggestTask.Action).Methods("POST").MatcherFunc(suggestTask.Matcher)
 
 	if legacyRedirectsEnabled {
 		// legacy redirects

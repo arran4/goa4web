@@ -33,7 +33,7 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/show/{link}", replyTaskEvent.Page).Methods("GET")                                                                                                                             // TODO implement replyTaskEvent
 	lr.HandleFunc("/show/{link}", replyTaskEvent.Action).Methods("POST").MatcherFunc(replyTaskEvent.Matcher())
 	lr.HandleFunc("/suggest", suggestTask.Page).Methods("GET")
-	lr.HandleFunc("/suggest", suggestTask.Action).Methods("POST").MatcherFunc(suggestTask.Matcher)
+	lr.HandleFunc("/suggest", suggestTask.Action()).Methods("POST").MatcherFunc(suggestTask.Matcher())
 
 	if legacyRedirectsEnabled {
 		// legacy redirects

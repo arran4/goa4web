@@ -3,6 +3,7 @@ package writings
 import (
 	"net/http"
 
+	"github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -16,6 +17,20 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) { Articl
 
 // ReplyTask posts a comment reply.
 type ReplyTask struct{ tasks.TaskString }
+
+func (ReplyTask) IndexType() string { return searchworker.SearchForumComment }
+func (ReplyTask) IndexID(data map[string]any) int64 {
+	if v, ok := data["comment_id"].(int64); ok {
+		return v
+	}
+	return 0
+}
+func (ReplyTask) IndexText(data map[string]any) string {
+	if s, ok := data["text"].(string); ok {
+		return s
+	}
+	return ""
+}
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 

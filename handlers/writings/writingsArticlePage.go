@@ -14,7 +14,7 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -378,17 +378,15 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO move to searchworker that is automatically activated by a event.
-	cid := int64(0)
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["comment_id"] = int64(0)
+			evt.Data["text"] = text
+		}
 	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
-	}
-	//??? if _, done := SearchWordIdsFromText(w, r, text, queries); done {
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }

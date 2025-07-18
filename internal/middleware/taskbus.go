@@ -11,6 +11,7 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // TaskEventMiddleware records form tasks on the event bus after processing.
@@ -83,7 +84,7 @@ func (r *statusRecorder) WriteHeader(code int) {
 
 func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		task := r.PostFormValue("task")
+		taskName := r.PostFormValue("task")
 		uid := int32(0)
 		cd, ok := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
 		if !ok || cd == nil {
@@ -95,7 +96,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		admin := strings.Contains(r.URL.Path, "/admin")
 		evt := &eventbus.Event{
 			Path:   r.URL.Path,
-			Task:   task,
+			Task:   tasks.NewTaskEvent(taskName),
 			UserID: uid,
 			Time:   time.Now(),
 			Admin:  admin,
@@ -103,7 +104,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		cd.SetEvent(evt)
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sr, r)
-		if task != "" && sr.status < http.StatusBadRequest {
+		if taskName != "" && sr.status < http.StatusBadRequest {
 			if err := eventbus.DefaultBus.Publish(*evt); err != nil {
 				if err == eventbus.ErrBusClosed {
 					taskQueue.enqueue(*evt)

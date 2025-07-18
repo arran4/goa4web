@@ -3,18 +3,20 @@ package eventbus
 import (
 	"context"
 	"errors"
-	"github.com/arran4/goa4web/internal/tasks"
 	"sync"
 	"time"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Event represents a task or notification that occurred in the application.
 type Event struct {
 	Path   string         // Path or URI describing the event source
-	Task   tasks.Task     // Name of the action/task performed
+	Task   tasks.Task     // Task that triggered the event
 	UserID int32          // ID of the user performing the action
 	Time   time.Time      // Time the event occurred
 	Data   map[string]any // Optional template data associated with the event
+	Admin  bool           // True when the action occurred within /admin
 }
 
 // Bus provides a simple publish/subscribe mechanism for events.

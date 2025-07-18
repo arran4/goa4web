@@ -10,7 +10,6 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	emailutil "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -171,14 +170,14 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["comment_id"] = cid
+			evt.Data["text"] = text
+		}
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)

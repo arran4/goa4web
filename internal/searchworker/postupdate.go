@@ -7,7 +7,8 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-// TODO this should be made into a "searchworker" that updates when ever there has been a post / comment.
+// PostUpdate is triggered by the search worker whenever a new post or comment
+// is created. It refreshes metadata for the specified thread and topic.
 
 // PostUpdate refreshes metadata on the given forum thread and topic.
 // It recalculates thread counters and rebuilds the topic aggregates.

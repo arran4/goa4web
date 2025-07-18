@@ -16,14 +16,27 @@ import (
 	"github.com/arran4/goa4web/core"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
+
+func (ReplyTask) IndexType() string { return searchworker.SearchForumComment }
+func (ReplyTask) IndexID(data map[string]any) int64 {
+	if v, ok := data["comment_id"].(int64); ok {
+		return v
+	}
+	return 0
+}
+func (ReplyTask) IndexText(data map[string]any) string {
+	if s, ok := data["text"].(string); ok {
+		return s
+	}
+	return ""
+}
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
@@ -103,18 +116,15 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["comment_id"] = cid
+			evt.Data["text"] = text
+		}
 	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
-	}
-
-	// TODO remove and replace with proper eventbus notification
-	notif.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), threadRow.Idforumthread, uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

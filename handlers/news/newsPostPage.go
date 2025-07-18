@@ -24,7 +24,7 @@ import (
 	email "github.com/arran4/goa4web/internal/email"
 	emailutil "github.com/arran4/goa4web/internal/notifications"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -36,6 +36,20 @@ type NewsPost struct {
 }
 
 type replyTask struct{ tasks.TaskString }
+
+func (replyTask) IndexType() string { return searchworker.SearchForumComment }
+func (replyTask) IndexID(data map[string]any) int64 {
+	if v, ok := data["comment_id"].(int64); ok {
+		return v
+	}
+	return 0
+}
+func (replyTask) IndexText(data map[string]any) string {
+	if s, ok := data["text"].(string); ok {
+		return s
+	}
+	return ""
+}
 
 var replyTask = &replyTask{TaskString: TaskReply}
 
@@ -333,8 +347,14 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO this should be automatic through the event bus -> notification system
-	notfications.NotifyNewsSubscribers(r.Context(), queries, int32(pid), uid, endUrl)
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["target"] = notifications.Target{Type: "news", ID: int32(pid)}
+		}
+	}
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
@@ -357,13 +377,14 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO move to searchworker that is automatically activated by a event.
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
+	if cd, ok := r.Context().Value(handlers.KeyCoreData).(*corecommon.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["comment_id"] = cid
+			evt.Data["text"] = text
+		}
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)

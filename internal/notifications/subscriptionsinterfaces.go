@@ -10,9 +10,9 @@ type EmailTemplates struct {
 // from prefix.
 func NewEmailTemplates(prefix string) *EmailTemplates {
 	return &EmailTemplates{
-		Text:    prefix + ".gotxt",
-		HTML:    prefix + ".gohtml",
-		Subject: prefix + "Subject.gotxt",
+		Text:    EmailTextTemplateFilenameGenerator(prefix),
+		HTML:    EmailHTMLTemplateFilenameGenerator(prefix),
+		Subject: EmailSubjectTemplateFilenameGenerator(prefix),
 	}
 }
 

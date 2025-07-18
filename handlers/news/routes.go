@@ -3,13 +3,13 @@ package news
 import (
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/forum/comments"
 
 	"github.com/gorilla/mux"
 
-	handlers "github.com/arran4/goa4web/handlers"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
 )

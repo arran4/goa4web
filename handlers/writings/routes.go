@@ -33,12 +33,12 @@ func RegisterRoutes(r *mux.Router) {
 	wr.HandleFunc("/article/{article}", replyTask.Action).Methods("POST").MatcherFunc(replyTask.Matcher())
 	wr.HandleFunc("/article/{article}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(editReplyTask.Action)).ServeHTTP).Methods("POST").MatcherFunc(editReplyTask.Matcher())
 	wr.HandleFunc("/article/{article}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(cancelTask.Action)).ServeHTTP).Methods("POST").MatcherFunc(cancelTask.Matcher())
-	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(ArticleEditPage))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
+	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(updateWritingTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
 	wr.Handle("/article/{article}/edit", RequireWritingAuthor(http.HandlerFunc(updateWritingTask.Action))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(updateWritingTask.Matcher())
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
-	wr.HandleFunc("/category/{category}/add", ArticleAddPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
+	wr.HandleFunc("/category/{category}/add", submitWritingTask.Page).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
 	wr.HandleFunc("/category/{category}/add", submitWritingTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(submitWritingTask.Matcher())
 
 	if legacyRedirectsEnabled {

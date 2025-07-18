@@ -7,9 +7,18 @@ import (
 )
 
 // HasTask restricts requests to those specifying the provided task value.
-func HasTask(taskName string) mux.MatcherFunc {
+func HasTask(task Task, taskName string) mux.MatcherFunc {
 	return func(r *http.Request, m *mux.RouteMatch) bool {
-		return r.PostFormValue("task") == taskName
+		if r.PostFormValue("task") != taskName {
+			return false
+		}
+		// TODO implement something like this
+		//if cd, ok := r.Context().Value("coreData").(*common.CoreData); ok {
+		//	if evt := cd.Event(); evt != nil {
+		//		evt.Task = task
+		//	}
+		//}
+		return true
 	}
 }
 

@@ -19,8 +19,8 @@ type AskTask struct{ tasks.TaskString }
 
 var askTask = &AskTask{TaskString: TaskAsk}
 
-func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskAsk)(r, m)
+func (t AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskAsk)(r, m)
 }
 
 func (AskTask) Page(w http.ResponseWriter, r *http.Request) {

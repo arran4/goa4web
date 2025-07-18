@@ -20,12 +20,12 @@ type RemoveQuestionTask struct{ tasks.TaskString }
 var answerTask = &AnswerTask{TaskString: TaskAnswer}
 var removeQuestionTask = &RemoveQuestionTask{TaskString: TaskRemoveRemove}
 
-func (AnswerTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskAnswer)(r, m)
+func (t AnswerTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskAnswer)(r, m)
 }
 
-func (RemoveQuestionTask) Match(req *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskRemoveRemove)(req, m)
+func (t RemoveQuestionTask) Match(req *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskRemoveRemove)(req, m)
 }
 
 func AdminAnswerPage(w http.ResponseWriter, r *http.Request) {

@@ -27,9 +27,4 @@ func (t TaskString) Name() string {
 	return string(t)
 }
 
-func (t TaskString) Matcher() mux.MatcherFunc {
-	return HasTask(string(t))
-}
-
-var _ TaskMatcher = (TaskString)("")
 var _ Name = (TaskString)("")

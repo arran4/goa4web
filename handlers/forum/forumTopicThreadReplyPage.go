@@ -23,6 +23,17 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+func (ReplyTask) IndexType() string { return searchworker.TypeComment }
+
+func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyTask{}
+
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -49,7 +60,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      threadRow.Idforumthread,

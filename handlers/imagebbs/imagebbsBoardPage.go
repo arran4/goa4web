@@ -17,7 +17,7 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/core"
@@ -33,6 +33,17 @@ import (
 type UploadImageTask struct{ tasks.TaskString }
 
 var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
+
+func (UploadImageTask) IndexType() string { return searchworker.TypeImage }
+
+func (UploadImageTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = UploadImageTask{}
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -175,13 +186,13 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
+		}
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)

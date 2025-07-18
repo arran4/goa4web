@@ -28,6 +28,17 @@ type ReplyBlogTask struct{ tasks.TaskString }
 
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 
+func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }
+
+func (ReplyBlogTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyBlogTask{}
+
 func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogReplyPostPage(w, r) }
 
 func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {

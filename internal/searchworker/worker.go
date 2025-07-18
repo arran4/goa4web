@@ -36,11 +36,12 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 	for {
 		select {
 		case evt := <-ch:
-			data, ok := evt.Data[EventKey].(IndexEventData)
-			if ok {
+			if data, ok := evt.Data[EventKey].(IndexEventData); ok {
 				if err := index(ctx, q, data); err != nil {
 					log.Printf("index error: %v", err)
 				}
+			} else {
+				processEvent(ctx, evt, q)
 			}
 		case <-ctx.Done():
 			return

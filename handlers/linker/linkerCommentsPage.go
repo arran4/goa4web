@@ -157,6 +157,17 @@ var ReplyTaskEvent = replyTask{
 	},
 }
 
+func (replyTask) IndexType() string { return searchworker.TypeComment }
+
+func (replyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = replyTask{}
+
 func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -240,7 +251,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)
 
-  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      pthid,

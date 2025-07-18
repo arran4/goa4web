@@ -13,7 +13,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -167,6 +167,17 @@ var ApproveTask = approveTask{
 	},
 }
 
+func (approveTask) IndexType() string { return searchworker.TypeLinker }
+
+func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = approveTask{}
+
 func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
@@ -184,13 +195,13 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-		if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-			return
+	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
@@ -228,6 +239,17 @@ var BulkApproveTask = bulkApproveTask{
 	},
 }
 
+func (bulkApproveTask) IndexType() string { return searchworker.TypeLinker }
+
+func (bulkApproveTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = bulkApproveTask{}
+
 func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
@@ -245,13 +267,13 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("getLinkerItemById Error: %s", err)
 			continue
 		}
-		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-			if done {
-				return
-			}
-			if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-				return
+		text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 			}
 		}
 	}

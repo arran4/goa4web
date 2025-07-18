@@ -30,6 +30,17 @@ type CreateThreadTask struct{ tasks.TaskString }
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
+func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
+
+func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = CreateThreadTask{}
+
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*CoreData

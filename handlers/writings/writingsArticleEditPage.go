@@ -10,7 +10,8 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
+	"strings"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -86,18 +87,13 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, text := range []string{
-		abstract,
-		title,
-		body,
-	} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-
-		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(writing.Idwriting)) {
-			return
+	fullText := strings.Join([]string{abstract, title, body}, " ")
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: writing.Idwriting, Text: fullText}
 		}
 	}
 }

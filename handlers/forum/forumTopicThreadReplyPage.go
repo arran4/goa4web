@@ -7,12 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/email"
-
-	emailutil "github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
@@ -54,36 +49,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: threadRow.Idforumthread,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		Idusers:       uid,
-		ForumthreadID: threadRow.Idforumthread,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
-
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      threadRow.Idforumthread,

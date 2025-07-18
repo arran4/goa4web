@@ -96,14 +96,14 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		req.AddCookie(c)
 	}
 	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := &corecommon.CoreData{}
+	cd := &common.CoreData{}
 	cd.SetEvent(evt)
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	handler := middleware.TaskEventMiddleware(http.HandlerFunc(AskActionPage))
+	handler := middleware.TaskEventMiddleware(http.HandlerFunc(askTask.Page))
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 

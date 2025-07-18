@@ -237,7 +237,6 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 		}
 	}
 	if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
-		name, _ := evt.Task.(tasks.Name)
 		msg, err := renderMessage(ctx, n.Queries, noteTmpls, *nt, evt.Path, evt.Data, evt.UserID)
 		if err != nil {
 			return err

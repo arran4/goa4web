@@ -15,6 +15,10 @@ const (
 	// TaskEditReply edits a comment or reply.
 	TaskEditReply tasks.TaskString = "Edit Reply"
 
+	// TaskCancel cancels the current operation and returns to the previous
+	// page.
+	TaskCancel tasks.TaskString = "Cancel"
+
 	// TaskSuggest creates a suggestion in the linker.
 	TaskSuggest tasks.TaskString = "Suggest"
 

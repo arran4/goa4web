@@ -17,11 +17,15 @@ import (
 )
 
 // CommentEditActionPage updates a comment then refreshes thread metadata.
-type editReplyTask struct{ tasks.TaskString }
+type EditReplyTask struct{ tasks.TaskString }
 
-var EditReplyTask = &editReplyTask{TaskString: TaskEditReply}
+var commentEditAction = &EditReplyTask{TaskString: TaskEditReply}
 
-func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (t EditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
+	t.Action(w, r)
+}
+
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -86,4 +90,12 @@ func CommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
 	http.Redirect(w, r, fmt.Sprintf("/linker/comments/%d", linkId), http.StatusTemporaryRedirect)
+}
+
+type cancelEditReplyTask struct{ tasks.TaskString }
+
+var commentEditActionCancel = &cancelEditReplyTask{TaskString: TaskCancel}
+
+func (cancelEditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
+	CommentEditActionCancelPage(w, r)
 }

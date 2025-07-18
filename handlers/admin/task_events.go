@@ -5,98 +5,30 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var ResendQueueTask = resendQueueTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskResend,
-		Match:     tasks.HasTask(TaskResend),
-	},
-}
+var ResendQueueTask = resendQueueTask{TaskString: TaskResend}
 
-var DeleteQueueTask = deleteQueueTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskDelete,
-		Match:     tasks.HasTask(TaskDelete),
-	},
-}
+var DeleteQueueTask = deleteQueueTask{TaskString: TaskDelete}
 
-var SaveTemplateTask = saveTemplateTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskUpdate,
-		Match:     tasks.HasTask(TaskUpdate),
-	},
-}
+var SaveTemplateTask = saveTemplateTask{TaskString: TaskUpdate}
 
-var TestTemplateTask = testTemplateTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskTestMail,
-		Match:     tasks.HasTask(TaskTestMail),
-	},
-}
+var TestTemplateTask = testTemplateTask{TaskString: TaskTestMail}
 
-var DeleteDLQTask = deleteDLQTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskDelete,
-		Match:     tasks.HasTask(TaskDelete),
-	},
-}
+var DeleteDLQTask = deleteDLQTask{TaskString: TaskDelete}
 
-var MarkReadTask = markReadTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskDismiss,
-		Match:     tasks.HasTask(TaskDismiss),
-	},
-}
+var MarkReadTask = markReadTask{TaskString: TaskDismiss}
 
-var PurgeNotificationsTask = purgeNotificationsTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskPurge,
-		Match:     tasks.HasTask(TaskPurge),
-	},
-}
+var PurgeNotificationsTask = purgeNotificationsTask{TaskString: TaskPurge}
 
-var SendNotificationTask = sendNotificationTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskNotify,
-		Match:     tasks.HasTask(TaskNotify),
-	},
-}
+var SendNotificationTask = sendNotificationTask{TaskString: TaskNotify}
 
-var AddAnnouncementTask = addAnnouncementTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskAdd,
-		Match:     tasks.HasTask(TaskAdd),
-	},
-}
+var AddAnnouncementTask = addAnnouncementTask{TaskString: TaskAdd}
 
-var DeleteAnnouncementTask = deleteAnnouncementTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskDelete,
-		Match:     tasks.HasTask(TaskDelete),
-	},
-}
+var DeleteAnnouncementTask = deleteAnnouncementTask{TaskString: TaskDelete}
 
-var AddIPBanTask = addIPBanTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskAdd,
-		Match:     tasks.HasTask(TaskAdd),
-	},
-}
+var AddIPBanTask = addIPBanTask{TaskString: TaskAdd}
 
-var DeleteIPBanTask = deleteIPBanTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskDelete,
-		Match:     tasks.HasTask(TaskDelete),
-	},
-}
+var DeleteIPBanTask = deleteIPBanTask{TaskString: TaskDelete}
 
-var NewsUserAllowTask = tasks.BasicTaskEvent{
-	EventName:     TaskAllow,
-	Match:         tasks.HasTask(TaskAllow),
-	ActionHandler: news.NewsAdminUserLevelsAllowActionPage,
-}
+var NewsUserAllowTask = news.NewsUserAllowTask{TaskString: TaskAllow}
 
-var NewsUserRemoveTask = tasks.BasicTaskEvent{
-	EventName:     TaskRemoveLower,
-	Match:         tasks.HasTask(TaskRemoveLower),
-	ActionHandler: news.NewsAdminUserLevelsRemoveActionPage,
-}
+var NewsUserRemoveTask = news.NewsUserRemoveTask{TaskString: TaskRemoveLower}

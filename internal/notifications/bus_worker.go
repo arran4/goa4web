@@ -20,10 +20,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-type namedTask struct{ name string }
-
-func (n namedTask) Name() string { return n.name }
-
 func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) error {
 	if q == nil {
 		return fmt.Errorf("no dlq provider")
@@ -65,6 +61,36 @@ func buildPatterns(task tasks.Name, path string) []string {
 	}
 	patterns = append(patterns, fmt.Sprintf("%s:/*", name))
 	return patterns
+}
+
+// renderMessage loads the template for the action and populates it with data.
+func renderMessage(ctx context.Context, q *dbpkg.Queries, tmpls *template.Template, tmplName, path string, item interface{}, uid int32) (string, error) {
+	var t *template.Template
+	if q != nil {
+		if body, err := q.GetTemplateOverride(ctx, tmplName); err == nil && body != "" {
+			parsed, perr := template.New(tmplName).Parse(body)
+			if perr != nil {
+				return "", fmt.Errorf("parse template %s: %w", tmplName, perr)
+			}
+			t = parsed
+		}
+	}
+	if t == nil {
+		if tmpls == nil || tmpls.Lookup(tmplName) == nil {
+			return "", nil
+		}
+		t = tmpls
+	}
+	var buf bytes.Buffer
+	data := struct {
+		Path   string
+		Item   interface{}
+		UserID int32
+	}{Path: path, Item: item, UserID: uid}
+	if err := t.ExecuteTemplate(&buf, tmplName, data); err != nil {
+		return "", fmt.Errorf("execute template %s: %w", tmplName, err)
+	}
+	return strings.TrimSuffix(buf.String(), "\n"), nil
 }
 
 // collectSubscribers returns a set of user IDs subscribed to any of the
@@ -164,7 +190,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
-		if err := notifySelf(ctx, evt, n, tp); err != nil {
+		if err := notifySelf(ctx, evt, n, tp, notificationTemplates); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -174,7 +200,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
-		if err := notifySubscribers(ctx, evt, n, tp); err != nil {
+		if err := notifySubscribers(ctx, evt, n, tp, notificationTemplates); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -191,7 +217,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	return nil
 }
 
-func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNotificationTemplateProvider) error {
+func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNotificationTemplateProvider, noteTmpls *template.Template) error {
 	user, err := n.Queries.GetUserById(ctx, evt.UserID)
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
 		notifyMissingEmail(ctx, n.Queries, evt.UserID)
@@ -210,20 +236,27 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 			}
 		}
 	}
-	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
-	if msg != "" {
-		if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
-			UsersIdusers: evt.UserID,
-			Link:         sql.NullString{String: evt.Path, Valid: true},
-			Message:      sql.NullString{String: msg, Valid: true},
-		}); err != nil {
+	if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
+		name, _ := evt.Task.(tasks.Name)
+		msg, err := renderMessage(ctx, n.Queries, noteTmpls, *nt, evt.Path, evt.Data, evt.UserID)
+		if err != nil {
 			return err
+		}
+		if msg != "" {
+			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+				UsersIdusers: evt.UserID,
+				Link:         sql.NullString{String: evt.Path, Valid: true},
+				Message:      sql.NullString{String: msg, Valid: true},
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp SubscribersNotificationTemplateProvider) error {
+func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp SubscribersNotificationTemplateProvider, noteTmpls *template.Template) error {
+	patterns := buildPatterns(named, evt.Path)
 	name := ""
 	if tn, ok := evt.Task.(tasks.Name); ok {
 		name = tn.Name()

@@ -16,8 +16,8 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 )
 
-type resendQueueTask struct{ tasks.BasicTaskEvent }
-type deleteQueueTask struct{ tasks.BasicTaskEvent }
+type resendQueueTask struct{ tasks.TaskString }
+type deleteQueueTask struct{ tasks.TaskString }
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {

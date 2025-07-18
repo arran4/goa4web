@@ -22,8 +22,8 @@ import (
 	emailutil "github.com/arran4/goa4web/internal/notifications"
 )
 
-type saveTemplateTask struct{ tasks.BasicTaskEvent }
-type testTemplateTask struct{ tasks.BasicTaskEvent }
+type saveTemplateTask struct{ tasks.TaskString }
+type testTemplateTask struct{ tasks.TaskString }
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {

@@ -10,6 +10,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +43,9 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }
 
-func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
+type newsUserAllowTask struct{ tasks.TaskString }
+
+func (newsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
@@ -62,10 +65,11 @@ func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
-
 }
 
-func NewsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
+type newsUserRemoveTask struct{ tasks.TaskString }
+
+func (newsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid, err := strconv.Atoi(r.PostFormValue("permid"))
 	if err != nil {
@@ -80,3 +84,6 @@ func NewsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request)
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
+
+var NewsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
+var NewsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}

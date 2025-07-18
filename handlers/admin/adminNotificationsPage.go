@@ -14,9 +14,9 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type markReadTask struct{ tasks.BasicTaskEvent }
-type purgeNotificationsTask struct{ tasks.BasicTaskEvent }
-type sendNotificationTask struct{ tasks.BasicTaskEvent }
+type markReadTask struct{ tasks.TaskString }
+type purgeNotificationsTask struct{ tasks.TaskString }
+type sendNotificationTask struct{ tasks.TaskString }
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

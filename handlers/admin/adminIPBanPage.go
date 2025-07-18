@@ -15,8 +15,8 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type addIPBanTask struct{ tasks.BasicTaskEvent }
-type deleteIPBanTask struct{ tasks.BasicTaskEvent }
+type addIPBanTask struct{ tasks.TaskString }
+type deleteIPBanTask struct{ tasks.TaskString }
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

@@ -114,7 +114,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		t.Fatalf("location=%q", loc)
 	}
 	evt := cd.Event()
-	if !evt.Admin || evt.Path != "/admin/faq" {
+	named, ok := evt.Task.(tasks.Name)
+	if !ok || named.Name() != TaskAsk || evt.Path != "/admin/faq" {
 		t.Fatalf("event %+v", evt)
 	}
 

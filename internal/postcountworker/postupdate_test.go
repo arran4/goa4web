@@ -1,4 +1,4 @@
-package searchworker
+package postcountworker
 
 import (
 	"context"

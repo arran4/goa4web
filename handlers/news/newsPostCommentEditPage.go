@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 )
 
 func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
@@ -53,9 +54,13 @@ func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdateLocal(r.Context(), queries, thread.Idforumthread, thread.ForumtopicIdforumtopic); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
+		}
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)

@@ -4,18 +4,10 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
-
-// AddFAQIndex injects FAQ index links into CoreData.
-func AddFAQIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(func(cd *common.CoreData, r *http.Request) {
-		CustomFAQIndex(cd, r)
-	})(h)
-}
 
 func noTask() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {

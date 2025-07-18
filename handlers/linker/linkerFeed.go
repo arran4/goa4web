@@ -11,8 +11,8 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	common "github.com/arran4/goa4web/core/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
+	images "github.com/arran4/goa4web/pkg/images"
 	"github.com/gorilla/feeds"
 )
 
@@ -29,7 +29,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 		}
 		desc := ""
 		if row.Description.Valid {
-			conv := a4code2html.New(imageshandler.MapURL)
+			conv := a4code2html.New(images.MapURL)
 			conv.CodeType = a4code2html.CTTagStrip
 			conv.SetInput(row.Description.String)
 			out, _ := io.ReadAll(conv.Process())

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/feeds"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
+	images "github.com/arran4/goa4web/pkg/images"
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		text := row.News.String
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(images.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())

@@ -4,6 +4,8 @@ import (
 	"io/fs"
 	"os"
 	"testing"
+
+	"github.com/arran4/goa4web/core"
 )
 
 type memFile struct {
@@ -29,7 +31,7 @@ func (m *memFS) WriteFile(name string, data []byte, perm fs.FileMode) error {
 }
 
 // useMemFS returns an in-memory FileSystem for tests.
-func useMemFS(t *testing.T) FileSystem {
+func useMemFS(t *testing.T) core.FileSystem {
 	t.Helper()
 	return newMemFS()
 }

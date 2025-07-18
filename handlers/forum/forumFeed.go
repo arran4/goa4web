@@ -13,8 +13,8 @@ import (
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
+	images "github.com/arran4/goa4web/pkg/images"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 )
@@ -31,7 +31,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 			continue
 		}
 		text := row.Firstposttext.String
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(images.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())

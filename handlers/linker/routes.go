@@ -2,7 +2,6 @@ package linker
 
 import (
 	"github.com/arran4/goa4web/handlers/forum/comments"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	handlers "github.com/arran4/goa4web/handlers"
@@ -11,11 +10,6 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
-
-// AddLinkerIndex injects linker index links into CoreData.
-func AddLinkerIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(CustomLinkerIndex)(h)
-}
 
 var legacyRedirectsEnabled = true
 

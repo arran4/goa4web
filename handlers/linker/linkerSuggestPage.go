@@ -55,11 +55,13 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "suggestPage.gohtml", data)
 }
 
-type suggestTask struct{ tasks.TaskString }
+type SuggestTask struct{ tasks.TaskString }
 
-var SuggestTask = &suggestTask{TaskString: TaskSuggest}
+var suggestTask = &SuggestTask{TaskString: TaskSuggest}
 
-func (suggestTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SuggestTask) Page(w http.ResponseWriter, r *http.Request) { SuggestPage(w, r) }
+
+func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)

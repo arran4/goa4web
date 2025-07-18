@@ -18,10 +18,12 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
+	"github.com/arran4/goa4web/internal/auditworker"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/logworker"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
@@ -154,9 +156,9 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqP
 	log.Printf("Starting notification purger worker")
 	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
 	log.Printf("Starting event bus logger worker")
-	safeGo(func() { eventbus.LogWorker(ctx, eventbus.DefaultBus) })
+	safeGo(func() { logworker.Worker(ctx, eventbus.DefaultBus) })
 	log.Printf("Starting audit worker")
-	safeGo(func() { eventbus.AuditWorker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
+	safeGo(func() { auditworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
 	log.Printf("Starting notification bus worker")
 	safeGo(func() {
 		notifications.BusWorker(ctx, eventbus.DefaultBus, provider, dbpkg.New(db), dlqProvider)

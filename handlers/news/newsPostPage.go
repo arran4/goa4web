@@ -37,6 +37,17 @@ type replyTask struct{ tasks.TaskString }
 
 var replyTask = &replyTask{TaskString: TaskReply}
 
+func (replyTask) IndexType() string { return searchworker.TypeComment }
+
+func (replyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = replyTask{}
+
 type editTask struct{ tasks.TaskString }
 
 var editTask = &editTask{TaskString: TaskEdit}

@@ -3,6 +3,7 @@ package writings
 import (
 	"net/http"
 
+	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -18,6 +19,17 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) { Articl
 type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
+
+func (ReplyTask) IndexType() string { return searchworker.TypeComment }
+
+func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) { ArticleReplyActionPage(w, r) }
 

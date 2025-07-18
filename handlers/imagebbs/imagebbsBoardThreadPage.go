@@ -26,6 +26,17 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+func (ReplyTask) IndexType() string { return searchworker.TypeComment }
+
+func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyTask{}
+
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
 		*db.GetCommentsByThreadIdForUserRow

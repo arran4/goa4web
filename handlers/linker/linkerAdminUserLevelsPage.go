@@ -73,14 +73,9 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }
 
-type userAllowTask struct{ tasks.BasicTaskEvent }
+type userAllowTask struct{ tasks.TaskString }
 
-var UserAllowTask = userAllowTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskUserAllow,
-		Match:     tasks.HasTask(TaskUserAllow),
-	},
-}
+var UserAllowTask = &userAllowTask{TaskString: TaskUserAllow}
 
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -108,14 +103,9 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-type userDisallowTask struct{ tasks.BasicTaskEvent }
+type userDisallowTask struct{ tasks.TaskString }
 
-var UserDisallowTask = userDisallowTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskUserDisallow,
-		Match:     tasks.HasTask(TaskUserDisallow),
-	},
-}
+var UserDisallowTask = &userDisallowTask{TaskString: TaskUserDisallow}
 
 func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

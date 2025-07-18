@@ -5,70 +5,81 @@ import (
 )
 
 // SetUserLevelTask updates a user's forum access level.
-var SetUserLevelTask = tasks.BasicTaskEvent{
-	EventName: TaskSetUserLevel,
-	Match:     tasks.HasTask(TaskSetUserLevel),
-}
+type SetUserLevelTask struct{ tasks.TaskString }
+
+var setUserLevelTask = &SetUserLevelTask{TaskString: TaskSetUserLevel}
 
 // UpdateUserLevelTask modifies a user's access level.
-var UpdateUserLevelTask = tasks.BasicTaskEvent{
-	EventName: TaskUpdateUserLevel,
-	Match:     tasks.HasTask(TaskUpdateUserLevel),
-}
+type UpdateUserLevelTask struct{ tasks.TaskString }
+
+var updateUserLevelTask = &UpdateUserLevelTask{TaskString: TaskUpdateUserLevel}
 
 // DeleteUserLevelTask removes a user's access level.
-var DeleteUserLevelTask = tasks.BasicTaskEvent{
-	EventName: TaskDeleteUserLevel,
-	Match:     tasks.HasTask(TaskDeleteUserLevel),
-}
+type DeleteUserLevelTask struct{ tasks.TaskString }
+
+var deleteUserLevelTask = &DeleteUserLevelTask{TaskString: TaskDeleteUserLevel}
 
 // SetTopicRestrictionTask adds a topic restriction.
-var SetTopicRestrictionTask = tasks.BasicTaskEvent{
-	EventName: TaskSetTopicRestriction,
-	Match:     tasks.HasTask(TaskSetTopicRestriction),
-}
+type SetTopicRestrictionTask struct{ tasks.TaskString }
+
+var setTopicRestrictionTask = &SetTopicRestrictionTask{TaskString: TaskSetTopicRestriction}
 
 // UpdateTopicRestrictionTask updates a topic restriction.
-var UpdateTopicRestrictionTask = tasks.BasicTaskEvent{
-	EventName: TaskUpdateTopicRestriction,
-	Match:     tasks.HasTask(TaskUpdateTopicRestriction),
-}
+type UpdateTopicRestrictionTask struct{ tasks.TaskString }
+
+var updateTopicRestrictionTask = &UpdateTopicRestrictionTask{TaskString: TaskUpdateTopicRestriction}
 
 // DeleteTopicRestrictionTask deletes a topic restriction.
-var DeleteTopicRestrictionTask = tasks.BasicTaskEvent{
-	EventName: TaskDeleteTopicRestriction,
-	Match:     tasks.HasTask(TaskDeleteTopicRestriction),
-}
+type DeleteTopicRestrictionTask struct{ tasks.TaskString }
+
+var deleteTopicRestrictionTask = &DeleteTopicRestrictionTask{TaskString: TaskDeleteTopicRestriction}
 
 // CopyTopicRestrictionTask copies topic restrictions between topics.
-var CopyTopicRestrictionTask = tasks.BasicTaskEvent{
-	EventName: TaskCopyTopicRestriction,
-	Match:     tasks.HasTask(TaskCopyTopicRestriction),
-}
+type CopyTopicRestrictionTask struct{ tasks.TaskString }
+
+var copyTopicRestrictionTask = &CopyTopicRestrictionTask{TaskString: TaskCopyTopicRestriction}
 
 // RemakeThreadStatsTask refreshes forum thread statistics.
-var RemakeThreadStatsTask = tasks.NewTaskEvent(TaskRemakeStatisticInformationOnForumthread)
+type RemakeThreadStatsTask struct{ tasks.TaskString }
+
+var remakeThreadStatsTask = &RemakeThreadStatsTask{TaskString: TaskRemakeStatisticInformationOnForumthread}
 
 // RemakeTopicStatsTask refreshes forum topic statistics.
-var RemakeTopicStatsTask = tasks.NewTaskEvent(TaskRemakeStatisticInformationOnForumtopic)
+type RemakeTopicStatsTask struct{ tasks.TaskString }
+
+var remakeTopicStatsTask = &RemakeTopicStatsTask{TaskString: TaskRemakeStatisticInformationOnForumtopic}
 
 // CategoryChangeTask updates a forum category name.
-var CategoryChangeTask = tasks.NewTaskEvent(TaskForumCategoryChange)
+type CategoryChangeTask struct{ tasks.TaskString }
+
+var categoryChangeTask = &CategoryChangeTask{TaskString: TaskForumCategoryChange}
 
 // CategoryCreateTask creates a new forum category.
-var CategoryCreateTask = tasks.NewTaskEvent(TaskForumCategoryCreate)
+type CategoryCreateTask struct{ tasks.TaskString }
+
+var categoryCreateTask = &CategoryCreateTask{TaskString: TaskForumCategoryCreate}
 
 // DeleteCategoryTask removes a forum category.
-var DeleteCategoryTask = tasks.NewTaskEvent(TaskDeleteCategory)
+type DeleteCategoryTask struct{ tasks.TaskString }
+
+var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
 
 // ThreadDeleteTask removes a forum thread.
-var ThreadDeleteTask = tasks.NewTaskEvent(TaskForumThreadDelete)
+type ThreadDeleteTask struct{ tasks.TaskString }
+
+var threadDeleteTask = &ThreadDeleteTask{TaskString: TaskForumThreadDelete}
 
 // TopicChangeTask updates a forum topic title.
-var TopicChangeTask = tasks.NewTaskEvent(TaskForumTopicChange)
+type TopicChangeTask struct{ tasks.TaskString }
+
+var topicChangeTask = &TopicChangeTask{TaskString: TaskForumTopicChange}
 
 // TopicDeleteTask removes a forum topic.
-var TopicDeleteTask = tasks.NewTaskEvent(TaskForumTopicDelete)
+type TopicDeleteTask struct{ tasks.TaskString }
+
+var topicDeleteTask = &TopicDeleteTask{TaskString: TaskForumTopicDelete}
 
 // TopicCreateTask creates a new forum topic.
-var TopicCreateTask = tasks.NewTaskEvent(TaskForumTopicCreate)
+type TopicCreateTask struct{ tasks.TaskString }
+
+var topicCreateTask = &TopicCreateTask{TaskString: TaskForumTopicCreate}

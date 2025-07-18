@@ -55,14 +55,9 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "suggestPage.gohtml", data)
 }
 
-type suggestTask struct{ tasks.BasicTaskEvent }
+type suggestTask struct{ tasks.TaskString }
 
-var SuggestTask = suggestTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskSuggest,
-		Match:     tasks.HasTask(TaskSuggest),
-	},
-}
+var SuggestTask = &suggestTask{TaskString: TaskSuggest}
 
 func (suggestTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

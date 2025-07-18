@@ -1,23 +1,31 @@
 package languages
 
 import (
+	"net/http"
+
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var RenameLanguageTask = tasks.BasicTaskEvent{
-	EventName:     "Rename Language",
-	Match:         tasks.HasTask("Rename Language"),
-	ActionHandler: adminLanguagesRenamePage,
+type RenameLanguageTask struct{ tasks.TaskString }
+
+var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
+
+func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesRenamePage(w, r)
 }
 
-var DeleteLanguageTask = tasks.BasicTaskEvent{
-	EventName:     "Delete Language",
-	Match:         tasks.HasTask("Delete Language"),
-	ActionHandler: adminLanguagesDeletePage,
+type DeleteLanguageTask struct{ tasks.TaskString }
+
+var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delete Language")}
+
+func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesDeletePage(w, r)
 }
 
-var CreateLanguageTask = tasks.BasicTaskEvent{
-	EventName:     "Create Language",
-	Match:         tasks.HasTask("Create Language"),
-	ActionHandler: adminLanguagesCreatePage,
+type CreateLanguageTask struct{ tasks.TaskString }
+
+var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}
+
+func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesCreatePage(w, r)
 }

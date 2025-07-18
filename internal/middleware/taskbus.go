@@ -96,7 +96,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		_ = admin
 		evt := &eventbus.Event{
 			Path:   r.URL.Path,
-			Task:   tasks.NewTaskEvent(task), // TODO determined by router
+			Task:   tasks.TaskString(task), // TODO determined by router
 			UserID: uid,
 			Time:   time.Now(),
 		}

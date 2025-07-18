@@ -25,6 +25,7 @@ import (
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
+	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/gorilla/mux"
@@ -163,4 +164,6 @@ func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqP
 	})
 	log.Printf("Starting search index worker")
 	safeGo(func() { searchworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
+	log.Printf("Starting post count worker")
+	safeGo(func() { postcountworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
 }

@@ -14,6 +14,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 )
 
 // ArticleCommentEditActionPage updates a comment on a writing and refreshes thread metadata.
@@ -58,10 +59,13 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := handlers.PostUpdate(r.Context(), queries, thread.Idforumthread, thread.ForumtopicIdforumtopic); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
+		}
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", articleId), http.StatusTemporaryRedirect)

@@ -18,6 +18,9 @@ const (
 	// TaskSuggest creates a suggestion in the linker.
 	TaskSuggest tasks.TaskString = "Suggest"
 
+	// TaskCancel aborts an edit action.
+	TaskCancel tasks.TaskString = "Cancel"
+
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
 

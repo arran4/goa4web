@@ -16,12 +16,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CommentEditActionPage updates a comment then refreshes thread metadata.
-type editReplyTask struct{ tasks.TaskString }
+// commentEditAction updates a comment then refreshes thread metadata.
+type commentEditActionTask struct{ tasks.TaskString }
 
-var EditReplyTask = &editReplyTask{TaskString: TaskEditReply}
+var commentEditAction = &commentEditActionTask{TaskString: TaskEditReply}
 
-func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (commentEditActionTask) Page(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -82,7 +82,11 @@ func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 // CommentEditActionCancelPage aborts editing a comment.
-func CommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
+type commentEditActionCancelTask struct{ tasks.TaskString }
+
+var commentEditActionCancel = &commentEditActionCancelTask{TaskString: TaskCancel}
+
+func (commentEditActionCancelTask) Page(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
 	http.Redirect(w, r, fmt.Sprintf("/linker/comments/%d", linkId), http.StatusTemporaryRedirect)

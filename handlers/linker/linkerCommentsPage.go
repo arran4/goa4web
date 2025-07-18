@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
@@ -150,7 +151,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 type replyTask struct{ tasks.TaskString }
 
-var ReplyTaskEvent = &replyTask{TaskString: TaskReply}
+var replyTaskEvent = &replyTask{TaskString: TaskReply}
 
 func (replyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -162,6 +163,14 @@ func (replyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 }
 
 var _ searchworker.IndexedTask = replyTask{}
+
+func (replyTask) Page(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/linker/comments/") {
+		CommentsPage(w, r)
+		return
+	}
+	ShowPage(w, r)
+}
 
 func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

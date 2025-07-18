@@ -10,6 +10,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestTaskEventMiddleware(t *testing.T) {
@@ -27,14 +28,15 @@ func TestTaskEventMiddleware(t *testing.T) {
 	successHandler.ServeHTTP(rec, req)
 	select {
 	case evt := <-ch:
-		if evt.Task != "Add" || evt.Path != "/admin/p" || !evt.Admin {
+		named, ok := evt.Task.(tasks.Name)
+		if !ok || named.Name() != "Add" || evt.Path != "/admin/p" {
 			t.Fatalf("unexpected event %+v", evt)
 		}
 	default:
 		t.Fatalf("expected event on success")
 	}
 
-	// non-admin path should not set Admin flag
+	// non-admin path should not include /admin prefix
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
@@ -42,8 +44,8 @@ func TestTaskEventMiddleware(t *testing.T) {
 	successHandler.ServeHTTP(rec, req)
 	select {
 	case evt := <-ch:
-		if evt.Admin {
-			t.Fatalf("unexpected admin flag for %#v", evt)
+		if strings.Contains(evt.Path, "/admin") {
+			t.Fatalf("unexpected admin path for %#v", evt)
 		}
 	default:
 		t.Fatalf("expected event for non-admin path")

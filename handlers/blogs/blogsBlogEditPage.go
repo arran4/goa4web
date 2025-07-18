@@ -12,9 +12,18 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 )
+
+// EditBlogTask updates an existing blog entry.
+type EditBlogTask struct{ tasks.TaskString }
+
+var editBlogTask = &EditBlogTask{TaskString: TaskEdit}
+
+func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogEditPage(w, r) }
+func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogEditActionPage(w, r) }
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*CoreData)

@@ -16,19 +16,6 @@ import (
 	imagesign "github.com/arran4/goa4web/pkg/images"
 )
 
-// SetSigningKey stores the key used for signing URLs.
-func SetSigningKey(k string) { imagesign.SetSigningKey(k) }
-
-// SignedURL maps an image identifier to a signed URL.
-func SignedURL(id string) string { return imagesign.SignedURL(id) }
-
-// SignedCacheURL maps a cache identifier to a signed URL.
-func SignedCacheURL(id string) string { return imagesign.SignedCacheURL(id) }
-
-// MapURL converts image: or cache: references to fully signed HTTP URLs.
-// Only img tags are transformed; other tags are left unchanged.
-func MapURL(tag, val string) string { return imagesign.MapURL(tag, val) }
-
 func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +26,7 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 			if prefix != "" {
 				data = prefix + id
 			}
-			if !verify(data, ts, sig) {
+			if !imagesign.Verify(data, ts, sig) {
 				http.Error(w, "forbidden", http.StatusForbidden)
 				return
 			}
@@ -47,8 +34,6 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 		})
 	}
 }
-
-func verify(data, tsStr, sig string) bool { return imagesign.Verify(data, tsStr, sig) }
 
 // RegisterRoutes attaches the image endpoints to r.
 func RegisterRoutes(r *mux.Router) {

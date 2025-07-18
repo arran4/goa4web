@@ -18,7 +18,6 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
@@ -27,6 +26,7 @@ import (
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/arran4/goa4web/workers/auditworker"
 	"github.com/arran4/goa4web/workers/logworker"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -79,7 +79,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		return fmt.Errorf("smtp fallback: %w", err)
 	}
 	config.AppRuntimeConfig = cfg
-	imageshandler.SetSigningKey(imageSignSecret)
+	imagesign.SetSigningKey(imageSignSecret)
 	email.SetDefaultFromName(cfg.EmailFrom)
 
 	if dbPool != nil {

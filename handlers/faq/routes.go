@@ -10,13 +10,6 @@ import (
 	router "github.com/arran4/goa4web/internal/router"
 )
 
-// AddFAQIndex injects FAQ index links into CoreData.
-func AddFAQIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(func(cd *common.CoreData, r *http.Request) {
-		CustomFAQIndex(cd, r)
-	})(h)
-}
-
 func noTask() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {
 		return r.PostFormValue("task") == ""

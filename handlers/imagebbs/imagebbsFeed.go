@@ -14,8 +14,8 @@ import (
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
 	db "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 )
@@ -38,7 +38,7 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 			continue
 		}
 		desc := row.Description.String
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(imagesign.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())

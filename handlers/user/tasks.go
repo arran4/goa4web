@@ -20,6 +20,9 @@ const (
 	// TaskDismiss marks a notification as read.
 	TaskDismiss tasks.TaskString = "Dismiss"
 
+	// TaskResend attempts to resend a verification email.
+	TaskResend tasks.TaskString = "Resend"
+
 	// TaskAdd represents the "Add" action.
 	TaskAdd tasks.TaskString = "Add"
 

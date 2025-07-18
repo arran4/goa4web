@@ -11,6 +11,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
+	"regexp"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -77,9 +78,9 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	config.AppRuntimeConfig.NotificationsEnabled = true
 	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 
-	mock.ExpectExec("INSERT INTO faq"). // TODO complete sql expression
-						WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1)).
-						WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO faq (question, users_idusers, language_idlanguage) VALUES (?, ?, ?)")).
+		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store

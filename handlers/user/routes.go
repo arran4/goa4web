@@ -20,7 +20,7 @@ func RegisterRoutes(r *mux.Router) {
 	ur.HandleFunc("/email", userEmailPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/email", saveEmailTask.Action).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveEmailTask.Matcher())
 	ur.HandleFunc("/email/add", addEmailTask.Action).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addEmailTask.Matcher())
-	ur.HandleFunc("/email/resend", addEmailTask.Resend).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addEmailTask.Matcher()) // TODO resend should be it's own task.
+	ur.HandleFunc("/email/resend", resendEmailTask.Action).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(resendEmailTask.Matcher())
 	ur.HandleFunc("/email/delete", deleteEmailTask.Action).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(deleteEmailTask.Matcher())
 	ur.HandleFunc("/email/notify", addEmailTask.Notify).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addEmailTask.Matcher())
 	ur.HandleFunc("/email/verify", userEmailVerifyCodePage).Methods(http.MethodGet)

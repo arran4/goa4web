@@ -12,7 +12,35 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// PermissionUserAllowTask grants a user permission.
+type PermissionUserAllowTask struct{ tasks.TaskString }
+
+var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
+
+func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminUsersPermissionsPermissionUserAllowPage(w, r)
+}
+
+// PermissionUserDisallowTask removes a user's permission.
+type PermissionUserDisallowTask struct{ tasks.TaskString }
+
+var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
+
+func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminUsersPermissionsDisallowPage(w, r)
+}
+
+// PermissionUpdateTask updates an existing permission entry.
+type PermissionUpdateTask struct{ tasks.TaskString }
+
+var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
+
+func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminUsersPermissionsUpdatePage(w, r)
+}
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

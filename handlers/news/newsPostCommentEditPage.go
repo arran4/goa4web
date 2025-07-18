@@ -11,8 +11,27 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 )
+
+// EditReplyTask updates an existing comment.
+type EditReplyTask struct{ tasks.TaskString }
+
+var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
+
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+	NewsPostCommentEditActionPage(w, r)
+}
+
+// CancelTask cancels comment editing.
+type CancelTask struct{ tasks.TaskString }
+
+var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
+	NewsPostCommentEditActionCancelPage(w, r)
+}
 
 func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))

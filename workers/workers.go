@@ -48,7 +48,8 @@ func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider
 	safeGo(func() { auditworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
 	log.Printf("Starting notification bus worker")
 	safeGo(func() {
-		notifications.BusWorker(ctx, eventbus.DefaultBus, provider, dbpkg.New(db), dlqProvider)
+		n := notifications.Notifier{EmailProvider: provider, Queries: dbpkg.New(db)}
+		notifications.BusWorker(ctx, eventbus.DefaultBus, n, dlqProvider)
 	})
 	log.Printf("Starting search index worker")
 	safeGo(func() { searchworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })

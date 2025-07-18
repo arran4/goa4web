@@ -28,12 +28,16 @@ import (
 
 type SaveEmailTask struct{ tasks.TaskString }
 type AddEmailTask struct{ tasks.TaskString }
+type ResendEmailTask struct{ tasks.TaskString }
 type DeleteEmailTask struct{ tasks.TaskString }
 type TestMailTask struct{ tasks.TaskString }
+
+func (ResendEmailTask) Action(w http.ResponseWriter, r *http.Request) { addEmailTask.Resend(w, r) }
 
 var (
 	saveEmailTask   = &SaveEmailTask{TaskString: tasks.TaskString(TaskSaveAll)}
 	addEmailTask    = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
+	resendEmailTask = &ResendEmailTask{TaskString: TaskResend}
 	deleteEmailTask = &DeleteEmailTask{TaskString: tasks.TaskString(TaskDelete)}
 	testMailTask    = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
 )
@@ -206,13 +210,14 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0})
-	page := "http://" + r.Host + "/usr/email/verify?code=" + code
+	path := "/usr/email/verify?code=" + code
+	page := "http://" + r.Host + path
 	if config.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Path = // TODO
+	evt.Path = page
 	if evt.Data == nil {
 		evt.Data = map[string]any{}
 	}
@@ -243,18 +248,18 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)})
-	page := "http://" + r.Host + "/usr/email/verify?code=" + code
+	path := "/usr/email/verify?code=" + code
+	page := "http://" + r.Host + path
 	if config.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Path = // TODO
+	evt.Path = page
 	if evt.Data == nil {
 		evt.Data = map[string]any{}
 	}
 	evt.Data["page"] = page
-
 	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, TaskUserEmailVerification, nil) TODO make AddEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

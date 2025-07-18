@@ -22,16 +22,16 @@ var renameCategoryTask = &RenameCategoryTask{TaskString: TaskRenameCategory}
 var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
 var createCategoryTask = &CreateCategoryTask{TaskString: TaskCreateCategory}
 
-func (RenameCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskRenameCategory)(r, m)
+func (t RenameCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskRenameCategory)(r, m)
 }
 
-func (DeleteCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskDeleteCategory)(r, m)
+func (t DeleteCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskDeleteCategory)(r, m)
 }
 
-func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskCreateCategory)(r, m)
+func (t CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskCreateCategory)(r, m)
 }
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {

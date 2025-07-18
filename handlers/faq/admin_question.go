@@ -23,16 +23,16 @@ var editQuestionTask = &EditQuestionTask{TaskString: TaskEdit}
 var deleteQuestionTask = &DeleteQuestionTask{TaskString: TaskRemoveRemove}
 var createQuestionTask = &CreateQuestionTask{TaskString: TaskCreate}
 
-func (EditQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskEdit)(r, m)
+func (t EditQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskEdit)(r, m)
 }
 
-func (DeleteQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskRemoveRemove)(r, m)
+func (t DeleteQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskRemoveRemove)(r, m)
 }
 
-func (CreateQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskCreate)(r, m)
+func (t CreateQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(t, TaskCreate)(r, m)
 }
 
 func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {

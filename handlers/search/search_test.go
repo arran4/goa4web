@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/searchworker"
+	searchutil "github.com/arran4/goa4web/workers/searchworker"
 	"net/http"
 	"net/http/httptest"
 	"testing"

@@ -14,8 +14,8 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	emailutil "github.com/arran4/goa4web/internal/notifications"
-	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
-	searchworker "github.com/arran4/goa4web/internal/searchworker"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"

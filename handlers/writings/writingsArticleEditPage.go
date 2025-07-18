@@ -10,7 +10,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchworker "github.com/arran4/goa4web/internal/searchworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 	"strings"
 
 	"github.com/arran4/goa4web/config"

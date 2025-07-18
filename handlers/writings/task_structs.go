@@ -3,8 +3,8 @@ package writings
 import (
 	"net/http"
 
-	searchworker "github.com/arran4/goa4web/internal/searchworker"
 	"github.com/arran4/goa4web/internal/tasks"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 )
 
 // SubmitWritingTask encapsulates creating a new writing.

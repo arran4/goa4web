@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/app/server"
-	"github.com/arran4/goa4web/internal/emailqueue"
+	"github.com/arran4/goa4web/workers"
+	"github.com/arran4/goa4web/workers/emailqueue"
 	"log"
 	"net/http"
 	"os"
@@ -18,18 +19,18 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	imageshandler "github.com/arran4/goa4web/handlers/images"
-	"github.com/arran4/goa4web/internal/auditworker"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/internal/logworker"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	notifications "github.com/arran4/goa4web/internal/notifications"
-	postcountworker "github.com/arran4/goa4web/internal/postcountworker"
 	routerpkg "github.com/arran4/goa4web/internal/router"
-	searchworker "github.com/arran4/goa4web/internal/searchworker"
+	"github.com/arran4/goa4web/workers/auditworker"
+	"github.com/arran4/goa4web/workers/logworker"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -119,7 +120,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
-	startWorkers(workerCtx, dbPool, emailProvider, dlqProvider, cfg)
+	workers.Start(workerCtx, dbPool, emailProvider, dlqProvider, cfg)
 
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
@@ -134,38 +135,4 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	workerCancel()
 
 	return nil
-}
-
-// safeGo runs fn in a goroutine and terminates the program if a panic occurs.
-func safeGo(fn func()) {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("goroutine panic: %v", r)
-				os.Exit(1)
-			}
-		}()
-		fn()
-	}()
-}
-
-func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg config.RuntimeConfig) {
-	log.Printf("Starting email worker")
-	safeGo(func() {
-		emailqueue.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
-	})
-	log.Printf("Starting notification purger worker")
-	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
-	log.Printf("Starting event bus logger worker")
-	safeGo(func() { logworker.Worker(ctx, eventbus.DefaultBus) })
-	log.Printf("Starting audit worker")
-	safeGo(func() { auditworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
-	log.Printf("Starting notification bus worker")
-	safeGo(func() {
-		notifications.BusWorker(ctx, eventbus.DefaultBus, provider, dbpkg.New(db), dlqProvider)
-	})
-	log.Printf("Starting search index worker")
-	safeGo(func() { searchworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
-	log.Printf("Starting post count worker")
-	safeGo(func() { postcountworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
 }

@@ -19,7 +19,15 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// ReplyBlogTask posts a comment reply on a blog.
+type ReplyBlogTask struct{ tasks.TaskString }
+
+var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
+
+func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogReplyPostPage(w, r) }
 
 func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

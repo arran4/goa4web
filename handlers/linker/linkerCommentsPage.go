@@ -150,7 +150,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 type replyTask struct{ tasks.TaskString }
 
-var ReplyTaskEvent = &replyTask{TaskString: TaskReply}
+var replyTaskEvent = &replyTask{TaskString: TaskReply}
+
+func (replyTask) Page(w http.ResponseWriter, r *http.Request) { CommentsPage(w, r) }
 
 func (replyTask) IndexType() string { return searchworker.TypeComment }
 

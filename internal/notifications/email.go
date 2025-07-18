@@ -18,10 +18,6 @@ import (
 )
 
 func getEmailTemplates(ctx context.Context, action string) (string, string) {
-	// Compile embedded templates so overrides work.
-	_ = templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	_ = templates.GetCompiledEmailTextTemplates(map[string]any{})
-
 	name := "email_" + strings.ToLower(action)
 	nameHTML := name + "_html"
 	var text, html string

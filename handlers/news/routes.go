@@ -15,8 +15,6 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
-func AddNewsIndex(h http.Handler) http.Handler { return handlers.IndexMiddleware(CustomNewsIndex)(h) }
-
 func runTemplate(name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		handlers.TemplateHandler(w, r, name, r.Context().Value(common.KeyCoreData))

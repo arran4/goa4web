@@ -11,11 +11,6 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
-// AddWritingsIndex injects writings index links into CoreData.
-func AddWritingsIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(CustomWritingsIndex)(h)
-}
-
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.

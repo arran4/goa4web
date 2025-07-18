@@ -12,9 +12,6 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
-// AddForumIndex injects forum index links into CoreData.
-func AddForumIndex(h http.Handler) http.Handler { return handlers.IndexMiddleware(CustomForumIndex)(h) }
-
 // RegisterRoutes attaches the public forum endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Forum", "/forum", SectionWeight)

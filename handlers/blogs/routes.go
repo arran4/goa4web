@@ -12,9 +12,6 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
-// AddBlogIndex injects blog index links into CoreData.
-func AddBlogIndex(h http.Handler) http.Handler { return handlers.IndexMiddleware(CustomBlogIndex)(h) }
-
 // RegisterRoutes attaches the public blog endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Blogs", "/blogs", SectionWeight)

@@ -12,11 +12,6 @@ import (
 	router "github.com/arran4/goa4web/internal/router"
 )
 
-// AddLinkerIndex injects linker index links into CoreData.
-func AddLinkerIndex(h http.Handler) http.Handler {
-	return handlers.IndexMiddleware(CustomLinkerIndex)(h)
-}
-
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.

@@ -211,12 +211,13 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	evt := cd.Event()
-	evt.Path = // TODO
-	if evt.Data == nil {
-		evt.Data = map[string]any{}
+	if evt := cd.Event(); evt != nil {
+		evt.Path = r.URL.Path
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["page"] = page
 	}
-	evt.Data["page"] = page
 	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, TaskUserEmailVerification, nil) TODO Make addEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
@@ -248,12 +249,13 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	evt := cd.Event()
-	evt.Path = // TODO
-	if evt.Data == nil {
-		evt.Data = map[string]any{}
+	if evt := cd.Event(); evt != nil {
+		evt.Path = r.URL.Path
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["page"] = page
 	}
-	evt.Data["page"] = page
 
 	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, TaskUserEmailVerification, nil) TODO make AddEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

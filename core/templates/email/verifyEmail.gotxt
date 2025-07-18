@@ -1,6 +1,6 @@
 To: {{.To}}
 From: {{.From}}
-Subject: [A4] Verify your email
+Subject: [{{.SubjectPrefix}}] Verify your email
 
 Hi {{.Item.Username}},
 Please verify your email address by visiting:

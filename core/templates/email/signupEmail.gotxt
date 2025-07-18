@@ -1,6 +1,6 @@
 To: {{.To}}
 From: {{.From}}
-Subject: [A4] {{.Subject}}
+Subject: [{{.SubjectPrefix}}] {{.Subject}}
 
 Hello,
 

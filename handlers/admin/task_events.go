@@ -29,6 +29,8 @@ var AddIPBanTask = addIPBanTask{TaskString: TaskAdd}
 
 var DeleteIPBanTask = deleteIPBanTask{TaskString: TaskDelete}
 
+// TODO move into this package even if it means updating link
 var NewsUserAllowTask = news.NewsUserAllowTask{TaskString: TaskAllow}
 
+// TODO move into this package even if it means updating link
 var NewsUserRemoveTask = news.NewsUserRemoveTask{TaskString: TaskRemoveLower}

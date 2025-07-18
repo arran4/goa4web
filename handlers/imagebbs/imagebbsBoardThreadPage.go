@@ -298,7 +298,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: cid, Text: text}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
 		}
 	}
 

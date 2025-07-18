@@ -14,8 +14,8 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type addAnnouncementTask struct{ tasks.BasicTaskEvent }
-type deleteAnnouncementTask struct{ tasks.BasicTaskEvent }
+type addAnnouncementTask struct{ tasks.TaskString }
+type deleteAnnouncementTask struct{ tasks.TaskString }
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

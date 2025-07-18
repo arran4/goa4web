@@ -14,7 +14,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type deleteDLQTask struct{ tasks.BasicTaskEvent }
+type deleteDLQTask struct{ tasks.TaskString }
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
@@ -39,7 +39,7 @@ func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ParseForm: %v", err)
 	}
 	switch r.PostFormValue("task") {
-	case "Delete":
+	case string(TaskDelete):
 		for _, idStr := range r.Form["id"] {
 			if idStr == "" {
 				continue
@@ -49,7 +49,7 @@ func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 				log.Printf("delete error: %v", err)
 			}
 		}
-	case "Purge":
+	case string(TaskPurge):
 		before := r.PostFormValue("before")
 		t := time.Now()
 		if before != "" {

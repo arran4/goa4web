@@ -20,10 +20,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-type namedTask struct{ name string }
-
-func (n namedTask) TaskName() string { return n.name }
-
 func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) error {
 	if q == nil {
 		return fmt.Errorf("no dlq provider")
@@ -67,6 +63,36 @@ func buildPatterns(task tasks.Name, path string) []string {
 	return patterns
 }
 
+// renderMessage loads the template for the action and populates it with data.
+func renderMessage(ctx context.Context, q *dbpkg.Queries, tmpls *template.Template, tmplName, path string, item interface{}, uid int32) (string, error) {
+	var t *template.Template
+	if q != nil {
+		if body, err := q.GetTemplateOverride(ctx, tmplName); err == nil && body != "" {
+			parsed, perr := template.New(tmplName).Parse(body)
+			if perr != nil {
+				return "", fmt.Errorf("parse template %s: %w", tmplName, perr)
+			}
+			t = parsed
+		}
+	}
+	if t == nil {
+		if tmpls == nil || tmpls.Lookup(tmplName) == nil {
+			return "", nil
+		}
+		t = tmpls
+	}
+	var buf bytes.Buffer
+	data := struct {
+		Path   string
+		Item   interface{}
+		UserID int32
+	}{Path: path, Item: item, UserID: uid}
+	if err := t.ExecuteTemplate(&buf, tmplName, data); err != nil {
+		return "", fmt.Errorf("execute template %s: %w", tmplName, err)
+	}
+	return strings.TrimSuffix(buf.String(), "\n"), nil
+}
+
 // collectSubscribers returns a set of user IDs subscribed to any of the
 // patterns using the specified delivery method.
 func collectSubscribers(ctx context.Context, q *dbpkg.Queries, patterns []string, method string) (map[int32]struct{}, error) {
@@ -90,7 +116,8 @@ func sendSubscriberEmail(ctx context.Context, n Notifier, userID int32, evt even
 		notifyMissingEmail(ctx, n.Queries, userID)
 		return err
 	}
-	return CreateEmailTemplateAndQueue(ctx, n.Queries, userID, user.Email.String, evt.Path, evt.Task, evt.Data)
+	name, _ := evt.Task.(tasks.Name)
+	return CreateEmailTemplateAndQueue(ctx, n.Queries, userID, user.Email.String, evt.Path, name.Name(), evt.Data)
 }
 
 // sendInternalNotification stores an internal notification for the user.
@@ -157,7 +184,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
-		if err := notifySelf(ctx, evt, n, tp, tp); err != nil {
+		if err := notifySelf(ctx, evt, n, tp, notificationTemplates); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -167,7 +194,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
-		if err := notifySubscribers(ctx, evt, n, tp); err != nil {
+		if err := notifySubscribers(ctx, evt, n, tp, notificationTemplates); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -184,30 +211,41 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	return nil
 }
 
-func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNotificationTemplateProvider) error {
+func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNotificationTemplateProvider, noteTmpls *template.Template) error {
 	user, err := n.Queries.GetUserById(ctx, evt.UserID)
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
 		notifyMissingEmail(ctx, n.Queries, evt.UserID)
 	} else {
-		if err := CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, evt.Task, evt.Data); err != nil {
+		name, _ := evt.Task.(tasks.Name)
+		if err := CreateEmailTemplateAndQueue(ctx, n.Queries, evt.UserID, user.Email.String, evt.Path, name.Name(), evt.Data); err != nil {
 			return err
 		}
 	}
-	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
-	if msg != "" {
-		if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
-			UsersIdusers: evt.UserID,
-			Link:         sql.NullString{String: evt.Path, Valid: true},
-			Message:      sql.NullString{String: msg, Valid: true},
-		}); err != nil {
+	if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
+		name, _ := evt.Task.(tasks.Name)
+		msg, err := renderMessage(ctx, n.Queries, noteTmpls, *nt, evt.Path, evt.Data, evt.UserID)
+		if err != nil {
 			return err
+		}
+		if msg != "" {
+			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+				UsersIdusers: evt.UserID,
+				Link:         sql.NullString{String: evt.Path, Valid: true},
+				Message:      sql.NullString{String: msg, Valid: true},
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier) error {
-	patterns := buildPatterns(namedTask{evt.Task}, evt.Path)
+func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp SubscribersNotificationTemplateProvider, noteTmpls *template.Template) error {
+	named, ok := evt.Task.(tasks.Name)
+	if !ok {
+		return nil
+	}
+	patterns := buildPatterns(named, evt.Path)
 
 	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
 	if err != nil {
@@ -221,7 +259,15 @@ func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier) erro
 	delete(emailSubs, evt.UserID)
 	delete(internalSubs, evt.UserID)
 
-	msg := renderMessage(ctx, n.Queries, evt.Task, evt.Path, evt.Data)
+	var msg string
+	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
+		name, _ := evt.Task.(tasks.Name)
+		var err error
+		msg, err = renderMessage(ctx, n.Queries, noteTmpls, *nt, evt.Path, evt.Data, evt.UserID)
+		if err != nil {
+			return err
+		}
+	}
 
 	for id := range emailSubs {
 		if err := sendSubscriberEmail(ctx, n, id, evt); err != nil {
@@ -275,7 +321,8 @@ func notifyAdmins(ctx context.Context, evt eventbus.Event, n Notifier, tp AdminE
 			}
 		}
 		if et := tp.AdminEmailTemplate(); et != nil {
-			if err := CreateEmailTemplateAndQueue(ctx, n.Queries, uid, addr, evt.Path, evt.Task, evt.Data); err != nil {
+			name, _ := evt.Task.(tasks.Name)
+			if err := CreateEmailTemplateAndQueue(ctx, n.Queries, uid, addr, evt.Path, name.Name(), evt.Data); err != nil {
 				return err
 			}
 		}

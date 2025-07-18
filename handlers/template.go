@@ -20,7 +20,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data a
 	if cd == nil {
 		cd = &common.CoreData{}
 	}
-	if err := templates.RenderTemplate(w, tmpl, data, cd.Funcs(r)); err != nil {
+	if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, tmpl, data); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {
 			*common.CoreData
@@ -31,7 +31,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data a
 			Error:    err.Error(),
 			BackURL:  r.Referer(),
 		}
-		if err2 := templates.RenderTemplate(w, "taskErrorAcknowledgementPage.gohtml", errData, cd.Funcs(r)); err2 != nil {
+		if err2 := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "taskErrorAcknowledgementPage.gohtml", errData); err2 != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}

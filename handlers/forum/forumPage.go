@@ -137,44 +137,44 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 		data.RSSFeedUrl = fmt.Sprintf("/forum/topic/%s.rss", topicId)
 		data.AtomFeedUrl = fmt.Sprintf("/forum/topic/%s.atom", topicId)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
-			IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
+			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
+			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
 		)
 	}
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Admin",
 				Link: "/forum/admin",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer categories",
 				Link: "/forum/admin/categories",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer topics",
 				Link: "/forum/admin/topics",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer users",
 				Link: "/forum/admin/users",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer topic restrictions",
 				Link: "/forum/admin/restrictions/topics",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer user restrictions",
 				Link: "/forum/admin/restrictions/users",
 			},
@@ -183,7 +183,7 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 	if threadId != "" && topicId != "" {
 		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "reply", int32(tid)) {
 			data.CustomIndexItems = append(data.CustomIndexItems,
-				IndexItem{
+				common.IndexItem{
 					Name: "Write Reply",
 					Link: fmt.Sprintf("/forum/topic/%s/thread/%s/reply", topicId, threadId),
 				},
@@ -193,7 +193,7 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 	if categoryId != "" && topicId != "" {
 		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "post", int32(tid)) {
 			data.CustomIndexItems = append(data.CustomIndexItems,
-				IndexItem{
+				common.IndexItem{
 					Name: "Create Thread",
 					Link: fmt.Sprintf("/forum/topic/%s/new", topicId),
 				},

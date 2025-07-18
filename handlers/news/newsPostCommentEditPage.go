@@ -11,10 +11,16 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 )
 
-func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
+// EditReplyTask updates an existing news comment.
+type EditReplyTask struct{ tasks.TaskString }
+
+var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
+
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -66,7 +72,12 @@ func NewsPostCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
 }
 
-func NewsPostCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
+// CancelTask aborts comment editing.
+type CancelTask struct{ tasks.TaskString }
+
+var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)

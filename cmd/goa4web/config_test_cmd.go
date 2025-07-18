@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"net/mail"
 	"strings"
-	"text/template"
 
-	coretemplates "github.com/arran4/goa4web/core/templates"
-
+	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	emailutil "github.com/arran4/goa4web/internal/notifications"
+
+	coretemplates "github.com/arran4/goa4web/core/templates"
 )
 
 //go:embed templates/config_test_usage.txt
@@ -101,27 +100,21 @@ func (c *configTestEmailCmd) Run() error {
 		q = dbpkg.New(db)
 	}
 	ctx := context.Background()
-	emails := emailutil.GetAdminEmails(ctx, q)
+	emails := config.GetAdminEmails(ctx, q)
 	if len(emails) == 0 {
 		return fmt.Errorf("no administrator emails configured")
 	}
+	htmlTmpls := coretemplates.GetCompiledEmailHtmlTemplates(map[string]any{})
+	textTmpls := coretemplates.GetCompiledEmailTextTemplates(map[string]any{})
 	for _, addrStr := range emails {
 		toAddr := mail.Address{Address: addrStr}
 		var buf strings.Builder
-		t, err := template.New("txt").Parse(coretemplates.TestEmailText)
-		if err != nil {
-			return fmt.Errorf("parse text template: %w", err)
-		}
-		if err := t.Execute(&buf, nil); err != nil {
+		if err := textTmpls.ExecuteTemplate(&buf, "testEmail.gotxt", nil); err != nil {
 			return fmt.Errorf("exec text template: %w", err)
 		}
 		textBody := buf.String()
 		buf.Reset()
-		ht, err := template.New("html").Parse(coretemplates.TestEmailHTML)
-		if err != nil {
-			return fmt.Errorf("parse html template: %w", err)
-		}
-		if err := ht.Execute(&buf, nil); err != nil {
+		if err := htmlTmpls.ExecuteTemplate(&buf, "testEmail.gohtml", nil); err != nil {
 			return fmt.Errorf("exec html template: %w", err)
 		}
 		var fromAddr mail.Address

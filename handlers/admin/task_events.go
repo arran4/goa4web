@@ -2,7 +2,6 @@ package admin
 
 import (
 	"github.com/arran4/goa4web/handlers/news"
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 var ResendQueueTask = resendQueueTask{TaskString: TaskResend}
@@ -29,6 +28,6 @@ var AddIPBanTask = addIPBanTask{TaskString: TaskAdd}
 
 var DeleteIPBanTask = deleteIPBanTask{TaskString: TaskDelete}
 
-var NewsUserAllowTask = news.NewsUserAllowTask{TaskString: TaskAllow}
+var NewsUserAllowTask = news.NewsUserAllowTask
 
-var NewsUserRemoveTask = news.NewsUserRemoveTask{TaskString: TaskRemoveLower}
+var NewsUserRemoveTask = news.NewsUserRemoveTask

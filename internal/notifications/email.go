@@ -36,6 +36,12 @@ func getEmailTemplates(ctx context.Context, action string) (string, string) {
 	return text, html
 }
 
+// GetUpdateEmailText returns the text template for update emails if available.
+func GetUpdateEmailText(ctx context.Context) string {
+	text, _ := getEmailTemplates(ctx, "update")
+	return text
+}
+
 // TODO: consider making this private and replacing with EmailTemplates.CreateEmail.
 func CreateEmailTemplate(ctx context.Context, emailAddr, page, action string, item interface{}) ([]byte, mail.Address, error) {
 	if emailAddr == "" {

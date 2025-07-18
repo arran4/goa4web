@@ -212,7 +212,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Path = // TODO
+	evt.Path = page
 	if evt.Data == nil {
 		evt.Data = map[string]any{}
 	}
@@ -249,7 +249,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Path = // TODO
+	evt.Path = page
 	if evt.Data == nil {
 		evt.Data = map[string]any{}
 	}

@@ -6,12 +6,6 @@ type EmailTemplates struct {
 	Subject string
 }
 
-// CreateEmail renders the templates using emailAddr and data.
-// This is a convenience wrapper around RenderEmailFromTemplates.
-func (et *EmailTemplates) CreateEmail(emailAddr string, data interface{}) ([]byte, error) {
-	return RenderEmailFromTemplates(emailAddr, et, data)
-}
-
 // NewEmailTemplates returns EmailTemplates populated with file names derived
 // from prefix.
 func NewEmailTemplates(prefix string) *EmailTemplates {

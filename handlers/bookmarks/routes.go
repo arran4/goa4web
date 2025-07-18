@@ -27,8 +27,8 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
 	br.HandleFunc("/edit", saveTask.Page).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
-	br.HandleFunc("/edit", saveTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Match)
-	br.HandleFunc("/edit", createTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Match)
+	br.HandleFunc("/edit", saveTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Matcher())
+	br.HandleFunc("/edit", createTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Matcher())
 	br.HandleFunc("/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(handlers.RequiresAnAccount())
 }
 

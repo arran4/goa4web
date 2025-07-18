@@ -17,14 +17,9 @@ import (
 )
 
 // CommentEditActionPage updates a comment then refreshes thread metadata.
-type editReplyTask struct{ tasks.BasicTaskEvent }
+type editReplyTask struct{ tasks.TaskString }
 
-var EditReplyTask = editReplyTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskEditReply,
-		Match:     tasks.HasTask(TaskEditReply),
-	},
-}
+var EditReplyTask = &editReplyTask{TaskString: TaskEditReply}
 
 func (editReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))

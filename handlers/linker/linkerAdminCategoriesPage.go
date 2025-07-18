@@ -39,14 +39,9 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }
 
-type updateCategoryTask struct{ tasks.BasicTaskEvent }
+type updateCategoryTask struct{ tasks.TaskString }
 
-var UpdateCategoryTask = updateCategoryTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskUpdate,
-		Match:     tasks.HasTask(TaskUpdate),
-	},
-}
+var UpdateCategoryTask = &updateCategoryTask{TaskString: TaskUpdate}
 
 func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -74,14 +69,9 @@ func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-type renameCategoryTask struct{ tasks.BasicTaskEvent }
+type renameCategoryTask struct{ tasks.TaskString }
 
-var RenameCategoryTask = renameCategoryTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskRenameCategory,
-		Match:     tasks.HasTask(TaskRenameCategory),
-	},
-}
+var RenameCategoryTask = &renameCategoryTask{TaskString: TaskRenameCategory}
 
 func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -100,14 +90,9 @@ func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-type deleteCategoryTask struct{ tasks.BasicTaskEvent }
+type deleteCategoryTask struct{ tasks.TaskString }
 
-var DeleteCategoryTask = deleteCategoryTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskDeleteCategory,
-		Match:     tasks.HasTask(TaskDeleteCategory),
-	},
-}
+var DeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
 
 func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -138,14 +123,9 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-type createCategoryTask struct{ tasks.BasicTaskEvent }
+type createCategoryTask struct{ tasks.TaskString }
 
-var CreateCategoryTask = createCategoryTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskCreateCategory,
-		Match:     tasks.HasTask(TaskCreateCategory),
-	},
-}
+var CreateCategoryTask = &createCategoryTask{TaskString: TaskCreateCategory}
 
 func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

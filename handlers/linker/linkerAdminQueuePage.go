@@ -117,14 +117,9 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
 }
 
-type deleteTask struct{ tasks.BasicTaskEvent }
+type deleteTask struct{ tasks.TaskString }
 
-var DeleteTask = deleteTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskDelete,
-		Match:     tasks.HasTask(TaskDelete),
-	},
-}
+var DeleteTask = &deleteTask{TaskString: TaskDelete}
 
 func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -158,14 +153,9 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-type approveTask struct{ tasks.BasicTaskEvent }
+type approveTask struct{ tasks.TaskString }
 
-var ApproveTask = approveTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskApprove,
-		Match:     tasks.HasTask(TaskApprove),
-	},
-}
+var ApproveTask = &approveTask{TaskString: TaskApprove}
 
 func (approveTask) IndexType() string { return searchworker.TypeLinker }
 
@@ -207,14 +197,9 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-type bulkDeleteTask struct{ tasks.BasicTaskEvent }
+type bulkDeleteTask struct{ tasks.TaskString }
 
-var BulkDeleteTask = bulkDeleteTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskBulkDelete,
-		Match:     tasks.HasTask(TaskBulkDelete),
-	},
-}
+var BulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
 
 func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -230,14 +215,9 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-type bulkApproveTask struct{ tasks.BasicTaskEvent }
+type bulkApproveTask struct{ tasks.TaskString }
 
-var BulkApproveTask = bulkApproveTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskBulkApprove,
-		Match:     tasks.HasTask(TaskBulkApprove),
-	},
-}
+var BulkApproveTask = &bulkApproveTask{TaskString: TaskBulkApprove}
 
 func (bulkApproveTask) IndexType() string { return searchworker.TypeLinker }
 

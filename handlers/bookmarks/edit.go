@@ -13,23 +13,13 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-type SaveTask struct{ tasks.BasicTaskEvent }
+type SaveTask struct{ tasks.TaskString }
 
-var saveTask = SaveTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskSave,
-		Match:     tasks.HasTask(TaskSave),
-	},
-}
+var saveTask = &SaveTask{TaskString: TaskSave}
 
-type CreateTask struct{ tasks.BasicTaskEvent }
+type CreateTask struct{ tasks.TaskString }
 
-var createTask = CreateTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskCreate,
-		Match:     tasks.HasTask(TaskCreate),
-	},
-}
+var createTask = &CreateTask{TaskString: TaskCreate}
 
 func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

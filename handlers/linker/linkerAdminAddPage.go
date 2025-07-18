@@ -55,14 +55,9 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminAddPage.gohtml", data)
 }
 
-type addTask struct{ tasks.BasicTaskEvent }
+type addTask struct{ tasks.TaskString }
 
-var AddTask = addTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskAdd,
-		Match:     tasks.HasTask(TaskAdd),
-	},
-}
+var AddTask = &addTask{TaskString: TaskAdd}
 
 func (addTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

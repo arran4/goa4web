@@ -148,14 +148,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "commentsPage.gohtml", data)
 }
 
-type replyTask struct{ tasks.BasicTaskEvent }
+type replyTask struct{ tasks.TaskString }
 
-var ReplyTaskEvent = replyTask{
-	BasicTaskEvent: tasks.BasicTaskEvent{
-		EventName: TaskReply,
-		Match:     tasks.HasTask(TaskReply),
-	},
-}
+var ReplyTaskEvent = &replyTask{TaskString: TaskReply}
 
 func (replyTask) IndexType() string { return searchworker.TypeComment }
 

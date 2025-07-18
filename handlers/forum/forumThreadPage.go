@@ -31,7 +31,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
 		Thread              *db.GetThreadLastPosterAndPermsRow
@@ -47,7 +47,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		Offset:             offset,

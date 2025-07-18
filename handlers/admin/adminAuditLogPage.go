@@ -24,7 +24,7 @@ func copyValues(v url.Values) url.Values {
 // AdminAuditLogPage shows recent admin actions with basic filtering.
 func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows     []*db.ListAuditLogsRow
 		User     string
 		Action   string
@@ -34,7 +34,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		User:     r.URL.Query().Get("user"),
 		Action:   r.URL.Query().Get("action"),
 		PageSize: handlers.GetPageSize(r),

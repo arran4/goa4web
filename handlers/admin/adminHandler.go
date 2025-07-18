@@ -24,13 +24,13 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		AdminLinks []common.IndexItem
 		Stats      Stats
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:   r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		AdminLinks: nav.AdminLinks(),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

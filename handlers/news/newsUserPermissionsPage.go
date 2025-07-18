@@ -10,18 +10,17 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
-	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-type userAllowTask struct{ tasks.TaskString }
+type UserAllowTask struct{ tasks.TaskString }
 
-var userAllowTask = &userAllowTask{TaskString: TaskUserAllow}
+var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 
-type userDisallowTask struct{ tasks.TaskString }
+type UserDisallowTask struct{ tasks.TaskString }
 
-var userDisallowTask = &userDisallowTask{TaskString: TaskUserDisallow}
+var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
@@ -58,7 +57,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "userPermissionsPage.gohtml", data)
 }
 
-func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
@@ -83,7 +82,7 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {

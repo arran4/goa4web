@@ -33,28 +33,28 @@ type NewsPost struct {
 	ShowEdit bool
 }
 
-type replyTask struct{ tasks.TaskString }
+type ReplyTask struct{ tasks.TaskString }
 
-var replyTask = &replyTask{TaskString: TaskReply}
+var replyTask = &ReplyTask{TaskString: TaskReply}
 
-func (replyTask) IndexType() string { return searchworker.TypeComment }
+func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
-func (replyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
 		return []searchworker.IndexEventData{v}
 	}
 	return nil
 }
 
-var _ searchworker.IndexedTask = replyTask{}
+var _ searchworker.IndexedTask = ReplyTask{}
 
-type editTask struct{ tasks.TaskString }
+type EditTask struct{ tasks.TaskString }
 
-var editTask = &editTask{TaskString: TaskEdit}
+var editTask = &EditTask{TaskString: TaskEdit}
 
-type newPostTask struct{ tasks.TaskString }
+type NewPostTask struct{ tasks.TaskString }
 
-var newPostTask = &newPostTask{TaskString: TaskNewPost}
+var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
@@ -222,7 +222,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)
 }
 
-func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -319,14 +319,8 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	endUrl := base + fmt.Sprintf("/news/news/%d", pid)
 
-	var author string
-	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
-		author = u.Username.String
-	}
-	action := "comment"
-	if author != "" {
-		action = fmt.Sprintf("comment by %s", author)
-	}
+	evt := cd.Event()
+	evt.Data["news_url"] = endUrl
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
@@ -363,7 +357,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (editTask) Action(w http.ResponseWriter, r *http.Request) {
+func (EditTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
 		handlers.TaskErrorAcknowledgementPage(w, r)
@@ -401,7 +395,7 @@ func (editTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (newPostTask) Action(w http.ResponseWriter, r *http.Request) {
+func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
 		handlers.TaskErrorAcknowledgementPage(w, r)

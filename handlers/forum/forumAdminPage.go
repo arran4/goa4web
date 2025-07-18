@@ -18,12 +18,12 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Stats Stats
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

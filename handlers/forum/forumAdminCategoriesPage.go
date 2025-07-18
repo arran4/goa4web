@@ -16,13 +16,13 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())

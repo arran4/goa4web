@@ -20,7 +20,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Stats Stats
 	}
 
@@ -28,7 +28,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,

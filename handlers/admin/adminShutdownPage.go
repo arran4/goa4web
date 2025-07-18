@@ -12,12 +12,12 @@ import (
 
 func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Back:     "/admin",
 	}
 

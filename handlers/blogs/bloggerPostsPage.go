@@ -25,7 +25,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows     []*BlogRow
 		IsOffset bool
 		UID      string
@@ -76,7 +76,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		IsOffset: offset != 0,
 		UID:      strconv.Itoa(int(buid)),
 	}

@@ -9,12 +9,12 @@ import (
 
 func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		//Rows []*GetCountOfBlogPostsByUserRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	//queries := r.Context().Name(common.KeyQueries).(*db.Queries)

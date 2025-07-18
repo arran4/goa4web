@@ -18,7 +18,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		Threads    []*db.GetAllForumThreadsWithTopicRow
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Groups map[int32]*Group
 		Order  []int32
 	}
@@ -33,7 +33,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Groups:   make(map[int32]*Group),
 	}
 

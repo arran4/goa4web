@@ -28,7 +28,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		PageSize: handlers.GetPageSize(r),
 	}
@@ -62,7 +62,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: data.NextLink,
 		})
@@ -73,7 +73,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: data.PrevLink,
 		})

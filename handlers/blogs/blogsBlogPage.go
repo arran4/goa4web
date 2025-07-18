@@ -36,7 +36,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		Idblogs   int32
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Blog               *BlogRow
 		Comments           []*BlogComment
 		Offset             int
@@ -53,7 +53,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),

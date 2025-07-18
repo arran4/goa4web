@@ -39,7 +39,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Blog               *BlogRow
 		Comments           []*BlogComment
 		Offset             int
@@ -56,7 +56,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),

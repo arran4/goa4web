@@ -19,7 +19,7 @@ import (
 func Page(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Categories              []*ForumcategoryPlus
 		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
@@ -37,7 +37,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	data := &Data{
 		CoreData: cd,
 		Admin:    cd.CanEditAny(),
@@ -128,7 +128,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "forumPage", data)
 }
 
-func CustomForumIndex(data *CoreData, r *http.Request) {
+func CustomForumIndex(data *common.CoreData, r *http.Request) {
 	vars := mux.Vars(r)
 	threadId := vars["thread"]
 	topicId := vars["topic"]

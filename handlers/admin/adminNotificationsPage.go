@@ -20,14 +20,14 @@ type sendNotificationTask struct{ tasks.TaskString }
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Notifications []*db.Notification
 		Total         int
 		Unread        int
 		Roles         []*db.Role
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	roles, err := data.AllRoles()

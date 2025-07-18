@@ -26,11 +26,11 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Emails []EmailItem
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.ListUnsentPendingEmails(r.Context())

@@ -20,10 +20,10 @@ type deleteIPBanTask struct{ tasks.TaskString }
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Bans []*db.BannedIp
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

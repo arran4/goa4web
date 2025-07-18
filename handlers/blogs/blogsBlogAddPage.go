@@ -27,13 +27,13 @@ func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(
 func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogAddActionPage(w, r) }
 
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Mode               string

@@ -13,7 +13,7 @@ import (
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		ForumTopics       []*db.ForumTopicThreadCountsRow
 		ForumCategories   []*db.ForumCategoryThreadCountsRow
 		WritingCategories []*db.WritingCategoryCountsRow
@@ -24,7 +24,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		UserMonthly       []*db.UserMonthlyUsageRow
 		StartYear         int
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	var err error

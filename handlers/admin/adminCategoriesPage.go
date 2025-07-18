@@ -13,7 +13,7 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Section           string
 		ForumCategories   []*db.GetAllForumCategoriesWithSubcategoryCountRow
 		WritingCategories []*db.WritingCategory
@@ -21,7 +21,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Section:  r.URL.Query().Get("section"),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

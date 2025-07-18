@@ -10,8 +10,8 @@ import (
 // adminForumModeratorLogsPage displays recent moderator actions.
 func AdminForumModeratorLogsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
 	handlers.TemplateHandler(w, r, "forumModeratorLogsPage.gohtml", data)
 }

@@ -43,12 +43,12 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Body    string
 		Preview string
 		Error   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Body:     b,
 		Preview:  preview,
 		Error:    r.URL.Query().Get("error"),
@@ -79,7 +79,7 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	urow, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {
 		log.Printf("get user: %v", err)

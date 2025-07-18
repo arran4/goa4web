@@ -4,14 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
@@ -26,13 +26,13 @@ func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogEditPag
 func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogEditActionPage(w, r) }
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		Blog               *db.GetBlogEntryForUserByIdRow
 		SelectedLanguageId int

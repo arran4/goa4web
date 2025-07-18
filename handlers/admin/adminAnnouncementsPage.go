@@ -19,11 +19,11 @@ type deleteAnnouncementTask struct{ tasks.TaskString }
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Announcements []*db.ListAnnouncementsWithNewsRow
 		NewsID        string
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*CoreData)}
+	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.ListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

@@ -4,11 +4,11 @@ import (
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"net/http"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 )
 
 var legacyRedirectsEnabled = true

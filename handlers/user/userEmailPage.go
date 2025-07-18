@@ -212,11 +212,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Path = page
-	if evt.Data == nil {
-		evt.Data = map[string]any{}
-	}
-	evt.Data["page"] = page
+  evt.Data["page"] = page
 	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, TaskUserEmailVerification, nil) TODO Make addEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
@@ -249,11 +245,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	evt.Path = page
-	if evt.Data == nil {
-		evt.Data = map[string]any{}
-	}
-	evt.Data["page"] = page
+  evt.Data["page"] = page
 
 	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, TaskUserEmailVerification, nil) TODO make AddEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

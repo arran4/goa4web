@@ -5,7 +5,6 @@ import (
 
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/forum/comments"
-	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/gorilla/mux"
 

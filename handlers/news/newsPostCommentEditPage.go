@@ -15,7 +15,7 @@ import (
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 )
 
-// EditReplyTask updates an existing news comment.
+// EditReplyTask updates an existing comment.
 type EditReplyTask struct{ tasks.TaskString }
 
 var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
@@ -72,7 +72,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
 }
 
-// CancelTask aborts comment editing.
+// CancelTask cancels comment editing.
 type CancelTask struct{ tasks.TaskString }
 
 var cancelTask = &CancelTask{TaskString: TaskCancel}

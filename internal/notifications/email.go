@@ -128,7 +128,6 @@ func CreateEmailTemplateAndQueue(ctx context.Context, q *db.Queries, userID int3
 }
 
 // QueueEmailFromTemplates renders the provided templates and queues the result.
-// QueueEmailFromTemplates renders the provided templates and queues the result.
 // TODO: make private and unify call sites.
 func QueueEmailFromTemplates(ctx context.Context, q *db.Queries, userID int32, emailAddr string, et *EmailTemplates, data interface{}) error {
 	if q == nil {
@@ -141,7 +140,6 @@ func QueueEmailFromTemplates(ctx context.Context, q *db.Queries, userID int32, e
 	return queueEmail(ctx, q, userID, msg)
 }
 
-// RenderEmailFromTemplates returns the rendered email message using the provided templates.
 // RenderEmailFromTemplates returns the rendered email message using the provided templates.
 // TODO: evaluate exposing this via EmailTemplates.CreateEmail instead.
 func RenderEmailFromTemplates(emailAddr string, et *EmailTemplates, data interface{}) ([]byte, error) {

@@ -14,6 +14,10 @@ const (
 	TaskNewPost tasks.TaskString = "New Post"
 	// TaskReply posts a reply to a news thread.
 	TaskReply tasks.TaskString = "Reply"
+	// TaskEditReply edits a comment or reply.
+	TaskEditReply tasks.TaskString = "Edit Reply"
+	// TaskCancel cancels the current operation and returns to the previous page.
+	TaskCancel tasks.TaskString = "Cancel"
 	// TaskUserAllow grants a permission level to a user.
 	TaskUserAllow = "User Allow"
 	// TaskUserDisallow removes a permission level from a user.

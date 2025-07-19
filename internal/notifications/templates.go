@@ -3,11 +3,9 @@ package notifications
 import (
 	"bytes"
 	"context"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	htemplate "html/template"
 	"io"
-	ttemplate "text/template"
 )
 
 type TemplateEngine interface {
@@ -34,10 +32,6 @@ func renderTemplate[TE TemplateEngine](ctx context.Context, q *db.Queries, filen
 	return buf.Bytes(), nil
 }
 
-func TextTemplatesNew(s string) NewTemplateEngine[*ttemplate.Template] {
-	return ttemplate.New(s)
-}
-
 func HTMLTemplatesNew(s string) NewTemplateEngine[*htemplate.Template] {
 	return htemplate.New(s)
 }
@@ -60,22 +54,22 @@ func EmailSubjectTemplateFilenameGenerator(base string) string {
 
 // renderNotification renders the notification template associated with task.
 // Database overrides are respected when present.
-func renderNotification(ctx context.Context, q *db.Queries, filename string, data any) ([]byte, error) {
-	tmpls := templates.GetCompiledNotificationTemplates(map[string]any{})
-	return renderTemplate[*ttemplate.Template](ctx, q, filename, data, tmpls, TextTemplatesNew)
+func (n *Notifier) renderNotification(ctx context.Context, filename string, data any) ([]byte, error) {
+	tmpls := n.notificationTemplates()
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }
 
-func renderEmailSubject(ctx context.Context, q *db.Queries, filename string, data any) ([]byte, error) {
-	tmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	return renderTemplate[*ttemplate.Template](ctx, q, filename, data, tmpls, TextTemplatesNew)
+func (n *Notifier) renderEmailSubject(ctx context.Context, filename string, data any) ([]byte, error) {
+	tmpls := n.emailTextTemplates()
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }
 
-func renderEmailText(ctx context.Context, q *db.Queries, filename string, data any) ([]byte, error) {
-	tmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	return renderTemplate[*ttemplate.Template](ctx, q, filename, data, tmpls, TextTemplatesNew)
+func (n *Notifier) renderEmailText(ctx context.Context, filename string, data any) ([]byte, error) {
+	tmpls := n.emailTextTemplates()
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }
 
-func renderEmailHtml(ctx context.Context, q *db.Queries, filename string, data any) ([]byte, error) {
-	tmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	return renderTemplate[*htemplate.Template](ctx, q, filename, data, tmpls, HTMLTemplatesNew)
+func (n *Notifier) renderEmailHtml(ctx context.Context, filename string, data any) ([]byte, error) {
+	tmpls := n.emailHTMLTemplates()
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }

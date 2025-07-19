@@ -179,7 +179,8 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, user.Idusers, addr, pageURL, "update", nil); err != nil {
+	n := emailutil.New(queries, provider)
+	if err := n.CreateEmailTemplateAndQueue(r.Context(), user.Idusers, addr, pageURL, "update", nil); err != nil {
 		log.Printf("notify Error: %s", err)
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

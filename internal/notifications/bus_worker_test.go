@@ -107,7 +107,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &errProvider{}
-	n := Notifier{EmailProvider: prov, Queries: q}
+	n := New(q, prov)
 	dlqRec := &recordDLQ{}
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
 		AddRow(1, 1, 1, true, 15, true)
@@ -122,7 +122,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/p", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}).AddRow(1))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
-	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, n, dlqRec); err == nil {
+	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, dlqRec); err == nil {
 		t.Fatal("expected error")
 	}
 	if dlqRec.msg == "" {
@@ -148,7 +148,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := Notifier{Queries: q}
+	n := New(q, nil)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
 		AddRow(1, 1, 1, true, 15, true)
@@ -165,7 +165,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "email").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 	mock.ExpectQuery("subscriptions").WithArgs("reply:/*", "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, n, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -187,13 +187,13 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := Notifier{Queries: q}
+	n := New(q, nil)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
 		AddRow(1, 1, 1, true, 15, false)
 	mock.ExpectQuery("preferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, n, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -218,7 +218,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &busDummyProvider{}
-	n := Notifier{EmailProvider: prov, Queries: q}
+	n := New(q, prov)
 
 	mock.ExpectQuery("UserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).
@@ -226,7 +226,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: TaskTest, UserID: 1}, n, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -250,7 +250,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := Notifier{Queries: q}
+	n := New(q, nil)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
 		AddRow(1, 1, 2, true, 15, true)
@@ -277,7 +277,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, n, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 
@@ -304,7 +304,7 @@ func TestBusWorker(t *testing.T) {
 	q := dbpkg.New(db)
 
 	prov := &busDummyProvider{}
-	n := Notifier{EmailProvider: prov, Queries: q}
+	n := New(q, prov)
 
 	mock.ExpectQuery("SELECT body FROM template_overrides").
 		WithArgs("notify_register").
@@ -335,7 +335,7 @@ func TestBusWorker(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		BusWorker(ctx, bus, n, nil)
+		n.BusWorker(ctx, bus, nil)
 	}()
 
 	time.Sleep(10 * time.Millisecond)

@@ -132,7 +132,8 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
 	rec := &recordAdminMail{}
-	notif.NotifyAdmins(context.Background(), notif.Notifier{EmailProvider: rec}, &notif.EmailTemplates{}, notif.EmailData{})
+	n := notif.New(nil, rec)
+	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 2 {
 		t.Fatalf("expected 2 mails, got %d", len(rec.to))
 	}
@@ -155,7 +156,8 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 	config.AppRuntimeConfig.AdminEmails = "a@test.com"
 	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
 	rec := &recordAdminMail{}
-	notif.NotifyAdmins(context.Background(), notif.Notifier{EmailProvider: rec}, &notif.EmailTemplates{}, notif.EmailData{})
+	n := notif.New(nil, rec)
+	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))
 	}

@@ -95,6 +95,10 @@ func TestInsertPendingEmail(t *testing.T) {
 }
 
 func TestEmailQueueWorker(t *testing.T) {
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -126,6 +130,10 @@ func (errProvider) Send(context.Context, mail.Address, []byte) error {
 }
 
 func TestProcessPendingEmailDLQ(t *testing.T) {
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.EmailEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)

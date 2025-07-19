@@ -189,6 +189,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.Event, tp
 		msg, err = n.renderNotification(ctx, *nt, data)
 		if err != nil {
 			log.Printf("render subscriber notification: %v", err)
+			return fmt.Errorf("render notification: %w", err)
 		}
 	}
 

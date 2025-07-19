@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	handlers "github.com/arran4/goa4web/handlers"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -20,6 +21,18 @@ import (
 type UserAllowTask struct{ tasks.TaskString }
 
 var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
+
+var _ tasks.Task = (*UserAllowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*UserAllowTask)(nil)
+
+func (UserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogUserAllowEmail")
+}
+
+func (UserAllowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUserAllowEmail")
+	return &v
+}
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsPermissionUserAllowPage(w, r)
@@ -30,6 +43,18 @@ type UserDisallowTask struct{ tasks.TaskString }
 
 var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 
+var _ tasks.Task = (*UserDisallowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*UserDisallowTask)(nil)
+
+func (UserDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogUserDisallowEmail")
+}
+
+func (UserDisallowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUserDisallowEmail")
+	return &v
+}
+
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsDisallowPage(w, r)
 }
@@ -39,6 +64,18 @@ type UsersAllowTask struct{ tasks.TaskString }
 
 var usersAllowTask = &UsersAllowTask{TaskString: TaskUsersAllow}
 
+var _ tasks.Task = (*UsersAllowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*UsersAllowTask)(nil)
+
+func (UsersAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogUsersAllowEmail")
+}
+
+func (UsersAllowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUsersAllowEmail")
+	return &v
+}
+
 func (UsersAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsBulkAllowPage(w, r)
 }
@@ -47,6 +84,18 @@ func (UsersAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 type UsersDisallowTask struct{ tasks.TaskString }
 
 var usersDisallowTask = &UsersDisallowTask{TaskString: TaskUsersDisallow}
+
+var _ tasks.Task = (*UsersDisallowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*UsersDisallowTask)(nil)
+
+func (UsersDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogUsersDisallowEmail")
+}
+
+func (UsersDisallowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUsersDisallowEmail")
+	return &v
+}
 
 func (UsersDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsBulkDisallowPage(w, r)

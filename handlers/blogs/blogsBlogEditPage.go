@@ -15,12 +15,25 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // EditBlogTask updates an existing blog entry.
 type EditBlogTask struct{ tasks.TaskString }
 
 var editBlogTask = &EditBlogTask{TaskString: TaskEdit}
+
+var _ tasks.Task = (*EditBlogTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*EditBlogTask)(nil)
+
+func (EditBlogTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogEditEmail")
+}
+
+func (EditBlogTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogEditEmail")
+	return &v
+}
 
 func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogEditPage(w, r) }
 func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogEditActionPage(w, r) }

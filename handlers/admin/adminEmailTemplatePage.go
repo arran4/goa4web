@@ -2,6 +2,7 @@ package admin
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"net/http"
 	"net/mail"
@@ -18,17 +19,30 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
-	emailutil "github.com/arran4/goa4web/internal/notifications"
 )
 
 type saveTemplateTask struct{ tasks.TaskString }
 type testTemplateTask struct{ tasks.TaskString }
 
+func getUpdateEmailText(ctx context.Context) string {
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
+		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
+			return body
+		}
+	}
+	tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "updateEmail.gotxt", nil); err != nil {
+		return ""
+	}
+	return buf.String()
+}
+
 // AdminEmailTemplatePage allows administrators to edit the update email template.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	b := emailutil.GetUpdateEmailText(r.Context(), queries)
+	b := getUpdateEmailText(r.Context())
 
 	var preview string
 	tmpl, err := template.New("email").Parse(b)
@@ -99,7 +113,7 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	pageURL := base + r.URL.Path
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("email").Parse(emailutil.GetUpdateEmailText(r.Context(), queries))
+	tmpl, err := template.New("email").Parse(getUpdateEmailText(r.Context()))
 	if err != nil {
 		log.Printf("parse template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

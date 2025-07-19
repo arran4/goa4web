@@ -10,6 +10,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -45,6 +46,18 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 
 type newsUserAllowTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*newsUserAllowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*newsUserAllowTask)(nil)
+
+func (newsUserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsUserAllowEmail")
+}
+
+func (newsUserAllowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserAllowEmail")
+	return &v
+}
+
 func (newsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
@@ -68,6 +81,18 @@ func (newsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 type newsUserRemoveTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*newsUserRemoveTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*newsUserRemoveTask)(nil)
+
+func (newsUserRemoveTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsUserDisallowEmail")
+}
+
+func (newsUserRemoveTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserDisallowEmail")
+	return &v
+}
 
 func (newsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

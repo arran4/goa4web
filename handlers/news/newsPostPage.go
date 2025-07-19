@@ -37,6 +37,11 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+var _ tasks.Task = (*ReplyTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
 func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
@@ -48,13 +53,74 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("newsReplyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("news_reply")
+	return &s
+}
+
+func (ReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsReplyEmail")
+}
+
+func (ReplyTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsReplyEmail")
+	return &v
+}
+
+func (ReplyTask) AutoSubscribePath() (string, string) {
+	return string(TaskReply), ""
+}
+
 type EditTask struct{ tasks.TaskString }
 
 var editTask = &EditTask{TaskString: TaskEdit}
 
+var _ tasks.Task = (*EditTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
+
+func (EditTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsEditEmail")
+}
+
+func (EditTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsEditEmail")
+	return &v
+}
+
 type NewPostTask struct{ tasks.TaskString }
 
 var newPostTask = &NewPostTask{TaskString: TaskNewPost}
+
+var _ tasks.Task = (*NewPostTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*NewPostTask)(nil)
+var _ notif.AutoSubscribeProvider = (*NewPostTask)(nil)
+
+func (NewPostTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsAddEmail")
+}
+
+func (NewPostTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsAddEmail")
+	return &v
+}
+
+func (NewPostTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("newsAddEmail")
+}
+
+func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("news_add")
+	return &s
+}
+
+func (NewPostTask) AutoSubscribePath() (string, string) {
+	return string(TaskNewPost), ""
+}
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {

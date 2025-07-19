@@ -16,12 +16,35 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // AddBlogTask encapsulates creating a blog entry.
 type AddBlogTask struct{ tasks.TaskString }
 
 var addBlogTask = &AddBlogTask{TaskString: TaskAdd}
+
+var _ tasks.Task = (*AddBlogTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
+
+func (AddBlogTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogAddEmail")
+}
+
+func (AddBlogTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogAddEmail")
+	return &v
+}
+
+func (AddBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("blogAddEmail")
+}
+
+func (AddBlogTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("blog_add")
+	return &s
+}
 
 func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(w, r) }
 func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogAddActionPage(w, r) }

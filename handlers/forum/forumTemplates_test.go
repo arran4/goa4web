@@ -1,9 +1,10 @@
 package forum
 
 import (
+	"testing"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	"testing"
 )
 
 func requireEmailTemplates(t *testing.T, prefix string) {
@@ -21,7 +22,15 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-func TestForumEmailTemplatesExist(t *testing.T) {
-	requireEmailTemplates(t, "replyEmail")
-	requireEmailTemplates(t, "threadEmail")
+func TestForumTemplatesExist(t *testing.T) {
+  // TODO make it loop over the tasks.
+	prefixes := []string{
+		"forumThreadCreateEmail",
+		"adminNotificationForumThreadCreateEmail",
+		"forumReplyEmail",
+		"adminNotificationForumReplyEmail",
+	}
+	for _, p := range prefixes {
+		requireEmailTemplates(t, p)
+	}
 }

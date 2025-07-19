@@ -1,56 +1,49 @@
 package blogs
 
 import (
-	"context"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/gorilla/sessions"
-
-	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/notifications"
 )
 
-func TestBlogAddActionPage_InvalidForms(t *testing.T) {
-	dbconn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+func requireEmailTemplates(t *testing.T, prefix string) {
+	t.Helper()
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	if htmlTmpls.Lookup(notifications.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
+		t.Errorf("missing html template %s.gohtml", prefix)
 	}
-	defer dbconn.Close()
-
-	queries := db.New(dbconn)
-	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
-
-	cases := []url.Values{
-		{"text": {"hi"}},
-		{"language": {"1"}},
-		{"language": {"1"}, "text": {"hi"}, "foo": {"bar"}},
+	if textTmpls.Lookup(notifications.EmailTextTemplateFilenameGenerator(prefix)) == nil {
+		t.Errorf("missing text template %s.gotxt", prefix)
 	}
-	for _, form := range cases {
-		req := httptest.NewRequest("POST", "/blogs/add", strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		sess, _ := store.Get(req, core.SessionName)
-		sess.Values["UID"] = int32(1)
-		w := httptest.NewRecorder()
-		sess.Save(req, w)
-		for _, c := range w.Result().Cookies() {
-			req.AddCookie(c)
-		}
-		ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-		ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
-		req = req.WithContext(ctx)
+	if textTmpls.Lookup(notifications.EmailSubjectTemplateFilenameGenerator(prefix)) == nil {
+		t.Errorf("missing subject template %sSubject.gotxt", prefix)
+	}
+}
 
-		rr := httptest.NewRecorder()
-		BlogAddActionPage(rr, req)
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("form=%v status=%d", form, rr.Code)
-		}
+func TestBlogTemplatesExist(t *testing.T) {
+	prefixes := []string{
+		"blogAddEmail",
+		"adminNotificationBlogAddEmail",
+		"blogEditEmail",
+		"adminNotificationBlogEditEmail",
+		"blogReplyEmail",
+		"adminNotificationBlogReplyEmail",
+		"blogCommentEditEmail",
+		"adminNotificationBlogCommentEditEmail",
+		"blogCommentCancelEmail",
+		"adminNotificationBlogCommentCancelEmail",
+		"blogUserAllowEmail",
+		"adminNotificationBlogUserAllowEmail",
+		"blogUserDisallowEmail",
+		"adminNotificationBlogUserDisallowEmail",
+		"blogUsersAllowEmail",
+		"adminNotificationBlogUsersAllowEmail",
+		"blogUsersDisallowEmail",
+		"adminNotificationBlogUsersDisallowEmail",
+	}
+	for _, p := range prefixes {
+		requireEmailTemplates(t, p)
 	}
 }

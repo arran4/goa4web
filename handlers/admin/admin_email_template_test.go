@@ -124,18 +124,33 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	config.AppRuntimeConfig.AdminNotify = true
 	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
 	t.Cleanup(func() { config.AppRuntimeConfig = cfgOrig })
+
 	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
-	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	defer os.Unsetenv(config.EnvAdminEmails)
-	origEmails := config.AppRuntimeConfig.AdminEmails
-	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
-	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
-	rec := &recordAdminMail{}
-	n := notif.New(nil, rec)
-	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
-	if len(rec.to) != 2 {
-		t.Fatalf("expected 2 mails, got %d", len(rec.to))
+
+	dbh, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer dbh.Close()
+	q := db.New(dbh)
+
+	rowsA := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "a")
+	mock.ExpectQuery("UserByEmail").WithArgs("a@test.com").WillReturnRows(rowsA)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	rowsB := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "b@test.com", "b")
+	mock.ExpectQuery("UserByEmail").WithArgs("b@test.com").WillReturnRows(rowsB)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	n := notif.New(q, nil)
+	if err := n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{}); err != nil {
+		t.Fatalf("notify: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }
 

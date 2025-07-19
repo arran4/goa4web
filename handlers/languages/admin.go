@@ -60,7 +60,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -79,7 +79,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -99,5 +99,5 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }

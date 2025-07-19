@@ -29,5 +29,5 @@ func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }

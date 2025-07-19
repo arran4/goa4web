@@ -31,7 +31,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data a
 			Error:    err.Error(),
 			BackURL:  r.Referer(),
 		}
-		if err2 := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "taskErrorAcknowledgementPage.gohtml", errData); err2 != nil {
+		if err2 := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "tasks/error_ack.gohtml", errData); err2 != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}

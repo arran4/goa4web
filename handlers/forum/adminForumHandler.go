@@ -44,7 +44,7 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Thread metadata rebuild complete.")
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 
 func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +68,7 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Topic metadata rebuild complete.")
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 
 func countForumThreads(ctx context.Context, q *db.Queries) (int64, error) {

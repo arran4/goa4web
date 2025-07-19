@@ -79,7 +79,7 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
 
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -99,5 +99,5 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }

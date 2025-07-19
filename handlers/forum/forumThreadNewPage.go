@@ -12,7 +12,7 @@ import (
 	common "github.com/arran4/goa4web/handlers/common"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 
 	"github.com/arran4/goa4web/config"
@@ -87,7 +87,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["thread"] = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
+			evt.Data["thread"] = notifications.ThreadInfo{TopicTitle: topicTitle, Author: author}
 		}
 	}
 
@@ -129,7 +129,7 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO remove and replace with proper eventbus notification
-	notif.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), int32(threadId), uid, endUrl)
+	notifications.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), int32(threadId), uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

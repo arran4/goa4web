@@ -217,7 +217,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-  evt.Data["page"] = page
+	evt.Data["page"] = page
 	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, TaskUserEmailVerification, nil) TODO Make addEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

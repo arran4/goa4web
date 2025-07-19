@@ -56,6 +56,8 @@ type UpdateWritingTask struct{ tasks.TaskString }
 
 var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
+func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
+
 func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleEditActionPage(w, r) }
 
 // UserAllowTask grants a user a permission.

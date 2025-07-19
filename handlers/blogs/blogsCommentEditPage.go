@@ -21,13 +21,7 @@ type EditReplyTask struct{ tasks.TaskString }
 
 var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 
-// CancelTask cancels comment editing.
-type CancelTask struct{ tasks.TaskString }
-
-var cancelTask = &CancelTask{TaskString: TaskCancel}
-
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
-
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -84,13 +78,15 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
-
 }
 
-func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
+// CancelTask cancels comment editing.
+type CancelTask struct{ tasks.TaskString }
 
+var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
-
 }

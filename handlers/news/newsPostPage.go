@@ -20,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -37,6 +38,9 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+// Interface checks with reasoning. Administrators and subscribers receive
+// notifications when discussions grow, and commenters are auto-subscribed so
+// they know when someone replies.
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
@@ -71,8 +75,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
 }
 
 type EditTask struct{ tasks.TaskString }
@@ -95,6 +99,8 @@ type NewPostTask struct{ tasks.TaskString }
 
 var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 
+// New posts alert subscribers and admins and subscribe the poster to reply
+// notifications.
 var _ tasks.Task = (*NewPostTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*NewPostTask)(nil)
@@ -118,8 +124,8 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (NewPostTask) AutoSubscribePath() (string, string) {
-	return string(TaskNewPost), ""
+func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskNewPost), evt.Path
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {

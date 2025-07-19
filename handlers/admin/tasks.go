@@ -245,12 +245,6 @@ const (
 	// TaskUserEmailVerification verifies a user's email address.
 	TaskUserEmailVerification tasks.TaskString = "Email Verification"
 
-	// TaskAllow approves a news user level.
-	TaskAllow tasks.TaskString = "allow"
-
-	// TaskRemoveLower removes a news user level.
-	TaskRemoveLower tasks.TaskString = "remove"
-
 	// TaskWritingCategoryChange changes a writing category name.
 	TaskWritingCategoryChange tasks.TaskString = "writing category change"
 

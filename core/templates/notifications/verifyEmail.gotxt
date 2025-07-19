@@ -1,0 +1,1 @@
+Email verification requested for {{if .Item}}{{.Item.Username}}{{else}}{{.Path}}{{end}}

@@ -23,6 +23,7 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 }
 
 func TestImageBbsTemplatesExist(t *testing.T) {
+  // TODO use the action itself
 	prefixes := []string{
 		"imageBoardNewEmail",
 		"adminNotificationImageBoardNewEmail",
@@ -31,3 +32,12 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 		requireEmailTemplates(t, p)
 	}
 }
+
+func requireNotificationTemplate(t *testing.T, name string) {
+	t.Helper()
+	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if nt.Lookup(name) == nil {
+		t.Errorf("missing notification template %s", name)
+	}
+}
+

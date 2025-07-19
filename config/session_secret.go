@@ -15,9 +15,6 @@ import (
 // defaultSecretName is used for local development when no other path is found.
 const defaultSecretName = ".session_secret"
 
-// FileSystem abstracts file operations for loading and storing the secret.
-type FileSystem = core.FileSystem
-
 // DefaultSessionSecretPath returns the default path for the session secret file
 // based on the execution environment.
 func DefaultSessionSecretPath() string {
@@ -44,7 +41,7 @@ func DefaultSessionSecretPath() string {
 //     or DefaultSessionSecretPath().
 //
 // If the file does not exist, a new random secret is generated and saved.
-func LoadOrCreateSecret(fs FileSystem, cliSecret, path, envSecret, envSecretFile string) (string, error) {
+func LoadOrCreateSecret(fs core.FileSystem, cliSecret, path, envSecret, envSecretFile string) (string, error) {
 	if cliSecret != "" {
 		return cliSecret, nil
 	}

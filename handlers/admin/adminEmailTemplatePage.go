@@ -2,6 +2,7 @@ package admin
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"net/http"
 	"net/mail"
@@ -10,22 +11,38 @@ import (
 	"text/template"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
-type saveTemplateTask struct{ eventbus.BasicTaskEvent }
-type testTemplateTask struct{ eventbus.BasicTaskEvent }
+type saveTemplateTask struct{ tasks.TaskString }
+type testTemplateTask struct{ tasks.TaskString }
+
+func getUpdateEmailText(ctx context.Context) string {
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
+		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
+			return body
+		}
+	}
+	tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "updateEmail.gotxt", nil); err != nil {
+		return ""
+	}
+	return buf.String()
+}
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
-	b := emailutil.GetUpdateEmailText(r.Context())
+	b := getUpdateEmailText(r.Context())
 
 	var preview string
 	tmpl, err := template.New("email").Parse(b)
@@ -41,18 +58,18 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Body    string
 		Preview string
 		Error   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Body:     b,
 		Preview:  preview,
 		Error:    r.URL.Query().Get("error"),
 	}
 
-	common.TemplateHandler(w, r, "emailTemplatePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "emailTemplatePage.gohtml", data)
 }
 
 func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -72,12 +89,12 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q
-		common.TaskErrorAcknowledgementPage(w, r)
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	urow, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {
 		log.Printf("get user: %v", err)
@@ -96,7 +113,7 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	pageURL := base + r.URL.Path
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("email").Parse(emailutil.GetUpdateEmailText(r.Context()))
+	tmpl, err := template.New("email").Parse(getUpdateEmailText(r.Context()))
 	if err != nil {
 		log.Printf("parse template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -111,7 +128,7 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		From:     config.AppRuntimeConfig.EmailFrom,
 		Subject:  "Website Update Notification",
 		URL:      pageURL,
-		Action:   common.TaskTestMail,
+		Action:   string(TaskTestMail),
 		Path:     r.URL.Path,
 		Time:     time.Now().Format(time.RFC822),
 		UnsubURL: unsub,

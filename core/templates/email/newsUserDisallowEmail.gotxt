@@ -1,0 +1,6 @@
+Hi {{.Item.Username}},
+Your news permissions have been revoked.
+
+{{/* TODO add URL back to news section here */}}
+Manage notifications: {{.UnsubURL}}
+

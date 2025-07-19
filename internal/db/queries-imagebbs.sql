@@ -188,3 +188,7 @@ WHERE i.idimagepost = sqlc.arg(id)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 LIMIT 1;
+
+-- name: SetImagePostLastIndex :exec
+UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?;
+

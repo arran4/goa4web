@@ -177,18 +177,24 @@ Many queries now filter results directly in SQL using `viewer_id` together with 
 | `forum` | `topic` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `forum` | `topic` | `post` | `NULL` | viewer role ID | role-based grant |
 | `forum` | `topic` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `admin` | `page` | `view` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `view` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `view` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `view` | `NULL` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `edit` | `NULL` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `viewer_id` | `NULL` | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `viewer_id` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `NULL` | viewer role ID | TODO – admin filtering in SQL |
-| `admin` | `page` | `admin` | `NULL` | `NULL` | TODO – admin filtering in SQL |
+| `admin` | `page` | `view` | `viewer_id` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `view` | `viewer_id` | viewer role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `view` | `NULL` | viewer role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `view` | `NULL` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `edit` | `viewer_id` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `edit` | `viewer_id` | viewer role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `edit` | `NULL` | viewer role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `edit` | `NULL` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `admin` | `viewer_id` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `admin` | `viewer_id` | viewer role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `admin` | `NULL` | viewer role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `admin` | `page` | `admin` | `NULL` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
+
+Administrator endpoints are guarded by the `AdminCheckerMiddleware` implemented
+in `internal/router/router.go`. The middleware calls `corecommon.Allowed`, which
+loads roles for the current user using the `GetPermissionsByUserID` query from
+`internal/db/queries-permissions.sql`. Only users with the `administrator` role
+can reach these routes.
 
 Listing pages and RSS feeds still invoke `HasGrant` on each row for extra safety.
 

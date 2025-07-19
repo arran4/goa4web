@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/core/common"
+
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -28,7 +29,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)
@@ -47,9 +48,9 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			return
 		}
 
-		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+		cd, _ := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 		if cd != nil && cd.HasRole("administrator") {
-			ctx := context.WithValue(r.Context(), hcommon.KeyWriting, row)
+			ctx := context.WithValue(r.Context(), common.KeyWriting, row)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -57,7 +58,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		ctx := context.WithValue(r.Context(), hcommon.KeyWriting, row)
+		ctx := context.WithValue(r.Context(), common.KeyWriting, row)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

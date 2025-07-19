@@ -1,24 +1,22 @@
 package middleware
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/gorilla/sessions"
 )
 
@@ -26,9 +24,6 @@ import (
 func handleDie(w http.ResponseWriter, message string) {
 	http.Error(w, message, http.StatusInternalServerError)
 }
-
-// IndexItem exposes the core/common navigation item type.
-type IndexItem = common.IndexItem
 
 // CoreAdderMiddleware populates request context with CoreData for templates.
 func CoreAdderMiddleware(next http.Handler) http.Handler {
@@ -61,7 +56,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		queries := r.Context().Value(hcommon.KeyQueries).(*dbpkg.Queries)
+		queries := r.Context().Value(common.KeyQueries).(*dbpkg.Queries)
 		if session.ID != "" {
 			if uid != 0 {
 				if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
@@ -76,7 +71,8 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		cd := common.NewCoreData(r.Context(), queries,
 			common.WithImageURLMapper(imagesign.MapURL),
-			common.WithSession(session))
+			common.WithSession(session),
+			common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 		cd.UserID = uid
 		_ = cd.UserRoles()
 
@@ -88,13 +84,13 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		cd.Title = "Arran's Site"
 		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 		cd.AdminMode = r.URL.Query().Get("mode") == "admin"
-		if uid != 0 && hcommon.NotificationsEnabled() {
+		if uid != 0 && handlers.NotificationsEnabled() {
 			if c := cd.UnreadNotificationCount(); c > 0 {
 				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
 			}
 		}
 		cd.IndexItems = idx
-		ctx := context.WithValue(r.Context(), hcommon.KeyCoreData, cd)
+		ctx := context.WithValue(r.Context(), common.KeyCoreData, cd)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -115,8 +111,8 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			log.Printf("db pool stats: %+v", DBPool.Stats())
 		}
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, hcommon.KeySQLDB, DBPool)
-		ctx = context.WithValue(ctx, hcommon.KeyQueries, dbpkg.New(DBPool))
+		ctx = context.WithValue(ctx, common.KeySQLDB, DBPool)
+		ctx = context.WithValue(ctx, common.KeyQueries, dbpkg.New(DBPool))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -131,62 +127,12 @@ func SetDBPool(db *sql.DB, verbosity int) {
 // dbLogVerbosity controls optional logging of database pool stats.
 var dbLogVerbosity int
 
-// Configuration stores simple key/value pairs loaded from a file.
-type Configuration struct {
-	data map[string]string
-}
-
-// NewConfiguration creates an empty Configuration.
-func NewConfiguration() *Configuration {
-	return &Configuration{data: make(map[string]string)}
-}
-
-func (c *Configuration) set(key, value string) {
-	c.data[key] = value
-}
-
-func (c *Configuration) get(key string) string {
-	return c.data[key]
-}
-
-// readConfiguration populates Configuration from a file on the provided fs.
-func (c *Configuration) readConfiguration(fs core.FileSystem, filename string) {
-	b, err := fs.ReadFile(filename)
-	if err != nil {
-		return
-	}
-	scanner := bufio.NewScanner(bytes.NewReader(b))
-	for scanner.Scan() {
-		line := scanner.Text()
-		sep := strings.Index(line, "=")
-		if sep >= 0 {
-			key := line[:sep]
-			value := line[sep+1:]
-			c.set(key, value)
-		}
-	}
-}
-
-// X2c converts a two character hex string into a byte.
-func X2c(what string) byte {
-	digit := func(c byte) byte {
-		if c >= 'A' {
-			return (c & 0xdf) - 'A' + 10
-		}
-		return c - '0'
-	}
-
-	d1 := digit(what[0])
-	d2 := digit(what[1])
-	return d1*16 + d2
-}
-
 // RequestLoggerMiddleware logs incoming requests along with the user and session IDs.
 func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		uid := int32(0)
 		sessID := ""
-		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*common.CoreData); ok && cd != nil {
+		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok && cd != nil {
 			uid = cd.UserID
 			if s := cd.Session(); s != nil {
 				sessID = s.ID

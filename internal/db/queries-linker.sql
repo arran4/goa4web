@@ -114,3 +114,7 @@ UPDATE linker_category SET sortorder = ? WHERE idlinkerCategory = ?;
 -- name: CountLinksByCategory :one
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?;
 
+
+-- name: SetLinkerLastIndex :exec
+UPDATE linker SET last_index = NOW() WHERE idlinker = ?;
+

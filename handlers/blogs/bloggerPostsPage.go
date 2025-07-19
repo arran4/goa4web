@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"log"
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -24,7 +25,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows     []*BlogRow
 		IsOffset bool
 		UID      string
@@ -75,7 +76,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		IsOffset: offset != 0,
 		UID:      strconv.Itoa(int(buid)),
 	}
@@ -91,5 +92,5 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	common.TemplateHandler(w, r, "bloggerPostsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "bloggerPostsPage.gohtml", data)
 }

@@ -1,0 +1,5 @@
+User {{.Item.Username}} edited a blog post.
+
+{{/* TODO add URL back to blog post here */}}
+Manage notifications: {{.UnsubURL}}
+

@@ -2,16 +2,16 @@ package writings
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/a4code/a4code2html"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
-	"github.com/gorilla/feeds"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/a4code/a4code2html"
+	common "github.com/arran4/goa4web/core/common"
+	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/gorilla/feeds"
 )
 
 func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
@@ -23,7 +23,7 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	rows, err := cd.LatestWritings(corecommon.WithWritingsOffset(int32(offset)))
+	rows, err := cd.LatestWritings(common.WithWritingsOffset(int32(offset)))
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 		if desc == "" {
 			desc = row.Writing.String
 		}
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(imagesign.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())

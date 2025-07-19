@@ -8,8 +8,11 @@ import (
 	"sort"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
@@ -41,11 +44,14 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		return rows[i].Username.String < rows[j].Username.String
 	})
 	data.Rows = rows
-
-	common.TemplateHandler(w, r, "usersPermissionsPage.gohtml", data)
 }
 
-func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
+// PermissionUserAllowTask grants a user permission.
+type PermissionUserAllowTask struct{ tasks.TaskString }
+
+var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
+
+func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
@@ -66,10 +72,15 @@ func adminUsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
+// PermissionUserDisallowTask removes a user's permission.
+type PermissionUserDisallowTask struct{ tasks.TaskString }
+
+var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
+
+func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
@@ -86,10 +97,15 @@ func adminUsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
+// PermissionUpdateTask updates an existing permission entry.
+type PermissionUpdateTask struct{ tasks.TaskString }
+
+var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
+
+func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	level := r.PostFormValue("role")
@@ -113,5 +129,5 @@ func adminUsersPermissionsUpdatePage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 	}
 
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

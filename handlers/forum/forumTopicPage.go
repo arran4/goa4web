@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -16,7 +17,7 @@ import (
 
 func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
 		Back                    bool
@@ -33,7 +34,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	data := &Data{
 		CoreData: cd,
 		Admin:    cd.CanEditAny(),
@@ -92,5 +93,5 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Threads = threadRows
 
-	common.TemplateHandler(w, r, "topicsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "topicsPage.gohtml", data)
 }

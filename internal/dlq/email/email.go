@@ -10,7 +10,6 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 // DLQ sends DLQ messages to administrator emails using the configured provider.
@@ -28,7 +27,7 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 	if f, err := mail.ParseAddress(config.AppRuntimeConfig.EmailFrom); err == nil {
 		fromAddr = *f
 	}
-	for _, addrStr := range emailutil.GetAdminEmails(ctx, e.Queries) {
+	for _, addrStr := range config.GetAdminEmails(ctx, e.Queries) {
 		toAddr := mail.Address{Address: addrStr}
 		msg, err := email.BuildMessage(fromAddr, toAddr, "DLQ message", message, "")
 		if err != nil {

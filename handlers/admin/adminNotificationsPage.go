@@ -7,26 +7,27 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/internal/eventbus"
+	handlers "github.com/arran4/goa4web/handlers"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
-type markReadTask struct{ eventbus.BasicTaskEvent }
-type purgeNotificationsTask struct{ eventbus.BasicTaskEvent }
-type sendNotificationTask struct{ eventbus.BasicTaskEvent }
+type markReadTask struct{ tasks.TaskString }
+type purgeNotificationsTask struct{ tasks.TaskString }
+type sendNotificationTask struct{ tasks.TaskString }
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Notifications []*db.Notification
 		Total         int
 		Unread        int
 		Roles         []*db.Role
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	roles, err := data.AllRoles()
@@ -49,7 +50,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	common.TemplateHandler(w, r, "notificationsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "notificationsPage.gohtml", data)
 }
 
 func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +64,7 @@ func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("mark read: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +72,7 @@ func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -120,5 +121,5 @@ func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("insert notification: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

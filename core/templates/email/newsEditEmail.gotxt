@@ -1,0 +1,6 @@
+Hi {{.Item.Username}},
+Your news post has been updated.
+
+{{/* TODO add URL back to news post here */}}
+Manage notifications: {{.UnsubURL}}
+

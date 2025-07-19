@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Rows:     rows,
 	}
-	common.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
@@ -46,11 +47,9 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{UsersIdusers: id, Name: "user"}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("add role: %w", err).Error())
 		}
-		if u, err := queries.GetUserById(r.Context(), id); err == nil && u.Email.Valid {
-			_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, id, u.Email.String, "", "user approved", nil)
-		}
+
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
@@ -76,10 +75,7 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 		if reason != "" {
 			_ = queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: id, Comment: reason})
 		}
-		if u, err := queries.GetUserById(r.Context(), id); err == nil && u.Email.Valid {
-			item := struct{ Reason string }{Reason: reason}
-			_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, id, u.Email.String, "", "user rejected", item)
-		}
+
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

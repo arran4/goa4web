@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"time"
@@ -40,17 +41,29 @@ func NotificationsFeed(r *http.Request, notifications []*db.Notification) *feeds
 }
 
 // notificationPurgeWorker periodically removes old read notifications.
-func NotificationPurgeWorker(ctx context.Context, q *db.Queries, interval time.Duration) {
+func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Duration) {
+	if n.Queries == nil {
+		return
+	}
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			if err := q.PurgeReadNotifications(ctx); err != nil {
+			if err := n.Queries.PurgeReadNotifications(ctx); err != nil {
 				log.Printf("purge notifications: %v", err)
 			}
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+// sendInternalNotification stores an internal notification for the user.
+func sendInternalNotification(ctx context.Context, q *db.Queries, userID int32, path, msg string) error {
+	return q.InsertNotification(ctx, db.InsertNotificationParams{
+		UsersIdusers: userID,
+		Link:         sql.NullString{String: path, Valid: path != ""},
+		Message:      sql.NullString{String: msg, Valid: msg != ""},
+	})
 }

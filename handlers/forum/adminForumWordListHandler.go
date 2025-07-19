@@ -6,18 +6,19 @@ import (
 	"errors"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows []sql.NullString
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -33,5 +34,5 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	common.TemplateHandler(w, r, "forumWordListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forumWordListPage.gohtml", data)
 }

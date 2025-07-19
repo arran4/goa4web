@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -17,7 +18,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		Threads    []*db.GetAllForumThreadsWithTopicRow
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Groups map[int32]*Group
 		Order  []int32
 	}
@@ -32,7 +33,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Groups:   make(map[int32]*Group),
 	}
 
@@ -46,7 +47,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		g.Threads = append(g.Threads, row)
 	}
 
-	common.TemplateHandler(w, r, "adminThreadsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminThreadsPage.gohtml", data)
 }
 
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {

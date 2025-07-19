@@ -1,0 +1,5 @@
+User {{.Item.Username}} was granted news permissions.
+
+{{/* TODO add URL back to user permissions here */}}
+Manage notifications: {{.UnsubURL}}
+

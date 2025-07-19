@@ -1,24 +1,31 @@
 package languages
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"net/http"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var RenameLanguageTask = eventbus.BasicTaskEvent{
-	EventName:     "Rename Language",
-	Match:         hcommon.TaskMatcher("Rename Language"),
-	ActionHandler: adminLanguagesRenamePage,
+type RenameLanguageTask struct{ tasks.TaskString }
+
+var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
+
+func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesRenamePage(w, r)
 }
 
-var DeleteLanguageTask = eventbus.BasicTaskEvent{
-	EventName:     "Delete Language",
-	Match:         hcommon.TaskMatcher("Delete Language"),
-	ActionHandler: adminLanguagesDeletePage,
+type DeleteLanguageTask struct{ tasks.TaskString }
+
+var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delete Language")}
+
+func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesDeletePage(w, r)
 }
 
-var CreateLanguageTask = eventbus.BasicTaskEvent{
-	EventName:     "Create Language",
-	Match:         hcommon.TaskMatcher("Create Language"),
-	ActionHandler: adminLanguagesCreatePage,
+type CreateLanguageTask struct{ tasks.TaskString }
+
+var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}
+
+func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesCreatePage(w, r)
 }

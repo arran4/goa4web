@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -61,5 +63,5 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		IsOffset: offset != 0,
 	}
 
-	common.TemplateHandler(w, r, "posterPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "posterPage.gohtml", data)
 }

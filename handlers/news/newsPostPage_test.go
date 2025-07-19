@@ -8,12 +8,13 @@ import (
 	"strings"
 	"testing"
 
+	common "github.com/arran4/goa4web/core/common"
+
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -44,12 +45,12 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+		ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		NewsPostNewActionPage(rr, req)
+		newPostTask.Action(rr, req)
 		if rr.Code != http.StatusOK {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
@@ -90,12 +91,12 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+		ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		NewsPostEditActionPage(rr, req)
+		editTask.Action(rr, req)
 		if rr.Code != http.StatusOK {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}

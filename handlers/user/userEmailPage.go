@@ -12,15 +12,34 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/core"
-	db "github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
+	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+)
+
+type SaveEmailTask struct{ tasks.TaskString }
+type AddEmailTask struct{ tasks.TaskString }
+type ResendEmailTask struct{ tasks.TaskString }
+type DeleteEmailTask struct{ tasks.TaskString }
+type TestMailTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*TestMailTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
+
+func (ResendEmailTask) Action(w http.ResponseWriter, r *http.Request) { addEmailTask.Resend(w, r) }
+
+var (
+	saveEmailTask   = &SaveEmailTask{TaskString: tasks.TaskString(TaskSaveAll)}
+	addEmailTask    = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
+	resendEmailTask = &ResendEmailTask{TaskString: TaskResend}
+	deleteEmailTask = &DeleteEmailTask{TaskString: tasks.TaskString(TaskDelete)}
+	testMailTask    = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
 )
 
 // ErrMailNotConfigured is returned when test mail has no provider configured.
@@ -69,9 +88,9 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		data.UserPreferences.AutoSubscribeReplies = true
 	}
 
-	common.TemplateHandler(w, r, "emailPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "emailPage.gohtml", data)
 }
-func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -129,44 +148,37 @@ func userEmailSaveActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailTestActionPage(w http.ResponseWriter, r *http.Request) {
+func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
-	queries, _ := r.Context().Value(common.KeyQueries).(*db.Queries)
-	var emails []*db.UserEmail
-	var err error
-	if queries != nil {
-		emails, err = queries.GetUserEmailsByUserID(r.Context(), user.Idusers)
-	}
-	if err != nil || len(emails) == 0 {
-		http.Error(w, "email unknown", http.StatusBadRequest)
-		return
-	}
-	addr := emails[0].Email
-	base := "http://" + r.Host
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
-	}
-	pageURL := base + r.URL.Path
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-	if provider == nil {
+	if cd.EmailProvider() == nil {
 		q := url.QueryEscape(ErrMailNotConfigured.Error())
-		// Display the error without redirecting so the POST isn't repeated.
 		r.URL.RawQuery = "error=" + q
-		common.TaskErrorAcknowledgementPage(w, r)
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, user.Idusers, addr, pageURL, "update", nil); err != nil {
-		log.Printf("notify Error: %s", err)
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
+func (TestMailTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("testEmail")
+}
+
+func (TestMailTask) SelfInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("testEmail")
+	return &s
+}
+
+func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -191,15 +203,19 @@ func userEmailAddActionPage(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0})
-	page := "http://" + r.Host + "/usr/email/verify?code=" + code
+	path := "/usr/email/verify?code=" + code
+	page := "http://" + r.Host + path
 	if config.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
 	}
-	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, common.TaskUserEmailVerification, nil)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	evt := cd.Event()
+	evt.Data["page"] = page
+	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, emailAddr, page, TaskUserEmailVerification, nil) TODO Make addEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
+func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -221,15 +237,19 @@ func userEmailResendActionPage(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	_ = queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)})
-	page := "http://" + r.Host + "/usr/email/verify?code=" + code
+	path := "/usr/email/verify?code=" + code
+	page := "http://" + r.Host + path
 	if config.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + "/usr/email/verify?code=" + code
+		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
 	}
-	_ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, common.TaskUserEmailVerification, nil)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	evt := cd.Event()
+	evt.Data["page"] = page
+	// _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, uid, ue.Email, page, TaskUserEmailVerification, nil) TODO make AddEmailTask sendSelf
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -248,7 +268,7 @@ func userEmailDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func userEmailNotifyActionPage(w http.ResponseWriter, r *http.Request) {
+func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

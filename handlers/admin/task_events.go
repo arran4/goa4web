@@ -1,103 +1,47 @@
 package admin
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/handlers/news"
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-var ResendQueueTask = resendQueueTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskResend,
-		Match:     hcommon.TaskMatcher(hcommon.TaskResend),
-	},
-}
+// TODO var resendQueueTask = ResendQueueTask{
+var ResendQueueTask = resendQueueTask{TaskString: TaskResend}
 
-var DeleteQueueTask = deleteQueueTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
-	},
-}
+// TODO var deleteQueueTask = DeleteQueueTask{
+var DeleteQueueTask = deleteQueueTask{TaskString: TaskDelete}
 
-var SaveTemplateTask = saveTemplateTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskUpdate,
-		Match:     hcommon.TaskMatcher(hcommon.TaskUpdate),
-	},
-}
+// TODO var saveTemplateTask = SaveTemplateTask{
+var SaveTemplateTask = saveTemplateTask{TaskString: TaskUpdate}
 
-var TestTemplateTask = testTemplateTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskTestMail,
-		Match:     hcommon.TaskMatcher(hcommon.TaskTestMail),
-	},
-}
+// TODO var testTemplateTask = TestTemplateTask{
+var TestTemplateTask = testTemplateTask{TaskString: TaskTestMail}
 
-var DeleteDLQTask = deleteDLQTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
-	},
-}
+// TODO var deleteDLQTask = DeleteDLQTask{
+var DeleteDLQTask = deleteDLQTask{TaskString: TaskDelete}
 
-var MarkReadTask = markReadTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDismiss,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDismiss),
-	},
-}
+// TODO var markReadTask = MarkReadTask{
+var MarkReadTask = markReadTask{TaskString: TaskDismiss}
 
-var PurgeNotificationsTask = purgeNotificationsTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskPurge,
-		Match:     hcommon.TaskMatcher(hcommon.TaskPurge),
-	},
-}
+// TODO var purgeNotificationsTask = PurgeNotificationsTask{
+var PurgeNotificationsTask = purgeNotificationsTask{TaskString: TaskPurge}
 
-var SendNotificationTask = sendNotificationTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskNotify,
-		Match:     hcommon.TaskMatcher(hcommon.TaskNotify),
-	},
-}
+// TODO var sendNotificationTask = SendNotificationTask{
+var SendNotificationTask = sendNotificationTask{TaskString: TaskNotify}
 
-var AddAnnouncementTask = addAnnouncementTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskAdd,
-		Match:     hcommon.TaskMatcher(hcommon.TaskAdd),
-	},
-}
+// TODO var addAnnouncementTask = AddAnnouncementTask{
+var AddAnnouncementTask = addAnnouncementTask{TaskString: TaskAdd}
 
-var DeleteAnnouncementTask = deleteAnnouncementTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
-	},
-}
+// TODO var deleteAnnouncementTask = DeleteAnnouncementTask{
+var DeleteAnnouncementTask = deleteAnnouncementTask{TaskString: TaskDelete}
 
-var AddIPBanTask = addIPBanTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskAdd,
-		Match:     hcommon.TaskMatcher(hcommon.TaskAdd),
-	},
-}
+// TODO var addIPBanTask = AddIPBanTask{
+var AddIPBanTask = addIPBanTask{TaskString: TaskAdd}
 
-var DeleteIPBanTask = deleteIPBanTask{
-	BasicTaskEvent: eventbus.BasicTaskEvent{
-		EventName: hcommon.TaskDelete,
-		Match:     hcommon.TaskMatcher(hcommon.TaskDelete),
-	},
-}
+// TODO var deleteIPBanTask = DeleteIPBanTask{
+var DeleteIPBanTask = deleteIPBanTask{TaskString: TaskDelete}
 
-var NewsUserAllowTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskAllow,
-	Match:         hcommon.TaskMatcher(hcommon.TaskAllow),
-	ActionHandler: news.NewsAdminUserLevelsAllowActionPage,
-}
+// TODO move into this package even if it means updating link
+var NewsUserAllowTask = news.NewsUserAllowTask
 
-var NewsUserRemoveTask = eventbus.BasicTaskEvent{
-	EventName:     hcommon.TaskRemoveLower,
-	Match:         hcommon.TaskMatcher(hcommon.TaskRemoveLower),
-	ActionHandler: news.NewsAdminUserLevelsRemoveActionPage,
-}
+// TODO move into this package even if it means updating link
+var NewsUserRemoveTask = news.NewsUserRemoveTask

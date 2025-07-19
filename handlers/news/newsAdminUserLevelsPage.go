@@ -7,23 +7,25 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*common.CoreData
 		UserLevels []*db.GetUserRolesRow
 		Roles      []*db.Role
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -39,11 +41,25 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = rows
 
-	common.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }
 
-func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type newsUserAllowTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*newsUserAllowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*newsUserAllowTask)(nil)
+
+func (newsUserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsUserAllowEmail")
+}
+
+func (newsUserAllowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserAllowEmail")
+	return &v
+}
+
+func (newsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
@@ -61,12 +77,25 @@ func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
-
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func NewsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type newsUserRemoveTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*newsUserRemoveTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*newsUserRemoveTask)(nil)
+
+func (newsUserRemoveTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsUserDisallowEmail")
+}
+
+func (newsUserRemoveTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserDisallowEmail")
+	return &v
+}
+
+func (newsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	permid, err := strconv.Atoi(r.PostFormValue("permid"))
 	if err != nil {
 		log.Printf("strconv.Atoi(permid) Error: %s", err)
@@ -78,5 +107,8 @@ func NewsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
+
+var NewsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
+var NewsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}

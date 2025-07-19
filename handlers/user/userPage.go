@@ -3,7 +3,9 @@ package user
 import (
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/middleware"
 
 	"github.com/arran4/goa4web/core"
@@ -28,5 +30,5 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TemplateHandler(w, r, "userPage", data)
+	handlers.TemplateHandler(w, r, "userPage", data)
 }

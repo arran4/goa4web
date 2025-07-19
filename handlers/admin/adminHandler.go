@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
@@ -24,13 +24,13 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*CoreData
-		AdminLinks []corecommon.IndexItem
+		*common.CoreData
+		AdminLinks []common.IndexItem
 		Stats      Stats
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData:   r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		AdminLinks: nav.AdminLinks(),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -48,5 +48,5 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)
 	count("SELECT COUNT(*) FROM writing", &data.Stats.Writings)
 
-	common.TemplateHandler(w, r, "adminPage", data)
+	handlers.TemplateHandler(w, r, "adminPage", data)
 }

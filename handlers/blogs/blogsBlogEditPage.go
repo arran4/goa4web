@@ -4,25 +4,48 @@ import (
 	"database/sql"
 	"fmt"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
+// EditBlogTask updates an existing blog entry.
+type EditBlogTask struct{ tasks.TaskString }
+
+var editBlogTask = &EditBlogTask{TaskString: TaskEdit}
+
+var _ tasks.Task = (*EditBlogTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*EditBlogTask)(nil)
+
+func (EditBlogTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogEditEmail")
+}
+
+func (EditBlogTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogEditEmail")
+	return &v
+}
+
+func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogEditPage(w, r) }
+func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogEditActionPage(w, r) }
+
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		Blog               *db.GetBlogEntryForUserByIdRow
 		SelectedLanguageId int
@@ -46,7 +69,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	row := r.Context().Value(common.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 	data.Blog = row
 
-	common.TemplateHandler(w, r, "blogEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "blogEditPage.gohtml", data)
 }
 
 func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {

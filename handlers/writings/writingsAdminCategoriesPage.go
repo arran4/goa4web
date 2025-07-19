@@ -7,14 +7,14 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Categories          []*db.WritingCategory
 		CategoryBreadcrumbs []*db.WritingCategory
 		IsAdmin             bool
@@ -23,7 +23,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		WritingCategoryID   int32
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
 	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
@@ -41,7 +41,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	common.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }
 
 func AdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +75,7 @@ func AdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
@@ -102,5 +102,5 @@ func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

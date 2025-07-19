@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -84,22 +84,21 @@ func (r *statusRecorder) WriteHeader(code int) {
 func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
-		uid := int32(0)
-		cd, _ := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
-		if cd != nil {
-			uid = cd.UserID
+		cd, ok := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
+		if !ok || cd == nil {
+			cd = &corecommon.CoreData{}
+			r = r.WithContext(context.WithValue(r.Context(), corecommon.KeyCoreData, cd))
 		}
+		uid := cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")
+		_ = admin
 		evt := &eventbus.Event{
 			Path:   r.URL.Path,
-			Task:   task,
+			Task:   tasks.TaskString(task), // TODO determined by router
 			UserID: uid,
 			Time:   time.Now(),
-			Admin:  admin,
 		}
-		if cd != nil {
-			cd.SetEvent(evt)
-		}
+		cd.SetEvent(evt)
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sr, r)
 		if task != "" && sr.status < http.StatusBadRequest {

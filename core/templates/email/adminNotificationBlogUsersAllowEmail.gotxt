@@ -1,0 +1,5 @@
+Multiple users were granted blog permissions.
+
+{{/* TODO add URL back to blog section here */}}
+Manage notifications: {{.UnsubURL}}
+

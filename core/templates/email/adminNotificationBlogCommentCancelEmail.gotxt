@@ -1,0 +1,5 @@
+User {{.Item.Username}} canceled editing a blog comment.
+
+{{/* TODO add URL back to comment here */}}
+Manage notifications: {{.UnsubURL}}
+

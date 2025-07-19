@@ -1,0 +1,5 @@
+Hi {{.Item.Username}},
+Your blog post has been created successfully.
+
+{{/* TODO add URL back to blog post here */}}
+Manage notifications: {{.UnsubURL}}

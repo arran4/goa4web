@@ -1,0 +1,2 @@
+User {{.Item.Username}} canceled editing a blog comment
+

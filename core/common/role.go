@@ -7,12 +7,7 @@ import (
 )
 
 // Context keys used by Allowed when reading from the request context.
-const (
-	// KeyCoreData provides access to CoreData.
-	KeyCoreData ContextValues = "coreData"
-	// KeyQueries holds the db.Queries pointer.
-	KeyQueries ContextValues = "queries"
-)
+// These are defined in contextkeys.go.
 
 // Allowed checks if the request context provides one of the given roles.
 func Allowed(r *http.Request, roles ...string) bool {

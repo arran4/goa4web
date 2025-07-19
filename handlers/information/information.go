@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/host"
@@ -22,12 +22,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		System *SystemInformation
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 	ld, err := load.Avg()
 	if err != nil {
@@ -60,5 +60,5 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.System.Processors = cpuInfo
 
-	common.TemplateHandler(w, r, "informationPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "informationPage.gohtml", data)
 }

@@ -1,15 +1,27 @@
 package imagebbs
 
 import (
-	"github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
 
-func AdminApprovePostPage(w http.ResponseWriter, r *http.Request) {
+// ApprovePostTask marks a post as approved.
+type ApprovePostTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*ApprovePostTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*ApprovePostTask)(nil)
+
+var approvePostTask = &ApprovePostTask{TaskString: TaskApprove}
+
+func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -18,5 +30,14 @@ func AdminApprovePostPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
+}
+
+func (ApprovePostTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("imagePostApprovedEmail")
+}
+
+func (ApprovePostTask) SelfInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("image_post_approved")
+	return &s
 }

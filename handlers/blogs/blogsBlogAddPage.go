@@ -9,21 +9,54 @@ import (
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
+// AddBlogTask encapsulates creating a blog entry.
+type AddBlogTask struct{ tasks.TaskString }
+
+var addBlogTask = &AddBlogTask{TaskString: TaskAdd}
+
+var _ tasks.Task = (*AddBlogTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
+
+func (AddBlogTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogAddEmail")
+}
+
+func (AddBlogTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogAddEmail")
+	return &v
+}
+
+func (AddBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("blogAddEmail")
+}
+
+func (AddBlogTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("blog_add")
+	return &s
+}
+
+func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(w, r) }
+func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogAddActionPage(w, r) }
+
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Mode               string
@@ -43,11 +76,11 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "blogAddPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "blogAddPage.gohtml", data)
 }
 
 func BlogAddActionPage(w http.ResponseWriter, r *http.Request) {
-	if err := common.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

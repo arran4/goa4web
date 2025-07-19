@@ -1,0 +1,5 @@
+Hi {{.Item.Username}},
+Your forum thread has been created successfully.
+
+{{/* TODO add URL back to thread here */}}
+Manage notifications: {{.UnsubURL}}

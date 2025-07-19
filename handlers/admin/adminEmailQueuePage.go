@@ -7,15 +7,17 @@ import (
 	"strconv"
 	"strings"
 
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/arran4/goa4web/config"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type resendQueueTask struct{ eventbus.BasicTaskEvent }
-type deleteQueueTask struct{ eventbus.BasicTaskEvent }
+type resendQueueTask struct{ tasks.TaskString }
+type deleteQueueTask struct{ tasks.TaskString }
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {
@@ -24,11 +26,11 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Emails []EmailItem
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	rows, err := queries.ListUnsentPendingEmails(r.Context())
@@ -58,7 +60,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
-	common.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
 }
 
 func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +104,7 @@ func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("mark sent: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -116,5 +118,5 @@ func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("delete email: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -24,12 +24,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		FAQ []*CategoryFAQs
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -63,25 +63,25 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	// index links provided via middleware
 
-	common.TemplateHandler(w, r, "faqPage", data)
+	handlers.TemplateHandler(w, r, "faqPage", data)
 }
 
-func CustomFAQIndex(data *corecommon.CoreData, r *http.Request) {
+func CustomFAQIndex(data *common.CoreData, r *http.Request) {
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
-	data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: "Ask",
 		Link: "/faq/ask",
 	})
 	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Question Qontrols",
 			Link: "/admin/faq/questions",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Answer",
 			Link: "/admin/faq/answer",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Category Controls",
 			Link: "/admin/faq/categories",
 		})

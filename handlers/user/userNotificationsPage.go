@@ -5,14 +5,21 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
+type DismissTask struct{ tasks.TaskString }
+
+var dismissTask = &DismissTask{TaskString: tasks.TaskString(TaskDismiss)}
+
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
-	if !common.NotificationsEnabled() {
+	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return
 	}
@@ -46,11 +53,11 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Emails:        emails,
 		MaxPriority:   maxPr,
 	}
-	common.TemplateHandler(w, r, "notifications.gohtml", data)
+	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
 }
 
-func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) {
-	if !common.NotificationsEnabled() {
+func (DismissTask) Action(w http.ResponseWriter, r *http.Request) {
+	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return
 	}
@@ -78,7 +85,7 @@ func userNotificationsDismissActionPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
-	if !common.NotificationsEnabled() {
+	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
 		return
 	}

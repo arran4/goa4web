@@ -10,10 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +24,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		Preview string
 	}
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Queue    []*QueueRow
 		Search   string
 		User     string
@@ -32,14 +34,14 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),
 		Offset:   offset,
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	queue, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context())
 	if err != nil {
@@ -71,7 +73,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		filtered = append(filtered, &QueueRow{q, FetchPageTitle(r.Context(), q.Url.String)})
 	}
 
-	pageSize := hcommon.GetPageSize(r)
+	pageSize := handlers.GetPageSize(r)
 	if data.Offset < 0 {
 		data.Offset = 0
 	}
@@ -101,33 +103,37 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		next = "?offset=%d"
 	}
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: fmt.Sprintf("Next %d", pageSize),
 		Link: baseURL + fmt.Sprintf(next, data.Offset+pageSize),
 	})
 	if data.Offset > 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: baseURL + fmt.Sprintf(next, data.Offset-pageSize),
 		})
 	}
 
-	hcommon.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
 }
 
-func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type deleteTask struct{ tasks.TaskString }
+
+var DeleteTask = &deleteTask{TaskString: TaskDelete}
+
+func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
 	URL := r.URL.Query().Get("URL")
@@ -144,11 +150,26 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type approveTask struct{ tasks.TaskString }
+
+var ApproveTask = &approveTask{TaskString: TaskApprove}
+
+func (approveTask) IndexType() string { return searchworker.TypeLinker }
+
+func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = approveTask{}
+
+func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
@@ -164,20 +185,24 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-		if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-			return
+	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type bulkDeleteTask struct{ tasks.TaskString }
+
+var BulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
+
+func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -187,11 +212,26 @@ func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("deleteLinkerQueuedItem Error: %s", err)
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type bulkApproveTask struct{ tasks.TaskString }
+
+var BulkApproveTask = &bulkApproveTask{TaskString: TaskBulkApprove}
+
+func (bulkApproveTask) IndexType() string { return searchworker.TypeLinker }
+
+func (bulkApproveTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = bulkApproveTask{}
+
+func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -207,15 +247,15 @@ func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("getLinkerItemById Error: %s", err)
 			continue
 		}
-		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-			if done {
-				return
-			}
-			if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-				return
+		text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 			}
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

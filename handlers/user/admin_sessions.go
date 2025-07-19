@@ -4,7 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -22,7 +24,7 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Sessions = items
-	common.TemplateHandler(w, r, "sessionsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "sessionsPage.gohtml", data)
 }
 
 func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
@@ -43,5 +45,5 @@ func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

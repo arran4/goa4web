@@ -7,9 +7,30 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// NewBoardTask creates a new image board.
+type NewBoardTask struct{ tasks.TaskString }
+
+var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
+
+var _ tasks.Task = (*NewBoardTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*NewBoardTask)(nil)
+
+func (NewBoardTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationImageBoardNewEmail")
+}
+
+func (NewBoardTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationImageBoardNewEmail")
+	return &v
+}
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -33,10 +54,10 @@ func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = boardRows
 
-	common.TemplateHandler(w, r, "adminNewBoardPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminNewBoardPage.gohtml", data)
 }
 
-func AdminNewBoardMakePage(w http.ResponseWriter, r *http.Request) {
+func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))

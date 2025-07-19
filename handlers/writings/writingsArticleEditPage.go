@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"strings"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -19,15 +19,15 @@ import (
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Writing            *db.GetWritingByIdForUserDescendingByPublishedDateRow
 		UserId             int32
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -43,7 +43,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(common.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 	data.Writing = writing
 
 	languageRows, err := cd.Languages()
@@ -53,12 +53,12 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "articleEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "articleEditPage.gohtml", data)
 }
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.
-	writing := r.Context().Value(hcommon.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(common.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
@@ -66,7 +66,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},
@@ -87,18 +87,13 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, text := range []string{
-		abstract,
-		title,
-		body,
-	} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-
-		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, int64(writing.Idwriting)) {
-			return
+	fullText := strings.Join([]string{abstract, title, body}, " ")
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: writing.Idwriting, Text: fullText}
 		}
 	}
 }

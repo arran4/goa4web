@@ -108,3 +108,4 @@ dbbackups
 /dev-config.json
 /dev-config.env
 /dlq
+/.idea/

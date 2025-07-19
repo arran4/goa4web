@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -15,13 +16,13 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
 	}
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
@@ -37,7 +38,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	common.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
 }
 
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {

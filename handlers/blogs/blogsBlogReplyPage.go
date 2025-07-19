@@ -4,20 +4,56 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/searchworker"
+	"github.com/gorilla/mux"
 )
+
+// ReplyBlogTask posts a comment reply on a blog.
+type ReplyBlogTask struct{ tasks.TaskString }
+
+var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
+
+var _ tasks.Task = (*ReplyBlogTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
+
+func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("blogReplyEmail")
+}
+
+func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("blog_reply")
+	return &s
+}
+
+func (ReplyBlogTask) AutoSubscribePath() (string, string) {
+	return TaskReply, ""
+}
+
+func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }
+
+func (ReplyBlogTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyBlogTask{}
+
+func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogReplyPostPage(w, r) }
 
 func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
@@ -26,7 +62,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := hcommon.ValidateForm(r, []string{"language", "replytext"}, []string{"language", "replytext"}); err != nil {
+	if err := handlers.ValidateForm(r, []string{"language", "replytext"}, []string{"language", "replytext"}); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -44,7 +80,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
 		ViewerIdusers: uid,
@@ -53,8 +89,8 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
-			_ = templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
 			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
@@ -120,35 +156,6 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/blogs/blog/%d/comments", bid)
 
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: pthid,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToBlogs(r.Context(), db.ListUsersSubscribedToBlogsParams{
-		Idusers: uid,
-		Idblogs: int32(bid),
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
-
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
@@ -164,19 +171,21 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+		}
 	}
-
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
+	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
+		}
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)

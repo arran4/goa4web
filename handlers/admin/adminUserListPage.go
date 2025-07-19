@@ -3,8 +3,8 @@ package admin
 import (
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -16,11 +16,11 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Users []*db.AllUsersRow
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		Users:    users,
 	}
-	common.TemplateHandler(w, r, "admin/userList.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/userList.gohtml", data)
 }

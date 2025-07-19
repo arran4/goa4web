@@ -1,0 +1,4 @@
+User {{.Item.Username}} created a new forum thread.
+
+{{/* TODO add URL back to thread here */}}
+Manage notifications: {{.UnsubURL}}

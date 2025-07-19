@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"log"
@@ -14,11 +15,11 @@ import (
 	"strconv"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )
 
@@ -28,7 +29,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		EditUrl string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows     []*BlogRow
 		IsOffset bool
 		UID      string
@@ -61,7 +62,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		IsOffset: offset != 0,
 		UID:      buid,
 	}
@@ -80,30 +81,30 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	common.TemplateHandler(w, r, "blogsPage", data)
+	handlers.TemplateHandler(w, r, "blogsPage", data)
 }
 
-func CustomBlogIndex(data *CoreData, r *http.Request) {
+func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
 	if data.FeedsEnabled {
 		if user == "" {
 			data.CustomIndexItems = append(data.CustomIndexItems,
-				IndexItem{
+				common.IndexItem{
 					Name: "Everyones Atom Feed",
 					Link: "/blogs/atom",
 				},
-				IndexItem{
+				common.IndexItem{
 					Name: "Everyones RSS Feed",
 					Link: "/blogs/rss",
 				},
 			)
 		} else {
 			data.CustomIndexItems = append(data.CustomIndexItems,
-				IndexItem{
+				common.IndexItem{
 					Name: fmt.Sprintf("%s Atom Feed", user),
 					Link: fmt.Sprintf("/blogs/atom?user=%s", url.QueryEscape(user)),
 				},
-				IndexItem{
+				common.IndexItem{
 					Name: fmt.Sprintf("%s RSS Feed", user),
 					Link: fmt.Sprintf("/blogs/rss?user=%s", url.QueryEscape(user)),
 				},
@@ -115,42 +116,42 @@ func CustomBlogIndex(data *CoreData, r *http.Request) {
 
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "User Permissions",
 			Link: "/admin/blogs/user/permissions",
 		})
 	}
 	userHasWriter := data.HasRole("content writer")
 	if userHasWriter {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Write blog",
 			Link: "/blogs/add",
 		})
 
 	}
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: "List bloggers",
 		Link: "/blogs/bloggers",
 	})
 	if user == "" {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next 15",
 			Link: fmt.Sprintf("/blogs?offset=%d", offset+15),
 		})
 		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 				Name: "Previous 15",
 				Link: fmt.Sprintf("/blogs?offset=%d", offset-15),
 			})
 		}
 	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next 15",
 			Link: fmt.Sprintf("/blogs?user=%s&offset=%d", url.QueryEscape(user), offset+15),
 		})
 		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 				Name: "Previous 15",
 				Link: fmt.Sprintf("/blogs?user=%s&offset=%d", url.QueryEscape(user), offset-15),
 			})
@@ -237,7 +238,7 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 	for _, row := range rows {
 		u := r.URL
 		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(imagesign.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)
 		out, _ := io.ReadAll(conv.Process())

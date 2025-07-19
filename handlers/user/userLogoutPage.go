@@ -4,7 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
@@ -44,5 +46,5 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	data.CoreData.UserID = 0
 
-	common.TemplateHandler(w, r, "logoutPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "logoutPage.gohtml", data)
 }

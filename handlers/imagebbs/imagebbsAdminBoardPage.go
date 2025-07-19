@@ -2,15 +2,35 @@ package imagebbs
 
 import (
 	"database/sql"
-	"github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+
+	common "github.com/arran4/goa4web/core/common"
+	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
 
-func AdminBoardModifyBoardActionPage(w http.ResponseWriter, r *http.Request) {
+// ModifyBoardTask updates an existing board's settings.
+type ModifyBoardTask struct{ tasks.TaskString }
+
+var modifyBoardTask = &ModifyBoardTask{TaskString: TaskModifyBoard}
+
+var _ tasks.Task = (*ModifyBoardTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*ModifyBoardTask)(nil)
+
+func (ModifyBoardTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("imageBoardUpdateEmail")
+}
+
+func (ModifyBoardTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("imageBoardUpdateEmail")
+	return &v
+}
+
+func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))

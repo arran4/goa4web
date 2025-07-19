@@ -7,22 +7,43 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
+	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
+
+type EditQuestionTask struct{ tasks.TaskString }
+type DeleteQuestionTask struct{ tasks.TaskString }
+type CreateQuestionTask struct{ tasks.TaskString }
+
+var editQuestionTask = &EditQuestionTask{TaskString: TaskEdit}
+var deleteQuestionTask = &DeleteQuestionTask{TaskString: TaskRemoveRemove}
+var createQuestionTask = &CreateQuestionTask{TaskString: TaskCreate}
+
+func (EditQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskEdit)(r, m)
+}
+
+func (DeleteQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskRemoveRemove)(r, m)
+}
+
+func (CreateQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
+	return tasks.HasTask(TaskCreate)(r, m)
+}
 
 func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Categories []*db.FaqCategory
 		Rows       []*db.Faq
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
 	}
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
@@ -49,10 +70,10 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	common.TemplateHandler(w, r, "adminQuestionPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminQuestionPage.gohtml", data)
 }
 
-func QuestionsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
+func (DeleteQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 	faq, err := strconv.Atoi(r.PostFormValue("faq"))
 	if err != nil {
 		log.Printf("Error: %s", err)
@@ -67,10 +88,10 @@ func QuestionsDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func QuestionsEditActionPage(w http.ResponseWriter, r *http.Request) {
+func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
 	category, err := strconv.Atoi(r.PostFormValue("category"))
@@ -98,10 +119,10 @@ func QuestionsEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func QuestionsCreateActionPage(w http.ResponseWriter, r *http.Request) {
+func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
 	category, err := strconv.Atoi(r.PostFormValue("category"))
@@ -128,5 +149,5 @@ func QuestionsCreateActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

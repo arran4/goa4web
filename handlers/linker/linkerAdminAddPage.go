@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -18,7 +20,7 @@ import (
 
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Categories         []*db.LinkerCategory
@@ -26,7 +28,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:           r.Context().Value(common.KeyCoreData).(*common.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
@@ -50,9 +52,14 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "adminAddPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminAddPage.gohtml", data)
 }
-func AdminAddActionPage(w http.ResponseWriter, r *http.Request) {
+
+type addTask struct{ tasks.TaskString }
+
+var AddTask = &addTask{TaskString: TaskAdd}
+
+func (addTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)
@@ -79,6 +86,6 @@ func AdminAddActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 
 }

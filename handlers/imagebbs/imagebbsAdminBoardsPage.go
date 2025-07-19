@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -53,5 +55,5 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	common.TemplateHandler(w, r, "adminBoardsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminBoardsPage.gohtml", data)
 }

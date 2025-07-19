@@ -1,0 +1,5 @@
+Announcement removed by {{.Item.Username}}.
+
+{{/* TODO add URL back to item here */}}
+Manage notifications: {{.UnsubURL}}
+

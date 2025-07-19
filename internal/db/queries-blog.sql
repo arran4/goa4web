@@ -151,3 +151,7 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
 GROUP BY u.idusers
 ORDER BY u.username
 LIMIT ? OFFSET ?;
+
+-- name: SetBlogLastIndex :exec
+UPDATE blogs SET last_index = NOW() WHERE idblogs = ?;
+

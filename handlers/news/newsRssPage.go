@@ -7,15 +7,16 @@ import (
 	"net/http"
 	"time"
 
+	common "github.com/arran4/goa4web/core/common"
+
 	"github.com/gorilla/feeds"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
+	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
 	posts, err := cd.LatestNews(r)
 	if err != nil {
 		log.Printf("latestNews: %v", err)
@@ -35,7 +36,7 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		text := row.News.String
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(imagesign.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())

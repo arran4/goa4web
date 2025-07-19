@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	common "github.com/arran4/goa4web/core/common"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 type galleryImage struct {
@@ -69,8 +71,8 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimSuffix(fname, ext)
 		thumb := id + "_thumb" + ext
 		imgs = append(imgs, galleryImage{
-			Thumb:  imageshandler.SignedCacheURL(thumb),
-			Full:   imageshandler.SignedURL("image:" + fname),
+			Thumb:  imagesign.SignedCacheURL(thumb),
+			Full:   imagesign.SignedURL("image:" + fname),
 			A4Code: "[img=image:" + fname + "]",
 		})
 	}
@@ -98,5 +100,5 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		PageSize: size,
 	}
 
-	common.TemplateHandler(w, r, "gallery.gohtml", data)
+	handlers.TemplateHandler(w, r, "gallery.gohtml", data)
 }

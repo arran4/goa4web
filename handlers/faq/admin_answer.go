@@ -10,6 +10,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -19,6 +20,30 @@ type RemoveQuestionTask struct{ tasks.TaskString }
 
 var answerTask = &AnswerTask{TaskString: TaskAnswer}
 var removeQuestionTask = &RemoveQuestionTask{TaskString: TaskRemoveRemove}
+
+// Implementing these interfaces means answering a FAQ automatically notifies
+// the original asker and the administrators. From a user's perspective this
+// ensures they are kept in the loop once their question is addressed.
+var _ notif.AdminEmailTemplateProvider = (*AnswerTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*AnswerTask)(nil)
+
+func (AnswerTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("faqAnsweredEmail")
+}
+
+func (AnswerTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("faq_answered")
+	return &v
+}
+
+func (AnswerTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("faqAnsweredEmail")
+}
+
+func (AnswerTask) SelfInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("faq_answered")
+	return &v
+}
 
 func (AnswerTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 	return tasks.HasTask(TaskAnswer)(r, m)

@@ -21,12 +21,11 @@ import (
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
-var _ tasks.Task = (*ReplyTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
-
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+// Compile-time interface checks with user focused reasoning. Subscribing allows
+// thread followers to hear about replies while administrators are alerted to new
+// content. AutoSubscribeProvider ensures the author is kept in the loop.
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
@@ -41,15 +40,6 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 	return nil
 }
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("forumReplyEmail")
-}
-
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("forum_reply")
-	return &s
-}
-
 func (ReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationForumReplyEmail")
 }
@@ -57,6 +47,17 @@ func (ReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
 func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumReplyEmail")
 	return &v
+}
+
+var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+       return notif.NewEmailTemplates("forumReplyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+       s := notif.NotificationTemplateFilenameGenerator("forum_reply")
+       return &s
 }
 
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {

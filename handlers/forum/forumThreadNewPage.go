@@ -28,12 +28,11 @@ import (
 // CreateThreadTask handles creating a new forum thread.
 type CreateThreadTask struct{ tasks.TaskString }
 
-var _ tasks.Task = (*CreateThreadTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
-var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
-
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
+// Interface checks with user value. When a new thread is created we notify
+// topic subscribers so they see new discussions, alert administrators for
+// moderation, and auto-subscribe the author so they are looped into replies.
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
@@ -49,11 +48,11 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 }
 
 func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("forumThreadCreateEmail")
+	return notif.NewEmailTemplates("threadEmail")
 }
 
 func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("forum_thread_create")
+	s := notif.NotificationTemplateFilenameGenerator("thread")
 	return &s
 }
 

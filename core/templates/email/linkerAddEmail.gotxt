@@ -1,0 +1,5 @@
+Hi {{.Item.Username}},
+Your link has been submitted successfully.
+
+{{/* TODO add URL back to link item here */}}
+Manage notifications: {{.UnsubURL}}

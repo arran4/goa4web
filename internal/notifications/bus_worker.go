@@ -216,7 +216,7 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.Event, 
 		}
 	}
 	if auto {
-		task, path := tp.AutoSubscribePath()
+		task, path := tp.AutoSubscribePath(evt)
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
 		if config.AppRuntimeConfig.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")

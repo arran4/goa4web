@@ -1,0 +1,4 @@
+User {{.Item.Username}} created a new image board.
+
+{{/* TODO add URL back to board here */}}
+Manage notifications: {{.UnsubURL}}

@@ -22,11 +22,11 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-
-func TestImagebbsTemplatesExist(t *testing.T) {
+func TestImageBbsTemplatesExist(t *testing.T) {
   // TODO use the action itself
 	prefixes := []string{
-		"imageBoardUpdateEmail",
+		"imageBoardNewEmail",
+		"adminNotificationImageBoardNewEmail",
 	}
 	for _, p := range prefixes {
 		requireEmailTemplates(t, p)

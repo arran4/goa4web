@@ -55,12 +55,12 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := db.New(sqldb)
-	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).
-		AddRow(1, "u@example.com", "u")
+	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "u@example.com", "u")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
-	mock.ExpectExec("INSERT INTO pending_emails").
-		WithArgs(int32(1), sqlmock.AnyArg()).
+	mock.ExpectQuery("SELECT body FROM template_overrides WHERE name = ?").
+		WithArgs("updateEmail.gotxt").WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
@@ -150,13 +150,27 @@ func TestNotifyAdminsEnv(t *testing.T) {
 
 	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
 	defer os.Unsetenv(config.EnvAdminEmails)
+	origEmails := config.AppRuntimeConfig.AdminEmails
+	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
+	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer sqldb.Close()
+	q := db.New(sqldb)
+	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "a")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u JOIN user_emails ue ON ue.user_id = u.idusers WHERE ue.email = ? LIMIT 1")).WithArgs("a@test.com").WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	rows2 := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "b@test.com", "b")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u JOIN user_emails ue ON ue.user_id = u.idusers WHERE ue.email = ? LIMIT 1")).WithArgs("b@test.com").WillReturnRows(rows2)
+	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &recordAdminMail{}
 	n := notif.New(q, rec)
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
-
 	if len(rec.to) != 0 {
-		t.Fatalf("expected no direct mail got %d", len(rec.to))
+		t.Fatalf("expected 0 direct mails, got %d", len(rec.to))
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)

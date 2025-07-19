@@ -84,14 +84,12 @@ func (r *statusRecorder) WriteHeader(code int) {
 func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
-		uid := int32(0)
 		cd, ok := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
 		if !ok || cd == nil {
-			log.Printf("task event middleware: missing core data")
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
+			cd = &corecommon.CoreData{}
+			r = r.WithContext(context.WithValue(r.Context(), corecommon.KeyCoreData, cd))
 		}
-		uid = cd.UserID
+		uid := cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")
 		_ = admin
 		evt := &eventbus.Event{

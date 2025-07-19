@@ -77,30 +77,6 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}
 }
-
-func TestCreateEmailTemplateAndQueue(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer db.Close()
-	q := dbpkg.New(db)
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	ctx := context.Background()
-	if err := emailutil.CreateEmailTemplateAndQueue(ctx, q, 2, "a@b.com", "http://host", "update", nil); err != nil {
-		t.Fatalf("notify error: %v", err)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
-}
-
-func TestCreateEmailTemplateErrors(t *testing.T) {
-	if _, _, err := emailutil.CreateEmailTemplate(context.Background(), "", "p", "update", nil); err == nil {
-		t.Fatal("expected error for empty email")
-	}
-}
-
 func TestInsertPendingEmail(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {

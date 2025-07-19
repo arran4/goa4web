@@ -33,7 +33,7 @@ func (f ForgotPasswordTask) AdminEmailTemplate() *notif.EmailTemplates {
 }
 
 func (f ForgotPasswordTask) AdminInternalNotificationTemplate() *string {
-	v := "adminNotificationUserRequestPasswordResetEmail.gotxt"
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationUserRequestPasswordResetEmail")
 	return &v
 }
 
@@ -42,7 +42,7 @@ func (f ForgotPasswordTask) SelfEmailTemplate() *notif.EmailTemplates {
 }
 
 func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
-	s := "password_reset.gotxt"
+	s := notif.NotificationTemplateFilenameGenerator("password_reset")
 	return &s
 }
 

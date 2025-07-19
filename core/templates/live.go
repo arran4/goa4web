@@ -4,24 +4,25 @@
 package templates
 
 import (
-	"html/template"
+	htemplate "html/template"
 	"os"
+	ttemplate "text/template"
 )
 
-func GetCompiledSiteTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/site"), "*.gohtml", "*/*.gohtml"))
+func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/site"), "*.gohtml", "*/*.gohtml"))
 }
 
-func GetCompiledNotificationTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/notifications"), "*.gotxt"))
+func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/notifications"), "*.gotxt"))
 }
 
-func GetCompiledEmailHtmlTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gohtml"))
+func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gohtml"))
 }
 
-func GetCompiledEmailTextTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gotxt"))
+func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gotxt"))
 }
 
 func GetMainCSSData() []byte {

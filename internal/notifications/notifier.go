@@ -17,9 +17,9 @@ type Notifier struct {
 }
 
 // NotifyAdmins sends a generic update notice to administrator accounts.
-func NotifyAdmins(ctx context.Context, n Notifier, page string) {
+func NotifyAdmins(ctx context.Context, n Notifier, et *EmailTemplates, data EmailData) error {
 	if !config.AdminNotificationsEnabled() {
-		return
+		return nil
 	}
 	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
 		var uid int32
@@ -27,11 +27,13 @@ func NotifyAdmins(ctx context.Context, n Notifier, page string) {
 			if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
 				uid = u.Idusers
 			} else {
-				log.Printf("user by email %s: %v", addr, err)
+				log.Printf("notify admin %s: %v", addr, err)
+				continue
 			}
 		}
-		if err := CreateEmailTemplateAndQueue(ctx, n.Queries, uid, addr, page, "update", nil); err != nil {
+		if err := RenderAndQueueEmailFromTemplates(ctx, n.Queries, uid, addr, et, data); err != nil {
 			log.Printf("notify admin %s: %v", addr, err)
 		}
 	}
+	return nil
 }

@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"time"
@@ -53,4 +54,13 @@ func NotificationPurgeWorker(ctx context.Context, q *db.Queries, interval time.D
 			return
 		}
 	}
+}
+
+// sendInternalNotification stores an internal notification for the user.
+func sendInternalNotification(ctx context.Context, q *db.Queries, userID int32, path, msg string) error {
+	return q.InsertNotification(ctx, db.InsertNotificationParams{
+		UsersIdusers: userID,
+		Link:         sql.NullString{String: path, Valid: path != ""},
+		Message:      sql.NullString{String: msg, Valid: msg != ""},
+	})
 }

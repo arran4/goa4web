@@ -135,7 +135,7 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	} else if _, err := r.Context().Value(common.KeyQueries).(*db.Queries).DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +176,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET username=?, email=? WHERE idusers=?", username, email, uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 
 func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {

@@ -72,7 +72,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 
 // PermissionUserDisallowTask removes a user's permission.
@@ -97,7 +97,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }
 
 // PermissionUpdateTask updates an existing permission entry.
@@ -129,5 +129,5 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 	}
 
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "tasks/run_task.gohtml", data)
 }

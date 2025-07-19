@@ -15,5 +15,5 @@ func TaskDoneAutoRefreshPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.AutoRefresh = true
 
-	TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", data)
+	TemplateHandler(w, r, "tasks/done_auto_refresh.gohtml", data)
 }

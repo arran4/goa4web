@@ -1,12 +1,60 @@
 package middleware
 
 import (
+	"bufio"
+	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/core"
 )
+
+// Configuration is a simple key/value store for tests.
+type Configuration struct {
+	data map[string]string
+}
+
+// NewConfiguration creates an empty Configuration.
+func NewConfiguration() *Configuration {
+	return &Configuration{data: make(map[string]string)}
+}
+
+func (c *Configuration) set(key, value string) {
+	c.data[key] = value
+}
+
+func (c *Configuration) get(key string) string {
+	return c.data[key]
+}
+
+// readConfiguration populates the configuration from a file system.
+func (c *Configuration) readConfiguration(fs core.FileSystem, filename string) {
+	b, err := fs.ReadFile(filename)
+	if err != nil {
+		return
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(b))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if sep := strings.Index(line, "="); sep >= 0 {
+			c.set(line[:sep], line[sep+1:])
+		}
+	}
+}
+
+// X2c converts a two character hex string to a byte.
+func X2c(what string) byte {
+	digit := func(c byte) byte {
+		if c >= 'A' {
+			return (c & 0xdf) - 'A' + 10
+		}
+		return c - '0'
+	}
+
+	return digit(what[0])*16 + digit(what[1])
+}
 
 func TestHandleDie(t *testing.T) {
 	rr := httptest.NewRecorder()

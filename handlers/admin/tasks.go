@@ -262,16 +262,4 @@ const (
 
 	// TaskPurge removes old records.
 	TaskPurge tasks.TaskString = "Purge"
-
-	// TaskSubscribeBlogs subscribes a user to all blog posts.
-	TaskSubscribeBlogs tasks.TaskString = "Subscribe blogs"
-
-	// TaskSubscribeWritings subscribes a user to all writing posts.
-	TaskSubscribeWritings tasks.TaskString = "Subscribe writings"
-
-	// TaskSubscribeNews subscribes a user to all news posts.
-	TaskSubscribeNews tasks.TaskString = "Subscribe news"
-
-	// TaskSubscribeImages subscribes a user to all image board posts.
-	TaskSubscribeImages tasks.TaskString = "Subscribe images"
 )

@@ -1,5 +1,7 @@
 package notifications
 
+import "github.com/arran4/goa4web/internal/eventbus"
+
 type EmailTemplates struct {
 	Text    string
 	HTML    string
@@ -41,6 +43,7 @@ type SubscribersNotificationTemplateProvider interface {
 // subscription when user preferences allow.
 type AutoSubscribeProvider interface {
 	// AutoSubscribePath returns the action name and URI used when creating the
-	// subscription.
-	AutoSubscribePath() (string, string)
+	// subscription. The event may provide additional context required to build
+	// the path.
+	AutoSubscribePath(evt eventbus.Event) (string, string)
 }

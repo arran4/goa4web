@@ -48,8 +48,8 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
 		"writerName", "writerId", "idsitenews", "forumthread_id", "language_idlanguage",
-		"users_idusers", "news", "occurred", "comments",
-	}).AddRow("w", 1, 1, 0, 1, 1, "a", now, 0).AddRow("w", 1, 2, 0, 1, 1, "b", now, 0)
+		"users_idusers", "news", "occurred", "last_index", "comments",
+	}).AddRow("w", 1, 1, 0, 1, 1, "a", now, now, 0).AddRow("w", 1, 2, 0, 1, 1, "b", now, now, 0)
 
 	mock.ExpectQuery("SELECT u.username").WithArgs(int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
 

@@ -109,6 +109,9 @@ func TestProcessEventDLQ(t *testing.T) {
 	if dlqRec.msg != "" {
 		t.Fatalf("unexpected dlq message: %s", dlqRec.msg)
 	}
+	if dlqRec.msg != "" {
+		t.Fatalf("unexpected dlq message: %s", dlqRec.msg)
+	}
 }
 
 func TestProcessEventSubscribeSelf(t *testing.T) {
@@ -193,6 +196,9 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 
 	if err := n.processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
 		t.Fatalf("process: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
 	}
 }
 

@@ -18,6 +18,8 @@ type threadNewCancelTask struct{ tasks.TaskString }
 
 var threadNewCancel = &threadNewCancelTask{TaskString: TaskCancel}
 
+var _ tasks.Task = (*threadNewCancelTask)(nil)
+
 func (threadNewCancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	topicID, _ := strconv.Atoi(mux.Vars(r)["topic"])
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d", topicID), http.StatusTemporaryRedirect)
@@ -27,6 +29,8 @@ func (threadNewCancelTask) Action(w http.ResponseWriter, r *http.Request) {
 type topicThreadReplyCancelTask struct{ tasks.TaskString }
 
 var topicThreadReplyCancel = &topicThreadReplyCancelTask{TaskString: TaskCancel}
+
+var _ tasks.Task = (*topicThreadReplyCancelTask)(nil)
 
 func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
@@ -39,6 +43,8 @@ func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request)
 type topicThreadCommentEditActionTask struct{ tasks.TaskString }
 
 var topicThreadCommentEditAction = &topicThreadCommentEditActionTask{TaskString: TaskEditReply}
+
+var _ tasks.Task = (*topicThreadCommentEditActionTask)(nil)
 
 func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageID, err := strconv.Atoi(r.PostFormValue("language"))
@@ -78,6 +84,8 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 type topicThreadCommentEditActionCancelTask struct{ tasks.TaskString }
 
 var topicThreadCommentEditActionCancel = &topicThreadCommentEditActionCancelTask{TaskString: TaskCancel}
+
+var _ tasks.Task = (*topicThreadCommentEditActionCancelTask)(nil)
 
 func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)

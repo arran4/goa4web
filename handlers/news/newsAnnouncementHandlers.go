@@ -12,16 +12,41 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 type AnnouncementAddTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*AnnouncementAddTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AnnouncementAddTask)(nil)
+
+func (AnnouncementAddTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsAddEmail")
+}
+
+func (AnnouncementAddTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsAddEmail")
+	return &v
+}
 
 var announcementAddTask = &AnnouncementAddTask{TaskString: TaskAdd}
 
 type AnnouncementDeleteTask struct{ tasks.TaskString }
 
 var announcementDeleteTask = &AnnouncementDeleteTask{TaskString: TaskDelete}
+
+var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AnnouncementDeleteTask)(nil)
+
+func (AnnouncementDeleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsDeleteEmail")
+}
+
+func (AnnouncementDeleteTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsDeleteEmail")
+	return &v
+}
 
 func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)

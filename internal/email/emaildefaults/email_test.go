@@ -20,7 +20,6 @@ import (
 	mockemail "github.com/arran4/goa4web/internal/email/mock"
 	sesProv "github.com/arran4/goa4web/internal/email/ses"
 	smtpProv "github.com/arran4/goa4web/internal/email/smtp"
-	emailutil "github.com/arran4/goa4web/internal/notifications"
 	"strings"
 )
 

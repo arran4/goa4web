@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
@@ -23,6 +24,23 @@ import (
 type ReplyBlogTask struct{ tasks.TaskString }
 
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
+
+var _ tasks.Task = (*ReplyBlogTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
+
+func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("blogReplyEmail")
+}
+
+func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("blog_reply")
+	return &s
+}
+
+func (ReplyBlogTask) AutoSubscribePath() (string, string) {
+	return TaskReply, ""
+}
 
 func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }
 

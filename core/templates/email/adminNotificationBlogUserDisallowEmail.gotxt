@@ -1,0 +1,5 @@
+User {{.Item.Username}} revoked blog permissions.
+
+{{/* TODO add URL back to blog section here */}}
+Manage notifications: {{.UnsubURL}}
+

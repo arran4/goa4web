@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
@@ -20,6 +21,18 @@ import (
 type EditReplyTask struct{ tasks.TaskString }
 
 var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
+
+var _ tasks.Task = (*EditReplyTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
+
+func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogCommentEditEmail")
+}
+
+func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentEditEmail")
+	return &v
+}
 
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
@@ -84,6 +97,18 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 type CancelTask struct{ tasks.TaskString }
 
 var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+var _ tasks.Task = (*CancelTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*CancelTask)(nil)
+
+func (CancelTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogCommentCancelEmail")
+}
+
+func (CancelTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentCancelEmail")
+	return &v
+}
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

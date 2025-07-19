@@ -11,6 +11,7 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -18,9 +19,33 @@ type UserAllowTask struct{ tasks.TaskString }
 
 var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 
+var _ tasks.Task = (*UserAllowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*UserAllowTask)(nil)
+
+func (UserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsUserAllowEmail")
+}
+
+func (UserAllowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserAllowEmail")
+	return &v
+}
+
 type UserDisallowTask struct{ tasks.TaskString }
 
 var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
+
+var _ tasks.Task = (*UserDisallowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*UserDisallowTask)(nil)
+
+func (UserDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsUserDisallowEmail")
+}
+
+func (UserDisallowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserDisallowEmail")
+	return &v
+}
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)

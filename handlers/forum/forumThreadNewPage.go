@@ -29,6 +29,11 @@ type CreateThreadTask struct{ tasks.TaskString }
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
+var _ tasks.Task = (*CreateThreadTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
+var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
+
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
 
 func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEventData {
@@ -36,6 +41,28 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 		return []searchworker.IndexEventData{v}
 	}
 	return nil
+}
+
+func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("forumThreadCreateEmail")
+}
+
+func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("forum_thread_create")
+	return &s
+}
+
+func (CreateThreadTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail")
+}
+
+func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumThreadCreateEmail")
+	return &v
+}
+
+func (CreateThreadTask) AutoSubscribePath() (string, string) {
+	return string(TaskCreateThread), ""
 }
 
 var _ searchworker.IndexedTask = CreateThreadTask{}

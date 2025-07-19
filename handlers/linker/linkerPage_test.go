@@ -10,6 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 )
 
 func TestLinkerFeed(t *testing.T) {
@@ -53,19 +55,27 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 		AddRow(1, 1, 1, 1, 0, "Foo", "http://foo", "Bar", time.Now(), "u", "c")
 	mock.ExpectQuery("SELECT l.idlinker").WithArgs(int32(1)).WillReturnRows(rows)
 
-	mock.ExpectExec("INSERT IGNORE INTO searchwordlist").WithArgs("foo").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("INSERT IGNORE INTO linker_search").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec("INSERT IGNORE INTO searchwordlist").WithArgs("bar").WillReturnResult(sqlmock.NewResult(2, 1))
-	mock.ExpectExec("INSERT IGNORE INTO linker_search").WithArgs(int32(1), int32(2)).WillReturnResult(sqlmock.NewResult(0, 1))
-
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
+	evt := &eventbus.Event{}
+	cd := &common.CoreData{}
+	cd.SetEvent(evt)
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, &common.CoreData{})
+	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	ApproveTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
+	}
+	data, ok := evt.Data[searchworker.EventKey].(searchworker.IndexEventData)
+	if !ok {
+		t.Fatalf("missing search event: %+v", evt.Data)
+	}
+	if data.ID != 1 {
+		t.Errorf("id=%d", data.ID)
+	}
+	if data.Text != "Foo Bar" {
+		t.Errorf("text=%q", data.Text)
 	}
 }

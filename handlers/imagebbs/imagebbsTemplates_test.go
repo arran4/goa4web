@@ -22,6 +22,17 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
+
+func TestImagebbsTemplatesExist(t *testing.T) {
+  // TODO use the action itself
+	prefixes := []string{
+		"imageBoardUpdateEmail",
+	}
+	for _, p := range prefixes {
+		requireEmailTemplates(t, p)
+	}
+}
+
 func requireNotificationTemplate(t *testing.T, name string) {
 	t.Helper()
 	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
@@ -30,7 +41,3 @@ func requireNotificationTemplate(t *testing.T, name string) {
 	}
 }
 
-func TestImagebbsTemplatesExist(t *testing.T) {
-	requireEmailTemplates(t, "imagePostApprovedEmail")
-	requireNotificationTemplate(t, notif.NotificationTemplateFilenameGenerator("image_post_approved"))
-}

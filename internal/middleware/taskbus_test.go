@@ -23,9 +23,10 @@ func TestTaskEventMiddleware(t *testing.T) {
 	}))
 	req := httptest.NewRequest("POST", "/admin/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{})
 	rec := httptest.NewRecorder()
 	ch := bus.Subscribe()
-	successHandler.ServeHTTP(rec, req)
+	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
 		named, ok := evt.Task.(tasks.Name)
@@ -39,9 +40,10 @@ func TestTaskEventMiddleware(t *testing.T) {
 	// non-admin path should not include /admin prefix
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx = context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{})
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	successHandler.ServeHTTP(rec, req)
+	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
 		if strings.Contains(evt.Path, "/admin") {
@@ -56,9 +58,10 @@ func TestTaskEventMiddleware(t *testing.T) {
 	}))
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx = context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{})
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	failureHandler.ServeHTTP(rec, req)
+	failureHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case <-ch:
 		t.Fatalf("did not expect event on failure")
@@ -81,7 +84,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{})
+	ctx = context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
@@ -111,8 +114,9 @@ func TestTaskEventQueue(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, &corecommon.CoreData{})
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
+	handler.ServeHTTP(rec, req.WithContext(ctx))
 
 	if len(taskQueue.events) != 1 {
 		t.Fatalf("expected queued event")

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 [<a href="/admin/permissions/sections">Back to sections</a>]<br/>
 <h3>Permissions for {{ .Section }}</h3>
 <table border="1">
@@ -12,4 +12,4 @@
     </tr>
     {{ end }}
 </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

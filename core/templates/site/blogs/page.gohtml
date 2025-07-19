@@ -1,5 +1,5 @@
 {{ define "blogsPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
 		{{if .Rows}}
                         {{if .UID}}
                                 <font size="5"><a href="/blogs/blogger/{{(index $.Blogs 0).Username.String}}">{{(index $.Blogs 0).Username.String}}</a>'s blogs.</font><br>
@@ -34,5 +34,5 @@
 				{{end}}
 			{{end}}
 		{{end}}
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

@@ -1,6 +1,6 @@
 {{ define "getAllForumCategories" }}
     {{ if and .Category .CategoryBreadcrumbs }}
-        {{ template "categoryBreadcrumbs" . }}
+        {{ template "partials/categoryBreadcrumbs.gohtml" . }}
     {{ end }}
     {{ if .Categories }}
         <table align="center" width="90%" border="1">

@@ -1,6 +1,6 @@
 {{ define "linkerPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
         {{ template "getAllLinkerCategories" $ }}
         {{ template "getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks" $ }}
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

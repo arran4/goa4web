@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     Search writings<br />
     {{- if .NoResults }}
         <p>Nothing found.</p>
@@ -15,4 +15,4 @@
     Comment search:<br>
     {{ template "commentSearchResults" $ }}
     <br>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

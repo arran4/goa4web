@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     <form method="get">
         <input name="search" value="{{$.Search}}">
         <input type="submit" value="Search">
@@ -13,4 +13,4 @@
     {{end}}
     {{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous {{$.PageSize}}</a>{{end}}
     {{if $.NextLink}}<a href="{{$.NextLink}}">Next {{$.PageSize}}</a>{{end}}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

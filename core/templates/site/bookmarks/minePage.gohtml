@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     <table>
         <tr valign="top">
             {{- range .Columns }}
@@ -16,4 +16,4 @@
         </tr>
     </table>
     <hr><a href="/bookmarks/edit">EDIT</a><br>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

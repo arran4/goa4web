@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ if .Writing }}
         <font size="4">New writing:</font><br>
         (Please select an appropriate section before writing this.)<br>
@@ -14,4 +14,4 @@
     {{ else }}
         Sorry, there is no article that you can edit here.
     {{ end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

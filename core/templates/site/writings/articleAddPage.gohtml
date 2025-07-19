@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     <font size="4">New writing:</font><br>
     (Please select an appropriate section before writing this.)<br>
     <form method="post">
@@ -10,4 +10,4 @@
         {{ template "languageCombobox" $ }}
         <input type="submit" name="task" value="Submit writing">
     </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     New board:
     <form method="post" action="/admin/imagebbs/board">
         {{ csrfField }}
@@ -7,4 +7,4 @@
         Parent Board: <select name="pbid" value=""><option value="0">None</option>{{ range $.Boards }}<option value="{{.Idimageboard}}">{{.Title.String}}</option>  {{ end }}</select>
         <input type="submit" name="task" value="New board">
     </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

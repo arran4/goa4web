@@ -1,5 +1,5 @@
 {{ define "faqPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
     {{ range $index, $categoryFAQs := .FAQ }}
         <font size="5">Section: {{ $categoryFAQs.Category.Name.String }}</font><br>
         <table width="100%">
@@ -13,5 +13,5 @@
         {{ end }}
         </table>
     {{ end }}
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

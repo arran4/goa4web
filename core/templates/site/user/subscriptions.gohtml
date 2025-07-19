@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h2>Your Subscriptions</h2>
 {{ if .Subs }}
 <table>
@@ -33,4 +33,4 @@
     {{ end }}
     <input type="submit" name="task" value="Update">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

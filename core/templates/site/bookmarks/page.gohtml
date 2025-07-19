@@ -1,5 +1,5 @@
 {{ define "bookmarksPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
 	<a href="/bookmarks/mine">View bookmarks</a><br>
 	<a href="/bookmarks/edit">Edit page.</a><br>
 	<b><u>How to use this?</u></b><br>
@@ -7,5 +7,5 @@
 	"<URL> <Name> <Newline>" - Will create a link to URL with name, if you need to use a space make it %20 and use that.<br>
 	"Category: <name> <Newline>" - Creates a category named <name>.<br>
 	"Column <Newline>" - Creates a new column.
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

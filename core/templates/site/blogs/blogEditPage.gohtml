@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ if .Blog }}
         <form method="post" action="">
         {{ csrfField }}
@@ -11,4 +11,4 @@
     {{ else }}
 		Dead. No BLOG!
     {{ end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

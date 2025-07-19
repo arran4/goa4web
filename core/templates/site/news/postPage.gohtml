@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ template "newsPost" $.Post }}
     <hr><font size=4>Replies:</font>
     {{ template "threadComments" $ }}
@@ -13,4 +13,4 @@
             <input type="submit" name="task" value="Reply">
         </form>
     {{ end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

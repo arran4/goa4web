@@ -1,9 +1,9 @@
 {{ define "newsPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
         {{ range LatestNews }}
             {{ template "newsPost" . }}
         {{ else }}
             <p>There is no news.</p>
         {{ end }}
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

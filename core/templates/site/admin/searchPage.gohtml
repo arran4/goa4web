@@ -1,5 +1,5 @@
 {{ define "adminSearchPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
     [<a href="/admin">Admin:</a> <a href="/admin/search">(This page/Refresh)</a>]<br />
                 <p>Search index counts:</p>
                 <table border="1">
@@ -28,5 +28,5 @@
                         <input type="submit" name="task" value="Remake writing search"><br>
                         <input type="submit" name="task" value="Remake image search">
                 </form>
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

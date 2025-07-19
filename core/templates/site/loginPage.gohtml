@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{- if $.Error }}
     <p style="color:red">{{ $.Error }}</p>
     {{- end }}
@@ -10,5 +10,5 @@
         <input type="submit" name="task" value="Login">
         <br><a href="/forgot">Forgot password?</a>
     </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}
 

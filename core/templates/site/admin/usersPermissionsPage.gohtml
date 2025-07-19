@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     [<a href="/admin">Admin:</a> <a href="/admin/users/permissions">(This page/Refresh)</a>]<br />
 <table border="1" class="perm-table">
     <thead>
@@ -96,4 +96,4 @@
     });
 })();
 </script>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

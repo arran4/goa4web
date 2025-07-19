@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h2>Usage Statistics</h2>
 
 <h3>Threads per Forum Topic</h3>
@@ -64,4 +64,4 @@
     <tr><td>{{ .Username.String }}</td><td>{{ .Year }}</td><td>{{ .Month }}</td><td>{{ .Blogs }}</td><td>{{ .News }}</td><td>{{ .Comments }}</td><td>{{ .Images }}</td><td>{{ .Links }}</td><td>{{ .Writings }}</td></tr>
     {{- end }}
 </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

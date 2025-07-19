@@ -1,5 +1,5 @@
 {{ define "userPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
         User preferences:<br><br>
         Modify <a href="/usr/lang">Language settings</a><br>
         Modify <a href="/usr/email">Email and notification settings</a><br>
@@ -7,5 +7,5 @@
         Modify <a href="/usr/paging">Pagination settings</a><br>
         Modify <a href="/usr/page-size">Page size config</a><br>
         Manage <a href="/usr/subscriptions">Subscriptions</a><br>
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 [<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]<br />
 <form method="post">
     {{ csrfField }}
@@ -17,4 +17,4 @@ Before: <input type="date" name="before">
 <input type="submit" name="task" value="Delete">
 <input type="submit" name="task" value="Purge">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

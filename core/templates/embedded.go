@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	//go:embed "site/*.gohtml" "site/*/*.gohtml"
+	//go:embed "site/*.gohtml" "site/*/*.gohtml" "site/partials/*.gohtml"
 	siteTemplatesFS embed.FS
 	//go:embed "notifications/*.gotxt"
 	notificationTemplatesFS embed.FS
@@ -28,7 +28,7 @@ var (
 )
 
 func GetCompiledSiteTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(siteTemplatesFS, "site/*.gohtml", "site/*/*.gohtml"))
+	return template.Must(template.New("").Funcs(funcs).ParseFS(siteTemplatesFS, "site/*.gohtml", "site/*/*.gohtml", "site/partials/*.gohtml"))
 }
 
 func GetCompiledNotificationTemplates(funcs template.FuncMap) *template.Template {

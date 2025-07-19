@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     <form method="post" action="">
         {{ csrfField }}
         <!-- Title <input name="title" value=""><br> -->
@@ -7,4 +7,4 @@
         {{ template "languageCombobox" $ }}
         <input type="submit" name="task" value="{{ .Mode }}">
     </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     <form method="get">
         <label>Search <input name="search" value="{{ .Search }}"></label>
         <label>User <input name="user" value="{{ .User }}"></label>
@@ -42,4 +42,4 @@
     <input type="submit" name="task" value="Bulk Approve">
     <input type="submit" name="task" value="Bulk Delete">
     </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

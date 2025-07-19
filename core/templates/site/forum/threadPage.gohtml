@@ -1,8 +1,8 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ template "threadBreadcrumbs" $ }}
     {{ template "threadComments" $ }}
     {{ template "forumReply" $ }}
 
     <a href="/forum/topic/{{.Topic.Idforumtopic}}">Back</a>
 
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

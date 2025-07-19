@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <form method="post">
         {{ csrfField }}
     <label>
@@ -16,4 +16,4 @@
     <br>
     <input type="submit" value="Save">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

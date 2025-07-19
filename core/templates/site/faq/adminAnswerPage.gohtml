@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     <font size="5">Section: Unanswered/Uncategorized Questions</font><br>
     {{- range .Rows }}
 		<form method="post" action="">
@@ -39,4 +39,4 @@
 			</table>
 		</form><br>
     {{- end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

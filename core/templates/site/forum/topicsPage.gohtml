@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ template "topicBreadcrumbs" $ }}
 
     {{ template "getAllForumCategories" $ }}
@@ -7,4 +7,4 @@
     {{- if .CanEditAny }} | <a href="/forum/admin/topic/{{.Topic.Idforumtopic}}/edit">Edit Topic</a>{{ end }}<br />
 
     {{ template "topicThreads" $ }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

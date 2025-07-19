@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h4>New Topic</h4>
 <form method="post" action="/forum/admin/topic">
 {{ csrfField }}
@@ -17,4 +17,4 @@ Moderator: <select name="mod">{{- range $.Roles }}<option value="{{.ID}}">{{.Nam
 Administrator: <select name="admin">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
 <input type="submit" name="task" value="Forum topic create">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

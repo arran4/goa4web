@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 [<a href="/admin">Admin:</a> <a href="/admin/audit">(This page/Refresh)</a>]<br />
 <form method="get">
     User: <input name="user" value="{{$.User}}">
@@ -18,4 +18,4 @@
 </table>
 {{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous {{$.PageSize}}</a>{{end}}
 {{if $.NextLink}}<a href="{{$.NextLink}}">Next {{$.PageSize}}</a>{{end}}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

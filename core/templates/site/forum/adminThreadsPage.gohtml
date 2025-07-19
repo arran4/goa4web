@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 {{ range $idx, $tid := .Order }}
     {{ $grp := index $.Groups $tid }}
     <h2>{{ $grp.TopicTitle }}</h2>
@@ -21,4 +21,4 @@
         {{ end }}
     </table>
 {{ end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 {{- if $.Error }}
     <p style="color:red;">{{ $.Error }}</p>
 {{- end }}
@@ -34,4 +34,4 @@
         <input type="checkbox" name="autosubscribe" {{ if .UserPreferences.AutoSubscribeReplies }}checked{{ end }}>Automatically subscribe to threads I reply to<br>
         <input type="submit" name="task" value="Save all"><br>
         <input type="submit" name="task" value="Test mail"><br>
-    </form>{{ template "tail" $ }}
+    </form>{{ template "partials/tail.gohtml" $ }}

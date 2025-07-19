@@ -1,5 +1,5 @@
 {{ define "forumPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
         {{ template "getAllForumCategories" . }}
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

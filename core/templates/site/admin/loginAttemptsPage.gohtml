@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <table border="1">
     <tr><th>Time</th><th>Username</th><th>IP</th></tr>
     {{- range .Attempts }}
@@ -9,4 +9,4 @@
     </tr>
     {{- end }}
 </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

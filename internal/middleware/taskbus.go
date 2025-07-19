@@ -88,8 +88,8 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		cd, ok := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
 		if !ok || cd == nil {
 			log.Printf("task event middleware: missing core data")
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
+			cd = corecommon.NewCoreData(r.Context(), nil)
+			r = r.WithContext(context.WithValue(r.Context(), corecommon.KeyCoreData, cd))
 		}
 		uid = cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")

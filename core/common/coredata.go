@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"sync"
 
@@ -22,6 +23,11 @@ type ContextValues string
 type IndexItem struct {
 	Name string
 	Link string
+}
+
+// MailProvider defines the interface required by CoreData for sending emails.
+type MailProvider interface {
+	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
 }
 
 const (
@@ -59,8 +65,9 @@ type CoreData struct {
 
 	session *sessions.Session
 
-	ctx     context.Context
-	queries *db.Queries
+	ctx           context.Context
+	queries       *db.Queries
+	emailProvider lazyValue[MailProvider]
 
 	allRoles                 lazyValue[[]*db.Role]
 	announcement             lazyValue[*db.GetActiveAnnouncementWithNewsRow]
@@ -127,6 +134,18 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 		return cd.a4codeMapper(tag, val)
 	}
 	return val
+}
+
+// EmailProvider lazily returns the configured email provider.
+// WithEmailProvider sets the email provider used by CoreData.
+func WithEmailProvider(p MailProvider) CoreOption {
+	return func(cd *CoreData) { cd.emailProvider.set(p) }
+}
+
+// EmailProvider returns the configured email provider.
+func (cd *CoreData) EmailProvider() MailProvider {
+	p, _ := cd.emailProvider.load(func() (MailProvider, error) { return nil, nil })
+	return p
 }
 
 // HasRole reports whether the current user explicitly has the named role.

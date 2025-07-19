@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/gorilla/sessions"
@@ -70,7 +71,8 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 
 		cd := common.NewCoreData(r.Context(), queries,
 			common.WithImageURLMapper(imagesign.MapURL),
-			common.WithSession(session))
+			common.WithSession(session),
+			common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 		cd.UserID = uid
 		_ = cd.UserRoles()
 

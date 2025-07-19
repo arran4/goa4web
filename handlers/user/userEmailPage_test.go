@@ -11,10 +11,10 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	t.Helper()
 	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
 	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	if htmlTmpls.Lookup(notif.EmailTextTemplateFilenameGenerator(prefix)) == nil {
+	if htmlTmpls.Lookup(notif.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
 		t.Errorf("missing html template %s.gohtml", prefix)
 	}
-	if textTmpls.Lookup(notif.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
+	if textTmpls.Lookup(notif.EmailTextTemplateFilenameGenerator(prefix)) == nil {
 		t.Errorf("missing text template %s.gotxt", prefix)
 	}
 	if textTmpls.Lookup(notif.EmailSubjectTemplateFilenameGenerator(prefix)) == nil {

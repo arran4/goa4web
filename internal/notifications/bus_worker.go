@@ -185,8 +185,10 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.Event, tp
 		Item interface{}
 	}{Event: evt, Item: evt.Data}
 	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
+		var err error
 		msg, err = n.renderNotification(ctx, *nt, data)
 		if err != nil {
+			log.Printf("render subscriber notification: %v", err)
 			return fmt.Errorf("render notification: %w", err)
 		}
 	}
@@ -219,7 +221,7 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.Event, 
 		}
 	}
 	if auto {
-		task, path := tp.AutoSubscribePath()
+		task, path := tp.AutoSubscribePath(evt)
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
 		if config.AppRuntimeConfig.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")

@@ -1,4 +1,4 @@
-package forum
+package user
 
 import (
 	"testing"
@@ -22,15 +22,6 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-func TestForumTemplatesExist(t *testing.T) {
-  // TODO make it loop over the tasks.
-	prefixes := []string{
-		"forumThreadCreateEmail",
-		"adminNotificationForumThreadCreateEmail",
-		"forumReplyEmail",
-		"adminNotificationForumReplyEmail",
-	}
-	for _, p := range prefixes {
-		requireEmailTemplates(t, p)
-	}
+func TestTestMailTemplatesExist(t *testing.T) {
+	requireEmailTemplates(t, "testEmail")
 }

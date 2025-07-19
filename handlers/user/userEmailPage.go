@@ -17,13 +17,10 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/internal/email"
-	emailutil "github.com/arran4/goa4web/internal/notifications"
-
-	"github.com/arran4/goa4web/config"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 type SaveEmailTask struct{ tasks.TaskString }
@@ -31,6 +28,9 @@ type AddEmailTask struct{ tasks.TaskString }
 type ResendEmailTask struct{ tasks.TaskString }
 type DeleteEmailTask struct{ tasks.TaskString }
 type TestMailTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*TestMailTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
 
 func (ResendEmailTask) Action(w http.ResponseWriter, r *http.Request) { addEmailTask.Resend(w, r) }
 
@@ -155,35 +155,27 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "email unknown", http.StatusBadRequest)
 		return
 	}
-	queries, _ := r.Context().Value(common.KeyQueries).(*db.Queries)
-	var emails []*db.UserEmail
-	var err error
-	if queries != nil {
-		emails, err = queries.GetUserEmailsByUserID(r.Context(), user.Idusers)
-	}
-	if err != nil || len(emails) == 0 {
-		http.Error(w, "email unknown", http.StatusBadRequest)
-		return
-	}
-	addr := emails[0].Email
-	base := "http://" + r.Host
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
-	}
-	pageURL := base + r.URL.Path
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-	if provider == nil {
+	if cd.EmailProvider() == nil {
 		q := url.QueryEscape(ErrMailNotConfigured.Error())
-		// Display the error without redirecting so the POST isn't repeated.
 		r.URL.RawQuery = "error=" + q
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	n := emailutil.New(queries, provider)
-	if err := n.CreateEmailTemplateAndQueue(r.Context(), user.Idusers, addr, pageURL, "update", nil); err != nil {
-		log.Printf("notify Error: %s", err)
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+}
+
+func (TestMailTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("testEmail")
+}
+
+func (TestMailTask) SelfInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("testEmail")
+	return &s
 }
 
 func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {

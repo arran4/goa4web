@@ -17,6 +17,7 @@ import (
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
@@ -26,6 +27,10 @@ import (
 
 // CreateThreadTask handles creating a new forum thread.
 type CreateThreadTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*CreateThreadTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
@@ -66,6 +71,19 @@ func (CreateThreadTask) AutoSubscribePath() (string, string) {
 }
 
 var _ searchworker.IndexedTask = CreateThreadTask{}
+
+func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("threadEmail")
+}
+
+func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("thread")
+	return &s
+}
+
+func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskCreateThread), evt.Path
+}
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

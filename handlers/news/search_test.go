@@ -31,7 +31,8 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 
 	newsRows := sqlmock.NewRows([]string{
 		"writerName", "writerId", "idsitenews", "forumthread_id",
-		"language_idlanguage", "users_idusers", "news", "occurred", "Comments",
+		"language_idlanguage", "users_idusers", "news", "occurred",
+		"Comments",
 	}).AddRow("bob", 1, 1, 0, 1, 1, "text", time.Unix(0, 0), 0)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.username AS writerName")).
 		WithArgs(int32(1), int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}).

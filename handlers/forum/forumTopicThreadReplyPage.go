@@ -64,6 +64,8 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskReply), evt.Path
 }
 
+var _ searchworker.IndexedTask = ReplyTask{}
+
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

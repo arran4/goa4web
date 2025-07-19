@@ -65,6 +65,8 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+var _ searchworker.IndexedTask = CreateThreadTask{}
+
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskCreateThread), evt.Path
 }

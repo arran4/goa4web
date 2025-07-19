@@ -18,7 +18,6 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -97,16 +96,15 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		req.AddCookie(c)
 	}
 	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := &common.CoreData{}
+	cd := &common.CoreData{UserID: 1}
 	cd.SetEvent(evt)
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	handler := middleware.TaskEventMiddleware(http.HandlerFunc(askTask.Page))
 	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	askTask.Action(rr, req)
 
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
@@ -114,9 +112,10 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	if loc := rr.Header().Get("Location"); loc != "/faq" {
 		t.Fatalf("location=%q", loc)
 	}
-	named, ok := evt.Task.(tasks.Name)
-	if !ok || named.Name() != TaskAsk || evt.Path != "/admin/faq" {
-		t.Fatalf("event %+v", evt)
+	e := cd.Event()
+	named, ok := e.Task.(tasks.Name)
+	if !ok || named.Name() != TaskAsk || e.Path != "/admin/faq" {
+		t.Fatalf("event %+v", e)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

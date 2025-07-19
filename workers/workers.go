@@ -41,17 +41,18 @@ func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider
 		emailqueue.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
 	})
 	log.Printf("Starting notification purger worker")
-	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
+	safeGo(func() {
+		n := notifications.New(dbpkg.New(db), provider)
+		n.NotificationPurgeWorker(ctx, time.Hour)
+	})
 	log.Printf("Starting event bus logger worker")
 	safeGo(func() { logworker.Worker(ctx, eventbus.DefaultBus) })
 	log.Printf("Starting audit worker")
 	safeGo(func() { auditworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
 	log.Printf("Starting notification bus worker")
 	safeGo(func() {
-		// TODO n := notifications.New(...)
-		n := notifications.Notifier{EmailProvider: provider, Queries: dbpkg.New(db)}
-		// TODO Notifier n.BusWorker(...)
-		notifications.BusWorker(ctx, eventbus.DefaultBus, n, dlqProvider)
+		n := notifications.New(dbpkg.New(db), provider)
+		n.BusWorker(ctx, eventbus.DefaultBus, dlqProvider)
 	})
 	log.Printf("Starting search index worker")
 	safeGo(func() { searchworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })

@@ -4,14 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"html/template"
 	"log"
 	"strings"
-	ttemplate "text/template"
 	"time"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -67,7 +64,7 @@ func parseEvent(evt eventbus.Event) (string, int32, bool) {
 	return "", 0, false
 }
 
-func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
+func (n *Notifier) BusWorker(ctx context.Context, bus *eventbus.Bus, q dlq.DLQ) {
 	if bus == nil || n.Queries == nil {
 		return
 	}
@@ -75,7 +72,7 @@ func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
 	for {
 		select {
 		case evt := <-ch:
-			if err := processEvent(ctx, evt, n, q); err != nil {
+			if err := n.processEvent(ctx, evt, q); err != nil {
 				log.Printf("process event: %v", err)
 			}
 		case <-ctx.Done():
@@ -84,7 +81,7 @@ func BusWorker(ctx context.Context, bus *eventbus.Bus, n Notifier, q dlq.DLQ) {
 	}
 }
 
-func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ) error {
+func (n *Notifier) processEvent(ctx context.Context, evt eventbus.Event, q dlq.DLQ) error {
 	if !handlers.NotificationsEnabled() {
 		return nil
 	}
@@ -93,12 +90,8 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 		return nil
 	}
 
-	emailHtmlTemplates := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	emailTextTemplates := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	notificationTemplates := templates.GetCompiledNotificationTemplates(map[string]any{})
-
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		if err := notifyAdmins(ctx, evt, n, tp, emailHtmlTemplates, emailTextTemplates, notificationTemplates); err != nil {
+		if err := n.notifyAdmins(ctx, evt, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -107,7 +100,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
-		if err := notifySelf(ctx, evt, n, tp, notificationTemplates); err != nil {
+		if err := n.notifySelf(ctx, evt, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -117,7 +110,7 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
-		if err := notifySubscribers(ctx, evt, n, tp, notificationTemplates); err != nil {
+		if err := n.notifySubscribers(ctx, evt, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -127,20 +120,20 @@ func processEvent(ctx context.Context, evt eventbus.Event, n Notifier, q dlq.DLQ
 	}
 
 	if tp, ok := evt.Task.(AutoSubscribeProvider); ok {
-		handleAutoSubscribe(ctx, evt, n, tp)
+		n.handleAutoSubscribe(ctx, evt, tp)
 
 	}
 
 	return nil
 }
 
-func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNotificationTemplateProvider, noteTmpls *ttemplate.Template) error {
+func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNotificationTemplateProvider) error {
 	user, err := n.Queries.GetUserById(ctx, evt.UserID)
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
 		notifyMissingEmail(ctx, n.Queries, evt.UserID)
 	} else {
 		if et := tp.SelfEmailTemplate(); et != nil {
-			if err := RenderAndQueueEmailFromTemplates(ctx, n.Queries, evt.UserID, user.Email.String, et, evt.Data); err != nil {
+			if err := n.RenderAndQueueEmailFromTemplates(ctx, evt.UserID, user.Email.String, et, evt.Data); err != nil {
 				return err
 			}
 		}
@@ -150,7 +143,7 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 			eventbus.Event
 			Item interface{}
 		}{Event: evt, Item: evt.Data}
-		msg, err := renderTemplate(ctx, n.Queries, *nt, data, noteTmpls, TextTemplatesNew)
+		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {
 			return err
 		}
@@ -167,7 +160,7 @@ func notifySelf(ctx context.Context, evt eventbus.Event, n Notifier, tp SelfNoti
 	return nil
 }
 
-func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp SubscribersNotificationTemplateProvider, noteTmpls *ttemplate.Template) error {
+func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.Event, tp SubscribersNotificationTemplateProvider) error {
 	name := ""
 	if tn, ok := evt.Task.(tasks.Name); ok {
 		name = tn.Name()
@@ -192,12 +185,12 @@ func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp S
 		Item interface{}
 	}{Event: evt, Item: evt.Data}
 	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
-		msg, err = renderNotification(ctx, n.Queries, *nt, data)
+		msg, err = n.renderNotification(ctx, *nt, data)
 	}
 
 	et := tp.SubscribedEmailTemplate()
 	for id := range emailSubs {
-		if err := sendSubscriberEmail(ctx, n, id, evt, et); err != nil {
+		if err := n.sendSubscriberEmail(ctx, id, evt, et); err != nil {
 			return fmt.Errorf("deliver email to %d: %w", id, err)
 		}
 	}
@@ -213,7 +206,7 @@ func notifySubscribers(ctx context.Context, evt eventbus.Event, n Notifier, tp S
 	return nil
 }
 
-func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier, tp AutoSubscribeProvider) {
+func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.Event, tp AutoSubscribeProvider) {
 	auto := true
 	email := false
 	if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
@@ -234,7 +227,7 @@ func handleAutoSubscribe(ctx context.Context, evt eventbus.Event, n Notifier, tp
 	}
 }
 
-func notifyAdmins(ctx context.Context, evt eventbus.Event, n Notifier, tp AdminEmailTemplateProvider, htmlTmpls *template.Template, textTmpls, noteTmpls *ttemplate.Template) error {
+func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.Event, tp AdminEmailTemplateProvider) error {
 	if !config.AdminNotificationsEnabled() {
 		return nil
 	}
@@ -248,7 +241,7 @@ func notifyAdmins(ctx context.Context, evt eventbus.Event, n Notifier, tp AdminE
 			}
 		}
 		if et := tp.AdminEmailTemplate(); et != nil {
-			if err := RenderAndQueueEmailFromTemplates(ctx, n.Queries, uid, addr, et, evt.Data); err != nil {
+			if err := n.RenderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data); err != nil {
 				return err
 			}
 		}
@@ -257,7 +250,7 @@ func notifyAdmins(ctx context.Context, evt eventbus.Event, n Notifier, tp AdminE
 				eventbus.Event
 				Item interface{}
 			}{Event: evt, Item: evt.Data}
-			msg, err := renderTemplate(ctx, n.Queries, *nt, data, noteTmpls, TextTemplatesNew)
+			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {
 				return err
 			}

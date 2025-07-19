@@ -7,7 +7,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq/db"
 )
 
-func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) error {
+func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string) error {
 	if q == nil {
 		return fmt.Errorf("no dlq provider")
 	}
@@ -16,7 +16,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n Notifier, msg string) 
 			if count, err := dbq.Queries.CountDeadLetters(ctx); err == nil {
 				if isPow10(count) {
 					// TODO create template and data
-					err := NotifyAdmins(ctx, n, &EmailTemplates{
+					err := n.NotifyAdmins(ctx, &EmailTemplates{
 						Text:    EmailTextTemplateFilenameGenerator("dlqMultiFailure"),
 						HTML:    EmailHTMLTemplateFilenameGenerator("dlqMultiFailure"),
 						Subject: EmailSubjectTemplateFilenameGenerator("dlqMultiFailure"),

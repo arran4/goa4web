@@ -51,9 +51,6 @@ const (
 	// TaskDeleteCategory removes a category.
 	TaskDeleteCategory tasks.TaskString = "Delete Category"
 
-	// TaskDeleteLanguage removes a language entry.
-	TaskDeleteLanguage tasks.TaskString = "Delete Language"
-
 	// TaskDeleteTopicRestriction deletes a topic restriction record.
 	TaskDeleteTopicRestriction tasks.TaskString = "Delete topic restriction"
 
@@ -139,9 +136,6 @@ const (
 
 	// TaskRenameCategory renames a category.
 	TaskRenameCategory tasks.TaskString = "Rename Category"
-
-	// TaskRenameLanguage renames a language entry.
-	TaskRenameLanguage tasks.TaskString = "Rename Language"
 
 	// TaskReply posts a reply to a thread or comment.
 	TaskReply tasks.TaskString = "Reply"
@@ -233,9 +227,6 @@ const (
 	// TaskUsersDisallow removes multiple user permissions or levels.
 	TaskUsersDisallow tasks.TaskString = "Users Disallow"
 
-	// TaskUserDoNothing is used when no action should be taken on a user.
-	TaskUserDoNothing tasks.TaskString = "User do nothing"
-
 	// TaskUserResetPassword resets a user's password.
 	TaskUserResetPassword tasks.TaskString = "Password Reset"
 
@@ -244,12 +235,6 @@ const (
 
 	// TaskUserEmailVerification verifies a user's email address.
 	TaskUserEmailVerification tasks.TaskString = "Email Verification"
-
-	// TaskAllow approves a news user level.
-	TaskAllow tasks.TaskString = "allow"
-
-	// TaskRemoveLower removes a news user level.
-	TaskRemoveLower tasks.TaskString = "remove"
 
 	// TaskWritingCategoryChange changes a writing category name.
 	TaskWritingCategoryChange tasks.TaskString = "writing category change"
@@ -262,16 +247,4 @@ const (
 
 	// TaskPurge removes old records.
 	TaskPurge tasks.TaskString = "Purge"
-
-	// TaskSubscribeBlogs subscribes a user to all blog posts.
-	TaskSubscribeBlogs tasks.TaskString = "Subscribe blogs"
-
-	// TaskSubscribeWritings subscribes a user to all writing posts.
-	TaskSubscribeWritings tasks.TaskString = "Subscribe writings"
-
-	// TaskSubscribeNews subscribes a user to all news posts.
-	TaskSubscribeNews tasks.TaskString = "Subscribe news"
-
-	// TaskSubscribeImages subscribes a user to all image board posts.
-	TaskSubscribeImages tasks.TaskString = "Subscribe images"
 )

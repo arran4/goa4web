@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <form action="{{.BackURL}}" method="{{.Method}}">
     {{ range $key, $vals := .Values }}
         {{ range $vals }}
@@ -7,5 +7,5 @@
     {{ end }}
     <input type="submit" value="Go Back">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}
 

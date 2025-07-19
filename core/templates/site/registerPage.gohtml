@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 Register:<br>
 <form method="post">
         {{ csrfField }}
@@ -7,4 +7,4 @@ Register:<br>
     EmailAdr: <input name="email"><br>
     <input type="submit" name="task" value="Register">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

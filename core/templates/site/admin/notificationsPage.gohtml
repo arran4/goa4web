@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     [<a href="/admin">Admin:</a> <a href="/admin/notifications">(This page/Refresh)</a>]<br />
     <div>Total: {{ .Total }} Unread: {{ .Unread }}</div>
 <form method="post">
@@ -32,4 +32,4 @@
 <input type="submit" name="task" value="Dismiss">
 <input type="submit" name="task" value="Purge">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

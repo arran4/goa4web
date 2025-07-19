@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ if .ImagePost }}
         <font size="4">Picture:</font><br>
         <table>
@@ -21,4 +21,4 @@
             <input type="submit" name="task" value="Reply">
         </form>
     {{ end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

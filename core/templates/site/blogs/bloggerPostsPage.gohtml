@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 		{{if .Rows}}
                         {{if .UID}}
                                 <font size="5"><a href="/blogs/blogger/{{(index $.Rows 0).Username.String}}">{{(index $.Rows 0).Username.String}}</a>'s blogs.</font><br>
@@ -33,4 +33,4 @@
 				{{end}}
 			{{end}}
 		{{end}}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

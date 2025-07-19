@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h2>Your Uploaded Images</h2>
 {{- if .Images }}
 <div class="gallery">
@@ -16,4 +16,4 @@
 {{- else }}
 <p>No images uploaded.</p>
 {{- end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

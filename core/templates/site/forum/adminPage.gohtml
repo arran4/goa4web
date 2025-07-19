@@ -1,5 +1,5 @@
 {{ define "forumAdminPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
 <p>Please select an option:</p>
 <ul>
     <li><a href="/forum/admin/categories">Manage Categories</a></li>
@@ -17,5 +17,5 @@
     <tr><td>Topics</td><td>{{ .Stats.Topics }}</td></tr>
     <tr><td>Threads</td><td>{{ .Stats.Threads }}</td></tr>
 </table>
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <div id="notifications-list">
 {{ range .Notifications }}
     <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
@@ -23,4 +23,4 @@
     </select>
     <input type="submit" name="task" value="SaveAll">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

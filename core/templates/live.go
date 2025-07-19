@@ -10,7 +10,7 @@ import (
 )
 
 func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
-	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/site"), "*.gohtml", "*/*.gohtml"))
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/site"), "*.gohtml", "*/*.gohtml", "partials/*.gohtml"))
 }
 
 func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {

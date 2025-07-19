@@ -1,5 +1,5 @@
 {{ define "adminPage" }}
-    {{ template "head" $ }}
+    {{ template "partials/head.gohtml" $ }}
     [<a href="/admin">(This page/Refresh)</a>]<br />
 <p>Please select an option:</p>
 <ul>
@@ -19,5 +19,5 @@
     <tr><td>Forum Threads</td><td>{{ .Stats.ForumThreads }}</td></tr>
     <tr><td>Writings</td><td>{{ .Stats.Writings }}</td></tr>
 </table>
-    {{ template "tail" $ }}
+    {{ template "partials/tail.gohtml" $ }}
 {{ end }}

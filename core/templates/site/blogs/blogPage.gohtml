@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 		<font size="5"><a href="/blogs/blogger/{{$.Blog.Username.String}}">{{$.Blog.Username.String}}'s Blog</a>:</font><br>
 		<table width="100%">
                 <tr>
@@ -11,4 +11,4 @@
                     </td>
                 </tr>
 		</table><br>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

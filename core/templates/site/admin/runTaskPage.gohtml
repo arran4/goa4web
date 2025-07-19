@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 {{- if $.Messages }}
         <ul>
         {{- range $.Messages }}
@@ -23,4 +23,4 @@
         Task completed successfully.
 {{- end }}
 <a href="{{$.Back}}">Back</a>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h4>Edit Topic</h4>
 <form method="post" action="/forum/admin/topic/{{ .Topic.Idforumtopic }}/edit">
 {{ csrfField }}
@@ -17,4 +17,4 @@ Moderator: <select name="mod">{{- range $.Roles }}<option value="{{.ID}}" {{if $
 Administrator: <select name="admin">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.AdminRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
 <input type="submit" name="task" value="Forum topic change">
 </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

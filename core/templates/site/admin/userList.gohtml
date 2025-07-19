@@ -1,7 +1,7 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <ul>
 {{ range .Users }}
     <li><a href="/admin/user/{{ .Idusers }}">{{ .Username.String }}</a></li>
 {{ end }}
 </ul>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

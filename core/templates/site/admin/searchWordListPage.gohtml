@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 [<a href="/admin">Admin:</a> <a href="/admin/search/list">Word List</a>]<br />
 Jump to:
 {{ range $.Letters }} <a href="/admin/search/list?letter={{.}}">{{ . }}</a> {{ end }}<br />
@@ -13,4 +13,4 @@ Jump to:
     {{ if .Active }}<strong>{{ .Num }}</strong>{{ else }}<a href="{{ .Link }}">{{ .Num }}</a>{{ end }}
 {{ end }}
 {{ if $.NextLink }}<a href="{{ $.NextLink }}">Next</a>{{ end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

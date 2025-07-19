@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h2>User {{ .User.Username.String }} (ID {{ .User.Idusers }})</h2>
 <table border="1">
 <tr><th>Email</th><th>Verified</th><th>Priority</th></tr>
@@ -18,4 +18,4 @@
     <tr><td>{{ .CreatedAt.Format "2006-01-02 15:04" }}</td><td>{{ .Comment }}</td></tr>
     {{- end }}
 </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

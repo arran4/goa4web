@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ template "writingCategoryBreadcrumbs" $ }}
     {{ if .Writing }}
         <font size="4">At {{ .Writing.Published.Time }}, By {{ .Writing.Writerusername.String }}; {{ .Writing.Title.String | a4code2html }}</font>:
@@ -28,4 +28,4 @@
     {{ else }}
         Article doesn't exist.<br>
     {{ end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

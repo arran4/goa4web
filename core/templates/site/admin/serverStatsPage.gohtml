@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h2>Server Runtime Statistics</h2>
 <table border="1">
     <tr><th>Metric</th><th>Value</th></tr>
@@ -10,4 +10,4 @@
     <tr><td>Heap Sys</td><td>{{ .Stats.HeapSys }}</td></tr>
     <tr><td>GC Count</td><td>{{ .Stats.NumGC }}</td></tr>
 </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

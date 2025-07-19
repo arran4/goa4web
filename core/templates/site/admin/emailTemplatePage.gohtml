@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 {{- if $.Error }}
     <p style="color:red;">{{ $.Error }}</p>
 {{- end }}
@@ -10,4 +10,4 @@
 </form>
 <h3>Preview</h3>
 <pre>{{ $.Preview }}</pre>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

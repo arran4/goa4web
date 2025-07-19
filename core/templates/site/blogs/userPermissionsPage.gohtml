@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <form method="get">
 Filter by role:
     <select name="role">
@@ -41,4 +41,4 @@ Filter by role:
 </form>
 
 Permissions should be valid only.
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     Search linker:<br>
     {{- with .Links }}
     	{{- if $.NoResults }}
@@ -17,4 +17,4 @@
     Comment search:<br>
     {{ template "commentSearchResults" $ }}
     <br>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

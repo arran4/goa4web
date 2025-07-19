@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     {{ range $i, $cpu := .System.Processors }}
         Processor {{ $i }} is a {{ $cpu.VendorID }} {{ $cpu.ModelName }} with {{ $cpu.Mhz }}MHz and {{ $cpu.CacheSize }} cache.<br>
     {{ end }}
@@ -7,4 +7,4 @@
     The server has been up for: {{ .System.Uptime }} and is {{ .System.IdlePercent }}% idle.<br>
     <br>
     The time is now {{ now }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

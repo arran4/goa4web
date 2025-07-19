@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     <form method="post">
         {{ csrfField }}
     {{ range .LanguageOptions }}
@@ -16,4 +16,4 @@
     <br>
     <input type="submit" name="task" value="Save all">
     </form>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

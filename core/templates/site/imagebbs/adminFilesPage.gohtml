@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 <h2>Uploaded Files - {{ .Path }}</h2>
 {{ if .Parent }}<a href="/imagebbs/admin/files?path={{ .Parent }}">Parent</a><br>{{ end }}
 <table border="1">
@@ -11,4 +11,4 @@
 </tr>
 {{ end }}
 </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

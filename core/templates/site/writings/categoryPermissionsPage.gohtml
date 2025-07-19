@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 Category {{.CategoryID}} permissions:<br>
 <table border="1">
     <tr>
@@ -38,4 +38,4 @@ Category {{.CategoryID}} permissions:<br>
         </form>
     </tr>
 </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

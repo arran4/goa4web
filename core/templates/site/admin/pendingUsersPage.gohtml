@@ -1,4 +1,4 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
     [<a href="/admin">Admin:</a> <a href="/admin/users/pending">(This page/Refresh)</a>]<br />
     <table border="1">
         <tr><th>ID</th><th>User</th><th>Email</th><th>Actions</th></tr>
@@ -19,4 +19,4 @@
         </tr>
         {{end}}
     </table>
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

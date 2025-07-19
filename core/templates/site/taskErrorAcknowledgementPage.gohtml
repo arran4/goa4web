@@ -1,8 +1,8 @@
-{{ template "head" $ }}
+{{ template "partials/head.gohtml" $ }}
 {{- if $.Error }}
 <p style="color:red;">{{ $.Error }}</p>
 {{- end }}
 {{- if $.BackURL }}
 <a href="{{ $.BackURL }}">Go Back</a>
 {{- end }}
-{{ template "tail" $ }}
+{{ template "partials/tail.gohtml" $ }}

@@ -130,8 +130,25 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	config.AppRuntimeConfig.EmailEnabled = true
 	config.AppRuntimeConfig.EmailFrom = "from@example.com"
 	t.Cleanup(func() { config.AppRuntimeConfig = cfgOrig })
+
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer sqldb.Close()
+	q := db.New(sqldb)
+
+	emails := []string{"a@test.com", "b@test.com"}
+	for _, e := range emails {
+		mock.ExpectQuery("UserByEmail").
+			WithArgs(sql.NullString{String: e, Valid: true}).
+			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, e, "u"))
+		mock.ExpectExec("INSERT INTO pending_emails").
+			WithArgs(int32(1), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
 	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
-	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	defer os.Unsetenv(config.EnvAdminEmails)
 	origEmails := config.AppRuntimeConfig.AdminEmails
 	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"

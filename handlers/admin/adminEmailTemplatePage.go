@@ -27,7 +27,8 @@ type testTemplateTask struct{ tasks.TaskString }
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
-	b := emailutil.GetUpdateEmailText(r.Context())
+	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	b := emailutil.GetUpdateEmailText(r.Context(), queries)
 
 	var preview string
 	tmpl, err := template.New("email").Parse(b)
@@ -98,7 +99,7 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	pageURL := base + r.URL.Path
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("email").Parse(emailutil.GetUpdateEmailText(r.Context()))
+	tmpl, err := template.New("email").Parse(emailutil.GetUpdateEmailText(r.Context(), queries))
 	if err != nil {
 		log.Printf("parse template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

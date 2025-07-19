@@ -19,10 +19,10 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	routerpkg "github.com/arran4/goa4web/internal/router"
-	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )

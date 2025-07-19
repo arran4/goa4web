@@ -17,8 +17,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	imagesign "github.com/arran4/goa4web/pkg/images"
 	"github.com/gorilla/sessions"
 )
 

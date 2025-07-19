@@ -185,7 +185,11 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.Event, tp
 		Item interface{}
 	}{Event: evt, Item: evt.Data}
 	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
+		var err error
 		msg, err = n.renderNotification(ctx, *nt, data)
+		if err != nil {
+			log.Printf("render subscriber notification: %v", err)
+		}
 	}
 
 	et := tp.SubscribedEmailTemplate()

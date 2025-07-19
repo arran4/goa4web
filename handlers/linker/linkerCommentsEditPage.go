@@ -19,6 +19,8 @@ import (
 // CommentEditActionPage updates a comment then refreshes thread metadata.
 type EditReplyTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*EditReplyTask)(nil)
+
 var commentEditAction = &EditReplyTask{TaskString: TaskEditReply}
 
 func (t EditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
@@ -93,6 +95,8 @@ func CommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 }
 
 type cancelEditReplyTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*cancelEditReplyTask)(nil)
 
 var commentEditActionCancel = &cancelEditReplyTask{TaskString: TaskCancel}
 

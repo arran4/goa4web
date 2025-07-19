@@ -57,6 +57,8 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 type addTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*addTask)(nil)
+
 var AddTask = &addTask{TaskString: TaskAdd}
 
 func (addTask) Action(w http.ResponseWriter, r *http.Request) {

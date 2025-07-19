@@ -24,6 +24,8 @@ import (
 // UploadImageTask processes authenticated image uploads.
 type UploadImageTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*UploadImageTask)(nil)
+
 var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {

@@ -18,6 +18,8 @@ import (
 
 type SearchForumTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*SearchForumTask)(nil)
+
 var searchForumTask = &SearchForumTask{TaskString: TaskSearchForum}
 
 func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) {

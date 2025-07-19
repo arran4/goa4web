@@ -17,7 +17,12 @@ import (
 )
 
 type resendQueueTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*resendQueueTask)(nil)
+
 type deleteQueueTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*deleteQueueTask)(nil)
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {

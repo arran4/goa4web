@@ -14,6 +14,8 @@ import (
 // RemakeCommentsTask rebuilds the comments search index.
 type RemakeCommentsTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*RemakeCommentsTask)(nil)
+
 var remakeCommentsTask = &RemakeCommentsTask{TaskString: TaskRemakeCommentsSearch}
 
 func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) {

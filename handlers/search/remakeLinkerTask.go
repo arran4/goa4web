@@ -14,6 +14,8 @@ import (
 // RemakeLinkerTask rebuilds the linker search index.
 type RemakeLinkerTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*RemakeLinkerTask)(nil)
+
 var remakeLinkerTask = &RemakeLinkerTask{TaskString: TaskRemakeLinkerSearch}
 
 func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) {

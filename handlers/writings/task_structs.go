@@ -10,6 +10,8 @@ import (
 // SubmitWritingTask encapsulates creating a new writing.
 type SubmitWritingTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*SubmitWritingTask)(nil)
+
 var submitWritingTask = &SubmitWritingTask{TaskString: TaskSubmitWriting}
 
 func (SubmitWritingTask) Page(w http.ResponseWriter, r *http.Request)   { ArticleAddPage(w, r) }
@@ -17,6 +19,8 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) { Articl
 
 // ReplyTask posts a comment reply.
 type ReplyTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*ReplyTask)(nil)
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
@@ -36,6 +40,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) { ArticleReplyAc
 // EditReplyTask updates an existing comment.
 type EditReplyTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*EditReplyTask)(nil)
+
 var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +50,8 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 // CancelTask cancels comment editing.
 type CancelTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*CancelTask)(nil)
 
 var cancelTask = &CancelTask{TaskString: TaskCancel}
 
@@ -54,6 +62,8 @@ func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 // UpdateWritingTask applies changes to an article.
 type UpdateWritingTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*UpdateWritingTask)(nil)
+
 var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
@@ -62,6 +72,8 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { Articl
 
 // UserAllowTask grants a user a permission.
 type UserAllowTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*UserAllowTask)(nil)
 
 var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 
@@ -76,6 +88,8 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 // UserDisallowTask removes a user's permission.
 type UserDisallowTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*UserDisallowTask)(nil)
+
 var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -89,6 +103,8 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 // WritingCategoryChangeTask modifies a category.
 type WritingCategoryChangeTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*WritingCategoryChangeTask)(nil)
+
 var writingCategoryChangeTask = &WritingCategoryChangeTask{TaskString: TaskWritingCategoryChange}
 
 func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -97,6 +113,8 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 
 // WritingCategoryCreateTask creates a new category.
 type WritingCategoryCreateTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*WritingCategoryCreateTask)(nil)
 
 var writingCategoryCreateTask = &WritingCategoryCreateTask{TaskString: TaskWritingCategoryCreate}
 

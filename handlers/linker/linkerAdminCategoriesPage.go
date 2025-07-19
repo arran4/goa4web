@@ -41,6 +41,8 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 type updateCategoryTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*updateCategoryTask)(nil)
+
 var UpdateCategoryTask = &updateCategoryTask{TaskString: TaskUpdate}
 
 func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +73,8 @@ func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 
 type renameCategoryTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*renameCategoryTask)(nil)
+
 var RenameCategoryTask = &renameCategoryTask{TaskString: TaskRenameCategory}
 
 func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +95,8 @@ func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 type deleteCategoryTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*deleteCategoryTask)(nil)
 
 var DeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
 
@@ -124,6 +130,8 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 type createCategoryTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*createCategoryTask)(nil)
 
 var CreateCategoryTask = &createCategoryTask{TaskString: TaskCreateCategory}
 

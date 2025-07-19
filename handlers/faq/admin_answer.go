@@ -15,7 +15,12 @@ import (
 )
 
 type AnswerTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*AnswerTask)(nil)
+
 type RemoveQuestionTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*RemoveQuestionTask)(nil)
 
 var answerTask = &AnswerTask{TaskString: TaskAnswer}
 var removeQuestionTask = &RemoveQuestionTask{TaskString: TaskRemoveRemove}

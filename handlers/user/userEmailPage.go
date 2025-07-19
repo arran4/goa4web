@@ -24,9 +24,21 @@ import (
 )
 
 type SaveEmailTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*SaveEmailTask)(nil)
+
 type AddEmailTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*AddEmailTask)(nil)
+
 type ResendEmailTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*ResendEmailTask)(nil)
+
 type DeleteEmailTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*DeleteEmailTask)(nil)
+
 type TestMailTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*TestMailTask)(nil)

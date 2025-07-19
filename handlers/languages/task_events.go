@@ -8,6 +8,8 @@ import (
 
 type RenameLanguageTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*RenameLanguageTask)(nil)
+
 var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
 
 func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +18,8 @@ func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
 
 type DeleteLanguageTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*DeleteLanguageTask)(nil)
+
 var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delete Language")}
 
 func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -23,6 +27,8 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 type CreateLanguageTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*CreateLanguageTask)(nil)
 
 var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}
 

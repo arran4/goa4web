@@ -20,6 +20,8 @@ import (
 
 type PagingSaveTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*PagingSaveTask)(nil)
+
 var pagingSaveTask = &PagingSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {

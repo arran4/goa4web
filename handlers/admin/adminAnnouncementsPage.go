@@ -15,7 +15,12 @@ import (
 )
 
 type addAnnouncementTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*addAnnouncementTask)(nil)
+
 type deleteAnnouncementTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*deleteAnnouncementTask)(nil)
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

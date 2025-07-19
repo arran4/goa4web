@@ -17,6 +17,8 @@ import (
 
 type AskTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*AskTask)(nil)
+
 var askTask = &AskTask{TaskString: TaskAsk}
 
 func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {

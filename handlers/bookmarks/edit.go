@@ -15,9 +15,13 @@ import (
 
 type SaveTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*SaveTask)(nil)
+
 var saveTask = &SaveTask{TaskString: TaskSave}
 
 type CreateTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*CreateTask)(nil)
 
 var createTask = &CreateTask{TaskString: TaskCreate}
 

@@ -75,6 +75,8 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 
 type userAllowTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*userAllowTask)(nil)
+
 var UserAllowTask = &userAllowTask{TaskString: TaskUserAllow}
 
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +106,8 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 type userDisallowTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*userDisallowTask)(nil)
 
 var UserDisallowTask = &userDisallowTask{TaskString: TaskUserDisallow}
 

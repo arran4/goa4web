@@ -15,6 +15,8 @@ import (
 // ApprovePostTask marks a post as approved.
 type ApprovePostTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*ApprovePostTask)(nil)
+
 var approvePostTask = &ApprovePostTask{TaskString: TaskApprove}
 
 func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) {

@@ -49,6 +49,8 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 // PermissionUserAllowTask grants a user permission.
 type PermissionUserAllowTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*PermissionUserAllowTask)(nil)
+
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +80,8 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 // PermissionUserDisallowTask removes a user's permission.
 type PermissionUserDisallowTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*PermissionUserDisallowTask)(nil)
+
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -102,6 +106,8 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 
 // PermissionUpdateTask updates an existing permission entry.
 type PermissionUpdateTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*PermissionUpdateTask)(nil)
 
 var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
 

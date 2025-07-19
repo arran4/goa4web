@@ -14,6 +14,8 @@ import (
 // RemakeImageTask rebuilds the image search index.
 type RemakeImageTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*RemakeImageTask)(nil)
+
 var remakeImageTask = &RemakeImageTask{TaskString: TaskRemakeImageSearch}
 
 func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) {

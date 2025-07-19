@@ -16,8 +16,16 @@ import (
 )
 
 type EditQuestionTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*EditQuestionTask)(nil)
+
 type DeleteQuestionTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*DeleteQuestionTask)(nil)
+
 type CreateQuestionTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*CreateQuestionTask)(nil)
 
 var editQuestionTask = &EditQuestionTask{TaskString: TaskEdit}
 var deleteQuestionTask = &DeleteQuestionTask{TaskString: TaskRemoveRemove}

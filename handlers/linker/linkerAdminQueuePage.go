@@ -119,6 +119,8 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 type deleteTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*deleteTask)(nil)
+
 var DeleteTask = &deleteTask{TaskString: TaskDelete}
 
 func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -154,6 +156,8 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 type approveTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*approveTask)(nil)
 
 var ApproveTask = &approveTask{TaskString: TaskApprove}
 
@@ -199,6 +203,8 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 
 type bulkDeleteTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*bulkDeleteTask)(nil)
+
 var BulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
 
 func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -216,6 +222,8 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 type bulkApproveTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*bulkApproveTask)(nil)
 
 var BulkApproveTask = &bulkApproveTask{TaskString: TaskBulkApprove}
 

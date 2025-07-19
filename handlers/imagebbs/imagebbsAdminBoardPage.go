@@ -15,6 +15,8 @@ import (
 // ModifyBoardTask updates an existing board's settings.
 type ModifyBoardTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*ModifyBoardTask)(nil)
+
 var modifyBoardTask = &ModifyBoardTask{TaskString: TaskModifyBoard}
 
 func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) {

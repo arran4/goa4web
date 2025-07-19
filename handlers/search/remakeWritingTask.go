@@ -14,6 +14,8 @@ import (
 // RemakeWritingTask rebuilds the writing search index.
 type RemakeWritingTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*RemakeWritingTask)(nil)
+
 var remakeWritingTask = &RemakeWritingTask{TaskString: TaskRemakeWritingSearch}
 
 func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) {

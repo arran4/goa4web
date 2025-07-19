@@ -16,6 +16,8 @@ import (
 
 type DismissTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*DismissTask)(nil)
+
 var dismissTask = &DismissTask{TaskString: tasks.TaskString(TaskDismiss)}
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,8 @@ import (
 
 type deleteDLQTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*deleteDLQTask)(nil)
+
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData

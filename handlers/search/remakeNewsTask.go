@@ -14,6 +14,8 @@ import (
 // RemakeNewsTask rebuilds the news search index.
 type RemakeNewsTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*RemakeNewsTask)(nil)
+
 var remakeNewsTask = &RemakeNewsTask{TaskString: TaskRemakeNewsSearch}
 
 func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) {

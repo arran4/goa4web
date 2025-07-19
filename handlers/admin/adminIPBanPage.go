@@ -16,7 +16,12 @@ import (
 )
 
 type addIPBanTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*addIPBanTask)(nil)
+
 type deleteIPBanTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*deleteIPBanTask)(nil)
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

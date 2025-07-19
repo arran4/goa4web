@@ -15,8 +15,16 @@ import (
 )
 
 type RenameCategoryTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*RenameCategoryTask)(nil)
+
 type DeleteCategoryTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*DeleteCategoryTask)(nil)
+
 type CreateCategoryTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*CreateCategoryTask)(nil)
 
 var renameCategoryTask = &RenameCategoryTask{TaskString: TaskRenameCategory}
 var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}

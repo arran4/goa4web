@@ -15,7 +15,12 @@ import (
 )
 
 type UpdateSubscriptionsTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*UpdateSubscriptionsTask)(nil)
+
 type DeleteTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*DeleteTask)(nil)
 
 var (
 	updateSubscriptionsTask = &UpdateSubscriptionsTask{TaskString: tasks.TaskString(TaskUpdate)}

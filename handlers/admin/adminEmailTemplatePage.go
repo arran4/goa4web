@@ -24,7 +24,12 @@ import (
 )
 
 type saveTemplateTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*saveTemplateTask)(nil)
+
 type testTemplateTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*testTemplateTask)(nil)
 
 func getUpdateEmailText(ctx context.Context) string {
 	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {

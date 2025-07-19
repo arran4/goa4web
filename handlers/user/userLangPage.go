@@ -21,8 +21,16 @@ import (
 )
 
 type SaveLanguagesTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*SaveLanguagesTask)(nil)
+
 type SaveLanguageTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*SaveLanguageTask)(nil)
+
 type SaveAllTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*SaveAllTask)(nil)
 
 var (
 	saveLanguagesTask = &SaveLanguagesTask{TaskString: tasks.TaskString(TaskSaveLanguages)}

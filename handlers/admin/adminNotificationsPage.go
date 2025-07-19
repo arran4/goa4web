@@ -15,8 +15,16 @@ import (
 )
 
 type markReadTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*markReadTask)(nil)
+
 type purgeNotificationsTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*purgeNotificationsTask)(nil)
+
 type sendNotificationTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*sendNotificationTask)(nil)
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

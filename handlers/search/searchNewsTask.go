@@ -10,6 +10,8 @@ import (
 // SearchNewsTask performs a news search.
 type SearchNewsTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*SearchNewsTask)(nil)
+
 var searchNewsTask = &SearchNewsTask{TaskString: TaskSearchNews}
 
 func (SearchNewsTask) Action(w http.ResponseWriter, r *http.Request) {

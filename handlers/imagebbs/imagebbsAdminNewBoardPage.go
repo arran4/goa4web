@@ -17,6 +17,8 @@ import (
 // NewBoardTask creates a new image board.
 type NewBoardTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*NewBoardTask)(nil)
+
 var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {

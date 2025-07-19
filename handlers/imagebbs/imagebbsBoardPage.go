@@ -32,6 +32,8 @@ import (
 // UploadImageTask handles uploading an image to a board.
 type UploadImageTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*UploadImageTask)(nil)
+
 var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
 func (UploadImageTask) IndexType() string { return searchworker.TypeImage }

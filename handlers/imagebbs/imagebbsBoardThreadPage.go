@@ -24,6 +24,8 @@ import (
 // ReplyTask posts a reply within a thread.
 type ReplyTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*ReplyTask)(nil)
+
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }

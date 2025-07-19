@@ -19,6 +19,8 @@ import (
 
 type SearchLinkerTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*SearchLinkerTask)(nil)
+
 var searchLinkerTask = &SearchLinkerTask{TaskString: TaskSearchLinker}
 
 func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {

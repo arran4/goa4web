@@ -14,6 +14,8 @@ import (
 // RemakeBlogTask rebuilds the blog search index.
 type RemakeBlogTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*RemakeBlogTask)(nil)
+
 var remakeBlogTask = &RemakeBlogTask{TaskString: TaskRemakeBlogSearch}
 
 func (RemakeBlogTask) Action(w http.ResponseWriter, r *http.Request) {

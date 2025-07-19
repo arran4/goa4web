@@ -8,6 +8,7 @@ import (
 
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -16,6 +17,18 @@ import (
 type ModifyBoardTask struct{ tasks.TaskString }
 
 var modifyBoardTask = &ModifyBoardTask{TaskString: TaskModifyBoard}
+
+var _ tasks.Task = (*ModifyBoardTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*ModifyBoardTask)(nil)
+
+func (ModifyBoardTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("imageBoardUpdateEmail")
+}
+
+func (ModifyBoardTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("imageBoardUpdateEmail")
+	return &v
+}
 
 func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")

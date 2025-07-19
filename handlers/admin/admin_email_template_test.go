@@ -153,12 +153,12 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	origEmails := config.AppRuntimeConfig.AdminEmails
 	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
-	sqldb, mock, err := sqlmock.New()
+	sqldb, mock, err = sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer sqldb.Close()
-	q := db.New(sqldb)
+	q = db.New(sqldb)
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "a")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u JOIN user_emails ue ON ue.user_id = u.idusers WHERE ue.email = ? LIMIT 1")).WithArgs("a@test.com").WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))

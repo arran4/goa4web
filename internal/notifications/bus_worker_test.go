@@ -186,7 +186,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	config.AppRuntimeConfig.NotificationsEnabled = true
 	config.AppRuntimeConfig.EmailFrom = "from@example.com"
 	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
-	db, _, err := sqlmock.New()
+	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}

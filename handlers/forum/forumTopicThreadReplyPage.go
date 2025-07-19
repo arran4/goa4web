@@ -14,11 +14,16 @@ import (
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*ReplyTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
@@ -32,6 +37,19 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 }
 
 var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
+}
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

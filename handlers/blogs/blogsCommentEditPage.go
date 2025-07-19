@@ -11,11 +11,22 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
 
-func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
+// EditReplyTask updates an existing comment.
+type EditReplyTask struct{ tasks.TaskString }
+
+var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
+
+// CancelTask cancels comment editing.
+type CancelTask struct{ tasks.TaskString }
+
+var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
@@ -76,7 +87,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func CommentEditPostCancelPage(w http.ResponseWriter, r *http.Request) {
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])

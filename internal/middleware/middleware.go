@@ -1,15 +1,12 @@
 package middleware
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/config"
@@ -127,56 +124,6 @@ func SetDBPool(db *sql.DB, verbosity int) {
 
 // dbLogVerbosity controls optional logging of database pool stats.
 var dbLogVerbosity int
-
-// Configuration stores simple key/value pairs loaded from a file.
-type Configuration struct {
-	data map[string]string
-}
-
-// NewConfiguration creates an empty Configuration.
-func NewConfiguration() *Configuration {
-	return &Configuration{data: make(map[string]string)}
-}
-
-func (c *Configuration) set(key, value string) {
-	c.data[key] = value
-}
-
-func (c *Configuration) get(key string) string {
-	return c.data[key]
-}
-
-// readConfiguration populates Configuration from a file on the provided fs.
-func (c *Configuration) readConfiguration(fs core.FileSystem, filename string) {
-	b, err := fs.ReadFile(filename)
-	if err != nil {
-		return
-	}
-	scanner := bufio.NewScanner(bytes.NewReader(b))
-	for scanner.Scan() {
-		line := scanner.Text()
-		sep := strings.Index(line, "=")
-		if sep >= 0 {
-			key := line[:sep]
-			value := line[sep+1:]
-			c.set(key, value)
-		}
-	}
-}
-
-// X2c converts a two character hex string into a byte.
-func X2c(what string) byte {
-	digit := func(c byte) byte {
-		if c >= 'A' {
-			return (c & 0xdf) - 'A' + 10
-		}
-		return c - '0'
-	}
-
-	d1 := digit(what[0])
-	d2 := digit(what[1])
-	return d1*16 + d2
-}
 
 // RequestLoggerMiddleware logs incoming requests along with the user and session IDs.
 func RequestLoggerMiddleware(next http.Handler) http.Handler {

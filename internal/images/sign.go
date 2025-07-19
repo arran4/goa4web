@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -71,44 +70,6 @@ func SignedRef(ref string) string {
 	}
 	ts, sig := sign(prefix + id)
 	return fmt.Sprintf("%s%s?ts=%d&sig=%s", prefix, id, ts, sig)
-}
-
-// VerifyRef checks the signature on ref and returns the cleaned reference
-// without query parameters. The returned bool indicates whether the signature
-// was valid.
-func VerifyRef(ref string) (string, bool) {
-	var prefix, rest string
-	switch {
-	case strings.HasPrefix(ref, "image:"):
-		prefix = "image:"
-		rest = strings.TrimPrefix(ref, "image:")
-	case strings.HasPrefix(ref, "img:"):
-		prefix = "image:"
-		rest = strings.TrimPrefix(ref, "img:")
-	case strings.HasPrefix(ref, "cache:"):
-		prefix = "cache:"
-		rest = strings.TrimPrefix(ref, "cache:")
-	default:
-		return ref, false
-	}
-	parts := strings.SplitN(rest, "?", 2)
-	id := parts[0]
-	if len(parts) != 2 {
-		return prefix + id, false
-	}
-	vals, err := url.ParseQuery(parts[1])
-	if err != nil {
-		return prefix + id, false
-	}
-	ts := vals.Get("ts")
-	sig := vals.Get("sig")
-	if ts == "" || sig == "" {
-		return prefix + id, false
-	}
-	if Verify(prefix+id, ts, sig) {
-		return prefix + id, true
-	}
-	return prefix + id, false
 }
 
 // MapURL converts image references to signed HTTP URLs.

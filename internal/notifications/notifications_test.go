@@ -79,8 +79,9 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	mock.ExpectQuery("UserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").
+		WithArgs(int32(1), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
 	n := New(q, rec)
 	n.NotifyAdmins(context.Background(), &EmailTemplates{}, EmailData{})

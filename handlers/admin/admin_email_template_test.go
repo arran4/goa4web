@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"net/mail"
@@ -58,6 +59,9 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 		AddRow(1, "u@example.com", "u")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO pending_emails").
+		WithArgs(int32(1), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	ctx := context.WithValue(req.Context(), common.KeyCoreData, &common.CoreData{UserID: 1})
@@ -124,18 +128,38 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	config.AppRuntimeConfig.AdminNotify = true
 	config.AppRuntimeConfig.EmailEnabled = true
+	config.AppRuntimeConfig.EmailFrom = "from@example.com"
 	t.Cleanup(func() { config.AppRuntimeConfig = cfgOrig })
+
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer sqldb.Close()
+	q := db.New(sqldb)
+
+	emails := []string{"a@test.com", "b@test.com"}
+	for _, e := range emails {
+		mock.ExpectQuery("UserByEmail").
+			WithArgs(sql.NullString{String: e, Valid: true}).
+			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, e, "u"))
+		mock.ExpectExec("INSERT INTO pending_emails").
+			WithArgs(int32(1), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
 	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
-	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
 	defer os.Unsetenv(config.EnvAdminEmails)
-	origEmails := config.AppRuntimeConfig.AdminEmails
-	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
-	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
+
 	rec := &recordAdminMail{}
-	n := notif.New(nil, rec)
+	n := notif.New(q, rec)
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
-	if len(rec.to) != 2 {
-		t.Fatalf("expected 2 mails, got %d", len(rec.to))
+
+	if len(rec.to) != 0 {
+		t.Fatalf("expected no direct mail got %d", len(rec.to))
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/feeds"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	imagesign "github.com/arran4/goa4web/pkg/images"
+	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {

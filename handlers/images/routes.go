@@ -11,9 +11,9 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	handlers "github.com/arran4/goa4web/handlers"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/upload"
-	imagesign "github.com/arran4/goa4web/pkg/images"
 )
 
 func verifyMiddleware(prefix string) mux.MiddlewareFunc {

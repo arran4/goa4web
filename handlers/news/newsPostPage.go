@@ -22,7 +22,7 @@ import (
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 	email "github.com/arran4/goa4web/internal/email"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/utils/emailutil"
 	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 )
@@ -450,7 +450,7 @@ func NewsPostNewActionPage(w http.ResponseWriter, r *http.Request) {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
+				evt.Data["blog"] = notifications.BlogPostInfo{Author: u.Username.String}
 			}
 		}
 	}

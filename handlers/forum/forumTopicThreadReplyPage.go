@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
 )
 
@@ -33,7 +33,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["reply"] = notif.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
+			evt.Data["reply"] = notifications.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
 		}
 	}
 
@@ -105,7 +105,7 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO remove and replace with proper eventbus notification
-	notif.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), threadRow.Idforumthread, uid, endUrl)
+	notifications.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), threadRow.Idforumthread, uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

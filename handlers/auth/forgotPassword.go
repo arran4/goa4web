@@ -9,7 +9,7 @@ import (
 
 	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 )
 
 func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,7 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
+				evt.Data["reset"] = notifications.PasswordResetInfo{Username: row.Username.String, Code: code}
 			}
 		}
 		// OLD _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, hcommon.TaskUserResetPassword, code)

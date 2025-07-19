@@ -22,7 +22,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
-	notifications "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/server"
 	startup "github.com/arran4/goa4web/internal/startup"

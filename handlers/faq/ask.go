@@ -24,6 +24,14 @@ func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 }
 
 func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err == nil {
+			r.PostForm.Del("task")
+		}
+		askTask.Action(w, r)
+		return
+	}
+
 	type Data struct {
 		*common.CoreData
 		Languages          []*db.Language

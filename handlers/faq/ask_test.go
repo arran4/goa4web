@@ -17,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -86,7 +85,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test-session"
 
-	form := url.Values{"language": {"1"}, "text": {"hi"}}
+	form := url.Values{"language": {"1"}, "text": {"hi"}, "task": {TaskAsk}}
 	req := httptest.NewRequest("POST", "/faq/ask", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	sess, _ := store.Get(req, core.SessionName)
@@ -96,9 +95,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
 	cd := &common.CoreData{}
-	cd.SetEvent(evt)
 
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
@@ -113,6 +110,10 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	}
 	if loc := rr.Header().Get("Location"); loc != "/faq" {
 		t.Fatalf("location=%q", loc)
+	}
+	evt := cd.Event()
+	if evt == nil {
+		t.Fatalf("missing event")
 	}
 	named, ok := evt.Task.(tasks.Name)
 	if !ok || named.Name() != TaskAsk || evt.Path != "/admin/faq" {

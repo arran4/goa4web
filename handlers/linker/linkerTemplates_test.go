@@ -1,4 +1,4 @@
-package forum
+package linker
 
 import (
 	"testing"
@@ -22,12 +22,10 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-func TestForumTemplatesExist(t *testing.T) {
+func TestLinkerTemplatesExist(t *testing.T) {
 	prefixes := []string{
-		"forumThreadCreateEmail",
-		"adminNotificationForumThreadCreateEmail",
-		"forumReplyEmail",
-		"adminNotificationForumReplyEmail",
+		"linkerAddEmail",
+		"adminNotificationLinkerAddEmail",
 	}
 	for _, p := range prefixes {
 		requireEmailTemplates(t, p)

@@ -18,6 +18,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email"
 	logProv "github.com/arran4/goa4web/internal/email/log"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -28,7 +29,9 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	config.AppRuntimeConfig.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, &common.CoreData{UserID: 1})
+	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
+	cd.UserID = 1
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -64,7 +67,9 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, &common.CoreData{UserID: 1})
+	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
+	cd.UserID = 1
+	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
 	ctx = context.WithValue(ctx, common.KeyQueries, q)
 	req = req.WithContext(ctx)
 
@@ -136,8 +141,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer sqldb.Close()
-	q := db.New(sqldb)
-
+	var q *db.Queries
 	emails := []string{"a@test.com", "b@test.com"}
 	for _, e := range emails {
 		mock.ExpectQuery("UserByEmail").

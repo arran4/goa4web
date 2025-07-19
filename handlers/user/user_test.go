@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email"
 	logProv "github.com/arran4/goa4web/internal/email/log"
 )
 
@@ -51,7 +52,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := common.NewCoreData(ctx, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -82,7 +83,7 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := common.NewCoreData(ctx, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
 	req = req.WithContext(ctx)

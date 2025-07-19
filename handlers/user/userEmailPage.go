@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -16,12 +17,10 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
-
 	notif "github.com/arran4/goa4web/internal/notifications"
-
-	"github.com/arran4/goa4web/config"
 )
 
 type SaveEmailTask struct{ tasks.TaskString }
@@ -154,6 +153,12 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
 	user, _ := cd.CurrentUser()
 	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)
+		return
+	}
+	if cd.EmailProvider() == nil {
+		q := url.QueryEscape(ErrMailNotConfigured.Error())
+		r.URL.RawQuery = "error=" + q
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
 	if evt := cd.Event(); evt != nil {

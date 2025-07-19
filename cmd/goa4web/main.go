@@ -6,9 +6,16 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/arran4/goa4web/internal/app/dbstart"
 	"log"
 	"os"
+
+	authhandlers "github.com/arran4/goa4web/handlers/auth"
+	bloghandlers "github.com/arran4/goa4web/handlers/blogs"
+	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	imagebbshandlers "github.com/arran4/goa4web/handlers/imagebbs"
+	newshandlers "github.com/arran4/goa4web/handlers/news"
+	userhandlers "github.com/arran4/goa4web/handlers/user"
+	"github.com/arran4/goa4web/internal/app/dbstart"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -22,6 +29,12 @@ var version = "dev"
 
 func init() {
 	dlqreg.Register()
+	authhandlers.RegisterTasks()
+	bloghandlers.RegisterTasks()
+	forumhandlers.RegisterTasks()
+	imagebbshandlers.RegisterTasks()
+	newshandlers.RegisterTasks()
+	userhandlers.RegisterTasks()
 }
 
 func main() {
@@ -193,6 +206,12 @@ func (r *rootCmd) Run() error {
 		c, err := parseAuditCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("audit: %w", err)
+		}
+		return c.Run()
+	case "notifications":
+		c, err := parseNotificationsCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("notifications: %w", err)
 		}
 		return c.Run()
 	case "lang":

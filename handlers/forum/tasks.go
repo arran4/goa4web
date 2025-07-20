@@ -68,4 +68,10 @@ const (
 
 	// TaskForumTopicCreate creates a new forum topic.
 	TaskForumTopicCreate = "Forum topic create"
+
+	// TaskTopicGrantCreate adds a new grant to a forum topic.
+	TaskTopicGrantCreate tasks.TaskString = "Create grant"
+
+	// TaskTopicGrantDelete removes an existing forum topic grant.
+	TaskTopicGrantDelete tasks.TaskString = "Delete grant"
 )

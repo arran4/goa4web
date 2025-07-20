@@ -217,7 +217,13 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
+	if evt.Data == nil {
+		evt.Data = map[string]any{}
+	}
 	evt.Data["URL"] = page
+	if user, err := cd.CurrentUser(); err == nil && user != nil {
+		evt.Data["Username"] = user.Username.String
+	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -250,7 +256,13 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
+	if evt.Data == nil {
+		evt.Data = map[string]any{}
+	}
 	evt.Data["URL"] = page
+	if user, err := cd.CurrentUser(); err == nil && user != nil {
+		evt.Data["Username"] = user.Username.String
+	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 

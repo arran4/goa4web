@@ -25,6 +25,7 @@ func RegisterRoutes(ar *mux.Router) {
 	nav.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
 	nav.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
 	nav.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
+	nav.RegisterAdminControlCenter("Information", "/admin/information", InformationSectionWeight)
 	nav.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
 	nav.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
 
@@ -55,6 +56,7 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", AdminServerStatsPage).Methods("GET")
+	ar.HandleFunc("/information", AdminInformationPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")
 
 	// forum admin routes

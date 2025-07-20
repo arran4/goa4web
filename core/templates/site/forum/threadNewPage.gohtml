@@ -5,7 +5,7 @@
         <textarea id="reply" name="replytext" cols="40" rows="20"></textarea><br>
         {{ template "languageCombobox" $ }}
         <input type="submit" name="task" value="Create Thread">
-        <input type="submit" name="task" value="Cancel">
+        <input type="submit" name="task" formaction="cancel" value="Cancel">
     </form>
 
 {{ template "tail" $ }}

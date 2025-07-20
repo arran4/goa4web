@@ -102,7 +102,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &errProvider{}
-	n := New(q, prov)
+	n := New(WithQueries(q), WithEmailProvider(prov))
 	dlqRec := &recordDLQ{}
 
 	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, dlqRec); err != nil {
@@ -130,7 +130,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(q, nil)
+	n := New(WithQueries(q))
 
 	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -150,7 +150,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(q, nil)
+	n := New(WithQueries(q))
 
 	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -173,7 +173,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &busDummyProvider{}
-	n := New(q, prov)
+	n := New(WithQueries(q), WithEmailProvider(prov))
 
 	if err := n.processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -194,9 +194,58 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(q, nil)
+	n := New(WithQueries(q))
 
 	if err := n.processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
+		t.Fatalf("process: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
+type targetTask struct{ tasks.TaskString }
+
+func (targetTask) Action(http.ResponseWriter, *http.Request) {}
+
+func (targetTask) TargetUserIDs(evt eventbus.Event) []int32 { return []int32{2, 3} }
+
+func (targetTask) TargetEmailTemplate() *EmailTemplates { return nil }
+
+func (targetTask) TargetInternalNotificationTemplate() *string {
+	t := NotificationTemplateFilenameGenerator("announcement")
+	return &t
+}
+
+func TestProcessEventTargetUsers(t *testing.T) {
+	ctx := context.Background()
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	n := New(WithQueries(q))
+
+	for _, id := range []int32{2, 3} {
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
+			WithArgs(id).
+			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(id, "u@test", fmt.Sprintf("u%d", id)))
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT body FROM template_overrides WHERE name = ?")).
+			WithArgs("announcement.gotxt").
+			WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
+		mock.ExpectExec(regexp.QuoteMeta("INSERT INTO notifications (users_idusers, link, message) VALUES (?, ?, ?)")).
+			WithArgs(id, sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	evt := eventbus.Event{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}}
+
+	if err := n.processEvent(ctx, evt, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -222,7 +271,7 @@ func TestBusWorker(t *testing.T) {
 	q := dbpkg.New(db)
 
 	prov := &busDummyProvider{}
-	n := New(q, prov)
+	n := New(WithQueries(q), WithEmailProvider(prov))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -265,7 +314,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(q, nil)
+	n := New(WithQueries(q))
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
 		AddRow(1, 0, 1, nil, 0, true)

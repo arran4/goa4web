@@ -37,6 +37,6 @@ func requireAutoSubscribeProvider(t *testing.T, task any) {
 	}
 }
 
-func TestRepliesMustAutoSubscribe(t *testing.T) {
+func TestReplyTemplatesAutoSubscribe(t *testing.T) {
 	requireAutoSubscribeProvider(t, replyTask)
 }

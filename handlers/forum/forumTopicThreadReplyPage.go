@@ -22,22 +22,17 @@ import (
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
-// ReplyTask asserts these interfaces so that anyone responding to a thread
-// automatically follows subsequent replies and administrators receive an email
-// summary. This keeps discussions active and lets mods monitor forum activity.
-var _ tasks.Task = (*ReplyTask)(nil)
+// compile-time assertions that ReplyTask provides notifications, indexing and
+// auto-subscription for thread replies.
+var (
+	replyTask = &ReplyTask{TaskString: TaskReply}
 
-// send notifications to thread subscribers when someone replies
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-
-// replies should automatically watch the thread so users see future updates
-var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
-
-// Build time checks so replying to a thread always triggers subscription and
-// notification delivery using the standard templates, keeping readers in the
-// conversation.
-var replyTask = &ReplyTask{TaskString: TaskReply}
+	_ tasks.Task                                    = (*ReplyTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
+	_ notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+	_ searchworker.IndexedTask                      = ReplyTask{}
+)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -69,6 +64,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 }
 
 // AutoSubscribePath ensures authors automatically receive updates on replies.
+// AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
+// created for the originating forum thread when that information is available.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)

@@ -81,9 +81,6 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User already exists", http.StatusForbidden)
 		return
 	}
-	//sum := md5.Sum([]byte(password))
-
-	//hashedPassword := hex.EncodeToString(sum[:])
 
 	hash, alg, err := HashPassword(password)
 	if err != nil {

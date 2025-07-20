@@ -16,8 +16,15 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type addIPBanTask struct{ tasks.TaskString }
-type deleteIPBanTask struct{ tasks.TaskString }
+// AddIPBanTask blocks a network from accessing the site.
+type AddIPBanTask struct{ tasks.TaskString }
+
+var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
+
+// DeleteIPBanTask lifts an IP ban.
+type DeleteIPBanTask struct{ tasks.TaskString }
+
+var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -36,7 +43,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "iPBanPage.gohtml", data)
 }
 
-func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = NormalizeIPNet(ipNet)
@@ -58,7 +65,7 @@ func (addIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (deleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

@@ -22,6 +22,22 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
+func requireNotificationTemplate(t *testing.T, name *string) {
+	if name == nil {
+		return
+	}
+	tmpl := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if tmpl.Lookup(*name) == nil {
+		t.Errorf("missing notification template %s", *name)
+	}
+}
+
 func TestTestMailTemplatesExist(t *testing.T) {
 	requireEmailTemplates(t, "testEmail")
+}
+
+func TestAddEmailTaskTemplates(t *testing.T) {
+	var task AddEmailTask
+	requireEmailTemplates(t, "verifyEmail")
+	requireNotificationTemplate(t, task.SelfInternalNotificationTemplate())
 }

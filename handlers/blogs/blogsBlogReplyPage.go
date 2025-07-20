@@ -27,24 +27,13 @@ type ReplyBlogTask struct{ tasks.TaskString }
 
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 
-// ReplyBlogTask uses auto subscription so commenters keep track of follow-ups
-// on their posts. Subscribers also get notified via email or internal messages
-// so lively discussions don't go unnoticed.
-// Compile-time interface checks with reasoning.
-// Implementing SubscribersNotificationTemplateProvider means followers learn
-// about new comments.
-var _ tasks.Task = (*ReplyBlogTask)(nil)
-
-// subscribers expect an email when a blog receives a new reply
-// authors want to automatically follow discussion on their blogs
-// ReplyBlogTask ensures blog followers learn about new comments and the author
-// is automatically subscribed.
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
-
-// blog commenters should automatically watch replies for continued discussions
-// Implementing AutoSubscribeProvider ensures the author is automatically
-// subscribed so they won't miss any replies.
-var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
+// compile-time assertions that ReplyBlogTask sends notifications and
+// auto-subscribes blog commenters.
+var (
+	_ tasks.Task                                    = (*ReplyBlogTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
+	_ notif.AutoSubscribeProvider                   = (*ReplyBlogTask)(nil)
+)
 
 func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("replyEmail")

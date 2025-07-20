@@ -17,8 +17,15 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 )
 
-type resendQueueTask struct{ tasks.TaskString }
-type deleteQueueTask struct{ tasks.TaskString }
+// ResendQueueTask triggers sending queued emails immediately.
+type ResendQueueTask struct{ tasks.TaskString }
+
+var resendQueueTask = &ResendQueueTask{TaskString: TaskResend}
+
+// DeleteQueueTask removes queued emails without sending.
+type DeleteQueueTask struct{ tasks.TaskString }
+
+var deleteQueueTask = &DeleteQueueTask{TaskString: TaskDelete}
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {
@@ -64,7 +71,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
 }
 
-func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
+func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
@@ -108,7 +115,7 @@ func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

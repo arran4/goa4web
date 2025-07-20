@@ -29,25 +29,18 @@ import (
 // CreateThreadTask handles creating a new forum thread.
 type CreateThreadTask struct{ tasks.TaskString }
 
-var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+var (
+	createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
-// createThreadTask implements notification providers so that when a user starts
-// a new discussion they automatically watch for replies and administrators are
-// emailed about the new thread. This helps engaged users stay in the loop while
-// giving moderators visibility of new conversations.
-// The author should automatically follow their thread and existing topic
-// subscribers expect a notification that a new thread was created.
-var _ tasks.Task = (*CreateThreadTask)(nil)
-
-// topic followers want an email when a new thread starts
-var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
-
-// automatically subscribe the author so they hear about replies
-var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
-var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
-
-// ensures forum threads are indexed for search results
-var _ searchworker.IndexedTask = CreateThreadTask{}
+	// Interface checks ensure the new thread hooks into notifications so
+	// authors follow replies, administrators are alerted and subscribers see
+	// new discussions.
+	_ tasks.Task                                    = (*CreateThreadTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*CreateThreadTask)(nil)
+	_ notif.AutoSubscribeProvider                   = (*CreateThreadTask)(nil)
+	_ searchworker.IndexedTask                      = CreateThreadTask{}
+)
 
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
 

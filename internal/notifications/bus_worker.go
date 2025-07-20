@@ -109,6 +109,16 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.Event, q dlq.D
 
 	}
 
+	if tp, ok := evt.Task.(TargetUsersNotificationProvider); ok {
+		if err := n.notifyTargetUsers(ctx, evt, tp); err != nil {
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify target users: %v", err)); dlqErr != nil {
+				return dlqErr
+			}
+			return err
+		}
+
+	}
+
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
 		if err := n.notifySubscribers(ctx, evt, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err)); dlqErr != nil {
@@ -133,7 +143,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNo
 		notifyMissingEmail(ctx, n.Queries, evt.UserID)
 	} else {
 		if et := tp.SelfEmailTemplate(); et != nil {
-			if err := n.RenderAndQueueEmailFromTemplates(ctx, evt.UserID, user.Email.String, et, evt.Data); err != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, user.Email.String, et, evt.Data); err != nil {
 				return err
 			}
 		}
@@ -154,6 +164,41 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNo
 				Message:      sql.NullString{String: string(msg), Valid: true},
 			}); err != nil {
 				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.Event, tp TargetUsersNotificationProvider) error {
+	for _, id := range tp.TargetUserIDs(evt) {
+		user, err := n.Queries.GetUserById(ctx, id)
+		if err != nil || !user.Email.Valid || user.Email.String == "" {
+			notifyMissingEmail(ctx, n.Queries, id)
+		} else {
+			if et := tp.TargetEmailTemplate(); et != nil {
+				if err := n.RenderAndQueueEmailFromTemplates(ctx, id, user.Email.String, et, evt.Data); err != nil {
+					return err
+				}
+			}
+		}
+		if nt := tp.TargetInternalNotificationTemplate(); nt != nil {
+			data := struct {
+				eventbus.Event
+				Item interface{}
+			}{Event: evt, Item: evt.Data}
+			msg, err := n.renderNotification(ctx, *nt, data)
+			if err != nil {
+				return err
+			}
+			if len(msg) > 0 {
+				if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+					UsersIdusers: id,
+					Link:         sql.NullString{String: evt.Path, Valid: true},
+					Message:      sql.NullString{String: string(msg), Valid: true},
+				}); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -246,7 +291,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.Event, tp Admi
 			}
 		}
 		if et := tp.AdminEmailTemplate(); et != nil {
-			if err := n.RenderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data); err != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data); err != nil {
 				return err
 			}
 		}

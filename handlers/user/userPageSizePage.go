@@ -44,5 +44,5 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (PageSizeSaveTask) Action(w http.ResponseWriter, r *http.Request) {
-	userPageSizePage(w, r)
+	// TODO save to memory config.
 }

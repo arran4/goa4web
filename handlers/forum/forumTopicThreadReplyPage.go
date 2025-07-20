@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/notifications"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
@@ -34,28 +34,20 @@ var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
-
 // Build time checks so replying to a thread always triggers subscription and
 // notification delivery using the standard templates, keeping readers in the
 // conversation.
-var replyTask = &ReplyTask{TaskString: TaskReply}
+var (
+	replyTask = &ReplyTask{TaskString: TaskReply}
 
-// Compile-time interface checks with user focused reasoning. Subscribing allows
-// thread followers to hear about replies while administrators are alerted to new
-// content. AutoSubscribeProvider ensures the author is kept in the loop.
-var _ tasks.Task = (*ReplyTask)(nil)
-
-// ReplyTask notifies thread subscribers and automatically subscribes the author
-// to keep them in the conversation.
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-
-// admins track replies across the forum
-var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
-
-// participants expect to automatically follow discussions they reply to
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
-
-var replyTask = &ReplyTask{TaskString: TaskReply}
+	// Compile-time interface checks ensure replies trigger notifications and
+	// subscriptions so participants stay informed.
+	_ tasks.Task                                    = (*ReplyTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
+	_ notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+	_ searchworker.IndexedTask                      = ReplyTask{}
+)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -86,20 +78,7 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-var _ searchworker.IndexedTask = ReplyTask{}
-
 // AutoSubscribePath ensures authors automatically receive updates on replies.
-var _ searchworker.IndexedTask = ReplyTask{}
-
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("forumReplyEmail")
-}
-
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("forum_reply")
-	return &s
-}
-
 // AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
 // created for the originating forum thread when that information is available.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
@@ -108,8 +87,6 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	}
 	return string(TaskReply), evt.Path
 }
-
-var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
@@ -125,7 +102,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["reply"] = notifications.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
+			evt.Data["reply"] = notif.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
 		}
 	}
 

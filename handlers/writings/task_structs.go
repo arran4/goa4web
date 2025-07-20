@@ -86,19 +86,6 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 var _ searchworker.IndexedTask = ReplyTask{}
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("replyEmail")
-}
-
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("reply")
-	return &s
-}
-
-func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
-	return string(TaskReply), evt.Path
-}
-
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) { ArticleReplyActionPage(w, r) }
 
 // EditReplyTask updates an existing comment.

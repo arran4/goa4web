@@ -61,17 +61,17 @@ func EmailSubjectTemplateFilenameGenerator(base string) string {
 // Database overrides are respected when present.
 func (n *Notifier) renderNotification(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.notificationTemplates()
-	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }
 
 func (n *Notifier) renderEmailSubject(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.emailTextTemplates()
-	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }
 
 func (n *Notifier) renderEmailText(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.emailTextTemplates()
-	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }
 
 func (n *Notifier) renderEmailHtml(ctx context.Context, filename string, data any) ([]byte, error) {

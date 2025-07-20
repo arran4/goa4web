@@ -73,7 +73,8 @@ func preprocessBookmarks(bookmarks string) []*BookmarkColumn {
 func MinePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Columns []*BookmarkColumn
+		Columns      []*BookmarkColumn
+		HasBookmarks bool
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
@@ -83,19 +84,24 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 	_ = session
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	bookmarks, err := cd.Bookmarks()
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("error getBookmarksForUser: %s", err)
-			http.Error(w, "ERROR", 500)
-			return
-		}
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("error getBookmarksForUser: %s", err)
+		http.Error(w, "ERROR", 500)
+		return
 	}
 
+	var list string
+	if bookmarks != nil {
+		list = bookmarks.List.String
+	}
+	list = strings.TrimSpace(list)
+
 	data := Data{
-		CoreData: cd,
-		Columns:  preprocessBookmarks(bookmarks.List.String),
+		CoreData:     cd,
+		HasBookmarks: list != "",
+	}
+	if list != "" {
+		data.Columns = preprocessBookmarks(list)
 	}
 
 	handlers.TemplateHandler(w, r, "minePage.gohtml", data)

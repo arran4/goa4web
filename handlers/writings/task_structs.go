@@ -34,6 +34,13 @@ func (SubmitWritingTask) SubscribedInternalNotificationTemplate() *string {
 // ReplyTask posts a comment reply.
 type ReplyTask struct{ tasks.TaskString }
 
+// ReplyTask implements these interfaces so that when a user replies to a
+// writing everyone following the discussion is automatically subscribed and
+// receives a notification using the shared reply templates. This keeps readers
+// informed when conversations continue.
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
 var _ tasks.Task = (*ReplyTask)(nil)
@@ -42,6 +49,8 @@ var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 
 // repliers expect to automatically follow further conversation
+// ReplyTask notifies followers and auto-subscribes the author so replies aren't missed.
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
@@ -51,6 +60,19 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 		return []searchworker.IndexEventData{v}
 	}
 	return nil
+}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
 }
 
 var _ searchworker.IndexedTask = ReplyTask{}
@@ -77,8 +99,21 @@ var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 
 var _ tasks.Task = (*EditReplyTask)(nil)
 
+// notify administrators when comments are edited so they can moderate discussions
+// admins need to know when discussions change, notify them of edits
+var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
+
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	ArticleCommentEditActionPage(w, r)
+}
+
+func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsCommentEditEmail")
+}
+
+func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsCommentEditEmail")
+	return &v
 }
 
 // CancelTask cancels comment editing.
@@ -86,6 +121,8 @@ type CancelTask struct{ tasks.TaskString }
 
 var cancelTask = &CancelTask{TaskString: TaskCancel}
 
+// CancelTask is only used to abort editing, implementing tasks.Task ensures it
+// fits the routing interface even though no additional behaviour is required.
 var _ tasks.Task = (*CancelTask)(nil)
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {

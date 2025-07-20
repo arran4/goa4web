@@ -26,23 +26,40 @@ type ReplyBlogTask struct{ tasks.TaskString }
 
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 
+// ReplyBlogTask uses auto subscription so commenters keep track of follow-ups
+// on their posts. Subscribers also get notified via email or internal messages
+// so lively discussions don't go unnoticed.
+// Compile-time interface checks with reasoning.
+// Implementing SubscribersNotificationTemplateProvider means followers learn
+// about new comments.
 var _ tasks.Task = (*ReplyBlogTask)(nil)
 
 // subscribers expect an email when a blog receives a new reply
+// authors want to automatically follow discussion on their blogs
+// ReplyBlogTask ensures blog followers learn about new comments and the author
+// is automatically subscribed.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
 
-// authors want to automatically follow discussion on their blogs
+// blog commenters should automatically watch replies for continued discussions
+// Implementing AutoSubscribeProvider ensures the author is automatically
+// subscribed so they won't miss any replies.
 var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
 
 func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("blogReplyEmail")
+	return notif.NewEmailTemplates("replyEmail")
 }
 
 func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("blog_reply")
+	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 
+// AutoSubscribePath records the reply so the commenter automatically watches
+// for any further discussion.
+	// Automatically subscribe the commenter so they are notified about
+	// further discussion on the blog post they replied to.
+// AutoSubscribePath allows the worker to add a subscription when new replies are
+// posted so participants stay in the loop.
 func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return TaskReply, evt.Path
 }

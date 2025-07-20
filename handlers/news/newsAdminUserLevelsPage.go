@@ -46,15 +46,19 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 
 type newsUserAllowTask struct{ tasks.TaskString }
 
+// Admins expect an immediate notification when permissions change so they can
+// audit user roles, therefore this task provides email templates for admin
+// notifications.
+
 var _ tasks.Task = (*newsUserAllowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*newsUserAllowTask)(nil)
 
 func (newsUserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationNewsUserAllowEmail")
+	return notif.NewEmailTemplates("newsPermissionEmail")
 }
 
 func (newsUserAllowTask) AdminInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserAllowEmail")
+	v := notif.NotificationTemplateFilenameGenerator("news_permission")
 	return &v
 }
 
@@ -82,15 +86,18 @@ func (newsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 
 type newsUserRemoveTask struct{ tasks.TaskString }
 
+// Administrators rely on notifications when permissions are revoked. By
+// providing templates here we keep them informed whenever roles are removed.
+
 var _ tasks.Task = (*newsUserRemoveTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*newsUserRemoveTask)(nil)
 
 func (newsUserRemoveTask) AdminEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationNewsUserDisallowEmail")
+	return notif.NewEmailTemplates("newsPermissionEmail")
 }
 
 func (newsUserRemoveTask) AdminInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserDisallowEmail")
+	v := notif.NotificationTemplateFilenameGenerator("news_permission")
 	return &v
 }
 

@@ -28,7 +28,7 @@ func TestBlogTemplatesExist(t *testing.T) {
 		"adminNotificationBlogAddEmail",
 		"blogEditEmail",
 		"adminNotificationBlogEditEmail",
-		"blogReplyEmail",
+		"replyEmail",
 		"adminNotificationBlogReplyEmail",
 		"blogCommentEditEmail",
 		"adminNotificationBlogCommentEditEmail",

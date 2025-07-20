@@ -1,5 +1,6 @@
 Hi {{.Item.Username}},
 Your reply has been posted.
 
-{{/* TODO add URL back to comment here */}}
+View comment:
+{{.CommentURL}}
 Manage notifications: {{.UnsubURL}}

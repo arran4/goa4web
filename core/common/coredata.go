@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/sessions"
@@ -99,6 +100,8 @@ type CoreData struct {
 	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
 	writers                  lazyValue[[]*db.WriterCountRow]
 	writingCategories        lazyValue[[]*db.WritingCategory]
+
+	absoluteURLBase lazyValue[string]
 }
 
 // SetRoles preloads the current user roles.
@@ -119,6 +122,11 @@ func WithSession(s *sessions.Session) CoreOption {
 
 // WithEvent links an event to the CoreData object.
 func WithEvent(evt *eventbus.Event) CoreOption { return func(cd *CoreData) { cd.event = evt } }
+
+// WithAbsoluteURLBase sets the base URL used to build absolute links.
+func WithAbsoluteURLBase(base string) CoreOption {
+	return func(cd *CoreData) { cd.absoluteURLBase.set(strings.TrimRight(base, "/")) }
+}
 
 // NewCoreData creates a CoreData with context and queries applied.
 func NewCoreData(ctx context.Context, q *db.Queries, opts ...CoreOption) *CoreData {
@@ -252,6 +260,13 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 	if cd.event != nil {
 		cd.event.Task = t
 	}
+}
+
+// AbsoluteURL returns an absolute URL by combining the configured hostname or
+// the request host with path. The base value is cached per request.
+func (cd *CoreData) AbsoluteURL(path string) string {
+	base, _ := cd.absoluteURLBase.load(func() (string, error) { return "", nil })
+	return base + path
 }
 
 // Event returns the event associated with the request, if any.

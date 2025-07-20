@@ -1,6 +1,7 @@
 Hi {{.Item.Username}},
 You have been granted news permissions.
 
-{{/* TODO add URL back to news section here */}}
+News section:
+{{.NewsURL}}
 Manage notifications: {{.UnsubURL}}
 

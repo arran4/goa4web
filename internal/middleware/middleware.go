@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/config"
@@ -70,10 +71,15 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		base := "http://" + r.Host
+		if config.AppRuntimeConfig.HTTPHostname != "" {
+			base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
+		}
 		cd := common.NewCoreData(r.Context(), queries,
 			common.WithImageURLMapper(imagesign.MapURL),
 			common.WithSession(session),
-			common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
+			common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)),
+			common.WithAbsoluteURLBase(base))
 		cd.UserID = uid
 		_ = cd.UserRoles()
 

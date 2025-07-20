@@ -88,6 +88,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
+			evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d/comments", blogId))
 		}
 	}
 

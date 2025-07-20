@@ -1,5 +1,6 @@
 Comment edited by {{.Item.Username}}.
 
-{{/* TODO add URL back to item here */}}
+View comment:
+{{.CommentURL}}
 Manage notifications: {{.UnsubURL}}
 

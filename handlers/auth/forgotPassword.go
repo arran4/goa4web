@@ -95,6 +95,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 					evt.Data = map[string]any{}
 				}
 				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
+				evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
 			}
 		}
 	}

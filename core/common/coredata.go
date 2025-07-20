@@ -20,9 +20,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// ContextValues represents context key names used across the application.
-type ContextValues string
-
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
 	Name string

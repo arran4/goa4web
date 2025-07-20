@@ -1,11 +1,11 @@
 package config
 
 import (
+	"github.com/arran4/goa4web"
 	"path/filepath"
 	"testing"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
 )
 
 func TestLoadOrCreateSecretCLI(t *testing.T) {
@@ -64,7 +64,7 @@ func TestLoadOrCreateSecretGenerate(t *testing.T) {
 }
 
 func TestDefaultSessionSecretPathDev(t *testing.T) {
-	common.Version = "dev"
+	goa4web.Version = "dev"
 	t.Setenv(EnvDocker, "")
 	got := DefaultSessionSecretPath()
 	if got != ".session_secret" {
@@ -73,7 +73,7 @@ func TestDefaultSessionSecretPathDev(t *testing.T) {
 }
 
 func TestDefaultSessionSecretPathDocker(t *testing.T) {
-	common.Version = "1"
+	goa4web.Version = "1"
 	t.Setenv(EnvDocker, "1")
 	t.Setenv("HOME", "/home/test")
 	got := DefaultSessionSecretPath()
@@ -83,7 +83,7 @@ func TestDefaultSessionSecretPathDocker(t *testing.T) {
 }
 
 func TestDefaultSessionSecretPathUser(t *testing.T) {
-	common.Version = "1"
+	goa4web.Version = "1"
 	t.Setenv(EnvDocker, "")
 	t.Setenv("XDG_CONFIG_HOME", "/cfg")
 	got := DefaultSessionSecretPath()

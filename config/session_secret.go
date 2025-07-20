@@ -4,12 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"github.com/arran4/goa4web"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
 )
 
 // defaultSecretName is used for local development when no other path is found.
@@ -18,7 +18,7 @@ const defaultSecretName = ".session_secret"
 // DefaultSessionSecretPath returns the default path for the session secret file
 // based on the execution environment.
 func DefaultSessionSecretPath() string {
-	if common.Version == "dev" {
+	if goa4web.Version == "dev" {
 		return defaultSecretName
 	}
 	if os.Getenv(EnvDocker) != "" {

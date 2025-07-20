@@ -4,9 +4,8 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/config"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 // GetPageSize returns the preferred page size within configured bounds.

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
@@ -35,7 +36,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
-	ctx = context.WithValue(ctx, corecommon.ContextValues("session"), session)
+	ctx = context.WithValue(ctx, core.ContextValues("session"), session)
 	req = req.WithContext(ctx)
 
 	var cd *corecommon.CoreData
@@ -71,7 +72,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
-	ctx = context.WithValue(ctx, corecommon.ContextValues("session"), session)
+	ctx = context.WithValue(ctx, core.ContextValues("session"), session)
 	req = req.WithContext(ctx)
 
 	var cd *corecommon.CoreData

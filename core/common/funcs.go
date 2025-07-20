@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web"
 	"html/template"
 	"io"
 	"net/http"
@@ -14,8 +15,6 @@ import (
 	"github.com/gorilla/csrf"
 )
 
-var Version = "dev"
-
 // Funcs returns template helpers configured with cd's ImageURLMapper.
 func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	// newsCache memoizes LatestNews results for a single template execution.
@@ -25,7 +24,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	return map[string]any{
 		"now":       func() time.Time { return time.Now() },
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
-		"version":   func() string { return Version },
+		"version":   func() string { return goa4web.Version },
 		"a4code2html": func(s string) template.HTML {
 			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTHTML

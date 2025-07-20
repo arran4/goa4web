@@ -125,7 +125,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	evt := &eventbus.Event{Data: map[string]any{}}
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
 	ctx = context.WithValue(ctx, common.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))

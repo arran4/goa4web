@@ -321,7 +321,7 @@ func (AddEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 
-func (AddEmailTask) DirectEmailAddress(evt eventbus.Event) string {
+func (AddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) string {
 	if evt.Data != nil {
 		if email, ok := evt.Data["email"].(string); ok {
 			return email
@@ -334,7 +334,7 @@ func (ResendVerificationEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 
-func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.Event) string {
+func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) string {
 	if evt.Data != nil {
 		if email, ok := evt.Data["email"].(string); ok {
 			return email

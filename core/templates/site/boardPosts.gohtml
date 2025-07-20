@@ -1,11 +1,14 @@
 {{ define "boardPosts" }}
-    {{ if .Posts }}
+    {{- if .Posts }}
         <font size="4">Pictures:</font><br>
-        {{ range .Posts }}
+        {{- range .Posts }}
             <table>
                 <tr>
                     <th><a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
                     <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ .Posted.Time }} - [<a href="/imagebbs/board/{{ $.BoardNumber }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]
             </table><br>
-        {{ end }}
-    {{ end }}{{ end }}
+        {{- end }}
+    {{- else }}
+        There isn't anything to see.
+    {{- end }}
+{{ end }}

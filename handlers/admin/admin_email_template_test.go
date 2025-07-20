@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/mail"
@@ -31,7 +32,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -61,16 +62,14 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "u@example.com", "u")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
-	mock.ExpectQuery("SELECT body FROM template_overrides WHERE name = ?").
-		WithArgs("updateEmail").WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
-	ctx = context.WithValue(ctx, common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

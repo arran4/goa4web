@@ -1,10 +1,10 @@
 package news
 
 import (
-	"net/http"
-
-	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/internal/tasks"
+	"net/http"
 
 	"github.com/gorilla/mux"
 
@@ -16,7 +16,7 @@ import (
 
 func runTemplate(name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		handlers.TemplateHandler(w, r, name, r.Context().Value(common.KeyCoreData))
+		handlers.TemplateHandler(w, r, name, r.Context().Value(consts.KeyCoreData))
 	}
 }
 
@@ -33,18 +33,18 @@ func RegisterRoutes(r *mux.Router) {
 	nr.HandleFunc("", runTemplate("newsPage.gohtml")).Methods("GET")
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
-	nr.HandleFunc("/news/{post}", replyTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
-	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(editReplyTask.Action))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
-	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(cancelTask.Action))).Methods("POST").MatcherFunc(cancelTask.Matcher())
-	nr.HandleFunc("/news/{post}", editTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editTask.Matcher())
-	nr.HandleFunc("/news/{post}", newPostTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(newPostTask.Matcher())
-	nr.HandleFunc("/news/{post}/announcement", announcementAddTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementAddTask.Matcher())
-	nr.HandleFunc("/news/{post}/announcement", announcementDeleteTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementDeleteTask.Matcher())
+	nr.HandleFunc("/news/{post}", tasks.Action(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())
+	nr.HandleFunc("/news/{post}", tasks.Action(editTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editTask.Matcher())
+	nr.HandleFunc("/news/{post}", tasks.Action(newPostTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(newPostTask.Matcher())
+	nr.HandleFunc("/news/{post}/announcement", tasks.Action(announcementAddTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementAddTask.Matcher())
+	nr.HandleFunc("/news/{post}/announcement", tasks.Action(announcementDeleteTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementDeleteTask.Matcher())
 	nr.HandleFunc("/news/{post}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{post}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/user/permissions", NewsUserPermissionsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
-	nr.HandleFunc("/users/permissions", userAllowTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Matcher())
-	nr.HandleFunc("/users/permissions", userDisallowTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Matcher())
+	nr.HandleFunc("/users/permissions", tasks.Action(userAllowTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Matcher())
+	nr.HandleFunc("/users/permissions", tasks.Action(userDisallowTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Matcher())
 }
 
 // Register registers the news router module.

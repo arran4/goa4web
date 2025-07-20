@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
@@ -24,8 +25,8 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		UserMonthly       []*db.UserMonthlyUsageRow
 		StartYear         int
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	var err error
 	if data.ForumTopics, err = queries.ForumTopicThreadCounts(r.Context()); err != nil {

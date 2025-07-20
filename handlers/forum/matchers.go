@@ -3,6 +3,7 @@ package forum
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -32,7 +32,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 		session, _ := core.GetSession(r)
 		var uid int32
@@ -74,8 +74,8 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), common.KeyThread, threadRow)
-		ctx = context.WithValue(ctx, common.KeyTopic, topicRow)
+		ctx := context.WithValue(r.Context(), consts.KeyThread, threadRow)
+		ctx = context.WithValue(ctx, consts.KeyTopic, topicRow)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

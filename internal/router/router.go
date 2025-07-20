@@ -1,12 +1,12 @@
 package router
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core/common"
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
@@ -26,7 +26,7 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !corecommon.Allowed(r, roles...) {
-				cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+				cd := r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData)
 				err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 				if err != nil {
 					log.Printf("Template Error: %s", err)

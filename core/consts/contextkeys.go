@@ -1,23 +1,26 @@
-package common
+package consts
+
+// ContextKey is used for storing values in the request context.
+type ContextKey string
 
 // Context keys used across the handler packages.
 const (
 	// KeyCoreData provides access to CoreData.
-	KeyCoreData ContextValues = "coreData"
+	KeyCoreData ContextKey = "coreData"
 	// KeyQueries holds the db.Queries pointer.
-	KeyQueries ContextValues = "queries"
+	KeyQueries ContextKey = "queries"
 	// KeySQLDB exposes the *sql.DB handle.
-	KeySQLDB ContextValues = "sql.DB"
+	KeySQLDB ContextKey = "sql.DB"
 	// KeyThread holds the current thread information.
-	KeyThread ContextValues = "thread"
+	KeyThread ContextKey = "thread"
 	// KeyTopic holds the current topic information.
-	KeyTopic ContextValues = "topic"
+	KeyTopic ContextKey = "topic"
 	// KeyBlogEntry holds a fetched blog entry row.
-	KeyBlogEntry ContextValues = "blogEntry"
+	KeyBlogEntry ContextKey = "blogEntry"
 	// KeyComment stores the current comment row.
-	KeyComment ContextValues = "comment"
+	KeyComment ContextKey = "comment"
 	// KeyNewsPost holds the news post row.
-	KeyNewsPost ContextValues = "newsPost"
+	KeyNewsPost ContextKey = "newsPost"
 	// KeyWriting contains the writing row.
-	KeyWriting ContextValues = "writing"
+	KeyWriting ContextKey = "writing"
 )

@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
@@ -89,9 +90,9 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	url := path.Join("/uploads", sub1, sub2, fname)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	uid := int32(0)
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok && cd != nil {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
 		uid = cd.UserID
 	}
 	_, err = queries.CreateUploadedImage(r.Context(), db.CreateUploadedImageParams{

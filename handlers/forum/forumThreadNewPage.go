@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -45,28 +46,8 @@ var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
-var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
-
 // ensures forum threads are indexed for search results
 var _ searchworker.IndexedTask = CreateThreadTask{}
-
-// These assertions ensure at build time that starting a new thread hooks into
-// the notification system so participants are auto-subscribed and receive the
-// correct templates.
-
-// Interface checks with user value. When a new thread is created we notify
-// topic subscribers so they see new discussions, alert administrators for
-// moderation, and auto-subscribe the author so they are looped into replies.
-var _ tasks.Task = (*CreateThreadTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
-
-// admins also monitor new discussions
-var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
-
-// creators should automatically watch their new thread for replies
-var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
-
-var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
 
@@ -76,8 +57,6 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	}
 	return nil
 }
-
-var _ searchworker.IndexedTask = CreateThreadTask{}
 
 func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("threadEmail")
@@ -97,11 +76,9 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-var _ searchworker.IndexedTask = CreateThreadTask{}
-
 // AutoSubscribePath records the created thread so the author and topic
 // followers automatically receive updates when others reply.
-	// When a user creates a thread they expect to follow any replies.
+// When a user creates a thread they expect to follow any replies.
 // AutoSubscribePath allows new thread creators to automatically watch for replies.
 
 // AutoSubscribePath implements notif.AutoSubscribeProvider. When the
@@ -115,8 +92,6 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskCreateThread), evt.Path
 }
 
-var _ searchworker.IndexedTask = CreateThreadTask{}
-
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
@@ -124,8 +99,8 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -144,7 +119,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	session, ok := core.GetSessionOrFail(w, r)
@@ -178,7 +153,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -207,7 +182,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -215,7 +190,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: int32(threadId), TopicID: int32(topicId)}
 		}
 	}
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

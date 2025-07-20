@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
 	common "github.com/arran4/goa4web/core/common"
@@ -12,6 +13,6 @@ func AdminForumModeratorLogsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
+	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
 	handlers.TemplateHandler(w, r, "forumModeratorLogsPage.gohtml", data)
 }

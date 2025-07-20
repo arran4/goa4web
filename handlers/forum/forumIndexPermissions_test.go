@@ -3,6 +3,7 @@ package forum
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -48,7 +49,7 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -74,7 +75,7 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -100,7 +101,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").

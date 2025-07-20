@@ -2,7 +2,7 @@ package core_test
 
 import (
 	"context"
-	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -32,7 +32,7 @@ func TestSessionMiddlewareBadSession(t *testing.T) {
 	})
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
-	ctx := context.WithValue(req.Context(), common.KeyQueries, dbpkg.New(nil))
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, dbpkg.New(nil))
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)

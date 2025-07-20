@@ -2,6 +2,7 @@ package writings
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
@@ -60,7 +61,7 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
@@ -75,7 +76,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)

@@ -1,6 +1,7 @@
 package imagebbs
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
@@ -18,7 +19,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:    r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsSubBoard:  false,
 		BoardNumber: 0,
 	}

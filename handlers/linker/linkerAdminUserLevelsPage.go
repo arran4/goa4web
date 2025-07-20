@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -29,11 +30,11 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -78,7 +79,7 @@ type userAllowTask struct{ tasks.TaskString }
 var UserAllowTask = &userAllowTask{TaskString: TaskUserAllow}
 
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
 	level := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
@@ -108,7 +109,7 @@ type userDisallowTask struct{ tasks.TaskString }
 var UserDisallowTask = &userDisallowTask{TaskString: TaskUserDisallow}
 
 func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	r.ParseForm()
 	ids := r.Form["permids"]
 	if len(ids) == 0 {

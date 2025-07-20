@@ -3,6 +3,7 @@ package faq
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -41,10 +42,10 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
 	if err != nil {
@@ -68,7 +69,7 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	if err := queries.RenameFAQCategory(r.Context(), db.RenameFAQCategoryParams{
 		Name: sql.NullString{
@@ -92,7 +93,7 @@ func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	if err := queries.DeleteFAQCategory(r.Context(), int32(cid)); err != nil {
 		log.Printf("Error: %s", err)
@@ -105,7 +106,7 @@ func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 
 func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("cname")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	if err := queries.CreateFAQCategory(r.Context(), sql.NullString{
 		String: text,

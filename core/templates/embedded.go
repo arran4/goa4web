@@ -5,7 +5,8 @@ package templates
 
 import (
 	"embed"
-	"html/template"
+	htemplate "html/template"
+	ttemplate "text/template"
 )
 
 var (
@@ -27,20 +28,20 @@ var (
 	notificationsJSData []byte
 )
 
-func GetCompiledSiteTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(siteTemplatesFS, "site/*.gohtml", "site/*/*.gohtml"))
+func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(siteTemplatesFS, "site/*.gohtml", "site/*/*.gohtml"))
 }
 
-func GetCompiledNotificationTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(notificationTemplatesFS, "notifications/*.gotxt"))
+func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(notificationTemplatesFS, "notifications/*.gotxt"))
 }
 
-func GetCompiledEmailHtmlTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(emailHtmlTemplatesFS, "email/*.gohtml"))
+func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(emailHtmlTemplatesFS, "email/*.gohtml"))
 }
 
-func GetCompiledEmailTextTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(emailTextTemplatesFS, "email/*.gotxt"))
+func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(emailTextTemplatesFS, "email/*.gotxt"))
 }
 
 func GetMainCSSData() []byte {

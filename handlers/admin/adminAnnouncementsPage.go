@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,8 +35,8 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 		Announcements []*db.ListAnnouncementsWithNewsRow
 		NewsID        string
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	rows, err := queries.ListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list announcements: %v", err)
@@ -48,7 +49,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
 		log.Printf("news id: %v", err)
@@ -71,7 +72,7 @@ func (addAnnouncementTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

@@ -3,6 +3,7 @@ package admin
 import (
 	"bytes"
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/mail"
@@ -27,7 +28,7 @@ type saveTemplateTask struct{ tasks.TaskString }
 type testTemplateTask struct{ tasks.TaskString }
 
 func getUpdateEmailText(ctx context.Context) string {
-	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
+	if q, ok := ctx.Value(consts.KeyQueries).(*db.Queries); ok && q != nil {
 		if body, err := q.GetTemplateOverride(ctx, "updateEmail.gotxt"); err == nil && body != "" {
 			return body
 		}
@@ -63,7 +64,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		Preview string
 		Error   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Body:     b,
 		Preview:  preview,
 		Error:    r.URL.Query().Get("error"),
@@ -78,7 +79,7 @@ func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := r.PostFormValue("body")
-	q := r.Context().Value(common.KeyQueries).(*db.Queries)
+	q := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail", Body: body}); err != nil {
 		log.Printf("db save template: %v", err)
 	}
@@ -93,8 +94,8 @@ func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	urow, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {
 		log.Printf("get user: %v", err)

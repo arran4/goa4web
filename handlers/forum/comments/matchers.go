@@ -3,6 +3,7 @@ package comments
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,7 +23,7 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)
@@ -41,12 +42,12 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			return
 		}
 
-		cd, _ := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if row.UsersIdusers != uid && (cd == nil || !cd.HasRole("administrator")) {
 			http.NotFound(w, r)
 			return
 		}
-		ctx := context.WithValue(r.Context(), common.KeyComment, row)
+		ctx := context.WithValue(r.Context(), consts.KeyComment, row)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

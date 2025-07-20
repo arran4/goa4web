@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"time"
@@ -17,7 +18,7 @@ func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin",
 	}
 

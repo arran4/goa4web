@@ -3,12 +3,12 @@ package middleware
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"net"
 	"net/http"
 	"net/netip"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -45,7 +45,7 @@ func requestIP(r *http.Request) string {
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
-		if queries, ok := r.Context().Value(common.KeyQueries).(*db.Queries); ok {
+		if queries, ok := r.Context().Value(consts.KeyQueries).(*db.Queries); ok {
 			bans, err := queries.ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

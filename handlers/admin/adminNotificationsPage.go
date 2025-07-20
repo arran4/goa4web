@@ -15,9 +15,14 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type markReadTask struct{ tasks.TaskString }
-type purgeNotificationsTask struct{ tasks.TaskString }
-type sendNotificationTask struct{ tasks.TaskString }
+// MarkReadTask marks notifications as read.
+type MarkReadTask struct{ tasks.TaskString }
+
+// PurgeNotificationsTask removes old read notifications.
+type PurgeNotificationsTask struct{ tasks.TaskString }
+
+// SendNotificationTask creates a site notification for users.
+type SendNotificationTask struct{ tasks.TaskString }
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -54,7 +59,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "notificationsPage.gohtml", data)
 }
 
-func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
+func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -68,7 +73,7 @@ func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
+func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
@@ -76,7 +81,7 @@ func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")

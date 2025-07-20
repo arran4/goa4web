@@ -16,18 +16,21 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type addAnnouncementTask struct{ tasks.TaskString }
-type deleteAnnouncementTask struct{ tasks.TaskString }
+// AddAnnouncementTask posts a new announcement.
+type AddAnnouncementTask struct{ tasks.TaskString }
 
-var _ tasks.Task = (*addAnnouncementTask)(nil)
+// DeleteAnnouncementTask removes an announcement.
+type DeleteAnnouncementTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*AddAnnouncementTask)(nil)
 
 // addAnnouncementTask notifies admins so they know announcements were updated.
-var _ notif.AdminEmailTemplateProvider = (*addAnnouncementTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AddAnnouncementTask)(nil)
 
-var _ tasks.Task = (*deleteAnnouncementTask)(nil)
+var _ tasks.Task = (*DeleteAnnouncementTask)(nil)
 
 // deleteAnnouncementTask also notifies admins of changes for transparency.
-var _ notif.AdminEmailTemplateProvider = (*deleteAnnouncementTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*DeleteAnnouncementTask)(nil)
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -48,7 +51,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "announcementsPage.gohtml", data)
 }
 
-func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
@@ -62,16 +65,16 @@ func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (addAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (AddAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("announcementEmail")
 }
 
-func (addAnnouncementTask) AdminInternalNotificationTemplate() *string {
+func (AddAnnouncementTask) AdminInternalNotificationTemplate() *string {
 	v := notif.NotificationTemplateFilenameGenerator("announcement")
 	return &v
 }
 
-func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -85,11 +88,11 @@ func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (deleteAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (DeleteAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("announcementEmail")
 }
 
-func (deleteAnnouncementTask) AdminInternalNotificationTemplate() *string {
+func (DeleteAnnouncementTask) AdminInternalNotificationTemplate() *string {
 	v := notif.NotificationTemplateFilenameGenerator("announcement")
 	return &v
 }

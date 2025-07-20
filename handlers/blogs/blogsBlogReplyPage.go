@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -25,6 +26,9 @@ type ReplyBlogTask struct{ tasks.TaskString }
 
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 
+// ReplyBlogTask uses auto subscription so commenters keep track of follow-ups
+// on their posts. Subscribers also get notified via email or internal messages
+// so lively discussions don't go unnoticed.
 var _ tasks.Task = (*ReplyBlogTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
@@ -38,8 +42,10 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (ReplyBlogTask) AutoSubscribePath() (string, string) {
-	return TaskReply, ""
+// AutoSubscribePath allows the worker to add a subscription when new replies are
+// posted so participants stay in the loop.
+func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return TaskReply, evt.Path
 }
 
 func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }

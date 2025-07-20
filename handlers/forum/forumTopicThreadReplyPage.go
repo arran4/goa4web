@@ -21,16 +21,15 @@ import (
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
-var _ tasks.Task = (*ReplyTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
-
-var replyTask = &ReplyTask{TaskString: TaskReply}
-
+// ReplyTask asserts these interfaces so that anyone responding to a thread
+// automatically follows subsequent replies and administrators receive an email
+// summary. This keeps discussions active and lets mods monitor forum activity.
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
+var replyTask = &ReplyTask{TaskString: TaskReply}
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -59,24 +58,12 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
-}
-
-var _ searchworker.IndexedTask = ReplyTask{}
-
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("replyEmail")
-}
-
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("reply")
-	return &s
-}
-
+// AutoSubscribePath ensures authors automatically receive updates on replies.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskReply), evt.Path
 }
+
+var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

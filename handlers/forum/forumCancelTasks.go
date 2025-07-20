@@ -33,6 +33,10 @@ var topicThreadReplyCancel = &topicThreadReplyCancelTask{TaskString: TaskCancel}
 
 var _ tasks.Task = (*topicThreadReplyCancelTask)(nil)
 
+func (topicThreadReplyCancelTask) Page(w http.ResponseWriter, r *http.Request) {
+	TopicThreadReplyCancelPage(w, r)
+}
+
 func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)

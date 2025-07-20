@@ -5,7 +5,8 @@
         {{ csrfField }}
 				<textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
                 {{ template "languageCombobox" $ }}
-				<input type="submit" name="task" value="Reply">
-			</form>
+                                <input type="submit" name="task" value="Reply">
+                                <input type="submit" name="task" formaction="cancel" value="Cancel">
+                        </form>
 		{{end}}
 {{ end }}

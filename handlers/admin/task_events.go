@@ -6,9 +6,7 @@ import (
 
 // TODO move these into their appropriate files closer to their struct definitions
 
-// ResendQueueTask triggers sending queued emails immediately.
-type ResendQueueTask struct{ tasks.TaskString }
-
+// resendQueueTask triggers sending queued emails immediately.
 var resendQueueTask = &ResendQueueTask{TaskString: TaskResend}
 
 var deleteQueueTask = &DeleteQueueTask{TaskString: TaskDelete}
@@ -33,6 +31,6 @@ var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
 
 var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
-var newsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
+var NewsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
 
-var newsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}
+var NewsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}

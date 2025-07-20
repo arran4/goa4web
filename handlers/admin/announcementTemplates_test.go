@@ -24,8 +24,8 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 
 func TestAnnouncementTemplatesExist(t *testing.T) {
 	admins := []notif.AdminEmailTemplateProvider{
-		AddAnnouncementTask,
-		DeleteAnnouncementTask,
+		AddAnnouncementTask{},
+		DeleteAnnouncementTask{},
 	}
 	for _, p := range admins {
 		checkEmailTemplates(t, p.AdminEmailTemplate())

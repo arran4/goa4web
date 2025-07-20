@@ -89,9 +89,16 @@ func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
 
 func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")
-	role := r.PostFormValue("role")
+	roleID := r.PostFormValue("role")
+	role, err := cd.ResolveRoleName(roleID)
+	if err != nil {
+		log.Printf("resolve role %s: %v", roleID, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	names := r.PostFormValue("users")
 
 	var ids []int32

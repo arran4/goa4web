@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -85,8 +86,15 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	levelID := r.PostFormValue("role")
+	level, err := cd.ResolveRoleName(levelID)
+	if err != nil {
+		log.Printf("resolve role %s: %v", levelID, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	data := struct {
 		*common.CoreData
 		Errors   []string

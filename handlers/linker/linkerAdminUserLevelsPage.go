@@ -80,8 +80,15 @@ var UserAllowTask = &userAllowTask{TaskString: TaskUserAllow}
 
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	usernames := r.PostFormValue("usernames")
-	level := r.PostFormValue("role")
+	levelID := r.PostFormValue("role")
+	level, err := cd.ResolveRoleName(levelID)
+	if err != nil {
+		log.Printf("resolve role %s: %v", levelID, err)
+		handlers.TaskDoneAutoRefreshPage(w, r)
+		return
+	}
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
 		return r == ',' || r == '\n' || r == '\r' || r == '\t' || r == ' '
 	})

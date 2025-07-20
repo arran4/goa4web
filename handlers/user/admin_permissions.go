@@ -54,8 +54,10 @@ var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	levelID := r.PostFormValue("role")
+	level, err := cd.ResolveRoleName(levelID)
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -64,6 +66,9 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
+	}
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("resolve role %s: %w", levelID, err).Error())
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
@@ -109,7 +114,9 @@ var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
-	level := r.PostFormValue("role")
+	levelID := r.PostFormValue("role")
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	level, err := cd.ResolveRoleName(levelID)
 
 	data := struct {
 		*common.CoreData
@@ -119,6 +126,9 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
+	}
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("resolve role %s: %w", levelID, err).Error())
 	}
 
 	if id, err := strconv.Atoi(permid); err != nil {

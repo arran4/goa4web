@@ -45,8 +45,10 @@ func UserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	levelID := r.PostFormValue("role")
+	level, err := cd.ResolveRoleName(levelID)
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -55,6 +57,9 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/writings",
+	}
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("resolve role %s: %w", levelID, err).Error())
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())

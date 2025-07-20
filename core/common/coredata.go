@@ -88,6 +88,8 @@ type CoreData struct {
 	latestWritings           lazyValue[[]*db.Writing]
 	linkerCategories         lazyValue[[]*db.GetLinkerCategoryLinkCountsRow]
 	newsAnnouncements        map[int32]*lazyValue[*db.SiteAnnouncement]
+	roleNames                map[int32]*lazyValue[string]
+	roleMu                   sync.Mutex
 	notifCount               lazyValue[int32]
 	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
 	pref                     lazyValue[*db.Preference]
@@ -336,6 +338,49 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 			return nil, nil
 		}
 		return cd.queries.ListRoles(cd.ctx)
+	})
+}
+
+// ResolveRoleName converts an identifier into a role name. Numeric IDs are
+// looked up from the database and cached per request via cd.roleNames.
+func (cd *CoreData) ResolveRoleName(ident string) (string, error) {
+	if ident == "" {
+		return "", nil
+	}
+	id, err := strconv.Atoi(ident)
+	if err != nil {
+		return ident, nil
+	}
+
+	cd.roleMu.Lock()
+	if cd.roleNames == nil {
+		cd.roleNames = map[int32]*lazyValue[string]{}
+	}
+	lv, ok := cd.roleNames[int32(id)]
+	if !ok {
+		lv = &lazyValue[string]{}
+		cd.roleNames[int32(id)] = lv
+	}
+	cd.roleMu.Unlock()
+
+	return lv.load(func() (string, error) {
+		if cd.queries == nil {
+			return "", nil
+		}
+		roles, err := cd.AllRoles()
+		if err == nil {
+			for _, r := range roles {
+				if r.ID == int32(id) {
+					return r.Name, nil
+				}
+			}
+		}
+		var name string
+		err = cd.queries.DB().QueryRowContext(cd.ctx, "SELECT name FROM roles WHERE id = ?", id).Scan(&name)
+		if err != nil {
+			return "", err
+		}
+		return name, nil
 	})
 }
 

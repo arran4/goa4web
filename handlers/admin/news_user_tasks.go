@@ -2,6 +2,7 @@ package admin
 
 import (
 	"database/sql"
+	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -34,8 +35,15 @@ func (NewsUserAllowTask) AdminInternalNotificationTemplate() *string {
 
 func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	levelID := r.PostFormValue("role")
+	level, err := cd.ResolveRoleName(levelID)
+	if err != nil {
+		log.Printf("resolve role %s: %v", levelID, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("GetUserByUsername Error: %s", err)

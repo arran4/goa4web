@@ -9,13 +9,21 @@ import (
 	"log"
 	"os"
 
+	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
 	bloghandlers "github.com/arran4/goa4web/handlers/blogs"
+	bookmarkhandlers "github.com/arran4/goa4web/handlers/bookmarks"
+	faqhandlers "github.com/arran4/goa4web/handlers/faq"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	imagebbshandlers "github.com/arran4/goa4web/handlers/imagebbs"
+	imagehandlers "github.com/arran4/goa4web/handlers/images"
+	linkerhandlers "github.com/arran4/goa4web/handlers/linker"
 	newshandlers "github.com/arran4/goa4web/handlers/news"
+	searchhandlers "github.com/arran4/goa4web/handlers/search"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	writinghandlers "github.com/arran4/goa4web/handlers/writings"
 	"github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -29,12 +37,24 @@ var version = "dev"
 
 func init() {
 	dlqreg.Register()
-	authhandlers.RegisterTasks()
-	bloghandlers.RegisterTasks()
-	forumhandlers.RegisterTasks()
-	imagebbshandlers.RegisterTasks()
-	newshandlers.RegisterTasks()
-	userhandlers.RegisterTasks()
+	register := func(ts []tasks.NamedTask) {
+		for _, t := range ts {
+			tasks.Register(t)
+		}
+	}
+	register(adminhandlers.RegisterTasks())
+	register(authhandlers.RegisterTasks())
+	register(bloghandlers.RegisterTasks())
+	register(bookmarkhandlers.RegisterTasks())
+	register(faqhandlers.RegisterTasks())
+	register(forumhandlers.RegisterTasks())
+	register(imagehandlers.RegisterTasks())
+	register(imagebbshandlers.RegisterTasks())
+	register(linkerhandlers.RegisterTasks())
+	register(newshandlers.RegisterTasks())
+	register(searchhandlers.RegisterTasks())
+	register(userhandlers.RegisterTasks())
+	register(writinghandlers.RegisterTasks())
 }
 
 func main() {

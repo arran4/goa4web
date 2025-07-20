@@ -215,6 +215,8 @@ The allowed page size range and default value are resolved in the following orde
 2. Values from a config file specified with `--config-file` or `CONFIG_FILE`
 3. Environment variables (`PAGE_SIZE_MIN`, `PAGE_SIZE_MAX`, `PAGE_SIZE_DEFAULT`)
 4. Built-in defaults (5, 50 and 15)
+Administrators can temporarily adjust these limits through `/admin/page-size`. This only changes the running configuration; update the config file to retain the values after a restart.
+Individual users can override the default value for their account via `/usr/paging`.
 
 ## Configuration Reference
 
@@ -258,7 +260,7 @@ environment variables listed below.
 | `SESSION_SECRET_FILE` | `--session-secret-file` | No | auto | File containing the session secret. |
 | `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
-| `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Interval in seconds between email worker runs. |
+| `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |
 | `ADMIN_EMAILS` | `--admin-emails` | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
 | `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored when using the local provider. |

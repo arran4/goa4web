@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"html"
 	htemplate "html/template"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	db "github.com/arran4/goa4web/internal/db"
@@ -123,11 +125,18 @@ func (n *Notifier) queueEmail(ctx context.Context, userID int32, msg []byte) err
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
-	return n.Queries.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: userID, Body: string(msg)})
+	if err := n.Queries.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: userID, Body: string(msg)}); err != nil {
+		return err
+	}
+	evt := eventbus.EmailQueueEvent{Time: time.Now()}
+	if err := eventbus.DefaultBus.Publish(evt); err != nil && err != eventbus.ErrBusClosed {
+		log.Printf("publish email queue event: %v", err)
+	}
+	return nil
 }
 
 // sendSubscriberEmail queues an email notification for a subscriber.
-func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt eventbus.Event, et *EmailTemplates) error {
+func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt eventbus.TaskEvent, et *EmailTemplates) error {
 	user, err := n.Queries.GetUserById(ctx, userID)
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
 		notifyMissingEmail(ctx, n.Queries, userID)

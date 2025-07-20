@@ -20,7 +20,7 @@ type IndexedTask interface {
 }
 
 // processEvent indexes text for tasks implementing IndexableTask.
-func processEvent(ctx context.Context, evt eventbus.Event, q *dbpkg.Queries) {
+func processEvent(ctx context.Context, evt eventbus.TaskEvent, q *dbpkg.Queries) {
 	task, ok := evt.Task.(IndexedTask)
 	if !ok || evt.Data == nil {
 		return

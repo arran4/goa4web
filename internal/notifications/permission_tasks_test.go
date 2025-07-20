@@ -73,7 +73,7 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 			WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		bus.Publish(eventbus.Event{Path: "/admin", Task: c.task, UserID: 1, Data: map[string]any{"targetUserID": int32(2), "Username": "bob"}})
+		bus.Publish(eventbus.TaskEvent{Path: "/admin", Task: c.task, UserID: 1, Data: map[string]any{"targetUserID": int32(2), "Username": "bob"}})
 		time.Sleep(10 * time.Millisecond)
 	}
 	time.Sleep(50 * time.Millisecond)

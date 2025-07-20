@@ -51,7 +51,7 @@ func collectSubscribers(ctx context.Context, q *dbpkg.Queries, patterns []string
 
 // parseEvent identifies a subscription target from the request path.
 // It returns the item type and id if recognised.
-func parseEvent(evt eventbus.Event) (string, int32, bool) {
+func parseEvent(evt eventbus.TaskEvent) (string, int32, bool) {
 	if evt.Data == nil {
 		return "", 0, false
 	}
@@ -68,10 +68,14 @@ func (n *Notifier) BusWorker(ctx context.Context, bus *eventbus.Bus, q dlq.DLQ) 
 	if bus == nil || n.Queries == nil {
 		return
 	}
-	ch := bus.Subscribe()
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case evt := <-ch:
+		case msg := <-ch:
+			evt, ok := msg.(eventbus.TaskEvent)
+			if !ok {
+				continue
+			}
 			if err := n.processEvent(ctx, evt, q); err != nil {
 				log.Printf("process event: %v", err)
 			}
@@ -81,7 +85,7 @@ func (n *Notifier) BusWorker(ctx context.Context, bus *eventbus.Bus, q dlq.DLQ) 
 	}
 }
 
-func (n *Notifier) processEvent(ctx context.Context, evt eventbus.Event, q dlq.DLQ) error {
+func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q dlq.DLQ) error {
 	if !handlers.NotificationsEnabled() {
 		return nil
 	}
@@ -147,7 +151,7 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.Event, q dlq.D
 	return nil
 }
 
-func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNotificationTemplateProvider) error {
+func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
 	user, err := n.Queries.GetUserById(ctx, evt.UserID)
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
 		notifyMissingEmail(ctx, n.Queries, evt.UserID)
@@ -160,9 +164,9 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNo
 	}
 	if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
 		data := struct {
-			eventbus.Event
+			eventbus.TaskEvent
 			Item interface{}
-		}{Event: evt, Item: evt.Data}
+		}{TaskEvent: evt, Item: evt.Data}
 		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {
 			return err
@@ -180,7 +184,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNo
 	return nil
 }
 
-func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.Event, tp DirectEmailNotificationTemplateProvider) error {
+func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent, tp DirectEmailNotificationTemplateProvider) error {
 	addr := tp.DirectEmailAddress(evt)
 	if addr == "" {
 		return nil
@@ -193,7 +197,7 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.Event, tp
 	return nil
 }
 
-func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.Event, tp TargetUsersNotificationProvider) error {
+func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent, tp TargetUsersNotificationProvider) error {
 	for _, id := range tp.TargetUserIDs(evt) {
 		user, err := n.Queries.GetUserById(ctx, id)
 		if err != nil || !user.Email.Valid || user.Email.String == "" {
@@ -207,9 +211,9 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.Event, tp
 		}
 		if nt := tp.TargetInternalNotificationTemplate(); nt != nil {
 			data := struct {
-				eventbus.Event
+				eventbus.TaskEvent
 				Item interface{}
-			}{Event: evt, Item: evt.Data}
+			}{TaskEvent: evt, Item: evt.Data}
 			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {
 				return err
@@ -228,7 +232,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.Event, tp
 	return nil
 }
 
-func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.Event, tp SubscribersNotificationTemplateProvider) error {
+func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent, tp SubscribersNotificationTemplateProvider) error {
 	name := ""
 	if tn, ok := evt.Task.(tasks.Name); ok {
 		name = tn.Name()
@@ -249,9 +253,9 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.Event, tp
 
 	var msg []byte
 	data := struct {
-		eventbus.Event
+		eventbus.TaskEvent
 		Item interface{}
-	}{Event: evt, Item: evt.Data}
+	}{TaskEvent: evt, Item: evt.Data}
 	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
 		var err error
 		msg, err = n.renderNotification(ctx, *nt, data)
@@ -279,7 +283,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.Event, tp
 	return nil
 }
 
-func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.Event, tp AutoSubscribeProvider) {
+func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, tp AutoSubscribeProvider) {
 	auto := true
 	email := false
 	if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
@@ -300,7 +304,7 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.Event, 
 	}
 }
 
-func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.Event, tp AdminEmailTemplateProvider) error {
+func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.TaskEvent, tp AdminEmailTemplateProvider) error {
 	if !config.AdminNotificationsEnabled() {
 		return nil
 	}
@@ -320,9 +324,9 @@ func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.Event, tp Admi
 		}
 		if nt := tp.AdminInternalNotificationTemplate(); nt != nil && n.Queries != nil {
 			data := struct {
-				eventbus.Event
+				eventbus.TaskEvent
 				Item interface{}
-			}{Event: evt, Item: evt.Data}
+			}{TaskEvent: evt, Item: evt.Data}
 			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {
 				return err

@@ -19,9 +19,11 @@ The admin interface uses the same method when previewing templates. Rows in the
 
 ## Background Worker
 
-`EmailQueueWorker` runs in the `workers/emailqueue` package. It starts a ticker
-using the interval from `EmailWorkerInterval` and calls
-`ProcessPendingEmail` each tick. That function fetches one queued message with
+`EmailQueueWorker` runs in the `workers/emailqueue` package. It listens for
+`eventbus.EmailQueueEvent` messages and processes queued emails whenever
+signalled. After sending a message the worker waits at least
+`EmailWorkerInterval` seconds before attempting the next delivery. The
+`ProcessPendingEmail` function fetches one queued message with
 `FetchPendingEmails(ctx, 1)`, loads the recipient address and sends the email via
 the configured provider. Successful deliveries mark the row as sent. Failures
 increment `error_count`. Once the count exceeds four the message is copied to the
@@ -40,7 +42,7 @@ The `goa4web email queue` commands provide manual control:
 
 ## Configuration
 
-`EMAIL_WORKER_INTERVAL` (`--email-worker-interval`) sets the delay between worker
-runs in seconds. The default is `60`. Sending can be disabled entirely with
+`EMAIL_WORKER_INTERVAL` (`--email-worker-interval`) sets the minimum time in
+seconds between sending queued emails. The default is `60`. Sending can be disabled entirely with
 `EMAIL_ENABLED=false`. The worker currently processes a single email per run and
 this batch size is not configurable.

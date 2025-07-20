@@ -1,4 +1,5 @@
 User {{.Item.Username}} added a new blog post.
 
-{{/* TODO add URL back to item here */}}
+View post:
+{{.PostURL}}
 Manage notifications: {{.UnsubURL}}

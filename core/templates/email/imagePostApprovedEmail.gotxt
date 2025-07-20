@@ -1,5 +1,6 @@
 Hi {{.Item.Username}},
 Your image post has been approved.
 
-{{/* TODO add URL back to the post here */}}
+View post:
+{{.PostURL}}
 Manage notifications: {{.UnsubURL}}

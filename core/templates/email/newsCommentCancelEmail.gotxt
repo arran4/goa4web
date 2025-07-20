@@ -1,6 +1,7 @@
 Hi {{.Item.Username}},
 Your comment edit was cancelled.
 
-{{/* TODO add URL back to comment here */}}
+View comment:
+{{.CommentURL}}
 Manage notifications: {{.UnsubURL}}
 

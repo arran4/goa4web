@@ -1,5 +1,6 @@
 User {{.Item.Username}} replied to a news post.
 
-{{/* TODO add URL back to news post here */}}
+View post:
+{{.PostURL}}
 Manage notifications: {{.UnsubURL}}
 

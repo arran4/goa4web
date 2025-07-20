@@ -22,7 +22,7 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
@@ -570,7 +570,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
+				evt.Data["blog"] = notifications.BlogPostInfo{Author: u.Username.String}
 			}
 		}
 	}

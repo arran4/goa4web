@@ -14,7 +14,7 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
@@ -184,7 +184,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["thread"] = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
+			evt.Data["thread"] = notifications.ThreadInfo{TopicTitle: topicTitle, Author: author}
 		}
 	}
 

@@ -10,7 +10,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 	"strings"
 
@@ -78,7 +78,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["writing"] = notif.WritingInfo{Title: title, Author: author}
+			evt.Data["writing"] = notifications.WritingInfo{Title: title, Author: author}
 		}
 	}
 

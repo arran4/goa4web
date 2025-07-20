@@ -13,7 +13,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 )
 
 type ForgotPasswordTask struct {
@@ -94,7 +94,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
+				evt.Data["reset"] = notifications.PasswordResetInfo{Username: row.Username.String, Code: code}
 			}
 		}
 		// OLD _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, handlers.TaskUserResetPassword, code)

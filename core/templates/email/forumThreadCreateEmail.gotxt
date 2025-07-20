@@ -3,4 +3,4 @@ Your forum thread has been created successfully.
 
 View thread:
 {{.ThreadURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

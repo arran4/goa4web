@@ -2,4 +2,4 @@ User {{.Item.Username}} replied to a forum thread.
 
 View comment:
 {{.CommentURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

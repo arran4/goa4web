@@ -9,7 +9,7 @@ Hello,
 {{if .URL}}View details here:
 {{.URL}}
 {{end}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 
 Cheers,
 The A4Web Team

@@ -3,5 +3,5 @@ Your comment has been posted.
 
 View comment:
 {{.CommentURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

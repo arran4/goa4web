@@ -131,15 +131,15 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.HTTPHostname != "" {
 		unsub = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + unsub
 	}
-	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubURL string }{
-		To:       (&mail.Address{Name: urow.Username.String, Address: urow.Email.String}).String(),
-		From:     config.AppRuntimeConfig.EmailFrom,
-		Subject:  "Website Update Notification",
-		URL:      pageURL,
-		Action:   string(TaskTestMail),
-		Path:     r.URL.Path,
-		Time:     time.Now().Format(time.RFC822),
-		UnsubURL: unsub,
+	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubscribeUrl string }{
+		To:             (&mail.Address{Name: urow.Username.String, Address: urow.Email.String}).String(),
+		From:           config.AppRuntimeConfig.EmailFrom,
+		Subject:        "Website Update Notification",
+		URL:            pageURL,
+		Action:         string(TaskTestMail),
+		Path:           r.URL.Path,
+		Time:           time.Now().Format(time.RFC822),
+		UnsubscribeUrl: unsub,
 	}
 	if err := tmpl.Execute(&buf, content); err != nil {
 		log.Printf("execute template: %v", err)

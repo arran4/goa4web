@@ -2,4 +2,4 @@ A new image board "{{.Item.Title.String}}" has been created.
 
 Board link:
 {{.BoardURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

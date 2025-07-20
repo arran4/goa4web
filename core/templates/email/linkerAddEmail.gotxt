@@ -3,4 +3,4 @@ Your link has been submitted successfully.
 
 View link:
 {{.LinkURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

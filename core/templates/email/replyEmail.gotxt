@@ -10,7 +10,7 @@ There are now {{.Item.Thread.Comments.Int32}} comments in the discussion.
 View it here:
 {{.URL}}
 
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 
 Cheers,
 The A4Web Team

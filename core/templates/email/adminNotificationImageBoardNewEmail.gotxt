@@ -2,4 +2,4 @@ User {{.Item.Username}} created a new image board.
 
 Board link:
 {{.BoardURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

@@ -25,12 +25,16 @@ var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 var _ tasks.Task = (*UserAllowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*UserAllowTask)(nil)
 
+// AdminEmailTemplate ensures admins receive a consistent message when
+// permissions are granted so they stay informed about changes.
 func (UserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationBlogUserAllowEmail")
+	return notif.NewEmailTemplates("blogPermissionEmail")
 }
 
+// AdminInternalNotificationTemplate pairs with the admin email so the
+// dashboard also reflects the permission update.
 func (UserAllowTask) AdminInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUserAllowEmail")
+	v := notif.NotificationTemplateFilenameGenerator("blog_permission")
 	return &v
 }
 
@@ -46,12 +50,16 @@ var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 var _ tasks.Task = (*UserDisallowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*UserDisallowTask)(nil)
 
+// AdminEmailTemplate notifies administrators when a blog permission is
+// revoked, keeping them in the loop if access is removed.
 func (UserDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationBlogUserDisallowEmail")
+	return notif.NewEmailTemplates("blogPermissionEmail")
 }
 
+// AdminInternalNotificationTemplate mirrors the email so in-app alerts show
+// the permission revocation too.
 func (UserDisallowTask) AdminInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUserDisallowEmail")
+	v := notif.NotificationTemplateFilenameGenerator("blog_permission")
 	return &v
 }
 
@@ -67,12 +75,16 @@ var usersAllowTask = &UsersAllowTask{TaskString: TaskUsersAllow}
 var _ tasks.Task = (*UsersAllowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*UsersAllowTask)(nil)
 
+// AdminEmailTemplate informs admins when many users receive access so they
+// can audit bulk changes easily.
 func (UsersAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationBlogUsersAllowEmail")
+	return notif.NewEmailTemplates("blogPermissionEmail")
 }
 
+// AdminInternalNotificationTemplate complements the email with an in-app
+// notice for bulk permissions.
 func (UsersAllowTask) AdminInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUsersAllowEmail")
+	v := notif.NotificationTemplateFilenameGenerator("blog_permission")
 	return &v
 }
 
@@ -88,12 +100,16 @@ var usersDisallowTask = &UsersDisallowTask{TaskString: TaskUsersDisallow}
 var _ tasks.Task = (*UsersDisallowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*UsersDisallowTask)(nil)
 
+// AdminEmailTemplate alerts administrators when multiple users have
+// permissions removed so there is an audit trail.
 func (UsersDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationBlogUsersDisallowEmail")
+	return notif.NewEmailTemplates("blogPermissionEmail")
 }
 
+// AdminInternalNotificationTemplate sends the same message inside the admin
+// dashboard for visibility.
 func (UsersDisallowTask) AdminInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogUsersDisallowEmail")
+	v := notif.NotificationTemplateFilenameGenerator("blog_permission")
 	return &v
 }
 

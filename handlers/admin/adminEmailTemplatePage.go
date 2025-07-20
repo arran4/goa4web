@@ -14,12 +14,13 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/tasks"
 
+	notif "github.com/arran4/goa4web/internal/notifications"
+
 	handlers "github.com/arran4/goa4web/handlers"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/email"
 )
 
@@ -27,17 +28,10 @@ type saveTemplateTask struct{ tasks.TaskString }
 type testTemplateTask struct{ tasks.TaskString }
 
 func getUpdateEmailText(ctx context.Context) string {
-	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
-		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
-			return body
-		}
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok {
+		return notif.GetUpdateEmailText(ctx, q)
 	}
-	tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "updateEmail.gotxt", nil); err != nil {
-		return ""
-	}
-	return buf.String()
+	return notif.GetUpdateEmailText(ctx, nil)
 }
 
 // AdminEmailTemplatePage allows administrators to edit the update email template.

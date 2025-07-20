@@ -18,6 +18,8 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 // ReplyBlogTask posts a comment reply on a blog.
@@ -38,8 +40,8 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (ReplyBlogTask) AutoSubscribePath() (string, string) {
-	return TaskReply, ""
+func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return TaskReply, evt.Path
 }
 
 func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }

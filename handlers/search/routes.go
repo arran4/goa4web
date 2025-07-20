@@ -1,6 +1,7 @@
 package search
 
 import (
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 
@@ -13,6 +14,7 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Search", "/search", SectionWeight)
 	nav.RegisterAdminControlCenter("Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()
+	sr.Use(handlers.IndexMiddleware(CustomIndex))
 	sr.HandleFunc("", Page).Methods("GET")
 	sr.HandleFunc("", tasks.Action(searchForumTask)).Methods("POST").MatcherFunc(searchForumTask.Matcher())
 	sr.HandleFunc("", tasks.Action(searchNewsTask)).Methods("POST").MatcherFunc(searchNewsTask.Matcher())

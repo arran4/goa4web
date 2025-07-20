@@ -13,14 +13,5 @@
     <div id="notifications-empty">No notifications</div>
 {{ end }}
 </div>
-<form method="post" action="/usr/notifications">
-    {{ csrfField }}
-    <select name="email_id">
-        <option value="">In-app only</option>
-        {{- range .Emails }}
-        <option value="{{ .ID }}" {{ if eq .NotificationPriority $.MaxPriority }}selected{{ end }}>{{ .Email }}</option>
-        {{- end }}
-    </select>
-    <input type="submit" name="task" value="SaveAll">
-</form>
+<p>Change your email address under <a href="/usr/email">Email and notification settings</a>.</p>
 {{ template "tail" $ }}

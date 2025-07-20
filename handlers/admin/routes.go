@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 
@@ -25,6 +26,7 @@ func RegisterRoutes(ar *mux.Router) {
 	nav.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
 	nav.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
 	nav.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
+	nav.RegisterAdminControlCenter("Information", "/admin/information", InformationSectionWeight)
 	nav.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
 	nav.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
 
@@ -55,6 +57,7 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", AdminServerStatsPage).Methods("GET")
+	ar.HandleFunc("/information", AdminInformationPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")
 
 	// forum admin routes
@@ -87,6 +90,7 @@ func Register() {
 	router.RegisterModule("admin", []string{"faq", "forum", "languages", "linker", "news", "search", "user", "writings"}, func(r *mux.Router) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
+		ar.Use(handlers.IndexMiddleware(CustomIndex))
 		RegisterRoutes(ar)
 	})
 }

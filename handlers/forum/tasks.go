@@ -75,7 +75,7 @@ const (
 	// TaskTopicGrantDelete removes an existing forum topic grant.
 	TaskTopicGrantDelete tasks.TaskString = "Delete grant"
 
-  // TaskSubscribeToTopic subscribes the user to new threads in a topic.
+	// TaskSubscribeToTopic subscribes the user to new threads in a topic.
 	TaskSubscribeToTopic tasks.TaskString = "Subscribe To Topic"
 
 	// TaskUnsubscribeFromTopic removes topic thread notifications.

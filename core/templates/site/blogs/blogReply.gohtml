@@ -1,11 +1,11 @@
 {{ define "blogReply" }}
-		{{if $.IsReplyable}}
-			<font size="4">Reply:</font><br>
-			<form method="post" action="/blogs/blog/{{$.Blog.Idblogs}}/reply">
+        {{if $.IsReplyable}}
+            <font size="4">Reply:</font><br>
+            <form method="post" action="/blogs/blog/{{$.Blog.Idblogs}}/reply">
         {{ csrfField }}
-				<textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
+                <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
                 {{ template "languageCombobox" $ }}
-				<input type="submit" name="task" value="Reply">
-			</form>
-		{{end}}
+                <input type="submit" name="task" value="Reply">
+            </form>
+        {{end}}
 {{ end }}

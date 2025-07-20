@@ -1,6 +1,6 @@
 {{ template "head" $ }}
-		<font size="5"><a href="/blogs/blogger/{{$.Blog.Username.String}}">{{$.Blog.Username.String}}'s Blog</a>:</font><br>
-		<table width="100%">
+        <font size="5"><a href="/blogs/blogger/{{$.Blog.Username.String}}">{{$.Blog.Username.String}}'s Blog</a>:</font><br>
+        <table width="100%">
                 <tr>
                     <th bgcolor="lightgrey">{{$.Blog.Written}}</th>
                 </tr>
@@ -10,5 +10,5 @@
                         {{if .EditUrl}} - [<a href="{{.EditUrl}}">EDIT</a>]{{end}}
                     </td>
                 </tr>
-		</table><br>
+        </table><br>
 {{ template "tail" $ }}

@@ -140,19 +140,31 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
-		id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permidi))
+		var uname, role string
+		var userID int32
+		if rows, err := queries.GetUserRoles(r.Context()); err == nil {
+			for _, row := range rows {
+				if row.IduserRoles == int32(permidi) {
+					role = row.Role
+					userID = row.UsersIdusers
+					if u, err := queries.GetUserById(r.Context(), row.UsersIdusers); err == nil && u.Username.Valid {
+						uname = u.Username.String
+					}
+					break
+				}
+			}
+		}
 		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
-		} else if err2 == nil {
-			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-				if evt := cd.Event(); evt != nil {
-					if evt.Data == nil {
-						evt.Data = map[string]any{}
-					}
-					evt.Data["targetUserID"] = id
-					evt.Data["Username"] = username
-					evt.Data["Role"] = role
+		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
 				}
+				evt.Data["Username"] = uname
+				evt.Data["Permission"] = role
+				evt.Data["targetUserID"] = userID
+				evt.Data["Role"] = role
 			}
 		} else {
 			log.Printf("lookup role: %v", err2)

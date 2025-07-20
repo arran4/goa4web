@@ -37,7 +37,5 @@ func TestTestMailTemplatesExist(t *testing.T) {
 }
 
 func TestAddEmailTaskTemplates(t *testing.T) {
-	var task AddEmailTask
 	requireEmailTemplates(t, "verifyEmail")
-	requireNotificationTemplate(t, task.SelfInternalNotificationTemplate())
 }

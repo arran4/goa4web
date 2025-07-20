@@ -3,11 +3,14 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -25,7 +28,7 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -38,7 +41,7 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, err := queries.GetImagePostsByUserDescendingForUser(r.Context(), db.GetImagePostsByUserDescendingForUserParams{
 		ViewerID:     cd.UserID,
 		UserID:       u.Idusers,
@@ -61,5 +64,5 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		IsOffset: offset != 0,
 	}
 
-	common.TemplateHandler(w, r, "posterPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "posterPage.gohtml", data)
 }

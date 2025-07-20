@@ -3,13 +3,14 @@ package bookmarks
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 type BookmarkEntry struct {
@@ -71,7 +72,7 @@ func preprocessBookmarks(bookmarks string) []*BookmarkColumn {
 
 func MinePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Columns []*BookmarkColumn
 	}
 
@@ -80,7 +81,7 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
@@ -97,5 +98,5 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		Columns:  preprocessBookmarks(bookmarks.List.String),
 	}
 
-	common.TemplateHandler(w, r, "minePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "minePage.gohtml", data)
 }

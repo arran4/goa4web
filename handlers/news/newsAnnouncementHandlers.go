@@ -3,19 +3,55 @@ package news
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+type AnnouncementAddTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*AnnouncementAddTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AnnouncementAddTask)(nil)
+
+func (AnnouncementAddTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsAddEmail")
+}
+
+func (AnnouncementAddTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsAddEmail")
+	return &v
+}
+
+var announcementAddTask = &AnnouncementAddTask{TaskString: TaskAdd}
+
+type AnnouncementDeleteTask struct{ tasks.TaskString }
+
+var announcementDeleteTask = &AnnouncementDeleteTask{TaskString: TaskDelete}
+
+var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AnnouncementDeleteTask)(nil)
+
+func (AnnouncementDeleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsDeleteEmail")
+}
+
+func (AnnouncementDeleteTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsDeleteEmail")
+	return &v
+}
+
+func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -34,12 +70,12 @@ func NewsAnnouncementActivateActionPage(w http.ResponseWriter, r *http.Request) 
 			log.Printf("activate announcement: %v", err)
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -48,7 +84,7 @@ func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("announcementForNews: %v", err)
 		}
-		hcommon.TaskDoneAutoRefreshPage(w, r)
+		handlers.TaskDoneAutoRefreshPage(w, r)
 		return
 	}
 	if ann != nil && ann.Active {
@@ -56,5 +92,5 @@ func NewsAnnouncementDeactivateActionPage(w http.ResponseWriter, r *http.Request
 			log.Printf("deactivate announcement: %v", err)
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

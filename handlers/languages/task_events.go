@@ -1,24 +1,68 @@
 package languages
 
 import (
-	hcommon "github.com/arran4/goa4web/handlers/common"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"net/http"
+
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var RenameLanguageTask = eventbus.BasicTaskEvent{
-	EventName:     "Rename Language",
-	Match:         hcommon.TaskMatcher("Rename Language"),
-	ActionHandler: adminLanguagesRenamePage,
+type RenameLanguageTask struct{ tasks.TaskString }
+
+var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
+
+func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesRenamePage(w, r)
 }
 
-var DeleteLanguageTask = eventbus.BasicTaskEvent{
-	EventName:     "Delete Language",
-	Match:         hcommon.TaskMatcher("Delete Language"),
-	ActionHandler: adminLanguagesDeletePage,
+func (RenameLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLanguageRenameEmail")
 }
 
-var CreateLanguageTask = eventbus.BasicTaskEvent{
-	EventName:     "Create Language",
-	Match:         hcommon.TaskMatcher("Create Language"),
-	ActionHandler: adminLanguagesCreatePage,
+func (RenameLanguageTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageRenameEmail")
+	return &v
 }
+
+type DeleteLanguageTask struct{ tasks.TaskString }
+
+var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delete Language")}
+
+func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesDeletePage(w, r)
+}
+
+func (DeleteLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLanguageDeleteEmail")
+}
+
+func (DeleteLanguageTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageDeleteEmail")
+	return &v
+}
+
+type CreateLanguageTask struct{ tasks.TaskString }
+
+var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}
+
+func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+	adminLanguagesCreatePage(w, r)
+}
+
+func (CreateLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLanguageCreateEmail")
+}
+
+func (CreateLanguageTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageCreateEmail")
+	return &v
+}
+
+var (
+	_ tasks.Task                       = (*RenameLanguageTask)(nil)
+	_ notif.AdminEmailTemplateProvider = (*RenameLanguageTask)(nil)
+	_ tasks.Task                       = (*DeleteLanguageTask)(nil)
+	_ notif.AdminEmailTemplateProvider = (*DeleteLanguageTask)(nil)
+	_ tasks.Task                       = (*CreateLanguageTask)(nil)
+	_ notif.AdminEmailTemplateProvider = (*CreateLanguageTask)(nil)
+)

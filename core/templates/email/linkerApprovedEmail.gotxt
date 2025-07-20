@@ -1,0 +1,6 @@
+Hi {{.Item.Username}},
+Your link "{{.Item.Title}}" has been approved by {{.Item.Moderator}}.
+
+View link:
+{{.LinkURL}}
+Manage notifications: {{.UnsubURL}}

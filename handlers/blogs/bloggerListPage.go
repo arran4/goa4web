@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"net/http"
@@ -12,13 +14,13 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 // BloggerListPage shows all bloggers with their post counts.
 func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows     []*db.BloggerCountRow
 		Search   string
 		NextLink string
@@ -27,14 +29,14 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
-		PageSize: common.GetPageSize(r),
+		PageSize: handlers.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	pageSize := common.GetPageSize(r)
+	pageSize := handlers.GetPageSize(r)
 	rows, err := data.CoreData.Bloggers(r)
 	if err != nil {
 		switch {
@@ -61,7 +63,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: data.NextLink,
 		})
@@ -72,11 +74,11 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: data.PrevLink,
 		})
 	}
 
-	common.TemplateHandler(w, r, "bloggerListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "bloggerListPage.gohtml", data)
 }

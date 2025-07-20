@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+<div id="notifications-list">
+{{ range .Notifications }}
+    <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
+        {{ if .Link.Valid }}<a href="{{ .Link.String }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
+        <form method="post" action="/usr/notifications/dismiss" style="display:inline">
+            {{ csrfField }}
+            <input type="hidden" name="id" value="{{ .ID }}">
+            <input type="submit" name="task" value="Dismiss">
+        </form>
+    </div>
+{{ else }}
+    <div id="notifications-empty">No notifications</div>
+{{ end }}
+</div>
+<p>Change your email address under <a href="/usr/email">Email and notification settings</a>.</p>
+{{ template "tail" $ }}

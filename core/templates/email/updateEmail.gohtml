@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<body>
+<p>Hello,</p>
+<p>{{.Action}} occurred at <a href="{{.URL}}">{{.URL}}</a> on {{.Time}}.</p>
+{{/* URL always provided now */}}
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
+</body>
+</html>

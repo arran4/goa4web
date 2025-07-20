@@ -3,6 +3,7 @@ package forum
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -32,7 +32,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 		session, _ := core.GetSession(r)
 		var uid int32
@@ -74,22 +74,8 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), hcommon.KeyThread, threadRow)
-		ctx = context.WithValue(ctx, hcommon.KeyTopic, topicRow)
+		ctx := context.WithValue(r.Context(), consts.KeyThread, threadRow)
+		ctx = context.WithValue(ctx, consts.KeyTopic, topicRow)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// TargetUsersLevelNotHigherThanAdminsMax verifies the target user's level does not exceed the admin's maximum.
-func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
-		return true
-	}
-}
-
-// AdminUsersMaxLevelNotLowerThanTargetLevel ensures the admin's max level exceeds the requested level values.
-func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
-		return true
-	}
 }

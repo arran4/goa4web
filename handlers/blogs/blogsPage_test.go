@@ -3,6 +3,7 @@ package blogs
 import (
 	"context"
 	"encoding/xml"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -14,8 +15,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -51,9 +51,9 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, q)
-	cd := corecommon.NewCoreData(ctx, q, corecommon.WithSession(sess))
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "username"}).
@@ -101,7 +101,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0, true))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -125,9 +125,9 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	cd := corecommon.NewCoreData(req.Context(), nil)
+	cd := common.NewCoreData(req.Context(), nil)
 	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	BlogAddPage(rr, req)
@@ -138,9 +138,9 @@ func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 
 func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
-	cd := corecommon.NewCoreData(req.Context(), nil)
+	cd := common.NewCoreData(req.Context(), nil)
 	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	BlogEditPage(rr, req)
@@ -151,9 +151,9 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 
 func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/blogs/user/permissions", nil)
-	cd := corecommon.NewCoreData(req.Context(), nil)
+	cd := common.NewCoreData(req.Context(), nil)
 	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	GetPermissionsByUserIdAndSectionBlogsPage(rr, req)

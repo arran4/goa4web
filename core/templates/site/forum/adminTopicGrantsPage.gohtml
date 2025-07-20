@@ -1,0 +1,46 @@
+{{ template "head" $ }}
+<h3>Topic {{ .TopicID }} Grants</h3>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Role</th>
+        <th>Action</th>
+        <th>Delete?</th>
+    </tr>
+    {{- range .Grants }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ if .Username.Valid }}{{ .Username.String }}{{ end }}</td>
+        <td>{{ if .RoleName.Valid }}{{ .RoleName.String }}{{ end }}</td>
+        <td>{{ .Action }}</td>
+        <td>
+            <form method="post" action="/forum/admin/topic/{{ $.TopicID }}/grant/delete">
+        {{ csrfField }}
+                <input type="hidden" name="grantid" value="{{ .ID }}">
+                <input type="submit" name="task" value="Delete grant">
+            </form>
+        </td>
+    </tr>
+    {{- end }}
+    <tr>
+        <form method="post" action="/forum/admin/topic/{{ $.TopicID }}/grant">
+        {{ csrfField }}
+            <td>NEW</td>
+            <td><input name="username"></td>
+            <td>
+                <select name="role">
+                    <option value="">None</option>
+                    {{- range $.Roles }}<option value="{{ .Name }}">{{ .Name }}</option>{{- end }}
+                </select>
+            </td>
+            <td>
+                {{- range $.Actions }}
+                <label><input type="checkbox" name="action" value="{{ . }}">{{ . }}</label>
+                {{- end }}
+            </td>
+            <td><input type="submit" name="task" value="Create grant"></td>
+        </form>
+    </tr>
+</table>
+{{ template "tail" $ }}

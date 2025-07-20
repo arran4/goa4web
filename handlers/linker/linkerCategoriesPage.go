@@ -3,25 +3,26 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Categories []*db.LinkerCategory
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	categories, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {
@@ -36,5 +37,5 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categories
 
-	common.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }

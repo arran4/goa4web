@@ -1,0 +1,7 @@
+Hi {{.Item.Username}},
+Your news post has been updated.
+
+View post:
+{{.PostURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

@@ -6,13 +6,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/mail"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // ContextValues represents context key names used across the application.
@@ -24,10 +27,18 @@ type IndexItem struct {
 	Link string
 }
 
+// MailProvider defines the interface required by CoreData for sending emails.
+type MailProvider interface {
+	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
+}
+
 const (
+	// defaultPageSize is used when a user-supplied value is missing.
 	defaultPageSize = 15
-	pageSizeMin     = 5
-	pageSizeMax     = 50
+	// pageSizeMin is the lowest allowed page size.
+	pageSizeMin = 5
+	// pageSizeMax is the largest allowed page size.
+	pageSizeMax = 50
 )
 
 // NewsPost describes a news entry with access metadata.
@@ -56,8 +67,9 @@ type CoreData struct {
 
 	session *sessions.Session
 
-	ctx     context.Context
-	queries *db.Queries
+	ctx           context.Context
+	queries       *db.Queries
+	emailProvider lazyValue[MailProvider]
 
 	allRoles                 lazyValue[[]*db.Role]
 	announcement             lazyValue[*db.GetActiveAnnouncementWithNewsRow]
@@ -82,12 +94,15 @@ type CoreData struct {
 	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
 	unreadCount              lazyValue[int64]
+	subscriptions            lazyValue[map[string]bool]
 	user                     lazyValue[*db.User]
 	userRoles                lazyValue[[]string]
 	visibleWritingCategories lazyValue[[]*db.WritingCategory]
 	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
 	writers                  lazyValue[[]*db.WriterCountRow]
 	writingCategories        lazyValue[[]*db.WritingCategory]
+
+	absoluteURLBase lazyValue[string]
 }
 
 // SetRoles preloads the current user roles.
@@ -109,6 +124,11 @@ func WithSession(s *sessions.Session) CoreOption {
 // WithEvent links an event to the CoreData object.
 func WithEvent(evt *eventbus.Event) CoreOption { return func(cd *CoreData) { cd.event = evt } }
 
+// WithAbsoluteURLBase sets the base URL used to build absolute links.
+func WithAbsoluteURLBase(base string) CoreOption {
+	return func(cd *CoreData) { cd.absoluteURLBase.set(strings.TrimRight(base, "/")) }
+}
+
 // NewCoreData creates a CoreData with context and queries applied.
 func NewCoreData(ctx context.Context, q *db.Queries, opts ...CoreOption) *CoreData {
 	cd := &CoreData{ctx: ctx, queries: q, newsAnnouncements: map[int32]*lazyValue[*db.SiteAnnouncement]{}}
@@ -124,6 +144,18 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 		return cd.a4codeMapper(tag, val)
 	}
 	return val
+}
+
+// EmailProvider lazily returns the configured email provider.
+// WithEmailProvider sets the email provider used by CoreData.
+func WithEmailProvider(p MailProvider) CoreOption {
+	return func(cd *CoreData) { cd.emailProvider.set(p) }
+}
+
+// EmailProvider returns the configured email provider.
+func (cd *CoreData) EmailProvider() MailProvider {
+	p, _ := cd.emailProvider.load(func() (MailProvider, error) { return nil, nil })
+	return p
 }
 
 // HasRole reports whether the current user explicitly has the named role.
@@ -223,6 +255,20 @@ func (cd *CoreData) Session() *sessions.Session { return cd.session }
 
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.Event) { cd.event = evt }
+
+// SetEventTask records the task associated with the current request event.
+func (cd *CoreData) SetEventTask(t tasks.Task) {
+	if cd.event != nil {
+		cd.event.Task = t
+	}
+}
+
+// AbsoluteURL returns an absolute URL by combining the configured hostname or
+// the request host with path. The base value is cached per request.
+func (cd *CoreData) AbsoluteURL(path string) string {
+	base, _ := cd.absoluteURLBase.load(func() (string, error) { return "", nil })
+	return base + path
+}
 
 // Event returns the event associated with the request, if any.
 func (cd *CoreData) Event() *eventbus.Event { return cd.event }
@@ -743,6 +789,32 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		return cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
 	})
 	return count
+}
+
+// subscriptionMap loads the current user's subscriptions once.
+func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
+	return cd.subscriptions.load(func() (map[string]bool, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return map[string]bool{}, nil
+		}
+		rows, err := cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+		if err != nil {
+			return nil, err
+		}
+		m := make(map[string]bool)
+		for _, row := range rows {
+			if row.Method == "internal" {
+				m[row.Pattern] = true
+			}
+		}
+		return m, nil
+	})
+}
+
+// Subscribed reports whether the user has a subscription matching pattern.
+func (cd *CoreData) Subscribed(pattern string) bool {
+	m, _ := cd.subscriptionMap()
+	return m[pattern]
 }
 
 // LinkerCategoryCounts lazily loads linker category statistics.

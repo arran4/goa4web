@@ -2,16 +2,17 @@ package writings
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"strings"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -19,12 +20,12 @@ import (
 
 func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Languages []*db.Language
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	languageRows, err := data.CoreData.Languages()
@@ -34,7 +35,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "articleAddPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "articleAddPage.gohtml", data)
 }
 func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -51,7 +52,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	articleId, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
 		WritingCategoryID:  int32(categoryId),
@@ -72,7 +73,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -81,18 +82,13 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	for _, text := range []string{
-		abstract,
-		title,
-		body,
-	} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-
-		if searchutil.InsertWordsToWritingSearch(w, r, wordIds, queries, articleId) {
-			return
+	fullText := strings.Join([]string{abstract, title, body}, " ")
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: int32(articleId), Text: fullText}
 		}
 	}
 }

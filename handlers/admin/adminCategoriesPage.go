@@ -3,16 +3,18 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Section           string
 		ForumCategories   []*db.GetAllForumCategoriesWithSubcategoryCountRow
 		WritingCategories []*db.WritingCategory
@@ -20,10 +22,10 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Section:  r.URL.Query().Get("section"),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	if data.Section == "" || data.Section == "forum" {
 		rows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
@@ -53,5 +55,5 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		data.LinkerCategories = rows
 	}
 
-	common.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }

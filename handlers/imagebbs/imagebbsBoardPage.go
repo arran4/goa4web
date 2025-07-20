@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
@@ -13,10 +14,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	"github.com/arran4/goa4web/internal/tasks"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -27,9 +30,28 @@ import (
 	"github.com/arran4/goa4web/internal/upload"
 )
 
+// UploadImageTask handles uploading an image to a board.
+type UploadImageTask struct{ tasks.TaskString }
+
+var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
+
+// UploadImageTask participates in generic task handling
+var _ tasks.Task = (*UploadImageTask)(nil)
+
+func (UploadImageTask) IndexType() string { return searchworker.TypeImage }
+
+func (UploadImageTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = UploadImageTask{}
+
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*common.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
@@ -40,13 +62,13 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(vars["boardno"])
 
 	data := Data{
-		CoreData:    r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -68,10 +90,10 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Posts = posts
 
-	common.TemplateHandler(w, r, "boardPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "boardPage.gohtml", data)
 }
 
-func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
+func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
 
 	vars := mux.Vars(r)
@@ -83,7 +105,7 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {
@@ -163,19 +185,19 @@ func BoardPostImageActionPage(w http.ResponseWriter, r *http.Request) {
 		FileSize:               int32(size),
 	})
 	if err != nil {
-		log.Printf("printTopicRestrictions Error: %s", err)
+		log.Printf("CreateImagePost Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
+		}
 	}
 
-	if searchutil.InsertWordsToImageSearch(w, r, wordIds, queries, pid) {
-		return
-	}
-
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

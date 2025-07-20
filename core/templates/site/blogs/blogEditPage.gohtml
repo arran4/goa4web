@@ -1,0 +1,14 @@
+{{ template "head" $ }}
+    {{ if .Blog }}
+        <form method="post" action="">
+        {{ csrfField }}
+            <!-- Title <input name="title" value=""><br> -->
+            Blog:<br>
+            <textarea name="text" cols=40 rows=20>{{.Blog.Blog.String}}</textarea><br>
+            {{ template "languageCombobox" $ }}
+            <input type="submit" name="task" value="{{ .Mode }}">
+        </form>
+    {{ else }}
+        Dead. No BLOG!
+    {{ end }}
+{{ template "tail" $ }}

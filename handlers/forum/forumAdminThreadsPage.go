@@ -1,11 +1,13 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -17,12 +19,12 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		Threads    []*db.GetAllForumThreadsWithTopicRow
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Groups map[int32]*Group
 		Order  []int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	rows, err := queries.GetAllForumThreadsWithTopic(r.Context())
 	if err != nil {
@@ -32,7 +34,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Groups:   make(map[int32]*Group),
 	}
 
@@ -46,7 +48,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		g.Threads = append(g.Threads, row)
 	}
 
-	common.TemplateHandler(w, r, "adminThreadsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminThreadsPage.gohtml", data)
 }
 
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +62,7 @@ func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := ThreadDelete(r.Context(), queries, int32(threadID), int32(topicID)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

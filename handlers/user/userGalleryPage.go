@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"path"
@@ -8,11 +9,13 @@ import (
 	"strconv"
 	"strings"
 
+	common "github.com/arran4/goa4web/core/common"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 type galleryImage struct {
@@ -27,7 +30,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	pageStr := r.URL.Query().Get("p")
 	page, _ := strconv.Atoi(pageStr)
@@ -35,7 +38,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {
 		size = int(pref.PageSize)
@@ -69,8 +72,8 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimSuffix(fname, ext)
 		thumb := id + "_thumb" + ext
 		imgs = append(imgs, galleryImage{
-			Thumb:  imageshandler.SignedCacheURL(thumb),
-			Full:   imageshandler.SignedURL("image:" + fname),
+			Thumb:  imagesign.SignedCacheURL(thumb),
+			Full:   imagesign.SignedURL("image:" + fname),
 			A4Code: "[img=image:" + fname + "]",
 		})
 	}
@@ -98,5 +101,5 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		PageSize: size,
 	}
 
-	common.TemplateHandler(w, r, "gallery.gohtml", data)
+	handlers.TemplateHandler(w, r, "gallery.gohtml", data)
 }

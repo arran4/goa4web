@@ -1,0 +1,15 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [{{.SubjectPrefix}}] {{.Subject}}
+
+Hello,
+
+A new writing "{{.Item.Title}}" was submitted.
+
+Read it here:
+{{.URL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

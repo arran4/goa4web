@@ -2,13 +2,15 @@ package admin
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -23,7 +25,7 @@ func copyValues(v url.Values) url.Values {
 // AdminAuditLogPage shows recent admin actions with basic filtering.
 func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Rows     []*db.ListAuditLogsRow
 		User     string
 		Action   string
@@ -33,14 +35,14 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		User:     r.URL.Query().Get("user"),
 		Action:   r.URL.Query().Get("action"),
-		PageSize: common.GetPageSize(r),
+		PageSize: handlers.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	usernameFilter := "%"
 	if strings.TrimSpace(data.User) != "" {
@@ -80,7 +82,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		nextVals := copyValues(params)
 		nextVals.Set("offset", strconv.Itoa(offset+data.PageSize))
 		data.NextLink = "/admin/audit?" + nextVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next " + strconv.Itoa(data.PageSize),
 			Link: data.NextLink,
 		})
@@ -89,11 +91,11 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		prevVals := copyValues(params)
 		prevVals.Set("offset", strconv.Itoa(offset-data.PageSize))
 		data.PrevLink = "/admin/audit?" + prevVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Previous " + strconv.Itoa(data.PageSize),
 			Link: data.PrevLink,
 		})
 	}
 
-	common.TemplateHandler(w, r, "auditLogPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "auditLogPage.gohtml", data)
 }

@@ -3,27 +3,27 @@ package news
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
-	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*common.CoreData
 		UserLevels []*db.GetUserRolesRow
 		Roles      []*db.Role
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -39,44 +39,5 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = rows
 
-	common.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
-}
-
-func NewsAdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
-	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
-	if err != nil {
-		log.Printf("GetUserByUsername Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
-		UsersIdusers: u.Idusers,
-		Name:         level,
-	}); err != nil {
-		log.Printf("permissionUserAllow Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
-
-}
-
-func NewsAdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	permid, err := strconv.Atoi(r.PostFormValue("permid"))
-	if err != nil {
-		log.Printf("strconv.Atoi(permid) Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
-		log.Printf("permissionUserDisallow Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TemplateHandler(w, r, "adminUserRolesPage.gohtml", data)
 }

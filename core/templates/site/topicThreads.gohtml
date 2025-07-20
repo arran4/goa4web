@@ -1,0 +1,26 @@
+{{ define "topicThreads" }}
+    <font size="4">Threads:</font><br>
+    {{- range .Threads }}
+        <table width="100%" border=1>
+            <tr>
+                <td bgcolor="lightgrey">
+                    First poster: <font color="green">{{ .Firstpostusername.String }}</font> At <font color="green">{{ .Firstpostwritten.Time }}</font><br />
+                    Contents:
+                </td>
+            </tr>
+            <tr>
+                <td bgcolor="">
+                    {{ .Firstposttext.String | a4code2html }}<br>
+                </td>
+            </tr>
+            <tr>
+                <td bgcolor="">
+                    Lastposter: <font color="blue">{{ .Lastposterusername.String }}</font>
+                    At <font color="blue">{{ .Lastaddition.Time }}</font>
+                    [<a href="/forum/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
+                </td>
+            </tr>
+        </table>
+        <br />
+    {{- end }}
+{{ end }}

@@ -3,33 +3,97 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
+	common "github.com/arran4/goa4web/core/common"
+
 	corelanguage "github.com/arran4/goa4web/core/language"
+	handlers "github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
+
+	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/internal/email"
 	"github.com/gorilla/mux"
 )
 
-func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
+// CreateThreadTask handles creating a new forum thread.
+type CreateThreadTask struct{ tasks.TaskString }
+
+var (
+	createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+
+	// Interface checks ensure the new thread hooks into notifications so
+	// authors follow replies, administrators are alerted and subscribers see
+	// new discussions.
+	_ tasks.Task                                    = (*CreateThreadTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*CreateThreadTask)(nil)
+	_ notif.AutoSubscribeProvider                   = (*CreateThreadTask)(nil)
+	_ searchworker.IndexedTask                      = CreateThreadTask{}
+)
+
+func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
+
+func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("threadEmail")
+}
+
+func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("thread")
+	return &s
+}
+
+func (CreateThreadTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail")
+}
+
+func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumThreadCreateEmail")
+	return &v
+}
+
+// AutoSubscribePath records the created thread so the author and topic
+// followers automatically receive updates when others reply.
+// When a user creates a thread they expect to follow any replies.
+// AutoSubscribePath allows new thread creators to automatically watch for replies.
+
+// AutoSubscribePath implements notif.AutoSubscribeProvider. When the
+// postcountworker provides context, a subscription to the created thread is
+// generated.
+func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskCreateThread), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
+
+	return string(TaskCreateThread), evt.Path
+}
+
+func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(hcommon.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -44,11 +108,11 @@ func ThreadNewPage(w http.ResponseWriter, r *http.Request) {
 
 	blogs.CustomBlogIndex(data.CoreData, r)
 
-	common.TemplateHandler(w, r, "threadNewPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }
 
-func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	session, ok := core.GetSessionOrFail(w, r)
@@ -82,12 +146,12 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["thread"] = notifications.ThreadInfo{TopicTitle: topicTitle, Author: author}
+			evt.Data["thread"] = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
 		}
 	}
 
@@ -95,8 +159,6 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
-
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
@@ -113,23 +175,23 @@ func ThreadNewActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, int32(threadId), int32(topicId)); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: int32(threadId), TopicID: int32(topicId)}
+			evt.Data["PostURL"] = cd.AbsoluteURL(endUrl)
+		}
 	}
-
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
+		}
 	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
-	}
-
-	// TODO remove and replace with proper eventbus notification
-	notifications.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), int32(threadId), uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

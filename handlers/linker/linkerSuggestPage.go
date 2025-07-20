@@ -3,14 +3,17 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -18,15 +21,15 @@ import (
 
 func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Categories         []*db.LinkerCategory
 		Languages          []*db.Language
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:           r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
@@ -50,11 +53,18 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "suggestPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "suggestPage.gohtml", data)
 }
 
-func SuggestActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+type SuggestTask struct{ tasks.TaskString }
+
+var suggestTask = SuggestTask{TaskString: TaskSuggest}
+var _ tasks.Task = (*SuggestTask)(nil)
+
+func (SuggestTask) Page(w http.ResponseWriter, r *http.Request) { SuggestPage(w, r) }
+
+func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -80,5 +90,5 @@ func SuggestActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

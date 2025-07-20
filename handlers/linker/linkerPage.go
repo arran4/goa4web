@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
@@ -18,18 +19,18 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Offset      int
 		HasOffset   bool
 		CatId       int
 		CommentOnId int
 		ReplyToId   int
-		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
+		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow
 		Categories  []*db.LinkerCategory
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
@@ -38,9 +39,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
 	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
-	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
+	uid := data.CoreData.UserID
+	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:         uid,
+		Idlinkercategory: int32(data.CatId),
+		ViewerUserID:     sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -51,7 +57,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.Links = linkerPosts
+	for _, row := range linkerPosts {
+		if !data.CoreData.HasGrant("linker", "link", "see", row.Idlinker) {
+			continue
+		}
+		data.Links = append(data.Links, row)
+	}
 
 	categories, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {
@@ -66,10 +77,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categories
 
-	common.TemplateHandler(w, r, "linkerPage", data)
+	handlers.TemplateHandler(w, r, "linkerPage", data)
 }
 
-func CustomLinkerIndex(data *corecommon.CoreData, r *http.Request) {
+func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
+	data.CustomIndexItems = []common.IndexItem{}
 	if r.URL.Path == "/linker" || strings.HasPrefix(r.URL.Path, "/linker/category/") {
 		data.RSSFeedUrl = "/linker/rss"
 		data.AtomFeedUrl = "/linker/atom"
@@ -77,19 +89,19 @@ func CustomLinkerIndex(data *corecommon.CoreData, r *http.Request) {
 
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "User Permissions",
-			Link: "/admin/linker/users/levels",
+			Link: "/admin/linker/users/roles",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Category Controls",
 			Link: "/admin/linker/categories",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Approve links",
 			Link: "/admin/linker/queue",
 		})
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Add link",
 			Link: "/admin/linker/add",
 		})
@@ -98,23 +110,23 @@ func CustomLinkerIndex(data *corecommon.CoreData, r *http.Request) {
 	categoryId := vars["category"]
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	if categoryId == "" {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next 15",
 			Link: fmt.Sprintf("/linker?offset=%d", offset+15),
 		})
 		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 				Name: "Previous 15",
 				Link: fmt.Sprintf("/linker?offset=%d", offset-15),
 			})
 		}
 	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next 15",
 			Link: fmt.Sprintf("/linker/category/%s?offset=%d", categoryId, offset+15),
 		})
 		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 				Name: "Previous 15",
 				Link: fmt.Sprintf("/linker/category/%s?offset=%d", categoryId, offset-15),
 			})

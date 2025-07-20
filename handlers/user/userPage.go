@@ -1,9 +1,12 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/middleware"
 
 	"github.com/arran4/goa4web/core"
@@ -15,7 +18,7 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	if data.CoreData.UserID == 0 {
@@ -28,5 +31,5 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.TemplateHandler(w, r, "userPage", data)
+	handlers.TemplateHandler(w, r, "userPage", data)
 }

@@ -3,23 +3,25 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Categories []*db.GetLinkerCategoryLinkCountsRow
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	categoryRows, err := data.LinkerCategoryCounts()
@@ -35,11 +37,16 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	common.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
 }
 
-func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+type updateCategoryTask struct{ tasks.TaskString }
+
+var UpdateCategoryTask = &updateCategoryTask{TaskString: TaskUpdate}
+var _ tasks.Task = (*updateCategoryTask)(nil)
+
+func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -61,11 +68,16 @@ func AdminCategoriesUpdatePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+type renameCategoryTask struct{ tasks.TaskString }
+
+var RenameCategoryTask = &renameCategoryTask{TaskString: TaskRenameCategory}
+var _ tasks.Task = (*renameCategoryTask)(nil)
+
+func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -78,13 +90,18 @@ func AdminCategoriesRenamePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+type deleteCategoryTask struct{ tasks.TaskString }
+
+var DeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
+var _ tasks.Task = (*deleteCategoryTask)(nil)
+
+func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	for _, c := range rows {
 		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
@@ -107,13 +124,18 @@ func AdminCategoriesDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+type createCategoryTask struct{ tasks.TaskString }
+
+var CreateCategoryTask = &createCategoryTask{TaskString: TaskCreateCategory}
+var _ tasks.Task = (*createCategoryTask)(nil)
+
+func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	title := r.PostFormValue("title")
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	pos := len(rows) + 1
 	if err := queries.CreateLinkerCategory(r.Context(), db.CreateLinkerCategoryParams{
@@ -124,5 +146,5 @@ func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

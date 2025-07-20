@@ -1,0 +1,16 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [{{.SubjectPrefix}}] {{.Subject}}
+
+Hello,
+
+A new user {{.Item.Username}} has registered at {{.Time}}.
+Please add them to the user group to approve the account.
+
+Review the account here:
+{{.URL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

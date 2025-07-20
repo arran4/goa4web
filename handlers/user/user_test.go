@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,10 +16,11 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email"
 	logProv "github.com/arran4/goa4web/internal/email/log"
+	"time"
 )
 
 func init() { logProv.Register() }
@@ -51,14 +53,14 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	userEmailTestActionPage(rr, req)
+	testMailTask.Action(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
@@ -82,14 +84,14 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	userEmailTestActionPage(rr, req)
+	testMailTask.Action(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
@@ -106,10 +108,10 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -120,6 +122,58 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 	}
 	if !strings.Contains(rr.Body.String(), "missing") {
 		t.Fatalf("body=%q", rr.Body.String())
+	}
+}
+
+func TestUserEmailPage_NoUnverified(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
+	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", time.Now(), nil, nil, 100))
+
+	req := httptest.NewRequest("GET", "/usr/email", nil)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
+	cd.UserID = 1
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	userEmailPage(rr, req)
+
+	body := rr.Body.String()
+	if strings.Contains(body, "Unverified Emails") {
+		t.Fatalf("unverified section should be hidden: %q", body)
+	}
+	if !strings.Contains(body, "Verified Emails") {
+		t.Fatalf("missing verified section: %q", body)
+	}
+}
+
+func TestUserEmailPage_NoVerified(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	queries := dbpkg.New(db)
+	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "e", "u"))
+	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}))
+
+	req := httptest.NewRequest("GET", "/usr/email", nil)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
+	cd.UserID = 1
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	userEmailPage(rr, req)
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "No verified emails") {
+		t.Fatalf("missing warning message: %q", body)
+	}
+	if strings.Contains(body, "Unverified Emails") {
+		t.Fatalf("unexpected unverified section: %q", body)
 	}
 }
 
@@ -154,10 +208,10 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
 	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -167,7 +221,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	config.AppRuntimeConfig.PageSizeDefault = 15
 	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(config.AppRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	userLangSaveAllActionPage(rr, req)
+	saveAllTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -203,10 +257,10 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
@@ -214,7 +268,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	userLangSaveLanguagesActionPage(rr, req)
+	saveLanguagesTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -253,10 +307,10 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries, corecommon.WithSession(sess))
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
@@ -264,7 +318,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(config.AppRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	userLangSaveLanguagePreferenceActionPage(rr, req)
+	saveLanguageTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

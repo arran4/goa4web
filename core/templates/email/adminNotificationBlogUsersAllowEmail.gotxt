@@ -1,0 +1,6 @@
+Multiple users were granted blog permissions.
+
+Blog section:
+{{.BlogURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

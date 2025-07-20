@@ -4,19 +4,21 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/core/templates"
-	"github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/feeds"
-	"github.com/gorilla/mux"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/a4code/a4code2html"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
+	db "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/gorilla/feeds"
+	"github.com/gorilla/mux"
 )
 
 func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow) *feeds.Feed {
@@ -37,7 +39,7 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 			continue
 		}
 		desc := row.Description.String
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(imagesign.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())
@@ -65,8 +67,8 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	boards, err := queries.GetAllImageBoardsForUser(r.Context(), db.GetAllImageBoardsForUserParams{
 		ViewerID:     cd.UserID,
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
@@ -99,8 +101,8 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	boards, err := queries.GetAllImageBoardsForUser(r.Context(), db.GetAllImageBoardsForUserParams{
 		ViewerID:     cd.UserID,
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
@@ -135,10 +137,10 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
-		_ = templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 		return
 	}
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
@@ -177,10 +179,10 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
-		_ = templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 		return
 	}
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{

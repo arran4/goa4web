@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"strconv"
 	"testing"
@@ -34,11 +35,11 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
-	ctx = context.WithValue(ctx, common.ContextValues("coreData"), cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if _, err := cd.LatestNews(req); err != nil {
@@ -68,7 +69,7 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "category", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(context.Background(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
@@ -99,7 +100,7 @@ func TestAnnouncementForNewsCaching(t *testing.T) {
 
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnRows(annRows)
 
-	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(context.Background(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 
 	if _, err := cd.AnnouncementForNews(1); err != nil {
@@ -125,7 +126,7 @@ func TestAnnouncementForNewsError(t *testing.T) {
 
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrConnDone)
 
-	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(context.Background(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 
 	if _, err := cd.AnnouncementForNews(1); !errors.Is(err, sql.ErrConnDone) {
@@ -149,26 +150,26 @@ func TestPublicWritingsLazy(t *testing.T) {
 
 	queries := dbpkg.New(db)
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "Username", "Comments"}).
-		AddRow(1, 1, 0, 1, 0, "t", now, "w", "a", false, now, "u", 0)
+	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
+		AddRow(1, 1, 0, 1, 0, "t", now, "w", "a", false, now, now, "u", 0)
 
 	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(1), int32(0), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	rows2 := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "Username", "Comments"}).
-		AddRow(2, 1, 0, 1, 1, "t2", now, "w2", "a2", false, now, "u", 0)
+	rows2 := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
+		AddRow(2, 1, 0, 1, 1, "t2", now, "w2", "a2", false, now, now, "u", 0)
 
 	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows2)
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
-	ctx = context.WithValue(ctx, common.ContextValues("coreData"), cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if _, err := cd.PublicWritings(0, req); err != nil {
@@ -201,19 +202,19 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	rows := sqlmock.NewRows([]string{
 		"idwriting", "users_idusers", "forumthread_id", "language_idlanguage",
 		"writing_category_id", "title", "published", "writing", "abstract",
-		"private", "deleted_at",
-	}).AddRow(1, 1, 0, 1, 1, "t", now, "w", "a", nil, nil)
+		"private", "deleted_at", "last_index",
+	}).AddRow(1, 1, 0, 1, 1, "t", now, "w", "a", nil, nil, now)
 
 	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(15), int32(0)).WillReturnRows(rows)
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	ctx := context.WithValue(context.Background(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(context.Background(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 
-	req := httptest.NewRequest("GET", "/", nil).WithContext(context.WithValue(ctx, common.ContextValues("coreData"), cd))
+	req := httptest.NewRequest("GET", "/", nil).WithContext(context.WithValue(ctx, consts.KeyCoreData, cd))
 	offset, _ := strconv.Atoi(req.URL.Query().Get("offset"))
 	if _, err := cd.LatestWritings(common.WithWritingsOffset(int32(offset))); err != nil {
 		t.Fatalf("LatestWritings: %v", err)
@@ -241,7 +242,7 @@ func TestBloggersLazy(t *testing.T) {
 		WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	req = req.WithContext(ctx)
@@ -273,7 +274,7 @@ func TestWritersLazy(t *testing.T) {
 		WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	req = req.WithContext(ctx)

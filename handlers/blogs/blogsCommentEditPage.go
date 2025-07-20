@@ -4,17 +4,38 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
+	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/gorilla/mux"
 )
 
-func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
+// EditReplyTask updates an existing comment.
+type EditReplyTask struct{ tasks.TaskString }
 
+var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
+
+var _ tasks.Task = (*EditReplyTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
+
+func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogCommentEditEmail")
+}
+
+func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentEditEmail")
+	return &v
+}
+
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -22,7 +43,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -32,7 +53,7 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(common.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(consts.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
@@ -61,20 +82,38 @@ func CommentEditPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, thread.Idforumthread, thread.ForumtopicIdforumtopic); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
+			evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d/comments", blogId))
+		}
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
-
 }
 
-func CommentEditPostCancelPage(w http.ResponseWriter, r *http.Request) {
+// CancelTask cancels comment editing.
+type CancelTask struct{ tasks.TaskString }
 
+var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+var _ tasks.Task = (*CancelTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*CancelTask)(nil)
+
+func (CancelTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationBlogCommentCancelEmail")
+}
+
+func (CancelTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentCancelEmail")
+	return &v
+}
+
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
-
 }

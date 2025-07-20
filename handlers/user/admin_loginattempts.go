@@ -1,10 +1,13 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -13,8 +16,8 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Attempts []*db.LoginAttempt
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	items, err := queries.ListLoginAttempts(r.Context())
 	if err != nil {
 		log.Printf("list login attempts: %v", err)
@@ -22,5 +25,5 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Attempts = items
-	common.TemplateHandler(w, r, "loginAttemptsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "loginAttemptsPage.gohtml", data)
 }

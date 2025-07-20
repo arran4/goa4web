@@ -1,20 +1,16 @@
 package linker
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
-	comments "github.com/arran4/goa4web/handlers/comments"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 )
-
-// AddLinkerIndex injects linker index links into CoreData.
-func AddLinkerIndex(h http.Handler) http.Handler {
-	return hcommon.IndexMiddleware(CustomLinkerIndex)(h)
-}
 
 var legacyRedirectsEnabled = true
 
@@ -23,27 +19,26 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Linker", "/linker", SectionWeight)
 	nav.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()
-	lr.Use(hcommon.IndexMiddleware(CustomLinkerIndex))
+	lr.Use(handlers.IndexMiddleware(CustomLinkerIndex))
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
 	lr.HandleFunc("/atom", AtomPage).Methods("GET")
 	lr.HandleFunc("", Page).Methods("GET")
-	lr.HandleFunc("/linker/{username}", LinkerPage).Methods("GET")
-	lr.HandleFunc("/linker/{username}/", LinkerPage).Methods("GET")
+	lr.HandleFunc("/linker/{username}", UserPage).Methods("GET")
+	lr.HandleFunc("/linker/{username}/", UserPage).Methods("GET")
 	lr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	lr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", CommentsPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", ReplyTaskEvent.Action).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionPage))).Methods("POST").MatcherFunc(EditReplyTask.Match)
-	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST").MatcherFunc(hcommon.CancelTask.Match)
-	lr.HandleFunc("/show/{link}", ShowPage).Methods("GET")
-	lr.HandleFunc("/show/{link}", ReplyTaskEvent.Action).Methods("POST").MatcherFunc(ReplyTaskEvent.Match)
-	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")
-	lr.HandleFunc("/suggest", SuggestTask.Action).Methods("POST").MatcherFunc(SuggestTask.Match)
+	lr.HandleFunc("/comments/{link}", replyTaskEvent.Page).Methods("GET")
+	lr.HandleFunc("/comments/{link}", tasks.Action(replyTaskEvent)).Methods("POST").MatcherFunc(replyTaskEvent.Matcher())
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(commentEditAction.Page))).Methods("POST").MatcherFunc(commentEditAction.Matcher())
+	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(commentEditActionCancel.Page))).Methods("POST").MatcherFunc(commentEditActionCancel.Matcher())
+	lr.HandleFunc("/show/{link}", replyTaskEvent.Page).Methods("GET")
+	lr.HandleFunc("/suggest", suggestTask.Page).Methods("GET")
+	lr.HandleFunc("/suggest", tasks.Action(suggestTask)).Methods("POST").MatcherFunc(suggestTask.Matcher())
 
 	if legacyRedirectsEnabled {
 		// legacy redirects
-		r.Path("/links").HandlerFunc(hcommon.RedirectPermanentPrefix("/links", "/linker"))
-		r.PathPrefix("/links/").HandlerFunc(hcommon.RedirectPermanentPrefix("/links", "/linker"))
+		r.Path("/links").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
+		r.PathPrefix("/links/").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
 	}
 }
 

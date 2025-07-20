@@ -4,19 +4,54 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	"github.com/arran4/goa4web/internal/tasks"
+
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/notifications"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
-	hcommon.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(hcommon.KeyCoreData))
+type ForgotPasswordTask struct {
+	tasks.TaskString
 }
 
-func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
+var _ tasks.Task = (*ForgotPasswordTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*ForgotPasswordTask)(nil)
+
+// ForgotPasswordTask handles password reset requests.
+var forgotPasswordTask = &ForgotPasswordTask{
+	TaskString: TaskUserResetPassword,
+}
+
+func (f ForgotPasswordTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationUserRequestPasswordResetEmail")
+}
+
+func (f ForgotPasswordTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationUserRequestPasswordResetEmail")
+	return &v
+}
+
+func (f ForgotPasswordTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("passwordResetEmail")
+}
+
+func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("password_reset")
+	return &s
+}
+
+func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
+	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(consts.KeyCoreData))
+}
+
+func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -27,7 +62,7 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing fields", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -54,15 +89,15 @@ func ForgotPasswordActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if row.Email != "" {
-		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["reset"] = notifications.PasswordResetInfo{Username: row.Username.String, Code: code}
+				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
+				evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
 			}
 		}
-		// OLD _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, hcommon.TaskUserResetPassword, code)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

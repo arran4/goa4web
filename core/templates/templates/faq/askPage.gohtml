@@ -1,9 +1,0 @@
-{{ template "head" $ }}
-		<font size="5">Add a Question of your own:</font><br>
-		<form method="post" action="">
-        {{ csrfField }}
-			<textarea name="text" cols="60" rows="20"></textarea><br>
-            {{ template "languageCombobox" $ }}
-			<input type="submit" name="task" value="Ask">
-		</form>
-{{ template "tail" $ }}

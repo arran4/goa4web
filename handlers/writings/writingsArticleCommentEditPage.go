@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,8 +12,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 )
 
 // ArticleCommentEditActionPage updates a comment on a writing and refreshes thread metadata.
@@ -24,7 +26,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -35,7 +37,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(hcommon.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(consts.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
@@ -57,10 +59,13 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := hcommon.PostUpdate(r.Context(), queries, thread.Idforumthread, thread.ForumtopicIdforumtopic); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
+		}
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", articleId), http.StatusTemporaryRedirect)

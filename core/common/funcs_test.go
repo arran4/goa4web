@@ -3,6 +3,7 @@ package common_test
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"reflect"
 	"testing"
@@ -62,11 +63,11 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), common.ContextValues("queries"), queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries)
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
-	ctx = context.WithValue(ctx, common.ContextValues("coreData"), cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	funcs := cd.Funcs(req)

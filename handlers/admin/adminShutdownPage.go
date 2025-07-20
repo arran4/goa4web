@@ -2,21 +2,23 @@ package admin
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin",
 	}
 
@@ -28,5 +30,5 @@ func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

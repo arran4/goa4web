@@ -1,0 +1,9 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [{{.SubjectPrefix}}] Verify your email
+
+Hi {{.Item.Username}},
+Please verify your email address by visiting:
+{{.URL}}
+
+If this wasn't you, you can ignore this email.

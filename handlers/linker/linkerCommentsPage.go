@@ -4,19 +4,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	"github.com/arran4/goa4web/internal/tasks"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -34,8 +35,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*corecommon.CoreData
-		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+		*common.CoreData
+		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 		CanReply           bool
 		Languages          []*db.Language
 		Comments           []*CommentPlus
@@ -49,8 +50,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -67,7 +68,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries = r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	languageRows, err := cd.Languages()
 	if err != nil {
@@ -76,10 +77,19 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		Idlinker:     int32(linkId),
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 
@@ -145,10 +155,28 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Thread = threadRow
 
-	hcommon.TemplateHandler(w, r, "commentsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "commentsPage.gohtml", data)
 }
 
-func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
+type replyTask struct{ tasks.TaskString }
+
+var replyTaskEvent = &replyTask{TaskString: TaskReply}
+var _ tasks.Task = (*replyTask)(nil)
+
+func (replyTask) Page(w http.ResponseWriter, r *http.Request) { CommentsPage(w, r) }
+
+func (replyTask) IndexType() string { return searchworker.TypeComment }
+
+func (replyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = replyTask{}
+
+func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -167,12 +195,22 @@ func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		Idlinker:     int32(linkId),
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 
@@ -231,35 +269,6 @@ func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)
 
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: pthid,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToLinker(r.Context(), db.ListUsersSubscribedToLinkerParams{
-		Idusers:  uid,
-		Idlinker: int32(linkId),
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
-
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
@@ -275,19 +284,22 @@ func CommentsReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
+		}
 	}
-
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
+		}
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)

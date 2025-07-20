@@ -1,0 +1,6 @@
+Announcement removed by {{.Item.Username}}.
+
+View post:
+{{.PostURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

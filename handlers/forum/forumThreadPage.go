@@ -4,14 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
+	handlers "github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
-	common "github.com/arran4/goa4web/handlers/common"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
@@ -30,7 +32,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
 		Thread              *db.GetThreadLastPosterAndPermsRow
@@ -45,8 +47,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		Offset:             offset,
@@ -61,8 +63,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -172,5 +174,5 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	blogs.CustomBlogIndex(data.CoreData, r)
 
-	common.TemplateHandler(w, r, "threadPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "threadPage.gohtml", data)
 }

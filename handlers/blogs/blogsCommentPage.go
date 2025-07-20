@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -12,9 +13,9 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
-	corecommon "github.com/arran4/goa4web/core/common"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -39,7 +40,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Blog               *BlogRow
 		Comments           []*BlogComment
 		Offset             int
@@ -54,9 +55,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(hcommon.KeyCoreData).(*CoreData),
+		CoreData:           r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Offset:             offset,
 		IsReplyable:        true,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -83,7 +84,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
@@ -184,5 +185,5 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	hcommon.TemplateHandler(w, r, "commentPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "commentPage.gohtml", data)
 }

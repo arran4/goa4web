@@ -1,0 +1,6 @@
+User {{.Item.Username}} replied to a news post.
+
+View post:
+{{.PostURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

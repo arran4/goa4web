@@ -2,33 +2,55 @@ package admin
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/handlers/common"
-	db "github.com/arran4/goa4web/internal/db"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/internal/eventbus"
+	handlers "github.com/arran4/goa4web/handlers"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
-type markReadTask struct{ eventbus.BasicTaskEvent }
-type purgeNotificationsTask struct{ eventbus.BasicTaskEvent }
-type sendNotificationTask struct{ eventbus.BasicTaskEvent }
+// MarkReadTask marks notifications as read.
+type MarkReadTask struct{ tasks.TaskString }
+
+var markReadTask = &MarkReadTask{TaskString: TaskDismiss}
+
+// ensures MarkReadTask implements the tasks.Task interface
+var _ tasks.Task = (*MarkReadTask)(nil)
+
+// PurgeNotificationsTask removes old read notifications.
+type PurgeNotificationsTask struct{ tasks.TaskString }
+
+var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
+
+// ensures PurgeNotificationsTask implements the tasks.Task interface
+var _ tasks.Task = (*PurgeNotificationsTask)(nil)
+
+// SendNotificationTask creates a site notification for users.
+type SendNotificationTask struct{ tasks.TaskString }
+
+var sendNotificationTask = &SendNotificationTask{TaskString: TaskNotify}
+
+// ensures SendNotificationTask implements the tasks.Task interface
+var _ tasks.Task = (*SendNotificationTask)(nil)
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Notifications []*db.Notification
 		Total         int
 		Unread        int
 		Roles         []*db.Role
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	roles, err := data.AllRoles()
 	if err != nil {
 		log.Printf("load roles: %v", err)
@@ -49,11 +71,11 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	common.TemplateHandler(w, r, "notificationsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "notificationsPage.gohtml", data)
 }
 
-func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -63,19 +85,19 @@ func (markReadTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("mark read: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (purgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")
 	role := r.PostFormValue("role")
@@ -120,5 +142,5 @@ func (sendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("insert notification: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

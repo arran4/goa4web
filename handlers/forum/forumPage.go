@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -18,7 +20,7 @@ import (
 func Page(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Categories              []*ForumcategoryPlus
 		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
@@ -27,7 +29,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		Back                    bool
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -36,7 +38,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
-	cd := r.Context().Value(common.KeyCoreData).(*CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := &Data{
 		CoreData: cd,
 		Admin:    cd.CanEditAny(),
@@ -124,65 +126,54 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.Back = true
 	}
 
-	common.TemplateHandler(w, r, "forumPage", data)
+	handlers.TemplateHandler(w, r, "forumPage", data)
 }
 
-func CustomForumIndex(data *CoreData, r *http.Request) {
+func CustomForumIndex(data *common.CoreData, r *http.Request) {
 	vars := mux.Vars(r)
 	threadId := vars["thread"]
 	topicId := vars["topic"]
 	categoryId := vars["category"]
+	data.CustomIndexItems = []common.IndexItem{}
 	if data.FeedsEnabled && topicId != "" && threadId == "" {
 		data.RSSFeedUrl = fmt.Sprintf("/forum/topic/%s.rss", topicId)
 		data.AtomFeedUrl = fmt.Sprintf("/forum/topic/%s.atom", topicId)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
-			IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
+			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
+			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
 		)
 	}
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Admin",
 				Link: "/forum/admin",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer categories",
 				Link: "/forum/admin/categories",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer topics",
 				Link: "/forum/admin/topics",
 			},
 		)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
+			common.IndexItem{
 				Name: "Administer users",
 				Link: "/forum/admin/users",
-			},
-		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: "Administer topic restrictions",
-				Link: "/forum/admin/restrictions/topics",
-			},
-		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			IndexItem{
-				Name: "Administer user restrictions",
-				Link: "/forum/admin/restrictions/users",
 			},
 		)
 	}
 	if threadId != "" && topicId != "" {
 		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "reply", int32(tid)) {
 			data.CustomIndexItems = append(data.CustomIndexItems,
-				IndexItem{
+				common.IndexItem{
 					Name: "Write Reply",
 					Link: fmt.Sprintf("/forum/topic/%s/thread/%s/reply", topicId, threadId),
 				},
@@ -192,11 +183,31 @@ func CustomForumIndex(data *CoreData, r *http.Request) {
 	if categoryId != "" && topicId != "" {
 		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "post", int32(tid)) {
 			data.CustomIndexItems = append(data.CustomIndexItems,
-				IndexItem{
+				common.IndexItem{
 					Name: "Create Thread",
 					Link: fmt.Sprintf("/forum/topic/%s/new", topicId),
 				},
 			)
+		}
+	}
+	if threadId == "" && topicId != "" && data.UserID != 0 {
+		tid, err := strconv.Atoi(topicId)
+		if err == nil {
+			if subscribedToTopic(data, int32(tid)) {
+				data.CustomIndexItems = append(data.CustomIndexItems,
+					common.IndexItem{
+						Name: "Unsubscribe From Topic",
+						Link: fmt.Sprintf("/forum/topic/%s/unsubscribe", topicId),
+					},
+				)
+			} else {
+				data.CustomIndexItems = append(data.CustomIndexItems,
+					common.IndexItem{
+						Name: "Subscribe To Topic",
+						Link: fmt.Sprintf("/forum/topic/%s/subscribe", topicId),
+					},
+				)
+			}
 		}
 	}
 }

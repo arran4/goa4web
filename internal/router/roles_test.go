@@ -2,12 +2,12 @@ package router
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	"github.com/arran4/goa4web/internal/middleware"
 )
 
@@ -15,7 +15,7 @@ func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.SetRoles([]string{"administrator"})
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	called := false
@@ -40,7 +40,7 @@ func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
 	cd := corecommon.NewCoreData(req.Context(), nil)
 	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	called := false

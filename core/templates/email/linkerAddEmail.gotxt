@@ -1,0 +1,6 @@
+Hi {{.Item.Username}},
+Your link has been submitted successfully.
+
+View link:
+{{.LinkURL}}
+Manage notifications: {{.UnsubscribeUrl}}

@@ -1,0 +1,39 @@
+{{ template "head" $ }}
+    <form method="get">
+        <input name="search" value="{{ $.Search }}">
+        <input type="submit" value="Search">
+    </form>
+    {{- range $.Rows }}
+    <h3>{{ .User.Username.String }} ({{ .User.Email.String }})</h3>
+    <table border="1" width="100%">
+        <tr>
+            <th>Topic</th>
+            <th>Forum</th>
+            <th>Level</th>
+            <th>Starting roles</th>
+            <th>Expiration</th>
+            <th>Options</th>
+        </tr>
+        {{- $u := .User }}
+        {{- range .Topics }}
+        <tr>
+            <form method="post" action="/forum/admin/user/{{ $u.Idusers }}/levels">
+        {{ csrfField }}
+                <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}</td>
+                <td>{{ with index $.Categories .ForumcategoryIdforumcategory }}{{ .Title.String }}{{ end }}</td>
+                <td><input name="level" value="{{ .Level.Int32 }}" size="8"></td>
+                <td><input name="startingRoles" value="{{ .Invitemax.Int32 }}" size="8"></td>
+                <td><input type="date" name="expiresAt" value="{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time.Format "2006-01-02" }}{{ end }}"></td>
+                <td>
+                    <input type="submit" name="task" value="Update role">
+                    <input type="submit" name="task" value="Revoke role">
+                </td>
+            </form>
+        </tr>
+        {{- end }}
+    </table>
+    <a href="/forum/admin/user/{{ .User.Idusers }}/levels">Configure users access levels</a>
+    {{- end }}
+    {{- if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous 15</a>{{ end }}
+    {{- if $.NextLink }} <a href="{{ $.NextLink }}">Next 15</a>{{ end }}
+{{ template "tail" $ }}

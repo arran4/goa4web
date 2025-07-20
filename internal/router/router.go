@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
@@ -8,13 +9,13 @@ import (
 
 	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 // RegisterRoutes sets up all application routes on r.
 func RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/main.css", hcommon.MainCSS).Methods("GET")
-	r.HandleFunc("/favicon.svg", hcommon.Favicon).Methods("GET")
+	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
+	r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
 
 	InitModules(r)
 
@@ -25,8 +26,8 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !corecommon.Allowed(r, roles...) {
-				cd := r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData)
-				err := templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+				cd := r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData)
+				err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 				if err != nil {
 					log.Printf("Template Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -39,6 +40,7 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 }
 
 // AdminCheckerMiddleware ensures the requester has administrator rights.
+// Roles are loaded via the GetPermissionsByUserID query before this check.
 func AdminCheckerMiddleware(next http.Handler) http.Handler {
 	return RoleCheckerMiddleware("administrator")(next)
 }

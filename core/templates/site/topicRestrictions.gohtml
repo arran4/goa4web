@@ -1,0 +1,51 @@
+{{ define "topicRestrictions" }}
+    <font size="4">Topic Restrictions:</font><br>
+    <table width="100%">
+        <tr>
+            <th>Topic
+            <th>view level
+            <th>reply level
+            <th>new thread level
+            <th>see level
+            <th>Starting roles
+            <th>read level
+            <th>Moderator Level
+            <th>Administrator level
+            <th>Options
+        </tr>
+        {{- range .Restrictions }}
+            <form method="post">
+        {{ csrfField }}
+                <tr>
+                    <td><input type="hidden" name="ftid" value="{{ .ForumTopicID }}">{{ .Title }}
+                    <td><input name="view" value="{{ .ViewLevel }}" size="8">
+                    <td><input name="reply" value="{{ .ReplyLevel }}" size="8">
+                    <td><input name="newthread" value="{{ .NewThreadLevel }}" size="8">
+                    <td><input name="see" value="{{ .SeeLevel }}" size="8">
+                    <td><input name="invite" value="{{ .InviteLevel }}" size="8">
+                    <td><input name="read" value="{{ .ReadLevel }}" size="8">
+                    <td><input name="mod" value="{{ .ModeratorLevel }}" size="8">
+                    <td><input name="admin" value="{{ .AdminLevel }}" size="8">
+                    <td>
+                        {{- if .HasRestriction }}
+                        <input type="submit" name="task" value="Update topic restriction">
+                        <input type="submit" name="task" value="Delete topic restriction">
+                        {{- else }}
+                        <input type="submit" name="task" value="Set topic restriction">
+                        {{- end }}
+                </tr>
+            </form>
+        {{- end }}
+    </table><br>
+    Remember:
+    <ul>
+        <li>View threads
+        <li>Reply to thread
+        <li>Create new threads
+        <li>See the topic
+        <li>Invite new user to restricted topic
+        <li>Read threads
+        <li>Moderate threads
+        <li>Administrate users
+    </ul>
+{{ end }}

@@ -4,19 +4,61 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
+
+// ReplyTask posts a reply within a thread.
+type ReplyTask struct{ tasks.TaskString }
+
+var replyTask = &ReplyTask{TaskString: TaskReply}
+
+var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask alerts watchers of new posts and auto-subscribes the replier so
+// they see further responses.
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
+func (ReplyTask) IndexType() string { return searchworker.TypeComment }
+
+func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
+}
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
@@ -30,7 +72,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 	}
 	type Data struct {
-		*hcommon.CoreData
+		*common.CoreData
 		Replyable          bool
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -53,16 +95,16 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	var uid int32
 	uid, _ = session.Values["UID"].(int32)
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:      r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData:      r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Replyable:     true,
 		BoardId:       bid,
 		ForumThreadId: thid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -138,7 +180,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledTemplates(r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
@@ -151,10 +193,10 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Languages = languageRows
 
-	common.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
 }
 
-func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -177,7 +219,7 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
 		ViewerID:     uid,
@@ -187,8 +229,8 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
-			_ = templates.GetCompiledTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
@@ -281,19 +323,22 @@ func BoardThreadReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := hcommon.PostUpdate(r.Context(), queries, pthid, ptid); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
+		}
 	}
-
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
-	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
+		}
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)

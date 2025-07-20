@@ -1,6 +1,7 @@
 package imagebbs
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"os"
@@ -8,7 +9,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
 )
@@ -50,7 +53,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Path:     cleaned,
 	}
 	if cleaned != "/" {
@@ -68,5 +71,5 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	common.TemplateHandler(w, r, "adminFilesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminFilesPage.gohtml", data)
 }

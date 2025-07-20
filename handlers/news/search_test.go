@@ -3,6 +3,7 @@ package news
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"net/url"
 	"regexp"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	hcommon "github.com/arran4/goa4web/handlers/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -31,7 +31,8 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 
 	newsRows := sqlmock.NewRows([]string{
 		"writerName", "writerId", "idsitenews", "forumthread_id",
-		"language_idlanguage", "users_idusers", "news", "occurred", "Comments",
+		"language_idlanguage", "users_idusers", "news", "occurred",
+		"Comments",
 	}).AddRow("bob", 1, 1, 0, 1, 1, "text", time.Unix(0, 0), 0)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.username AS writerName")).
 		WithArgs(int32(1), int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}).
@@ -40,7 +41,7 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 	form := url.Values{"searchwords": {"foo"}}
 	req := httptest.NewRequest("POST", "/", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

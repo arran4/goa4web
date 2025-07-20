@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strings"
@@ -11,17 +12,30 @@ import (
 	"github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/config"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
+// RegisterTask encapsulates rendering and processing of the registration form.
+type RegisterTask struct {
+	tasks.TaskString
+}
+
+// registerTask handles user registration.
+var registerTask = &RegisterTask{TaskString: TaskRegister}
+
+// ensure RegisterTask satisfies tasks.Task
+var _ tasks.Task = (*RegisterTask)(nil)
+
 // RegisterPage renders the user registration form.
-func RegisterPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(hcommon.KeyCoreData)
-	hcommon.TemplateHandler(w, r, "registerPage.gohtml", cd)
+func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData)
+	handlers.TemplateHandler(w, r, "registerPage.gohtml", cd)
 }
 
 // RegisterActionPage handles user creation from the registration form.
-func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
+func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}
@@ -46,7 +60,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -70,9 +84,6 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User already exists", http.StatusForbidden)
 		return
 	}
-	//sum := md5.Sum([]byte(password))
-
-	//hashedPassword := hex.EncodeToString(sum[:])
 
 	hash, alg, err := HashPassword(password)
 	if err != nil {
@@ -111,7 +122,7 @@ func RegisterActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

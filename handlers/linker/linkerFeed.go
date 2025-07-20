@@ -4,15 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/feeds"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/a4code/a4code2html"
+	db "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/gorilla/feeds"
 )
 
 func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow) *feeds.Feed {
@@ -28,7 +29,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 		}
 		desc := ""
 		if row.Description.Valid {
-			conv := a4code2html.New(imageshandler.MapURL)
+			conv := a4code2html.New(imagesign.MapURL)
 			conv.CodeType = a4code2html.CTTagStrip
 			conv.SetInput(row.Description.String)
 			out, _ := io.ReadAll(conv.Process())
@@ -58,7 +59,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
 	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -73,7 +74,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
 	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

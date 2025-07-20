@@ -1,8 +1,0 @@
-Hello,
-
-This is a test email confirming your Goa4Web configuration.
-
-Manage notifications: {{.UnsubURL}}
-
-Cheers,
-The A4Web Team

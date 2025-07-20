@@ -1,0 +1,7 @@
+Hi {{.Item.Username}},
+Your comment has been updated.
+
+View comment:
+{{.CommentURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

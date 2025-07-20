@@ -1,9 +1,0 @@
-{{ define "postImage" }}
-		<font size="4">Post image</font>:<br>
-                <form method="post" enctype="multipart/form-data">
-        {{ csrfField }}
-                        Image file: <input type="file" name="image"><br>
-                        About the image: <textarea name="text" cols="40" rows="5"></textarea><br>
-                        <input type="submit" name="task" value="Upload image">
-                </form>
-{{ end }}

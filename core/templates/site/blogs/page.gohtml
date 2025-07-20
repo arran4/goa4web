@@ -1,0 +1,38 @@
+{{ define "blogsPage" }}
+    {{ template "head" $ }}
+        {{if .Rows}}
+                        {{if .UID}}
+                                <font size="5"><a href="/blogs/blogger/{{(index $.Blogs 0).Username.String}}">{{(index $.Blogs 0).Username.String}}</a>'s blogs.</font><br>
+            {{else}}
+                <font size="5"><a href="/blogs/bloggers">All bloggers</a>' blogs.</font><br>
+            {{end}}
+            <table width="100%">
+                {{range .Rows}}
+                    <tr>
+                        <th bgcolor="lightgrey">{{.Written}}</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]
+                                                        {{if .EditUrl}} - [<a href="{{.EditUrl}}">EDIT</a>]{{end}}
+                        </td>
+                    </tr>
+                {{end}}
+            </table><br>
+        {{else}}
+            {{if .IsOffset}}
+                {{if .UID}}
+                    There are no more blogs under this user.<br>
+                {{else}}
+                    There are no more blogs.<br>
+                {{end}}
+            {{else}}
+                {{if .UID}}
+                    Nothing under this blog.<br>
+                {{else}}
+                    There are no blogs here.<br>
+                {{end}}
+            {{end}}
+        {{end}}
+    {{ template "tail" $ }}
+{{ end }}

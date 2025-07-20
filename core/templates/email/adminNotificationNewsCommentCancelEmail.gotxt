@@ -1,0 +1,6 @@
+Comment edit cancelled by {{.Item.Username}}.
+
+View comment:
+{{.CommentURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

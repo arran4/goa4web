@@ -1,21 +1,22 @@
 package search
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*common.CoreData
 		SearchWords string
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	common.TemplateHandler(w, r, "searchPage", data)
+	handlers.TemplateHandler(w, r, "searchPage", data)
 }

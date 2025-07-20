@@ -1,0 +1,19 @@
+{{ define "forumAdminPage" }}
+    {{ template "head" $ }}
+<p>Please select an option:</p>
+<ul>
+    <li><a href="/forum/admin/categories">Manage Categories</a></li>
+    <li><a href="/forum/admin/topics">Manage Topics</a></li>
+    <li><a href="/forum/admin/conversations">Manage Conversations</a></li>
+    <li><a href="/forum/admin/users">Manage Users</a></li>
+</ul>
+
+<p>Forum statistics:</p>
+<table border="1">
+    <tr><th>Item</th><th>Count</th></tr>
+    <tr><td>Categories</td><td>{{ .Stats.Categories }}</td></tr>
+    <tr><td>Topics</td><td>{{ .Stats.Topics }}</td></tr>
+    <tr><td>Threads</td><td>{{ .Stats.Threads }}</td></tr>
+</table>
+    {{ template "tail" $ }}
+{{ end }}

@@ -4,16 +4,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +26,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		Preview string
 	}
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Queue    []*QueueRow
 		Search   string
 		User     string
@@ -32,14 +36,14 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*corecommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),
 		Offset:   offset,
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	queue, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context())
 	if err != nil {
@@ -71,7 +75,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		filtered = append(filtered, &QueueRow{q, FetchPageTitle(r.Context(), q.Url.String)})
 	}
 
-	pageSize := hcommon.GetPageSize(r)
+	pageSize := handlers.GetPageSize(r)
 	if data.Offset < 0 {
 		data.Offset = 0
 	}
@@ -101,33 +105,89 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		next = "?offset=%d"
 	}
-	data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: fmt.Sprintf("Next %d", pageSize),
 		Link: baseURL + fmt.Sprintf(next, data.Offset+pageSize),
 	})
 	if data.Offset > 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: baseURL + fmt.Sprintf(next, data.Offset-pageSize),
 		})
 	}
 
-	hcommon.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
 }
 
-func AdminQueueDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type deleteTask struct{ tasks.TaskString }
+
+var DeleteTask = &deleteTask{TaskString: TaskDelete}
+var _ tasks.Task = (*deleteTask)(nil)
+
+var (
+	_ tasks.Task                                    = (*deleteTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*deleteTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*deleteTask)(nil)
+)
+
+func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
+	var link *db.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
+	if rows, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context()); err == nil {
+		for _, it := range rows {
+			if it.Idlinkerqueue == int32(qid) {
+				link = it
+				break
+			}
+		}
+	}
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	if link != nil {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				u, _ := cd.CurrentUser()
+				mod := ""
+				if u != nil {
+					mod = u.Username.String
+				}
+				info := notif.LinkInfo{Title: link.Title.String, URL: link.Url.String, Username: link.Username.String, Moderator: mod}
+				evt.Data["link"] = info
+				evt.Data["LinkURL"] = link.Url.String
+				evt.Data["Moderator"] = mod
+			}
+		}
+	}
+	handlers.TaskDoneAutoRefreshPage(w, r)
+}
+
+func (deleteTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("linkerRejectedEmail")
+}
+
+func (deleteTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("linker_rejected")
+	return &s
+}
+
+func (deleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLinkerRejectedEmail")
+}
+
+func (deleteTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerRejectedEmail")
+	return &v
 }
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
 	URL := r.URL.Query().Get("URL")
@@ -144,11 +204,32 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type approveTask struct{ tasks.TaskString }
+
+var ApproveTask = &approveTask{TaskString: TaskApprove}
+var _ tasks.Task = (*approveTask)(nil)
+
+var (
+	_ tasks.Task                                    = (*approveTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*approveTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*approveTask)(nil)
+	_ searchworker.IndexedTask                      = approveTask{}
+)
+
+func (approveTask) IndexType() string { return searchworker.TypeLinker }
+
+func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
@@ -157,29 +238,65 @@ func AdminQueueApproveActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(lid))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		Idlinker:     int32(lid),
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		log.Printf("getLinkerItemById Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	for _, text := range []string{link.Title.String, link.Description.String} {
-		wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-		if done {
-			return
-		}
-		if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-			return
+	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			u, _ := cd.CurrentUser()
+			mod := ""
+			if u != nil {
+				mod = u.Username.String
+			}
+			evt.Data["link"] = notif.LinkInfo{Title: link.Title.String, URL: link.Url.String, Username: link.Username.String, Moderator: mod}
+			evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
+			evt.Data["Moderator"] = mod
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+type bulkDeleteTask struct{ tasks.TaskString }
+
+var BulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
+
+var (
+	_ tasks.Task                                    = (*bulkDeleteTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*bulkDeleteTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*bulkDeleteTask)(nil)
+)
+
+func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
+	}
+	var info []notif.LinkInfo
+	if rows, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context()); err == nil {
+		ids := make(map[int]struct{})
+		for _, q := range r.Form["qid"] {
+			id, _ := strconv.Atoi(q)
+			ids[id] = struct{}{}
+		}
+		for _, it := range rows {
+			if _, ok := ids[int(it.Idlinkerqueue)]; ok {
+				info = append(info, notif.LinkInfo{Title: it.Title.String, URL: it.Url.String, Username: it.Username.String})
+			}
+		}
 	}
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
@@ -187,14 +304,93 @@ func AdminQueueBulkDeleteActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("deleteLinkerQueuedItem Error: %s", err)
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	if len(info) > 0 {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				u, _ := cd.CurrentUser()
+				mod := ""
+				if u != nil {
+					mod = u.Username.String
+				}
+				for i := range info {
+					info[i].Moderator = mod
+				}
+				evt.Data["links"] = info
+				if len(info) == 1 {
+					evt.Data["LinkURL"] = info[0].URL
+				}
+				evt.Data["Moderator"] = mod
+			}
+		}
+	}
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+func (bulkDeleteTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("linkerRejectedEmail")
+}
+
+func (bulkDeleteTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("linker_rejected")
+	return &s
+}
+
+func (bulkDeleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLinkerRejectedEmail")
+}
+
+func (bulkDeleteTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerRejectedEmail")
+	return &v
+}
+
+func (approveTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("linkerApprovedEmail")
+}
+
+func (approveTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("linker_approved")
+	return &s
+}
+
+func (approveTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLinkerApprovedEmail")
+}
+
+func (approveTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerApprovedEmail")
+	return &v
+}
+
+type bulkApproveTask struct{ tasks.TaskString }
+
+var BulkApproveTask = &bulkApproveTask{TaskString: TaskBulkApprove}
+
+var (
+	_ tasks.Task                                    = (*bulkApproveTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*bulkApproveTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*bulkApproveTask)(nil)
+	_ searchworker.IndexedTask                      = bulkApproveTask{}
+)
+
+func (bulkApproveTask) IndexType() string { return searchworker.TypeLinker }
+
+func (bulkApproveTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
+	var links []notif.LinkInfo
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
 		lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(id))
@@ -202,20 +398,54 @@ func AdminQueueBulkApproveActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("selectInsert Error: %s", err)
 			continue
 		}
-		link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(lid))
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+			ViewerID:     cd.UserID,
+			Idlinker:     int32(lid),
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
 		if err != nil {
 			log.Printf("getLinkerItemById Error: %s", err)
 			continue
 		}
-		for _, text := range []string{link.Title.String, link.Description.String} {
-			wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-			if done {
-				return
-			}
-			if searchutil.InsertWordsToLinkerSearch(w, r, wordIds, queries, lid) {
-				return
+		text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				u, _ := cd.CurrentUser()
+				mod := ""
+				if u != nil {
+					mod = u.Username.String
+				}
+				links = append(links, notif.LinkInfo{Title: link.Title.String, URL: link.Url.String, Username: link.Username.String, Moderator: mod})
+				evt.Data["Moderator"] = mod
+				evt.Data["links"] = links
+				if len(links) == 1 {
+					evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
+				}
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 			}
 		}
 	}
-	hcommon.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
+}
+
+func (bulkApproveTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("linkerApprovedEmail")
+}
+
+func (bulkApproveTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("linker_approved")
+	return &s
+}
+
+func (bulkApproveTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLinkerApprovedEmail")
+}
+
+func (bulkApproveTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerApprovedEmail")
+	return &v
 }

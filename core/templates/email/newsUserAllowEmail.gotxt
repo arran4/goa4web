@@ -1,0 +1,7 @@
+Hi {{.Item.Username}},
+You have been granted news permissions.
+
+News section:
+{{.NewsURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

@@ -1,0 +1,13 @@
+{{ define "searchPage" }}
+    {{ template "head" $ }}
+    <form method="post">
+        {{ csrfField }}
+        Search words: <input name="searchwords" value="{{.SearchWords}}">, (No keywords exist as of this moment.)<br>
+        <input type="submit" name="task" value="Search forum">
+        <input type="submit" name="task" value="Search news">
+        <input type="submit" name="task" value="Search linker">
+        <input type="submit" name="task" value="Search blogs">
+        <input type="submit" name="task" value="Search writings">
+    </form>
+    {{ template "tail" $ }}
+{{ end }}

@@ -4,19 +4,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
-	db "github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/feeds"
-	"github.com/gorilla/mux"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/arran4/goa4web/a4code/a4code2html"
+	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
+	db "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/gorilla/feeds"
+	"github.com/gorilla/mux"
 )
 
 func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
@@ -31,7 +32,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 			continue
 		}
 		text := row.Firstposttext.String
-		conv := a4code2html.New(imageshandler.MapURL)
+		conv := a4code2html.New(imagesign.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())
@@ -64,7 +65,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -95,7 +96,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {

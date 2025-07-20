@@ -4,10 +4,13 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -17,15 +20,15 @@ func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
 
 func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*common.CoreData
 		Rows []*db.Language
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	cd := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	rows, err := cd.Languages()
 	if err != nil {
@@ -34,20 +37,20 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	hcommon.TemplateHandler(w, r, "languagesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "languagesPage.gohtml", data)
 }
 
 func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid := r.PostFormValue("cid")
 	cname := r.PostFormValue("cname")
 	data := struct {
-		*hcommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
@@ -57,45 +60,82 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 		Idlanguage: int32(cidi),
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("RenameLanguage: %w", err).Error())
+	} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["LanguageID"] = cidi
+			evt.Data["LanguageName"] = cname
+		}
 	}
-	hcommon.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid := r.PostFormValue("cid")
 	data := struct {
-		*hcommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
+	} else {
+		var name string
+		if rows, err := queries.FetchLanguages(r.Context()); err == nil {
+			for _, l := range rows {
+				if l.Idlanguage == int32(cidi) {
+					name = l.Nameof.String
+					break
+				}
+			}
+		}
+		if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
+		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["LanguageID"] = cidi
+				evt.Data["LanguageName"] = name
+			}
+		}
 	}
-	hcommon.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cname := r.PostFormValue("cname")
 	data := struct {
-		*hcommon.CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/languages",
 	}
-	if err := queries.CreateLanguage(r.Context(), sql.NullString{
+	if res, err := queries.InsertLanguage(r.Context(), sql.NullString{
 		String: cname,
 		Valid:  true,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
+	} else if id, err := res.LastInsertId(); err == nil {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["LanguageID"] = id
+				evt.Data["LanguageName"] = cname
+			}
+		}
 	}
-	hcommon.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

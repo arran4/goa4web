@@ -1,0 +1,99 @@
+{{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/users/permissions">(This page/Refresh)</a>]<br />
+<table border="1" class="perm-table">
+    <thead>
+        <tr>
+            <th class="sortable">ID</th>
+            <th class="sortable">User</th>
+            <th class="sortable">Email</th>
+            <th class="sortable">Role</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Rows}}
+        <tr data-id="{{.IduserRoles}}">
+            <td>{{.IduserRoles}}</td>
+            <td class="username">{{.Username.String}}</td>
+            <td class="email">{{.Email.String}}</td>
+            <td class="role">{{.Role}}</td>
+            <td><button class="edit-btn" data-id="{{.IduserRoles}}">Edit</button></td>
+            <td><button class="delete-btn" data-id="{{.IduserRoles}}">Delete</button></td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+<h3>Add Permission</h3>
+<form id="add-permission-form">
+    Username: <input name="username">
+    Role:
+    <select name="role">
+        {{- range $.Roles }}
+        <option value="{{.Name}}">{{.Name}}</option>
+        {{- end }}
+    </select>
+    <button type="submit">Add</button>
+</form>
+<template id="roleOptions">
+    {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
+</template>
+<script>
+(function(){
+    function post(data){
+        return fetch('/admin/users/permissions', {method:'POST', body:data});
+    }
+    document.querySelectorAll('.delete-btn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            var data = new URLSearchParams();
+            data.set('task','User Disallow');
+            data.set('permid',btn.dataset.id);
+            post(data).then(function(){ location.reload(); });
+        });
+    });
+    document.querySelectorAll('.edit-btn').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            var tr = btn.closest('tr');
+            var roleCell = tr.querySelector('.role');
+            var curRole = roleCell.textContent.trim();
+            roleCell.innerHTML = document.getElementById('roleOptions').innerHTML;
+            roleCell.querySelector('select').value = curRole;
+            btn.textContent = 'Save';
+            btn.addEventListener('click', function(ev){
+                ev.preventDefault();
+                var data = new URLSearchParams();
+                data.set('task','Update permission');
+                data.set('permid',btn.dataset.id);
+                data.set('role',roleCell.querySelector('select').value);
+                post(data).then(function(){ location.reload(); });
+            }, {once:true});
+        }, {once:true});
+    });
+    document.getElementById('add-permission-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        var data = new URLSearchParams(new FormData(e.target));
+        data.set('task','User Allow');
+        post(data).then(function(){ location.reload(); });
+    });
+    document.querySelectorAll('.perm-table th.sortable').forEach(function(th){
+        th.addEventListener('click', function(){
+            var table = th.closest('table');
+            var tbody = table.querySelector('tbody');
+            var rows = Array.from(tbody.querySelectorAll('tr'));
+            var idx = Array.from(th.parentNode.children).indexOf(th);
+            var asc = th.dataset.asc === 'true';
+            rows.sort(function(a,b){
+                var av = a.children[idx].textContent.trim();
+                var bv = b.children[idx].textContent.trim();
+                if(av === bv) return 0;
+                return (av > bv ? 1 : -1) * (asc ? 1 : -1);
+            });
+            th.dataset.asc = !asc;
+            rows.forEach(function(r){ tbody.appendChild(r); });
+        });
+    });
+})();
+</script>
+{{ template "tail" $ }}

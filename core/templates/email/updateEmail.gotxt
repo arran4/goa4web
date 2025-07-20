@@ -1,0 +1,15 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [{{.SubjectPrefix}}] {{.Subject}}
+
+Hello,
+
+{{.Action}} occurred at {{.URL}} on {{.Time}}.
+
+{{if .URL}}View details here:
+{{.URL}}
+{{end}}
+Manage notifications: {{.UnsubscribeUrl}}
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

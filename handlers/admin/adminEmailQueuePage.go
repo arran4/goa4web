@@ -1,21 +1,37 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/mail"
 	"strconv"
 	"strings"
 
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/arran4/goa4web/config"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type resendQueueTask struct{ eventbus.BasicTaskEvent }
-type deleteQueueTask struct{ eventbus.BasicTaskEvent }
+// ResendQueueTask triggers sending queued emails immediately.
+type ResendQueueTask struct{ tasks.TaskString }
+
+var resendQueueTask = &ResendQueueTask{TaskString: TaskResend}
+
+// ensure ResendQueueTask satisfies the tasks.Task interface
+var _ tasks.Task = (*ResendQueueTask)(nil)
+
+// DeleteQueueTask removes queued emails without sending.
+type DeleteQueueTask struct{ tasks.TaskString }
+
+var deleteQueueTask = &DeleteQueueTask{TaskString: TaskDelete}
+
+// ensure DeleteQueueTask satisfies the tasks.Task interface
+var _ tasks.Task = (*DeleteQueueTask)(nil)
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {
@@ -24,13 +40,13 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		*CoreData
+		*common.CoreData
 		Emails []EmailItem
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	rows, err := queries.ListUnsentPendingEmails(r.Context())
 	if err != nil {
 		log.Printf("list pending emails: %v", err)
@@ -58,11 +74,11 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
-	common.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
 }
 
-func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -102,11 +118,11 @@ func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("mark sent: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -116,5 +132,5 @@ func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("delete email: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

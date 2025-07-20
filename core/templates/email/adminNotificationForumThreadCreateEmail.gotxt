@@ -1,0 +1,5 @@
+User {{.Item.Username}} created a new forum thread.
+
+View thread:
+{{.ThreadURL}}
+Manage notifications: {{.UnsubscribeUrl}}

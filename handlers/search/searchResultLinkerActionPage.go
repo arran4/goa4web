@@ -3,21 +3,29 @@ package search
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 	hlinker "github.com/arran4/goa4web/handlers/linker"
 	db "github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	searchutil "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
+type SearchLinkerTask struct{ tasks.TaskString }
+
+var searchLinkerTask = &SearchLinkerTask{TaskString: TaskSearchLinker}
+var _ tasks.Task = (*SearchLinkerTask)(nil)
+
+func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*hcommon.CoreData
+		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		Links              []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 		CommentsNoResults  bool
@@ -28,9 +36,9 @@ func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -60,7 +68,7 @@ func SearchResultLinkerActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	common.TemplateHandler(w, r, "resultLinkerActionPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "resultLinkerActionPage.gohtml", data)
 }
 
 func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {

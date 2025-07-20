@@ -3,76 +3,101 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/email"
-
-	"github.com/arran4/goa4web/internal/utils/emailutil"
-
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/notifications"
-	searchutil "github.com/arran4/goa4web/internal/utils/searchutil"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	searchworker "github.com/arran4/goa4web/workers/searchworker"
+
+	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
+// ReplyTask handles replying to an existing thread.
+type ReplyTask struct{ tasks.TaskString }
+
+// compile-time assertions that ReplyTask provides notifications, indexing and
+// auto-subscription for thread replies.
+var (
+	replyTask = &ReplyTask{TaskString: TaskReply}
+
+	_ tasks.Task                                    = (*ReplyTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
+	_ notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+	_ searchworker.IndexedTask                      = ReplyTask{}
+)
+
+func (ReplyTask) IndexType() string { return searchworker.TypeComment }
+
+func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationForumReplyEmail")
+}
+
+func (ReplyTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumReplyEmail")
+	return &v
+}
+
+// AutoSubscribePath ensures authors automatically receive updates on replies.
+// AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
+// created for the originating forum thread when that information is available.
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
+	return string(TaskReply), evt.Path
+}
+
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
-	if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["reply"] = notifications.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
+			evt.Data["reply"] = notif.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
 		}
 	}
 
-	queries := r.Context().Value(hcommon.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	uid, _ := session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
-
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		ForumthreadID: threadRow.Idforumthread,
-		Idusers:       uid,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-			}
-		}
-	}
-
-	if rows, err := queries.ListUsersSubscribedToThread(r.Context(), db.ListUsersSubscribedToThreadParams{
-		Idusers:       uid,
-		ForumthreadID: threadRow.Idforumthread,
-	}); err != nil {
-		log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	} else if provider != nil {
-		for _, row := range rows {
-			if err := emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, endUrl, "update", nil); err != nil {
-				log.Printf("Error: notifyChange: %s", err)
-
-			}
-		}
-	}
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
@@ -89,30 +114,30 @@ func TopicThreadReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PostUpdate(r.Context(), queries, threadRow.Idforumthread, topicRow.Idforumtopic); err != nil {
-		log.Printf("Error: postUpdate: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
+		}
 	}
-
-	wordIds, done := searchutil.SearchWordIdsFromText(w, r, text, queries)
-	if done {
-		return
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
+		}
 	}
-
-	if searchutil.InsertWordsToForumSearch(w, r, wordIds, queries, cid) {
-		return
-	}
-
-	// TODO remove and replace with proper eventbus notification
-	notifications.Notifier{EmailProvider: provider, Queries: queries}.NotifyThreadSubscribers(r.Context(), threadRow.Idforumthread, uid, endUrl)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(hcommon.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(hcommon.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

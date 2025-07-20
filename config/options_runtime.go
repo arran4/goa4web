@@ -44,6 +44,8 @@ var StringOptions = []StringOption{
 	{"smtp-pass", EnvSMTPPass, "SMTP pass", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSMTPPass }},
 	{"smtp-auth", EnvSMTPAuth, "SMTP auth method", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSMTPAuth }},
 	{"email-from", EnvEmailFrom, "default From address", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailFrom }},
+	{"email-subject-prefix", EnvEmailSubjectPrefix, "email subject prefix", "goa4web", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSubjectPrefix }},
+	{"email-signoff", EnvEmailSignOff, "email sign off", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSignOff }},
 	{"aws-region", EnvAWSRegion, "AWS region", "", []string{"us-east-1"}, "", func(c *RuntimeConfig) *string { return &c.EmailAWSRegion }},
 	{"jmap-endpoint", EnvJMAPEndpoint, "JMAP endpoint", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPEndpoint }},
 	{"jmap-account", EnvJMAPAccount, "JMAP account", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPAccount }},

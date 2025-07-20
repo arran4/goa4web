@@ -275,7 +275,7 @@ func (q *Queries) GetAllImageBoardsForUser(ctx context.Context, arg GetAllImageB
 }
 
 const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -294,6 +294,7 @@ type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow struct 
 	FileSize               int32
 	Approved               bool
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 	Username               sql.NullString
 	Comments               sql.NullInt32
 }
@@ -319,6 +320,7 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 			&i.FileSize,
 			&i.Approved,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Username,
 			&i.Comments,
 		); err != nil {
@@ -344,7 +346,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -380,6 +382,7 @@ type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow 
 	FileSize               int32
 	Approved               bool
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 	Username               sql.NullString
 	Comments               sql.NullInt32
 }
@@ -405,6 +408,7 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 			&i.FileSize,
 			&i.Approved,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Username,
 			&i.Comments,
 		); err != nil {
@@ -422,7 +426,7 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 }
 
 const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -441,6 +445,7 @@ type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow struct {
 	FileSize               int32
 	Approved               bool
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 	Username               sql.NullString
 	Comments               sql.NullInt32
 }
@@ -460,6 +465,7 @@ func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ct
 		&i.FileSize,
 		&i.Approved,
 		&i.DeletedAt,
+		&i.LastIndex,
 		&i.Username,
 		&i.Comments,
 	)
@@ -475,7 +481,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -512,6 +518,7 @@ type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserRow struc
 	FileSize               int32
 	Approved               bool
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 	Username               sql.NullString
 	Comments               sql.NullInt32
 }
@@ -531,6 +538,7 @@ func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountFor
 		&i.FileSize,
 		&i.Approved,
 		&i.DeletedAt,
+		&i.LastIndex,
 		&i.Username,
 		&i.Comments,
 	)
@@ -555,7 +563,7 @@ func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*I
 }
 
 const getImagePostsByUserDescending = `-- name: GetImagePostsByUserDescending :many
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -582,6 +590,7 @@ type GetImagePostsByUserDescendingRow struct {
 	FileSize               int32
 	Approved               bool
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 	Username               sql.NullString
 	Comments               sql.NullInt32
 }
@@ -607,6 +616,7 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 			&i.FileSize,
 			&i.Approved,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Username,
 			&i.Comments,
 		); err != nil {
@@ -632,7 +642,7 @@ WITH RECURSIVE role_ids(id) AS (
     JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
     JOIN roles r2 ON r2.name = g.action
 )
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -672,6 +682,7 @@ type GetImagePostsByUserDescendingForUserRow struct {
 	FileSize               int32
 	Approved               bool
 	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
 	Username               sql.NullString
 	Comments               sql.NullInt32
 }
@@ -703,6 +714,7 @@ func (q *Queries) GetImagePostsByUserDescendingForUser(ctx context.Context, arg 
 			&i.FileSize,
 			&i.Approved,
 			&i.DeletedAt,
+			&i.LastIndex,
 			&i.Username,
 			&i.Comments,
 		); err != nil {
@@ -717,6 +729,15 @@ func (q *Queries) GetImagePostsByUserDescendingForUser(ctx context.Context, arg 
 		return nil, err
 	}
 	return items, nil
+}
+
+const setImagePostLastIndex = `-- name: SetImagePostLastIndex :exec
+UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?
+`
+
+func (q *Queries) SetImagePostLastIndex(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, setImagePostLastIndex, idimagepost)
+	return err
 }
 
 const updateImageBoard = `-- name: UpdateImageBoard :exec

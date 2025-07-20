@@ -3,6 +3,8 @@ package eventbus
 import (
 	"context"
 	"errors"
+	"github.com/arran4/goa4web/internal/tasks"
+	"log"
 	"sync"
 	"time"
 )
@@ -10,11 +12,10 @@ import (
 // Event represents a task or notification that occurred in the application.
 type Event struct {
 	Path   string         // Path or URI describing the event source
-	Task   string         // Name of the action/task performed
+	Task   tasks.Task     // Name of the action/task performed
 	UserID int32          // ID of the user performing the action
 	Time   time.Time      // Time the event occurred
 	Data   map[string]any // Optional template data associated with the event
-	Admin  bool           // True when the event came from an admin action
 }
 
 // Bus provides a simple publish/subscribe mechanism for events.
@@ -44,6 +45,9 @@ func (b *Bus) Subscribe() <-chan Event {
 // Publish dispatches an event to all current subscribers.
 // It returns ErrBusClosed when publishing after Shutdown.
 func (b *Bus) Publish(evt Event) error {
+	if n, ok := evt.Task.(tasks.Name); ok && n.Name() == "MISSING" {
+		log.Printf("event bus received MISSING task for path %s", evt.Path)
+	}
 	b.mu.RLock()
 	if b.closed {
 		b.mu.RUnlock()

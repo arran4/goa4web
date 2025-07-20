@@ -3,20 +3,16 @@ package common
 import (
 	"net/http"
 
+	"github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 // Context keys used by Allowed when reading from the request context.
-const (
-	// KeyCoreData provides access to CoreData.
-	KeyCoreData ContextValues = "coreData"
-	// KeyQueries holds the db.Queries pointer.
-	KeyQueries ContextValues = "queries"
-)
+// These are defined in contextkeys.go.
 
 // Allowed checks if the request context provides one of the given roles.
 func Allowed(r *http.Request, roles ...string) bool {
-	cd, ok := r.Context().Value(KeyCoreData).(*CoreData)
+	cd, ok := r.Context().Value(consts.KeyCoreData).(*CoreData)
 	if ok && cd != nil {
 		for _, lvl := range roles {
 			if cd.HasRole(lvl) {
@@ -26,7 +22,7 @@ func Allowed(r *http.Request, roles ...string) bool {
 		return false
 	}
 
-	queries, qok := r.Context().Value(KeyQueries).(*dbpkg.Queries)
+	queries, qok := r.Context().Value(consts.KeyQueries).(*dbpkg.Queries)
 	if !qok {
 		return false
 	}

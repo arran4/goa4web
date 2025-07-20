@@ -5,12 +5,20 @@ package templates
 
 import (
 	"embed"
-	"html/template"
+	htemplate "html/template"
+	"io/fs"
+	ttemplate "text/template"
 )
 
 var (
-	//go:embed "templates/*.gohtml" "templates/*/*.gohtml"
-	templateFS embed.FS
+	//go:embed "site/*.gohtml" "site/*/*.gohtml"
+	siteTemplatesFS embed.FS
+	//go:embed "notifications/*.gotxt"
+	notificationTemplatesFS embed.FS
+	//go:embed "email/*.gohtml"
+	emailHtmlTemplatesFS embed.FS
+	//go:embed "email/*.gotxt"
+	emailTextTemplatesFS embed.FS
 	//go:embed "assets/main.css"
 	mainCSSData []byte
 	//go:embed "assets/favicon.svg"
@@ -21,9 +29,36 @@ var (
 	notificationsJSData []byte
 )
 
-func GetCompiledTemplates(funcs template.FuncMap) *template.Template {
-	return template.Must(template.New("").Funcs(funcs).ParseFS(templateFS,
-		"templates/*.gohtml", "templates/*/*.gohtml"))
+func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	f, err := fs.Sub(siteTemplatesFS, "site")
+	if err != nil {
+		panic(err)
+	}
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(f, "*.gohtml", "*/*.gohtml"))
+}
+
+func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	f, err := fs.Sub(notificationTemplatesFS, "notifications")
+	if err != nil {
+		panic(err)
+	}
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(f, "*.gotxt"))
+}
+
+func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	f, err := fs.Sub(emailHtmlTemplatesFS, "email")
+	if err != nil {
+		panic(err)
+	}
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(f, "*.gohtml"))
+}
+
+func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	f, err := fs.Sub(emailTextTemplatesFS, "email")
+	if err != nil {
+		panic(err)
+	}
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(f, "*.gotxt"))
 }
 
 func GetMainCSSData() []byte {

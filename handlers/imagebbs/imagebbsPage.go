@@ -1,11 +1,12 @@
 package imagebbs
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
@@ -18,7 +19,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:    r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsSubBoard:  false,
 		BoardNumber: 0,
 	}
@@ -32,10 +33,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	data.Boards = boards
 
-	common.TemplateHandler(w, r, "imagebbsPage", data)
+	handlers.TemplateHandler(w, r, "imagebbsPage", data)
 }
 
 func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
+	data.CustomIndexItems = []common.IndexItem{}
 
 	if data.FeedsEnabled {
 		data.RSSFeedUrl = "/imagebbs/rss"
@@ -44,13 +46,13 @@ func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
 
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Admin",
 			Link: "/admin",
-		}, corecommon.IndexItem{
+		}, common.IndexItem{
 			Name: "Modify Boards",
 			Link: "/admin/imagebbs/boards",
-		}, corecommon.IndexItem{
+		}, common.IndexItem{
 			Name: "New Board",
 			Link: "/admin/imagebbs/board",
 		})

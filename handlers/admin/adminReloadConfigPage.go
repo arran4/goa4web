@@ -2,25 +2,27 @@ package admin
 
 import (
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
-	common "github.com/arran4/goa4web/handlers/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin",
 	}
 
@@ -35,5 +37,5 @@ func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 
-	common.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

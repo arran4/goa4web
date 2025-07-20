@@ -2,31 +2,27 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
+
+	"github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/workers"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	imageshandler "github.com/arran4/goa4web/handlers/images"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	dbstart "github.com/arran4/goa4web/internal/dbstart"
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
-	"github.com/arran4/goa4web/internal/notifications"
 	routerpkg "github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/server"
-	startup "github.com/arran4/goa4web/internal/startup"
-	emailutil "github.com/arran4/goa4web/internal/utils/emailutil"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -60,9 +56,8 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
-	common.Version = version
 
-	if err := startup.PerformChecks(cfg); err != nil {
+	if err := PerformChecks(cfg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
@@ -75,7 +70,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		return fmt.Errorf("smtp fallback: %w", err)
 	}
 	config.AppRuntimeConfig = cfg
-	imageshandler.SetSigningKey(imageSignSecret)
+	imagesign.SetSigningKey(imageSignSecret)
 	email.SetDefaultFromName(cfg.EmailFrom)
 
 	if dbPool != nil {
@@ -108,7 +103,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
 	emailProvider := email.ProviderFromConfig(cfg)
-	if emailutil.EmailSendingEnabled() && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
+	if config.EmailSendingEnabled() && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
 	}
 
@@ -116,7 +111,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
-	startWorkers(workerCtx, dbPool, emailProvider, dlqProvider, cfg)
+	workers.Start(workerCtx, dbPool, emailProvider, dlqProvider, cfg)
 
 	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
 		return fmt.Errorf("run server: %w", err)
@@ -131,37 +126,4 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	workerCancel()
 
 	return nil
-}
-
-// safeGo runs fn in a goroutine and terminates the program if a panic occurs.
-func safeGo(fn func()) {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("goroutine panic: %v", r)
-				os.Exit(1)
-			}
-		}()
-		fn()
-	}()
-}
-
-func startWorkers(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg config.RuntimeConfig) {
-	log.Printf("Starting email worker")
-	safeGo(func() {
-		emailutil.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, time.Duration(cfg.EmailWorkerInterval)*time.Second)
-	})
-	log.Printf("Starting notification purger worker")
-	safeGo(func() { notifications.NotificationPurgeWorker(ctx, dbpkg.New(db), time.Hour) })
-	log.Printf("Starting event bus logger worker")
-	safeGo(func() { eventbus.LogWorker(ctx, eventbus.DefaultBus) })
-	log.Printf("Starting audit worker")
-	safeGo(func() { eventbus.AuditWorker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
-	log.Printf("Starting notification bus worker")
-	safeGo(func() {
-		notifications.BusWorker(ctx, eventbus.DefaultBus, notifications.Notifier{
-			EmailProvider: provider,
-			Queries:       dbpkg.New(db),
-		}, dlqProvider)
-	})
 }

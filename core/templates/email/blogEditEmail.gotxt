@@ -1,0 +1,7 @@
+Hi {{.Item.Username}},
+Your blog post has been updated successfully.
+
+View post:
+{{.PostURL}}
+Manage notifications: {{.UnsubscribeUrl}}
+

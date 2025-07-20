@@ -1,43 +1,52 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/tasks"
+
+	handlers "github.com/arran4/goa4web/handlers"
 
 	db "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type deleteDLQTask struct{ eventbus.BasicTaskEvent }
+// DeleteDLQTask deletes entries from the dead letter queue.
+type DeleteDLQTask struct{ tasks.TaskString }
+
+var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
+
+// compile-time interface check so DeleteDLQTask is usable as a generic task.
+var _ tasks.Task = (*DeleteDLQTask)(nil)
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
-		*CoreData
+		*common.CoreData
 		Errors []*db.DeadLetter
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	rows, err := queries.ListDeadLetters(r.Context(), 100)
 	if err != nil {
 		log.Printf("list dead letters: %v", err)
 	} else {
 		data.Errors = rows
 	}
-	common.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
 }
 
-func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
 	switch r.PostFormValue("task") {
-	case "Delete":
+	case string(TaskDelete):
 		for _, idStr := range r.Form["id"] {
 			if idStr == "" {
 				continue
@@ -47,7 +56,7 @@ func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 				log.Printf("delete error: %v", err)
 			}
 		}
-	case "Purge":
+	case string(TaskPurge):
 		before := r.PostFormValue("before")
 		t := time.Now()
 		if before != "" {
@@ -59,5 +68,5 @@ func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("purge errors: %v", err)
 		}
 	}
-	common.TaskDoneAutoRefreshPage(w, r)
+	handlers.TaskDoneAutoRefreshPage(w, r)
 }

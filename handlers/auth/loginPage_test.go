@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,8 +12,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	corecommon "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -31,13 +31,13 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	LoginActionPage(rr, req)
+	loginTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -69,13 +69,13 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
-	cd := corecommon.NewCoreData(ctx, queries)
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	cd := common.NewCoreData(ctx, queries)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	LoginActionPage(rr, req)
+	loginTask.Action(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

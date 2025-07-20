@@ -4,20 +4,21 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 )
 
 // WriterListPage shows all writers with their article counts.
 func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		Rows                []*db.WriterCountRow
 		Search              string
 		NextLink            string
@@ -29,16 +30,16 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:     r.URL.Query().Get("search"),
-		PageSize:   common.GetPageSize(r),
+		PageSize:   handlers.GetPageSize(r),
 		IsAdmin:    false,
 		CategoryId: 0,
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	pageSize := common.GetPageSize(r)
+	pageSize := handlers.GetPageSize(r)
 	rows, err := data.CoreData.Writers(r)
 	if err != nil {
 		switch {
@@ -65,7 +66,7 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: data.NextLink,
 		})
@@ -76,11 +77,11 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, corecommon.IndexItem{
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: data.PrevLink,
 		})
 	}
 
-	common.TemplateHandler(w, r, "writerListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "writerListPage.gohtml", data)
 }

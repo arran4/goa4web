@@ -3,6 +3,7 @@ package faq
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,12 +12,15 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
+	"regexp"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/middleware"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestAskActionPage_InvalidForms(t *testing.T) {
@@ -46,12 +50,12 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-		ctx = context.WithValue(ctx, hcommon.KeyCoreData, &hcommon.CoreData{})
+		ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+		ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		AskActionPage(rr, req)
+		askTask.Action(rr, req)
 		if rr.Code != http.StatusBadRequest {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
@@ -75,7 +79,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	config.AppRuntimeConfig.NotificationsEnabled = true
 	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 
-	mock.ExpectExec("INSERT INTO faq").
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO faq (question, users_idusers, language_idlanguage) VALUES (?, ?, ?)")).
 		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -93,16 +97,17 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	evt := &eventbus.Event{Path: "/faq/ask", Task: hcommon.TaskAsk, UserID: 1}
-	cd := &hcommon.CoreData{}
+	evt := &eventbus.Event{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
+	cd := &common.CoreData{UserID: 1}
 	cd.SetEvent(evt)
 
-	ctx := context.WithValue(req.Context(), hcommon.KeyQueries, queries)
-	ctx = context.WithValue(ctx, hcommon.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
+	handler := middleware.TaskEventMiddleware(http.HandlerFunc(askTask.Action))
 	rr := httptest.NewRecorder()
-	AskActionPage(rr, req)
+	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
@@ -110,7 +115,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	if loc := rr.Header().Get("Location"); loc != "/faq" {
 		t.Fatalf("location=%q", loc)
 	}
-	if !evt.Admin || evt.Path != "/admin/faq" {
+	evt = cd.Event()
+	if evt.Path != "/admin/faq" {
 		t.Fatalf("event %+v", evt)
 	}
 

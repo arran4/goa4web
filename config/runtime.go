@@ -20,21 +20,24 @@ type RuntimeConfig struct {
 	HTTPListen   string
 	HTTPHostname string
 
-	EmailProvider     string
-	EmailSMTPHost     string
-	EmailSMTPPort     string
-	EmailSMTPUser     string
-	EmailSMTPPass     string
-	EmailSMTPAuth     string
-	EmailSMTPStartTLS bool
-	EmailFrom         string
-	EmailAWSRegion    string
-	EmailJMAPEndpoint string
-	EmailJMAPAccount  string
-	EmailJMAPIdentity string
-	EmailJMAPUser     string
-	EmailJMAPPass     string
-	EmailSendGridKey  string
+	EmailProvider      string
+	EmailSMTPHost      string
+	EmailSMTPPort      string
+	EmailSMTPUser      string
+	EmailSMTPPass      string
+	EmailSMTPAuth      string
+	EmailSMTPStartTLS  bool
+	EmailFrom          string
+	EmailAWSRegion     string
+	EmailJMAPEndpoint  string
+	EmailJMAPAccount   string
+	EmailJMAPIdentity  string
+	EmailJMAPUser      string
+	EmailJMAPPass      string
+	EmailSendGridKey   string
+	EmailSubjectPrefix string
+	// EmailSignOff defines the optional sign-off appended to emails.
+	EmailSignOff string
 
 	// EmailEnabled toggles sending queued emails.
 	EmailEnabled bool

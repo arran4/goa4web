@@ -1,10 +1,13 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+
+	handlers "github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
@@ -22,14 +25,14 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	// session retrieved earlier
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if session.ID != "" {
 		_ = queries.DeleteSessionByID(r.Context(), session.ID)
 	}
@@ -44,5 +47,5 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	data.CoreData.UserID = 0
 
-	common.TemplateHandler(w, r, "logoutPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "logoutPage.gohtml", data)
 }

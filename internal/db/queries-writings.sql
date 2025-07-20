@@ -276,3 +276,7 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
 GROUP BY u.idusers
 ORDER BY u.username
 LIMIT ? OFFSET ?;
+
+-- name: SetWritingLastIndex :exec
+UPDATE writing SET last_index = NOW() WHERE idwriting = ?;
+

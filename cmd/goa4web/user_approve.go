@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/utils/emailutil"
 )
 
 // userApproveCmd approves a pending user account.
@@ -53,9 +52,7 @@ func (c *userApproveCmd) Run() error {
 	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "user"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
-	if u, err := queries.GetUserById(ctx, int32(c.ID)); err == nil && u.Email.Valid {
-		_ = emailutil.CreateEmailTemplateAndQueue(ctx, queries, int32(c.ID), u.Email.String, "", "user approved", nil)
-	}
+
 	if c.rootCmd.Verbosity > 0 {
 		fmt.Printf("approved user %d\n", c.ID)
 	}

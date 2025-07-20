@@ -2,13 +2,15 @@ package middleware
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	hcommon "github.com/arran4/goa4web/handlers/common"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestTaskEventMiddleware(t *testing.T) {
@@ -23,26 +25,29 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	ch := bus.Subscribe()
-	successHandler.ServeHTTP(rec, req)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
-		if evt.Task != "Add" || evt.Path != "/admin/p" || !evt.Admin {
+		named, ok := evt.Task.(tasks.Name)
+		if !ok || named.Name() != "MISSING" || evt.Path != "/admin/p" {
 			t.Fatalf("unexpected event %+v", evt)
 		}
 	default:
 		t.Fatalf("expected event on success")
 	}
 
-	// non-admin path should not set Admin flag
+	// non-admin path should not include /admin prefix
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	successHandler.ServeHTTP(rec, req)
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
-		if evt.Admin {
-			t.Fatalf("unexpected admin flag for %#v", evt)
+		if strings.Contains(evt.Path, "/admin") {
+			t.Fatalf("unexpected admin path for %#v", evt)
 		}
 	default:
 		t.Fatalf("expected event for non-admin path")
@@ -55,7 +60,8 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	failureHandler.ServeHTTP(rec, req)
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	failureHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case <-ch:
 		t.Fatalf("did not expect event on failure")
@@ -64,7 +70,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 
 	// ensure handlers can attach event data
 	itemHandler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if cd, ok := r.Context().Value(hcommon.KeyCoreData).(*hcommon.CoreData); ok {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -78,7 +84,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe()
-	ctx := context.WithValue(req.Context(), hcommon.KeyCoreData, &hcommon.CoreData{})
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case evt := <-ch:
@@ -109,7 +115,8 @@ func TestTaskEventQueue(t *testing.T) {
 	req := httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	handler.ServeHTTP(rec, req.WithContext(ctx))
 
 	if len(taskQueue.events) != 1 {
 		t.Fatalf("expected queued event")
@@ -123,5 +130,24 @@ func TestTaskEventQueue(t *testing.T) {
 	case <-ch:
 	default:
 		t.Fatalf("expected flushed event")
+	}
+}
+
+func TestTaskEventMiddleware_EventProvided(t *testing.T) {
+	handler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData)
+		if cd == nil || cd.Event() == nil {
+			t.Fatalf("missing event")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status=%d", rec.Code)
 	}
 }

@@ -3,24 +3,40 @@ package bookmarks
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
-	corecommon "github.com/arran4/goa4web/core/common"
-	common "github.com/arran4/goa4web/handlers/common"
+	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func EditPage(w http.ResponseWriter, r *http.Request) {
+type SaveTask struct{ tasks.TaskString }
+
+var saveTask = &SaveTask{TaskString: TaskSave}
+
+// ensure SaveTask implements tasks.Task for routing
+var _ tasks.Task = (*SaveTask)(nil)
+
+type CreateTask struct{ tasks.TaskString }
+
+var createTask = &CreateTask{TaskString: TaskCreate}
+
+// ensure CreateTask implements tasks.Task for routing
+var _ tasks.Task = (*CreateTask)(nil)
+
+func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*corecommon.CoreData
+		*common.CoreData
 		BookmarkContent string
 		Bid             interface{}
 	}
 
 	data := Data{
-		CoreData:        r.Context().Value(common.KeyCoreData).(*corecommon.CoreData),
+		CoreData:        r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
 	}
 	session, ok := core.GetSessionOrFail(w, r)
@@ -28,7 +44,7 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(common.KeyCoreData).(*corecommon.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
@@ -43,12 +59,12 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 		data.Bid = bookmarks.Idbookmarks
 	}
 
-	common.TemplateHandler(w, r, "editPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "editPage.gohtml", data)
 }
 
-func EditSaveActionPage(w http.ResponseWriter, r *http.Request) {
+func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -70,9 +86,9 @@ func EditSaveActionPage(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func EditCreateActionPage(w http.ResponseWriter, r *http.Request) {
+func (CreateTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

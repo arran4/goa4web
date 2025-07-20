@@ -1,0 +1,15 @@
+To: {{.To}}
+From: {{.From}}
+Subject: [{{.SubjectPrefix}}] {{.Subject}}
+
+Hello,
+
+A new thread "{{.Item.TopicTitle}}" was started at {{.Path}}.
+
+View it here:
+{{.URL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

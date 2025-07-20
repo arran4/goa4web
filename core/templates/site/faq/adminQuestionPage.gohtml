@@ -1,0 +1,76 @@
+{{ template "head" $ }}
+   <font size="5">Section: Unanswered/Uncategorized Questions</font><br>
+    {{- range .Rows }}
+                <form method="post" action="">
+        {{ csrfField }}
+                        <table width="100%">
+                                <tr>
+                                        <th bgcolor="lightgrey">Q:
+                                        </th>
+                </tr>
+                <tr>
+                    <td>
+                        <textarea name="question" cols="60" rows="5">{{ .Question.String }}</textarea><br>
+                    </td>
+                </tr>
+                <tr>
+                    <th bgcolor="lightgrey">A:
+                    </th>
+                </tr>
+                <tr>
+                    <td>
+                        <textarea name="answer" cols="60" rows="5">{{ .Answer.String }}</textarea><br>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                                                <input type="submit" name="task" value="Edit">
+                                                <input type="submit" name="task" value="Remove">
+                                                <select name="category">
+                                                        <option value="0">Hidden</option>
+                                                        {{$FaqcategoriesIdfaqcategories := .FaqcategoriesIdfaqcategories }}
+                                                        {{- range $.Categories }}
+                                                        <option value="{{ .Idfaqcategories }}" {{if eq $FaqcategoriesIdfaqcategories .Idfaqcategories}}selected{{end}}>{{ .Name.String }} {{if eq $FaqcategoriesIdfaqcategories .Idfaqcategories}}(Current){{end}}</option>
+                                                        {{- end }}
+                                                </select>
+                                                <input type="hidden" name="faq" value="{{ .Idfaq }}">
+                                        </td>
+                                </tr>
+                        </table>
+                </form><br>
+    {{- end }}
+            <form method="post" action="">
+        {{ csrfField }}
+                    <table width="100%">
+                            <tr>
+                                    <th bgcolor="lightgrey">Q:
+                                    </th>
+                            </tr>
+                            <tr>
+                                    <td>
+                                            <textarea name="question" cols="60" rows="5"></textarea><br>
+                                    </td>
+                            </tr>
+                            <tr>
+                                    <th bgcolor="lightgrey">A:
+                                    </th>
+                            </tr>
+                            <tr>
+                                    <td>
+                                            <textarea name="answer" cols="60" rows="5"></textarea><br>
+                                    </td>
+                            </tr>
+                            <tr>
+                                    <td>
+                                            <input type="submit" name="task" value="Create">
+                                            <select name="category">
+                                                    <option value="0">Hidden</option>
+                                                    {{- range $.Categories }}
+                                                    <option value="{{ .Idfaqcategories }}">{{ .Name.String }}</option>
+                                                    {{- end }}
+                                            </select>
+                                    </td>
+                            </tr>
+                    </table>
+            </form>
+{{ template "tail" $ }}

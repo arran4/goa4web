@@ -1,0 +1,8 @@
+{{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/forum/list">(This page/Refresh)</a>]<br />
+            Complete word list:<ul>
+            {{range $.Rows}}
+                <li>{{- .String}}</li>
+            {{- end}}
+            </ul>
+{{ template "tail" $ }}

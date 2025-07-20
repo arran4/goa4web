@@ -1,0 +1,1 @@
+Link "{{.Item.Title}}" rejected by {{.Item.Moderator}}.

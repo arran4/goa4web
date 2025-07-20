@@ -16,6 +16,7 @@ import (
 type PageSizeSaveTask struct{ tasks.TaskString }
 
 var pageSizeSaveTask = &PageSizeSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
+var _ tasks.Task = (*PageSizeSaveTask)(nil)
 
 func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {

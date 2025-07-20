@@ -20,15 +20,24 @@ type MarkReadTask struct{ tasks.TaskString }
 
 var markReadTask = &MarkReadTask{TaskString: TaskDismiss}
 
+// ensures MarkReadTask implements the tasks.Task interface
+var _ tasks.Task = (*MarkReadTask)(nil)
+
 // PurgeNotificationsTask removes old read notifications.
 type PurgeNotificationsTask struct{ tasks.TaskString }
 
 var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
 
+// ensures PurgeNotificationsTask implements the tasks.Task interface
+var _ tasks.Task = (*PurgeNotificationsTask)(nil)
+
 // SendNotificationTask creates a site notification for users.
 type SendNotificationTask struct{ tasks.TaskString }
 
 var sendNotificationTask = &SendNotificationTask{TaskString: TaskNotify}
+
+// ensures SendNotificationTask implements the tasks.Task interface
+var _ tasks.Task = (*SendNotificationTask)(nil)
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

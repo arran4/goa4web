@@ -21,6 +21,7 @@ import (
 type EditReplyTask struct{ tasks.TaskString }
 
 var commentEditAction = &EditReplyTask{TaskString: TaskEditReply}
+var _ tasks.Task = (*EditReplyTask)(nil)
 
 func (t EditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
 	t.Action(w, r)
@@ -96,6 +97,7 @@ func CommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 type cancelEditReplyTask struct{ tasks.TaskString }
 
 var commentEditActionCancel = &cancelEditReplyTask{TaskString: TaskCancel}
+var _ tasks.Task = (*cancelEditReplyTask)(nil)
 
 func (cancelEditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
 	CommentEditActionCancelPage(w, r)

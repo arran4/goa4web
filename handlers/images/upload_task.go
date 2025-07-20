@@ -27,6 +27,9 @@ type UploadImageTask struct{ tasks.TaskString }
 
 var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
+// ensure UploadImageTask conforms to tasks.Task
+var _ tasks.Task = (*UploadImageTask)(nil)
+
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {

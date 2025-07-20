@@ -161,6 +161,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 type replyTask struct{ tasks.TaskString }
 
 var replyTaskEvent = &replyTask{TaskString: TaskReply}
+var _ tasks.Task = (*replyTask)(nil)
 
 func (replyTask) Page(w http.ResponseWriter, r *http.Request) { CommentsPage(w, r) }
 

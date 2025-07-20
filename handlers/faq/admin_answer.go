@@ -20,7 +20,11 @@ type AnswerTask struct{ tasks.TaskString }
 type RemoveQuestionTask struct{ tasks.TaskString }
 
 var answerTask = &AnswerTask{TaskString: TaskAnswer}
+
+var _ tasks.Task = (*AnswerTask)(nil)
 var removeQuestionTask = &RemoveQuestionTask{TaskString: TaskRemoveRemove}
+
+var _ tasks.Task = (*RemoveQuestionTask)(nil)
 
 // Implementing these interfaces means answering a FAQ automatically notifies
 // the original asker and the administrators. From a user's perspective this

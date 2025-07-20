@@ -20,6 +20,9 @@ type DeleteDLQTask struct{ tasks.TaskString }
 
 var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
 
+// compile-time interface check so DeleteDLQTask is usable as a generic task.
+var _ tasks.Task = (*DeleteDLQTask)(nil)
+
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData

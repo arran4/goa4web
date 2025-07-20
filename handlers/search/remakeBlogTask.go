@@ -16,6 +16,7 @@ import (
 type RemakeBlogTask struct{ tasks.TaskString }
 
 var remakeBlogTask = &RemakeBlogTask{TaskString: TaskRemakeBlogSearch}
+var _ tasks.Task = (*RemakeBlogTask)(nil)
 
 func (RemakeBlogTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)

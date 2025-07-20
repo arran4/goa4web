@@ -22,10 +22,16 @@ type ResendQueueTask struct{ tasks.TaskString }
 
 var resendQueueTask = &ResendQueueTask{TaskString: TaskResend}
 
+// ensure ResendQueueTask satisfies the tasks.Task interface
+var _ tasks.Task = (*ResendQueueTask)(nil)
+
 // DeleteQueueTask removes queued emails without sending.
 type DeleteQueueTask struct{ tasks.TaskString }
 
 var deleteQueueTask = &DeleteQueueTask{TaskString: TaskDelete}
+
+// ensure DeleteQueueTask satisfies the tasks.Task interface
+var _ tasks.Task = (*DeleteQueueTask)(nil)
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {

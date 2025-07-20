@@ -14,6 +14,9 @@ type eventTaskSetter interface {
 
 // Action wraps t.Action to record the task on the request event.
 func Action(t Task) func(http.ResponseWriter, *http.Request) {
+	if nt, ok := t.(NamedTask); ok {
+		Register(nt)
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		if v := r.Context().Value(consts.KeyCoreData); v != nil {
 			if s, ok := v.(eventTaskSetter); ok {

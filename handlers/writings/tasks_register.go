@@ -1,18 +1,18 @@
-package blogs
+package writings
 
 import "github.com/arran4/goa4web/internal/tasks"
 
-// RegisterTasks registers blog related tasks with the global registry.
+// RegisterTasks returns writing related tasks.
 func RegisterTasks() []tasks.NamedTask {
 	return []tasks.NamedTask{
-		addBlogTask,
-		editBlogTask,
-		replyBlogTask,
+		submitWritingTask,
+		replyTask,
 		editReplyTask,
 		cancelTask,
+		updateWritingTask,
 		userAllowTask,
 		userDisallowTask,
-		usersAllowTask,
-		usersDisallowTask,
+		writingCategoryChangeTask,
+		writingCategoryCreateTask,
 	}
 }

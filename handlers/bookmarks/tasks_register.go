@@ -1,11 +1,11 @@
-package forum
+package bookmarks
 
 import "github.com/arran4/goa4web/internal/tasks"
 
-// RegisterTasks registers forum related tasks with the global registry.
+// RegisterTasks returns bookmark related tasks.
 func RegisterTasks() []tasks.NamedTask {
 	return []tasks.NamedTask{
-		createThreadTask,
-		replyTask,
+		saveTask,
+		createTask,
 	}
 }

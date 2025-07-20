@@ -150,6 +150,7 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 		defer func() {
 			if rec := recover(); rec != nil {
 				log.Printf("panic: %v", rec)
+				// TODO ensure it uses the error page template here and everywhere there is an error like this
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
 		}()

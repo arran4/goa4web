@@ -5,14 +5,14 @@ import (
 
 	coretemplates "github.com/arran4/goa4web/core/templates"
 	db "github.com/arran4/goa4web/internal/db"
-	htemplate "html/template"
+	ttemplate "text/template"
 )
 
 // GetUpdateEmailText returns the update email text template after applying any
 // database overrides.
 func GetUpdateEmailText(ctx context.Context, q *db.Queries) string {
 	tmpls := coretemplates.GetCompiledEmailTextTemplates(map[string]any{})
-	b, err := renderTemplate[*htemplate.Template](ctx, q, EmailTextTemplateFilenameGenerator("updateEmail"), nil, tmpls, HTMLTemplatesNew)
+	b, err := renderTemplate[*ttemplate.Template](ctx, q, EmailTextTemplateFilenameGenerator("updateEmail"), nil, tmpls, TextTemplatesNew)
 	if err != nil {
 		return ""
 	}

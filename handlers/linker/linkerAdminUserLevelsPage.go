@@ -24,9 +24,9 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*common.CoreData
-		UserLevels []*PermissionUser
-		Search     string
-		Roles      []*db.Role
+		UserRoles []*PermissionUser
+		Search    string
+		Roles     []*db.Role
 	}
 
 	data := Data{
@@ -69,7 +69,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 		}
 		perms = filtered
 	}
-	data.UserLevels = perms
+	data.UserRoles = perms
 
 	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }
@@ -81,7 +81,7 @@ var UserAllowTask = &userAllowTask{TaskString: TaskUserAllow}
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
 		return r == ',' || r == '\n' || r == '\r' || r == '\t' || r == ' '
 	})
@@ -96,7 +96,7 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 			UsersIdusers: u.Idusers,
-			Name:         level,
+			Name:         role,
 		}); err != nil {
 			log.Printf("permissionUserAllow Error: %s", err)
 		}

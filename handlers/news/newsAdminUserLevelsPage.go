@@ -15,8 +15,8 @@ import (
 func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		UserLevels []*db.GetUserRolesRow
-		Roles      []*db.Role
+		UserRoles []*db.GetUserRolesRow
+		Roles     []*db.Role
 	}
 
 	data := Data{
@@ -37,7 +37,7 @@ func NewsAdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.UserLevels = rows
+	data.UserRoles = rows
 
 	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }

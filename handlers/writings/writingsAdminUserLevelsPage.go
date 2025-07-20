@@ -16,8 +16,8 @@ import (
 func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		UserLevels []*db.GetUserRolesRow
-		Roles      []*db.Role
+		UserRoles []*db.GetUserRolesRow
+		Roles     []*db.Role
 	}
 
 	data := Data{
@@ -38,7 +38,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.UserLevels = rows
+	data.UserRoles = rows
 
 	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
 }
@@ -46,7 +46,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("GetUserByUsername Error: %s", err)
@@ -56,7 +56,7 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 
 	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Name:         level,
+		Name:         role,
 	}); err != nil {
 		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

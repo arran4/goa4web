@@ -21,14 +21,14 @@ const (
 	// TaskCancel cancels the current operation and returns to the previous page.
 	TaskCancel tasks.TaskString = "Cancel"
 
-	// TaskSetUserLevel sets a user's forum access level.
-	TaskSetUserLevel = "Set user level"
+	// TaskSetUserRole sets a user's forum access role.
+	TaskSetUserRole = "Set user role"
 
-	// TaskUpdateUserLevel updates a user's forum access level.
-	TaskUpdateUserLevel = "Update user level"
+	// TaskUpdateUserRole updates a user's forum access role.
+	TaskUpdateUserRole = "Update user role"
 
-	// TaskDeleteUserLevel deletes a user's forum access level.
-	TaskDeleteUserLevel = "Delete user level"
+	// TaskDeleteUserRole deletes a user's forum access role.
+	TaskDeleteUserRole = "Delete user role"
 
 	// TaskSetTopicRestriction adds a topic restriction.
 	TaskSetTopicRestriction = "Set topic restriction"

@@ -13,8 +13,8 @@
             <th>Email</th>
             <th>Role</th>
         </tr>
-        {{- if .UserLevels }}
-            {{- range $result := .UserLevels }}
+        {{- if .UserRoles }}
+            {{- range $result := .UserRoles }}
                 <tr>
                     <td><input type="checkbox" name="permids" value="{{ $result.ID }}"></td>
                     <td>{{ $result.ID }}</td>

@@ -7,8 +7,8 @@
             <th>Role</th>
             <th>Delete?</th>
         </tr>
-        {{- if .UserLevels }}
-            {{- range .UserLevels }}
+        {{- if .UserRoles }}
+            {{- range .UserRoles }}
                 <tr>
                     <td>{{ .IduserRoles }}</td>
                     <td>{{ .Username.String }}</td>

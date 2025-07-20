@@ -70,7 +70,6 @@ func (PermissionUserAllowTask) AdminInternalNotificationTemplate() *string {
 
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
 
-
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
@@ -97,10 +96,10 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data["Username"] = username
-			evt.Data["Permission"] = level
+			evt.Data["Permission"] = role
 			evt.Data["targetUserID"] = u.Idusers
 			evt.Data["Username"] = u.Username.String
-			evt.Data["Role"] = level
+			evt.Data["Role"] = role
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
@@ -126,7 +125,6 @@ func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
 
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
 
-
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
@@ -142,31 +140,22 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
-		var uname, role string
-		if rows, err := queries.GetUserRoles(r.Context()); err == nil {
-			for _, row := range rows {
-				if row.IduserRoles == int32(permidi) {
-					role = row.Role
-					if u, err := queries.GetUserById(r.Context(), row.UsersIdusers); err == nil && u.Username.Valid {
-						uname = u.Username.String
-					}
-					break
-				}
-			}
-		}
+		id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permidi))
 		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
-		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
-				}
-				evt.Data["Username"] = uname
-				evt.Data["Permission"] = role
+		} else if err2 == nil {
+			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+				if evt := cd.Event(); evt != nil {
+					if evt.Data == nil {
+						evt.Data = map[string]any{}
+					}
 					evt.Data["targetUserID"] = id
 					evt.Data["Username"] = username
 					evt.Data["Role"] = role
+				}
 			}
+		} else {
+			log.Printf("lookup role: %v", err2)
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
@@ -201,7 +190,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 		infoID, username, _, err2 := roleInfoByPermID(r.Context(), queries, int32(id))
 		if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
 			IduserRoles: int32(id),
-			Name:        level,
+			Name:        role,
 		}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 		} else if err2 == nil {
@@ -212,7 +201,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 					}
 					evt.Data["targetUserID"] = infoID
 					evt.Data["Username"] = username
-					evt.Data["Role"] = level
+					evt.Data["Role"] = role
 				}
 			}
 		} else {

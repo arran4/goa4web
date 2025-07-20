@@ -62,7 +62,7 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 			}
 			evt.Data["targetUserID"] = u.Idusers
 			evt.Data["Username"] = u.Username.String
-			evt.Data["Role"] = level
+			evt.Data["Role"] = role
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)

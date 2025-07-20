@@ -375,7 +375,7 @@ go build -o goa4web ./cmd/goa4web
 
 ```bash
 # grant a permission
-./goa4web perm grant --user alice --section forum --level moderator
+./goa4web perm grant --user alice --section forum --role moderator
 
 # list all permissions
 ./goa4web perm list

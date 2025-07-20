@@ -293,21 +293,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	uid, _ = session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
-
-	//if rows, err := queries.SomethingNotifyImagebbss(r.Context(), SomethingNotifyImagebbssParams{
-	//	Idusers: uid,
-	//	Idimagebbss: int32(bid),
-	//}); err != nil {
-	//	log.Printf("Error: listUsersSubscribedToThread: %s", err)
-	//} else {
-	//	for _, row := range rows {
-	//		if err := notifyChange(r.Context(), getEmailProvider(), row.String, endUrl); err != nil {
-	//			log.Printf("Error: notifyChange: %s", err)
-	//
-	//		}
-	//	}
-	//}
-
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,

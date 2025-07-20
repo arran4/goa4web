@@ -7,29 +7,42 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func requireEmailTemplates(t *testing.T, prefix string) {
+func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
 	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
 	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	if htmlTmpls.Lookup(notif.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
-		t.Errorf("missing html template %s.gohtml", prefix)
+	if htmlTmpls.Lookup(et.HTML) == nil {
+		t.Errorf("missing html template %s", et.HTML)
 	}
-	if textTmpls.Lookup(notif.EmailTextTemplateFilenameGenerator(prefix)) == nil {
-		t.Errorf("missing text template %s.gotxt", prefix)
+	if textTmpls.Lookup(et.Text) == nil {
+		t.Errorf("missing text template %s", et.Text)
 	}
-	if textTmpls.Lookup(notif.EmailSubjectTemplateFilenameGenerator(prefix)) == nil {
-		t.Errorf("missing subject template %sSubject.gotxt", prefix)
+	if textTmpls.Lookup(et.Subject) == nil {
+		t.Errorf("missing subject template %s", et.Subject)
 	}
 }
 
 func TestImageBbsTemplatesExist(t *testing.T) {
-	// TODO use the action itself
-	prefixes := []string{
-		"imageBoardNewEmail",
-		"adminNotificationImageBoardNewEmail",
+	self := []notif.SelfNotificationTemplateProvider{
+		approvePostTask,
 	}
-	for _, p := range prefixes {
-		requireEmailTemplates(t, p)
+	for _, p := range self {
+		checkEmailTemplates(t, p.SelfEmailTemplate())
+	}
+
+	subs := []notif.SubscribersNotificationTemplateProvider{
+		replyTask,
+	}
+	for _, p := range subs {
+		checkEmailTemplates(t, p.SubscribedEmailTemplate())
+	}
+
+	admins := []notif.AdminEmailTemplateProvider{
+		modifyBoardTask,
+		newBoardTask,
+	}
+	for _, p := range admins {
+		checkEmailTemplates(t, p.AdminEmailTemplate())
 	}
 }
 

@@ -27,6 +27,14 @@ type WritingInfo struct {
 	Author string
 }
 
+// LinkInfo represents a linker entry involved in moderation events.
+type LinkInfo struct {
+	Title     string
+	URL       string
+	Username  string
+	Moderator string
+}
+
 // SignupInfo holds details about a new user registration.
 type SignupInfo struct {
 	Username string

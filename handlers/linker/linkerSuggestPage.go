@@ -59,6 +59,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 type SuggestTask struct{ tasks.TaskString }
 
 var suggestTask = SuggestTask{TaskString: TaskSuggest}
+var _ tasks.Task = (*SuggestTask)(nil)
 
 func (SuggestTask) Page(w http.ResponseWriter, r *http.Request) { SuggestPage(w, r) }
 

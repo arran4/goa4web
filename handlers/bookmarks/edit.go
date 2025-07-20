@@ -18,9 +18,15 @@ type SaveTask struct{ tasks.TaskString }
 
 var saveTask = &SaveTask{TaskString: TaskSave}
 
+// ensure SaveTask implements tasks.Task for routing
+var _ tasks.Task = (*SaveTask)(nil)
+
 type CreateTask struct{ tasks.TaskString }
 
 var createTask = &CreateTask{TaskString: TaskCreate}
+
+// ensure CreateTask implements tasks.Task for routing
+var _ tasks.Task = (*CreateTask)(nil)
 
 func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

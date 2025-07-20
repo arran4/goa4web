@@ -22,6 +22,7 @@ import (
 type PagingSaveTask struct{ tasks.TaskString }
 
 var pagingSaveTask = &PagingSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
+var _ tasks.Task = (*PagingSaveTask)(nil)
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

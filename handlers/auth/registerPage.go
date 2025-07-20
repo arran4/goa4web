@@ -25,6 +25,9 @@ type RegisterTask struct {
 // registerTask handles user registration.
 var registerTask = &RegisterTask{TaskString: TaskRegister}
 
+// ensure RegisterTask satisfies tasks.Task
+var _ tasks.Task = (*RegisterTask)(nil)
+
 // RegisterPage renders the user registration form.
 func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData)

@@ -29,10 +29,16 @@ type SaveTemplateTask struct{ tasks.TaskString }
 
 var saveTemplateTask = &SaveTemplateTask{TaskString: TaskUpdate}
 
+// compile-time interface check for SaveTemplateTask
+var _ tasks.Task = (*SaveTemplateTask)(nil)
+
 // TestTemplateTask queues an email using the template for preview.
 type TestTemplateTask struct{ tasks.TaskString }
 
 var testTemplateTask = &TestTemplateTask{TaskString: TaskTestMail}
+
+// compile-time interface check for TestTemplateTask
+var _ tasks.Task = (*TestTemplateTask)(nil)
 
 func getUpdateEmailText(ctx context.Context) string {
 	if q, ok := ctx.Value(consts.KeyQueries).(*db.Queries); ok && q != nil {

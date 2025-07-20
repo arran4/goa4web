@@ -20,8 +20,11 @@ type DeleteCategoryTask struct{ tasks.TaskString }
 type CreateCategoryTask struct{ tasks.TaskString }
 
 var renameCategoryTask = &RenameCategoryTask{TaskString: TaskRenameCategory}
+var _ tasks.Task = (*RenameCategoryTask)(nil)
 var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
+var _ tasks.Task = (*DeleteCategoryTask)(nil)
 var createCategoryTask = &CreateCategoryTask{TaskString: TaskCreateCategory}
+var _ tasks.Task = (*CreateCategoryTask)(nil)
 
 func (RenameCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 	return tasks.HasTask(TaskRenameCategory)(r, m)

@@ -16,6 +16,7 @@ import (
 type RemakeImageTask struct{ tasks.TaskString }
 
 var remakeImageTask = &RemakeImageTask{TaskString: TaskRemakeImageSearch}
+var _ tasks.Task = (*RemakeImageTask)(nil)
 
 func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)

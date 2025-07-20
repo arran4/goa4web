@@ -43,6 +43,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 type updateCategoryTask struct{ tasks.TaskString }
 
 var UpdateCategoryTask = &updateCategoryTask{TaskString: TaskUpdate}
+var _ tasks.Task = (*updateCategoryTask)(nil)
 
 func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -73,6 +74,7 @@ func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 type renameCategoryTask struct{ tasks.TaskString }
 
 var RenameCategoryTask = &renameCategoryTask{TaskString: TaskRenameCategory}
+var _ tasks.Task = (*renameCategoryTask)(nil)
 
 func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -94,6 +96,7 @@ func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 type deleteCategoryTask struct{ tasks.TaskString }
 
 var DeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
+var _ tasks.Task = (*deleteCategoryTask)(nil)
 
 func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -127,6 +130,7 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 type createCategoryTask struct{ tasks.TaskString }
 
 var CreateCategoryTask = &createCategoryTask{TaskString: TaskCreateCategory}
+var _ tasks.Task = (*createCategoryTask)(nil)
 
 func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)

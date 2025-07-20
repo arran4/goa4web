@@ -11,6 +11,7 @@ import (
 type SearchNewsTask struct{ tasks.TaskString }
 
 var searchNewsTask = &SearchNewsTask{TaskString: TaskSearchNews}
+var _ tasks.Task = (*SearchNewsTask)(nil)
 
 func (SearchNewsTask) Action(w http.ResponseWriter, r *http.Request) {
 	news.SearchResultNewsActionPage(w, r)

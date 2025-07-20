@@ -22,6 +22,10 @@ var (
 	updateSubscriptionsTask = &UpdateSubscriptionsTask{TaskString: tasks.TaskString(TaskUpdate)}
 	deleteTask              = &DeleteTask{TaskString: tasks.TaskString(TaskDelete)}
 )
+var (
+	_ tasks.Task = (*UpdateSubscriptionsTask)(nil)
+	_ tasks.Task = (*DeleteTask)(nil)
+)
 
 type subscriptionOption struct {
 	Name    string

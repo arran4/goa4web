@@ -20,6 +20,7 @@ import (
 type SearchBlogsTask struct{ tasks.TaskString }
 
 var searchBlogsTask = &SearchBlogsTask{TaskString: TaskSearchBlogs}
+var _ tasks.Task = (*SearchBlogsTask)(nil)
 
 func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

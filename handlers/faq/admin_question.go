@@ -21,8 +21,11 @@ type DeleteQuestionTask struct{ tasks.TaskString }
 type CreateQuestionTask struct{ tasks.TaskString }
 
 var editQuestionTask = &EditQuestionTask{TaskString: TaskEdit}
+var _ tasks.Task = (*EditQuestionTask)(nil)
 var deleteQuestionTask = &DeleteQuestionTask{TaskString: TaskRemoveRemove}
+var _ tasks.Task = (*DeleteQuestionTask)(nil)
 var createQuestionTask = &CreateQuestionTask{TaskString: TaskCreate}
+var _ tasks.Task = (*CreateQuestionTask)(nil)
 
 func (EditQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 	return tasks.HasTask(TaskEdit)(r, m)

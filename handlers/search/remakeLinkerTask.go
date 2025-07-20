@@ -16,6 +16,7 @@ import (
 type RemakeLinkerTask struct{ tasks.TaskString }
 
 var remakeLinkerTask = &RemakeLinkerTask{TaskString: TaskRemakeLinkerSearch}
+var _ tasks.Task = (*RemakeLinkerTask)(nil)
 
 func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)

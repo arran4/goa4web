@@ -21,6 +21,7 @@ import (
 type SearchWritingsTask struct{ tasks.TaskString }
 
 var searchWritingsTask = &SearchWritingsTask{TaskString: TaskSearchWritings}
+var _ tasks.Task = (*SearchWritingsTask)(nil)
 
 func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

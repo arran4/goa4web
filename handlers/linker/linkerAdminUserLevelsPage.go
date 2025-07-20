@@ -82,6 +82,7 @@ type userAllowTask struct{ tasks.TaskString }
 var UserAllowTask = &userAllowTask{TaskString: TaskUserAllow}
 
 var _ notif.TargetUsersNotificationProvider = (*userAllowTask)(nil)
+var _ tasks.Task = (*userAllowTask)(nil)
 
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -123,6 +124,7 @@ type userDisallowTask struct{ tasks.TaskString }
 var UserDisallowTask = &userDisallowTask{TaskString: TaskUserDisallow}
 
 var _ notif.TargetUsersNotificationProvider = (*userDisallowTask)(nil)
+var _ tasks.Task = (*userDisallowTask)(nil)
 
 func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)

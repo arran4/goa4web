@@ -27,12 +27,18 @@ type LoginTask struct {
 
 var loginTask = &LoginTask{TaskString: TaskLogin}
 
+// ensure LoginTask conforms to tasks.Task
+var _ tasks.Task = (*LoginTask)(nil)
+
 // VerifyPasswordTask verifies reset codes during login.
 type VerifyPasswordTask struct {
 	tasks.TaskString
 }
 
 var verifyPasswordTask = &VerifyPasswordTask{TaskString: TaskPasswordVerify}
+
+// ensure VerifyPasswordTask conforms to tasks.Task
+var _ tasks.Task = (*VerifyPasswordTask)(nil)
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	type Data struct {

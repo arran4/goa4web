@@ -35,6 +35,9 @@ type UploadImageTask struct{ tasks.TaskString }
 
 var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
+// UploadImageTask participates in generic task handling
+var _ tasks.Task = (*UploadImageTask)(nil)
+
 func (UploadImageTask) IndexType() string { return searchworker.TypeImage }
 
 func (UploadImageTask) IndexData(data map[string]any) []searchworker.IndexEventData {

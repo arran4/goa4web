@@ -21,6 +21,7 @@ import (
 type SearchLinkerTask struct{ tasks.TaskString }
 
 var searchLinkerTask = &SearchLinkerTask{TaskString: TaskSearchLinker}
+var _ tasks.Task = (*SearchLinkerTask)(nil)
 
 func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

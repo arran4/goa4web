@@ -27,6 +27,11 @@ var (
 	saveLanguageTask  = &SaveLanguageTask{TaskString: tasks.TaskString(TaskSaveLanguage)}
 	saveAllTask       = &SaveAllTask{TaskString: tasks.TaskString(TaskSaveAll)}
 )
+var (
+	_ tasks.Task = (*SaveLanguagesTask)(nil)
+	_ tasks.Task = (*SaveLanguageTask)(nil)
+	_ tasks.Task = (*SaveAllTask)(nil)
+)
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
 	type LanguageOption struct {

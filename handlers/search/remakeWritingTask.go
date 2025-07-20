@@ -16,6 +16,7 @@ import (
 type RemakeWritingTask struct{ tasks.TaskString }
 
 var remakeWritingTask = &RemakeWritingTask{TaskString: TaskRemakeWritingSearch}
+var _ tasks.Task = (*RemakeWritingTask)(nil)
 
 func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)

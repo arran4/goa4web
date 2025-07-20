@@ -28,6 +28,7 @@ func RegisterRoutes(ar *mux.Router) {
 	nav.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
 	nav.RegisterAdminControlCenter("Information", "/admin/information", InformationSectionWeight)
 	nav.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
+	nav.RegisterAdminControlCenter("Pagination", "/admin/page-size", 152)
 	nav.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
@@ -56,6 +57,7 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/ipbans", tasks.Action(deleteIPBanTask)).Methods("POST").MatcherFunc(deleteIPBanTask.Matcher())
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
+	ar.HandleFunc("/page-size", AdminPageSizePage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", AdminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/information", AdminInformationPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")

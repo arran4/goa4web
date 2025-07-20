@@ -22,10 +22,14 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 	if bus == nil || q == nil {
 		return
 	}
-	ch := bus.Subscribe()
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case evt := <-ch:
+		case msg := <-ch:
+			evt, ok := msg.(eventbus.TaskEvent)
+			if !ok {
+				continue
+			}
 			data, ok := evt.Data[EventKey].(UpdateEventData)
 			if ok {
 				if err := PostUpdate(ctx, q, data.ThreadID, data.TopicID); err != nil {

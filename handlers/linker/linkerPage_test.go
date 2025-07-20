@@ -69,7 +69,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go searchworker.Worker(ctx, bus, queries)
 
-	evt := &eventbus.Event{Data: map[string]any{}}
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	cd := &common.CoreData{}
 	cd.SetEvent(evt)
 

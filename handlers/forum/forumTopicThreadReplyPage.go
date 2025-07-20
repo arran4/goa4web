@@ -66,7 +66,7 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 // AutoSubscribePath ensures authors automatically receive updates on replies.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
 // created for the originating forum thread when that information is available.
-func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
 	}

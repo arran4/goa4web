@@ -25,7 +25,7 @@ func TestForgotPasswordEventData(t *testing.T) {
 	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "u"))
 	mock.ExpectExec("INSERT INTO pending_passwords").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	evt := &eventbus.Event{Data: map[string]any{}}
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	cd := common.NewCoreData(context.Background(), q, common.WithEvent(evt))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	ctx = context.WithValue(ctx, consts.KeyQueries, q)

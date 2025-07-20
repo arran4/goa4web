@@ -260,7 +260,7 @@ environment variables listed below.
 | `SESSION_SECRET_FILE` | `--session-secret-file` | No | auto | File containing the session secret. |
 | `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
-| `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Interval in seconds between email worker runs. |
+| `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |
 | `ADMIN_EMAILS` | `--admin-emails` | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
 | `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored when using the local provider. |

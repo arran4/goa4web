@@ -14,10 +14,14 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 	if q == nil || bus == nil {
 		return
 	}
-	ch := bus.Subscribe()
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case evt := <-ch:
+		case msg := <-ch:
+			evt, ok := msg.(eventbus.TaskEvent)
+			if !ok {
+				continue
+			}
 			named, ok := evt.Task.(tasks.Name)
 			if evt.UserID == 0 || !ok {
 				continue

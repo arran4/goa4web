@@ -53,20 +53,20 @@ func TestBuildPatterns(t *testing.T) {
 }
 
 func TestParseEvent(t *testing.T) {
-	evt := eventbus.Event{Data: map[string]any{"target": Target{Type: "thread", ID: 42}}}
+	evt := eventbus.TaskEvent{Data: map[string]any{"target": Target{Type: "thread", ID: 42}}}
 	typ, id, ok := parseEvent(evt)
 	if !ok || typ != "thread" || id != 42 {
 		t.Fatalf("thread parse got %s %d %v", typ, id, ok)
 	}
-	evt = eventbus.Event{Data: map[string]any{"target": Target{Type: "writing", ID: 7}}}
+	evt = eventbus.TaskEvent{Data: map[string]any{"target": Target{Type: "writing", ID: 7}}}
 	typ, id, ok = parseEvent(evt)
 	if !ok || typ != "writing" || id != 7 {
 		t.Fatalf("writing parse got %s %d %v", typ, id, ok)
 	}
-	if _, _, ok := parseEvent(eventbus.Event{Path: "/bad/path"}); ok {
+	if _, _, ok := parseEvent(eventbus.TaskEvent{Path: "/bad/path"}); ok {
 		t.Fatalf("unexpected match")
 	}
-	if _, _, ok := parseEvent(eventbus.Event{Path: "/news/news/9"}); ok {
+	if _, _, ok := parseEvent(eventbus.TaskEvent{Path: "/news/news/9"}); ok {
 		t.Fatalf("unexpected match with path")
 	}
 }
@@ -105,7 +105,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	n := New(WithQueries(q), WithEmailProvider(prov))
 	dlqRec := &recordDLQ{}
 
-	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, dlqRec); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, dlqRec); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 	if dlqRec.msg != "" {
@@ -132,7 +132,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	q := dbpkg.New(db)
 	n := New(WithQueries(q))
 
-	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -152,7 +152,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	q := dbpkg.New(db)
 	n := New(WithQueries(q))
 
-	if err := n.processEvent(ctx, eventbus.Event{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -175,7 +175,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov))
 
-	if err := n.processEvent(ctx, eventbus.Event{Path: "/admin/x", Task: TaskTest, UserID: 1}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -196,7 +196,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	q := dbpkg.New(db)
 	n := New(WithQueries(q))
 
-	if err := n.processEvent(ctx, eventbus.Event{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -208,7 +208,7 @@ type targetTask struct{ tasks.TaskString }
 
 func (targetTask) Action(http.ResponseWriter, *http.Request) {}
 
-func (targetTask) TargetUserIDs(evt eventbus.Event) []int32 { return []int32{2, 3} }
+func (targetTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 { return []int32{2, 3} }
 
 func (targetTask) TargetEmailTemplate() *EmailTemplates { return nil }
 
@@ -243,7 +243,7 @@ func TestProcessEventTargetUsers(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 	}
 
-	evt := eventbus.Event{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}}
+	evt := eventbus.TaskEvent{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}}
 
 	if err := n.processEvent(ctx, evt, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -282,7 +282,7 @@ func TestBusWorker(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	bus.Publish(eventbus.Event{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"signup": SignupInfo{Username: "bob"}}})
+	bus.Publish(eventbus.TaskEvent{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"signup": SignupInfo{Username: "bob"}}})
 	time.Sleep(200 * time.Millisecond)
 	cancel()
 	wg.Wait()
@@ -296,7 +296,7 @@ type autoSubTask struct{ tasks.TaskString }
 
 func (autoSubTask) Action(http.ResponseWriter, *http.Request) {}
 
-func (autoSubTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+func (autoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return "AutoSub", fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
 	}
@@ -327,7 +327,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO subscriptions (users_idusers, pattern, method) VALUES (?, ?, ?)")).
 		WithArgs(int32(1), pattern, "internal").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	evt := eventbus.Event{
+	evt := eventbus.TaskEvent{
 		Path:   "/forum/topic/7/thread/42/reply",
 		UserID: 1,
 		Data: map[string]any{

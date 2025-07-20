@@ -52,7 +52,7 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 // posted so participants stay in the loop.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. It derives the
 // subscription path from postcountworker event data when present.
-func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+func (ReplyBlogTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
 	}

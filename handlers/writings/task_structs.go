@@ -76,7 +76,7 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 // AutoSubscribePath implements notif.AutoSubscribeProvider. It builds the
 // subscription path for the writing's forum thread when that data is provided
 // by the event.
-func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
 	}
@@ -162,7 +162,7 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsPermissionUserAllowPage(w, r)
 }
 
-func (UserAllowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+func (UserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
 		return []int32{id}
 	}
@@ -197,7 +197,7 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsDisallowPage(w, r)
 }
 
-func (UserDisallowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+func (UserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
 		return []int32{id}
 	}

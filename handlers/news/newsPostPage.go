@@ -82,7 +82,7 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 // AutoSubscribePath allows commenters to automatically watch for further replies.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. A subscription to
 // the underlying discussion thread is created using event data when available.
-func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
 	}
@@ -143,7 +143,7 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 // AutoSubscribePath keeps authors in the loop on new post discussions.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. Subscriptions use
 // the thread path derived from postcountworker data when possible.
-func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+func (NewPostTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskNewPost), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
 	}

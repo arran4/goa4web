@@ -30,14 +30,14 @@ const maxQueuedTaskEvents = 100
 type eventQueue struct {
 	mu       sync.Mutex
 	capacity int
-	events   []eventbus.Event
+	events   []eventbus.TaskEvent
 }
 
 func newEventQueue(capacity int) *eventQueue {
 	return &eventQueue{capacity: capacity}
 }
 
-func (q *eventQueue) enqueue(evt eventbus.Event) {
+func (q *eventQueue) enqueue(evt eventbus.TaskEvent) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	if len(q.events) >= q.capacity {
@@ -53,7 +53,7 @@ func (q *eventQueue) flush(ctx context.Context) {
 		q.mu.Unlock()
 		return
 	}
-	events := append([]eventbus.Event(nil), q.events...)
+	events := append([]eventbus.TaskEvent(nil), q.events...)
 	q.events = nil
 	q.mu.Unlock()
 	for i, e := range events {
@@ -93,7 +93,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		uid := cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")
 		_ = admin
-		evt := &eventbus.Event{
+		evt := &eventbus.TaskEvent{
 			Path:   r.URL.Path,
 			Task:   tasks.TaskString("MISSING"),
 			UserID: uid,

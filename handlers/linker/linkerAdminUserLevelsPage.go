@@ -169,7 +169,7 @@ func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, stri
 	return 0, "", "", sql.ErrNoRows
 }
 
-func (userAllowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+func (userAllowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
 		return []int32{id}
 	}
@@ -188,7 +188,7 @@ func (userAllowTask) TargetInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (userDisallowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+func (userDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
 		return []int32{id}
 	}

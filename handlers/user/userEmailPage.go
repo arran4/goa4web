@@ -205,7 +205,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0}); err != nil {
-		// TODO better error for NOT Duplicate entry  for key 'user_emails_email_idx'
+		// TODO better error for NOT Duplicate entry for key 'user_emails_email_code_idx'
 		log.Printf("insert user email: %v", err)
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
 		return
@@ -319,5 +319,6 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})
+	_ = queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID})
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

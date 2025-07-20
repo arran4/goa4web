@@ -1,4 +1,4 @@
-package information
+package admin
 
 import (
 	"github.com/arran4/goa4web/core/consts"
@@ -14,7 +14,8 @@ import (
 	"github.com/shirou/gopsutil/v3/load"
 )
 
-func Page(w http.ResponseWriter, r *http.Request) {
+// AdminInformationPage renders system information for administrators.
+func AdminInformationPage(w http.ResponseWriter, r *http.Request) {
 	type SystemInformation struct {
 		Processors  []cpu.InfoStat
 		Uptime      time.Duration
@@ -30,6 +31,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+
 	ld, err := load.Avg()
 	if err != nil {
 		log.Printf("load.Avg Error: %s", err)

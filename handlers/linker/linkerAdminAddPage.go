@@ -12,6 +12,7 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
@@ -59,6 +60,13 @@ type addTask struct{ tasks.TaskString }
 
 var AddTask = &addTask{TaskString: TaskAdd}
 
+// Compile-time interface conformance with context. When a link is submitted we
+// alert subscribers of new content and notify administrators so they can review
+// it for publication.
+var _ tasks.Task = (*addTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*addTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*addTask)(nil)
+
 func (addTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
 
@@ -88,4 +96,22 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
 
+}
+
+func (addTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("linkerAddEmail")
+}
+
+func (addTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("linker_add")
+	return &s
+}
+
+func (addTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLinkerAddEmail")
+}
+
+func (addTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerAddEmail")
+	return &v
 }

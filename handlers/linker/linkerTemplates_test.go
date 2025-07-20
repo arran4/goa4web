@@ -1,4 +1,4 @@
-package news
+package linker
 
 import (
 	"testing"
@@ -22,22 +22,10 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-func TestNewsTemplatesExist(t *testing.T) {
+func TestLinkerTemplatesExist(t *testing.T) {
 	prefixes := []string{
-		"newsAddEmail",
-		"adminNotificationNewsAddEmail",
-		"newsEditEmail",
-		"adminNotificationNewsEditEmail",
-		"replyEmail",
-		"adminNotificationNewsReplyEmail",
-		"newsCommentEditEmail",
-		"adminNotificationNewsCommentEditEmail",
-		"newsCommentCancelEmail",
-		"adminNotificationNewsCommentCancelEmail",
-		"newsUserAllowEmail",
-		"adminNotificationNewsUserAllowEmail",
-		"newsUserDisallowEmail",
-		"adminNotificationNewsUserDisallowEmail",
+		"linkerAddEmail",
+		"adminNotificationLinkerAddEmail",
 	}
 	for _, p := range prefixes {
 		requireEmailTemplates(t, p)

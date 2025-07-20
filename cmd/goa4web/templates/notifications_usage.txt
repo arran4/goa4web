@@ -1,0 +1,11 @@
+Usage:
+  {{.Prog}} notifications <command> [<args>]
+
+Commands:
+  tasks    list task template usage
+
+Examples:
+  {{.Prog}} notifications tasks
+
+Flags:
+{{template "flags" .Flags}}

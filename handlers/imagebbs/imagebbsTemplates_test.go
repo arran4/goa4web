@@ -1,4 +1,4 @@
-package news
+package imagebbs
 
 import (
 	"testing"
@@ -22,24 +22,22 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-func TestNewsTemplatesExist(t *testing.T) {
+func TestImageBbsTemplatesExist(t *testing.T) {
+  // TODO use the action itself
 	prefixes := []string{
-		"newsAddEmail",
-		"adminNotificationNewsAddEmail",
-		"newsEditEmail",
-		"adminNotificationNewsEditEmail",
-		"replyEmail",
-		"adminNotificationNewsReplyEmail",
-		"newsCommentEditEmail",
-		"adminNotificationNewsCommentEditEmail",
-		"newsCommentCancelEmail",
-		"adminNotificationNewsCommentCancelEmail",
-		"newsUserAllowEmail",
-		"adminNotificationNewsUserAllowEmail",
-		"newsUserDisallowEmail",
-		"adminNotificationNewsUserDisallowEmail",
+		"imageBoardNewEmail",
+		"adminNotificationImageBoardNewEmail",
 	}
 	for _, p := range prefixes {
 		requireEmailTemplates(t, p)
 	}
 }
+
+func requireNotificationTemplate(t *testing.T, name string) {
+	t.Helper()
+	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if nt.Lookup(name) == nil {
+		t.Errorf("missing notification template %s", name)
+	}
+}
+

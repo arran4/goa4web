@@ -8,7 +8,7 @@
             <th>Threads
             <th>Posts
             <th>View
-            <th>Restrictions
+            <th>Permissions
             <th>Options?
         </tr>
         {{ range .Topics }}
@@ -24,7 +24,7 @@
                 <td align="center">{{ .Threads.Int32 }}</td>
                 <td align="center">{{ .Comments.Int32 }}</td>
                 <td><a href="/forum/topic/{{ .Idforumtopic }}">View</a></td>
-                <td><a href="/forum/admin/topic/{{ .Idforumtopic }}/levels">Permission Levels</a></td>
+                <td><a href="/forum/admin/topic/{{ .Idforumtopic }}/permissions">Manage</a></td>
                 <td>
                         <input type="hidden" name="tid" value="{{ .Idforumtopic }}">
                         <input type="submit" name="task" value="Forum topic change">

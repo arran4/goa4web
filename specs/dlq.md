@@ -19,7 +19,7 @@ Providers implement `Record` to persist messages for later inspection.
 The `internal/dlq/dlqdefaults` package registers the stable implementations:
 
 - **log** – writes messages to the application log.
-- **file** – appends messages to a single log file specified by `DLQ_FILE`.
+- **file** – appends messages to a single log file specified by `DLQ_FILE`. Each entry begins with an RFC3339 timestamp.
 - **dir** – stores each message as a file under the directory given by `DLQ_FILE`.
 - **db** – inserts messages into the database using the `dead_letters` table.
 - **email** – emails messages to administrator addresses using the configured mail provider.

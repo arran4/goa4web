@@ -5,6 +5,8 @@
 <p>A new thread "{{.Item.TopicTitle}}" was started at {{.Path}}.</p>
 <p>You can view it <a href="{{.URL}}">here</a>.</p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
-<p>Cheers,<br>The A4Web Team</p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
 </body>
 </html>

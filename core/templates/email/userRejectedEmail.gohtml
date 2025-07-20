@@ -3,5 +3,7 @@
 <p>Hello,</p>
 <p>Your account request was rejected.</p>
 <p>{{.Item.Reason}}</p>
-<p>Cheers,<br>The A4Web Team</p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
 </body></html>

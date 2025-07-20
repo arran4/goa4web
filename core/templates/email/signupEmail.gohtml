@@ -6,6 +6,8 @@
 <p>Please add them to the user group to approve the account.</p>
 <p>Review the account <a href="{{.URL}}">here</a>.</p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
-<p>Cheers,<br>The A4Web Team</p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
 </body>
 </html>

@@ -4,5 +4,6 @@ This is a test email confirming your Goa4Web configuration.
 
 Manage notifications: {{.UnsubscribeUrl}}
 
-Cheers,
-The A4Web Team
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

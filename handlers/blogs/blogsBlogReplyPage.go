@@ -50,6 +50,8 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
+	// Automatically subscribe the commenter so they are notified about
+	// further discussion on the blog post they replied to.
 // AutoSubscribePath allows the worker to add a subscription when new replies are
 // posted so participants stay in the loop.
 func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {

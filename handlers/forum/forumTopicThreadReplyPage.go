@@ -77,6 +77,8 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 }
 
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	// Replying should subscribe the user so they hear about new posts in
+	// the discussion they just contributed to.
 	return string(TaskReply), evt.Path
 }
 

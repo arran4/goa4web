@@ -38,6 +38,7 @@ func TestNewsTemplatesExist(t *testing.T) {
 		"adminNotificationNewsUserAllowEmail",
 		"newsUserDisallowEmail",
 		"adminNotificationNewsUserDisallowEmail",
+		"newsPermissionEmail",
 	}
 	for _, p := range prefixes {
 		requireEmailTemplates(t, p)

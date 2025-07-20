@@ -82,6 +82,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+	// When users reply to a news post we automatically subscribe them so
+	// they receive updates to the thread they just engaged with.
 // AutoSubscribePath allows commenters to automatically watch for further replies.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskReply), evt.Path
@@ -136,6 +138,8 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
+	// Subscribing the poster ensures they are notified when readers engage
+	// with their new thread.
 // AutoSubscribePath keeps authors in the loop on new post discussions.
 func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskNewPost), evt.Path

@@ -86,6 +86,8 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 var _ searchworker.IndexedTask = CreateThreadTask{}
 
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	// When creating a thread users expect to follow subsequent replies,
+	// so we automatically subscribe them using the event path.
 	return string(TaskCreateThread), evt.Path
 }
 

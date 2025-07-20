@@ -20,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -71,8 +72,13 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
+// AutoSubscribePath implements notif.AutoSubscribeProvider. A subscription to
+// the underlying discussion thread is created using event data when available.
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
+	return string(TaskReply), evt.Path
 }
 
 type EditTask struct{ tasks.TaskString }
@@ -118,8 +124,13 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (NewPostTask) AutoSubscribePath() (string, string) {
-	return string(TaskNewPost), ""
+// AutoSubscribePath implements notif.AutoSubscribeProvider. Subscriptions use
+// the thread path derived from postcountworker data when possible.
+func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskNewPost), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
+	return string(TaskNewPost), evt.Path
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {

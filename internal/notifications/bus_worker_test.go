@@ -6,6 +6,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/mail"
+	"regexp"
 	"sync"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 )
 
 type busDummyProvider struct{ to string }
@@ -238,5 +240,54 @@ func TestBusWorker(t *testing.T) {
 
 	if prov.to != "" {
 		t.Fatalf("unexpected email sent to %s", prov.to)
+	}
+}
+
+type autoSubTask struct{ tasks.TaskString }
+
+func (autoSubTask) Action(http.ResponseWriter, *http.Request) {}
+
+func (autoSubTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return "AutoSub", fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
+	return "AutoSub", evt.Path
+}
+
+func TestProcessEventAutoSubscribe(t *testing.T) {
+	ctx := context.Background()
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	n := New(q, nil)
+
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
+		AddRow(1, 0, 1, nil, 0, true)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies FROM preferences WHERE users_idusers = ?")).
+		WithArgs(int32(1)).WillReturnRows(prefRows)
+
+	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT users_idusers FROM subscriptions WHERE pattern = ? AND method = ?")).
+		WithArgs(pattern, "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO subscriptions (users_idusers, pattern, method) VALUES (?, ?, ?)")).
+		WithArgs(int32(1), pattern, "internal").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	evt := eventbus.Event{
+		Path:   "/forum/topic/7/thread/42/reply",
+		UserID: 1,
+		Data: map[string]any{
+			postcountworker.EventKey: postcountworker.UpdateEventData{ThreadID: 42, TopicID: 7},
+		},
+	}
+
+	n.handleAutoSubscribe(ctx, evt, autoSubTask{TaskString: "AutoSub"})
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
 	}
 }

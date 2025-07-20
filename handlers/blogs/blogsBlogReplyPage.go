@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -38,8 +39,13 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (ReplyBlogTask) AutoSubscribePath() (string, string) {
-	return TaskReply, ""
+// AutoSubscribePath implements notif.AutoSubscribeProvider. It derives the
+// subscription path from postcountworker event data when present.
+func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
+	return string(TaskReply), evt.Path
 }
 
 func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }

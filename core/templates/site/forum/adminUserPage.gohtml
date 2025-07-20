@@ -10,29 +10,22 @@
             <th>Topic</th>
             <th>Forum</th>
             <th>Level</th>
-            <th>Invite Level Max</th>
+            <th>Invite Role</th>
             <th>Expiration</th>
             <th>Options</th>
         </tr>
         {{- $u := .User }}
         {{- range .Topics }}
         <tr>
-            <form method="post" action="/forum/admin/user/{{ $u.Idusers }}/levels">
-        {{ csrfField }}
-                <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}</td>
+                <td>{{ .Title.String }}</td>
                 <td>{{ with index $.Categories .ForumcategoryIdforumcategory }}{{ .Title.String }}{{ end }}</td>
-                <td><input name="level" value="{{ .Level.Int32 }}" size="8"></td>
-                <td><input name="inviteMax" value="{{ .Invitemax.Int32 }}" size="8"></td>
-                <td><input type="date" name="expiresAt" value="{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time.Format "2006-01-02" }}{{ end }}"></td>
-                <td>
-                    <input type="submit" name="task" value="Update user level">
-                    <input type="submit" name="task" value="Delete user level">
-                </td>
-            </form>
+                <td>{{ .Level.Int32 }}</td>
+                <td>{{ .Invitemax.Int32 }}</td>
+                <td>{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time.Format "2006-01-02" }}{{ end }}</td>
+                <td>N/A</td>
         </tr>
         {{- end }}
     </table>
-    <a href="/forum/admin/user/{{ .User.Idusers }}/levels">Configure users access levels</a>
     {{- end }}
     {{- if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous 15</a>{{ end }}
     {{- if $.NextLink }} <a href="{{ $.NextLink }}">Next 15</a>{{ end }}

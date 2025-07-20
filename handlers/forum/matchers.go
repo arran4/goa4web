@@ -79,17 +79,3 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-// TargetUsersLevelNotHigherThanAdminsMax verifies the target user's level does not exceed the admin's maximum.
-func TargetUsersLevelNotHigherThanAdminsMax() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
-		return true
-	}
-}
-
-// AdminUsersMaxLevelNotLowerThanTargetLevel ensures the admin's max level exceeds the requested level values.
-func AdminUsersMaxLevelNotLowerThanTargetLevel() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
-		return true
-	}
-}

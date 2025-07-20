@@ -1,2 +1,2 @@
 Image board "{{.Item.Title}}" updated.
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

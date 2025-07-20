@@ -86,7 +86,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -100,7 +100,7 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
 	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Name:         level,
+		Name:         role,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}

@@ -2,5 +2,5 @@ User {{.Item.Username}} edited a blog comment.
 
 View comment:
 {{.CommentURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

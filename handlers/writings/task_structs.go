@@ -131,10 +131,20 @@ type UpdateWritingTask struct{ tasks.TaskString }
 var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
 var _ tasks.Task = (*UpdateWritingTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*UpdateWritingTask)(nil)
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
 func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleEditActionPage(w, r) }
+
+func (UpdateWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("writingUpdateEmail")
+}
+
+func (UpdateWritingTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("writing_update")
+	return &s
+}
 
 // UserAllowTask grants a user a permission.
 type UserAllowTask struct{ tasks.TaskString }
@@ -142,13 +152,33 @@ type UserAllowTask struct{ tasks.TaskString }
 var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 
 var _ tasks.Task = (*UserAllowTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*UserAllowTask)(nil)
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/admin/writings/users/levels" {
+	if r.URL.Path == "/admin/writings/users/roles" {
 		AdminUserLevelsAllowActionPage(w, r)
 		return
 	}
 	UsersPermissionsPermissionUserAllowPage(w, r)
+}
+
+func (UserAllowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["targetUserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (UserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("setUserRoleEmail")
+}
+
+func (UserAllowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("set_user_role")
+	return &v
 }
 
 // UserDisallowTask removes a user's permission.
@@ -157,13 +187,33 @@ type UserDisallowTask struct{ tasks.TaskString }
 var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 
 var _ tasks.Task = (*UserDisallowTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*UserDisallowTask)(nil)
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/admin/writings/users/levels" {
+	if r.URL.Path == "/admin/writings/users/roles" {
 		AdminUserLevelsRemoveActionPage(w, r)
 		return
 	}
 	UsersPermissionsDisallowPage(w, r)
+}
+
+func (UserDisallowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["targetUserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (UserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("deleteUserRoleEmail")
+}
+
+func (UserDisallowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("delete_user_role")
+	return &v
 }
 
 // WritingCategoryChangeTask modifies a category.

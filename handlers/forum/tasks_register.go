@@ -9,5 +9,7 @@ func RegisterTasks() []tasks.NamedTask {
 		replyTask,
 		topicGrantCreateTask,
 		topicGrantDeleteTask,
+		subscribeTopicTaskAction,
+		unsubscribeTopicTaskAction,
 	}
 }

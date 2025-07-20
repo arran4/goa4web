@@ -3,7 +3,9 @@
 <body>
 <p>Hello,</p>
 <p>This is a test email confirming your Goa4Web configuration.</p>
-<p><a href="{{.UnsubURL}}">Manage notifications</a></p>
-<p>Cheers,<br>The A4Web Team</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
 </body>
 </html>

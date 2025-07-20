@@ -58,8 +58,8 @@ const (
 	// TaskDeleteUserApproval deletes a user's approval entry.
 	TaskDeleteUserApproval = "Delete user approval"
 
-	// TaskDeleteUserLevel deletes a user's access level.
-	TaskDeleteUserLevel = "Delete user level"
+	// TaskRevokeRole revokes a role from a user.
+	TaskRevokeRole = "Revoke role"
 
 	// TaskEdit modifies an existing item.
 	TaskEdit = "Edit"
@@ -177,8 +177,8 @@ const (
 	// TaskCopyTopicRestriction copies restriction levels from one topic to another.
 	TaskCopyTopicRestriction = "Copy topic restriction"
 
-	// TaskSetUserLevel sets a user's access level.
-	TaskSetUserLevel = "Set user level"
+	// TaskGrantRole grants a role to a user.
+	TaskGrantRole = "Grant role"
 
 	// TaskSubmitWriting submits a new writing.
 	TaskSubmitWriting = "Submit writing"
@@ -204,8 +204,8 @@ const (
 	// TaskUpdateUserApproval updates a writing user's approval state.
 	TaskUpdateUserApproval = "Update user approval"
 
-	// TaskUpdateUserLevel updates a user's access level.
-	TaskUpdateUserLevel = "Update user level"
+	// TaskUpdateRole updates an existing user role grant.
+	TaskUpdateRole = "Update role"
 
 	// TaskBulkApprove approves multiple queued items at once.
 	TaskBulkApprove = "Bulk Approve"
@@ -216,19 +216,19 @@ const (
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting = "Update writing"
 
-	// TaskUserAllow grants a user a permission or level.
+	// TaskUserAllow grants a user a role.
 	TaskUserAllow = "User Allow"
 
 	// TaskUpdatePermission modifies an existing user permission.
 	TaskUpdatePermission = "Update permission"
 
-	// TaskUserDisallow removes a user's permission or level.
+	// TaskUserDisallow removes a user's role.
 	TaskUserDisallow = "User Disallow"
 
-	// TaskUsersAllow grants multiple users a permission or level.
+	// TaskUsersAllow grants multiple users a role.
 	TaskUsersAllow = "Users Allow"
 
-	// TaskUsersDisallow removes multiple user permissions or levels.
+	// TaskUsersDisallow removes multiple user roles.
 	TaskUsersDisallow = "Users Disallow"
 
 	// TaskUserDoNothing is used when no action should be taken on a user.

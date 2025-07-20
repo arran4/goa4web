@@ -11,7 +11,7 @@ View: <select name="view">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Res
 Reply: <select name="reply">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.ReplyRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
 New thread: <select name="newthread">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.NewthreadRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
 See: <select name="see">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.SeeRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-Invite: <select name="invite">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.InviteRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
+Starting roles: <select name="startingRoles">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.InviteRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
 Read: <select name="read">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.ReadRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
 Moderator: <select name="mod">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.ModRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
 Administrator: <select name="admin">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.AdminRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>

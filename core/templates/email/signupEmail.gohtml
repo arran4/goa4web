@@ -5,7 +5,9 @@
 <p>A new user {{.Item.Username}} has registered at {{.Time}}.</p>
 <p>Please add them to the user group to approve the account.</p>
 <p>Review the account <a href="{{.URL}}">here</a>.</p>
-<p><a href="{{.UnsubURL}}">Manage notifications</a></p>
-<p>Cheers,<br>The A4Web Team</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
 </body>
 </html>

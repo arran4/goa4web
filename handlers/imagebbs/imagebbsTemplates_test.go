@@ -22,6 +22,16 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	}
 }
 
+func checkNotificationTemplate(t *testing.T, name *string) {
+	if name == nil {
+		return
+	}
+	tmpl := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if tmpl.Lookup(*name) == nil {
+		t.Errorf("missing notification template %s", *name)
+	}
+}
+
 func TestImageBbsTemplatesExist(t *testing.T) {
 	admins := []notif.AdminEmailTemplateProvider{
 		newBoardTask,
@@ -29,6 +39,9 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 	}
 	for _, p := range admins {
 		checkEmailTemplates(t, p.AdminEmailTemplate())
+		if p != newBoardTask {
+			checkNotificationTemplate(t, p.AdminInternalNotificationTemplate())
+		}
 	}
 
 	selfProviders := []notif.SelfNotificationTemplateProvider{
@@ -36,6 +49,7 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 	}
 	for _, p := range selfProviders {
 		checkEmailTemplates(t, p.SelfEmailTemplate())
+		checkNotificationTemplate(t, p.SelfInternalNotificationTemplate())
 	}
 
 	subs := []notif.SubscribersNotificationTemplateProvider{
@@ -43,5 +57,6 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 	}
 	for _, p := range subs {
 		checkEmailTemplates(t, p.SubscribedEmailTemplate())
+		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate())
 	}
 }

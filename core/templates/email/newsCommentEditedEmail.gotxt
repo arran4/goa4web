@@ -2,4 +2,4 @@ Comment edited by {{.Item.Username}}.
 
 View comment:
 {{.CommentURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

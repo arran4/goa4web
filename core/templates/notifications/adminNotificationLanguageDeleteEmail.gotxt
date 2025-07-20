@@ -1,0 +1,2 @@
+Language {{.LanguageName}} (ID {{.LanguageID}}) deleted by {{.Item.Username}}
+

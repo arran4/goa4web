@@ -2,4 +2,4 @@ User {{.Item.Username}} added a new link.
 
 View link:
 {{.LinkURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

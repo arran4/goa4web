@@ -1,0 +1,1 @@
+Moderator {{.Item.Moderator}} removed ban for {{.Item.IP}}

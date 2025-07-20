@@ -25,6 +25,8 @@ const (
 	EnvEmailFrom = "EMAIL_FROM"
 	// EnvEmailSubjectPrefix sets the prefix used for email subjects.
 	EnvEmailSubjectPrefix = "EMAIL_SUBJECT_PREFIX"
+	// EnvEmailSignOff specifies the sign-off text appended to emails.
+	EnvEmailSignOff = "EMAIL_SIGNOFF"
 	// EnvAWSRegion is the AWS region for the SES provider.
 	EnvAWSRegion = "AWS_REGION"
 	// EnvJMAPEndpoint is the JMAP API endpoint.

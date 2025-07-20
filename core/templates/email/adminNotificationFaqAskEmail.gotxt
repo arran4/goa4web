@@ -1,0 +1,4 @@
+New FAQ question submitted.
+
+{{.Question}}
+Manage notifications: {{.UnsubscribeUrl}}

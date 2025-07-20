@@ -6,7 +6,6 @@
                                 <th>Description
                                 <th>Parent board
                                 <th>Threads
-                                <th>Mod Level
                                 <th>Visible
                                 <th>Options?
                         {{ range .Boards }}
@@ -18,7 +17,6 @@
                                                 <td><textarea name="desc">{{ .Description.String }}</textarea>
                                                 <td>{{ $pbid := .ImageboardIdimageboard }} {{ $pbid }} <select name="pbid" value="{{ .ImageboardIdimageboard }}"><option value="0">None</option>{{ range $.Boards }}<option value="{{.Idimageboard}}" {{if eq $pbid .Idimageboard}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select>
                                                 <td>{{ .Threads }}
-                                                <td>{{ .ModLevel }}
                                                 <td>{{ if .Visible }}Yes{{ else }}No{{ end }}
                                                 <td>
                                                         <input type="hidden" name="bid" value="{{ .Idimageboard }}">

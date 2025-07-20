@@ -1,10 +1,12 @@
 package writings
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -46,7 +48,7 @@ func UserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -60,9 +62,18 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
 	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Name:         level,
+		Name:         role,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
+	} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["targetUserID"] = u.Idusers
+			evt.Data["Username"] = u.Username.String
+			evt.Data["Role"] = level
+		}
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
@@ -82,8 +93,37 @@ func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
+	} else {
+		id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permidi))
+		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
+		} else if err2 == nil {
+			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+				if evt := cd.Event(); evt != nil {
+					if evt.Data == nil {
+						evt.Data = map[string]any{}
+					}
+					evt.Data["targetUserID"] = id
+					evt.Data["Username"] = username
+					evt.Data["Role"] = role
+				}
+			}
+		} else {
+			log.Printf("lookup role: %v", err2)
+		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+}
+
+func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, string, string, error) {
+	rows, err := q.GetPermissionsWithUsers(ctx, db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
+	if err != nil {
+		return 0, "", "", err
+	}
+	for _, row := range rows {
+		if row.IduserRoles == id {
+			return row.UsersIdusers, row.Username.String, row.Name, nil
+		}
+	}
+	return 0, "", "", sql.ErrNoRows
 }

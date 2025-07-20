@@ -3,12 +3,14 @@ package notifications
 import (
 	"context"
 	"fmt"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"html"
+	htemplate "html/template"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID int32, emailAddr, page, action string, item interface{}) error {
@@ -41,6 +43,8 @@ type EmailData struct {
 	any
 	SubjectPrefix  string
 	UnsubscribeUrl string
+	SignOff        string
+	SignOffHTML    htemplate.HTML
 	Item           interface{}
 }
 
@@ -62,10 +66,16 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 		unsub = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + unsub
 	}
 
+	signOff := config.AppRuntimeConfig.EmailSignOff
+	htmlSignOff := html.EscapeString(signOff)
+	htmlSignOff = strings.ReplaceAll(htmlSignOff, "\n", "<br />")
+
 	data := EmailData{
 		any:            item,
 		SubjectPrefix:  subjectPrefix,
 		UnsubscribeUrl: unsub,
+		SignOff:        signOff,
+		SignOffHTML:    htemplate.HTML(htmlSignOff),
 		Item:           item,
 	}
 	var textBody, htmlBody string
@@ -78,7 +88,7 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 		subject = strings.TrimSpace(string(bs))
 	}
 	if et.Text != "" {
-		tb, err := n.renderEmailText(ctx, et.Subject, data)
+		tb, err := n.renderEmailText(ctx, et.Text, data)
 		if err != nil {
 			return nil, err
 		}

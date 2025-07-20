@@ -36,6 +36,8 @@ type RuntimeConfig struct {
 	EmailJMAPPass      string
 	EmailSendGridKey   string
 	EmailSubjectPrefix string
+	// EmailSignOff defines the optional sign-off appended to emails.
+	EmailSignOff string
 
 	// EmailEnabled toggles sending queued emails.
 	EmailEnabled bool

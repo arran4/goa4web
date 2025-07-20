@@ -1,0 +1,4 @@
+User {{.Item.Username}} created a new language {{.LanguageName}} (ID {{.LanguageID}}).
+
+Manage notifications: {{.UnsubscribeUrl}}
+

@@ -58,5 +58,5 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 		HasOffset: offset != 0,
 	}
 
-	handlers.TemplateHandler(w, r, "linkerPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "linkerPage", data)
 }

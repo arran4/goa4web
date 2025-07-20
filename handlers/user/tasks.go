@@ -32,10 +32,10 @@ const (
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
 
-	// TaskUserAllow grants a user a permission or level.
+	// TaskUserAllow grants a user a role.
 	TaskUserAllow tasks.TaskString = "User Allow"
 
-	// TaskUserDisallow removes a user's permission or level.
+	// TaskUserDisallow removes a user's role.
 	TaskUserDisallow tasks.TaskString = "User Disallow"
 
 	// TaskUserEmailVerification verifies a user's email address.

@@ -17,8 +17,8 @@
                 <td><input name="level" value="{{ .Level }}" size="8">
                 <td><input name="invitemax" value="{{ .InviteMax }}" size="8">
                 <td>
-                    <input type="submit" name="task" value="Update user level">
-                    <input type="submit" name="task" value="Delete user level">
+                    <input type="submit" name="task" value="Update role">
+                    <input type="submit" name="task" value="Revoke role">
             </tr>
         </form>
         {{- end }}
@@ -30,7 +30,7 @@
                 <td><input name="level" value="0" size="8">
                 <td><input name="invitemax" value="0" size="8">
                 <td>
-                    <input type="submit" name="task" value="Add user level">
+                    <input type="submit" name="task" value="Grant role">
             </tr>
         </form>
     </table><br>

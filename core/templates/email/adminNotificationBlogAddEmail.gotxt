@@ -2,4 +2,4 @@ User {{.Item.Username}} added a new blog post.
 
 View post:
 {{.PostURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

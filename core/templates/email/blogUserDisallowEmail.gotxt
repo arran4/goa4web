@@ -3,5 +3,5 @@ Your blog permissions were revoked.
 
 Blog section:
 {{.BlogURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

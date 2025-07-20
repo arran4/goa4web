@@ -18,8 +18,8 @@ const (
 	TaskEditReply tasks.TaskString = "Edit Reply"
 	// TaskCancel cancels the current operation and returns to the previous page.
 	TaskCancel tasks.TaskString = "Cancel"
-	// TaskUserAllow grants a permission level to a user.
+	// TaskUserAllow grants a role to a user.
 	TaskUserAllow = "User Allow"
-	// TaskUserDisallow removes a permission level from a user.
+	// TaskUserDisallow removes a role from a user.
 	TaskUserDisallow = "User Disallow"
 )

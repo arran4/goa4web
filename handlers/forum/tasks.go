@@ -21,14 +21,14 @@ const (
 	// TaskCancel cancels the current operation and returns to the previous page.
 	TaskCancel tasks.TaskString = "Cancel"
 
-	// TaskSetUserLevel sets a user's forum access level.
-	TaskSetUserLevel = "Set user level"
+	// TaskGrantRole grants a role to a forum user.
+	TaskGrantRole = "Grant role"
 
-	// TaskUpdateUserLevel updates a user's forum access level.
-	TaskUpdateUserLevel = "Update user level"
+	// TaskUpdateRole updates an existing forum role grant.
+	TaskUpdateRole = "Update role"
 
-	// TaskDeleteUserLevel deletes a user's forum access level.
-	TaskDeleteUserLevel = "Delete user level"
+	// TaskRevokeRole revokes a role from a forum user.
+	TaskRevokeRole = "Revoke role"
 
 	// TaskSetTopicRestriction adds a topic restriction.
 	TaskSetTopicRestriction = "Set topic restriction"
@@ -68,4 +68,10 @@ const (
 
 	// TaskForumTopicCreate creates a new forum topic.
 	TaskForumTopicCreate = "Forum topic create"
+
+	// TaskSubscribeToTopic subscribes the user to new threads in a topic.
+	TaskSubscribeToTopic tasks.TaskString = "Subscribe To Topic"
+
+	// TaskUnsubscribeFromTopic removes topic thread notifications.
+	TaskUnsubscribeFromTopic tasks.TaskString = "Unsubscribe From Topic"
 )

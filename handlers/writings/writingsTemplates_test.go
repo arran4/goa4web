@@ -22,6 +22,16 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	}
 }
 
+func checkNotificationTemplate(t *testing.T, name *string) {
+	if name == nil {
+		return
+	}
+	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if nt.Lookup(*name) == nil {
+		t.Errorf("missing notification template %s", *name)
+	}
+}
+
 func TestWritingsTemplatesExist(t *testing.T) {
 	providers := []notif.SubscribersNotificationTemplateProvider{
 		submitWritingTask,
@@ -30,5 +40,6 @@ func TestWritingsTemplatesExist(t *testing.T) {
 	}
 	for _, p := range providers {
 		checkEmailTemplates(t, p.SubscribedEmailTemplate())
+		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate())
 	}
 }

@@ -29,9 +29,9 @@ func RegisterRoutes(r *mux.Router) {
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")
 	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(tasks.Action(replyTask)))).Methods("POST").MatcherFunc(replyTask.Matcher())
-	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(tasks.Action(topicThreadReplyCancel)))).Methods("POST").MatcherFunc(topicThreadReplyCancel.Matcher())                                                        // TODO make this form
-	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(topicThreadCommentEditAction))))).Methods("POST").MatcherFunc(topicThreadCommentEditAction.Matcher()) // TODO make this form
-	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(http.HandlerFunc(tasks.Action(topicThreadCommentEditActionCancel)))).Methods("POST").MatcherFunc(topicThreadCommentEditActionCancel.Matcher())                    // TODO make this form
+	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(tasks.Action(topicThreadReplyCancel)))).Methods("POST").MatcherFunc(topicThreadReplyCancel.Matcher())                                                                    // TODO make this form
+	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(topicThreadCommentEditAction))))).Methods("POST").MatcherFunc(topicThreadCommentEditAction.Matcher())             // TODO make this form
+	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(topicThreadCommentEditActionCancel))))).Methods("POST").MatcherFunc(topicThreadCommentEditActionCancel.Matcher()) // TODO make this form
 }
 
 // Register registers the forum router module.

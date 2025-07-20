@@ -79,14 +79,33 @@ type EditReplyTask struct{ tasks.TaskString }
 
 var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 
+var _ tasks.Task = (*EditReplyTask)(nil)
+
+// notify administrators when comments are edited so they can moderate discussions
+// admins need to know when discussions change, notify them of edits
+var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
+
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	ArticleCommentEditActionPage(w, r)
+}
+
+func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationNewsCommentEditEmail")
+}
+
+func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsCommentEditEmail")
+	return &v
 }
 
 // CancelTask cancels comment editing.
 type CancelTask struct{ tasks.TaskString }
 
 var cancelTask = &CancelTask{TaskString: TaskCancel}
+
+// CancelTask is only used to abort editing, implementing tasks.Task ensures it
+// fits the routing interface even though no additional behaviour is required.
+var _ tasks.Task = (*CancelTask)(nil)
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
 	ArticleCommentEditActionCancelPage(w, r)

@@ -31,6 +31,7 @@ func TestNewsTemplatesExist(t *testing.T) {
 		"replyEmail",
 		"adminNotificationNewsReplyEmail",
 		"newsCommentEditEmail",
+		"newsCommentEditedEmail",
 		"adminNotificationNewsCommentEditEmail",
 		"newsCommentCancelEmail",
 		"adminNotificationNewsCommentCancelEmail",

@@ -38,10 +38,15 @@ var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 // subscribers expect a notification that a new thread was created.
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+
+// automatically subscribe the author so they hear about replies
 var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+
+// ensures forum threads are indexed for search results
+var _ searchworker.IndexedTask = CreateThreadTask{}
 
 // These assertions ensure at build time that starting a new thread hooks into
 // the notification system so participants are auto-subscribed and receive the
@@ -82,6 +87,9 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// AutoSubscribePath records the created thread so the author and topic
+// followers automatically receive updates when others reply.
+	// When a user creates a thread they expect to follow any replies.
 // AutoSubscribePath allows new thread creators to automatically watch for replies.
 var _ searchworker.IndexedTask = CreateThreadTask{}
 

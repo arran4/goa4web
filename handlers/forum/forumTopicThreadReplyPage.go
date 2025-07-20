@@ -26,6 +26,8 @@ type ReplyTask struct{ tasks.TaskString }
 // summary. This keeps discussions active and lets mods monitor forum activity.
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+
+// replies should automatically watch the thread so users see future updates
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 

@@ -51,6 +51,8 @@ var _ tasks.Task = (*ReplyTask)(nil)
 // subscribing the author to future replies.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
+
+// auto-subscribe so readers know when someone replies to their comment
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
@@ -82,6 +84,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// AutoSubscribePath registers this reply so the author automatically follows
+// subsequent comments on the news post.
 	// When users reply to a news post we automatically subscribe them so
 	// they receive updates to the thread they just engaged with.
 // AutoSubscribePath allows commenters to automatically watch for further replies.
@@ -118,6 +122,8 @@ var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 var _ tasks.Task = (*NewPostTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*NewPostTask)(nil)
+
+// new posts should auto-subscribe authors for reply alerts
 var _ notif.AutoSubscribeProvider = (*NewPostTask)(nil)
 
 func (NewPostTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -138,6 +144,8 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
+// AutoSubscribePath links the newly created post so that any future replies
+// notify the author by default.
 	// Subscribing the poster ensures they are notified when readers engage
 	// with their new thread.
 // AutoSubscribePath keeps authors in the loop on new post discussions.

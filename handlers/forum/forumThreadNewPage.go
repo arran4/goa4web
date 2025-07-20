@@ -30,14 +30,10 @@ type CreateThreadTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
-
-var _ tasks.Task = (*CreateThreadTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
-var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
 
@@ -66,22 +62,11 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (CreateThreadTask) AutoSubscribePath() (string, string) {
-	return string(TaskCreateThread), ""
-}
-
 var _ searchworker.IndexedTask = CreateThreadTask{}
 
-func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("threadEmail")
-}
-
-func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("thread")
-	return &s
-}
-
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	// When creating a thread users expect to follow subsequent replies,
+	// so we automatically subscribe them using the event path.
 	return string(TaskCreateThread), evt.Path
 }
 

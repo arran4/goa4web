@@ -23,14 +23,10 @@ type ReplyTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
-
-var _ tasks.Task = (*ReplyTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -59,22 +55,11 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
-}
-
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("replyEmail")
-}
-
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("reply")
-	return &s
-}
-
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	// Replying should subscribe the user so they hear about new posts in
+	// the discussion they just contributed to.
 	return string(TaskReply), evt.Path
 }
 

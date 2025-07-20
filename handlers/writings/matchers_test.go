@@ -3,6 +3,7 @@ package writings
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -36,8 +37,8 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 
 	cd := common.NewCoreData(req.Context(), q, common.WithSession(sess))
 	cd.SetRoles([]string{"content writer"})
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
-	ctx = context.WithValue(ctx, common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{

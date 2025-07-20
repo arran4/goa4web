@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
@@ -24,10 +25,10 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	rows, err := cd.Languages()
 	if err != nil {
@@ -40,7 +41,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid := r.PostFormValue("cid")
 	cname := r.PostFormValue("cname")
 	data := struct {
@@ -49,7 +50,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
@@ -63,7 +64,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid := r.PostFormValue("cid")
 	data := struct {
 		*common.CoreData
@@ -71,7 +72,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
@@ -82,7 +83,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cname := r.PostFormValue("cname")
 	data := struct {
 		*common.CoreData
@@ -90,7 +91,7 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/languages",
 	}
 	if err := queries.CreateLanguage(r.Context(), sql.NullString{

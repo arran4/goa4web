@@ -3,6 +3,7 @@ package news
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -49,8 +50,8 @@ func (AnnouncementDeleteTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 
@@ -73,8 +74,8 @@ func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 

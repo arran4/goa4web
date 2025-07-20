@@ -2,6 +2,7 @@ package news
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 
@@ -30,7 +31,7 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	cd = common.NewCoreData(ctx, q)
 	cd.SetRoles([]string{"content writer", "administrator"})
 	CustomNewsIndex(cd, req.WithContext(ctx))

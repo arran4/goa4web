@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 
@@ -15,7 +16,7 @@ func TestRequiredAccessAllowed(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), nil)
 	cd.UserID = 1
 	cd.SetRoles([]string{"content writer"})
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if !RequiredAccess("content writer")(req, &mux.RouteMatch{}) {
@@ -28,7 +29,7 @@ func TestRequiredAccessDenied(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), nil)
 	cd.UserID = 1
 	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	if RequiredAccess("content writer")(req, &mux.RouteMatch{}) {

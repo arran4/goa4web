@@ -10,6 +10,7 @@ import (
 	"time"
 
 	corecommon "github.com/arran4/goa4web/core/common"
+	coreconsts "github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -84,17 +85,17 @@ func (r *statusRecorder) WriteHeader(code int) {
 func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
-		cd, ok := r.Context().Value(corecommon.KeyCoreData).(*corecommon.CoreData)
+		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData)
 		if !ok || cd == nil {
 			cd = &corecommon.CoreData{}
-			r = r.WithContext(context.WithValue(r.Context(), corecommon.KeyCoreData, cd))
+			r = r.WithContext(context.WithValue(r.Context(), coreconsts.KeyCoreData, cd))
 		}
 		uid := cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")
 		_ = admin
 		evt := &eventbus.Event{
 			Path:   r.URL.Path,
-			Task:   tasks.TaskString(task), // TODO determined by router
+			Task:   tasks.TaskString("MISSING"),
 			UserID: uid,
 			Time:   time.Now(),
 		}

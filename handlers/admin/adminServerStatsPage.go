@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"runtime"
 
@@ -28,7 +29,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
@@ -64,7 +65,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -95,7 +96,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/csrf"
 )
 
@@ -50,7 +51,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			return s[:l]
 		},
 		"addmode": func(u string) string {
-			cd, _ := r.Context().Value(ContextValues("coreData")).(*CoreData)
+			cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
 			if cd == nil || !cd.AdminMode {
 				return u
 			}

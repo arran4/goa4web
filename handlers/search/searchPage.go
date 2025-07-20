@@ -1,6 +1,7 @@
 package search
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
 	common "github.com/arran4/goa4web/core/common"
@@ -14,7 +15,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	handlers.TemplateHandler(w, r, "searchPage", data)

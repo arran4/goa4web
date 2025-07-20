@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -52,12 +53,12 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-       return notif.NewEmailTemplates("forumReplyEmail")
+	return notif.NewEmailTemplates("forumReplyEmail")
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-       s := notif.NotificationTemplateFilenameGenerator("forum_reply")
-       return &s
+	s := notif.NotificationTemplateFilenameGenerator("forum_reply")
+	return &s
 }
 
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
@@ -72,10 +73,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -84,7 +85,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
@@ -107,7 +108,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -115,7 +116,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
 		}
 	}
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -128,8 +129,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(common.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(common.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
+	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

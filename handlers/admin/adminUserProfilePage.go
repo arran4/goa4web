@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,7 +16,7 @@ import (
 func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(idStr)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	user, err := queries.GetUserById(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
@@ -29,7 +30,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		Emails   []*db.UserEmail
 		Comments []*db.AdminUserComment
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
 		Emails:   emails,
 		Comments: comments,
@@ -45,7 +46,7 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/user/" + idStr,
 	}
 	comment := r.PostFormValue("comment")
@@ -54,7 +55,7 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	} else if strings.TrimSpace(comment) == "" {
 		data.Errors = append(data.Errors, "empty comment")
 	} else {
-		queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 		if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: int32(id), Comment: comment}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}

@@ -14,6 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // ContextValues represents context key names used across the application.
@@ -245,6 +246,13 @@ func (cd *CoreData) Session() *sessions.Session { return cd.session }
 
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.Event) { cd.event = evt }
+
+// SetEventTask records the task associated with the current request event.
+func (cd *CoreData) SetEventTask(t tasks.Task) {
+	if cd.event != nil {
+		cd.event.Task = t
+	}
+}
 
 // Event returns the event associated with the request, if any.
 func (cd *CoreData) Event() *eventbus.Event { return cd.event }

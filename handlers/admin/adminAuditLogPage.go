@@ -2,6 +2,7 @@ package admin
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
@@ -34,14 +35,14 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		User:     r.URL.Query().Get("user"),
 		Action:   r.URL.Query().Get("action"),
 		PageSize: handlers.GetPageSize(r),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	usernameFilter := "%"
 	if strings.TrimSpace(data.User) != "" {

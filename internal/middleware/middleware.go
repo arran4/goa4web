@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
@@ -56,7 +57,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		queries := r.Context().Value(common.KeyQueries).(*dbpkg.Queries)
+		queries := r.Context().Value(consts.KeyQueries).(*dbpkg.Queries)
 		if session.ID != "" {
 			if uid != 0 {
 				if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
@@ -90,7 +91,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		cd.IndexItems = idx
-		ctx := context.WithValue(r.Context(), common.KeyCoreData, cd)
+		ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -111,8 +112,8 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 			log.Printf("db pool stats: %+v", DBPool.Stats())
 		}
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, common.KeySQLDB, DBPool)
-		ctx = context.WithValue(ctx, common.KeyQueries, dbpkg.New(DBPool))
+		ctx = context.WithValue(ctx, consts.KeySQLDB, DBPool)
+		ctx = context.WithValue(ctx, consts.KeyQueries, dbpkg.New(DBPool))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -132,7 +133,7 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		uid := int32(0)
 		sessID := ""
-		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok && cd != nil {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
 			uid = cd.UserID
 			if s := cd.Session(); s != nil {
 				sessID = s.ID

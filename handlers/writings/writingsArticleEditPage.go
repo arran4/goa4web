@@ -2,6 +2,7 @@ package writings
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,8 +27,8 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		UserId             int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -43,7 +44,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	writing := r.Context().Value(common.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(consts.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 	data.Writing = writing
 
 	languageRows, err := cd.Languages()
@@ -58,7 +59,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.
-	writing := r.Context().Value(common.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing := r.Context().Value(consts.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
@@ -66,7 +67,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},
@@ -88,7 +89,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fullText := strings.Join([]string{abstract, title, body}, " ")
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

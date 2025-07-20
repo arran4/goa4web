@@ -1,6 +1,7 @@
 package bookmarks
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
@@ -20,7 +21,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	if uid == 0 {

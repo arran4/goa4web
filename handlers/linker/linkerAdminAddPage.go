@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,9 +28,9 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 		Categories         []*db.LinkerCategory
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:           r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
@@ -68,7 +69,7 @@ var _ notif.SubscribersNotificationTemplateProvider = (*addTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*addTask)(nil)
 
 func (addTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

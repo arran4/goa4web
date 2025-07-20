@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
@@ -48,7 +49,7 @@ func (UserDisallowTask) AdminInternalNotificationTemplate() *string {
 }
 
 func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -63,7 +64,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -83,7 +84,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	data := struct {
@@ -92,7 +93,7 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/news",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -108,7 +109,7 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*common.CoreData
@@ -116,7 +117,7 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/news",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

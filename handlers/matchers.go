@@ -9,7 +9,7 @@ import (
 	common "github.com/arran4/goa4web/core/common"
 )
 
-// RequiredAccess ensures the requestor has one of the provided access levels.
+// RequiredAccess ensures the requestor has one of the provided roles.
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		return common.Allowed(request, accessLevels...)

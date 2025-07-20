@@ -1,47 +1,38 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/handlers/news"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// TODO var resendQueueTask = ResendQueueTask{
-var ResendQueueTask = resendQueueTask{TaskString: TaskResend}
+// TODO move these into their appropriate files closer to their struct definitions
 
-// TODO var deleteQueueTask = DeleteQueueTask{
-var DeleteQueueTask = deleteQueueTask{TaskString: TaskDelete}
+// ResendQueueTask triggers sending queued emails immediately.
+type ResendQueueTask struct{ tasks.TaskString }
 
-// TODO var saveTemplateTask = SaveTemplateTask{
-var SaveTemplateTask = saveTemplateTask{TaskString: TaskUpdate}
+var resendQueueTask = &ResendQueueTask{TaskString: TaskResend}
 
-// TODO var testTemplateTask = TestTemplateTask{
-var TestTemplateTask = testTemplateTask{TaskString: TaskTestMail}
+var deleteQueueTask = &DeleteQueueTask{TaskString: TaskDelete}
 
-// TODO var deleteDLQTask = DeleteDLQTask{
-var DeleteDLQTask = deleteDLQTask{TaskString: TaskDelete}
+var saveTemplateTask = &SaveTemplateTask{TaskString: TaskUpdate}
 
-// TODO var markReadTask = MarkReadTask{
-var MarkReadTask = markReadTask{TaskString: TaskDismiss}
+var testTemplateTask = &TestTemplateTask{TaskString: TaskTestMail}
 
-// TODO var purgeNotificationsTask = PurgeNotificationsTask{
-var PurgeNotificationsTask = purgeNotificationsTask{TaskString: TaskPurge}
+var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
 
-// TODO var sendNotificationTask = SendNotificationTask{
-var SendNotificationTask = sendNotificationTask{TaskString: TaskNotify}
+var markReadTask = &MarkReadTask{TaskString: TaskDismiss}
 
-// TODO var addAnnouncementTask = AddAnnouncementTask{
-var AddAnnouncementTask = addAnnouncementTask{TaskString: TaskAdd}
+var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
 
-// TODO var deleteAnnouncementTask = DeleteAnnouncementTask{
-var DeleteAnnouncementTask = deleteAnnouncementTask{TaskString: TaskDelete}
+var sendNotificationTask = &SendNotificationTask{TaskString: TaskNotify}
 
-// TODO var addIPBanTask = AddIPBanTask{
-var AddIPBanTask = addIPBanTask{TaskString: TaskAdd}
+var addAnnouncementTask = &AddAnnouncementTask{TaskString: TaskAdd}
 
-// TODO var deleteIPBanTask = DeleteIPBanTask{
-var DeleteIPBanTask = deleteIPBanTask{TaskString: TaskDelete}
+var deleteAnnouncementTask = &DeleteAnnouncementTask{TaskString: TaskDelete}
 
-// TODO move into this package even if it means updating link
-var NewsUserAllowTask = news.NewsUserAllowTask
+var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
 
-// TODO move into this package even if it means updating link
-var NewsUserRemoveTask = news.NewsUserRemoveTask
+var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
+
+var newsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
+
+var newsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}

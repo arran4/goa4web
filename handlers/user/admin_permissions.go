@@ -13,6 +13,8 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -52,6 +54,9 @@ type PermissionUserAllowTask struct{ tasks.TaskString }
 
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
+var _ tasks.Task = (*PermissionUserAllowTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
+
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
@@ -72,14 +77,49 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		Name:         level,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
+	} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["UserID"] = u.Idusers
+			if u.Username.Valid {
+				evt.Data["Username"] = u.Username.String
+			}
+		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+}
+
+func (PermissionUserAllowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["UserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["UserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	if id, ok := evt.Data["UserID"].(float64); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (PermissionUserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return nil
+}
+
+func (PermissionUserAllowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("permission_user_allow")
+	return &v
 }
 
 // PermissionUserDisallowTask removes a user's permission.
 type PermissionUserDisallowTask struct{ tasks.TaskString }
 
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
+
+var _ tasks.Task = (*PermissionUserDisallowTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -95,16 +135,63 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
+	} else {
+		rows, _ := queries.GetPermissionsWithUsers(r.Context(), db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
+		var uid int32
+		var uname sql.NullString
+		for _, row := range rows {
+			if row.IduserRoles == int32(permidi) {
+				uid = row.UsersIdusers
+				uname = row.Username
+				break
+			}
+		}
+		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
+		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["UserID"] = uid
+				if uname.Valid {
+					evt.Data["Username"] = uname.String
+				}
+			}
+		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+}
+
+func (PermissionUserDisallowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["UserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["UserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	if id, ok := evt.Data["UserID"].(float64); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (PermissionUserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return nil
+}
+
+func (PermissionUserDisallowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("permission_user_disallow")
+	return &v
 }
 
 // PermissionUpdateTask updates an existing permission entry.
 type PermissionUpdateTask struct{ tasks.TaskString }
 
 var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
+
+var _ tasks.Task = (*PermissionUpdateTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -123,12 +210,56 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	if id, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
-		IduserRoles: int32(id),
-		Name:        level,
-	}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
+	} else {
+		rows, _ := queries.GetPermissionsWithUsers(r.Context(), db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
+		var uid int32
+		var uname sql.NullString
+		for _, row := range rows {
+			if row.IduserRoles == int32(id) {
+				uid = row.UsersIdusers
+				uname = row.Username
+				break
+			}
+		}
+		if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
+			IduserRoles: int32(id),
+			Name:        level,
+		}); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
+		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["UserID"] = uid
+				if uname.Valid {
+					evt.Data["Username"] = uname.String
+				}
+			}
+		}
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+}
+
+func (PermissionUpdateTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["UserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["UserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	if id, ok := evt.Data["UserID"].(float64); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (PermissionUpdateTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return nil
+}
+
+func (PermissionUpdateTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("permission_update")
+	return &v
 }

@@ -1,10 +1,12 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -82,10 +84,9 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["UserID"] = u.Idusers
-			if u.Username.Valid {
-				evt.Data["Username"] = u.Username.String
-			}
+			evt.Data["targetUserID"] = u.Idusers
+			evt.Data["Username"] = u.Username.String
+			evt.Data["Role"] = level
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
@@ -136,26 +137,21 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
-		rows, _ := queries.GetPermissionsWithUsers(r.Context(), db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
-		var uid int32
-		var uname sql.NullString
-		for _, row := range rows {
-			if row.IduserRoles == int32(permidi) {
-				uid = row.UsersIdusers
-				uname = row.Username
-				break
-			}
+		id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permidi))
+		if err2 != nil {
+			log.Printf("lookup role: %v", err2)
 		}
 		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
-		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
-				}
-				evt.Data["UserID"] = uid
-				if uname.Valid {
-					evt.Data["Username"] = uname.String
+		} else if err2 == nil {
+			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+				if evt := cd.Event(); evt != nil {
+					if evt.Data == nil {
+						evt.Data = map[string]any{}
+					}
+					evt.Data["targetUserID"] = id
+					evt.Data["Username"] = username
+					evt.Data["Role"] = role
 				}
 			}
 		}
@@ -211,55 +207,97 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if id, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
-		rows, _ := queries.GetPermissionsWithUsers(r.Context(), db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
-		var uid int32
-		var uname sql.NullString
-		for _, row := range rows {
-			if row.IduserRoles == int32(id) {
-				uid = row.UsersIdusers
-				uname = row.Username
-				break
-			}
-		}
+		infoID, username, _, err2 := roleInfoByPermID(r.Context(), queries, int32(id))
 		if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
 			IduserRoles: int32(id),
 			Name:        level,
 		}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
-		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
-				}
-				evt.Data["UserID"] = uid
-				if uname.Valid {
-					evt.Data["Username"] = uname.String
+		} else if err2 == nil {
+			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+				if evt := cd.Event(); evt != nil {
+					if evt.Data == nil {
+						evt.Data = map[string]any{}
+					}
+					evt.Data["targetUserID"] = infoID
+					evt.Data["Username"] = username
+					evt.Data["Role"] = level
 				}
 			}
+		} else {
+			log.Printf("lookup role: %v", err2)
 		}
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func (PermissionUpdateTask) TargetUserIDs(evt eventbus.Event) []int32 {
-	if id, ok := evt.Data["UserID"].(int32); ok {
+func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, string, string, error) {
+	rows, err := q.GetPermissionsWithUsers(ctx, db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
+	if err != nil {
+		return 0, "", "", err
+	}
+	for _, row := range rows {
+		if row.IduserRoles == id {
+			return row.UsersIdusers, row.Username.String, row.Name, nil
+		}
+	}
+	return 0, "", "", sql.ErrNoRows
+}
+
+func (PermissionUserAllowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
 		return []int32{id}
 	}
-	if id, ok := evt.Data["UserID"].(int); ok {
+	if id, ok := evt.Data["targetUserID"].(int); ok {
 		return []int32{int32(id)}
 	}
-	if id, ok := evt.Data["UserID"].(float64); ok {
+	return nil
+}
+
+func (PermissionUserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("setUserRoleEmail")
+}
+
+func (PermissionUserAllowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("set_user_role")
+	return &v
+}
+
+func (PermissionUserDisallowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["targetUserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (PermissionUserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("deleteUserRoleEmail")
+}
+
+func (PermissionUserDisallowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("delete_user_role")
+	return &v
+}
+
+func (PermissionUpdateTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["targetUserID"].(int); ok {
 		return []int32{int32(id)}
 	}
 	return nil
 }
 
 func (PermissionUpdateTask) TargetEmailTemplate() *notif.EmailTemplates {
-	return nil
+	return notif.NewEmailTemplates("updateUserRoleEmail")
 }
 
 func (PermissionUpdateTask) TargetInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("permission_update")
+	v := notif.NotificationTemplateFilenameGenerator("update_user_role")
 	return &v
 }

@@ -152,6 +152,7 @@ type UserAllowTask struct{ tasks.TaskString }
 var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 
 var _ tasks.Task = (*UserAllowTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*UserAllowTask)(nil)
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/admin/writings/users/roles" {
@@ -161,12 +162,32 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsPermissionUserAllowPage(w, r)
 }
 
+func (UserAllowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["targetUserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (UserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("setUserRoleEmail")
+}
+
+func (UserAllowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("set_user_role")
+	return &v
+}
+
 // UserDisallowTask removes a user's permission.
 type UserDisallowTask struct{ tasks.TaskString }
 
 var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 
 var _ tasks.Task = (*UserDisallowTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*UserDisallowTask)(nil)
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/admin/writings/users/roles" {
@@ -174,6 +195,25 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	UsersPermissionsDisallowPage(w, r)
+}
+
+func (UserDisallowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["targetUserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (UserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("deleteUserRoleEmail")
+}
+
+func (UserDisallowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("delete_user_role")
+	return &v
 }
 
 // WritingCategoryChangeTask modifies a category.

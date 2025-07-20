@@ -47,8 +47,8 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if _, ok := evt.Data["page"]; !ok {
-		t.Fatalf("missing page event data: %+v", evt.Data)
+	if _, ok := evt.Data["URL"]; !ok {
+		t.Fatalf("missing URL event data: %+v", evt.Data)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

@@ -13,7 +13,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		UserLevels []*db.GetUserRolesRow
@@ -40,7 +40,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = rows
 
-	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminUserRolesPage.gohtml", data)
 }
 
 func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {

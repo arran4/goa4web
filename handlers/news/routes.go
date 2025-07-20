@@ -23,7 +23,7 @@ func runTemplate(name string) http.HandlerFunc {
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("News", "/", SectionWeight)
-	nav.RegisterAdminControlCenter("News", "/admin/news/users/levels", SectionWeight)
+	nav.RegisterAdminControlCenter("News", "/admin/news/users/roles", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex))
 	r.HandleFunc("/", runTemplate("newsPage.gohtml")).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")

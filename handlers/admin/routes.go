@@ -71,9 +71,9 @@ func RegisterRoutes(ar *mux.Router) {
 
 	// news admin
 	nar := ar.PathPrefix("/news").Subrouter()
-	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsPage).Methods("GET")
-	nar.HandleFunc("/users/levels", tasks.Action(newsUserAllow)).Methods("POST").MatcherFunc(newsUserAllow.Matcher())
-	nar.HandleFunc("/users/levels", tasks.Action(newsUserRemove)).Methods("POST").MatcherFunc(newsUserRemove.Matcher())
+	nar.HandleFunc("/users/roles", news.AdminUserRolesPage).Methods("GET")
+	nar.HandleFunc("/users/roles", tasks.Action(newsUserAllow)).Methods("POST").MatcherFunc(newsUserAllow.Matcher())
+	nar.HandleFunc("/users/roles", tasks.Action(newsUserRemove)).Methods("POST").MatcherFunc(newsUserRemove.Matcher())
 
 	// writings admin
 	writings.RegisterAdminRoutes(ar)

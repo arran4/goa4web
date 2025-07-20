@@ -3,6 +3,8 @@ package writings
 import (
 	"net/http"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 )
@@ -18,7 +20,20 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) { Articl
 // ReplyTask posts a comment reply.
 type ReplyTask struct{ tasks.TaskString }
 
+// ReplyTask implements these interfaces so that when a user replies to a
+// writing everyone following the discussion is automatically subscribed and
+// receives a notification using the shared reply templates. This keeps readers
+// informed when conversations continue.
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
 var replyTask = &ReplyTask{TaskString: TaskReply}
+
+var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask notifies followers and auto-subscribes the author so replies aren't missed.
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -29,7 +44,33 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 	return nil
 }
 
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
+}
+
 var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
+}
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) { ArticleReplyActionPage(w, r) }
 

@@ -12,6 +12,8 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
@@ -26,6 +28,13 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask alerts watchers of new posts and auto-subscribes the replier so
+// they see further responses.
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
 func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
@@ -36,6 +45,19 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 }
 
 var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
+}
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {

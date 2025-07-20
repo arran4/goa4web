@@ -1,0 +1,7 @@
+Usage:
+  {{.Prog}} notifications tasks
+
+Displays a table of tasks and their notification templates.
+
+Flags:
+{{template "flags" .Flags}}

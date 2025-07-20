@@ -38,7 +38,17 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+// ReplyTask hooks into notification and auto subscription systems so readers
+// following a news post will see replies and admins are emailed about new
+// discussions. This promotes active conversations while giving moderators
+// oversight.
+// Interface checks with reasoning. Administrators and subscribers receive
+// notifications when discussions grow, and commenters are auto-subscribed so
+// they know when someone replies.
 var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask keeps commenters in the loop by notifying thread followers and
+// subscribing the author to future replies.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
@@ -55,11 +65,11 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("newsReplyEmail")
+	return notif.NewEmailTemplates("replyEmail")
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("news_reply")
+	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 
@@ -72,9 +82,10 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	// When users reply to a news post we automatically subscribe them so
 	// they receive updates to the thread they just engaged with.
+// AutoSubscribePath allows commenters to automatically watch for further replies.
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskReply), evt.Path
 }
 
@@ -98,6 +109,12 @@ type NewPostTask struct{ tasks.TaskString }
 
 var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 
+// NewPostTask implements notification providers so authors automatically
+// subscribe to discussion on their posts and administrators are kept in the
+// loop. Subscribers are notified as well, encouraging engagement with freshly
+// published content.
+// New posts alert subscribers and admins and subscribe the poster to reply
+// notifications.
 var _ tasks.Task = (*NewPostTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*NewPostTask)(nil)
@@ -121,9 +138,10 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	// Subscribing the poster ensures they are notified when readers engage
 	// with their new thread.
+// AutoSubscribePath keeps authors in the loop on new post discussions.
+func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskNewPost), evt.Path
 }
 

@@ -12,22 +12,27 @@ import (
 	"strconv"
 )
 
-// newsUserAllowTask grants a role to a user and notifies admins.
-type newsUserAllowTask struct{ tasks.TaskString }
+// NewsUserAllowTask grants a role to a user and notifies admins.
+type NewsUserAllowTask struct{ tasks.TaskString }
 
-var _ tasks.Task = (*newsUserAllowTask)(nil)
-var _ notifications.AdminEmailTemplateProvider = (*newsUserAllowTask)(nil)
+// TaskNewsUserAllow identifies a request to grant a user a role.
+const TaskNewsUserAllow tasks.TaskString = "allow"
 
-func (newsUserAllowTask) AdminEmailTemplate() *notifications.EmailTemplates {
+var newsUserAllow = &NewsUserAllowTask{TaskString: TaskNewsUserAllow}
+
+var _ tasks.Task = (*NewsUserAllowTask)(nil)
+var _ notifications.AdminEmailTemplateProvider = (*NewsUserAllowTask)(nil)
+
+func (NewsUserAllowTask) AdminEmailTemplate() *notifications.EmailTemplates {
 	return notifications.NewEmailTemplates("newsPermissionEmail")
 }
 
-func (newsUserAllowTask) AdminInternalNotificationTemplate() *string {
+func (NewsUserAllowTask) AdminInternalNotificationTemplate() *string {
 	v := notifications.NotificationTemplateFilenameGenerator("news_permission")
 	return &v
 }
 
-func (newsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
@@ -49,22 +54,27 @@ func (newsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-// newsUserRemoveTask revokes a role from a user and notifies admins.
-type newsUserRemoveTask struct{ tasks.TaskString }
+// NewsUserRemoveTask revokes a role from a user and notifies admins.
+type NewsUserRemoveTask struct{ tasks.TaskString }
 
-var _ tasks.Task = (*newsUserRemoveTask)(nil)
-var _ notifications.AdminEmailTemplateProvider = (*newsUserRemoveTask)(nil)
+// TaskNewsUserRemove identifies a request to revoke a user's role.
+const TaskNewsUserRemove tasks.TaskString = "remove"
 
-func (newsUserRemoveTask) AdminEmailTemplate() *notifications.EmailTemplates {
+var newsUserRemove = &NewsUserRemoveTask{TaskString: TaskNewsUserRemove}
+
+var _ tasks.Task = (*NewsUserRemoveTask)(nil)
+var _ notifications.AdminEmailTemplateProvider = (*NewsUserRemoveTask)(nil)
+
+func (NewsUserRemoveTask) AdminEmailTemplate() *notifications.EmailTemplates {
 	return notifications.NewEmailTemplates("newsPermissionEmail")
 }
 
-func (newsUserRemoveTask) AdminInternalNotificationTemplate() *string {
+func (NewsUserRemoveTask) AdminInternalNotificationTemplate() *string {
 	v := notifications.NotificationTemplateFilenameGenerator("news_permission")
 	return &v
 }
 
-func (newsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
+func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	permid, err := strconv.Atoi(r.PostFormValue("permid"))
 	if err != nil {

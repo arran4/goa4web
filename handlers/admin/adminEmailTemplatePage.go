@@ -27,8 +27,12 @@ import (
 // SaveTemplateTask stores a custom update email template.
 type SaveTemplateTask struct{ tasks.TaskString }
 
+var saveTemplateTask = &SaveTemplateTask{TaskString: TaskUpdate}
+
 // TestTemplateTask queues an email using the template for preview.
 type TestTemplateTask struct{ tasks.TaskString }
+
+var testTemplateTask = &TestTemplateTask{TaskString: TaskTestMail}
 
 func getUpdateEmailText(ctx context.Context) string {
 	if q, ok := ctx.Value(consts.KeyQueries).(*db.Queries); ok && q != nil {

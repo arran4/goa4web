@@ -19,8 +19,12 @@ import (
 // AddAnnouncementTask posts a new announcement.
 type AddAnnouncementTask struct{ tasks.TaskString }
 
+var addAnnouncementTask = &AddAnnouncementTask{TaskString: TaskAdd}
+
 // DeleteAnnouncementTask removes an announcement.
 type DeleteAnnouncementTask struct{ tasks.TaskString }
+
+var deleteAnnouncementTask = &DeleteAnnouncementTask{TaskString: TaskDelete}
 
 var _ tasks.Task = (*AddAnnouncementTask)(nil)
 

@@ -19,8 +19,12 @@ import (
 // AddIPBanTask blocks a network from accessing the site.
 type AddIPBanTask struct{ tasks.TaskString }
 
+var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
+
 // DeleteIPBanTask lifts an IP ban.
 type DeleteIPBanTask struct{ tasks.TaskString }
+
+var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

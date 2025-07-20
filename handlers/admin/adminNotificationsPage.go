@@ -18,11 +18,17 @@ import (
 // MarkReadTask marks notifications as read.
 type MarkReadTask struct{ tasks.TaskString }
 
+var markReadTask = &MarkReadTask{TaskString: TaskDismiss}
+
 // PurgeNotificationsTask removes old read notifications.
 type PurgeNotificationsTask struct{ tasks.TaskString }
 
+var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
+
 // SendNotificationTask creates a site notification for users.
 type SendNotificationTask struct{ tasks.TaskString }
+
+var sendNotificationTask = &SendNotificationTask{TaskString: TaskNotify}
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

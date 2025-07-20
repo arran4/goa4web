@@ -215,6 +215,8 @@ The allowed page size range and default value are resolved in the following orde
 2. Values from a config file specified with `--config-file` or `CONFIG_FILE`
 3. Environment variables (`PAGE_SIZE_MIN`, `PAGE_SIZE_MAX`, `PAGE_SIZE_DEFAULT`)
 4. Built-in defaults (5, 50 and 15)
+Administrators can temporarily adjust these limits through `/admin/page-size`. This only changes the running configuration; update the config file to retain the values after a restart.
+Individual users can override the default value for their account via `/usr/paging`.
 
 ## Configuration Reference
 

@@ -39,3 +39,9 @@ func TestAnswerTaskTemplatesCompile(t *testing.T) {
 	requireEmailTemplates(t, task.SelfEmailTemplate())
 	requireNotificationTemplate(t, task.SelfInternalNotificationTemplate())
 }
+
+func TestAskTaskTemplatesCompile(t *testing.T) {
+	var task AskTask
+	requireEmailTemplates(t, task.AdminEmailTemplate())
+	requireNotificationTemplate(t, task.AdminInternalNotificationTemplate())
+}

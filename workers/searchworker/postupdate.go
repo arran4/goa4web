@@ -13,7 +13,6 @@ import (
 // the search tables.
 type IndexedTask interface {
 	// IndexType returns the search index type to update.
-	// TODO consider adding this field directly to IndexEventData.
 	IndexType() string
 	// IndexData extracts the pieces of data to index from the event payload.
 	// Returning nil indicates there is nothing to index.

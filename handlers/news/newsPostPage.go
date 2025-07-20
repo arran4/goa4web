@@ -20,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -40,6 +41,8 @@ var replyTask = &ReplyTask{TaskString: TaskReply}
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
+
+// auto-subscribe so readers know when someone replies to their comment
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
@@ -71,8 +74,10 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
+// AutoSubscribePath registers this reply so the author automatically follows
+// subsequent comments on the news post.
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
 }
 
 type EditTask struct{ tasks.TaskString }
@@ -98,6 +103,8 @@ var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 var _ tasks.Task = (*NewPostTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*NewPostTask)(nil)
+
+// new posts should auto-subscribe authors for reply alerts
 var _ notif.AutoSubscribeProvider = (*NewPostTask)(nil)
 
 func (NewPostTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -118,8 +125,10 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (NewPostTask) AutoSubscribePath() (string, string) {
-	return string(TaskNewPost), ""
+// AutoSubscribePath links the newly created post so that any future replies
+// notify the author by default.
+func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskNewPost), evt.Path
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {

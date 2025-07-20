@@ -23,6 +23,8 @@ type ReplyTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+
+// replies should automatically watch the thread so users see future updates
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
@@ -59,22 +61,10 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
-}
-
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("replyEmail")
-}
-
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("reply")
-	return &s
-}
-
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	// AutoSubscribePath ensures reply authors follow the conversation.
 	return string(TaskReply), evt.Path
 }
 

@@ -23,14 +23,22 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 }
 
 func TestForumTemplatesExist(t *testing.T) {
-  // TODO make it loop over the tasks.
-	prefixes := []string{
-		"forumThreadCreateEmail",
-		"adminNotificationForumThreadCreateEmail",
-		"forumReplyEmail",
-		"adminNotificationForumReplyEmail",
+	tasks := []notif.SubscribersNotificationTemplateProvider{
+		createThreadTask,
+		replyTask,
 	}
-	for _, p := range prefixes {
-		requireEmailTemplates(t, p)
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	for _, tp := range tasks {
+		et := tp.SubscribedEmailTemplate()
+		if htmlTmpls.Lookup(et.HTML) == nil {
+			t.Errorf("missing html template %s", et.HTML)
+		}
+		if textTmpls.Lookup(et.Text) == nil {
+			t.Errorf("missing text template %s", et.Text)
+		}
+		if textTmpls.Lookup(et.Subject) == nil {
+			t.Errorf("missing subject template %s", et.Subject)
+		}
 	}
 }

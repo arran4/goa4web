@@ -30,9 +30,14 @@ type CreateThreadTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+
+// automatically subscribe the author so they hear about replies
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+
+// ensures forum threads are indexed for search results
+var _ searchworker.IndexedTask = CreateThreadTask{}
 
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
@@ -66,22 +71,10 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (CreateThreadTask) AutoSubscribePath() (string, string) {
-	return string(TaskCreateThread), ""
-}
-
-var _ searchworker.IndexedTask = CreateThreadTask{}
-
-func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("threadEmail")
-}
-
-func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("thread")
-	return &s
-}
-
+// AutoSubscribePath records the created thread so the author and topic
+// followers automatically receive updates when others reply.
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	// When a user creates a thread they expect to follow any replies.
 	return string(TaskCreateThread), evt.Path
 }
 

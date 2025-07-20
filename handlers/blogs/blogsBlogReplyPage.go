@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -29,6 +30,9 @@ var _ tasks.Task = (*ReplyBlogTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
 
+// SubscribedEmailTemplate informs blog subscribers when someone replies.
+// Followers of a blog want to know when new discussion happens so they
+// can return and participate.
 func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("blogReplyEmail")
 }
@@ -38,8 +42,10 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (ReplyBlogTask) AutoSubscribePath() (string, string) {
-	return TaskReply, ""
+// AutoSubscribePath subscribes the commenting user to future replies so they
+// stay informed about responses to their comment.
+func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return TaskReply, evt.Path
 }
 
 func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }
@@ -169,6 +175,17 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
+	}
+
+	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["Username"] = u.Username.String
+			}
+		}
 	}
 
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {

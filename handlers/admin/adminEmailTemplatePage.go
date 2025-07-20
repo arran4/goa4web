@@ -28,7 +28,7 @@ type testTemplateTask struct{ tasks.TaskString }
 
 func getUpdateEmailText(ctx context.Context) string {
 	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
-		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
+		if body, err := q.GetTemplateOverride(ctx, "updateEmail.gotxt"); err == nil && body != "" {
 			return body
 		}
 	}
@@ -79,7 +79,7 @@ func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	body := r.PostFormValue("body")
 	q := r.Context().Value(common.KeyQueries).(*db.Queries)
-	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail", Body: body}); err != nil {
+	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail.gotxt", Body: body}); err != nil {
 		log.Printf("db save template: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)

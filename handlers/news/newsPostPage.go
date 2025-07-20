@@ -20,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -53,6 +54,8 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
+// SubscribedEmailTemplate notifies subscribers about replies on the news post.
+// Interested readers expect to hear when conversations continue on articles they follow.
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("newsReplyEmail")
 }
@@ -71,8 +74,10 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
+// AutoSubscribePath subscribes the commenter to updates on the post so they
+// receive future reactions without needing to manually subscribe.
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
 }
 
 type EditTask struct{ tasks.TaskString }
@@ -109,6 +114,8 @@ func (NewPostTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// SubscribedEmailTemplate notifies subscribers that a new news post was added.
+// Followers of the news feed expect immediate updates when articles are published.
 func (NewPostTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("newsAddEmail")
 }
@@ -118,8 +125,10 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (NewPostTask) AutoSubscribePath() (string, string) {
-	return string(TaskNewPost), ""
+// AutoSubscribePath subscribes the author to the new post's discussion thread so
+// they are automatically involved in any follow up conversation.
+func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskNewPost), evt.Path
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
@@ -403,6 +412,17 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["Username"] = u.Username.String
+			}
+		}
+	}
+
 	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -520,6 +540,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 					evt.Data = map[string]any{}
 				}
 				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
+				evt.Data["Username"] = u.Username.String
 			}
 		}
 	}

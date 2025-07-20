@@ -41,6 +41,8 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 	return nil
 }
 
+// SubscribedEmailTemplate notifies subscribers when someone replies.
+// Participants expect updates on new posts so they can keep the conversation going.
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("forumReplyEmail")
 }
@@ -59,21 +61,10 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
-}
-
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("replyEmail")
-}
-
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("reply")
-	return &s
-}
-
+// AutoSubscribePath subscribes the replier to the thread so their future replies
+// are tracked automatically.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskReply), evt.Path
 }

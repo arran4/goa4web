@@ -30,14 +30,10 @@ type CreateThreadTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
-
-var _ tasks.Task = (*CreateThreadTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
-var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
 
@@ -48,6 +44,8 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	return nil
 }
 
+// SubscribedEmailTemplate notifies topic subscribers about the new thread.
+// As a topic follower I want to hear when fresh discussions start so I can join in.
 func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("forumThreadCreateEmail")
 }
@@ -66,21 +64,10 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (CreateThreadTask) AutoSubscribePath() (string, string) {
-	return string(TaskCreateThread), ""
-}
-
 var _ searchworker.IndexedTask = CreateThreadTask{}
 
-func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("threadEmail")
-}
-
-func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("thread")
-	return &s
-}
-
+// AutoSubscribePath subscribes the thread author to future updates so they
+// automatically see any replies.
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskCreateThread), evt.Path
 }

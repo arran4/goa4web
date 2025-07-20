@@ -1,4 +1,4 @@
-package news
+package blogs
 
 import (
 	"testing"
@@ -36,22 +36,20 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 	}
 }
 
-func TestNewsReplyTemplatesExist(t *testing.T) {
-	requireEmailTemplatesFromProvider(t, replyTask.SubscribedEmailTemplate())
-	requireNotificationTemplate(t, replyTask.SubscribedInternalNotificationTemplate())
-	requireEmailTemplatesFromProvider(t, replyTask.AdminEmailTemplate())
-	requireNotificationTemplate(t, replyTask.AdminInternalNotificationTemplate())
+func TestBlogReplyTemplatesExist(t *testing.T) {
+	requireEmailTemplatesFromProvider(t, replyBlogTask.SubscribedEmailTemplate())
+	requireNotificationTemplate(t, replyBlogTask.SubscribedInternalNotificationTemplate())
 }
 
-func TestNewsNewPostTemplatesExist(t *testing.T) {
-	requireEmailTemplatesFromProvider(t, newPostTask.SubscribedEmailTemplate())
-	requireNotificationTemplate(t, newPostTask.SubscribedInternalNotificationTemplate())
-	requireEmailTemplatesFromProvider(t, newPostTask.AdminEmailTemplate())
-	requireNotificationTemplate(t, newPostTask.AdminInternalNotificationTemplate())
+func TestBlogAddTemplatesExist(t *testing.T) {
+	requireEmailTemplatesFromProvider(t, addBlogTask.SubscribedEmailTemplate())
+	requireNotificationTemplate(t, addBlogTask.SubscribedInternalNotificationTemplate())
+	requireEmailTemplatesFromProvider(t, addBlogTask.AdminEmailTemplate())
+	requireNotificationTemplate(t, addBlogTask.AdminInternalNotificationTemplate())
 }
 
-func TestNewsRepliesMustAutoSubscribe(t *testing.T) {
-	if _, ok := interface{}(replyTask).(notif.AutoSubscribeProvider); !ok {
+func TestBlogRepliesMustAutoSubscribe(t *testing.T) {
+	if _, ok := interface{}(replyBlogTask).(notif.AutoSubscribeProvider); !ok {
 		t.Fatalf("AutoSubscribeProvider must auto subscribe as users will want updates")
 	}
 }

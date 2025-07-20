@@ -1,4 +1,5 @@
 {{ template "head" $ }}
+{{- if .HasBookmarks }}
     <table>
         <tr valign="top">
             {{- range .Columns }}
@@ -15,5 +16,8 @@
             {{- end }}
         </tr>
     </table>
+{{- else }}
+    <p>No bookmarks saved. Use <a href="/bookmarks/edit">Edit</a> to add some.</p>
+{{- end }}
     <hr><a href="/bookmarks/edit">EDIT</a><br>
 {{ template "tail" $ }}

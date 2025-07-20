@@ -28,16 +28,45 @@ import (
 // CreateThreadTask handles creating a new forum thread.
 type CreateThreadTask struct{ tasks.TaskString }
 
+var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+
+// createThreadTask implements notification providers so that when a user starts
+// a new discussion they automatically watch for replies and administrators are
+// emailed about the new thread. This helps engaged users stay in the loop while
+// giving moderators visibility of new conversations.
+// The author should automatically follow their thread and existing topic
+// subscribers expect a notification that a new thread was created.
 var _ tasks.Task = (*CreateThreadTask)(nil)
+
+// topic followers want an email when a new thread starts
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+
+// automatically subscribe the author so they hear about replies
+var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
 
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
+// ensures forum threads are indexed for search results
+var _ searchworker.IndexedTask = CreateThreadTask{}
+
+// These assertions ensure at build time that starting a new thread hooks into
+// the notification system so participants are auto-subscribed and receive the
+// correct templates.
+
+// Interface checks with user value. When a new thread is created we notify
+// topic subscribers so they see new discussions, alert administrators for
+// moderation, and auto-subscribe the author so they are looped into replies.
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+
+// admins also monitor new discussions
 var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
+
+// creators should automatically watch their new thread for replies
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
+
+var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
 
@@ -48,12 +77,14 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	return nil
 }
 
+var _ searchworker.IndexedTask = CreateThreadTask{}
+
 func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("forumThreadCreateEmail")
+	return notif.NewEmailTemplates("threadEmail")
 }
 
 func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("forum_thread_create")
+	s := notif.NotificationTemplateFilenameGenerator("thread")
 	return &s
 }
 
@@ -68,6 +99,11 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 
 var _ searchworker.IndexedTask = CreateThreadTask{}
 
+// AutoSubscribePath records the created thread so the author and topic
+// followers automatically receive updates when others reply.
+	// When a user creates a thread they expect to follow any replies.
+// AutoSubscribePath allows new thread creators to automatically watch for replies.
+
 // AutoSubscribePath implements notif.AutoSubscribeProvider. When the
 // postcountworker provides context, a subscription to the created thread is
 // generated.
@@ -75,8 +111,11 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskCreateThread), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
 	}
+
 	return string(TaskCreateThread), evt.Path
 }
+
+var _ searchworker.IndexedTask = CreateThreadTask{}
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

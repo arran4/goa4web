@@ -47,8 +47,6 @@ type EmailData struct {
 }
 
 // RenderEmailFromTemplates returns the rendered email message using the provided templates.
-// TODO: evaluate exposing this via EmailTemplates.CreateEmail instead.
-// TODO: this should be a receiver on EmailTemplates
 func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr string, et *EmailTemplates, item interface{}) ([]byte, error) {
 	if emailAddr == "" {
 		return nil, fmt.Errorf("no email specified")

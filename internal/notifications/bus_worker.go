@@ -177,7 +177,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.Event, tp
 			notifyMissingEmail(ctx, n.Queries, id)
 		} else {
 			if et := tp.TargetEmailTemplate(); et != nil {
-				if err := n.RenderAndQueueEmailFromTemplates(ctx, id, user.Email.String, et, evt.Data); err != nil {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, id, user.Email.String, et, evt.Data); err != nil {
 					return err
 				}
 			}

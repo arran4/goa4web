@@ -76,7 +76,7 @@ type CoreData struct {
 	annMu                    sync.Mutex
 	bloggers                 lazyValue[[]*db.BloggerCountRow]
 	bookmarks                lazyValue[*db.GetBookmarksForUserRow]
-	event                    *eventbus.Event
+	event                    *eventbus.TaskEvent
 	forumCategories          lazyValue[[]*db.Forumcategory]
 	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
 	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
@@ -122,7 +122,7 @@ func WithSession(s *sessions.Session) CoreOption {
 }
 
 // WithEvent links an event to the CoreData object.
-func WithEvent(evt *eventbus.Event) CoreOption { return func(cd *CoreData) { cd.event = evt } }
+func WithEvent(evt *eventbus.TaskEvent) CoreOption { return func(cd *CoreData) { cd.event = evt } }
 
 // WithAbsoluteURLBase sets the base URL used to build absolute links.
 func WithAbsoluteURLBase(base string) CoreOption {
@@ -254,7 +254,7 @@ func (cd *CoreData) SetSession(s *sessions.Session) { cd.session = s }
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
 
 // SetEvent stores evt on cd for handler access.
-func (cd *CoreData) SetEvent(evt *eventbus.Event) { cd.event = evt }
+func (cd *CoreData) SetEvent(evt *eventbus.TaskEvent) { cd.event = evt }
 
 // SetEventTask records the task associated with the current request event.
 func (cd *CoreData) SetEventTask(t tasks.Task) {
@@ -271,7 +271,7 @@ func (cd *CoreData) AbsoluteURL(path string) string {
 }
 
 // Event returns the event associated with the request, if any.
-func (cd *CoreData) Event() *eventbus.Event { return cd.event }
+func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
 
 // CurrentUser returns the logged in user's record loaded on demand.
 func (cd *CoreData) CurrentUser() (*db.User, error) {

@@ -102,10 +102,14 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	defer conn.Close()
 
-	ch := h.Bus.Subscribe()
+	ch := h.Bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case evt := <-ch:
+		case msg := <-ch:
+			evt, ok := msg.(eventbus.TaskEvent)
+			if !ok {
+				continue
+			}
 			if evt.UserID == uid && strings.HasPrefix(evt.Path, "/usr/subscriptions") &&
 				(evt.Task == hcommon.TaskUpdate || evt.Task == hcommon.TaskDelete) {
 				var err error

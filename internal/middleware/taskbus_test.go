@@ -24,11 +24,15 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
-	ch := bus.Subscribe()
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
-	case evt := <-ch:
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong type %T", msg)
+		}
 		named, ok := evt.Task.(tasks.Name)
 		if !ok || named.Name() != "MISSING" || evt.Path != "/admin/p" {
 			t.Fatalf("unexpected event %+v", evt)
@@ -41,11 +45,15 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
-	ch = bus.Subscribe()
+	ch = bus.Subscribe(eventbus.TaskMessageType)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
-	case evt := <-ch:
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong type %T", msg)
+		}
 		if strings.Contains(evt.Path, "/admin") {
 			t.Fatalf("unexpected admin path for %#v", evt)
 		}
@@ -59,11 +67,12 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
-	ch = bus.Subscribe()
+	ch = bus.Subscribe(eventbus.TaskMessageType)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
 	failureHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
-	case <-ch:
+	case msg := <-ch:
+		t.Fatalf("did not expect event on failure, got %T", msg)
 		t.Fatalf("did not expect event on failure")
 	default:
 	}
@@ -83,11 +92,15 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
-	ch = bus.Subscribe()
+	ch = bus.Subscribe(eventbus.TaskMessageType)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
-	case evt := <-ch:
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong type %T", msg)
+		}
 		val, ok := evt.Data["info"].(bool)
 		if evt.Data == nil || !ok || !val {
 			t.Fatalf("missing data: %+v", evt)
@@ -123,7 +136,7 @@ func TestTaskEventQueue(t *testing.T) {
 	}
 
 	eventbus.ReopenDefaultBus()
-	ch := eventbus.DefaultBus.Subscribe()
+	ch := eventbus.DefaultBus.Subscribe(eventbus.TaskMessageType)
 	taskQueue.flush(context.Background())
 
 	select {

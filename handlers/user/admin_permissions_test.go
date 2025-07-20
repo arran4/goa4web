@@ -55,7 +55,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 		WithArgs(int32(2), "moderator").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	ch := bus.Subscribe()
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 
 	form := url.Values{}
 	form.Set("username", "bob")
@@ -64,7 +64,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/users/permissions", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cd := &common.CoreData{}
-	evt := &eventbus.Event{}
+	evt := &eventbus.TaskEvent{}
 	cd.SetEvent(evt)
 	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -74,7 +74,11 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	select {
-	case e := <-ch:
+	case msg := <-ch:
+		e, ok := msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong message type %T", msg)
+		}
 		if e.Data["Username"] != "bob" || e.Data["Permission"] != "moderator" {
 			t.Fatalf("unexpected event data: %+v", e.Data)
 		}

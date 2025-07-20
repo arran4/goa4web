@@ -36,7 +36,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test"
 
-	evt := &eventbus.Event{Data: map[string]any{}}
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1

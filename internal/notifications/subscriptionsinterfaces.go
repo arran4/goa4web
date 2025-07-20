@@ -45,13 +45,13 @@ type AutoSubscribeProvider interface {
 	// AutoSubscribePath returns the action name and URI used when creating the
 	// subscription. The event may provide additional context required to build
 	// the path.
-	AutoSubscribePath(evt eventbus.Event) (string, string)
+	AutoSubscribePath(evt eventbus.TaskEvent) (string, string)
 }
 
 // TargetUsersNotificationProvider indicates the notification should be delivered
 // to the returned user IDs.
 type TargetUsersNotificationProvider interface {
-	TargetUserIDs(evt eventbus.Event) []int32
+	TargetUserIDs(evt eventbus.TaskEvent) []int32
 	TargetEmailTemplate() *EmailTemplates
 	TargetInternalNotificationTemplate() *string
 }

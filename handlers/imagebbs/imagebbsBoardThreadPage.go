@@ -56,7 +56,7 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
 	return string(TaskReply), evt.Path
 }
 

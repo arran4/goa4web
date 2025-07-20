@@ -429,7 +429,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
-	endUrl := handlers.AbsoluteURL(r, fmt.Sprintf("/news/news/%d", pid))
+	endUrl := cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", pid))
 
 	evt := cd.Event()
 	if evt.Data == nil {
@@ -569,7 +569,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 					evt.Data = map[string]any{}
 				}
 				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
-				evt.Data["PostURL"] = handlers.AbsoluteURL(r, fmt.Sprintf("/news/news/%d", id))
+				evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", id))
 			}
 		}
 	}

@@ -101,7 +101,7 @@ func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["PostURL"] = handlers.AbsoluteURL(r, fmt.Sprintf("/blogs/blog/%d", row.Idblogs))
+			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d", row.Idblogs))
 		}
 	}
 

@@ -28,7 +28,16 @@ import (
 // CreateThreadTask handles creating a new forum thread.
 type CreateThreadTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*CreateThreadTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
+var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
+
 var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+
+// These assertions ensure at build time that starting a new thread hooks into
+// the notification system so participants are auto-subscribed and receive the
+// correct templates.
 
 // Interface checks with user value. When a new thread is created we notify
 // topic subscribers so they see new discussions, alert administrators for

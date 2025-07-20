@@ -21,6 +21,15 @@ import (
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
+var _ tasks.Task = (*ReplyTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
+
+// Build time checks so replying to a thread always triggers subscription and
+// notification delivery using the standard templates, keeping readers in the
+// conversation.
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
 // Compile-time interface checks with user focused reasoning. Subscribing allows

@@ -97,15 +97,21 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+var _ searchworker.IndexedTask = CreateThreadTask{}
+
 // AutoSubscribePath records the created thread so the author and topic
 // followers automatically receive updates when others reply.
 	// When a user creates a thread they expect to follow any replies.
 // AutoSubscribePath allows new thread creators to automatically watch for replies.
-var _ searchworker.IndexedTask = CreateThreadTask{}
 
+// AutoSubscribePath implements notif.AutoSubscribeProvider. When the
+// postcountworker provides context, a subscription to the created thread is
+// generated.
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
-	// When creating a thread users expect to follow subsequent replies,
-	// so we automatically subscribe them using the event path.
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskCreateThread), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
+
 	return string(TaskCreateThread), evt.Path
 }
 

@@ -1,11 +1,13 @@
 package writings
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
+	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 )
 
@@ -71,11 +73,18 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
+// AutoSubscribePath implements notif.AutoSubscribeProvider. It builds the
+// subscription path for the writing's forum thread when that data is provided
+// by the event.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
 	return string(TaskReply), evt.Path
 }
 
 var _ searchworker.IndexedTask = ReplyTask{}
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("replyEmail")

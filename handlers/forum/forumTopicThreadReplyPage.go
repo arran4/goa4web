@@ -85,6 +85,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+var _ searchworker.IndexedTask = ReplyTask{}
+
 // AutoSubscribePath ensures authors automatically receive updates on replies.
 var _ searchworker.IndexedTask = ReplyTask{}
 
@@ -97,9 +99,12 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
        return &s
 }
 
+// AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
+// created for the originating forum thread when that information is available.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
-	// Replying should subscribe the user so they hear about new posts in
-	// the discussion they just contributed to.
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
 	return string(TaskReply), evt.Path
 }
 

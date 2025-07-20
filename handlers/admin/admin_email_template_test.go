@@ -21,7 +21,7 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	logProv "github.com/arran4/goa4web/internal/email/log"
-	"github.com/arran4/goa4web/internal/notifications"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 func init() { logProv.Register() }
@@ -62,8 +62,6 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "u@example.com", "u")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
-	mock.ExpectQuery("SELECT body FROM template_overrides WHERE name = ?").
-		WithArgs("updateEmail").WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 

@@ -22,7 +22,7 @@ import (
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/internal/notifications"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
@@ -91,8 +91,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 
 // AutoSubscribePath registers this reply so the author automatically follows
 // subsequent comments on the news post.
-	// When users reply to a news post we automatically subscribe them so
-	// they receive updates to the thread they just engaged with.
+// When users reply to a news post we automatically subscribe them so
+// they receive updates to the thread they just engaged with.
 // AutoSubscribePath allows commenters to automatically watch for further replies.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. A subscription to
 // the underlying discussion thread is created using event data when available.
@@ -161,8 +161,8 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 
 // AutoSubscribePath links the newly created post so that any future replies
 // notify the author by default.
-	// Subscribing the poster ensures they are notified when readers engage
-	// with their new thread.
+// Subscribing the poster ensures they are notified when readers engage
+// with their new thread.
 // AutoSubscribePath keeps authors in the loop on new post discussions.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. Subscriptions use
 // the thread path derived from postcountworker data when possible.
@@ -570,7 +570,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["blog"] = notifications.BlogPostInfo{Author: u.Username.String}
+				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
 			}
 		}
 	}

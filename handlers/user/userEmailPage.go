@@ -307,6 +307,16 @@ func (AddEmailTask) SelfInternalNotificationTemplate() *string {
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	if uid == 0 {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.NotFound(w, r)
@@ -316,6 +326,10 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	ue, err := queries.GetUserEmailByCode(r.Context(), sql.NullString{String: code, Valid: true})
 	if err != nil || (ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now())) {
 		http.Error(w, "invalid code", http.StatusBadRequest)
+		return
+	}
+	if ue.UserID != uid {
+		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
 	_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})

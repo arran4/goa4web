@@ -10,6 +10,6 @@ Hello,
 {{.URL}}
 {{end}}
 Manage notifications: {{.UnsubscribeUrl}}
-
-Cheers,
-The A4Web Team
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

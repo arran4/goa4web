@@ -6,6 +6,6 @@ Hello,
 
 Your account request was rejected.
 Reason: {{.Item.Reason}}
-
-Cheers,
-The A4Web Team
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

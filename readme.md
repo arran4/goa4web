@@ -228,6 +228,7 @@ environment variables listed below.
 | `DB_DRIVER` | `--db-driver` | Yes | `mysql` | Database driver name. |
 | `EMAIL_PROVIDER` | `--email-provider` | No | `ses` | Selects the mail sending backend. |
 | `EMAIL_FROM` | `--email-from` | No | - | Default From address for outgoing mail. Must be a valid RFC 5322 address. |
+| `EMAIL_SIGNOFF` | `--email-signoff` | No | - | Optional sign off text appended to emails. |
 | `SMTP_HOST` | `--smtp-host` | No | - | SMTP server hostname. |
 | `SMTP_PORT` | `--smtp-port` | No | - | SMTP server port. |
 | `SMTP_USER` | `--smtp-user` | No | - | SMTP username. |

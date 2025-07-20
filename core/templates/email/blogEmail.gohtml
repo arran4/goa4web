@@ -2,4 +2,6 @@
 <p>A new blog post was published by {{.Item.Author}}.</p>
 <p>Read it <a href="{{.URL}}">here</a>.</p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
-<p>Cheers,<br>The A4Web Team</p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}

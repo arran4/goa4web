@@ -6,5 +6,6 @@ Hello,
 
 Your account has been approved.
 
-Cheers,
-The A4Web Team
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

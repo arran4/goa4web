@@ -10,6 +10,6 @@ Read it here:
 {{.URL}}
 
 Manage notifications: {{.UnsubscribeUrl}}
-
-Cheers,
-The A4Web Team
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}

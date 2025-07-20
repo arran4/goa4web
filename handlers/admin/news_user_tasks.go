@@ -35,7 +35,7 @@ func (NewsUserAllowTask) AdminInternalNotificationTemplate() *string {
 func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		log.Printf("GetUserByUsername Error: %s", err)
@@ -45,7 +45,7 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Name:         level,
+		Name:         role,
 	}); err != nil {
 		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -212,19 +212,19 @@ const (
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting tasks.TaskString = "Update writing"
 
-	// TaskUserAllow grants a user a permission or level.
+	// TaskUserAllow grants a user a role.
 	TaskUserAllow tasks.TaskString = "User Allow"
 
 	// TaskUpdatePermission modifies an existing user permission.
 	TaskUpdatePermission tasks.TaskString = "Update permission"
 
-	// TaskUserDisallow removes a user's permission or level.
+	// TaskUserDisallow removes a user's role.
 	TaskUserDisallow tasks.TaskString = "User Disallow"
 
-	// TaskUsersAllow grants multiple users a permission or level.
+	// TaskUsersAllow grants multiple users a role.
 	TaskUsersAllow tasks.TaskString = "Users Allow"
 
-	// TaskUsersDisallow removes multiple user permissions or levels.
+	// TaskUsersDisallow removes multiple user roles.
 	TaskUsersDisallow tasks.TaskString = "Users Disallow"
 
 	// TaskUserResetPassword resets a user's password.

@@ -140,8 +140,11 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
-		var uname, role string
-		var userID int32
+		var (
+			uname  string
+			userID int32
+			role   string
+		)
 		if rows, err := queries.GetUserRoles(r.Context()); err == nil {
 			for _, row := range rows {
 				if row.IduserRoles == int32(permidi) {

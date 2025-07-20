@@ -11,8 +11,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 )
 
-// TODO: make private once call sites are updated.
-func (n *Notifier) CreateEmailTemplateAndQueue(ctx context.Context, userID int32, emailAddr, page, action string, item interface{}) error {
+func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID int32, emailAddr, page, action string, item interface{}) error {
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
@@ -26,9 +25,8 @@ func (n *Notifier) CreateEmailTemplateAndQueue(ctx context.Context, userID int32
 	return n.queueEmail(ctx, userID, msg)
 }
 
-// RenderAndQueueEmailFromTemplates renders the provided templates and queues the result.
-// TODO: make private and unify call sites.
-func (n *Notifier) RenderAndQueueEmailFromTemplates(ctx context.Context, userID int32, emailAddr string, et *EmailTemplates, data interface{}) error {
+// renderAndQueueEmailFromTemplates renders the provided templates and queues the result.
+func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID int32, emailAddr string, et *EmailTemplates, data interface{}) error {
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
@@ -112,5 +110,5 @@ func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt ev
 	if et == nil {
 		return nil
 	}
-	return n.RenderAndQueueEmailFromTemplates(ctx, userID, user.Email.String, et, evt.Data)
+	return n.renderAndQueueEmailFromTemplates(ctx, userID, user.Email.String, et, evt.Data)
 }

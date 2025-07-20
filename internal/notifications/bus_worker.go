@@ -133,7 +133,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNo
 		notifyMissingEmail(ctx, n.Queries, evt.UserID)
 	} else {
 		if et := tp.SelfEmailTemplate(); et != nil {
-			if err := n.RenderAndQueueEmailFromTemplates(ctx, evt.UserID, user.Email.String, et, evt.Data); err != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, user.Email.String, et, evt.Data); err != nil {
 				return err
 			}
 		}
@@ -246,7 +246,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.Event, tp Admi
 			}
 		}
 		if et := tp.AdminEmailTemplate(); et != nil {
-			if err := n.RenderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data); err != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data); err != nil {
 				return err
 			}
 		}

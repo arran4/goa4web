@@ -1,12 +1,6 @@
 {{- define "index"}}
     {{- template "indexItems" $ }}
-    {{ if $.UserID }}
-        <hr>
-        <a href="/usr/logout">Logout</a><br>
-    {{ else }}
-        <a href="/register">Register</a><br>
-        <a href="/login">Login</a><br>
-    {{ end }}
+    {{- template "userPanel" $ }}
     {{ range $i := $.CustomIndexItems }}
         <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}

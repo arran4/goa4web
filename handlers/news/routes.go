@@ -1,20 +1,36 @@
 package news
 
 import (
+	"fmt"
+	htemplate "html/template"
+	"net/http"
+	"sync"
+
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
+var (
+	siteTemplates     *htemplate.Template
+	loadTemplatesOnce sync.Once
+)
+
 func runTemplate(name string) http.HandlerFunc {
+	loadTemplatesOnce.Do(func() {
+		siteTemplates = templates.GetCompiledSiteTemplates(map[string]any{})
+	})
+	if siteTemplates.Lookup(name) == nil {
+		panic(fmt.Sprintf("missing template %s", name))
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		handlers.TemplateHandler(w, r, name, r.Context().Value(consts.KeyCoreData))
 	}

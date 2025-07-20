@@ -7,4 +7,6 @@ import (
 )
 
 // CustomIndex injects additional index items for image routes. No custom items are provided.
-var CustomIndex = func(cd *common.CoreData, r *http.Request) {}
+var CustomIndex = func(cd *common.CoreData, r *http.Request) {
+	cd.CustomIndexItems = []common.IndexItem{}
+}

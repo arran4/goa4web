@@ -15,7 +15,8 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-type deleteDLQTask struct{ tasks.TaskString }
+// DeleteDLQTask deletes entries from the dead letter queue.
+type DeleteDLQTask struct{ tasks.TaskString }
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
@@ -34,7 +35,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
 }
 
-func (deleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

@@ -42,7 +42,6 @@
                     <td>N/A</td><td>N/A</td>
                 {{ end }}
                 {{ if .Admin }}
-                    <a href="?admin=topicrestrictions&topic={{ .ID }}">Edit Topic Restrictions</a><br>
                     <input type="hidden" name="tid" value="{{ .ID }}">
                     <input type="submit" name="task" value="Forum topic change">
                     </form><br>

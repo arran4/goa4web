@@ -52,9 +52,6 @@ const (
 	// TaskDeleteLanguage removes a language entry.
 	TaskDeleteLanguage = "Delete Language"
 
-	// TaskDeleteTopicRestriction deletes a topic restriction record.
-	TaskDeleteTopicRestriction = "Delete topic restriction"
-
 	// TaskDeleteUserApproval deletes a user's approval entry.
 	TaskDeleteUserApproval = "Delete user approval"
 
@@ -171,12 +168,6 @@ const (
 	// TaskSearchWritings triggers a writing search.
 	TaskSearchWritings = "Search writings"
 
-	// TaskSetTopicRestriction sets a new topic restriction.
-	TaskSetTopicRestriction = "Set topic restriction"
-
-	// TaskCopyTopicRestriction copies restriction levels from one topic to another.
-	TaskCopyTopicRestriction = "Copy topic restriction"
-
 	// TaskSetUserLevel sets a user's access level.
 	TaskSetUserLevel = "Set user level"
 
@@ -197,9 +188,6 @@ const (
 
 	// TaskUpdate updates an existing item.
 	TaskUpdate = "Update"
-
-	// TaskUpdateTopicRestriction updates an existing topic restriction.
-	TaskUpdateTopicRestriction = "Update topic restriction"
 
 	// TaskUpdateUserApproval updates a writing user's approval state.
 	TaskUpdateUserApproval = "Update user approval"

@@ -51,9 +51,6 @@ const (
 	// TaskDeleteCategory removes a category.
 	TaskDeleteCategory tasks.TaskString = "Delete Category"
 
-	// TaskDeleteTopicRestriction deletes a topic restriction record.
-	TaskDeleteTopicRestriction tasks.TaskString = "Delete topic restriction"
-
 	// TaskDeleteUserApproval deletes a user's approval entry.
 	TaskDeleteUserApproval tasks.TaskString = "Delete user approval"
 
@@ -167,12 +164,6 @@ const (
 	// TaskSearchWritings triggers a writing search.
 	TaskSearchWritings tasks.TaskString = "Search writings"
 
-	// TaskSetTopicRestriction sets a new topic restriction.
-	TaskSetTopicRestriction tasks.TaskString = "Set topic restriction"
-
-	// TaskCopyTopicRestriction copies restriction levels from one topic to another.
-	TaskCopyTopicRestriction tasks.TaskString = "Copy topic restriction"
-
 	// TaskSetUserLevel sets a user's access level.
 	TaskSetUserLevel tasks.TaskString = "Set user level"
 
@@ -193,9 +184,6 @@ const (
 
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
-
-	// TaskUpdateTopicRestriction updates an existing topic restriction.
-	TaskUpdateTopicRestriction tasks.TaskString = "Update topic restriction"
 
 	// TaskUpdateUserApproval updates a writing user's approval state.
 	TaskUpdateUserApproval tasks.TaskString = "Update user approval"

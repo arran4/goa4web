@@ -30,18 +30,6 @@ const (
 	// TaskDeleteUserLevel deletes a user's forum access level.
 	TaskDeleteUserLevel = "Delete user level"
 
-	// TaskSetTopicRestriction adds a topic restriction.
-	TaskSetTopicRestriction = "Set topic restriction"
-
-	// TaskUpdateTopicRestriction updates a topic restriction.
-	TaskUpdateTopicRestriction = "Update topic restriction"
-
-	// TaskDeleteTopicRestriction deletes a topic restriction.
-	TaskDeleteTopicRestriction = "Delete topic restriction"
-
-	// TaskCopyTopicRestriction copies topic restrictions between topics.
-	TaskCopyTopicRestriction = "Copy topic restriction"
-
 	// TaskRemakeStatisticInformationOnForumthread refreshes thread statistics.
 	TaskRemakeStatisticInformationOnForumthread = "Remake statistic information on forumthread"
 

@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -26,20 +27,23 @@ type ReplyBlogTask struct{ tasks.TaskString }
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 
 var _ tasks.Task = (*ReplyBlogTask)(nil)
+
+// ReplyBlogTask ensures blog followers learn about new comments and the author
+// is automatically subscribed.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
 
 func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("blogReplyEmail")
+	return notif.NewEmailTemplates("replyEmail")
 }
 
 func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("blog_reply")
+	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 
-func (ReplyBlogTask) AutoSubscribePath() (string, string) {
-	return TaskReply, ""
+func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return TaskReply, evt.Path
 }
 
 func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }

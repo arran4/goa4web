@@ -20,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -38,6 +39,9 @@ type ReplyTask struct{ tasks.TaskString }
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
 var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask keeps commenters in the loop by notifying thread followers and
+// subscribing the author to future replies.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
@@ -54,11 +58,11 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("newsReplyEmail")
+	return notif.NewEmailTemplates("replyEmail")
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("news_reply")
+	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 
@@ -71,8 +75,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (ReplyTask) AutoSubscribePath() (string, string) {
-	return string(TaskReply), ""
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
 }
 
 type EditTask struct{ tasks.TaskString }
@@ -118,8 +122,8 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (NewPostTask) AutoSubscribePath() (string, string) {
-	return string(TaskNewPost), ""
+func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskNewPost), evt.Path
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {

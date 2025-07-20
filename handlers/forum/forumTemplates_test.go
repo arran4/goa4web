@@ -23,11 +23,11 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 }
 
 func TestForumTemplatesExist(t *testing.T) {
-  // TODO make it loop over the tasks.
+	// TODO make it loop over the tasks.
 	prefixes := []string{
 		"forumThreadCreateEmail",
 		"adminNotificationForumThreadCreateEmail",
-		"forumReplyEmail",
+		"replyEmail",
 		"adminNotificationForumReplyEmail",
 	}
 	for _, p := range prefixes {

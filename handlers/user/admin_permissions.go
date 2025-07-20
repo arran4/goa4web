@@ -169,6 +169,8 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 				evt.Data["targetUserID"] = userID
 				evt.Data["Role"] = role
 			}
+		} else {
+			log.Printf("lookup role: %v", err2)
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)

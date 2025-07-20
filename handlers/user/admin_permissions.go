@@ -13,6 +13,7 @@ import (
 
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -52,6 +53,18 @@ type PermissionUserAllowTask struct{ tasks.TaskString }
 
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
+var _ tasks.Task = (*PermissionUserAllowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*PermissionUserAllowTask)(nil)
+
+func (PermissionUserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminPermissionAllowEmail")
+}
+
+func (PermissionUserAllowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminPermissionAllowEmail")
+	return &v
+}
+
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
@@ -72,6 +85,14 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		Name:         level,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
+	} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["Username"] = username
+			evt.Data["Permission"] = level
+		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
@@ -80,6 +101,18 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 type PermissionUserDisallowTask struct{ tasks.TaskString }
 
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
+
+var _ tasks.Task = (*PermissionUserDisallowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*PermissionUserDisallowTask)(nil)
+
+func (PermissionUserDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminPermissionDisallowEmail")
+}
+
+func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminPermissionDisallowEmail")
+	return &v
+}
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -95,8 +128,30 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
+	} else {
+		var uname, role string
+		if rows, err := queries.GetUserRoles(r.Context()); err == nil {
+			for _, row := range rows {
+				if row.IduserRoles == int32(permidi) {
+					role = row.Role
+					if u, err := queries.GetUserById(r.Context(), row.UsersIdusers); err == nil && u.Username.Valid {
+						uname = u.Username.String
+					}
+					break
+				}
+			}
+		}
+		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
+		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["Username"] = uname
+				evt.Data["Permission"] = role
+			}
+		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

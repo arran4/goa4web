@@ -51,8 +51,6 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	return nil
 }
 
-var _ searchworker.IndexedTask = CreateThreadTask{}
-
 func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("threadEmail")
 }
@@ -71,8 +69,6 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-var _ searchworker.IndexedTask = CreateThreadTask{}
-
 // AutoSubscribePath records the created thread so the author and topic
 // followers automatically receive updates when others reply.
 // When a user creates a thread they expect to follow any replies.
@@ -88,8 +84,6 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 
 	return string(TaskCreateThread), evt.Path
 }
-
-var _ searchworker.IndexedTask = CreateThreadTask{}
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

@@ -36,7 +36,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	TestTemplateTask.Action(rr, req)
+	testTemplateTask.Action(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
@@ -75,7 +75,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	TestTemplateTask.Action(rr, req)
+	testTemplateTask.Action(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)

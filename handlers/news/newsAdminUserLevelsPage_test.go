@@ -1,13 +1,14 @@
-package news
+package news_test
 
 import (
 	"testing"
 
+	admin "github.com/arran4/goa4web/handlers/admin"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 func TestNewsUserLevelTasksTemplates(t *testing.T) {
-	var allow newsUserAllowTask
+	allow := admin.NewsUserAllowTask
 	tpl := allow.AdminEmailTemplate()
 	if *tpl != *notif.NewEmailTemplates("newsPermissionEmail") {
 		t.Errorf("allow template mismatch: %#v", tpl)
@@ -17,7 +18,7 @@ func TestNewsUserLevelTasksTemplates(t *testing.T) {
 		t.Errorf("allow notification mismatch: %s", *nt)
 	}
 
-	var remove newsUserRemoveTask
+	remove := admin.NewsUserRemoveTask
 	tpl = remove.AdminEmailTemplate()
 	if *tpl != *notif.NewEmailTemplates("newsPermissionEmail") {
 		t.Errorf("remove template mismatch: %#v", tpl)

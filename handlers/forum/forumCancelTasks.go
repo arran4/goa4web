@@ -17,7 +17,7 @@ import (
 // threadNewCancelTask aborts creating a new thread.
 type threadNewCancelTask struct{ tasks.TaskString }
 
-var threadNewCancel = &threadNewCancelTask{TaskString: TaskCancel}
+var threadNewCancelAction = &threadNewCancelTask{TaskString: TaskCancel}
 
 var _ tasks.Task = (*threadNewCancelTask)(nil)
 

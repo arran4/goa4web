@@ -24,8 +24,11 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 )
 
-type saveTemplateTask struct{ tasks.TaskString }
-type testTemplateTask struct{ tasks.TaskString }
+// SaveTemplateTask stores a custom update email template.
+type SaveTemplateTask struct{ tasks.TaskString }
+
+// TestTemplateTask queues an email using the template for preview.
+type TestTemplateTask struct{ tasks.TaskString }
 
 func getUpdateEmailText(ctx context.Context) string {
 	if q, ok := ctx.Value(consts.KeyQueries).(*db.Queries); ok && q != nil {
@@ -73,7 +76,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "emailTemplatePage.gohtml", data)
 }
 
-func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -86,7 +89,7 @@ func (saveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
 }
 
-func (testTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q

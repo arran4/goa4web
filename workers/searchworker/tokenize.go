@@ -10,8 +10,6 @@ import (
 	db "github.com/arran4/goa4web/internal/db"
 )
 
-// TODO move all of this to searchworker
-
 func isAlphanumericOrPunctuation(char rune) bool {
 	return unicode.IsLetter(char) || unicode.IsDigit(char) || strings.ContainsRune("'-", char)
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // RegisterAdminRoutes attaches forum admin endpoints to ar.
@@ -23,4 +24,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	far.HandleFunc("/topics", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	far.HandleFunc("/conversations", AdminThreadsPage).Methods("GET")
 	far.HandleFunc("/thread/{thread}/delete", AdminThreadDeletePage).Methods("POST").MatcherFunc(threadDeleteTask.Matcher())
+	far.HandleFunc("/topic/{topic}/grants", AdminTopicGrantsPage).Methods("GET")
+	far.HandleFunc("/topic/{topic}/grant", tasks.Action(topicGrantCreateTask)).Methods("POST").MatcherFunc(topicGrantCreateTask.Matcher())
+	far.HandleFunc("/topic/{topic}/grant/delete", tasks.Action(topicGrantDeleteTask)).Methods("POST").MatcherFunc(topicGrantDeleteTask.Matcher())
 }

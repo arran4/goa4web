@@ -11,7 +11,7 @@ View: <select name="view">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}<
 Reply: <select name="reply">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
 New thread: <select name="newthread">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
 See: <select name="see">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
-Invite: <select name="invite">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
+Starting roles: <select name="startingRoles">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
 Read: <select name="read">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
 Moderator: <select name="mod">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>
 Administrator: <select name="admin">{{- range $.Roles }}<option value="{{.ID}}">{{.Name}}</option>{{- end }}</select><br>

@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -53,10 +52,9 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		Mode               string
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
 		Mode:               "Edit",
 	}
 

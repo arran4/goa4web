@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	common "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -20,6 +19,7 @@ import (
 	"github.com/arran4/goa4web/config"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -57,7 +57,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
 		Offset:             offset,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
@@ -83,12 +83,20 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			return
+		default:
+			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
@@ -204,12 +212,20 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			return
+		default:
+			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

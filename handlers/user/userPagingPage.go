@@ -21,7 +21,7 @@ import (
 
 type PagingSaveTask struct{ tasks.TaskString }
 
-var pagingSaveTask = &PagingSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
+var pagingSaveTask = &PagingSaveTask{TaskString: tasks.TaskString(TaskSaveSize)}
 var _ tasks.Task = (*PagingSaveTask)(nil)
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {

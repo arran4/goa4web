@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	common "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -15,7 +14,6 @@ import (
 )
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	if r.Method == http.MethodPost {
@@ -49,7 +47,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
+		SelectedLanguageId: cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage),
 	}
 	data.CoreData.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 	if langs, err := cd.Languages(); err == nil {

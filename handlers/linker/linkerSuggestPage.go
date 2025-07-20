@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	common "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -28,12 +27,17 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData:           r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
+		CoreData:           cd,
+		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
-	categoryRows, err := queries.GetAllLinkerCategories(r.Context())
+	uid := data.CoreData.UserID
+	categoryRows, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{
+		ViewerID:     uid,
+		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

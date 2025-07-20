@@ -27,11 +27,8 @@ type ForumcategoryPlus struct {
 }
 
 type CategoryTree struct {
-	//Categories           []*ForumcategoryPlus
-	//Topics               []*ForumtopicPlus
 	CategoryChildrenLookup map[int32][]*ForumcategoryPlus
 	CategoryLookup         map[int32]*ForumcategoryPlus
-	//TopicLookup         map[int32]*ForumtopicPlus
 }
 
 func NewCategoryTree(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPlus) *CategoryTree {
@@ -61,7 +58,44 @@ func NewCategoryTree(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPl
 		}
 		parent.Categories = children
 	}
+	categoryTree.PruneEmpty()
 	return categoryTree
+}
+
+func (ct *CategoryTree) pruneCategory(cat *ForumcategoryPlus) bool {
+	keep := len(cat.Topics) > 0
+	var filtered []*ForumcategoryPlus
+	for _, c := range cat.Categories {
+		if ct.pruneCategory(c) {
+			filtered = append(filtered, c)
+			keep = true
+		} else {
+			delete(ct.CategoryLookup, c.Idforumcategory)
+			delete(ct.CategoryChildrenLookup, c.Idforumcategory)
+		}
+	}
+	cat.Categories = filtered
+	if !keep {
+		delete(ct.CategoryLookup, cat.Idforumcategory)
+		delete(ct.CategoryChildrenLookup, cat.Idforumcategory)
+	}
+	return keep
+}
+
+// PruneEmpty removes categories that contain no visible topics and no
+// subcategories with visible topics.
+func (ct *CategoryTree) PruneEmpty() {
+	roots := ct.CategoryChildrenLookup[0]
+	var filtered []*ForumcategoryPlus
+	for _, root := range roots {
+		if ct.pruneCategory(root) {
+			filtered = append(filtered, root)
+		} else {
+			delete(ct.CategoryLookup, root.Idforumcategory)
+			delete(ct.CategoryChildrenLookup, root.Idforumcategory)
+		}
+	}
+	ct.CategoryChildrenLookup[0] = filtered
 }
 
 func (ct *CategoryTree) CategoryRoots(categoryId int32) (result []*ForumcategoryPlus) {

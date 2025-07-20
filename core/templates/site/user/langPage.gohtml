@@ -8,6 +8,7 @@
     <br>
     Please pick your default language:
     <select name="defaultLanguage">
+        <option value="0"{{ if .DefaultIsMultilingual }} selected{{ end }}>Multi-lingual</option>
     {{ range .LanguageOptions }}
         <option value="{{ .ID }}"{{ if .IsDefault }} selected{{ end }}>{{ .Name }}</option>
     {{ end }}

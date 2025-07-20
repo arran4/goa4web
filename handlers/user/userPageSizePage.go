@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -44,5 +44,5 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (PageSizeSaveTask) Action(w http.ResponseWriter, r *http.Request) {
-	userPageSizePage(w, r)
+	// TODO save to memory config. Mention that it's to memory only and that config needs to be changed.
 }

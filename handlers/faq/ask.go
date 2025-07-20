@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -44,11 +43,10 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int32
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
+		SelectedLanguageId: cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage),
 	}
 
 	languageRows, err := cd.Languages()

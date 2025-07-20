@@ -43,7 +43,8 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*common.CoreData
-		LanguageOptions []LanguageOption
+		LanguageOptions       []LanguageOption
+		DefaultIsMultilingual bool
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -75,9 +76,11 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		opts = append(opts, opt)
 	}
 
+	defaultIsMulti := pref == nil || pref.LanguageIdlanguage == 0
 	data := Data{
-		CoreData:        cd,
-		LanguageOptions: opts,
+		CoreData:              cd,
+		LanguageOptions:       opts,
+		DefaultIsMultilingual: defaultIsMulti,
 	}
 
 	handlers.TemplateHandler(w, r, "langPage.gohtml", data)

@@ -1,2 +1,9 @@
 {{ template "head" $ }}
+    {{if .Rows}}
+        {{range .Rows}}
+            Blogger: <a href="/blogs/blogger/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
+        {{end}}
+    {{else}}
+        No bloggers here.
+    {{end}}
 {{ template "tail" $ }}

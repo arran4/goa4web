@@ -6,7 +6,7 @@
     {{ end }}
     {{ if $.HasRole "administrator" }}
         <hr>
-        <a href="{{ addmode "/admin" }}">Control center</a><br>
+        <a href="{{ addmode "/admin/linker/categories" }}">Linker admin</a><br>
         {{ if $.AdminMode }}
             <a href="/">Disable admin mode</a><br>
         {{ else }}

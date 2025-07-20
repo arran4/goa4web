@@ -215,7 +215,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0}); err != nil {
-		// TODO better error for NOT Duplicate entry  for key 'user_emails_email_idx'
+		// TODO better error for NOT Duplicate entry for key 'user_emails_email_code_idx'
 		log.Printf("insert user email: %v", err)
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
 		return
@@ -229,6 +229,10 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	evt := cd.Event()
 	evt.Data["page"] = page
 	evt.Data["email"] = emailAddr
+	evt.Data["URL"] = page
+	if user, err := cd.CurrentUser(); err == nil && user != nil {
+		evt.Data["Username"] = user.Username.String
+	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -263,6 +267,10 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	evt := cd.Event()
 	evt.Data["page"] = page
 	evt.Data["email"] = ue.Email
+	evt.Data["URL"] = page
+	if user, err := cd.CurrentUser(); err == nil && user != nil {
+		evt.Data["Username"] = user.Username.String
+	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -336,6 +344,16 @@ func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.Event) string
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	if uid == 0 {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.NotFound(w, r)
@@ -347,6 +365,11 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid code", http.StatusBadRequest)
 		return
 	}
+	if ue.UserID != uid {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
 	_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})
+	_ = queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID})
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

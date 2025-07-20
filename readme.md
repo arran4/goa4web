@@ -282,7 +282,7 @@ Paths using the `s3://` scheme must include a bucket name and may specify an opt
 The `DLQ_PROVIDER` setting selects how failed messages are recorded:
 
 * `log` – writes messages to the application log (default)
-* `file` – appends messages to a file using separator lines at `DLQ_FILE`
+* `file` – appends messages to a file using separator lines at `DLQ_FILE`. Each entry begins with an RFC3339 timestamp
 * `dir` – creates one file per message under the directory `DLQ_FILE` using a KSUID name
 * `db` – stores messages in the database
 * `email` – sends messages to administrator addresses using the configured mail provider

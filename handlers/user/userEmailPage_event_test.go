@@ -28,6 +28,9 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	q := dbpkg.New(db)
 	mock.ExpectQuery("SELECT id, user_id, email").WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO user_emails").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("SELECT u.idusers").WithArgs(int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
+			AddRow(1, nil, "alice"))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	sess := sessions.NewSession(store, "test")
@@ -38,6 +41,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	evt := &eventbus.Event{Data: map[string]any{}}
 	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	req := httptest.NewRequest("POST", "http://example.com/usr/email", strings.NewReader("new_email=a@example.com"))
@@ -51,6 +55,9 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	}
 	if _, ok := evt.Data["URL"]; !ok {
 		t.Fatalf("missing URL event data: %+v", evt.Data)
+	}
+	if evt.Data["Username"] != "alice" {
+		t.Fatalf("username not set: %+v", evt.Data)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

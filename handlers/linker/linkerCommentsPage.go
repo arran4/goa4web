@@ -20,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/config"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -83,12 +84,20 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			return
+		default:
+			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
@@ -204,12 +213,20 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			return
+		default:
+			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

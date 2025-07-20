@@ -98,6 +98,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 			Task:   tasks.TaskString("MISSING"),
 			UserID: uid,
 			Time:   time.Now(),
+			Data:   map[string]any{},
 		}
 		cd.SetEvent(evt)
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}

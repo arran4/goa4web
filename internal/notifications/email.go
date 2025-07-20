@@ -41,6 +41,7 @@ func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID 
 
 type EmailData struct {
 	any
+	URL            string
 	SubjectPrefix  string
 	UnsubscribeUrl string
 	SignOff        string
@@ -70,8 +71,22 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 	htmlSignOff := html.EscapeString(signOff)
 	htmlSignOff = strings.ReplaceAll(htmlSignOff, "\n", "<br />")
 
+	var urlStr string
+	if m, ok := item.(map[string]any); ok {
+		if v, ok := m["URL"]; ok {
+			if s, ok := v.(string); ok {
+				urlStr = s
+			}
+		} else if v, ok := m["page"]; ok {
+			if s, ok := v.(string); ok {
+				urlStr = s
+			}
+		}
+	}
+
 	data := EmailData{
 		any:            item,
+		URL:            urlStr,
 		SubjectPrefix:  subjectPrefix,
 		UnsubscribeUrl: unsub,
 		SignOff:        signOff,

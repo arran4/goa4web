@@ -293,7 +293,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	uid, _ = session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+
+  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      pthid,

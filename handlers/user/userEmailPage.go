@@ -204,7 +204,12 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	_, _ = rand.Read(buf[:])
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
-	_ = queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0})
+	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0}); err != nil {
+		// TODO better error for NOT Duplicate entry  for key 'user_emails_email_idx'
+		log.Printf("insert user email: %v", err)
+		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
+		return
+	}
 	path := "/usr/email/verify?code=" + code
 	page := "http://" + r.Host + path
 	if config.AppRuntimeConfig.HTTPHostname != "" {

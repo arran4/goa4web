@@ -1,7 +1,3 @@
-To: {{.To}}
-From: {{.From}}
-Subject: [{{.SubjectPrefix}}] {{.Subject}}
-
 Hi {{.Item.Thread.Lastposterusername.String}},
 
 A new reply was posted in "{{.Item.TopicTitle}}" (thread #{{.Item.ThreadID}}) on {{.Time}}.

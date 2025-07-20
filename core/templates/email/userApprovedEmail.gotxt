@@ -1,7 +1,3 @@
-To: {{.To}}
-From: {{.From}}
-Subject: [{{.SubjectPrefix}}] {{.Subject}}
-
 Hello,
 
 Your account has been approved.

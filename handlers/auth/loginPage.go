@@ -60,10 +60,6 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
-	//sum := md5.Sum([]byte(password))
-	//
-	//hashedPassword := hex.EncodeToString(sum[:])
-
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})

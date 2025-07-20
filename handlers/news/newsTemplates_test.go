@@ -28,7 +28,7 @@ func TestNewsTemplatesExist(t *testing.T) {
 		"adminNotificationNewsAddEmail",
 		"newsEditEmail",
 		"adminNotificationNewsEditEmail",
-		"newsReplyEmail",
+		"replyEmail",
 		"adminNotificationNewsReplyEmail",
 		"newsCommentEditEmail",
 		"newsCommentEditedEmail",
@@ -39,6 +39,7 @@ func TestNewsTemplatesExist(t *testing.T) {
 		"adminNotificationNewsUserAllowEmail",
 		"newsUserDisallowEmail",
 		"adminNotificationNewsUserDisallowEmail",
+		"newsPermissionEmail",
 	}
 	for _, p := range prefixes {
 		requireEmailTemplates(t, p)

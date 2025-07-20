@@ -24,7 +24,10 @@ require (
 	golang.org/x/term v0.32.0
 )
 
-require github.com/gorilla/websocket v1.5.3
+require (
+	github.com/gorilla/websocket v1.5.3
+	github.com/jedib0t/go-pretty/v6 v6.6.7
+)
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -32,7 +35,9 @@ require (
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
@@ -40,4 +45,5 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/image v0.28.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 )

@@ -346,6 +346,174 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 	return items, nil
 }
 
+const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+FROM linker l
+LEFT JOIN users u ON l.users_idusers = u.idusers
+LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
+LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+WHERE (lc.idlinkerCategory = ? OR ? = 0)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='linker'
+      AND g.item='link'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = l.idlinker
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+ORDER BY l.listed DESC
+LIMIT ? OFFSET ?
+`
+
+type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams struct {
+	ViewerID         int32
+	Idlinkercategory int32
+	ViewerUserID     sql.NullInt32
+	Limit            int32
+	Offset           int32
+}
+
+type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow struct {
+	Idlinker           int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	LinkerCategoryID   int32
+	ForumthreadID      int32
+	Title              sql.NullString
+	Url                sql.NullString
+	Description        sql.NullString
+	Listed             sql.NullTime
+	Comments           sql.NullInt32
+	CategoryTitle      sql.NullString
+	Posterusername     sql.NullString
+}
+
+func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated,
+		arg.ViewerID,
+		arg.Idlinkercategory,
+		arg.Idlinkercategory,
+		arg.ViewerUserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
+	for rows.Next() {
+		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
+		if err := rows.Scan(
+			&i.Idlinker,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkerCategoryID,
+			&i.ForumthreadID,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Listed,
+			&i.Comments,
+			&i.CategoryTitle,
+			&i.Posterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated :many
+SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+FROM linker l
+LEFT JOIN users u ON l.users_idusers = u.idusers
+LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
+LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+WHERE (lc.idlinkerCategory = ? OR ? = 0)
+ORDER BY l.listed DESC
+LIMIT ? OFFSET ?
+`
+
+type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams struct {
+	Idlinkercategory int32
+	Limit            int32
+	Offset           int32
+}
+
+type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow struct {
+	Idlinker           int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	LinkerCategoryID   int32
+	ForumthreadID      int32
+	Title              sql.NullString
+	Url                sql.NullString
+	Description        sql.NullString
+	Listed             sql.NullTime
+	Comments           sql.NullInt32
+	CategoryTitle      sql.NullString
+	Posterusername     sql.NullString
+}
+
+func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated,
+		arg.Idlinkercategory,
+		arg.Idlinkercategory,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow
+	for rows.Next() {
+		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow
+		if err := rows.Scan(
+			&i.Idlinker,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.LinkerCategoryID,
+			&i.ForumthreadID,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.Listed,
+			&i.Comments,
+			&i.CategoryTitle,
+			&i.Posterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails = `-- name: GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails :many
 SELECT l.idlinkerqueue, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.title, l.url, l.description, u.username, c.title as category_title, c.idlinkerCategory
 FROM linker_queue l

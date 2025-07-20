@@ -84,7 +84,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			CatId       int
 			CommentOnId int
 			ReplyToId   int
-			Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
+			Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow
 		}{&common.CoreData{}, 0, false, 0, 0, 0, nil}},
 		{"writingsCategoryPage", struct {
 			*common.CoreData

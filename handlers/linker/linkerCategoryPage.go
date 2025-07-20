@@ -23,7 +23,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		CatId       int
 		CommentOnId int
 		ReplyToId   int
-		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
+		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow
 	}
 
 	data := Data{
@@ -39,7 +39,11 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
-	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
+	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams{
+		Idlinkercategory: int32(data.CatId),
+		Limit:            15,
+		Offset:           int32(data.Offset),
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

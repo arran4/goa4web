@@ -5,7 +5,7 @@
             <th>Topic
             <th>User
             <th>Level
-            <th>Max Invite
+            <th>Starting roles
             <th>Options
         </tr>
         {{- range .TopicRestrictions }}
@@ -15,7 +15,7 @@
                 <td><input type="hidden" name="tid" value="{{ .ForumTopicID }}">{{ .Title }}
                 <td><input type="hidden" name="uid" value="{{ .UserID }}">{{ .Username }}
                 <td><input name="level" value="{{ .Level }}" size="8">
-                <td><input name="invitemax" value="{{ .InviteMax }}" size="8">
+                <td><input name="startingRoles" value="{{ .InviteMax }}" size="8">
                 <td>
                     <input type="submit" name="task" value="Update role">
                     <input type="submit" name="task" value="Revoke role">
@@ -28,13 +28,13 @@
                 <td><input type="hidden" name="tid" value="{{ .TopicID }}">
                 <td><input name="username" value="USERNAME">
                 <td><input name="level" value="0" size="8">
-                <td><input name="invitemax" value="0" size="8">
+                <td><input name="startingRoles" value="0" size="8">
                 <td>
                     <input type="submit" name="task" value="Grant role">
             </tr>
         </form>
     </table><br>
-    The most you can give someone as their level or maxinvite level is {{ .MaxInvite }}.<br>
+    The most you can give someone as their level or starting role(s) is {{ .MaxInvite }}.<br>
     Current restiction levels:
     <ul>
         <li>Level {{ .ViewLevel }} to View threads

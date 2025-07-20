@@ -37,7 +37,17 @@ var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 // Build time checks so replying to a thread always triggers subscription and
 // notification delivery using the standard templates, keeping readers in the
 // conversation.
-var replyTask = &ReplyTask{TaskString: TaskReply}
+var (
+	replyTask = &ReplyTask{TaskString: TaskReply}
+
+	// Compile-time interface checks ensure replies trigger notifications and
+	// subscriptions so participants stay informed.
+	_ tasks.Task                                    = (*ReplyTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
+	_ notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+	_ searchworker.IndexedTask                      = ReplyTask{}
+)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -69,6 +79,8 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 }
 
 // AutoSubscribePath ensures authors automatically receive updates on replies.
+// AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
+// created for the originating forum thread when that information is available.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
 		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)

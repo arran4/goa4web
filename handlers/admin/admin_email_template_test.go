@@ -62,6 +62,8 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "u@example.com", "u")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
+	mock.ExpectQuery("SELECT body FROM template_overrides WHERE name = ?").
+		WithArgs("updateEmail.gotxt").WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(1), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -170,7 +172,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(int32(2), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &recordAdminMail{}
-	n := notif.New(q, rec)
+	n := notif.New(notif.WithQueries(q), notif.WithEmailProvider(rec))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 direct mails, got %d", len(rec.to))
@@ -197,7 +199,7 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 	config.AppRuntimeConfig.AdminEmails = "a@test.com"
 	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
 	rec := &recordAdminMail{}
-	n := notif.New(nil, rec)
+	n := notif.New(notif.WithEmailProvider(rec))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))

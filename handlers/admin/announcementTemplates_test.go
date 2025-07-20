@@ -1,4 +1,4 @@
-package imagebbs
+package admin
 
 import (
 	"testing"
@@ -22,26 +22,12 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	}
 }
 
-func TestImageBbsTemplatesExist(t *testing.T) {
+func TestAnnouncementTemplatesExist(t *testing.T) {
 	admins := []notif.AdminEmailTemplateProvider{
-		newBoardTask,
-		modifyBoardTask,
+		AddAnnouncementTask,
+		DeleteAnnouncementTask,
 	}
 	for _, p := range admins {
 		checkEmailTemplates(t, p.AdminEmailTemplate())
-	}
-
-	selfProviders := []notif.SelfNotificationTemplateProvider{
-		approvePostTask,
-	}
-	for _, p := range selfProviders {
-		checkEmailTemplates(t, p.SelfEmailTemplate())
-	}
-
-	subs := []notif.SubscribersNotificationTemplateProvider{
-		replyTask,
-	}
-	for _, p := range subs {
-		checkEmailTemplates(t, p.SubscribedEmailTemplate())
 	}
 }

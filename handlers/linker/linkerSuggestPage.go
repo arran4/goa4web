@@ -33,7 +33,11 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
-	categoryRows, err := queries.GetAllLinkerCategories(r.Context())
+	uid := data.CoreData.UserID
+	categoryRows, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{
+		ViewerID:     uid,
+		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

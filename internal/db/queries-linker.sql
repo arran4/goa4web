@@ -17,6 +17,33 @@ FROM linker_category lc
 ORDER BY lc.position
 ;
 
+-- name: GetAllLinkerCategoriesForUser :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT
+    lc.idlinkerCategory,
+    lc.position,
+    lc.title,
+    lc.sortorder
+FROM linker_category lc
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='linker'
+      AND g.item='category'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = lc.idlinkerCategory
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+ORDER BY lc.position;
+
 -- name: GetLinkerCategoryLinkCounts :many
 SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
 FROM linker_category c
@@ -167,7 +194,7 @@ WHERE l.idlinker = sqlc.arg(idlinker)
     SELECT 1 FROM grants g
     WHERE g.section='linker'
       AND g.item='link'
-      AND g.action='view'
+      AND g.action IN ('view','comment','reply')
       AND g.active=1
       AND g.item_id = l.idlinker
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)

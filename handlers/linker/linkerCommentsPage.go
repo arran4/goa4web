@@ -95,7 +95,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
@@ -222,7 +224,9 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
+		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

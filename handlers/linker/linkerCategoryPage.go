@@ -23,7 +23,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		CatId       int
 		CommentOnId int
 		ReplyToId   int
-		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow
+		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
 	}
 
 	data := Data{
@@ -39,8 +39,11 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
-	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams{
+	uid := data.CoreData.UserID
+	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams{
+		ViewerID:         uid,
 		Idlinkercategory: int32(data.CatId),
+		ViewerUserID:     sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Limit:            15,
 		Offset:           int32(data.Offset),
 	})
@@ -54,7 +57,12 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.Links = linkerPosts
+	for _, row := range linkerPosts {
+		if !data.CoreData.HasGrant("linker", "link", "see", row.Idlinker) {
+			continue
+		}
+		data.Links = append(data.Links, row)
+	}
 
 	handlers.TemplateHandler(w, r, "linkerCategoryPage", data)
 }

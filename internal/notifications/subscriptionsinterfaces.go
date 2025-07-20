@@ -37,7 +37,7 @@ type SelfNotificationTemplateProvider interface {
 // The address itself is obtained from the event data via DirectEmailAddress.
 // Internal notifications are not supported for this provider.
 type DirectEmailNotificationTemplateProvider interface {
-	DirectEmailAddress(evt eventbus.Event) string
+	DirectEmailAddress(evt eventbus.TaskEvent) string
 	DirectEmailTemplate() *EmailTemplates
 }
 

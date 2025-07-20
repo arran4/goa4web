@@ -390,5 +390,6 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: 0, Text: text}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
+
+  handlers.TaskDoneAutoRefreshPage(w, r)
 }

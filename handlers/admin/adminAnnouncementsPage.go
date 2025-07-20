@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	common "github.com/arran4/goa4web/core/common"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	handlers "github.com/arran4/goa4web/handlers"
@@ -17,6 +18,16 @@ import (
 
 type addAnnouncementTask struct{ tasks.TaskString }
 type deleteAnnouncementTask struct{ tasks.TaskString }
+
+var _ tasks.Task = (*addAnnouncementTask)(nil)
+
+// addAnnouncementTask notifies admins so they know announcements were updated.
+var _ notif.AdminEmailTemplateProvider = (*addAnnouncementTask)(nil)
+
+var _ tasks.Task = (*deleteAnnouncementTask)(nil)
+
+// deleteAnnouncementTask also notifies admins of changes for transparency.
+var _ notif.AdminEmailTemplateProvider = (*deleteAnnouncementTask)(nil)
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -51,6 +62,15 @@ func (addAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
+func (addAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("announcementEmail")
+}
+
+func (addAnnouncementTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("announcement")
+	return &v
+}
+
 func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
@@ -63,4 +83,13 @@ func (deleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+}
+
+func (deleteAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("announcementEmail")
+}
+
+func (deleteAnnouncementTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("announcement")
+	return &v
 }

@@ -22,15 +22,40 @@ import (
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
+// ReplyTask asserts these interfaces so that anyone responding to a thread
+// automatically follows subsequent replies and administrators receive an email
+// summary. This keeps discussions active and lets mods monitor forum activity.
+var _ tasks.Task = (*ReplyTask)(nil)
+
+// send notifications to thread subscribers when someone replies
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+
+// replies should automatically watch the thread so users see future updates
+var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
+
+// Build time checks so replying to a thread always triggers subscription and
+// notification delivery using the standard templates, keeping readers in the
+// conversation.
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
 // Compile-time interface checks with user focused reasoning. Subscribing allows
 // thread followers to hear about replies while administrators are alerted to new
 // content. AutoSubscribeProvider ensures the author is kept in the loop.
 var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask notifies thread subscribers and automatically subscribes the author
+// to keep them in the conversation.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+
+// admins track replies across the forum
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
+
+// participants expect to automatically follow discussions they reply to
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
+var replyTask = &ReplyTask{TaskString: TaskReply}
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -39,6 +64,17 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 		return []searchworker.IndexEventData{v}
 	}
 	return nil
+}
+
+var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
 }
 
 func (ReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -52,6 +88,9 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
+// AutoSubscribePath ensures authors automatically receive updates on replies.
+var _ searchworker.IndexedTask = ReplyTask{}
+
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("forumReplyEmail")
 }
@@ -61,7 +100,12 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
+// AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
+// created for the originating forum thread when that information is available.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+	}
 	return string(TaskReply), evt.Path
 }
 

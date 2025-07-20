@@ -28,8 +28,8 @@ type saveTemplateTask struct{ tasks.TaskString }
 type testTemplateTask struct{ tasks.TaskString }
 
 func getUpdateEmailText(ctx context.Context) string {
-	if q, ok := ctx.Value(consts.KeyQueries).(*db.Queries); ok && q != nil {
-		if body, err := q.GetTemplateOverride(ctx, "updateEmail"); err == nil && body != "" {
+	if q, ok := ctx.Value(common.KeyQueries).(*db.Queries); ok && q != nil {
+		if body, err := q.GetTemplateOverride(ctx, "updateEmail.gotxt"); err == nil && body != "" {
 			return body
 		}
 	}

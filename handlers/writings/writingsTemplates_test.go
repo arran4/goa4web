@@ -1,4 +1,4 @@
-package news
+package writings
 
 import (
 	"testing"
@@ -22,29 +22,12 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	}
 }
 
-func TestNewsTemplatesExist(t *testing.T) {
-	subs := []notif.SubscribersNotificationTemplateProvider{
-		newPostTask,
+func TestWritingsTemplatesExist(t *testing.T) {
+	providers := []notif.SubscribersNotificationTemplateProvider{
+		submitWritingTask,
 		replyTask,
 	}
-	for _, p := range subs {
+	for _, p := range providers {
 		checkEmailTemplates(t, p.SubscribedEmailTemplate())
-	}
-
-	admins := []notif.AdminEmailTemplateProvider{
-		newPostTask,
-		editTask,
-		replyTask,
-		editReplyTask,
-		cancelTask,
-		userAllowTask,
-		userDisallowTask,
-		announcementAddTask,
-		announcementDeleteTask,
-		NewsUserAllowTask,
-		NewsUserRemoveTask,
-	}
-	for _, p := range admins {
-		checkEmailTemplates(t, p.AdminEmailTemplate())
 	}
 }

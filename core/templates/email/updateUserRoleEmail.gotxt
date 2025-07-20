@@ -1,0 +1,4 @@
+Hi {{.Item.Username}},
+Your role has been updated to "{{.Item.Role}}".
+
+Manage notifications: {{.UnsubURL}}

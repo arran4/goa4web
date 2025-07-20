@@ -84,19 +84,13 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 		_ = cd.UserRoles()
 
 		idx := nav.IndexItems()
-		if uid != 0 {
-			idx = append(idx, common.IndexItem{Name: "Preferences", Link: "/usr"})
-		}
 		cd.IndexItems = idx
 		cd.Title = "Arran's Site"
 		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 		cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 		if uid != 0 && handlers.NotificationsEnabled() {
-			if c := cd.UnreadNotificationCount(); c > 0 {
-				idx = append(idx, common.IndexItem{Name: fmt.Sprintf("Notifications (%d)", c), Link: "/usr/notifications"})
-			}
+			cd.NotificationCount = int32(cd.UnreadNotificationCount())
 		}
-		cd.IndexItems = idx
 		ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

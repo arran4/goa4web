@@ -78,7 +78,7 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 		subject = strings.TrimSpace(string(bs))
 	}
 	if et.Text != "" {
-		tb, err := n.renderEmailText(ctx, et.Subject, data)
+		tb, err := n.renderEmailText(ctx, et.Text, data)
 		if err != nil {
 			return nil, err
 		}

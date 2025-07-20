@@ -2,6 +2,7 @@ package news
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/core/common"
 	htemplate "html/template"
 	"net/http"
 	"sync"
@@ -26,7 +27,7 @@ var (
 
 func runTemplate(name string) http.HandlerFunc {
 	loadTemplatesOnce.Do(func() {
-		siteTemplates = templates.GetCompiledSiteTemplates(map[string]any{})
+		siteTemplates = templates.GetCompiledSiteTemplates((&common.CoreData{}).Funcs(nil))
 	})
 	if siteTemplates.Lookup(name) == nil {
 		panic(fmt.Sprintf("missing template %s", name))

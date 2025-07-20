@@ -13,13 +13,12 @@ import (
 
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
-
-// ContextValues represents context key names used across the application.
-type ContextValues string
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
@@ -32,14 +31,7 @@ type MailProvider interface {
 	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
 }
 
-const (
-	// defaultPageSize is used when a user-supplied value is missing.
-	defaultPageSize = 15
-	// pageSizeMin is the lowest allowed page size.
-	pageSizeMin = 5
-	// pageSizeMax is the largest allowed page size.
-	pageSizeMax = 50
-)
+// No package-level pagination constants as runtime config provides these values.
 
 // NewsPost describes a news entry with access metadata.
 type NewsPost struct {
@@ -91,6 +83,7 @@ type CoreData struct {
 	notifCount               lazyValue[int32]
 	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
 	pref                     lazyValue[*db.Preference]
+	preferredLanguageID      lazyValue[int32]
 	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
 	unreadCount              lazyValue[int64]
@@ -127,6 +120,11 @@ func WithEvent(evt *eventbus.TaskEvent) CoreOption { return func(cd *CoreData) {
 // WithAbsoluteURLBase sets the base URL used to build absolute links.
 func WithAbsoluteURLBase(base string) CoreOption {
 	return func(cd *CoreData) { cd.absoluteURLBase.set(strings.TrimRight(base, "/")) }
+}
+
+// WithPreference preloads the user preference object.
+func WithPreference(p *db.Preference) CoreOption {
+	return func(cd *CoreData) { cd.pref.set(p) }
 }
 
 // NewCoreData creates a CoreData with context and queries applied.
@@ -203,17 +201,18 @@ func ContainsItem(items []IndexItem, name string) bool {
 }
 
 func pageSize(r *http.Request) int {
-	size := defaultPageSize
-	if pref, _ := r.Context().Value(ContextValues("preference")).(*db.Preference); pref != nil && pref.PageSize != 0 {
-		size = int(pref.PageSize)
+	cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
+	if cd == nil {
+		size := config.AppRuntimeConfig.PageSizeDefault
+		if size < config.AppRuntimeConfig.PageSizeMin {
+			size = config.AppRuntimeConfig.PageSizeMin
+		}
+		if size > config.AppRuntimeConfig.PageSizeMax {
+			size = config.AppRuntimeConfig.PageSizeMax
+		}
+		return size
 	}
-	if size < pageSizeMin {
-		size = pageSizeMin
-	}
-	if size > pageSizeMax {
-		size = pageSizeMax
-	}
-	return size
+	return cd.PageSize()
 }
 
 // UserRoles returns the user roles loaded lazily.
@@ -310,6 +309,21 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 	})
 }
 
+// PageSize returns the preferred page size within configured limits.
+func (cd *CoreData) PageSize() int {
+	size := config.AppRuntimeConfig.PageSizeDefault
+	if pref, err := cd.Preference(); err == nil && pref != nil && pref.PageSize != 0 {
+		size = int(pref.PageSize)
+	}
+	if size < config.AppRuntimeConfig.PageSizeMin {
+		size = config.AppRuntimeConfig.PageSizeMin
+	}
+	if size > config.AppRuntimeConfig.PageSizeMax {
+		size = config.AppRuntimeConfig.PageSizeMax
+	}
+	return size
+}
+
 // Languages returns the list of available languages loaded on demand.
 func (cd *CoreData) Languages() ([]*db.Language, error) {
 	return cd.langs.load(func() ([]*db.Language, error) {
@@ -328,6 +342,27 @@ func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
 		}
 		return cd.queries.FetchLanguages(cd.ctx)
 	})
+}
+
+// PreferredLanguageID returns the user's preferred language ID if set,
+// otherwise it resolves the site's default language name to an ID.
+func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
+	id, _ := cd.preferredLanguageID.load(func() (int32, error) {
+		if pref, err := cd.Preference(); err == nil && pref != nil {
+			if pref.LanguageIdlanguage != 0 {
+				return pref.LanguageIdlanguage, nil
+			}
+		}
+		if cd.queries == nil || siteDefault == "" {
+			return 0, nil
+		}
+		langID, err := cd.queries.GetLanguageIDByName(cd.ctx, sql.NullString{String: siteDefault, Valid: true})
+		if err != nil {
+			return 0, nil
+		}
+		return langID, nil
+	})
+	return id
 }
 
 // AllRoles returns every defined role loaded once from the database.
@@ -608,7 +643,7 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 			return nil, nil
 		}
 		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		ps := pageSize(r)
+		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
 			return cd.queries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
@@ -633,7 +668,7 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 			return nil, nil
 		}
 		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		ps := pageSize(r)
+		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
 			return cd.queries.SearchWriters(cd.ctx, db.SearchWritersParams{

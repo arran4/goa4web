@@ -21,27 +21,37 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 type SaveEmailTask struct{ tasks.TaskString }
+
+// AddEmailTask handles user email verification requests and sends
+// notifications directly to the specified address.
 type AddEmailTask struct{ tasks.TaskString }
-type ResendEmailTask struct{ tasks.TaskString }
+
+// ResendVerificationEmailTask resends the verification link for an
+// unverified user email address.
+type ResendVerificationEmailTask struct{ tasks.TaskString }
 type DeleteEmailTask struct{ tasks.TaskString }
 type TestMailTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*TestMailTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*AddEmailTask)(nil)
+var _ notif.DirectEmailNotificationTemplateProvider = (*AddEmailTask)(nil)
+var _ notif.DirectEmailNotificationTemplateProvider = (*ResendVerificationEmailTask)(nil)
 
-func (ResendEmailTask) Action(w http.ResponseWriter, r *http.Request) { addEmailTask.Resend(w, r) }
+func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) {
+	addEmailTask.Resend(w, r)
+}
 
 var (
-	saveEmailTask   = &SaveEmailTask{TaskString: tasks.TaskString(TaskSaveAll)}
-	addEmailTask    = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
-	resendEmailTask = &ResendEmailTask{TaskString: TaskResend}
-	deleteEmailTask = &DeleteEmailTask{TaskString: tasks.TaskString(TaskDelete)}
-	testMailTask    = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
+	saveEmailTask               = &SaveEmailTask{TaskString: tasks.TaskString(TaskSaveAll)}
+	addEmailTask                = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
+	resendVerificationEmailTask = &ResendVerificationEmailTask{TaskString: TaskResend}
+	deleteEmailTask             = &DeleteEmailTask{TaskString: tasks.TaskString(TaskDelete)}
+	testMailTask                = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
 )
 
 // ErrMailNotConfigured is returned when test mail has no provider configured.
@@ -205,7 +215,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0}); err != nil {
-		// TODO better error for NOT Duplicate entry  for key 'user_emails_email_idx'
+		// TODO better error for NOT Duplicate entry for key 'user_emails_email_code_idx'
 		log.Printf("insert user email: %v", err)
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
 		return
@@ -217,9 +227,8 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	if evt.Data == nil {
-		evt.Data = map[string]any{}
-	}
+	evt.Data["page"] = page
+	evt.Data["email"] = emailAddr
 	evt.Data["URL"] = page
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
@@ -256,9 +265,8 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
-	if evt.Data == nil {
-		evt.Data = map[string]any{}
-	}
+	evt.Data["page"] = page
+	evt.Data["email"] = ue.Email
 	evt.Data["URL"] = page
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
@@ -309,13 +317,30 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func (AddEmailTask) SelfEmailTemplate() *notif.EmailTemplates {
+func (AddEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 
-func (AddEmailTask) SelfInternalNotificationTemplate() *string {
-	v := notif.NotificationTemplateFilenameGenerator("verifyEmail")
-	return &v
+func (AddEmailTask) DirectEmailAddress(evt eventbus.Event) string {
+	if evt.Data != nil {
+		if email, ok := evt.Data["email"].(string); ok {
+			return email
+		}
+	}
+	return ""
+}
+
+func (ResendVerificationEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("verifyEmail")
+}
+
+func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.Event) string {
+	if evt.Data != nil {
+		if email, ok := evt.Data["email"].(string); ok {
+			return email
+		}
+	}
+	return ""
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
@@ -345,5 +370,6 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})
+	_ = queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID})
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }

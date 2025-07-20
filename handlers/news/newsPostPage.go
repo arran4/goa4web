@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/core/templates"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
@@ -185,11 +184,12 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData:           r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:           cd,
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
-		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
+		SelectedLanguageId: cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
@@ -253,7 +253,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

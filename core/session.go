@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
 	"github.com/gorilla/sessions"
 )
 
@@ -18,7 +17,7 @@ var Store *sessions.CookieStore
 // GetSession returns the session from the request context if present,
 // otherwise it retrieves the session from the session store.
 func GetSession(r *http.Request) (*sessions.Session, error) {
-	if sessVal := r.Context().Value(common.ContextValues("session")); sessVal != nil {
+	if sessVal := r.Context().Value(ContextValues("session")); sessVal != nil {
 		sess, ok := sessVal.(*sessions.Session)
 		if !ok {
 			return nil, fmt.Errorf("invalid session in context")
@@ -64,3 +63,6 @@ func SessionError(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("session error: %v", err)
 	clearSession(w, r)
 }
+
+// ContextValues represents context key names used across the application.
+type ContextValues string

@@ -32,6 +32,15 @@ type SelfNotificationTemplateProvider interface {
 	SelfInternalNotificationTemplate() *string
 }
 
+// DirectEmailNotificationTemplateProvider specifies templates for an email sent
+// directly to an address independent of the user's primary email.
+// The address itself is obtained from the event data via DirectEmailAddress.
+// Internal notifications are not supported for this provider.
+type DirectEmailNotificationTemplateProvider interface {
+	DirectEmailAddress(evt eventbus.Event) string
+	DirectEmailTemplate() *EmailTemplates
+}
+
 // SubscribersNotificationTemplateProvider indicates the notification should be delivered to
 // subscribed users.
 type SubscribersNotificationTemplateProvider interface {

@@ -1,8 +1,9 @@
 {{ template "head" $ }}
 <form method="post">
+        {{ csrfField }}
     Min page size: <input type="number" name="min" value="{{.Min}}"><br>
     Max page size: <input type="number" name="max" value="{{.Max}}"><br>
     Default page size: <input type="number" name="default" value="{{.Default}}"><br>
-    <input type="submit" name="task" value="Save all">
+    <input type="submit" value="Save">
 </form>
 {{ template "tail" $ }}

@@ -28,7 +28,12 @@ import (
 // CreateThreadTask handles creating a new forum thread.
 type CreateThreadTask struct{ tasks.TaskString }
 
+var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
+// createThreadTask implements notification providers so that when a user starts
+// a new discussion they automatically watch for replies and administrators are
+// emailed about the new thread. This helps engaged users stay in the loop while
+// giving moderators visibility of new conversations.
 // The author should automatically follow their thread and existing topic
 // subscribers expect a notification that a new thread was created.
 var _ tasks.Task = (*CreateThreadTask)(nil)
@@ -77,11 +82,14 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// AutoSubscribePath allows new thread creators to automatically watch for replies.
 var _ searchworker.IndexedTask = CreateThreadTask{}
 
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskCreateThread), evt.Path
 }
+
+var _ searchworker.IndexedTask = CreateThreadTask{}
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

@@ -26,6 +26,9 @@ type ReplyBlogTask struct{ tasks.TaskString }
 
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 
+// ReplyBlogTask uses auto subscription so commenters keep track of follow-ups
+// on their posts. Subscribers also get notified via email or internal messages
+// so lively discussions don't go unnoticed.
 // Compile-time interface checks with reasoning.
 // Implementing SubscribersNotificationTemplateProvider means followers learn
 // about new comments.
@@ -47,6 +50,8 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
+// AutoSubscribePath allows the worker to add a subscription when new replies are
+// posted so participants stay in the loop.
 func (ReplyBlogTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return TaskReply, evt.Path
 }

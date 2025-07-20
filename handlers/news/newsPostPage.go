@@ -38,6 +38,10 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+// ReplyTask hooks into notification and auto subscription systems so readers
+// following a news post will see replies and admins are emailed about new
+// discussions. This promotes active conversations while giving moderators
+// oversight.
 // Interface checks with reasoning. Administrators and subscribers receive
 // notifications when discussions grow, and commenters are auto-subscribed so
 // they know when someone replies.
@@ -78,6 +82,7 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// AutoSubscribePath allows commenters to automatically watch for further replies.
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskReply), evt.Path
 }
@@ -102,6 +107,10 @@ type NewPostTask struct{ tasks.TaskString }
 
 var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 
+// NewPostTask implements notification providers so authors automatically
+// subscribe to discussion on their posts and administrators are kept in the
+// loop. Subscribers are notified as well, encouraging engagement with freshly
+// published content.
 // New posts alert subscribers and admins and subscribe the poster to reply
 // notifications.
 var _ tasks.Task = (*NewPostTask)(nil)
@@ -127,6 +136,7 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
+// AutoSubscribePath keeps authors in the loop on new post discussions.
 func (NewPostTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskNewPost), evt.Path
 }

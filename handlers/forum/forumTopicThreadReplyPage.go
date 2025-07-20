@@ -21,6 +21,9 @@ import (
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
+// ReplyTask asserts these interfaces so that anyone responding to a thread
+// automatically follows subsequent replies and administrators receive an email
+// summary. This keeps discussions active and lets mods monitor forum activity.
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
@@ -61,6 +64,7 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// AutoSubscribePath ensures authors automatically receive updates on replies.
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {

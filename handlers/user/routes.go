@@ -22,7 +22,7 @@ func RegisterRoutes(r *mux.Router) {
 	ur.HandleFunc("/email", userEmailPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/email", tasks.Action(saveEmailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveEmailTask.Matcher())
 	ur.HandleFunc("/email/add", tasks.Action(addEmailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addEmailTask.Matcher())
-	ur.HandleFunc("/email/resend", tasks.Action(resendEmailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(resendEmailTask.Matcher())
+	ur.HandleFunc("/email/resend", tasks.Action(resendVerificationEmailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(resendVerificationEmailTask.Matcher())
 	ur.HandleFunc("/email/delete", tasks.Action(deleteEmailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(deleteEmailTask.Matcher())
 	ur.HandleFunc("/email/notify", addEmailTask.Notify).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addEmailTask.Matcher())
 	ur.HandleFunc("/email/verify", userEmailVerifyCodePage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

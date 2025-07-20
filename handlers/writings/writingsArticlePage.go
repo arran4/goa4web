@@ -390,7 +390,5 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: 0, Text: text}
 		}
 	}
-	//??? if _, done := SearchWordIdsFromText(w, r, text, queries); done {
-
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }

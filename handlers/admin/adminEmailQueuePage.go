@@ -20,8 +20,12 @@ import (
 // ResendQueueTask triggers sending queued emails immediately.
 type ResendQueueTask struct{ tasks.TaskString }
 
+var resendQueueTask = &ResendQueueTask{TaskString: TaskResend}
+
 // DeleteQueueTask removes queued emails without sending.
 type DeleteQueueTask struct{ tasks.TaskString }
+
+var deleteQueueTask = &DeleteQueueTask{TaskString: TaskDelete}
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {

@@ -18,6 +18,8 @@ import (
 // DeleteDLQTask deletes entries from the dead letter queue.
 type DeleteDLQTask struct{ tasks.TaskString }
 
+var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
+
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData

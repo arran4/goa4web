@@ -8,8 +8,8 @@ import (
 
 func TestNewsUserTasksTemplates(t *testing.T) {
 	admins := []notif.AdminEmailTemplateProvider{
-		NewsUserAllowTask,
-		NewsUserRemoveTask,
+		&NewsUserAllowTask{TaskString: TaskNewsUserAllow},
+		&NewsUserRemoveTask{TaskString: TaskNewsUserRemove},
 	}
 	for _, p := range admins {
 		et := p.AdminEmailTemplate()

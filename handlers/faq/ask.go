@@ -12,6 +12,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -19,6 +20,18 @@ import (
 type AskTask struct{ tasks.TaskString }
 
 var askTask = &AskTask{TaskString: TaskAsk}
+
+var _ tasks.Task = (*AskTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AskTask)(nil)
+
+func (AskTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationFaqAskEmail")
+}
+
+func (AskTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationFaqAskEmail")
+	return &v
+}
 
 func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 	return tasks.HasTask(TaskAsk)(r, m)
@@ -84,7 +97,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 	if evt.Data == nil {
 		evt.Data = map[string]any{}
 	}
-	evt.Data["question"] = text
+	evt.Data["Question"] = text
 
 	// The BusWorker sends notifications based on event metadata.
 	// Setting Admin=true signals administrators should be alerted.

@@ -38,15 +38,15 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 
 // RegisterRoutes attaches the image endpoints to r.
 func RegisterRoutes(r *mux.Router) {
-	// TODO add subroute
+	ir := r.PathPrefix("/images").Subrouter()
 	ir.Use(handlers.IndexMiddleware(CustomIndex))
-	r.HandleFunc("/images/upload/image", tasks.Action(uploadImageTask)).
+	ir.HandleFunc("/upload/image", tasks.Action(uploadImageTask)).
 		Methods(http.MethodPost).
 		MatcherFunc(handlers.RequiresAnAccount()).
 		MatcherFunc(uploadImageTask.Matcher())
-	r.HandleFunc("/images/pasteimg.js", handlers.PasteImageJS).Methods(http.MethodGet)
-	r.Handle("/images/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).Methods(http.MethodGet)
-	r.Handle("/images/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).Methods(http.MethodGet)
+	ir.HandleFunc("/pasteimg.js", handlers.PasteImageJS).Methods(http.MethodGet)
+	ir.Handle("/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).Methods(http.MethodGet)
+	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).Methods(http.MethodGet)
 }
 
 func serveImage(w http.ResponseWriter, r *http.Request) {

@@ -26,11 +26,16 @@ type ReplyBlogTask struct{ tasks.TaskString }
 
 var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 
+// Compile-time interface checks with reasoning.
+// Implementing SubscribersNotificationTemplateProvider means followers learn
+// about new comments.
 var _ tasks.Task = (*ReplyBlogTask)(nil)
 
 // ReplyBlogTask ensures blog followers learn about new comments and the author
 // is automatically subscribed.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
+// Implementing AutoSubscribeProvider ensures the author is automatically
+// subscribed so they won't miss any replies.
 var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
 
 func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {

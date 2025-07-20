@@ -38,6 +38,9 @@ type ReplyTask struct{ tasks.TaskString }
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+// Interface checks with reasoning. Administrators and subscribers receive
+// notifications when discussions grow, and commenters are auto-subscribed so
+// they know when someone replies.
 var _ tasks.Task = (*ReplyTask)(nil)
 
 // ReplyTask keeps commenters in the loop by notifying thread followers and
@@ -99,6 +102,8 @@ type NewPostTask struct{ tasks.TaskString }
 
 var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 
+// New posts alert subscribers and admins and subscribe the poster to reply
+// notifications.
 var _ tasks.Task = (*NewPostTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*NewPostTask)(nil)

@@ -6,6 +6,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	htemplate "html/template"
 	"io"
+	ttemplate "text/template"
 )
 
 type TemplateEngine interface {
@@ -36,6 +37,10 @@ func HTMLTemplatesNew(s string) NewTemplateEngine[*htemplate.Template] {
 	return htemplate.New(s)
 }
 
+func TextTemplatesNew(s string) NewTemplateEngine[*ttemplate.Template] {
+	return ttemplate.New(s)
+}
+
 func NotificationTemplateFilenameGenerator(base string) string {
 	return base + ".gotxt"
 }
@@ -56,17 +61,17 @@ func EmailSubjectTemplateFilenameGenerator(base string) string {
 // Database overrides are respected when present.
 func (n *Notifier) renderNotification(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.notificationTemplates()
-	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
+	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
 }
 
 func (n *Notifier) renderEmailSubject(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.emailTextTemplates()
-	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
+	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
 }
 
 func (n *Notifier) renderEmailText(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.emailTextTemplates()
-	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
+	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
 }
 
 func (n *Notifier) renderEmailHtml(ctx context.Context, filename string, data any) ([]byte, error) {

@@ -1,41 +1,35 @@
 package admin
 
-import "github.com/arran4/goa4web/internal/tasks"
+import (
+	"github.com/arran4/goa4web/internal/tasks"
+)
 
-// TODO var resendQueueTask = ResendQueueTask{
-var ResendQueueTask = resendQueueTask{TaskString: TaskResend}
+// ResendQueueTask triggers sending queued emails immediately.
+type ResendQueueTask struct{ tasks.TaskString }
 
-// TODO var deleteQueueTask = DeleteQueueTask{
-var DeleteQueueTask = deleteQueueTask{TaskString: TaskDelete}
+var resendQueueTask = &ResendQueueTask{TaskString: TaskResend}
 
-// TODO var saveTemplateTask = SaveTemplateTask{
-var SaveTemplateTask = saveTemplateTask{TaskString: TaskUpdate}
+var deleteQueueTask = &DeleteQueueTask{TaskString: TaskDelete}
 
-// TODO var testTemplateTask = TestTemplateTask{
-var TestTemplateTask = testTemplateTask{TaskString: TaskTestMail}
+var saveTemplateTask = &SaveTemplateTask{TaskString: TaskUpdate}
 
-// TODO var deleteDLQTask = DeleteDLQTask{
-var DeleteDLQTask = deleteDLQTask{TaskString: TaskDelete}
+var testTemplateTask = &TestTemplateTask{TaskString: TaskTestMail}
 
-// TODO var markReadTask = MarkReadTask{
-var MarkReadTask = markReadTask{TaskString: TaskDismiss}
+var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
 
-// TODO var purgeNotificationsTask = PurgeNotificationsTask{
-var PurgeNotificationsTask = purgeNotificationsTask{TaskString: TaskPurge}
+var markReadTask = &MarkReadTask{TaskString: TaskDismiss}
 
-// TODO var sendNotificationTask = SendNotificationTask{
-var SendNotificationTask = sendNotificationTask{TaskString: TaskNotify}
+var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
 
-// TODO var addAnnouncementTask = AddAnnouncementTask{
-var AddAnnouncementTask = addAnnouncementTask{TaskString: TaskAdd}
+var sendNotificationTask = &SendNotificationTask{TaskString: TaskNotify}
 
-// TODO var deleteAnnouncementTask = DeleteAnnouncementTask{
-var DeleteAnnouncementTask = deleteAnnouncementTask{TaskString: TaskDelete}
+var addAnnouncementTask = &AddAnnouncementTask{TaskString: TaskAdd}
 
-// TODO var addIPBanTask = AddIPBanTask{
-var AddIPBanTask = addIPBanTask{TaskString: TaskAdd}
+var deleteAnnouncementTask = &DeleteAnnouncementTask{TaskString: TaskDelete}
 
-var DeleteIPBanTask = deleteIPBanTask{TaskString: TaskDelete}
+var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
+
+var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
 var NewsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
 

@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core"
@@ -56,6 +58,40 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	}
 	if evt.Data["Username"] != "alice" {
 		t.Fatalf("username not set: %+v", evt.Data)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestVerifyRemovesDuplicates(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
+		AddRow(1, 1, "a@example.com", nil, "code", time.Now().Add(time.Hour), 0)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority\nFROM user_emails\nWHERE last_verification_code = ?")).
+		WithArgs(sql.NullString{String: "code", Valid: true}).
+		WillReturnRows(rows)
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE user_emails\nSET verified_at = ?, last_verification_code = NULL, verification_expires_at = NULL\nWHERE id = ?")).
+		WithArgs(sqlmock.AnyArg(), int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM user_emails WHERE email = ? AND id != ?")).
+		WithArgs("a@example.com", int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code=code", nil)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+	userEmailVerifyCodePage(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Fatalf("status=%d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

@@ -28,6 +28,20 @@ func (q *Queries) DeleteUserEmail(ctx context.Context, id int32) error {
 	return err
 }
 
+const deleteUserEmailsByEmailExceptID = `-- name: DeleteUserEmailsByEmailExceptID :exec
+DELETE FROM user_emails WHERE email = ? AND id != ?
+`
+
+type DeleteUserEmailsByEmailExceptIDParams struct {
+	Email string
+	ID    int32
+}
+
+func (q *Queries) DeleteUserEmailsByEmailExceptID(ctx context.Context, arg DeleteUserEmailsByEmailExceptIDParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUserEmailsByEmailExceptID, arg.Email, arg.ID)
+	return err
+}
+
 const getMaxNotificationPriority = `-- name: GetMaxNotificationPriority :one
 SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE user_id = ?
 `

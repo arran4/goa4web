@@ -318,7 +318,7 @@ CREATE TABLE `user_emails` (
   `verification_expires_at` datetime DEFAULT NULL,
   `notification_priority` int NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `user_emails_email_idx` (`email`(255)),
+  UNIQUE KEY `user_emails_email_code_idx` (`email`(255),`last_verification_code`),
   KEY `user_emails_user_idx` (`user_id`)
 );
 

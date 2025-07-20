@@ -48,3 +48,7 @@ WHERE last_verification_code = ?;
 
 -- name: GetMaxNotificationPriority :one
 SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE user_id = ?;
+
+-- name: DeleteUserEmailsByEmailExceptID :exec
+DELETE FROM user_emails WHERE email = ? AND id != ?;
+

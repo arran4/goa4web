@@ -22,26 +22,11 @@ import (
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
-// ReplyTask asserts these interfaces so that anyone responding to a thread
-// automatically follows subsequent replies and administrators receive an email
-// summary. This keeps discussions active and lets mods monitor forum activity.
-var _ tasks.Task = (*ReplyTask)(nil)
-
-// send notifications to thread subscribers when someone replies
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-
-// replies should automatically watch the thread so users see future updates
-var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
-
-// Build time checks so replying to a thread always triggers subscription and
-// notification delivery using the standard templates, keeping readers in the
-// conversation.
+// compile-time assertions that ReplyTask provides notifications, indexing and
+// auto-subscription for thread replies.
 var (
 	replyTask = &ReplyTask{TaskString: TaskReply}
 
-	// Compile-time interface checks ensure replies trigger notifications and
-	// subscriptions so participants stay informed.
 	_ tasks.Task                                    = (*ReplyTask)(nil)
 	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)

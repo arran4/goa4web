@@ -97,7 +97,6 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
 			}
 		}
-		// OLD _ = emailutil.CreateEmailTemplateAndQueue(r.Context(), queries, row.Idusers, row.Email, page, handlers.TaskUserResetPassword, code)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

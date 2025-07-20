@@ -41,8 +41,6 @@ func TestNewsTemplatesExist(t *testing.T) {
 		userDisallowTask,
 		announcementAddTask,
 		announcementDeleteTask,
-		NewsUserAllowTask,
-		NewsUserRemoveTask,
 	}
 	for _, p := range admins {
 		checkEmailTemplates(t, p.AdminEmailTemplate())

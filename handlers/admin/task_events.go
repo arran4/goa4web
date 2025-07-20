@@ -1,9 +1,10 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/handlers/news"
 	"github.com/arran4/goa4web/internal/tasks"
 )
+
+// TODO move these into their appropriate files closer to their struct definitions
 
 // ResendQueueTask triggers sending queued emails immediately.
 type ResendQueueTask struct{ tasks.TaskString }
@@ -32,8 +33,6 @@ var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
 
 var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
-// TODO move into this package even if it means updating link
-var NewsUserAllowTask = news.NewsUserAllowTask
+var newsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
 
-// TODO move into this package even if it means updating link
-var NewsUserRemoveTask = news.NewsUserRemoveTask
+var newsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}

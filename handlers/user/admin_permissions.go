@@ -57,7 +57,19 @@ type PermissionUserAllowTask struct{ tasks.TaskString }
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
 var _ tasks.Task = (*PermissionUserAllowTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*PermissionUserAllowTask)(nil)
+
+func (PermissionUserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminPermissionAllowEmail")
+}
+
+func (PermissionUserAllowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminPermissionAllowEmail")
+	return &v
+}
+
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
+
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -84,6 +96,8 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
+			evt.Data["Username"] = username
+			evt.Data["Permission"] = level
 			evt.Data["targetUserID"] = u.Idusers
 			evt.Data["Username"] = u.Username.String
 			evt.Data["Role"] = level
@@ -120,7 +134,20 @@ type PermissionUserDisallowTask struct{ tasks.TaskString }
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
 
 var _ tasks.Task = (*PermissionUserDisallowTask)(nil)
+
+var _ notif.AdminEmailTemplateProvider = (*PermissionUserDisallowTask)(nil)
+
+func (PermissionUserDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminPermissionDisallowEmail")
+}
+
+func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminPermissionDisallowEmail")
+	return &v
+}
+
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
+
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -137,22 +164,30 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
-		id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permidi))
-		if err2 != nil {
-			log.Printf("lookup role: %v", err2)
+		var uname, role string
+		if rows, err := queries.GetUserRoles(r.Context()); err == nil {
+			for _, row := range rows {
+				if row.IduserRoles == int32(permidi) {
+					role = row.Role
+					if u, err := queries.GetUserById(r.Context(), row.UsersIdusers); err == nil && u.Username.Valid {
+						uname = u.Username.String
+					}
+					break
+				}
+			}
 		}
 		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
-		} else if err2 == nil {
-			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-				if evt := cd.Event(); evt != nil {
-					if evt.Data == nil {
-						evt.Data = map[string]any{}
-					}
+		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["Username"] = uname
+				evt.Data["Permission"] = role
 					evt.Data["targetUserID"] = id
 					evt.Data["Username"] = username
 					evt.Data["Role"] = role
-				}
 			}
 		}
 	}

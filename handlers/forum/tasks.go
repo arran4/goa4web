@@ -69,7 +69,13 @@ const (
 	// TaskForumTopicCreate creates a new forum topic.
 	TaskForumTopicCreate = "Forum topic create"
 
-	// TaskSubscribeToTopic subscribes the user to new threads in a topic.
+	// TaskTopicGrantCreate adds a new grant to a forum topic.
+	TaskTopicGrantCreate tasks.TaskString = "Create grant"
+
+	// TaskTopicGrantDelete removes an existing forum topic grant.
+	TaskTopicGrantDelete tasks.TaskString = "Delete grant"
+
+  // TaskSubscribeToTopic subscribes the user to new threads in a topic.
 	TaskSubscribeToTopic tasks.TaskString = "Subscribe To Topic"
 
 	// TaskUnsubscribeFromTopic removes topic thread notifications.

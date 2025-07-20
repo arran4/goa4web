@@ -25,7 +25,7 @@ import (
 func ShowPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 		CanReply           bool
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -48,10 +48,19 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		Idlinker:     int32(linkId),
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 
@@ -80,11 +89,21 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(linkId))
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		Idlinker:     int32(linkId),
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 

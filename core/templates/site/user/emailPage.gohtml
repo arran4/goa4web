@@ -2,7 +2,7 @@
 {{- if $.Error }}
     <p style="color:red;">{{ $.Error }}</p>
 {{- end }}
-    <form method="post">
+    <form method="post" action="/usr/email/add">
         {{ csrfField }}
         Add Email: <input type="email" name="new_email">
         <input type="submit" name="task" value="Add">

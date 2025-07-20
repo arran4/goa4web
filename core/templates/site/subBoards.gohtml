@@ -1,12 +1,14 @@
 {{ define "subBoards" }}
-        {{ if .Boards }}
-            <font size="4">{{ if .IsSubBoard }}Sub-{{ end }}Boards:</font><br>
-            <table>
-                {{ range .Boards }}
-                    <tr>
-                        <th><a href="/imagebbs/board/{{ .Idimageboard }}">{{ .Title.String }}</a>
-                        <td>{{ .Description.String }}
-                {{ end }}
-            </table><br>
-        {{ end }}
+    {{- if .Boards }}
+        <font size="4">{{ if .IsSubBoard }}Sub-{{ end }}Boards:</font><br>
+        <table>
+            {{- range .Boards }}
+                <tr>
+                    <th><a href="/imagebbs/board/{{ .Idimageboard }}">{{ .Title.String }}</a>
+                    <td>{{ .Description.String }}
+            {{- end }}
+        </table><br>
+    {{- else }}
+        There isn't anything to see.
+    {{- end }}
 {{ end }}

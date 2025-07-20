@@ -27,11 +27,8 @@ type ForumcategoryPlus struct {
 }
 
 type CategoryTree struct {
-	//Categories           []*ForumcategoryPlus
-	//Topics               []*ForumtopicPlus
 	CategoryChildrenLookup map[int32][]*ForumcategoryPlus
 	CategoryLookup         map[int32]*ForumcategoryPlus
-	//TopicLookup         map[int32]*ForumtopicPlus
 }
 
 func NewCategoryTree(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPlus) *CategoryTree {

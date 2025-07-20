@@ -13,6 +13,8 @@ const (
 	TaskSaveLanguages tasks.TaskString = "Save languages"
 	// TaskSaveLanguage saves updates to a single language.
 	TaskSaveLanguage tasks.TaskString = "Save language"
+	// TaskSaveSize saves a user's paging preference.
+	TaskSaveSize tasks.TaskString = "Save size"
 	// TaskSaveAll saves all changes in bulk.
 	TaskSaveAll tasks.TaskString = "Save all"
 	// TaskTestMail sends a test email to the current user.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	ttemplate "text/template"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
@@ -20,9 +21,9 @@ type Notifier struct {
 	EmailProvider  email.Provider
 	Queries        *dbpkg.Queries
 	noteOnce       sync.Once
-	noteTmpls      *htemplate.Template
+	noteTmpls      *ttemplate.Template
 	emailTextOnce  sync.Once
-	emailTextTmpls *htemplate.Template
+	emailTextTmpls *ttemplate.Template
 	emailHTMLOnce  sync.Once
 	emailHTMLTmpls *htemplate.Template
 }
@@ -62,14 +63,14 @@ func New(opts ...Option) *Notifier {
 	return n
 }
 
-func (n *Notifier) notificationTemplates() *htemplate.Template {
+func (n *Notifier) notificationTemplates() *ttemplate.Template {
 	n.noteOnce.Do(func() {
 		n.noteTmpls = templates.GetCompiledNotificationTemplates(map[string]any{})
 	})
 	return n.noteTmpls
 }
 
-func (n *Notifier) emailTextTemplates() *htemplate.Template {
+func (n *Notifier) emailTextTemplates() *ttemplate.Template {
 	n.emailTextOnce.Do(func() {
 		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(map[string]any{})
 	})

@@ -29,6 +29,12 @@ var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
+var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask notifies followers and auto-subscribes the author so replies aren't missed.
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
 func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
@@ -52,6 +58,19 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 }
 
 var _ searchworker.IndexedTask = ReplyTask{}
+
+func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("replyEmail")
+}
+
+func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("reply")
+	return &s
+}
+
+func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
+	return string(TaskReply), evt.Path
+}
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) { ArticleReplyActionPage(w, r) }
 

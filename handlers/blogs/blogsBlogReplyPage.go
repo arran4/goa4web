@@ -30,17 +30,20 @@ var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 // Implementing SubscribersNotificationTemplateProvider means followers learn
 // about new comments.
 var _ tasks.Task = (*ReplyBlogTask)(nil)
+
+// ReplyBlogTask ensures blog followers learn about new comments and the author
+// is automatically subscribed.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
 // Implementing AutoSubscribeProvider ensures the author is automatically
 // subscribed so they won't miss any replies.
 var _ notif.AutoSubscribeProvider = (*ReplyBlogTask)(nil)
 
 func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("blogReplyEmail")
+	return notif.NewEmailTemplates("replyEmail")
 }
 
 func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("blog_reply")
+	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 

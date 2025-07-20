@@ -42,6 +42,9 @@ var replyTask = &ReplyTask{TaskString: TaskReply}
 // notifications when discussions grow, and commenters are auto-subscribed so
 // they know when someone replies.
 var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask keeps commenters in the loop by notifying thread followers and
+// subscribing the author to future replies.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
@@ -58,11 +61,11 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("newsReplyEmail")
+	return notif.NewEmailTemplates("replyEmail")
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("news_reply")
+	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 

@@ -27,7 +27,7 @@ func TestForumTemplatesExist(t *testing.T) {
 	prefixes := []string{
 		"forumThreadCreateEmail",
 		"adminNotificationForumThreadCreateEmail",
-		"forumReplyEmail",
+		"replyEmail",
 		"adminNotificationForumReplyEmail",
 	}
 	for _, p := range prefixes {

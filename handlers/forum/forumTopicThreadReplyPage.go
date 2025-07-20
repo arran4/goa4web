@@ -36,6 +36,9 @@ var replyTask = &ReplyTask{TaskString: TaskReply}
 // thread followers to hear about replies while administrators are alerted to new
 // content. AutoSubscribeProvider ensures the author is kept in the loop.
 var _ tasks.Task = (*ReplyTask)(nil)
+
+// ReplyTask notifies thread subscribers and automatically subscribes the author
+// to keep them in the conversation.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)

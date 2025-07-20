@@ -28,6 +28,9 @@ import (
 // CreateThreadTask handles creating a new forum thread.
 type CreateThreadTask struct{ tasks.TaskString }
 
+
+// The author should automatically follow their thread and existing topic
+// subscribers expect a notification that a new thread was created.
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)

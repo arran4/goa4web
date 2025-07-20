@@ -109,6 +109,16 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.Event, q dlq.D
 
 	}
 
+	if tp, ok := evt.Task.(DirectEmailNotificationTemplateProvider); ok {
+		if err := n.notifyDirectEmail(ctx, evt, tp); err != nil {
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("direct email notify: %v", err)); dlqErr != nil {
+				return dlqErr
+			}
+			return err
+		}
+
+	}
+
 	if tp, ok := evt.Task.(TargetUsersNotificationProvider); ok {
 		if err := n.notifyTargetUsers(ctx, evt, tp); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify target users: %v", err)); dlqErr != nil {
@@ -165,6 +175,19 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.Event, tp SelfNo
 			}); err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.Event, tp DirectEmailNotificationTemplateProvider) error {
+	addr := tp.DirectEmailAddress(evt)
+	if addr == "" {
+		return nil
+	}
+	if et := tp.DirectEmailTemplate(); et != nil {
+		if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, addr, et, evt.Data); err != nil {
+			return err
 		}
 	}
 	return nil

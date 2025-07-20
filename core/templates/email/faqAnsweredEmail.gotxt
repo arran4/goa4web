@@ -1,4 +1,4 @@
 Hi {{.Item.Username}},
 Your FAQ question has been answered.
 
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

@@ -168,18 +168,6 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 				Link: "/forum/admin/users",
 			},
 		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{
-				Name: "Administer topic restrictions",
-				Link: "/forum/admin/restrictions/topics",
-			},
-		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{
-				Name: "Administer user restrictions",
-				Link: "/forum/admin/restrictions/users",
-			},
-		)
 	}
 	if threadId != "" && topicId != "" {
 		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "reply", int32(tid)) {
@@ -199,6 +187,26 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 					Link: fmt.Sprintf("/forum/topic/%s/new", topicId),
 				},
 			)
+		}
+	}
+	if threadId == "" && topicId != "" && data.UserID != 0 {
+		tid, err := strconv.Atoi(topicId)
+		if err == nil {
+			if subscribedToTopic(data, int32(tid)) {
+				data.CustomIndexItems = append(data.CustomIndexItems,
+					common.IndexItem{
+						Name: "Unsubscribe From Topic",
+						Link: fmt.Sprintf("/forum/topic/%s/unsubscribe", topicId),
+					},
+				)
+			} else {
+				data.CustomIndexItems = append(data.CustomIndexItems,
+					common.IndexItem{
+						Name: "Subscribe To Topic",
+						Link: fmt.Sprintf("/forum/topic/%s/subscribe", topicId),
+					},
+				)
+			}
 		}
 	}
 }

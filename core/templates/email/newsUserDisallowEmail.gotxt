@@ -3,5 +3,5 @@ Your news permissions have been revoked.
 
 News section:
 {{.NewsURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

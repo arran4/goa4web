@@ -17,7 +17,7 @@
             <td>{{.IduserRoles}}</td>
             <td class="username">{{.Username.String}}</td>
             <td class="email">{{.Email.String}}</td>
-            <td class="level">{{.Role}}</td>
+            <td class="role">{{.Role}}</td>
             <td><button class="edit-btn" data-id="{{.IduserRoles}}">Edit</button></td>
             <td><button class="delete-btn" data-id="{{.IduserRoles}}">Delete</button></td>
         </tr>
@@ -56,17 +56,17 @@
         btn.addEventListener('click', function(e){
             e.preventDefault();
             var tr = btn.closest('tr');
-            var levelCell = tr.querySelector('.level');
-            var curLevel = levelCell.textContent.trim();
-            levelCell.innerHTML = document.getElementById('roleOptions').innerHTML;
-            levelCell.querySelector('select').value = curLevel;
+            var roleCell = tr.querySelector('.role');
+            var curRole = roleCell.textContent.trim();
+            roleCell.innerHTML = document.getElementById('roleOptions').innerHTML;
+            roleCell.querySelector('select').value = curRole;
             btn.textContent = 'Save';
             btn.addEventListener('click', function(ev){
                 ev.preventDefault();
                 var data = new URLSearchParams();
                 data.set('task','Update permission');
                 data.set('permid',btn.dataset.id);
-                data.set('role',levelCell.querySelector('select').value);
+                data.set('role',roleCell.querySelector('select').value);
                 post(data).then(function(){ location.reload(); });
             }, {once:true});
         }, {once:true});

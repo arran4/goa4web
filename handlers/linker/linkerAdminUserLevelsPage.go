@@ -18,7 +18,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
+func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 	type PermissionUser struct {
 		*db.GetUserRolesRow
 		Username sql.NullString
@@ -74,7 +74,7 @@ func AdminUserLevelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UserLevels = perms
 
-	handlers.TemplateHandler(w, r, "adminUserLevelsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminUserRolesPage.gohtml", data)
 }
 
 type userAllowTask struct{ tasks.TaskString }

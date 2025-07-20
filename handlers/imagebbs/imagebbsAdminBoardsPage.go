@@ -16,10 +16,9 @@ import (
 func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	type BoardRow struct {
 		*db.Imageboard
-		Threads  int32
-		ModLevel int32
-		Visible  bool
-		Nsfw     bool
+		Threads int32
+		Visible bool
+		Nsfw    bool
 	}
 	type Data struct {
 		*common.CoreData
@@ -50,7 +49,6 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		data.Boards = append(data.Boards, &BoardRow{
 			Imageboard: b,
 			Threads:    int32(threads),
-			ModLevel:   0,
 			Visible:    true,
 			Nsfw:       false,
 		})

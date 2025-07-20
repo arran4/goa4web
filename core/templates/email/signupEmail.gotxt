@@ -10,7 +10,7 @@ Please add them to the user group to approve the account.
 Review the account here:
 {{.URL}}
 
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 
 Cheers,
 The A4Web Team

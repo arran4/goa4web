@@ -3,4 +3,4 @@ Your image post has been approved.
 
 View post:
 {{.PostURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}

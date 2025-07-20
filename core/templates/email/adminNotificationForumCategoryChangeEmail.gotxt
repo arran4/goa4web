@@ -1,0 +1,3 @@
+User {{.Item.Username}} renamed a forum category.
+
+Manage notifications: {{.UnsubscribeUrl}}

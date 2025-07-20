@@ -131,10 +131,20 @@ type UpdateWritingTask struct{ tasks.TaskString }
 var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
 var _ tasks.Task = (*UpdateWritingTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*UpdateWritingTask)(nil)
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
 func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleEditActionPage(w, r) }
+
+func (UpdateWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("writingUpdateEmail")
+}
+
+func (UpdateWritingTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("writing_update")
+	return &s
+}
 
 // UserAllowTask grants a user a permission.
 type UserAllowTask struct{ tasks.TaskString }
@@ -145,7 +155,7 @@ var _ tasks.Task = (*UserAllowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserAllowTask)(nil)
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/admin/writings/users/levels" {
+	if r.URL.Path == "/admin/writings/users/roles" {
 		AdminUserLevelsAllowActionPage(w, r)
 		return
 	}
@@ -180,7 +190,7 @@ var _ tasks.Task = (*UserDisallowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserDisallowTask)(nil)
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/admin/writings/users/levels" {
+	if r.URL.Path == "/admin/writings/users/roles" {
 		AdminUserLevelsRemoveActionPage(w, r)
 		return
 	}

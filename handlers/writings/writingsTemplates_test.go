@@ -25,6 +25,7 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 func TestWritingsTemplatesExist(t *testing.T) {
 	providers := []notif.SubscribersNotificationTemplateProvider{
 		submitWritingTask,
+		updateWritingTask,
 		replyTask,
 	}
 	for _, p := range providers {

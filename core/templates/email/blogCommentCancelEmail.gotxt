@@ -3,5 +3,5 @@ Your comment edit was canceled.
 
 View comment:
 {{.CommentURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

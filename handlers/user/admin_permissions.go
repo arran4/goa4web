@@ -56,6 +56,7 @@ type PermissionUserAllowTask struct{ tasks.TaskString }
 
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
+var _ tasks.Task = (*PermissionUserAllowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -91,11 +92,34 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
+func (PermissionUserAllowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["UserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["UserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	if id, ok := evt.Data["UserID"].(float64); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (PermissionUserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return nil
+}
+
+func (PermissionUserAllowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("permission_user_allow")
+	return &v
+}
+
 // PermissionUserDisallowTask removes a user's permission.
 type PermissionUserDisallowTask struct{ tasks.TaskString }
 
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
 
+var _ tasks.Task = (*PermissionUserDisallowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
@@ -135,11 +159,34 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
+func (PermissionUserDisallowTask) TargetUserIDs(evt eventbus.Event) []int32 {
+	if id, ok := evt.Data["UserID"].(int32); ok {
+		return []int32{id}
+	}
+	if id, ok := evt.Data["UserID"].(int); ok {
+		return []int32{int32(id)}
+	}
+	if id, ok := evt.Data["UserID"].(float64); ok {
+		return []int32{int32(id)}
+	}
+	return nil
+}
+
+func (PermissionUserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {
+	return nil
+}
+
+func (PermissionUserDisallowTask) TargetInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("permission_user_disallow")
+	return &v
+}
+
 // PermissionUpdateTask updates an existing permission entry.
 type PermissionUpdateTask struct{ tasks.TaskString }
 
 var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
 
+var _ tasks.Task = (*PermissionUpdateTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {

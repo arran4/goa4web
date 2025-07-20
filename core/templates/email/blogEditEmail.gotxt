@@ -3,5 +3,5 @@ Your blog post has been updated successfully.
 
 View post:
 {{.PostURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

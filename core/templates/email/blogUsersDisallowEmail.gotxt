@@ -3,5 +3,5 @@ Multiple users had blog permissions revoked.
 
 Blog section:
 {{.BlogURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

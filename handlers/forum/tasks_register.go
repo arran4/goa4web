@@ -7,5 +7,7 @@ func RegisterTasks() []tasks.NamedTask {
 	return []tasks.NamedTask{
 		createThreadTask,
 		replyTask,
+		subscribeTopicTaskAction,
+		unsubscribeTopicTaskAction,
 	}
 }

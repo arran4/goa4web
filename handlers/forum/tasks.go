@@ -68,4 +68,10 @@ const (
 
 	// TaskForumTopicCreate creates a new forum topic.
 	TaskForumTopicCreate = "Forum topic create"
+
+	// TaskSubscribeToTopic subscribes the user to new threads in a topic.
+	TaskSubscribeToTopic tasks.TaskString = "Subscribe To Topic"
+
+	// TaskUnsubscribeFromTopic removes topic thread notifications.
+	TaskUnsubscribeFromTopic tasks.TaskString = "Unsubscribe From Topic"
 )

@@ -123,7 +123,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 
 	data := Data{
 		CoreData: cd,
-		Filter:   r.URL.Query().Get("level"),
+		Filter:   r.URL.Query().Get("role"),
 	}
 
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
@@ -159,7 +159,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -173,7 +173,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
 	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
-		Name:         level,
+		Name:         role,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -229,7 +229,7 @@ func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	names := strings.FieldsFunc(r.PostFormValue("usernames"), func(r rune) bool { return r == ',' || r == '\n' || r == ' ' || r == '\t' })
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -251,7 +251,7 @@ func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 			UsersIdusers: u.Idusers,
-			Name:         level,
+			Name:         role,
 		}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow %s: %w", n, err).Error())
 		}

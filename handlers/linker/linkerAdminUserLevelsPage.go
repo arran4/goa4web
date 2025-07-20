@@ -86,7 +86,7 @@ var _ notif.TargetUsersNotificationProvider = (*userAllowTask)(nil)
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	usernames := r.PostFormValue("usernames")
-	level := r.PostFormValue("role")
+	role := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
 		return r == ',' || r == '\n' || r == '\r' || r == '\t' || r == ' '
 	})
@@ -101,7 +101,7 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 			UsersIdusers: u.Idusers,
-			Name:         level,
+			Name:         role,
 		}); err != nil {
 			log.Printf("permissionUserAllow Error: %s", err)
 		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

@@ -216,19 +216,19 @@ const (
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting = "Update writing"
 
-	// TaskUserAllow grants a user a permission or level.
+	// TaskUserAllow grants a user a role.
 	TaskUserAllow = "User Allow"
 
 	// TaskUpdatePermission modifies an existing user permission.
 	TaskUpdatePermission = "Update permission"
 
-	// TaskUserDisallow removes a user's permission or level.
+	// TaskUserDisallow removes a user's role.
 	TaskUserDisallow = "User Disallow"
 
-	// TaskUsersAllow grants multiple users a permission or level.
+	// TaskUsersAllow grants multiple users a role.
 	TaskUsersAllow = "Users Allow"
 
-	// TaskUsersDisallow removes multiple user permissions or levels.
+	// TaskUsersDisallow removes multiple user roles.
 	TaskUsersDisallow = "Users Disallow"
 
 	// TaskUserDoNothing is used when no action should be taken on a user.

@@ -169,6 +169,31 @@ Many queries now filter results directly in SQL using `viewer_id` together with 
 | `imagebbs` | `board` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `imagebbs` | `board` | `post` | `NULL` | viewer role ID | role-based grant |
 | `imagebbs` | `board` | `post` | `NULL` | `NULL` | public grant for everyone |
+| `linker` | `category` | `see` | `viewer_id` | `NULL` | grant specific to that user |
+| `linker` | `category` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `linker` | `category` | `see` | `NULL` | viewer role ID | role-based grant |
+| `linker` | `category` | `see` | `NULL` | `NULL` | public grant for everyone |
+| `linker` | `category` | `view` | `viewer_id` | `NULL` | grant specific to that user |
+| `linker` | `category` | `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `linker` | `category` | `view` | `NULL` | viewer role ID | role-based grant |
+| `linker` | `category` | `view` | `NULL` | `NULL` | public grant for everyone |
+| `linker` | `link` | `see` | `viewer_id` | `NULL` | grant specific to that user |
+| `linker` | `link` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `linker` | `link` | `see` | `NULL` | viewer role ID | role-based grant |
+| `linker` | `link` | `see` | `NULL` | `NULL` | public grant for everyone |
+| `linker` | `link` | `view` | `viewer_id` | `NULL` | grant specific to that user |
+| `linker` | `link` | `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `linker` | `link` | `view` | `NULL` | viewer role ID | role-based grant |
+| `linker` | `link` | `view` | `NULL` | `NULL` | public grant for everyone |
+| `linker` | `link` | `comment` | `viewer_id` | `NULL` | grant specific to that user |
+| `linker` | `link` | `comment` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `linker` | `link` | `comment` | `NULL` | viewer role ID | role-based grant |
+| `linker` | `link` | `reply` | `viewer_id` | `NULL` | grant specific to that user |
+| `linker` | `link` | `reply` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `linker` | `link` | `reply` | `NULL` | viewer role ID | role-based grant |
+| `linker` | `link` | `post` | `viewer_id` | `NULL` | grant specific to that user |
+| `linker` | `link` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `linker` | `link` | `post` | `NULL` | viewer role ID | role-based grant |
 | `forum` | `topic` | `see` | `viewer_id` | `NULL` | grant specific to that user |
 | `forum` | `topic` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `forum` | `topic` | `see` | `NULL` | viewer role ID | role-based grant |

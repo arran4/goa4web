@@ -153,6 +153,67 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory
 	return items, nil
 }
 
+const getAllLinkerCategoriesForUser = `-- name: GetAllLinkerCategoriesForUser :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT
+    lc.idlinkerCategory,
+    lc.position,
+    lc.title,
+    lc.sortorder
+FROM linker_category lc
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='linker'
+      AND g.item='category'
+      AND g.action='see'
+      AND g.active=1
+      AND g.item_id = lc.idlinkerCategory
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+ORDER BY lc.position
+`
+
+type GetAllLinkerCategoriesForUserParams struct {
+	ViewerID     int32
+	ViewerUserID sql.NullInt32
+}
+
+func (q *Queries) GetAllLinkerCategoriesForUser(ctx context.Context, arg GetAllLinkerCategoriesForUserParams) ([]*LinkerCategory, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkerCategoriesForUser, arg.ViewerID, arg.ViewerUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*LinkerCategory
+	for rows.Next() {
+		var i LinkerCategory
+		if err := rows.Scan(
+			&i.Idlinkercategory,
+			&i.Position,
+			&i.Title,
+			&i.Sortorder,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllLinkerCategoriesWithSortOrder = `-- name: GetAllLinkerCategoriesWithSortOrder :many
 SELECT
     idlinkerCategory,
@@ -545,7 +606,7 @@ WHERE l.idlinker = ?
     SELECT 1 FROM grants g
     WHERE g.section='linker'
       AND g.item='link'
-      AND g.action='view'
+      AND g.action IN ('view','comment','reply')
       AND g.active=1
       AND g.item_id = l.idlinker
       AND (g.user_id = ? OR g.user_id IS NULL)

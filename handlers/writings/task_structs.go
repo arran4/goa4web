@@ -131,10 +131,20 @@ type UpdateWritingTask struct{ tasks.TaskString }
 var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
 var _ tasks.Task = (*UpdateWritingTask)(nil)
+var _ notif.SubscribersNotificationTemplateProvider = (*UpdateWritingTask)(nil)
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
 func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleEditActionPage(w, r) }
+
+func (UpdateWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("writingUpdateEmail")
+}
+
+func (UpdateWritingTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("writing_update")
+	return &s
+}
 
 // UserAllowTask grants a user a permission.
 type UserAllowTask struct{ tasks.TaskString }

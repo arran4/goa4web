@@ -2,6 +2,7 @@ package writings
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	searchworker "github.com/arran4/goa4web/workers/searchworker"
 	"strings"
 
@@ -80,6 +82,20 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("updateWriting Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			author := ""
+			if writing.Writerusername.Valid {
+				author = writing.Writerusername.String
+			}
+			evt.Data["writing"] = notif.WritingInfo{Title: title, Author: author}
+			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
+		}
 	}
 
 	if err := queries.WritingSearchDelete(r.Context(), writing.Idwriting); err != nil {

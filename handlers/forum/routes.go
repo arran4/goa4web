@@ -25,6 +25,8 @@ func RegisterRoutes(r *mux.Router) {
 	fr.HandleFunc("/topic/{topic}", TopicsPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread", createThreadTask.Page).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread", tasks.Action(createThreadTask)).Methods("POST").MatcherFunc(createThreadTask.Matcher())
+	fr.HandleFunc("/topic/{topic}/thread/cancel", ThreadNewCancelPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/thread/cancel", tasks.Action(threadNewCancelAction)).Methods("POST").MatcherFunc(threadNewCancelAction.Matcher())
 	fr.HandleFunc("/topic/{topic}/thread", tasks.Action(threadNewCancelAction)).Methods("POST").MatcherFunc(threadNewCancelAction.Matcher())
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")

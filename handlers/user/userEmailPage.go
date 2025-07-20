@@ -32,6 +32,7 @@ type TestMailTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*TestMailTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*AddEmailTask)(nil)
 
 func (ResendEmailTask) Action(w http.ResponseWriter, r *http.Request) { addEmailTask.Resend(w, r) }
 
@@ -212,7 +213,6 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
 	evt.Data["page"] = page
-	// TODO: AddEmailTask should automatically send the verification email.
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -246,7 +246,6 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
 	evt.Data["page"] = page
-	// TODO: AddEmailTask should automatically send the verification email.
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -291,6 +290,15 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)})
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+}
+
+func (AddEmailTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("verifyEmail")
+}
+
+func (AddEmailTask) SelfInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("verifyEmail")
+	return &v
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {

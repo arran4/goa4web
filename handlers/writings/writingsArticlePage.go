@@ -391,5 +391,5 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
+  handlers.TaskDoneAutoRefreshPage(w, r)
 }

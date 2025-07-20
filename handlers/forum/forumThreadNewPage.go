@@ -37,6 +37,8 @@ var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 // The author should automatically follow their thread and existing topic
 // subscribers expect a notification that a new thread was created.
 var _ tasks.Task = (*CreateThreadTask)(nil)
+
+// topic followers want an email when a new thread starts
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 
 // automatically subscribe the author so they hear about replies
@@ -57,8 +59,14 @@ var _ searchworker.IndexedTask = CreateThreadTask{}
 // moderation, and auto-subscribe the author so they are looped into replies.
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
+
+// admins also monitor new discussions
 var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
+
+// creators should automatically watch their new thread for replies
 var _ notif.AutoSubscribeProvider = (*CreateThreadTask)(nil)
+
+var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }
 
@@ -68,6 +76,8 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	}
 	return nil
 }
+
+var _ searchworker.IndexedTask = CreateThreadTask{}
 
 func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("threadEmail")

@@ -47,11 +47,15 @@ var replyTask = &ReplyTask{TaskString: TaskReply}
 // they know when someone replies.
 var _ tasks.Task = (*ReplyTask)(nil)
 
+// news readers subscribed to a post should get email when replies land
 // ReplyTask keeps commenters in the loop by notifying thread followers and
 // subscribing the author to future replies.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+
+// staff get alerted about all replies via admin templates
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 
+// commenters want to follow conversations they've participated in
 // auto-subscribe so readers know when someone replies to their comment
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
@@ -120,9 +124,14 @@ var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 // New posts alert subscribers and admins and subscribe the poster to reply
 // notifications.
 var _ tasks.Task = (*NewPostTask)(nil)
+
+// subscribers to the news feed expect updates when new posts appear
 var _ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
+
+// admins track all postings so they receive dedicated notifications
 var _ notif.AdminEmailTemplateProvider = (*NewPostTask)(nil)
 
+// authors should be subscribed to their post automatically for follow-ups
 // new posts should auto-subscribe authors for reply alerts
 var _ notif.AutoSubscribeProvider = (*NewPostTask)(nil)
 

@@ -34,6 +34,8 @@ var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 // about new comments.
 var _ tasks.Task = (*ReplyBlogTask)(nil)
 
+// subscribers expect an email when a blog receives a new reply
+// authors want to automatically follow discussion on their blogs
 // ReplyBlogTask ensures blog followers learn about new comments and the author
 // is automatically subscribed.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)

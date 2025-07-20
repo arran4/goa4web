@@ -14,8 +14,22 @@ type SubmitWritingTask struct{ tasks.TaskString }
 
 var submitWritingTask = &SubmitWritingTask{TaskString: TaskSubmitWriting}
 
+var _ tasks.Task = (*SubmitWritingTask)(nil)
+
+// followers of an author should be alerted when new writing is submitted
+var _ notif.SubscribersNotificationTemplateProvider = (*SubmitWritingTask)(nil)
+
 func (SubmitWritingTask) Page(w http.ResponseWriter, r *http.Request)   { ArticleAddPage(w, r) }
 func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleAddActionPage(w, r) }
+
+func (SubmitWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("writingEmail")
+}
+
+func (SubmitWritingTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("writing")
+	return &s
+}
 
 // ReplyTask posts a comment reply.
 type ReplyTask struct{ tasks.TaskString }
@@ -31,6 +45,10 @@ var replyTask = &ReplyTask{TaskString: TaskReply}
 
 var _ tasks.Task = (*ReplyTask)(nil)
 
+// replying should notify anyone following the discussion
+var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
+
+// repliers expect to automatically follow further conversation
 // ReplyTask notifies followers and auto-subscribes the author so replies aren't missed.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
@@ -116,6 +134,8 @@ type UpdateWritingTask struct{ tasks.TaskString }
 
 var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
+var _ tasks.Task = (*UpdateWritingTask)(nil)
+
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
 func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleEditActionPage(w, r) }
@@ -124,6 +144,8 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { Articl
 type UserAllowTask struct{ tasks.TaskString }
 
 var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
+
+var _ tasks.Task = (*UserAllowTask)(nil)
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/admin/writings/users/levels" {
@@ -138,6 +160,8 @@ type UserDisallowTask struct{ tasks.TaskString }
 
 var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 
+var _ tasks.Task = (*UserDisallowTask)(nil)
+
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/admin/writings/users/levels" {
 		AdminUserLevelsRemoveActionPage(w, r)
@@ -151,6 +175,8 @@ type WritingCategoryChangeTask struct{ tasks.TaskString }
 
 var writingCategoryChangeTask = &WritingCategoryChangeTask{TaskString: TaskWritingCategoryChange}
 
+var _ tasks.Task = (*WritingCategoryChangeTask)(nil)
+
 func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) {
 	AdminCategoriesModifyPage(w, r)
 }
@@ -159,6 +185,8 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 type WritingCategoryCreateTask struct{ tasks.TaskString }
 
 var writingCategoryCreateTask = &WritingCategoryCreateTask{TaskString: TaskWritingCategoryCreate}
+
+var _ tasks.Task = (*WritingCategoryCreateTask)(nil)
 
 func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) {
 	AdminCategoriesCreatePage(w, r)

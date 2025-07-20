@@ -236,7 +236,12 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(lid))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		Idlinker:     int32(lid),
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		log.Printf("getLinkerItemById Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -391,7 +396,12 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("selectInsert Error: %s", err)
 			continue
 		}
-		link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(lid))
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+			ViewerID:     cd.UserID,
+			Idlinker:     int32(lid),
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
 		if err != nil {
 			log.Printf("getLinkerItemById Error: %s", err)
 			continue

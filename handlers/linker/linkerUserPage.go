@@ -18,7 +18,7 @@ import (
 func UserPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Links     []*db.GetLinkerItemsByUserDescendingRow
+		Links     []*db.GetLinkerItemsByUserDescendingForUserRow
 		Username  string
 		HasOffset bool
 	}
@@ -40,8 +40,11 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetLinkerItemsByUserDescending(r.Context(), db.GetLinkerItemsByUserDescendingParams{
-		UsersIdusers: u.Idusers,
+	uid := r.Context().Value(consts.KeyCoreData).(*common.CoreData).UserID
+	rows, err := queries.GetLinkerItemsByUserDescendingForUser(r.Context(), db.GetLinkerItemsByUserDescendingForUserParams{
+		ViewerID:     uid,
+		UserID:       u.Idusers,
+		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Limit:        15,
 		Offset:       int32(offset),
 	})
@@ -51,11 +54,13 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := Data{
-		CoreData:  r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Links:     rows,
-		Username:  username,
-		HasOffset: offset != 0,
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	data := Data{CoreData: cd, Username: username, HasOffset: offset != 0}
+	for _, row := range rows {
+		if !cd.HasGrant("linker", "link", "see", row.Idlinker) {
+			continue
+		}
+		data.Links = append(data.Links, row)
 	}
 
 	handlers.TemplateHandler(w, r, "linkerPage", data)

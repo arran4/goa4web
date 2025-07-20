@@ -25,7 +25,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CatId       int
 		CommentOnId int
 		ReplyToId   int
-		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
+		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow
 		Categories  []*db.LinkerCategory
 	}
 
@@ -41,7 +41,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
-	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
+	uid := data.CoreData.UserID
+	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:         uid,
+		Idlinkercategory: int32(data.CatId),
+		ViewerUserID:     sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -52,7 +57,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.Links = linkerPosts
+	for _, row := range linkerPosts {
+		if !data.CoreData.HasGrant("linker", "link", "see", row.Idlinker) {
+			continue
+		}
+		data.Links = append(data.Links, row)
+	}
 
 	categories, err := queries.GetAllLinkerCategories(r.Context())
 	if err != nil {

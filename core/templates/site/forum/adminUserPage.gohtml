@@ -25,8 +25,8 @@
                 <td><input name="inviteMax" value="{{ .Invitemax.Int32 }}" size="8"></td>
                 <td><input type="date" name="expiresAt" value="{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time.Format "2006-01-02" }}{{ end }}"></td>
                 <td>
-                    <input type="submit" name="task" value="Update user level">
-                    <input type="submit" name="task" value="Delete user level">
+                    <input type="submit" name="task" value="Update role">
+                    <input type="submit" name="task" value="Revoke role">
                 </td>
             </form>
         </tr>

@@ -57,8 +57,8 @@ const (
 	// TaskDeleteUserApproval deletes a user's approval entry.
 	TaskDeleteUserApproval tasks.TaskString = "Delete user approval"
 
-	// TaskDeleteUserLevel deletes a user's access level.
-	TaskDeleteUserLevel tasks.TaskString = "Delete user level"
+	// TaskRevokeRole revokes a role from a user.
+	TaskRevokeRole tasks.TaskString = "Revoke role"
 
 	// TaskEdit modifies an existing item.
 	TaskEdit tasks.TaskString = "Edit"
@@ -173,8 +173,8 @@ const (
 	// TaskCopyTopicRestriction copies restriction levels from one topic to another.
 	TaskCopyTopicRestriction tasks.TaskString = "Copy topic restriction"
 
-	// TaskSetUserLevel sets a user's access level.
-	TaskSetUserLevel tasks.TaskString = "Set user level"
+	// TaskGrantRole grants a role to a user.
+	TaskGrantRole tasks.TaskString = "Grant role"
 
 	// TaskSubmitWriting submits a new writing.
 	TaskSubmitWriting tasks.TaskString = "Submit writing"
@@ -200,8 +200,8 @@ const (
 	// TaskUpdateUserApproval updates a writing user's approval state.
 	TaskUpdateUserApproval tasks.TaskString = "Update user approval"
 
-	// TaskUpdateUserLevel updates a user's access level.
-	TaskUpdateUserLevel tasks.TaskString = "Update user level"
+	// TaskUpdateRole updates an existing user role grant.
+	TaskUpdateRole tasks.TaskString = "Update role"
 
 	// TaskBulkApprove approves multiple queued items at once.
 	TaskBulkApprove tasks.TaskString = "Bulk Approve"

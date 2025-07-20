@@ -91,6 +91,7 @@ type CoreData struct {
 	notifCount               lazyValue[int32]
 	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
 	pref                     lazyValue[*db.Preference]
+	preferredLanguageID      lazyValue[int32]
 	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
 	unreadCount              lazyValue[int64]
@@ -328,6 +329,27 @@ func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
 		}
 		return cd.queries.FetchLanguages(cd.ctx)
 	})
+}
+
+// PreferredLanguageID returns the user's preferred language ID if set,
+// otherwise it resolves the site's default language name to an ID.
+func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
+	id, _ := cd.preferredLanguageID.load(func() (int32, error) {
+		if pref, err := cd.Preference(); err == nil && pref != nil {
+			if pref.LanguageIdlanguage != 0 {
+				return pref.LanguageIdlanguage, nil
+			}
+		}
+		if cd.queries == nil || siteDefault == "" {
+			return 0, nil
+		}
+		langID, err := cd.queries.GetLanguageIDByName(cd.ctx, sql.NullString{String: siteDefault, Valid: true})
+		if err != nil {
+			return 0, nil
+		}
+		return langID, nil
+	})
+	return id
 }
 
 // AllRoles returns every defined role loaded once from the database.

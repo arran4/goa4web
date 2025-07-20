@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	common "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -29,11 +28,10 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		UserId             int32
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
 	// article ID is validated by the RequireWritingAuthor middleware, so we

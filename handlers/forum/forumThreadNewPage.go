@@ -10,7 +10,6 @@ import (
 
 	common "github.com/arran4/goa4web/core/common"
 
-	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	db "github.com/arran4/goa4web/internal/db"
@@ -92,11 +91,10 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
 	}
 
 	languageRows, err := cd.Languages()

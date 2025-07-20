@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	common "github.com/arran4/goa4web/core/common"
-	corelanguage "github.com/arran4/goa4web/core/language"
 	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -36,7 +35,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
-		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])

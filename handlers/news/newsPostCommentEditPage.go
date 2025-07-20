@@ -3,6 +3,7 @@ package news
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
@@ -41,7 +42,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -52,7 +53,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(common.KeyComment).(*db.GetCommentByIdForUserRow)
+	comment := r.Context().Value(consts.KeyComment).(*db.GetCommentByIdForUserRow)
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
@@ -73,7 +74,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

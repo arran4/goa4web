@@ -2,6 +2,7 @@ package news
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	posts, err := cd.LatestNews(r)
 	if err != nil {
 		log.Printf("latestNews: %v", err)

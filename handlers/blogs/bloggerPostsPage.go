@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 
 	common "github.com/arran4/goa4web/core/common"
 	db "github.com/arran4/goa4web/internal/db"
@@ -40,7 +41,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -76,7 +77,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsOffset: offset != 0,
 		UID:      strconv.Itoa(int(buid)),
 	}

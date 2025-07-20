@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
 	common "github.com/arran4/goa4web/core/common"
@@ -17,14 +18,14 @@ type RemakeCommentsTask struct{ tasks.TaskString }
 var remakeCommentsTask = &RemakeCommentsTask{TaskString: TaskRemakeCommentsSearch}
 
 func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := struct {
 		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/search",
 	}
 	if err := queries.DeleteCommentsSearch(r.Context()); err != nil {

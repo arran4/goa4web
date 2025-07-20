@@ -1,6 +1,7 @@
 package search
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
 
@@ -8,12 +9,12 @@ import (
 func RegisterAdminRoutes(ar *mux.Router) {
 	sr := ar.PathPrefix("/search").Subrouter()
 	sr.HandleFunc("", adminSearchPage).Methods("GET")
-	sr.HandleFunc("", remakeCommentsTask.Action).Methods("POST").MatcherFunc(remakeCommentsTask.Matcher())
-	sr.HandleFunc("", remakeNewsTask.Action).Methods("POST").MatcherFunc(remakeNewsTask.Matcher())
-	sr.HandleFunc("", remakeBlogTask.Action).Methods("POST").MatcherFunc(remakeBlogTask.Matcher())
-	sr.HandleFunc("", remakeLinkerTask.Action).Methods("POST").MatcherFunc(remakeLinkerTask.Matcher())
-	sr.HandleFunc("", remakeWritingTask.Action).Methods("POST").MatcherFunc(remakeWritingTask.Matcher())
-	sr.HandleFunc("", remakeImageTask.Action).Methods("POST").MatcherFunc(remakeImageTask.Matcher())
+	sr.HandleFunc("", tasks.Action(remakeCommentsTask)).Methods("POST").MatcherFunc(remakeCommentsTask.Matcher())
+	sr.HandleFunc("", tasks.Action(remakeNewsTask)).Methods("POST").MatcherFunc(remakeNewsTask.Matcher())
+	sr.HandleFunc("", tasks.Action(remakeBlogTask)).Methods("POST").MatcherFunc(remakeBlogTask.Matcher())
+	sr.HandleFunc("", tasks.Action(remakeLinkerTask)).Methods("POST").MatcherFunc(remakeLinkerTask.Matcher())
+	sr.HandleFunc("", tasks.Action(remakeWritingTask)).Methods("POST").MatcherFunc(remakeWritingTask.Matcher())
+	sr.HandleFunc("", tasks.Action(remakeImageTask)).Methods("POST").MatcherFunc(remakeImageTask.Matcher())
 	sr.HandleFunc("/list", adminSearchWordListPage).Methods("GET")
 	sr.HandleFunc("/list.txt", adminSearchWordListDownloadPage).Methods("GET")
 }

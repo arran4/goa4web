@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
@@ -205,9 +206,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ReplyText          string
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
-		CoreData:           r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:           r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
@@ -228,7 +229,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(common.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 			return
 		default:
 			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
@@ -237,7 +238,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(common.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
 		return
 	}
 
@@ -274,7 +275,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -359,8 +360,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -453,7 +454,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -461,7 +462,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
 		}
 	}
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -485,11 +486,11 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
@@ -523,14 +524,14 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if cd := r.Context().Value(common.KeyCoreData).(*common.CoreData); !cd.HasGrant("news", "post", "post", 0) {
+	if cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData); !cd.HasGrant("news", "post", "post", 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
@@ -564,7 +565,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
-		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}

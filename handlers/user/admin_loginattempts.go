@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
@@ -15,8 +16,8 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Attempts []*db.LoginAttempt
 	}
-	data := Data{CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	items, err := queries.ListLoginAttempts(r.Context())
 	if err != nil {
 		log.Printf("list login attempts: %v", err)

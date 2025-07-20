@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,7 +24,7 @@ type PagingSaveTask struct{ tasks.TaskString }
 var pagingSaveTask = &PagingSaveTask{TaskString: tasks.TaskString(TaskSaveAll)}
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	pref, _ := cd.Preference()
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref != nil {
@@ -60,8 +61,8 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if size > config.AppRuntimeConfig.PageSizeMax {
 		size = config.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

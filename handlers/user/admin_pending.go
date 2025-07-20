@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
 	common "github.com/arran4/goa4web/core/common"
@@ -12,7 +13,7 @@ import (
 )
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	rows, err := queries.ListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -22,14 +23,14 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Rows []*db.ListPendingUsersRow
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Rows:     rows,
 	}
 	handlers.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
@@ -38,7 +39,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {
@@ -53,7 +54,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	uid := r.PostFormValue("uid")
 	reason := r.PostFormValue("reason")
 	var id int32
@@ -63,7 +64,7 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 		Errors []string
 		Back   string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/pending",
 	}
 	if id == 0 {

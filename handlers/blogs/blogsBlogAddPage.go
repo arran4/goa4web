@@ -3,6 +3,7 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 
 	db "github.com/arran4/goa4web/internal/db"
 
@@ -50,7 +51,7 @@ func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(
 func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogAddActionPage(w, r) }
 
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -62,7 +63,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 		Mode               string
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage)),
@@ -90,7 +91,7 @@ func BlogAddActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

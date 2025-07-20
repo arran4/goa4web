@@ -3,6 +3,7 @@ package writings
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,7 +24,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		WritingCategoryID   int32
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
 	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
@@ -52,7 +53,7 @@ func AdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	categoryId, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -87,7 +88,7 @@ func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := queries.InsertWritingCategory(r.Context(), db.InsertWritingCategoryParams{
 		WritingCategoryID: int32(pcid),
 		Title: sql.NullString{

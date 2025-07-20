@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/arran4/goa4web/internal/tasks"
+	"log"
 	"sync"
 	"time"
 )
@@ -44,6 +45,9 @@ func (b *Bus) Subscribe() <-chan Event {
 // Publish dispatches an event to all current subscribers.
 // It returns ErrBusClosed when publishing after Shutdown.
 func (b *Bus) Publish(evt Event) error {
+	if n, ok := evt.Task.(tasks.Name); ok && n.Name() == "MISSING" {
+		log.Printf("event bus received MISSING task for path %s", evt.Path)
+	}
 	b.mu.RLock()
 	if b.closed {
 		b.mu.RUnlock()

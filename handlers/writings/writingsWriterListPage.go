@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -29,7 +30,7 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:     r.URL.Query().Get("search"),
 		PageSize:   handlers.GetPageSize(r),
 		IsAdmin:    false,

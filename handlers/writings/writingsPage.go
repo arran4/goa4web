@@ -2,6 +2,7 @@ package writings
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -24,7 +25,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode

@@ -2,6 +2,7 @@ package writings
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 
@@ -22,10 +23,10 @@ func TestWriterListPage_List(t *testing.T) {
 	mock.ExpectQuery(".*").WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/writings/writers", nil)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -51,10 +52,10 @@ func TestWriterListPage_Search(t *testing.T) {
 	mock.ExpectQuery(".*").WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/writings/writers?search=bob", nil)
-	ctx := context.WithValue(req.Context(), common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q)
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

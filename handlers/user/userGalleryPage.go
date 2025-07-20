@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"path"
@@ -29,7 +30,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	pageStr := r.URL.Query().Get("p")
 	page, _ := strconv.Atoi(pageStr)
@@ -37,7 +38,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {
 		size = int(pref.PageSize)

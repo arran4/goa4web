@@ -3,6 +3,7 @@ package bookmarks
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
@@ -29,7 +30,7 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:        r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData:        r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
 	}
 	session, ok := core.GetSessionOrFail(w, r)
@@ -37,7 +38,7 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
@@ -57,7 +58,7 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -81,7 +82,7 @@ func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 
 func (CreateTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

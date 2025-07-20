@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/mail"
@@ -30,9 +31,9 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		Emails []EmailItem
 	}
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	rows, err := queries.ListUnsentPendingEmails(r.Context())
 	if err != nil {
 		log.Printf("list pending emails: %v", err)
@@ -64,7 +65,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -108,7 +109,7 @@ func (resendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (deleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

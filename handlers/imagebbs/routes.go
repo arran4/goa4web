@@ -8,6 +8,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	handlers "github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
@@ -24,9 +25,9 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/imagebbs.atom", AtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", BoardPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", uploadImageTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(uploadImageTask.Matcher())
+	ibr.HandleFunc("/board/{boardno}", tasks.Action(uploadImageTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(uploadImageTask.Matcher())
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", BoardThreadPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", replyTask.Action).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", tasks.Action(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
 	ibr.HandleFunc("", Page).Methods("GET")
 	ibr.HandleFunc("/", Page).Methods("GET")
 	ibr.HandleFunc("/poster/{username}", PosterPage).Methods("GET")

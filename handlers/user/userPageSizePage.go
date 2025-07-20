@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
@@ -33,7 +34,7 @@ func userPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max     int
 		Default int
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Min:      config.AppRuntimeConfig.PageSizeMin,
 		Max:      config.AppRuntimeConfig.PageSizeMax,
 		Default:  config.AppRuntimeConfig.PageSizeDefault,

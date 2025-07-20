@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
 	common "github.com/arran4/goa4web/core/common"
@@ -18,10 +19,10 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	rows, err := queries.CompleteWordList(r.Context())
 	if err != nil {

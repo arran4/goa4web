@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	corecommon "github.com/arran4/goa4web/core/common"
+	coreconsts "github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	routerpkg "github.com/arran4/goa4web/internal/router"
@@ -65,7 +66,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queries, ok := r.Context().Value(corecommon.KeyQueries).(*dbpkg.Queries)
+	queries, ok := r.Context().Value(coreconsts.KeyQueries).(*dbpkg.Queries)
 	if !ok || queries == nil {
 		http.Error(w, "db unavailable", http.StatusInternalServerError)
 		return

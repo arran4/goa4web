@@ -2,6 +2,7 @@ package writings
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -24,7 +25,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	languageRows, err := data.CoreData.Languages()
@@ -51,7 +52,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	articleId, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
 		WritingCategoryID:  int32(categoryId),
@@ -72,7 +73,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -82,7 +83,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fullText := strings.Join([]string{abstract, title, body}, " ")
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

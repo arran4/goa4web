@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strings"
@@ -26,7 +27,7 @@ var registerTask = &RegisterTask{TaskString: TaskRegister}
 
 // RegisterPage renders the user registration form.
 func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(common.KeyCoreData)
+	cd := r.Context().Value(consts.KeyCoreData)
 	handlers.TemplateHandler(w, r, "registerPage.gohtml", cd)
 }
 
@@ -56,7 +57,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -121,7 +122,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 
 	common "github.com/arran4/goa4web/core/common"
@@ -44,7 +45,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), db.GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  int32(userId),
 		ViewerIdusers: uid,
@@ -62,7 +63,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsOffset: offset != 0,
 		UID:      buid,
 	}
@@ -161,7 +162,7 @@ func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
@@ -186,7 +187,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
@@ -34,14 +35,14 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),
 		Offset:   offset,
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	queue, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context())
 	if err != nil {
@@ -122,7 +123,7 @@ type deleteTask struct{ tasks.TaskString }
 var DeleteTask = &deleteTask{TaskString: TaskDelete}
 
 func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
@@ -133,7 +134,7 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
 	URL := r.URL.Query().Get("URL")
@@ -169,7 +170,7 @@ func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData 
 var _ searchworker.IndexedTask = approveTask{}
 
 func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
@@ -186,7 +187,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
-	if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -202,7 +203,7 @@ type bulkDeleteTask struct{ tasks.TaskString }
 var BulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
 
 func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -231,7 +232,7 @@ func (bulkApproveTask) IndexData(data map[string]any) []searchworker.IndexEventD
 var _ searchworker.IndexedTask = bulkApproveTask{}
 
 func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -248,7 +249,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
-		if cd, ok := r.Context().Value(common.KeyCoreData).(*common.CoreData); ok {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}

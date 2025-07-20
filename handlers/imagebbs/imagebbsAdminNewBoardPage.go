@@ -3,6 +3,7 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -39,7 +40,7 @@ func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {
@@ -62,7 +63,7 @@ func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	err := queries.CreateImageBoard(r.Context(), db.CreateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"sort"
 	"strconv"
@@ -23,10 +24,10 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -52,7 +53,7 @@ type PermissionUserAllowTask struct{ tasks.TaskString }
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	username := r.PostFormValue("username")
 	level := r.PostFormValue("role")
 	data := struct {
@@ -61,7 +62,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
@@ -81,7 +82,7 @@ type PermissionUserDisallowTask struct{ tasks.TaskString }
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*common.CoreData
@@ -89,7 +90,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
@@ -106,7 +107,7 @@ type PermissionUpdateTask struct{ tasks.TaskString }
 var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	permid := r.PostFormValue("permid")
 	level := r.PostFormValue("role")
 
@@ -116,7 +117,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/permissions",
 	}
 

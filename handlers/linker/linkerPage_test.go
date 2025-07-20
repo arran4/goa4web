@@ -3,6 +3,7 @@ package linker
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -73,8 +74,8 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	cd.SetEvent(evt)
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
-	ctxreq := context.WithValue(req.Context(), common.KeyQueries, queries)
-	ctxreq = context.WithValue(ctxreq, common.KeyCoreData, cd)
+	ctxreq := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctxreq = context.WithValue(ctxreq, consts.KeyCoreData, cd)
 	req = req.WithContext(ctxreq)
 	rr := httptest.NewRecorder()
 	ApproveTask.Action(rr, req)

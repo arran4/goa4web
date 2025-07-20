@@ -2,6 +2,7 @@ package blogs
 
 import (
 	"github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 	"net/http"
 
@@ -22,18 +23,18 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/", Page).Methods("GET")
 	br.HandleFunc("/add", addBlogTask.Page).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
-	br.HandleFunc("/add", addBlogTask.Action).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(addBlogTask.Matcher())
+	br.HandleFunc("/add", tasks.Action(addBlogTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(addBlogTask.Matcher())
 	br.HandleFunc("/bloggers", BloggerListPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}", BloggerPostsPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}/", BloggerPostsPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", BlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	br.HandleFunc("/blog/{blog}/comments", CommentPage).Methods("GET", "POST")
-	br.HandleFunc("/blog/{blog}/reply", replyBlogTask.Action).Methods("POST").MatcherFunc(replyBlogTask.Matcher())
-	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(editReplyTask.Action))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
-	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(cancelTask.Action))).Methods("POST").MatcherFunc(cancelTask.Matcher())
+	br.HandleFunc("/blog/{blog}/reply", tasks.Action(replyBlogTask)).Methods("POST").MatcherFunc(replyBlogTask.Matcher())
+	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
+	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(editBlogTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
-	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(editBlogTask.Action))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editBlogTask.Matcher())
+	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(tasks.Action(editBlogTask)))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editBlogTask.Matcher())
 	br.HandleFunc("/blog/{blog}/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 
 	// Admin endpoints for blogs

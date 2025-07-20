@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -19,10 +20,10 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
@@ -49,7 +50,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
@@ -81,7 +82,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	if err := queries.CreateForumCategory(r.Context(), db.CreateForumCategoryParams{
 		ForumcategoryIdforumcategory: int32(pcid),
 		Title: sql.NullString{
@@ -101,7 +102,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,7 +21,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	categoryRows, err := data.LinkerCategoryCounts()
@@ -44,7 +45,7 @@ type updateCategoryTask struct{ tasks.TaskString }
 var UpdateCategoryTask = &updateCategoryTask{TaskString: TaskUpdate}
 
 func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -74,7 +75,7 @@ type renameCategoryTask struct{ tasks.TaskString }
 var RenameCategoryTask = &renameCategoryTask{TaskString: TaskRenameCategory}
 
 func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
@@ -95,9 +96,9 @@ type deleteCategoryTask struct{ tasks.TaskString }
 var DeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
 
 func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	for _, c := range rows {
 		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
@@ -128,9 +129,9 @@ type createCategoryTask struct{ tasks.TaskString }
 var CreateCategoryTask = &createCategoryTask{TaskString: TaskCreateCategory}
 
 func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	title := r.PostFormValue("title")
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	pos := len(rows) + 1
 	if err := queries.CreateLinkerCategory(r.Context(), db.CreateLinkerCategoryParams{

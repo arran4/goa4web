@@ -2,6 +2,7 @@ package faq
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
@@ -30,8 +31,8 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int32
 	}
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: corelanguage.ResolveDefaultLanguageID(r.Context(), queries, config.AppRuntimeConfig.DefaultLanguage),
@@ -58,7 +59,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -77,7 +78,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
 	evt.Path = "/admin/faq"
 	if evt.Data == nil {

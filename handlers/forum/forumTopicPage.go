@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,7 +35,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 
-	cd := r.Context().Value(common.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := &Data{
 		CoreData: cd,
 		Admin:    cd.CanEditAny(),

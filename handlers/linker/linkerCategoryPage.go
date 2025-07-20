@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,7 +27,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
 	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
@@ -36,7 +37,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
 	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 
-	queries := r.Context().Value(common.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
 	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(data.CatId)})
 	if err != nil {

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"errors"
+	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +22,7 @@ func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(common.KeyCoreData).(*common.CoreData),
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin",
 	}
 

@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/mail"
@@ -31,7 +32,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -69,8 +70,8 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
-	ctx := context.WithValue(req.Context(), common.KeyCoreData, cd)
-	ctx = context.WithValue(ctx, common.KeyQueries, q)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

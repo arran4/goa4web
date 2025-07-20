@@ -3,6 +3,7 @@ package blogs
 import (
 	"context"
 	"database/sql"
+	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -28,9 +29,9 @@ func setupCommentRequest(t *testing.T, queries *db.Queries, store *sessions.Cook
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	ctx := context.WithValue(req.Context(), common.KeyQueries, queries)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
 	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
-	ctx = context.WithValue(ctx, common.KeyCoreData, cd)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess
 }

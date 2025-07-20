@@ -4,6 +4,8 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
+// TODO move these into their appropriate files closer to their struct definitions
+
 // ResendQueueTask triggers sending queued emails immediately.
 type ResendQueueTask struct{ tasks.TaskString }
 
@@ -31,6 +33,6 @@ var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
 
 var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
-var NewsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
+var newsUserAllowTask = newsUserAllowTask{TaskString: tasks.TaskString("allow")}
 
-var NewsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}
+var newsUserRemoveTask = newsUserRemoveTask{TaskString: tasks.TaskString("remove")}

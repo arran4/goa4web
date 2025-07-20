@@ -32,7 +32,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "bookmarksPage", data)
 }
 
-func bookmarksCustomIndex(data *common.CoreData) {
+func bookmarksCustomIndex(data *common.CoreData, r *http.Request) {
+	data.CustomIndexItems = []common.IndexItem{}
 	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: "Show",
 		Link: "/bookmarks/mine",

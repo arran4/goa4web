@@ -45,6 +45,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "writingsPage", data)
 }
 func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
+	data.CustomIndexItems = []common.IndexItem{}
 
 	data.CustomIndexItems = append(data.CustomIndexItems,
 		common.IndexItem{Name: "Atom Feed", Link: "/writings/atom"},

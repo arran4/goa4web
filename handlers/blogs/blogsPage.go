@@ -87,8 +87,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
+	data.CustomIndexItems = []common.IndexItem{}
 	if data.FeedsEnabled {
 		if user == "" {
+			// TODO This is messy change the way RSSs are accessed / listed
 			data.CustomIndexItems = append(data.CustomIndexItems,
 				common.IndexItem{
 					Name: "Everyones Atom Feed",

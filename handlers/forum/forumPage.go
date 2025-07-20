@@ -134,6 +134,7 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 	threadId := vars["thread"]
 	topicId := vars["topic"]
 	categoryId := vars["category"]
+	data.CustomIndexItems = []common.IndexItem{}
 	if data.FeedsEnabled && topicId != "" && threadId == "" {
 		data.RSSFeedUrl = fmt.Sprintf("/forum/topic/%s.rss", topicId)
 		data.AtomFeedUrl = fmt.Sprintf("/forum/topic/%s.atom", topicId)

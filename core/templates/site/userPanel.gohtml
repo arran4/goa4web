@@ -1,12 +1,12 @@
 {{ define "userPanel" }}
+    <hr>
     {{ if $.UserID }}
-        <hr>
         <a href="/usr">Preferences</a><br>
         <a href="/usr/notifications" id="notif-index">Notifications{{ if gt $.NotificationCount 0 }} ({{ $.NotificationCount }}){{ end }}</a><br>
         <a href="/usr/logout">Logout</a><br>
     {{ else }}
-        <hr>
         <a href="/register">Register</a><br>
         <a href="/login">Login</a><br>
     {{ end }}
+    <hr>
 {{ end }}

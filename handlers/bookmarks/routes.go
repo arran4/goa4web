@@ -2,13 +2,11 @@ package bookmarks
 
 import (
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 
 	"github.com/gorilla/mux"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
@@ -17,9 +15,7 @@ import (
 func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
-	br.Use(handlers.IndexMiddleware(func(cd *common.CoreData, r *http.Request) {
-		bookmarksCustomIndex(cd)
-	}))
+	br.Use(handlers.IndexMiddleware(bookmarksCustomIndex))
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
 	br.HandleFunc("/edit", saveTask.Page).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())

@@ -37,6 +37,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
+	data.CustomIndexItems = []common.IndexItem{}
 
 	if data.FeedsEnabled {
 		data.RSSFeedUrl = "/imagebbs/rss"

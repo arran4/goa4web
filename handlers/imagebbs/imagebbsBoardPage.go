@@ -182,7 +182,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 		FileSize:               int32(size),
 	})
 	if err != nil {
-		log.Printf("printTopicRestrictions Error: %s", err)
+		log.Printf("CreateImagePost Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

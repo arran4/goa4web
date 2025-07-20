@@ -15,6 +15,6 @@ Each helper appends `ts` and `sig` query parameters to the host configured in `H
 
 ## Verification
 
-Requests to `/images/image/{id}` and `/images/cache/{id}` pass through `verifyMiddleware` which extracts the query parameters and calls `Verify`. Template code may also check references using `VerifyRef` which strips the parameters and reports whether they were valid.
+Requests to `/images/image/{id}` and `/images/cache/{id}` pass through `verifyMiddleware` which extracts the query parameters and calls `Verify`.
 
 Only URLs produced by `SignedURL` or `SignedCacheURL` (or `SignedRef`) will pass verification.

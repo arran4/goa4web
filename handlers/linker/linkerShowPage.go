@@ -164,6 +164,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+			evt.Data["CommentURL"] = handlers.AbsoluteURL(r, endUrl)
 		}
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -430,14 +429,13 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
-	base := "http://" + r.Host
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
-	}
-	endUrl := base + fmt.Sprintf("/news/news/%d", pid)
+	endUrl := handlers.AbsoluteURL(r, fmt.Sprintf("/news/news/%d", pid))
 
 	evt := cd.Event()
-	evt.Data["news_url"] = endUrl
+	if evt.Data == nil {
+		evt.Data = map[string]any{}
+	}
+	evt.Data["CommentURL"] = endUrl
 
 	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
@@ -571,6 +569,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 					evt.Data = map[string]any{}
 				}
 				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
+				evt.Data["PostURL"] = handlers.AbsoluteURL(r, fmt.Sprintf("/news/news/%d", id))
 			}
 		}
 	}

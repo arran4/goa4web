@@ -67,6 +67,7 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 	}
 
 	data := EmailData{
+		any:            item,
 		SubjectPrefix:  subjectPrefix,
 		UnsubscribeUrl: unsub,
 		Item:           item,

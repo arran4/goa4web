@@ -57,8 +57,8 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 
 // AutoSubscribePath records the reply so the commenter automatically watches
 // for any further discussion.
-	// Automatically subscribe the commenter so they are notified about
-	// further discussion on the blog post they replied to.
+// Automatically subscribe the commenter so they are notified about
+// further discussion on the blog post they replied to.
 // AutoSubscribePath allows the worker to add a subscription when new replies are
 // posted so participants stay in the loop.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. It derives the
@@ -206,6 +206,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+			evt.Data["CommentURL"] = handlers.AbsoluteURL(r, endUrl)
 		}
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

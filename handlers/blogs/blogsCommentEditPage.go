@@ -11,6 +11,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -88,6 +89,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
+			evt.Data["CommentURL"] = handlers.AbsoluteURL(r, fmt.Sprintf("/blogs/blog/%d/comments", blogId))
 		}
 	}
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
@@ -123,6 +124,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+			evt.Data["CommentURL"] = handlers.AbsoluteURL(r, endUrl)
 		}
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

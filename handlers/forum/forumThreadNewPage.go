@@ -188,6 +188,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: int32(threadId), TopicID: int32(topicId)}
+			evt.Data["PostURL"] = handlers.AbsoluteURL(r, endUrl)
 		}
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

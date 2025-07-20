@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	common "github.com/arran4/goa4web/core/common"
+	handlers "github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
 	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
@@ -45,6 +46,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+			evt.Data["CommentURL"] = handlers.AbsoluteURL(r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId))
 		}
 	}
 

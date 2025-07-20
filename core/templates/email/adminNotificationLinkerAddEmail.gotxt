@@ -1,0 +1,4 @@
+User {{.Item.Username}} added a new link.
+
+{{/* TODO add URL back to item here */}}
+Manage notifications: {{.UnsubURL}}

@@ -26,11 +26,15 @@ var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
-var replyTask = &ReplyTask{TaskString: TaskReply}
 
 // Build time checks so replying to a thread always triggers subscription and
 // notification delivery using the standard templates, keeping readers in the
 // conversation.
+var replyTask = &ReplyTask{TaskString: TaskReply}
+
+// Compile-time interface checks with user focused reasoning. Subscribing allows
+// thread followers to hear about replies while administrators are alerted to new
+// content. AutoSubscribeProvider ensures the author is kept in the loop.
 var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ReplyTask)(nil)
@@ -57,17 +61,19 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("replyEmail")
+       return notif.NewEmailTemplates("forumReplyEmail")
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("reply")
-	return &s
+       s := notif.NotificationTemplateFilenameGenerator("forum_reply")
+       return &s
 }
 
 func (ReplyTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskReply), evt.Path
 }
+
+var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

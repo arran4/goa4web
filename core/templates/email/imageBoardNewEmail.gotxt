@@ -1,0 +1,4 @@
+A new image board "{{.Item.Title.String}}" has been created.
+
+{{/* TODO add URL back to board here */}}
+Manage notifications: {{.UnsubURL}}

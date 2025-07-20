@@ -11,6 +11,7 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 	db "github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -18,6 +19,18 @@ import (
 type NewBoardTask struct{ tasks.TaskString }
 
 var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
+
+var _ tasks.Task = (*NewBoardTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*NewBoardTask)(nil)
+
+func (NewBoardTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationImageBoardNewEmail")
+}
+
+func (NewBoardTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationImageBoardNewEmail")
+	return &v
+}
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {

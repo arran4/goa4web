@@ -38,6 +38,10 @@ var createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
 // These assertions ensure at build time that starting a new thread hooks into
 // the notification system so participants are auto-subscribed and receive the
 // correct templates.
+
+// Interface checks with user value. When a new thread is created we notify
+// topic subscribers so they see new discussions, alert administrators for
+// moderation, and auto-subscribe the author so they are looped into replies.
 var _ tasks.Task = (*CreateThreadTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CreateThreadTask)(nil)
@@ -52,6 +56,15 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	return nil
 }
 
+func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("threadEmail")
+}
+
+func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("thread")
+	return &s
+}
+
 func (CreateThreadTask) AdminEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail")
 }
@@ -62,15 +75,6 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 }
 
 var _ searchworker.IndexedTask = CreateThreadTask{}
-
-func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
-	return notif.NewEmailTemplates("threadEmail")
-}
-
-func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
-	s := notif.NotificationTemplateFilenameGenerator("thread")
-	return &s
-}
 
 func (CreateThreadTask) AutoSubscribePath(evt eventbus.Event) (string, string) {
 	return string(TaskCreateThread), evt.Path

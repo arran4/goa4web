@@ -1,35 +1,43 @@
 package blogs
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
+	db "github.com/arran4/goa4web/internal/db"
 )
 
 func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		//Rows []*GetCountOfBlogPostsByUserRow
+		Rows []*db.BloggerCountRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	//queries := r.Context().Name(consts.KeyQueries).(*db.Queries)
-	//
-	//rows, err := queries.GetCountOfBlogPostsByUser(r.Context())
-	//if err != nil {
-	//switch {
-	//case errors.Is(err, sql.ErrNoRows):
-	//default:
+	cd := data.CoreData
+	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
-	//	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	//	return
-	//}
-	//data.Rows = rows
+	rows, err := queries.ListBloggers(r.Context(), db.ListBloggersParams{
+		ViewerID: cd.UserID,
+		Limit:    1000,
+		Offset:   0,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+	data.Rows = rows
 
 	handlers.TemplateHandler(w, r, "bloggersBloggerPage.gohtml", data)
 }

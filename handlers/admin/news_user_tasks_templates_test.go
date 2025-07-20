@@ -1,14 +1,13 @@
-package news_test
+package admin
 
 import (
 	"testing"
 
 	"github.com/arran4/goa4web/core/templates"
-	admin "github.com/arran4/goa4web/handlers/admin"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
+func requireEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
 	html := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
 	text := templates.GetCompiledEmailTextTemplates(map[string]any{})
@@ -23,7 +22,7 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	}
 }
 
-func checkNotificationTemplate(t *testing.T, name *string) {
+func requireNotificationTemplate(t *testing.T, name *string) {
 	if name == nil {
 		return
 	}
@@ -33,12 +32,13 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 	}
 }
 
-func TestNewsUserLevelTasksTemplates(t *testing.T) {
-	allow := admin.NewsUserAllowTask{TaskString: admin.TaskNewsUserAllow}
-	checkEmailTemplates(t, allow.AdminEmailTemplate())
-	checkNotificationTemplate(t, allow.AdminInternalNotificationTemplate())
-
-	remove := admin.NewsUserRemoveTask{TaskString: admin.TaskNewsUserRemove}
-	checkEmailTemplates(t, remove.AdminEmailTemplate())
-	checkNotificationTemplate(t, remove.AdminInternalNotificationTemplate())
+func TestNewsUserTasksTemplates(t *testing.T) {
+	admins := []notif.AdminEmailTemplateProvider{
+		&NewsUserAllowTask{TaskString: TaskNewsUserAllow},
+		&NewsUserRemoveTask{TaskString: TaskNewsUserRemove},
+	}
+	for _, p := range admins {
+		requireEmailTemplates(t, p.AdminEmailTemplate())
+		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate())
+	}
 }

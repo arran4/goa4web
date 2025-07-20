@@ -22,12 +22,19 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
+func requireNotificationTemplate(t *testing.T, name *string) {
+	if name == nil {
+		return
+	}
+	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if nt.Lookup(*name) == nil {
+		t.Errorf("missing notification template %s", *name)
+	}
+}
+
 func TestLinkerTemplatesExist(t *testing.T) {
-	prefixes := []string{
-		"linkerAddEmail",
-		"adminNotificationLinkerAddEmail",
-	}
-	for _, p := range prefixes {
-		requireEmailTemplates(t, p)
-	}
+	requireEmailTemplates(t, "linkerAddEmail")
+	requireNotificationTemplate(t, AddTask.SubscribedInternalNotificationTemplate())
+	requireEmailTemplates(t, "adminNotificationLinkerAddEmail")
+	requireNotificationTemplate(t, AddTask.AdminInternalNotificationTemplate())
 }

@@ -22,6 +22,16 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	}
 }
 
+func checkNotificationTemplate(t *testing.T, name *string) {
+	if name == nil {
+		return
+	}
+	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if nt.Lookup(*name) == nil {
+		t.Errorf("missing notification template %s", *name)
+	}
+}
+
 func TestAnnouncementTemplatesExist(t *testing.T) {
 	admins := []notif.AdminEmailTemplateProvider{
 		addAnnouncementTask,
@@ -29,5 +39,6 @@ func TestAnnouncementTemplatesExist(t *testing.T) {
 	}
 	for _, p := range admins {
 		checkEmailTemplates(t, p.AdminEmailTemplate())
+		checkNotificationTemplate(t, p.AdminInternalNotificationTemplate())
 	}
 }

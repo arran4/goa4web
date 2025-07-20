@@ -47,3 +47,11 @@ type AutoSubscribeProvider interface {
 	// the path.
 	AutoSubscribePath(evt eventbus.Event) (string, string)
 }
+
+// TargetUsersNotificationProvider indicates the notification should be delivered
+// to the returned user IDs.
+type TargetUsersNotificationProvider interface {
+	TargetUserIDs(evt eventbus.Event) []int32
+	TargetEmailTemplate() *EmailTemplates
+	TargetInternalNotificationTemplate() *string
+}

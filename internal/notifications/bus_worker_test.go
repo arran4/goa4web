@@ -204,6 +204,55 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	}
 }
 
+type targetTask struct{ tasks.TaskString }
+
+func (targetTask) Action(http.ResponseWriter, *http.Request) {}
+
+func (targetTask) TargetUserIDs(evt eventbus.Event) []int32 { return []int32{2, 3} }
+
+func (targetTask) TargetEmailTemplate() *EmailTemplates { return nil }
+
+func (targetTask) TargetInternalNotificationTemplate() *string {
+	t := NotificationTemplateFilenameGenerator("announcement")
+	return &t
+}
+
+func TestProcessEventTargetUsers(t *testing.T) {
+	ctx := context.Background()
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig.NotificationsEnabled = true
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	n := New(WithQueries(q))
+
+	for _, id := range []int32{2, 3} {
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
+			WithArgs(id).
+			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(id, "u@test", fmt.Sprintf("u%d", id)))
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT body FROM template_overrides WHERE name = ?")).
+			WithArgs("announcement.gotxt").
+			WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
+		mock.ExpectExec(regexp.QuoteMeta("INSERT INTO notifications (users_idusers, link, message) VALUES (?, ?, ?)")).
+			WithArgs(id, sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	evt := eventbus.Event{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}}
+
+	if err := n.processEvent(ctx, evt, nil); err != nil {
+		t.Fatalf("process: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
 func TestBusWorker(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	origCfg := config.AppRuntimeConfig

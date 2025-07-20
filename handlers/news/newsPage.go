@@ -20,7 +20,7 @@ func CustomNewsIndex(data *common.CoreData, r *http.Request) {
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "User Permissions",
-			Link: "/admin/news/user/permissions",
+			Link: "/news/user/permissions",
 		})
 	}
 	userHasWriter := data.HasGrant("news", "post", "post", 0)

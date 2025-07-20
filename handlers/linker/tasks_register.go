@@ -14,8 +14,6 @@ func RegisterTasks() []tasks.NamedTask {
 		ApproveTask,
 		BulkDeleteTask,
 		BulkApproveTask,
-		UserAllowTask,
-		UserDisallowTask,
 		commentEditAction,
 		commentEditActionCancel,
 		replyTaskEvent,

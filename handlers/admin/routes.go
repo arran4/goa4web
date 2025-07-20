@@ -69,11 +69,7 @@ func RegisterRoutes(ar *mux.Router) {
 	userhandlers.RegisterAdminRoutes(ar)
 	languages.RegisterAdminRoutes(ar)
 
-	// news admin
-	nar := ar.PathPrefix("/news").Subrouter()
-	nar.HandleFunc("/users/levels", news.NewsAdminUserLevelsPage).Methods("GET")
-	nar.HandleFunc("/users/levels", tasks.Action(newsUserAllow)).Methods("POST").MatcherFunc(newsUserAllow.Matcher())
-	nar.HandleFunc("/users/levels", tasks.Action(newsUserRemove)).Methods("POST").MatcherFunc(newsUserRemove.Matcher())
+	// news admin routes removed; use /admin/users/permissions instead
 
 	// writings admin
 	writings.RegisterAdminRoutes(ar)

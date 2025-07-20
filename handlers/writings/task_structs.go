@@ -144,10 +144,6 @@ var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 var _ tasks.Task = (*UserAllowTask)(nil)
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/admin/writings/users/levels" {
-		AdminUserLevelsAllowActionPage(w, r)
-		return
-	}
 	UsersPermissionsPermissionUserAllowPage(w, r)
 }
 
@@ -159,10 +155,6 @@ var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 var _ tasks.Task = (*UserDisallowTask)(nil)
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/admin/writings/users/levels" {
-		AdminUserLevelsRemoveActionPage(w, r)
-		return
-	}
 	UsersPermissionsDisallowPage(w, r)
 }
 

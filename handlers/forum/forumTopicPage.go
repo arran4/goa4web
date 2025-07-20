@@ -22,6 +22,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
 		Back                    bool
+		Subscribed              bool
 		Topic                   *ForumtopicPlus
 		Threads                 []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
 		Categories              []*ForumcategoryPlus
@@ -93,6 +94,10 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Threads = threadRows
+
+	if subscribedToTopic(cd, topicRow.Idforumtopic) {
+		data.Subscribed = true
+	}
 
 	handlers.TemplateHandler(w, r, "topicsPage.gohtml", data)
 }

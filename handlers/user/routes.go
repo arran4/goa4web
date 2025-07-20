@@ -12,6 +12,7 @@ import (
 // RegisterRoutes attaches user account endpoints to the router.
 func RegisterRoutes(r *mux.Router) {
 	ur := r.PathPrefix("/usr").Subrouter()
+	ur.Use(handlers.IndexMiddleware(CustomIndex))
 	ur.HandleFunc("", userPage).Methods(http.MethodGet)
 	ur.HandleFunc("/logout", userLogoutPage).Methods(http.MethodGet)
 	ur.HandleFunc("/lang", userLangPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

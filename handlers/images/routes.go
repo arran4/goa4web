@@ -38,6 +38,8 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 
 // RegisterRoutes attaches the image endpoints to r.
 func RegisterRoutes(r *mux.Router) {
+	// TODO add subroute
+	ir.Use(handlers.IndexMiddleware(CustomIndex))
 	r.HandleFunc("/images/upload/image", tasks.Action(uploadImageTask)).
 		Methods(http.MethodPost).
 		MatcherFunc(handlers.RequiresAnAccount()).

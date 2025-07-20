@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 
@@ -89,6 +90,7 @@ func Register() {
 	router.RegisterModule("admin", []string{"faq", "forum", "languages", "linker", "news", "search", "user", "writings"}, func(r *mux.Router) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
+		ar.Use(handlers.IndexMiddleware(CustomIndex))
 		RegisterRoutes(ar)
 	})
 }

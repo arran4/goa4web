@@ -52,8 +52,6 @@ func WithConfig(cfg config.RuntimeConfig) Option {
 }
 
 // New constructs a Notifier with the provided dependencies.
-// / TODO consider upgrading to optional args, so that it can do the deriving from Config as an alternative but to make
-// the test not change as much
 func New(opts ...Option) *Notifier {
 	n := &Notifier{}
 	for _, o := range opts {

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -33,3 +34,50 @@ var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
 type ThreadDeleteTask struct{ tasks.TaskString }
 
 var threadDeleteTask = &ThreadDeleteTask{TaskString: TaskForumThreadDelete}
+
+var (
+	_ tasks.Task                       = (*CategoryChangeTask)(nil)
+	_ notif.AdminEmailTemplateProvider = (*CategoryChangeTask)(nil)
+	_ tasks.Task                       = (*CategoryCreateTask)(nil)
+	_ notif.AdminEmailTemplateProvider = (*CategoryCreateTask)(nil)
+	_ tasks.Task                       = (*DeleteCategoryTask)(nil)
+	_ notif.AdminEmailTemplateProvider = (*DeleteCategoryTask)(nil)
+	_ tasks.Task                       = (*ThreadDeleteTask)(nil)
+	_ notif.AdminEmailTemplateProvider = (*ThreadDeleteTask)(nil)
+)
+
+func (CategoryChangeTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationForumCategoryChangeEmail")
+}
+
+func (CategoryChangeTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumCategoryChangeEmail")
+	return &v
+}
+
+func (CategoryCreateTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationForumCategoryCreateEmail")
+}
+
+func (CategoryCreateTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumCategoryCreateEmail")
+	return &v
+}
+
+func (DeleteCategoryTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationForumDeleteCategoryEmail")
+}
+
+func (DeleteCategoryTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumDeleteCategoryEmail")
+	return &v
+}
+
+func (ThreadDeleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationForumThreadDeleteEmail")
+}
+
+func (ThreadDeleteTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumThreadDeleteEmail")
+	return &v
+}

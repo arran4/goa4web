@@ -1,20 +1,37 @@
 package news
 
 import (
+	"fmt"
+	"github.com/arran4/goa4web/core/common"
+	htemplate "html/template"
+	"net/http"
+	"sync"
+
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
+var (
+	siteTemplates     *htemplate.Template
+	loadTemplatesOnce sync.Once
+)
+
 func runTemplate(name string) http.HandlerFunc {
+	loadTemplatesOnce.Do(func() {
+		siteTemplates = templates.GetCompiledSiteTemplates((&common.CoreData{}).Funcs(nil))
+	})
+	if siteTemplates.Lookup(name) == nil {
+		panic(fmt.Sprintf("missing template %s", name))
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		handlers.TemplateHandler(w, r, name, r.Context().Value(consts.KeyCoreData))
 	}
@@ -25,12 +42,12 @@ func RegisterRoutes(r *mux.Router) {
 	nav.RegisterIndexLink("News", "/", SectionWeight)
 	nav.RegisterAdminControlCenter("News", "/admin/news/users/roles", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex))
-	r.HandleFunc("/", runTemplate("newsPage.gohtml")).Methods("GET")
+	r.HandleFunc("/", runTemplate("newsPage")).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	r.HandleFunc("/news.rss", NewsRssPage).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(handlers.IndexMiddleware(CustomNewsIndex))
-	nr.HandleFunc("", runTemplate("newsPage.gohtml")).Methods("GET")
+	nr.HandleFunc("", runTemplate("newsPage")).Methods("GET")
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", tasks.Action(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())

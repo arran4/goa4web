@@ -3,5 +3,5 @@ You have been granted news permissions.
 
 News section:
 {{.NewsURL}}
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 

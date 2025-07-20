@@ -116,3 +116,58 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestCustomForumIndexSubscribeLink(t *testing.T) {
+	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
+	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
+
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer sqldb.Close()
+	q := dbpkg.New(sqldb)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	cd := common.NewCoreData(ctx, q)
+	cd.UserID = 1
+
+	mock.ExpectQuery("SELECT id, pattern, method FROM subscriptions").
+		WithArgs(int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "pattern", "method"}))
+
+	CustomForumIndex(cd, req.WithContext(ctx))
+	if !common.ContainsItem(cd.CustomIndexItems, "Subscribe To Topic") {
+		t.Errorf("expected subscribe item")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
+	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
+	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
+
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer sqldb.Close()
+	q := dbpkg.New(sqldb)
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	cd := common.NewCoreData(ctx, q)
+	cd.UserID = 1
+
+	pattern := topicSubscriptionPattern(2)
+	mock.ExpectQuery("SELECT id, pattern, method FROM subscriptions").
+		WithArgs(int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "pattern", "method"}).AddRow(1, pattern, "internal"))
+
+	CustomForumIndex(cd, req.WithContext(ctx))
+	if !common.ContainsItem(cd.CustomIndexItems, "Unsubscribe From Topic") {
+		t.Errorf("expected unsubscribe item")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

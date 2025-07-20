@@ -94,6 +94,7 @@ type CoreData struct {
 	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
 	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
 	unreadCount              lazyValue[int64]
+	subscriptions            lazyValue[map[string]bool]
 	user                     lazyValue[*db.User]
 	userRoles                lazyValue[[]string]
 	visibleWritingCategories lazyValue[[]*db.WritingCategory]
@@ -788,6 +789,32 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		return cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
 	})
 	return count
+}
+
+// subscriptionMap loads the current user's subscriptions once.
+func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
+	return cd.subscriptions.load(func() (map[string]bool, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return map[string]bool{}, nil
+		}
+		rows, err := cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+		if err != nil {
+			return nil, err
+		}
+		m := make(map[string]bool)
+		for _, row := range rows {
+			if row.Method == "internal" {
+				m[row.Pattern] = true
+			}
+		}
+		return m, nil
+	})
+}
+
+// Subscribed reports whether the user has a subscription matching pattern.
+func (cd *CoreData) Subscribed(pattern string) bool {
+	m, _ := cd.subscriptionMap()
+	return m[pattern]
 }
 
 // LinkerCategoryCounts lazily loads linker category statistics.

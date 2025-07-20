@@ -9,7 +9,7 @@ A new writing "{{.Item.Title}}" was submitted.
 Read it here:
 {{.URL}}
 
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.UnsubscribeUrl}}
 
 Cheers,
 The A4Web Team

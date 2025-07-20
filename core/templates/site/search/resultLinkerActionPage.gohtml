@@ -1,17 +1,17 @@
 {{ template "head" $ }}
     Search linker:<br>
     {{- with .Links }}
-    	{{- if $.NoResults }}
-    		<p>Nothing found.</p>
-    	{{- else if $.EmptyWords }}
-    		<p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
-    	{{- else }}
-    		<ul>
-    		{{- range $i, $result := . }}
-    			<li>{{ $i }}: <a href="/linker/show/{{$result.Idlinker}}">{{ $result.Title.String }}</a></li>
-    		{{- end }}
-    		</ul>
-    	{{ end }}
+        {{- if $.NoResults }}
+            <p>Nothing found.</p>
+        {{- else if $.EmptyWords }}
+            <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+        {{- else }}
+            <ul>
+            {{- range $i, $result := . }}
+                <li>{{ $i }}: <a href="/linker/show/{{$result.Idlinker}}">{{ $result.Title.String }}</a></li>
+            {{- end }}
+            </ul>
+        {{ end }}
     {{- end }}
     <br>
     Comment search:<br>

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	common "github.com/arran4/goa4web/core/common"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	handlers "github.com/arran4/goa4web/handlers"
@@ -25,6 +26,12 @@ var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
 type DeleteIPBanTask struct{ tasks.TaskString }
 
 var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
+
+var _ tasks.Task = (*AddIPBanTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*AddIPBanTask)(nil)
+
+var _ tasks.Task = (*DeleteIPBanTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*DeleteIPBanTask)(nil)
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -45,6 +52,8 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 
 func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = NormalizeIPNet(ipNet)
 	reason := strings.TrimSpace(r.PostFormValue("reason"))
@@ -62,19 +71,63 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt: expires,
 		})
 	}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["IP"] = ipNet
+		if reason != "" {
+			evt.Data["Reason"] = reason
+		}
+		if u, _ := cd.CurrentUser(); u != nil {
+			evt.Data["Moderator"] = u.Username
+		}
+	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
 func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
+	var ips []string
 	for _, ip := range r.Form["ip"] {
 		ipNet := NormalizeIPNet(ip)
 		if err := queries.CancelBannedIp(r.Context(), ipNet); err != nil {
 			log.Printf("cancel banned ip %s: %v", ipNet, err)
 		}
+		if ipNet != "" {
+			ips = append(ips, ipNet)
+		}
+	}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["IP"] = strings.Join(ips, ", ")
+		if u, _ := cd.CurrentUser(); u != nil {
+			evt.Data["Moderator"] = u.Username
+		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+}
+
+func (AddIPBanTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminAddIPBanEmail")
+}
+
+func (AddIPBanTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminAddIPBanEmail")
+	return &v
+}
+
+func (DeleteIPBanTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminRemoveIPBanEmail")
+}
+
+func (DeleteIPBanTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminRemoveIPBanEmail")
+	return &v
 }

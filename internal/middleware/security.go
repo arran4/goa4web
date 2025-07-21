@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/netip"
 	"strings"
-
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 func normalizeIP(ip string) string {
@@ -46,8 +44,8 @@ func requestIP(r *http.Request) string {
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
-		if queries, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries(); ok {
-			bans, err := queries.ListActiveBans(r.Context())
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			bans, err := cd.Queries().ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return

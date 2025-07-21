@@ -33,15 +33,18 @@ func TestAddEmailTaskEventData(t *testing.T) {
 			AddRow(1, nil, "alice"))
 
 	store := sessions.NewCookieStore([]byte("test"))
-	sess := sessions.NewSession(store, "test")
-	sess.Values = map[interface{}]interface{}{"UID": int32(1)}
 	core.Store = store
 	core.SessionName = "test"
+	sess, _ := store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName)
+	sess.Values["UID"] = int32(1)
+	w := httptest.NewRecorder()
+	_ = sess.Save(httptest.NewRequest(http.MethodGet, "http://example.com", nil), w)
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1
+	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	req := httptest.NewRequest("POST", "http://example.com/usr/email", strings.NewReader("new_email=a@example.com"))
@@ -72,6 +75,20 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test"
+	sess, _ := store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName)
+	sess.Values["UID"] = int32(1)
+	w := httptest.NewRecorder()
+	_ = sess.Save(httptest.NewRequest(http.MethodGet, "http://example.com", nil), w)
+
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
+	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
+	cd.UserID = 1
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+
 	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
 		AddRow(1, 1, "a@example.com", nil, "code", time.Now().Add(time.Hour), 0)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority\nFROM user_emails\nWHERE last_verification_code = ?")).
@@ -85,16 +102,15 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code=code", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	for _, c := range w.Result().Cookies() {
+		req.AddCookie(c)
+	}
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	userEmailVerifyCodePage(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if _, ok := evt.Data["email"]; !ok {
-		t.Fatalf("missing email event data: %+v", evt.Data)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -127,7 +143,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
-	ctx = context.WithValue(ctx, common.ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 

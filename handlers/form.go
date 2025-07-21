@@ -12,7 +12,10 @@ func ValidateForm(r *http.Request, allowed, required []string) error {
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
-	allowedSet := make(map[string]struct{}, len(allowed))
+	allowedSet := make(map[string]struct{}, len(allowed)+2)
+	// Always allow CSRF and task fields which are automatically added by forms.
+	allowedSet[CSRFField] = struct{}{}
+	allowedSet[TaskField] = struct{}{}
 	for _, k := range allowed {
 		allowedSet[k] = struct{}{}
 	}

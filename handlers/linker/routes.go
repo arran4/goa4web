@@ -23,6 +23,7 @@ func RegisterRoutes(r *mux.Router) {
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
 	lr.HandleFunc("/atom", AtomPage).Methods("GET")
 	lr.HandleFunc("", Page).Methods("GET")
+	lr.HandleFunc("/", Page).Methods("GET")
 	lr.HandleFunc("/linker/{username}", UserPage).Methods("GET")
 	lr.HandleFunc("/linker/{username}/", UserPage).Methods("GET")
 	lr.HandleFunc("/categories", CategoriesPage).Methods("GET")

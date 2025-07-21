@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"regexp"
 	"strings"
 	"testing"
@@ -101,10 +102,19 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		WithArgs("a@example.com", int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code=code", nil)
-	for _, c := range w.Result().Cookies() {
-		req.AddCookie(c)
-	}
+	store := sessions.NewCookieStore([]byte("test"))
+	sess := sessions.NewSession(store, "test")
+	sess.Values = map[interface{}]interface{}{"UID": int32(1)}
+	core.Store = store
+	core.SessionName = "test"
+
+	form := url.Values{"code": {"code"}}
+	req := httptest.NewRequest(http.MethodPost, "/usr/email/verify", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	userEmailVerifyCodePage(rr, req)

@@ -25,7 +25,7 @@ func RegisterRoutes(r *mux.Router) {
 	ur.HandleFunc("/email/resend", tasks.Action(resendVerificationEmailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(resendVerificationEmailTask.Matcher())
 	ur.HandleFunc("/email/delete", tasks.Action(deleteEmailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(deleteEmailTask.Matcher())
 	ur.HandleFunc("/email/notify", addEmailTask.Notify).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addEmailTask.Matcher())
-	ur.HandleFunc("/email/verify", userEmailVerifyCodePage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/email/verify", userEmailVerifyCodePage).Methods(http.MethodGet, http.MethodPost)
 	ur.HandleFunc("/email", tasks.Action(testMailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(testMailTask.Matcher())
 	ur.HandleFunc("/paging", userPagingPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/paging", tasks.Action(pagingSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(pagingSaveTask.Matcher())

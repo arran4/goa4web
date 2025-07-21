@@ -50,11 +50,22 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 
-	pref, _ := cd.Preference()
-	userLangs, _ := queries.GetUserLanguages(r.Context(), cd.UserID)
+	pref, err := cd.Preference()
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	userLangs, err := queries.GetUserLanguages(r.Context(), cd.UserID)
+	if err != nil {
+		log.Printf("Error getting user languages: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	langs, err := cd.Languages()
 	if err != nil {
+		log.Printf("Error getting languages: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

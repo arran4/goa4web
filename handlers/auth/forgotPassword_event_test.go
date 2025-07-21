@@ -45,6 +45,9 @@ func TestForgotPasswordEventData(t *testing.T) {
 	if _, ok := evt.Data["ResetURL"]; !ok {
 		t.Fatalf("missing ResetURL data")
 	}
+	if _, ok := evt.Data["UserURL"]; !ok {
+		t.Fatalf("missing UserURL data")
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}

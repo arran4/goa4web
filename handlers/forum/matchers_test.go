@@ -36,7 +36,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 
 	called := false
@@ -84,7 +84,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 
 	called := false
@@ -121,7 +121,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 
 	called := false

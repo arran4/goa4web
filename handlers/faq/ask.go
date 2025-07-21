@@ -70,7 +70,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

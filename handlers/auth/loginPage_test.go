@@ -31,7 +31,7 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, queries)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -69,7 +69,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, queries)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

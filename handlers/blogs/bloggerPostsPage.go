@@ -41,7 +41,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,

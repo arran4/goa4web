@@ -50,7 +50,7 @@ func (AnnouncementDeleteTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
@@ -74,7 +74,7 @@ func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])

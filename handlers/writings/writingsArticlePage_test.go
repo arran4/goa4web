@@ -48,7 +48,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
 	req = req.WithContext(ctx)
 

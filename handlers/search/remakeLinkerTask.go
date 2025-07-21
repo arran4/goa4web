@@ -19,7 +19,7 @@ var remakeLinkerTask = &RemakeLinkerTask{TaskString: TaskRemakeLinkerSearch}
 var _ tasks.Task = (*RemakeLinkerTask)(nil)
 
 func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
 		Errors   []string

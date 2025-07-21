@@ -60,7 +60,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,

@@ -91,7 +91,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))

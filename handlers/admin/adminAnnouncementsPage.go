@@ -43,7 +43,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 		NewsID        string
 	}
 	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	rows, err := queries.ListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list announcements: %v", err)
@@ -56,7 +56,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
 		log.Printf("news id: %v", err)
@@ -79,7 +79,7 @@ func (AddAnnouncementTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

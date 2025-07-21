@@ -61,7 +61,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * pageSize
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if r.URL.Query().Get("download") != "" {
 		rows, err := queries.CompleteWordList(r.Context())
@@ -148,7 +148,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	rows, err := queries.CompleteWordList(r.Context())
 	if err != nil {

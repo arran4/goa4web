@@ -2,6 +2,7 @@ package imagebbs
 
 import (
 	"database/sql"
+	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -37,7 +38,7 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["board"])
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	err := queries.UpdateImageBoard(r.Context(), db.UpdateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),

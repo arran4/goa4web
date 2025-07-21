@@ -5,6 +5,7 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+	common "github.com/arran4/goa4web/core/common"
 	hcommon "github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -65,7 +66,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queries, ok := r.Context().Value(coreconsts.KeyQueries).(*dbpkg.Queries)
+	queries, ok := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData).Queries()
 	if !ok || queries == nil {
 		http.Error(w, "db unavailable", http.StatusInternalServerError)
 		return

@@ -51,7 +51,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -101,7 +101,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0, true))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

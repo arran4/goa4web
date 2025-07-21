@@ -110,7 +110,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	session, ok := core.GetSessionOrFail(w, r)

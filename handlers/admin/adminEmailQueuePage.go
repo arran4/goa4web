@@ -46,7 +46,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	rows, err := queries.ListUnsentPendingEmails(r.Context())
 	if err != nil {
 		log.Printf("list pending emails: %v", err)
@@ -78,7 +78,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -122,7 +122,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

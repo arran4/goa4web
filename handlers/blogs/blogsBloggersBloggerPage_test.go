@@ -26,7 +26,7 @@ func TestBloggersBloggerPage(t *testing.T) {
 		WillReturnRows(rows)
 
 	req := httptest.NewRequest("GET", "/blogs/bloggers/blogger", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

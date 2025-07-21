@@ -95,7 +95,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	var uid int32
 	uid, _ = session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := Data{
 		CoreData:      r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Replyable:     true,
@@ -219,7 +219,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
 		ViewerID:     uid,
@@ -294,7 +294,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
 
-  cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
+	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
 		LanguageIdlanguage: int32(languageId),
 		UsersIdusers:       uid,
 		ForumthreadID:      pthid,

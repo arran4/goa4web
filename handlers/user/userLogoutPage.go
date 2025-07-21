@@ -5,12 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 func userLogoutPage(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +31,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if session.ID != "" {
 		_ = queries.DeleteSessionByID(r.Context(), session.ID)
 	}

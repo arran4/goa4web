@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 
 	"log"
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -51,7 +51,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,

@@ -3,7 +3,7 @@ package faq
 import (
 	"testing"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 func TestCustomFAQIndexRoles(t *testing.T) {

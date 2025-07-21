@@ -10,10 +10,10 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	blogs "github.com/arran4/goa4web/handlers/blogs"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -46,7 +46,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,

@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
@@ -30,7 +30,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	pageStr := r.URL.Query().Get("p")
 	page, _ := strconv.Atoi(pageStr)

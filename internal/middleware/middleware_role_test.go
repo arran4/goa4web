@@ -10,8 +10,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	corecommon "github.com/arran4/goa4web/core/common"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
 )
@@ -24,8 +23,6 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
 
-	q := dbpkg.New(db)
-
 	mock.ExpectExec("INSERT INTO sessions").WithArgs("sessid", int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	rows := sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "name"}).
@@ -35,13 +32,13 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), session)
 	req = req.WithContext(ctx)
 
-	var cd *corecommon.CoreData
+	var cd *common.CoreData
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ = r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData)
+		cd, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
@@ -64,20 +61,18 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
 
-	q := dbpkg.New(db)
-
 	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), session)
 	req = req.WithContext(ctx)
 
-	var cd *corecommon.CoreData
+	var cd *common.CoreData
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ = r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData)
+		cd, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)

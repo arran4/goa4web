@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/config"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
@@ -93,7 +93,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	url := path.Join("/uploads", sub1, sub2, fname)
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid := int32(0)
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
 		uid = cd.UserID

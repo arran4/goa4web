@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 type PageLink struct {
@@ -61,7 +61,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * pageSize
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if r.URL.Query().Get("download") != "" {
 		rows, err := queries.CompleteWordList(r.Context())
@@ -148,7 +148,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	rows, err := queries.CompleteWordList(r.Context())
 	if err != nil {

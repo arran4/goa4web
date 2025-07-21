@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestForumTopicFeed(t *testing.T) {

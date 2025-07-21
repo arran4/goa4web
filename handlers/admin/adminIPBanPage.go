@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // AddIPBanTask blocks a network from accessing the site.
@@ -39,7 +39,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		Bans []*db.BannedIp
 	}
 	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)
@@ -51,7 +51,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
@@ -87,7 +87,7 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)

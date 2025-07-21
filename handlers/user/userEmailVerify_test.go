@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
@@ -36,7 +36,7 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test"
 
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -72,7 +72,7 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test"
 
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

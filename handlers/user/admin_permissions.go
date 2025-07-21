@@ -11,10 +11,10 @@ import (
 	"sort"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -31,7 +31,7 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -71,7 +71,7 @@ func (PermissionUserAllowTask) AdminInternalNotificationTemplate() *string {
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	data := struct {
@@ -126,7 +126,7 @@ func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*common.CoreData
@@ -185,7 +185,7 @@ var _ tasks.Task = (*PermissionUpdateTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 

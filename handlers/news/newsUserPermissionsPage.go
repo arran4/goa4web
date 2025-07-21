@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -64,7 +64,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -84,7 +84,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	data := struct {
@@ -109,7 +109,7 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*common.CoreData

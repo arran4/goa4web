@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 type commentForTest struct {
@@ -28,7 +28,7 @@ type commentForTest struct {
 // Test that the comment template shows the edit form when Editing is true.
 func TestCommentTemplateEditing(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	cd := &corecommon.CoreData{}
+	cd := &common.CoreData{}
 	tmpl := GetCompiledSiteTemplates(cd.Funcs(r))
 
 	c := commentForTest{}

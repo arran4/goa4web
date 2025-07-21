@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	mockdlq "github.com/arran4/goa4web/internal/dlq/mock"

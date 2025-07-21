@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -66,7 +66,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
@@ -194,7 +194,7 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	code := r.FormValue("code")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	reset, err := queries.GetPasswordResetByCode(r.Context(), code)
 	if err != nil || reset.ID != id {
 		http.Error(w, "invalid code", http.StatusUnauthorized)

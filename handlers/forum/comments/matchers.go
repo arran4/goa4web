@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // RequireCommentAuthor ensures the requester authored the comment referenced in the URL.
@@ -23,7 +23,7 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)

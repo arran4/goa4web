@@ -3,7 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -37,7 +37,7 @@ func (NewsUserAllowTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
@@ -90,7 +90,7 @@ func (NewsUserRemoveTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid, err := strconv.Atoi(r.PostFormValue("permid"))
 	if err != nil {
 		log.Printf("strconv.Atoi(permid) Error: %s", err)

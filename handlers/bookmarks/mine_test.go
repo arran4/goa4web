@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
@@ -93,7 +93,7 @@ func TestMinePage_NoBookmarks(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

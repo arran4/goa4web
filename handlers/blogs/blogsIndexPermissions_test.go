@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 func TestCustomBlogIndexRoles(t *testing.T) {

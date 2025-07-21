@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/config"
 
@@ -51,7 +51,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -68,7 +68,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	languageRows, err := cd.Languages()
 	if err != nil {
@@ -203,7 +203,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{

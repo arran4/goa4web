@@ -13,8 +13,8 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestRequireWritingAuthorArticleVar(t *testing.T) {
@@ -38,7 +38,6 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), q, common.WithSession(sess))
 	cd.SetRoles([]string{"content writer"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	ctx = context.WithValue(ctx, consts.KeyQueries, q)
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{

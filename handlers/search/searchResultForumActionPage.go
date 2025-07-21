@@ -7,10 +7,10 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
@@ -33,7 +33,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

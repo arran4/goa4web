@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 )
 
 func TestLinkerFeed(t *testing.T) {
@@ -74,7 +74,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	cd.SetEvent(evt)
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
-	ctxreq := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctxreq := req.Context()
 	ctxreq = context.WithValue(ctxreq, consts.KeyCoreData, cd)
 	req = req.WithContext(ctxreq)
 	rr := httptest.NewRecorder()

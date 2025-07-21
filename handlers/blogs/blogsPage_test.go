@@ -15,8 +15,8 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 var (
@@ -51,7 +51,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -88,8 +88,6 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 	}
 	defer sqldb.Close()
 
-	queries := db.New(sqldb)
-
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, username\nFROM users\nWHERE username = ?")).
 		WithArgs("bob").
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
@@ -101,7 +99,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), "bob", 0, true))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

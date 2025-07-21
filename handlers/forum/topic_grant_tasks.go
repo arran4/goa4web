@@ -2,9 +2,10 @@ package forum
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 	"log"
@@ -20,7 +21,7 @@ var topicGrantCreateTask = &TopicGrantCreateTask{TaskString: TaskTopicGrantCreat
 var _ tasks.Task = (*TopicGrantCreateTask)(nil)
 
 func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	topicID, err := strconv.Atoi(vars["topic"])
 	if err != nil {
@@ -93,7 +94,7 @@ var topicGrantDeleteTask = &TopicGrantDeleteTask{TaskString: TaskTopicGrantDelet
 var _ tasks.Task = (*TopicGrantDeleteTask)(nil)
 
 func (TopicGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	grantID, err := strconv.Atoi(r.PostFormValue("grantid"))
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)

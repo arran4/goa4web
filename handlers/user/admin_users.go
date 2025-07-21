@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	auth "github.com/arran4/goa4web/handlers/auth"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func cloneValues(v url.Values) url.Values {
@@ -48,7 +48,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -133,14 +133,14 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := r.Context().Value(consts.KeyQueries).(*db.Queries).DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
+	} else if _, err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
 	urow, err := queries.GetUserById(r.Context(), int32(uid))
 	if err != nil {
@@ -159,7 +159,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid := r.PostFormValue("uid")
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
@@ -181,7 +181,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid := r.PostFormValue("uid")
 	data := struct {
 		*common.CoreData

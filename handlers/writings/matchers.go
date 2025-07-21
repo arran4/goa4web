@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // RequireWritingAuthor ensures the requester authored the writing referenced in the URL.
@@ -30,7 +30,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)

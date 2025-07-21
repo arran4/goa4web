@@ -1,14 +1,12 @@
 package forum
 
 import (
-	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
@@ -23,7 +21,7 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -49,7 +47,7 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -75,7 +73,7 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -101,7 +99,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q)
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
@@ -127,7 +125,7 @@ func TestCustomForumIndexSubscribeLink(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q)
 	cd.UserID = 1
 
@@ -154,7 +152,7 @@ func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
 	}
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q)
 	cd.UserID = 1
 

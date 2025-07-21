@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -29,7 +29,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		Back                    bool
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

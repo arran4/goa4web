@@ -15,15 +15,15 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 )
 
 type NewsPost struct {
@@ -183,7 +183,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ReplyText          string
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
@@ -338,7 +338,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
@@ -463,7 +463,7 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 
@@ -501,7 +501,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

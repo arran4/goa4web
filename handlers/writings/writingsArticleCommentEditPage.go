@@ -12,9 +12,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 // ArticleCommentEditActionPage updates a comment on a writing and refreshes thread metadata.
@@ -26,7 +26,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 	commentId, _ := strconv.Atoi(vars["comment"])

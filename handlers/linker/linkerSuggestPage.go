@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -26,7 +26,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
@@ -68,7 +68,7 @@ var _ tasks.Task = (*SuggestTask)(nil)
 func (SuggestTask) Page(w http.ResponseWriter, r *http.Request) { SuggestPage(w, r) }
 
 func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +53,7 @@ func AdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	categoryId, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -88,7 +88,7 @@ func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.InsertWritingCategory(r.Context(), db.InsertWritingCategoryParams{
 		WritingCategoryID: int32(pcid),
 		Title: sql.NullString{

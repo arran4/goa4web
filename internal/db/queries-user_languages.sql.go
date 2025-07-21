@@ -19,7 +19,7 @@ func (q *Queries) DeleteUserLanguagesByUser(ctx context.Context, usersIdusers in
 }
 
 const getUserLanguages = `-- name: GetUserLanguages :many
-SELECT iduser_language, users_idusers, language_idlanguage
+SELECT iduserlang, users_idusers, language_idlanguage
 FROM user_language
 WHERE users_idusers = ?
 `
@@ -33,7 +33,7 @@ func (q *Queries) GetUserLanguages(ctx context.Context, usersIdusers int32) ([]*
 	var items []*UserLanguage
 	for rows.Next() {
 		var i UserLanguage
-		if err := rows.Scan(&i.IduserLanguage, &i.UsersIdusers, &i.LanguageIdlanguage); err != nil {
+		if err := rows.Scan(&i.Iduserlang, &i.UsersIdusers, &i.LanguageIdlanguage); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

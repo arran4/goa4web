@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -37,7 +37,7 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 		Search:   r.URL.Query().Get("search"),
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -85,7 +85,7 @@ var _ notif.TargetUsersNotificationProvider = (*userAllowTask)(nil)
 var _ tasks.Task = (*userAllowTask)(nil)
 
 func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	usernames := r.PostFormValue("usernames")
 	role := r.PostFormValue("role")
 	fields := strings.FieldsFunc(usernames, func(r rune) bool {
@@ -127,7 +127,7 @@ var _ notif.TargetUsersNotificationProvider = (*userDisallowTask)(nil)
 var _ tasks.Task = (*userDisallowTask)(nil)
 
 func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	r.ParseForm()
 	ids := r.Form["permids"]
 	if len(ids) == 0 {

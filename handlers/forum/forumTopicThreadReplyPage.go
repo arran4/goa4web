@@ -9,11 +9,11 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -91,7 +91,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))

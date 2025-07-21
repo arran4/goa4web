@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
@@ -67,7 +67,8 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
 		Title:              sql.NullString{Valid: true, String: title},
@@ -93,6 +94,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 			}
 			evt.Data["writing"] = notif.WritingInfo{Title: title, Author: author}
 			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
+			evt.Data["target"] = notif.Target{Type: "writing", ID: writing.Idwriting}
 		}
 	}
 

@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -42,7 +42,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	_ = sess.Save(httptest.NewRequest(http.MethodGet, "http://example.com", nil), w)
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
@@ -85,7 +85,7 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 	_ = sess.Save(httptest.NewRequest(http.MethodGet, "http://example.com", nil), w)
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1
 
@@ -101,8 +101,6 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		WithArgs("a@example.com", int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	store = sessions.NewCookieStore([]byte("test"))
-	sess = sessions.NewSession(store, "test")
 	sess.Values = map[interface{}]interface{}{"UID": int32(1)}
 	core.Store = store
 	core.SessionName = "test"
@@ -110,9 +108,7 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 	form := url.Values{"code": {"code"}}
 	req := httptest.NewRequest(http.MethodPost, "/usr/email/verify", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx = context.WithValue(req.Context(), consts.KeyQueries, q)
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd = common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -151,7 +147,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	}
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

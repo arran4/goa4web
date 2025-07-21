@@ -4,8 +4,8 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 )
 
 // adminForumModeratorLogsPage displays recent moderator actions.

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func isAlphanumericOrPunctuation(char rune) bool {

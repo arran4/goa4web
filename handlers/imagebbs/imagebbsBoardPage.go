@@ -14,12 +14,12 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
@@ -105,7 +105,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {

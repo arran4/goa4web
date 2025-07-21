@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +22,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	cd := data.CoreData
 	categories, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{

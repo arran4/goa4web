@@ -33,6 +33,7 @@ var (
 	_ tasks.Task                                    = (*ReplyBlogTask)(nil)
 	_ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*ReplyBlogTask)(nil)
+	_ notif.GrantsRequiredProvider                  = (*ReplyBlogTask)(nil)
 )
 
 func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
@@ -42,6 +43,14 @@ func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
+}
+
+// GrantsRequired implements notif.GrantsRequiredProvider for blog replies.
+func (ReplyBlogTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+	if t, ok := evt.Data["target"].(notif.Target); ok {
+		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}
+	}
+	return nil
 }
 
 // AutoSubscribePath records the reply so the commenter automatically watches
@@ -98,7 +107,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
 		ViewerIdusers: uid,
@@ -196,6 +205,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 			}
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
 			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
+			evt.Data["target"] = notif.Target{Type: "blog", ID: int32(bid)}
 		}
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

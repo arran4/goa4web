@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -43,7 +43,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		Offset:   offset,
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	queue, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context())
 	if err != nil {
@@ -131,7 +131,7 @@ var (
 )
 
 func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	var link *db.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
 	if rows, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context()); err == nil {
@@ -187,7 +187,7 @@ func (deleteTask) AdminInternalNotificationTemplate() *string {
 }
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	title := r.URL.Query().Get("title")
 	URL := r.URL.Query().Get("URL")
@@ -229,7 +229,7 @@ func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData 
 }
 
 func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
@@ -281,7 +281,7 @@ var (
 )
 
 func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
@@ -386,7 +386,7 @@ func (bulkApproveTask) IndexData(data map[string]any) []searchworker.IndexEventD
 }
 
 func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}

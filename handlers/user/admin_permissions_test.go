@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
-	notifications "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -46,7 +45,6 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := dbpkg.New(db)
 
 	mock.ExpectQuery("SELECT idusers").
 		WithArgs(sqlmock.AnyArg()).
@@ -66,7 +64,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	cd := &common.CoreData{}
 	evt := &eventbus.TaskEvent{}
 	cd.SetEvent(evt)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

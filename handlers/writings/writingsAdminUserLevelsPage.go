@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +24,7 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -44,7 +44,7 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
@@ -66,7 +66,7 @@ func AdminUserLevelsAllowActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminUserLevelsRemoveActionPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	permidi, err := strconv.Atoi(permid)
 	if err != nil {

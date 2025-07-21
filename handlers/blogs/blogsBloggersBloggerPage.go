@@ -6,9 +6,9 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +22,7 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := data.CoreData
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	rows, err := queries.ListBloggers(r.Context(), db.ListBloggersParams{
 		ViewerID: cd.UserID,

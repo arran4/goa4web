@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 // topicSubscriptionPattern returns the subscription pattern for new threads in a topic.

@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -62,7 +62,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if size > config.AppRuntimeConfig.PageSizeMax {
 		size = config.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	pref, err := cd.Preference()

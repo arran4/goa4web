@@ -5,7 +5,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -26,7 +26,7 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		Actions []string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)

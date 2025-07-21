@@ -10,11 +10,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 // EditReplyTask updates an existing comment.
@@ -42,7 +42,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 	commentId, _ := strconv.Atoi(vars["comment"])

@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/notifications"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 	"strings"
 
 	"github.com/arran4/goa4web/core"
@@ -52,7 +52,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	articleId, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
 		WritingCategoryID:  int32(categoryId),
@@ -79,6 +79,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data["writing"] = notifications.WritingInfo{Title: title, Author: author}
+			evt.Data["target"] = notifications.Target{Type: "writing", ID: int32(articleId)}
 		}
 	}
 

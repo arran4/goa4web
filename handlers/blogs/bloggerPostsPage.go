@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 
 	"log"
 	"net/http"
 	"strconv"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -41,7 +41,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,

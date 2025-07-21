@@ -12,12 +12,12 @@ import (
 	"text/template"
 	"time"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
@@ -41,9 +41,11 @@ var testTemplateTask = &TestTemplateTask{TaskString: TaskTestMail}
 var _ tasks.Task = (*TestTemplateTask)(nil)
 
 func getUpdateEmailText(ctx context.Context) string {
-	if q, ok := ctx.Value(consts.KeyQueries).(*db.Queries); ok && q != nil {
-		if body, err := q.GetTemplateOverride(ctx, "updateEmail.gotxt"); err == nil && body != "" {
-			return body
+	if cd, ok := ctx.Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
+		if q := cd.Queries(); q != nil {
+			if body, err := q.GetTemplateOverride(ctx, "updateEmail.gotxt"); err == nil && body != "" {
+				return body
+			}
 		}
 	}
 	tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
@@ -92,7 +94,7 @@ func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := r.PostFormValue("body")
-	q := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail", Body: body}); err != nil {
 		log.Printf("db save template: %v", err)
 	}
@@ -107,7 +109,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	urow, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {

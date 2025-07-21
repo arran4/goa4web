@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
 )
@@ -39,7 +39,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
 	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	uid := data.CoreData.UserID
 	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams{

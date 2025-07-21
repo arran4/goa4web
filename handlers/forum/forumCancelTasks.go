@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
 
@@ -55,7 +55,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 	commentID, _ := strconv.Atoi(mux.Vars(r)["comment"])

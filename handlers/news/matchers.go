@@ -2,6 +2,7 @@ package news
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 // RequireNewsPostAuthor ensures the requester authored the news post referenced in the URL.
@@ -21,7 +21,7 @@ func RequireNewsPostAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)

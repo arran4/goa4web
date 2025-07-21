@@ -78,7 +78,7 @@ func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	row := r.Context().Value(consts.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
 
 	err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{

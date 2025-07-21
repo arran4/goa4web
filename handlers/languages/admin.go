@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strconv"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +41,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cid := r.PostFormValue("cid")
 	cname := r.PostFormValue("cname")
 	data := struct {
@@ -72,7 +72,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cid := r.PostFormValue("cid")
 	data := struct {
 		*common.CoreData
@@ -110,7 +110,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cname := r.PostFormValue("cname")
 	data := struct {
 		*common.CoreData

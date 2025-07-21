@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // PostUpdate refreshes metadata on the given forum thread and topic.

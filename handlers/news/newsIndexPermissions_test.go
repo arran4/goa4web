@@ -1,13 +1,11 @@
 package news
 
 import (
-	"context"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -31,7 +29,7 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	cd = common.NewCoreData(ctx, q)
 	cd.SetRoles([]string{"content writer", "administrator"})
 	CustomNewsIndex(cd, req.WithContext(ctx))

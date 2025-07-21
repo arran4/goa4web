@@ -7,8 +7,8 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
-	searchworker "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/searchworker"
 )
 
 // SubmitWritingTask encapsulates creating a new writing.
@@ -20,6 +20,7 @@ var _ tasks.Task = (*SubmitWritingTask)(nil)
 
 // followers of an author should be alerted when new writing is submitted
 var _ notif.SubscribersNotificationTemplateProvider = (*SubmitWritingTask)(nil)
+var _ notif.GrantsRequiredProvider = (*SubmitWritingTask)(nil)
 
 func (SubmitWritingTask) Page(w http.ResponseWriter, r *http.Request)   { ArticleAddPage(w, r) }
 func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleAddActionPage(w, r) }
@@ -31,6 +32,15 @@ func (SubmitWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 func (SubmitWritingTask) SubscribedInternalNotificationTemplate() *string {
 	s := notif.NotificationTemplateFilenameGenerator("writing")
 	return &s
+}
+
+// GrantsRequired implements notif.GrantsRequiredProvider. The newly created article
+// is referenced in evt.Data under the "target" key by the page handler.
+func (SubmitWritingTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+	if t, ok := evt.Data["target"].(notif.Target); ok {
+		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}
+	}
+	return nil
 }
 
 // ReplyTask posts a comment reply.
@@ -46,6 +56,7 @@ var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
 var _ tasks.Task = (*ReplyTask)(nil)
+var _ notif.GrantsRequiredProvider = (*ReplyTask)(nil)
 
 // replying should notify anyone following the discussion
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
@@ -71,6 +82,14 @@ func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
+}
+
+// GrantsRequired implements notif.GrantsRequiredProvider for replies.
+func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+	if t, ok := evt.Data["target"].(notif.Target); ok {
+		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}
+	}
+	return nil
 }
 
 // AutoSubscribePath implements notif.AutoSubscribeProvider. It builds the
@@ -132,6 +151,7 @@ var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
 var _ tasks.Task = (*UpdateWritingTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*UpdateWritingTask)(nil)
+var _ notif.GrantsRequiredProvider = (*UpdateWritingTask)(nil)
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
@@ -144,6 +164,14 @@ func (UpdateWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 func (UpdateWritingTask) SubscribedInternalNotificationTemplate() *string {
 	s := notif.NotificationTemplateFilenameGenerator("writing_update")
 	return &s
+}
+
+// GrantsRequired implements notif.GrantsRequiredProvider for article updates.
+func (UpdateWritingTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+	if t, ok := evt.Data["target"].(notif.Target); ok {
+		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}
+	}
+	return nil
 }
 
 // UserAllowTask grants a user a permission.

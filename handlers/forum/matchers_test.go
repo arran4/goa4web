@@ -1,7 +1,6 @@
 package forum
 
 import (
-	"context"
 	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
@@ -9,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	db "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
@@ -19,8 +17,6 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer sqldb.Close()
-
-	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
@@ -36,7 +32,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 
 	called := false
@@ -68,8 +64,6 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	}
 	defer sqldb.Close()
 
-	q := db.New(sqldb)
-
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
@@ -84,7 +78,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 
 	called := false
@@ -113,15 +107,13 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 	}
 	defer sqldb.Close()
 
-	q := db.New(sqldb)
-
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 
 	called := false

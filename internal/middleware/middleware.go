@@ -58,7 +58,7 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		queries := r.Context().Value(consts.KeyQueries).(*dbpkg.Queries)
+		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 		if session.ID != "" {
 			if uid != 0 {
 				if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
@@ -113,7 +113,6 @@ func DBAdderMiddleware(next http.Handler) http.Handler {
 		}
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, consts.KeySQLDB, DBPool)
-		ctx = context.WithValue(ctx, consts.KeyQueries, dbpkg.New(DBPool))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

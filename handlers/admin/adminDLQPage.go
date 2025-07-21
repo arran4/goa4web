@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"time"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // DeleteDLQTask deletes entries from the dead letter queue.
@@ -30,7 +30,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	rows, err := queries.ListDeadLetters(r.Context(), 100)
 	if err != nil {
 		log.Printf("list dead letters: %v", err)
@@ -41,7 +41,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}

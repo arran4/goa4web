@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	handlers "github.com/arran4/goa4web/handlers"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -64,7 +64,7 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -88,7 +88,7 @@ func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 
 func (CreateTask) Action(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

@@ -6,4 +6,10 @@ const (
 
 	// ExpectedSchemaVersion defines the required database schema version.
 	ExpectedSchemaVersion = 42
+
+	// CSRFField is the name of the hidden field used by gorilla/csrf.
+	CSRFField = "gorilla.csrf.Token"
+
+	// TaskField is used by submit buttons to indicate the chosen task.
+	TaskField = "task"
 )

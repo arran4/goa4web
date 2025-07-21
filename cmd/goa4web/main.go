@@ -121,14 +121,14 @@ func parseRoot(args []string) (*rootCmd, error) {
 		}
 		return nil, fmt.Errorf("load config file: %w", err)
 	}
-	fs := config.NewRuntimeFlagSet(args[0])
-	fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
-	fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
-	_ = fs.Parse(args[1:])
-	r.fs = fs
-	r.args = fs.Args()
+	r.fs = config.NewRuntimeFlagSet(args[0])
+	r.fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
+	r.fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
+	r.fs.Usage = r.Usage
+	_ = r.fs.Parse(args[1:])
+	r.args = r.fs.Args()
 	r.ConfigFile = cfgPath
-	r.cfg = config.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
+	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
 	return r, nil
 }
 

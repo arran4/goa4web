@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 )
+
+//go:embed templates/db_usage.txt
+var dbUsageTemplate string
 
 // dbCmd handles database utilities like migrations.
 type dbCmd struct {
@@ -13,15 +17,20 @@ type dbCmd struct {
 }
 
 func parseDbCmd(parent *rootCmd, args []string) (*dbCmd, error) {
+	c := &dbCmd{rootCmd: parent}
 	fs := flag.NewFlagSet("db", flag.ContinueOnError)
+	c.fs = fs
+	fs.Usage = c.Usage
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	return &dbCmd{rootCmd: parent, fs: fs, args: fs.Args()}, nil
+	c.args = fs.Args()
+	return c, nil
 }
 
 func (c *dbCmd) Run() error {
 	if len(c.args) == 0 {
+		c.fs.Usage()
 		return fmt.Errorf("missing db command")
 	}
 	switch c.args[0] {
@@ -50,6 +59,12 @@ func (c *dbCmd) Run() error {
 		}
 		return cmd.Run()
 	default:
+		c.fs.Usage()
 		return fmt.Errorf("unknown db command %q", c.args[0])
 	}
+}
+
+// Usage prints command usage information with examples.
+func (c *dbCmd) Usage() {
+	executeUsage(c.fs.Output(), dbUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

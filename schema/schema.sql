@@ -283,10 +283,10 @@ CREATE TABLE `site_news_search` (
 
 
 CREATE TABLE `user_language` (
-  `iduser_language` int(10) NOT NULL AUTO_INCREMENT,
+  `iduserlang` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`iduser_language`),
+  PRIMARY KEY (`iduserlang`),
   KEY `userpref_FKIndex1` (`language_idlanguage`),
   KEY `userpref_FKIndex2` (`users_idusers`)
 );

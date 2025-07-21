@@ -22,7 +22,7 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := data.CoreData
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	rows, err := queries.ListBloggers(r.Context(), db.ListBloggersParams{
 		ViewerID: cd.UserID,

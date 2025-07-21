@@ -46,7 +46,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	rows, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)
@@ -84,7 +84,7 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/subscriptions?error="+err.Error(), http.StatusSeeOther)
 		return
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	existing, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)
@@ -130,7 +130,7 @@ func (DeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idStr := r.PostFormValue("id")
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if idStr == "" {
 		http.Redirect(w, r, "/usr/subscriptions?error=missing id", http.StatusSeeOther)
 		return

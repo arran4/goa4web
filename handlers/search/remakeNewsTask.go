@@ -19,7 +19,7 @@ var remakeNewsTask = &RemakeNewsTask{TaskString: TaskRemakeNewsSearch}
 var _ tasks.Task = (*RemakeNewsTask)(nil)
 
 func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
 		Errors   []string

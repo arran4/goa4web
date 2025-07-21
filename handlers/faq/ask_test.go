@@ -50,7 +50,7 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+		ctx := req.Context()
 		ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
 		req = req.WithContext(ctx)
 
@@ -101,7 +101,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	cd := &common.CoreData{UserID: 1}
 	cd.SetEvent(evt)
 
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

@@ -34,7 +34,7 @@ func TestUserEmailVerifyCodePage_Forbidden(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test"
 
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -70,7 +70,7 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test"
 
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

@@ -32,7 +32,7 @@ func TestSessionMiddlewareBadSession(t *testing.T) {
 	})
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, dbpkg.New(nil))
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)

@@ -41,7 +41,7 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 	form := url.Values{"searchwords": {"foo"}}
 	req := httptest.NewRequest("POST", "/", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

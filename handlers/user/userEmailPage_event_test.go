@@ -39,7 +39,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	core.SessionName = "test"
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -85,7 +85,7 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code=code", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	userEmailVerifyCodePage(rr, req)
@@ -126,7 +126,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	}
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	ctx = context.WithValue(ctx, common.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

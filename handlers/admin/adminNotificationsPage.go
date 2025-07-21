@@ -50,7 +50,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	roles, err := data.AllRoles()
 	if err != nil {
 		log.Printf("load roles: %v", err)
@@ -75,7 +75,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
 	}
@@ -89,7 +89,7 @@ func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
@@ -97,7 +97,7 @@ func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")
 	role := r.PostFormValue("role")

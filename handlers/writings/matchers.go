@@ -30,7 +30,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)

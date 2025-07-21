@@ -63,7 +63,7 @@ func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	err := queries.CreateImageBoard(r.Context(), db.CreateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),

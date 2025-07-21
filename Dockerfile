@@ -2,7 +2,7 @@
 FROM golang:1.22-alpine AS build
 WORKDIR /src
 COPY . .
-RUN go build -o /goa4web ./cmd/goa4web
+RUN go build -tags=ses -o /goa4web ./cmd/goa4web
 
 FROM scratch
 # Install the application into the final image.

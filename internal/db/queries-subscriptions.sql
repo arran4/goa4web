@@ -10,6 +10,10 @@ WHERE users_idusers = ? AND pattern = ? AND method = ?;
 SELECT users_idusers FROM subscriptions
 WHERE pattern = ? AND method = ?;
 
+-- name: ListSubscribersForPatterns :many
+SELECT DISTINCT users_idusers FROM subscriptions
+WHERE pattern IN (sqlc.slice(patterns)) AND method = ?;
+
 -- name: ListSubscriptionsByUser :many
 SELECT id, pattern, method FROM subscriptions
 WHERE users_idusers = ?

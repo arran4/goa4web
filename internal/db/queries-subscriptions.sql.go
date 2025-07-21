@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"strings"
 )
 
 const deleteSubscription = `-- name: DeleteSubscription :exec
@@ -67,6 +68,50 @@ type ListSubscribersForPatternParams struct {
 
 func (q *Queries) ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, listSubscribersForPattern, arg.Pattern, arg.Method)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var users_idusers int32
+		if err := rows.Scan(&users_idusers); err != nil {
+			return nil, err
+		}
+		items = append(items, users_idusers)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSubscribersForPatterns = `-- name: ListSubscribersForPatterns :many
+SELECT DISTINCT users_idusers FROM subscriptions
+WHERE pattern IN (/*SLICE:patterns*/?) AND method = ?
+`
+
+type ListSubscribersForPatternsParams struct {
+	Patterns []string
+	Method   string
+}
+
+func (q *Queries) ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error) {
+	query := listSubscribersForPatterns
+	var queryParams []interface{}
+	if len(arg.Patterns) > 0 {
+		for _, v := range arg.Patterns {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:patterns*/?", strings.Repeat(",?", len(arg.Patterns))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:patterns*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.Method)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}

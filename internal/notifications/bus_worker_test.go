@@ -52,6 +52,60 @@ func TestBuildPatterns(t *testing.T) {
 	}
 }
 
+func TestBuildPatternsAdditional(t *testing.T) {
+	type testCase struct {
+		task tasks.TaskString
+		path string
+		want []string
+	}
+	cases := []testCase{
+		{tasks.TaskString("Reply"), "/writings/article/2", []string{"reply:/writings/article/2", "reply:/writings/article/*", "reply:/writings/*", "reply:/*"}},
+		{tasks.TaskString("Reply"), "/news/news/14", []string{"reply:/news/news/14", "reply:/news/news/*", "reply:/news/*", "reply:/*"}},
+		{tasks.TaskString("Post"), "/blog/3", []string{"post:/blog/3", "post:/blog/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/writing/5", []string{"post:/writing/5", "post:/writing/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/news/8", []string{"post:/news/8", "post:/news/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/image/9", []string{"post:/image/9", "post:/image/*", "post:/*"}},
+	}
+	for _, tc := range cases {
+		got := buildPatterns(tc.task, tc.path)
+		if len(got) != len(tc.want) {
+			t.Fatalf("%s len %d", tc.path, len(got))
+		}
+		for i, p := range tc.want {
+			if got[i] != p {
+				t.Fatalf("%s pattern %d = %s want %s", tc.path, i, got[i], p)
+			}
+		}
+	}
+}
+
+func TestCollectSubscribersQuery(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	patterns := []string{"post:/blog/1", "post:/blog/*"}
+	rows := sqlmock.NewRows([]string{"users_idusers"}).AddRow(1).AddRow(2)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT users_idusers FROM subscriptions WHERE pattern IN (?,?) AND method = ?")).
+		WithArgs(patterns[0], patterns[1], "email").
+		WillReturnRows(rows)
+
+	subs, err := collectSubscribers(ctx, q, patterns, "email")
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if len(subs) != 2 {
+		t.Fatalf("want 2 subs got %d", len(subs))
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
 func TestParseEvent(t *testing.T) {
 	evt := eventbus.TaskEvent{Data: map[string]any{"target": Target{Type: "thread", ID: 42}}}
 	typ, id, ok := parseEvent(evt)

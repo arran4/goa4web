@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/middleware"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -344,32 +345,58 @@ func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) st
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	session, err := core.GetSession(r)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		middleware.RedirectToLogin(w, r, session)
 		return
 	}
 
-	code := r.URL.Query().Get("code")
+	code := r.FormValue("code")
+	if code == "" {
+		code = r.URL.Query().Get("code")
+	}
 	if code == "" {
 		http.NotFound(w, r)
 		return
 	}
 	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
 	ue, err := queries.GetUserEmailByCode(r.Context(), sql.NullString{String: code, Valid: true})
-	if err != nil || (ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now())) {
-		http.Error(w, "invalid code", http.StatusBadRequest)
+	if err != nil || (ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now())) || ue.UserID != uid {
+		w.WriteHeader(http.StatusNotFound)
+		r.URL.RawQuery = "error=" + url.QueryEscape("Invalid verification link")
+		handlers.TaskErrorAcknowledgementPage(w, r)
 		return
 	}
-	if ue.UserID != uid {
-		http.Error(w, "forbidden", http.StatusForbidden)
+
+	if r.Method == http.MethodPost {
+		if ue.VerifiedAt.Valid {
+			handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
+			return
+		}
+		_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})
+		_ = queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID})
+		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 		return
 	}
-	_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})
-	_ = queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID})
-	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+
+	if ue.VerifiedAt.Valid {
+		handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
+		return
+	}
+
+	data := struct {
+		*common.CoreData
+		Code  string
+		Email string
+	}{
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		Code:     code,
+		Email:    ue.Email,
+	}
+	handlers.TemplateHandler(w, r, "user/emailVerifyConfirmPage.gohtml", data)
 }

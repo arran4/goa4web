@@ -37,14 +37,12 @@ func buildPatterns(task tasks.Name, path string) []string {
 // patterns using the specified delivery method.
 func collectSubscribers(ctx context.Context, q *dbpkg.Queries, patterns []string, method string) (map[int32]struct{}, error) {
 	subs := map[int32]struct{}{}
-	for _, p := range patterns {
-		ids, err := q.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: p, Method: method})
-		if err != nil {
-			return nil, fmt.Errorf("list subscribers: %w", err)
-		}
-		for _, id := range ids {
-			subs[id] = struct{}{}
-		}
+	ids, err := q.ListSubscribersForPatterns(ctx, dbpkg.ListSubscribersForPatternsParams{Patterns: patterns, Method: method})
+	if err != nil {
+		return nil, fmt.Errorf("list subscribers: %w", err)
+	}
+	for _, id := range ids {
+		subs[id] = struct{}{}
 	}
 	return subs, nil
 }

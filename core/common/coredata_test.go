@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"strconv"
@@ -229,6 +230,9 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 }
 
 func TestBloggersLazy(t *testing.T) {
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig = config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -260,6 +264,10 @@ func TestBloggersLazy(t *testing.T) {
 }
 
 func TestWritersLazy(t *testing.T) {
+
+	origCfg := config.AppRuntimeConfig
+	config.AppRuntimeConfig = config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 
 	db, mock, err := sqlmock.New()
 	if err != nil {

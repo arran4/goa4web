@@ -1,5 +1,5 @@
 -- name: GetUserLanguages :many
-SELECT iduser_language, users_idusers, language_idlanguage
+SELECT iduserlang, users_idusers, language_idlanguage
 FROM user_language
 WHERE users_idusers = ?;
 

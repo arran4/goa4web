@@ -1,8 +1,7 @@
-package goa4web
+package dbstart
 
 import (
 	"context"
-	dbstart2 "github.com/arran4/goa4web/internal/app/dbstart"
 	"regexp"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestEnsureSchemaVersionMatch(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
 		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion))
 
-	if err := dbstart2.EnsureSchema(context.Background(), db); err != nil {
+	if err := EnsureSchema(context.Background(), db); err != nil {
 		t.Fatalf("ensureSchema: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -42,11 +41,11 @@ func TestEnsureSchemaVersionMismatch(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
 		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion - 1))
 
-	err = dbstart2.EnsureSchema(context.Background(), db)
+	err = EnsureSchema(context.Background(), db)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
-	expected := dbstart2.RenderSchemaMismatch(handlers.ExpectedSchemaVersion-1, handlers.ExpectedSchemaVersion)
+	expected := RenderSchemaMismatch(handlers.ExpectedSchemaVersion-1, handlers.ExpectedSchemaVersion)
 	if err.Error() != expected {
 		t.Fatalf("unexpected error: %v", err)
 	}

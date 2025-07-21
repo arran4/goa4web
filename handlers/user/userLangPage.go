@@ -50,18 +50,35 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	pref, _ := cd.Preference()
-	userLangs, _ := queries.GetUserLanguages(r.Context(), cd.UserID)
+	pref, err := cd.Preference()
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	userLangs, err := queries.GetUserLanguages(r.Context(), cd.UserID)
+	if err != nil {
+		log.Printf("Error getting user languages: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	langs, err := cd.Languages()
 	if err != nil {
+		log.Printf("Error getting languages: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	selected := make(map[int32]bool)
-	for _, ul := range userLangs {
-		selected[ul.LanguageIdlanguage] = true
+	if len(userLangs) == 0 {
+		for _, l := range langs {
+			selected[l.Idlanguage] = true
+		}
+	} else {
+		for _, ul := range userLangs {
+			selected[ul.LanguageIdlanguage] = true
+		}
 	}
 
 	var opts []LanguageOption

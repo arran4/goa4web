@@ -12,6 +12,7 @@ import (
 
 	common "github.com/arran4/goa4web/core/common"
 	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
@@ -27,6 +28,7 @@ var addBlogTask = &AddBlogTask{TaskString: TaskAdd}
 var _ tasks.Task = (*AddBlogTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
+var _ notif.GrantsRequiredProvider = (*AddBlogTask)(nil)
 
 func (AddBlogTask) AdminEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationBlogAddEmail")
@@ -44,6 +46,14 @@ func (AddBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 func (AddBlogTask) SubscribedInternalNotificationTemplate() *string {
 	s := notif.NotificationTemplateFilenameGenerator("blog_add")
 	return &s
+}
+
+// GrantsRequired implements notif.GrantsRequiredProvider for new blog entries.
+func (AddBlogTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+	if t, ok := evt.Data["target"].(notif.Target); ok {
+		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}
+	}
+	return nil
 }
 
 func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(w, r) }
@@ -115,6 +125,7 @@ func BlogAddActionPage(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d", id))
+			evt.Data["target"] = notif.Target{Type: "blog", ID: int32(id)}
 		}
 	}
 

@@ -17,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -67,8 +66,6 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer dbconn.Close()
-
-	queries := db.New(dbconn)
 
 	origCfg := config.AppRuntimeConfig
 	config.AppRuntimeConfig.EmailEnabled = true

@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
-	notifications "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/workers/auditworker"
 	"github.com/arran4/goa4web/workers/emailqueue"

@@ -1,8 +1,6 @@
 package news
 
 import (
-	"context"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 

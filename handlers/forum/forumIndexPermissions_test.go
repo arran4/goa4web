@@ -1,9 +1,7 @@
 package forum
 
 import (
-	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 

@@ -38,7 +38,6 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), q, common.WithSession(sess))
 	cd.SetRoles([]string{"content writer"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	ctx = ctx
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{

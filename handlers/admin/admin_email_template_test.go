@@ -70,7 +70,6 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	ctx = ctx
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

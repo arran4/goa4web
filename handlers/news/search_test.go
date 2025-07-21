@@ -1,9 +1,7 @@
 package news
 
 import (
-	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"net/url"
 	"regexp"

@@ -12,10 +12,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
-	notifications "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 

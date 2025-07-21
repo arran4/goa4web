@@ -1,7 +1,6 @@
 package forum
 
 import (
-	"context"
 	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
@@ -9,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
@@ -66,8 +64,6 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	}
 	defer sqldb.Close()
 
-	q := db.New(sqldb)
-
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
@@ -110,8 +106,6 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer sqldb.Close()
-
-	q := db.New(sqldb)
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).

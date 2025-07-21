@@ -1,0 +1,8 @@
+{{ template "head" $ }}
+<p>Please confirm verification of your email address {{ .Email }}.</p>
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="code" value="{{ .Code }}">
+    <input type="submit" name="task" value="Confirm">
+</form>
+{{ template "tail" $ }}

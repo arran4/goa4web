@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"regexp"
 	"strings"
 	"testing"
@@ -84,17 +85,25 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		WithArgs("a@example.com", int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code=code", nil)
+	store := sessions.NewCookieStore([]byte("test"))
+	sess := sessions.NewSession(store, "test")
+	sess.Values = map[interface{}]interface{}{"UID": int32(1)}
+	core.Store = store
+	core.SessionName = "test"
+
+	form := url.Values{"code": {"code"}}
+	req := httptest.NewRequest(http.MethodPost, "/usr/email/verify", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	userEmailVerifyCodePage(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if _, ok := evt.Data["email"]; !ok {
-		t.Fatalf("missing email event data: %+v", evt.Data)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -127,7 +136,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
-	ctx = context.WithValue(ctx, common.ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 

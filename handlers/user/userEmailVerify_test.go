@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
@@ -16,7 +18,7 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
-func TestUserEmailVerifyCodePage_Forbidden(t *testing.T) {
+func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -39,11 +41,11 @@ func TestUserEmailVerifyCodePage_Forbidden(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
-	req := httptest.NewRequest("GET", "/usr/email/verify?code="+code, nil).WithContext(ctx)
+	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code="+code, nil).WithContext(ctx)
 	rr := httptest.NewRecorder()
 	userEmailVerifyCodePage(rr, req)
 
-	if rr.Code != http.StatusForbidden {
+	if rr.Code != http.StatusNotFound {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -75,7 +77,9 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
-	req := httptest.NewRequest("GET", "/usr/email/verify?code="+code, nil).WithContext(ctx)
+	form := url.Values{"code": {code}}
+	req := httptest.NewRequest(http.MethodPost, "/usr/email/verify", strings.NewReader(form.Encode())).WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr := httptest.NewRecorder()
 	userEmailVerifyCodePage(rr, req)
 

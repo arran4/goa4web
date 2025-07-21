@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -57,8 +58,18 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		}
+		if DBPool == nil {
+			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+			http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
+			return
+		}
 
-		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+		queries := dbpkg.New(DBPool)
+		if dbLogVerbosity > 0 {
+			log.Printf("db pool stats: %+v", DBPool.Stats())
+		}
+
 		if session.ID != "" {
 			if uid != 0 {
 				if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
@@ -99,24 +110,6 @@ func CoreAdderMiddleware(next http.Handler) http.Handler {
 // DBPool should be assigned by the parent package to supply the database.
 var DBPool *sql.DB
 
-// DBAdderMiddleware injects the database and queries into the request context.
-func DBAdderMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if DBPool == nil {
-			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
-			return
-		}
-		if dbLogVerbosity > 0 {
-			log.Printf("db pool stats: %+v", DBPool.Stats())
-		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, consts.KeySQLDB, DBPool)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 // SetDBPool configures the database handle and logging verbosity used by
 // DBAdderMiddleware.
 func SetDBPool(db *sql.DB, verbosity int) {
@@ -147,6 +140,9 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 func RecoverMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
+			if goa4web.Version == "dev" {
+				return
+			}
 			if rec := recover(); rec != nil {
 				log.Printf("panic: %v", rec)
 				// TODO ensure it uses the error page template here and everywhere there is an error like this

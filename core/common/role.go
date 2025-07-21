@@ -1,11 +1,9 @@
 package common
 
 import (
-	common "github.com/arran4/goa4web/core/common"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/consts"
-	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 // Context keys used by Allowed when reading from the request context.

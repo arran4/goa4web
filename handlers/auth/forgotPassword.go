@@ -4,10 +4,12 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -71,6 +73,18 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	if row.Email == "" {
 		http.Error(w, "no verified email", http.StatusBadRequest)
+		return
+	}
+
+	if reset, err := queries.GetPasswordResetByUser(r.Context(), row.Idusers); err == nil {
+		if time.Since(reset.CreatedAt) < 24*time.Hour {
+			http.Error(w, "reset recently requested", http.StatusTooManyRequests)
+			return
+		}
+		_ = queries.DeletePasswordReset(r.Context(), reset.ID)
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("get reset: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	hash, alg, err := HashPassword(pw)

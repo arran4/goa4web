@@ -20,7 +20,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
@@ -50,7 +50,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
@@ -82,7 +82,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.CreateForumCategory(r.Context(), db.CreateForumCategoryParams{
 		ForumcategoryIdforumcategory: int32(pcid),
 		Title: sql.NullString{
@@ -102,7 +102,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

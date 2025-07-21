@@ -42,7 +42,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	usernameFilter := "%"
 	if strings.TrimSpace(data.User) != "" {

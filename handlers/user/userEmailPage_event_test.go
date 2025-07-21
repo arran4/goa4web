@@ -42,7 +42,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	_ = sess.Save(httptest.NewRequest(http.MethodGet, "http://example.com", nil), w)
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
+	ctx := context.Background()
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
@@ -148,8 +148,8 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	}
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	ctx := context.WithValue(context.Background(), consts.KeyQueries, q)
-	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, common.ContextValues("session"), sess)
 	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 

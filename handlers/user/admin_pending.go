@@ -13,7 +13,7 @@ import (
 )
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	rows, err := queries.ListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -30,7 +30,7 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid := r.PostFormValue("uid")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
@@ -54,7 +54,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid := r.PostFormValue("uid")
 	reason := r.PostFormValue("reason")
 	var id int32

@@ -7,8 +7,6 @@ type ContextKey string
 const (
 	// KeyCoreData provides access to CoreData.
 	KeyCoreData ContextKey = "coreData"
-	// KeyQueries holds the db.Queries pointer.
-	KeyQueries ContextKey = "queries"
 	// KeySQLDB exposes the *sql.DB handle.
 	KeySQLDB ContextKey = "sql.DB"
 	// KeyThread holds the current thread information.

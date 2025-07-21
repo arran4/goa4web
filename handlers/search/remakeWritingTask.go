@@ -19,7 +19,7 @@ var remakeWritingTask = &RemakeWritingTask{TaskString: TaskRemakeWritingSearch}
 var _ tasks.Task = (*RemakeWritingTask)(nil)
 
 func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
 		Errors   []string

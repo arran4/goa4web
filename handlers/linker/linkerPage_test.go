@@ -74,7 +74,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	cd.SetEvent(evt)
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
-	ctxreq := context.WithValue(req.Context(), consts.KeyQueries, queries)
+	ctxreq := req.Context()
 	ctxreq = context.WithValue(ctxreq, consts.KeyCoreData, cd)
 	req = req.WithContext(ctxreq)
 	rr := httptest.NewRecorder()

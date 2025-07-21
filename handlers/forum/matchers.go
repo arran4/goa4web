@@ -3,6 +3,7 @@ package forum
 import (
 	"context"
 	"database/sql"
+	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -32,7 +33,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 		session, _ := core.GetSession(r)
 		var uid int32

@@ -28,7 +28,7 @@ func TestForgotPasswordEventData(t *testing.T) {
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	cd := common.NewCoreData(context.Background(), q, common.WithEvent(evt))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
-	ctx = context.WithValue(ctx, consts.KeyQueries, q)
+	ctx = ctx
 
 	form := url.Values{"username": {"u"}, "password": {"pw"}}
 	req := httptest.NewRequest("POST", "/forgot", strings.NewReader(form.Encode()))

@@ -72,7 +72,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	user, _ := cd.CurrentUser()
 	pref, _ := cd.Preference()
 
@@ -119,7 +119,7 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	updates := r.PostFormValue("emailupdates") != ""
@@ -206,7 +206,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 		return
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
 		return
@@ -248,7 +248,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
@@ -286,7 +286,7 @@ func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err == nil && ue.UserID == uid {
 		_ = queries.DeleteUserEmail(r.Context(), int32(id))
@@ -305,7 +305,7 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	val, _ := queries.GetMaxNotificationPriority(r.Context(), uid)
 	var maxPr int32
 	switch v := val.(type) {
@@ -364,7 +364,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ue, err := queries.GetUserEmailByCode(r.Context(), sql.NullString{String: code, Valid: true})
 	if err != nil || (ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now())) || ue.UserID != uid {
 		w.WriteHeader(http.StatusNotFound)

@@ -66,7 +66,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	cd := &common.CoreData{}
 	evt := &eventbus.TaskEvent{}
 	cd.SetEvent(evt)
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
+	ctx := req.Context()
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

@@ -42,7 +42,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 	commentId, _ := strconv.Atoi(vars["comment"])

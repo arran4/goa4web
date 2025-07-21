@@ -3,6 +3,7 @@ package forum
 import (
 	"fmt"
 	"github.com/arran4/goa4web/core"
+	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	db "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -28,7 +29,7 @@ func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	pattern := topicSubscriptionPattern(int32(topicID))
 	if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: "internal"}); err != nil {
 		log.Printf("insert subscription: %v", err)
@@ -51,7 +52,7 @@ func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(consts.KeyQueries).(*db.Queries)
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	pattern := topicSubscriptionPattern(int32(topicID))
 	if err := queries.DeleteSubscription(r.Context(), db.DeleteSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: "internal"}); err != nil {
 		log.Printf("delete subscription: %v", err)

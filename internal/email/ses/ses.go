@@ -1,3 +1,6 @@
+//go:build ses
+// +build ses
+
 package ses
 
 import (
@@ -19,6 +22,9 @@ type Provider struct {
 	Client sesiface.SESAPI
 	From   string
 }
+
+// Built indicates whether the SES provider is compiled in.
+const Built = true
 
 func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	input := &ses.SendRawEmailInput{

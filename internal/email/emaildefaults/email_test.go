@@ -18,7 +18,6 @@ import (
 	localProv "github.com/arran4/goa4web/internal/email/local"
 	logProv "github.com/arran4/goa4web/internal/email/log"
 	mockemail "github.com/arran4/goa4web/internal/email/mock"
-	sesProv "github.com/arran4/goa4web/internal/email/ses"
 	smtpProv "github.com/arran4/goa4web/internal/email/smtp"
 	"strings"
 )
@@ -28,7 +27,6 @@ func init() {
 	smtpProv.Register()
 	localProv.Register()
 	jmapProv.Register()
-	sesProv.Register()
 }
 
 func TestGetEmailProviderLog(t *testing.T) {

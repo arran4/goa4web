@@ -11,6 +11,7 @@ Commands:
   approve     approve a pending user
   reject      reject a pending user
   comments    manage admin comments for a user
+  roles       list user roles
   profile     show user profile information
 
 Examples:
@@ -20,6 +21,7 @@ Examples:
   {{.Prog}} user approve -id 3
   {{.Prog}} user reject -id 3 -reason spam
   {{.Prog}} user comments list -id 3
+  {{.Prog}} user roles
 
 Flags:
 {{template "flags" .Flags}}

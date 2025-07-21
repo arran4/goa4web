@@ -165,6 +165,7 @@ When using SQLite you must compile the binary with the `sqlite` build tag.
 Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
 
 - `ses` (default): Amazon SES. Requires valid AWS credentials and `AWS_REGION`.
+  The provider is built only when the `ses` build tag is enabled.
 - `smtp`: Standard SMTP server using `SMTP_HOST`, optional `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_AUTH`, `SMTP_STARTTLS` and `SMTP_TLS`.
 - `local`: Uses the local `sendmail` binary.
 - `jmap`: Sends mail using JMAP. Requires `JMAP_ENDPOINT`, `JMAP_USER`, `JMAP_PASS`,

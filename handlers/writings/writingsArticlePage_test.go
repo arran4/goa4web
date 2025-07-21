@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
@@ -46,8 +47,9 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
+	q := db.New(dbconn)
+	cd := common.NewCoreData(req.Context(), q)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting")).

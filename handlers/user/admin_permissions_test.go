@@ -12,6 +12,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/notifications"
@@ -45,6 +46,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
+	queries := dbpkg.New(db)
 
 	mock.ExpectQuery("SELECT idusers").
 		WithArgs(sqlmock.AnyArg()).
@@ -61,11 +63,10 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	form.Set("task", string(TaskUserAllow))
 	req := httptest.NewRequest("POST", "/admin/users/permissions", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := &common.CoreData{}
+	cd := common.NewCoreData(req.Context(), queries)
 	evt := &eventbus.TaskEvent{}
 	cd.SetEvent(evt)
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	handler := middleware.TaskEventMiddleware(http.HandlerFunc(tasks.Action(permissionUserAllowTask)))

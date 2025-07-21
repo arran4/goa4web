@@ -69,13 +69,11 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go searchworker.Worker(ctx, bus, queries)
 
-	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	cd := &common.CoreData{}
-	cd.SetEvent(evt)
-
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
-	ctxreq := req.Context()
-	ctxreq = context.WithValue(ctxreq, consts.KeyCoreData, cd)
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
+	cd := common.NewCoreData(req.Context(), queries)
+	cd.SetEvent(evt)
+	ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctxreq)
 	rr := httptest.NewRecorder()
 	ApproveTask.Action(rr, req)

@@ -11,6 +11,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
 )
@@ -32,19 +33,21 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, core.ContextValues("session"), session)
+	q := dbpkg.New(db)
+	cd := common.NewCoreData(req.Context(), q)
+	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	var cd *common.CoreData
+	var cdOut *common.CoreData
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
-	if diff := cmp.Diff(want, cd.UserRoles()); diff != "" {
+	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 
@@ -66,19 +69,21 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, core.ContextValues("session"), session)
+	q := dbpkg.New(db)
+	cd := common.NewCoreData(req.Context(), q)
+	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	var cd *common.CoreData
+	var cdOut *common.CoreData
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
 	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
-	if diff := cmp.Diff(want, cd.UserRoles()); diff != "" {
+	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 

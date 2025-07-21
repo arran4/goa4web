@@ -419,7 +419,7 @@ type UserEmail struct {
 }
 
 type UserLanguage struct {
-	IduserLanguage     int32
+	Iduserlang         int32
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 }

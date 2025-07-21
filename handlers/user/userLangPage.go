@@ -71,8 +71,14 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	selected := make(map[int32]bool)
-	for _, ul := range userLangs {
-		selected[ul.LanguageIdlanguage] = true
+	if len(userLangs) == 0 {
+		for _, l := range langs {
+			selected[l.Idlanguage] = true
+		}
+	} else {
+		for _, ul := range userLangs {
+			selected[ul.LanguageIdlanguage] = true
+		}
 	}
 
 	var opts []LanguageOption

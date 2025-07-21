@@ -22,6 +22,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
+	SetDBPool(db, 0)
 	mock.MatchExpectationsInOrder(false)
 
 	mock.ExpectExec("INSERT INTO sessions").WithArgs("sessid", int32(1)).
@@ -62,6 +63,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
+	SetDBPool(db, 0)
 	mock.MatchExpectationsInOrder(false)
 
 	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").

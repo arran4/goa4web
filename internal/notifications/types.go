@@ -61,3 +61,11 @@ type Target struct {
 
 // SubscriptionTarget implements SubscriptionTarget.
 func (t Target) SubscriptionTarget() (string, int32) { return t.Type, t.ID }
+
+// GrantRequirement describes a single permission check.
+type GrantRequirement struct {
+	Section string
+	Item    string
+	ItemID  int32
+	Action  string
+}

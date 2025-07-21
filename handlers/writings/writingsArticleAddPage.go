@@ -79,6 +79,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 				evt.Data = map[string]any{}
 			}
 			evt.Data["writing"] = notifications.WritingInfo{Title: title, Author: author}
+			evt.Data["target"] = notifications.Target{Type: "writing", ID: int32(articleId)}
 		}
 	}
 

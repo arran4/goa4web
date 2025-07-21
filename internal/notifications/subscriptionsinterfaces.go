@@ -64,3 +64,10 @@ type TargetUsersNotificationProvider interface {
 	TargetEmailTemplate() *EmailTemplates
 	TargetInternalNotificationTemplate() *string
 }
+
+// GrantsRequiredProvider exposes the permission context for subscription
+// notifications. Implementations return one or more GrantRequirement values
+// checked with `CheckGrant` before delivering a message.
+type GrantsRequiredProvider interface {
+	GrantsRequired(evt eventbus.TaskEvent) []GrantRequirement
+}

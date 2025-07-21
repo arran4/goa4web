@@ -47,21 +47,6 @@ func collectSubscribers(ctx context.Context, q *dbpkg.Queries, patterns []string
 	return subs, nil
 }
 
-// parseEvent identifies a subscription target from the request path.
-// It returns the item type and id if recognised.
-func parseEvent(evt eventbus.TaskEvent) (string, int32, bool) {
-	if evt.Data == nil {
-		return "", 0, false
-	}
-	if v, ok := evt.Data["target"]; ok {
-		if t, ok := v.(SubscriptionTarget); ok {
-			typ, id := t.SubscriptionTarget()
-			return typ, id, true
-		}
-	}
-	return "", 0, false
-}
-
 func (n *Notifier) BusWorker(ctx context.Context, bus *eventbus.Bus, q dlq.DLQ) {
 	if bus == nil || n.Queries == nil {
 		return
@@ -248,6 +233,31 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 
 	delete(emailSubs, evt.UserID)
 	delete(internalSubs, evt.UserID)
+
+	if gp, ok := evt.Task.(GrantsRequiredProvider); ok {
+		reqs := gp.GrantsRequired(evt)
+		if len(reqs) != 0 {
+			filterSubs := func(m map[int32]struct{}) {
+				for id := range m {
+					for _, g := range reqs {
+						if _, err := n.Queries.CheckGrant(ctx, dbpkg.CheckGrantParams{
+							ViewerID: id,
+							Section:  g.Section,
+							Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
+							Action:   g.Action,
+							ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
+							UserID:   sql.NullInt32{Int32: id, Valid: id != 0},
+						}); err != nil {
+							delete(m, id)
+							break
+						}
+					}
+				}
+			}
+			filterSubs(emailSubs)
+			filterSubs(internalSubs)
+		}
+	}
 
 	var msg []byte
 	data := struct {

@@ -102,8 +102,6 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		WithArgs("a@example.com", int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	store := sessions.NewCookieStore([]byte("test"))
-	sess := sessions.NewSession(store, "test")
 	sess.Values = map[interface{}]interface{}{"UID": int32(1)}
 	core.Store = store
 	core.SessionName = "test"
@@ -111,9 +109,7 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 	form := url.Values{"code": {"code"}}
 	req := httptest.NewRequest(http.MethodPost, "/usr/email/verify", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx := context.WithValue(req.Context(), consts.KeyQueries, q)
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

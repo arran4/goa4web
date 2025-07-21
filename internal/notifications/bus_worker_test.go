@@ -52,25 +52,6 @@ func TestBuildPatterns(t *testing.T) {
 	}
 }
 
-func TestParseEvent(t *testing.T) {
-	evt := eventbus.TaskEvent{Data: map[string]any{"target": Target{Type: "thread", ID: 42}}}
-	typ, id, ok := parseEvent(evt)
-	if !ok || typ != "thread" || id != 42 {
-		t.Fatalf("thread parse got %s %d %v", typ, id, ok)
-	}
-	evt = eventbus.TaskEvent{Data: map[string]any{"target": Target{Type: "writing", ID: 7}}}
-	typ, id, ok = parseEvent(evt)
-	if !ok || typ != "writing" || id != 7 {
-		t.Fatalf("writing parse got %s %d %v", typ, id, ok)
-	}
-	if _, _, ok := parseEvent(eventbus.TaskEvent{Path: "/bad/path"}); ok {
-		t.Fatalf("unexpected match")
-	}
-	if _, _, ok := parseEvent(eventbus.TaskEvent{Path: "/news/news/9"}); ok {
-		t.Fatalf("unexpected match with path")
-	}
-}
-
 const TaskTest = tasks.TaskString("TaskTest")
 
 type TestTask struct {

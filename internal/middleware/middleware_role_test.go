@@ -24,6 +24,9 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
 
+	SetDBPool(db, 0)
+	t.Cleanup(func() { SetDBPool(nil, 0) })
+
 	mock.ExpectExec("INSERT INTO sessions").WithArgs("sessid", int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	rows := sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "name"}).
@@ -63,6 +66,9 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	}
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
+
+	SetDBPool(db, 0)
+	t.Cleanup(func() { SetDBPool(nil, 0) })
 
 	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").
 		WillReturnResult(sqlmock.NewResult(0, 0))

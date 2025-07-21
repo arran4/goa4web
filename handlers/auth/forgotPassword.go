@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -96,6 +97,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 				}
 				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
 				evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
+				evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
 			}
 		}
 	}

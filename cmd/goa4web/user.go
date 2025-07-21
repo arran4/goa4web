@@ -93,6 +93,12 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("comments: %w", err)
 		}
 		return cmd.Run()
+	case "roles":
+		cmd, err := parseUserRolesCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("roles: %w", err)
+		}
+		return cmd.Run()
 	case "profile":
 		cmd, err := parseUserProfileCmd(c, c.args[1:])
 		if err != nil {

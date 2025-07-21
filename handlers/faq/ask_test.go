@@ -30,7 +30,6 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 	}
 	defer dbconn.Close()
 
-	queries := db.New(dbconn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"

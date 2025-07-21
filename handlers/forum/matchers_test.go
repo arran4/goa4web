@@ -20,8 +20,6 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	}
 	defer sqldb.Close()
 
-	q := db.New(sqldb)
-
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{

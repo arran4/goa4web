@@ -1,8 +1,6 @@
 package core_test
 
 import (
-	"context"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,7 +9,6 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 var (

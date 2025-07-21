@@ -46,7 +46,6 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := dbpkg.New(db)
 
 	mock.ExpectQuery("SELECT idusers").
 		WithArgs(sqlmock.AnyArg()).

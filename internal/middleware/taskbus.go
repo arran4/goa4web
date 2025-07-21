@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	core "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	coreconsts "github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
@@ -85,9 +85,9 @@ func (r *statusRecorder) WriteHeader(code int) {
 func TaskEventMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
-		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData)
+		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*common.CoreData)
 		if !ok || cd == nil {
-			cd = &corecommon.CoreData{}
+			cd = &common.CoreData{}
 			r = r.WithContext(context.WithValue(r.Context(), coreconsts.KeyCoreData, cd))
 		}
 		uid := cd.UserID

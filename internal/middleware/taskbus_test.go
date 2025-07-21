@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	core "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -25,7 +25,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	ch := bus.Subscribe(eventbus.TaskMessageType)
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case msg := <-ch:
@@ -46,7 +46,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe(eventbus.TaskMessageType)
-	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case msg := <-ch:
@@ -68,7 +68,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe(eventbus.TaskMessageType)
-	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	failureHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case msg := <-ch:
@@ -79,7 +79,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 
 	// ensure handlers can attach event data
 	itemHandler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData); ok {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -93,7 +93,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	ch = bus.Subscribe(eventbus.TaskMessageType)
-	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
 	case msg := <-ch:
@@ -128,7 +128,7 @@ func TestTaskEventQueue(t *testing.T) {
 	req := httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	handler.ServeHTTP(rec, req.WithContext(ctx))
 
 	if len(taskQueue.events) != 1 {
@@ -148,7 +148,7 @@ func TestTaskEventQueue(t *testing.T) {
 
 func TestTaskEventMiddleware_EventProvided(t *testing.T) {
 	handler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cd, _ := r.Context().Value(consts.KeyCoreData).(*corecommon.CoreData)
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd == nil || cd.Event() == nil {
 			t.Fatalf("missing event")
 		}
@@ -156,7 +156,7 @@ func TestTaskEventMiddleware_EventProvided(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &corecommon.CoreData{})
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req.WithContext(ctx))
 

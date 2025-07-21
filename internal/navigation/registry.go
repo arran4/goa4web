@@ -3,7 +3,7 @@ package navigation
 import (
 	"sort"
 
-	core "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 // link represents a navigation item for either index or admin control center.
@@ -29,25 +29,25 @@ func RegisterAdminControlCenter(name, url string, weight int) {
 }
 
 // IndexItems returns navigation items sorted by weight.
-func IndexItems() []corecommon.IndexItem {
+func IndexItems() []common.IndexItem {
 	entries := make([]link, len(indexRegistry))
 	copy(entries, indexRegistry)
 	sort.Slice(entries, func(i, j int) bool { return entries[i].weight < entries[j].weight })
-	items := make([]corecommon.IndexItem, 0, len(entries))
+	items := make([]common.IndexItem, 0, len(entries))
 	for _, e := range entries {
-		items = append(items, corecommon.IndexItem{Name: e.name, Link: e.link})
+		items = append(items, common.IndexItem{Name: e.name, Link: e.link})
 	}
 	return items
 }
 
 // AdminLinks returns admin navigation items sorted by weight.
-func AdminLinks() []corecommon.IndexItem {
+func AdminLinks() []common.IndexItem {
 	entries := make([]link, len(adminRegistry))
 	copy(entries, adminRegistry)
 	sort.Slice(entries, func(i, j int) bool { return entries[i].weight < entries[j].weight })
-	items := make([]corecommon.IndexItem, 0, len(entries))
+	items := make([]common.IndexItem, 0, len(entries))
 	for _, e := range entries {
-		items = append(items, corecommon.IndexItem{Name: e.name, Link: e.link})
+		items = append(items, common.IndexItem{Name: e.name, Link: e.link})
 	}
 	return items
 }

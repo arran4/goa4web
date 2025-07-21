@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 )
 
 // BloggerListPage shows all bloggers with their post counts.

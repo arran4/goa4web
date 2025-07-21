@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 func TestRequiredAccessAllowed(t *testing.T) {

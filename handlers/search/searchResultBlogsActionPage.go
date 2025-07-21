@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 	hblogs "github.com/arran4/goa4web/handlers/blogs"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"

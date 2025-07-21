@@ -2,7 +2,7 @@ package templates
 
 import (
 	"embed"
-	corecommon "github.com/arran4/goa4web/core/common"
+	core "github.com/arran4/goa4web/core/common"
 	"html/template"
 	"io/fs"
 	"net/http/httptest"

@@ -3,7 +3,7 @@ package navigation
 import (
 	"sort"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	core "github.com/arran4/goa4web/core/common"
 )
 
 // link represents a navigation item for either index or admin control center.

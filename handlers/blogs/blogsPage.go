@@ -7,8 +7,8 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"io"
 
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 
 	"log"
 	"net/http"
@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"time"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"

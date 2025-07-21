@@ -2,7 +2,7 @@ package forum
 
 import (
 	"context"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // ThreadDelete removes a forum thread and updates topic statistics.

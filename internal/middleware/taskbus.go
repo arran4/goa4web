@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	core "github.com/arran4/goa4web/core/common"
 	coreconsts "github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
 )

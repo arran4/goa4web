@@ -2,7 +2,7 @@ package common
 
 import (
 	"database/sql"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // HasGrant reports whether the current user is allowed the given action.

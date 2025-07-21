@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	core "github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 

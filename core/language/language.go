@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"unicode"
 
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // validateLanguageName ensures the provided language name contains only

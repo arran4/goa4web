@@ -3,7 +3,7 @@ package middleware
 import (
 	"database/sql"
 	"errors"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"net"
 	"net/http"

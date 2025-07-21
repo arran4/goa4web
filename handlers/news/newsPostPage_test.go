@@ -9,14 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
@@ -26,7 +25,6 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 	}
 	defer dbconn.Close()
 
-	queries := db.New(dbconn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -71,7 +69,6 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 	}
 	defer dbconn.Close()
 
-	queries := db.New(dbconn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"

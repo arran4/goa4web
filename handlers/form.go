@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 // ValidateForm ensures that only the allowed form keys are present and that all required keys exist with a non-empty value.

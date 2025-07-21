@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/dbdrivers"
 )
 
 // dbSeedCmd implements "db seed".

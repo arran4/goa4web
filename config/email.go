@@ -2,7 +2,7 @@ package config
 
 import (
 	"context"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"os"
 	"strings"

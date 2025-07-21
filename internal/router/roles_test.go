@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	core "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/middleware"
 )
 

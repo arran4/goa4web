@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 

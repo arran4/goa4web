@@ -1,7 +1,7 @@
 package news
 
 import (
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 )
 
 // canEditNewsPost reports whether cd can modify the specified news post.

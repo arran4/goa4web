@@ -12,9 +12,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 // ArticleCommentEditActionPage updates a comment on a writing and refreshes thread metadata.

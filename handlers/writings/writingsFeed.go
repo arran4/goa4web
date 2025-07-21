@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )

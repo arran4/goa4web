@@ -3,7 +3,7 @@ package forum
 import (
 	"github.com/gorilla/mux"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 

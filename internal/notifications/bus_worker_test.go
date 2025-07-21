@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	postcountworker "github.com/arran4/goa4web/workers/postcountworker"
+	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 type busDummyProvider struct{ to string }

@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
 

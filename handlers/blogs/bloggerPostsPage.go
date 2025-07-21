@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 
-	common "github.com/arran4/goa4web/core/common"
-	db "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 
 	"log"
 	"net/http"
 	"strconv"
 
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"

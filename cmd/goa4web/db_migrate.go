@@ -11,7 +11,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/dbdrivers"
 )
 
 // openDB establishes a database connection without verifying the schema version.

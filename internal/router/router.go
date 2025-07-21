@@ -7,9 +7,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	core "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
-	handlers "github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers"
 )
 
 // RegisterRoutes sets up all application routes on r.

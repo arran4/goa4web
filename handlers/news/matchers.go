@@ -2,7 +2,7 @@ package news
 
 import (
 	"context"
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
-	db "github.com/arran4/goa4web/internal/db"
 )
 
 // RequireNewsPostAuthor ensures the requester authored the news post referenced in the URL.

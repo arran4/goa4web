@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	common "github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/common"
 
 	"github.com/gorilla/feeds"
 

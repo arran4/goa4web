@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	corecommon "github.com/arran4/goa4web/core/common"
+	core "github.com/arran4/goa4web/core/common"
 )
 
 type commentForTest struct {

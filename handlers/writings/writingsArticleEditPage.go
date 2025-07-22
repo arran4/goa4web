@@ -92,7 +92,8 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 			if writing.Writerusername.Valid {
 				author = writing.Writerusername.String
 			}
-			evt.Data["writing"] = notif.WritingInfo{Title: title, Author: author}
+			evt.Data["Title"] = title
+			evt.Data["Author"] = author
 			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 			evt.Data["target"] = notif.Target{Type: "writing", ID: writing.Idwriting}
 		}

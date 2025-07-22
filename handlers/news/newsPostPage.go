@@ -551,7 +551,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["blog"] = notif.BlogPostInfo{Author: u.Username.String}
+				evt.Data["Author"] = u.Username.String
 				evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", id))
 			}
 		}

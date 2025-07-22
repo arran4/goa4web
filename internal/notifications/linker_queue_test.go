@@ -38,8 +38,10 @@ func TestLinkerQueueNotifierMessages(t *testing.T) {
 	q := dbpkg.New(db)
 	n := New(WithQueries(q))
 	data := map[string]any{
-		"Item":    LinkInfo{Title: "Example", URL: "http://example.com", Username: "bob", Moderator: "mod"},
-		"LinkURL": "http://example.com/link",
+		"Title":     "Example",
+		"Username":  "bob",
+		"Moderator": "mod",
+		"LinkURL":   "http://example.com/link",
 	}
 	msg, err := n.renderNotification(ctx, ntName, data)
 	if err != nil {

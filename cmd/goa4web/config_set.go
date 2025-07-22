@@ -14,19 +14,17 @@ type configSetCmd struct {
 	fs    *flag.FlagSet
 	Key   string
 	Value string
-	args  []string
 }
 
 func parseConfigSetCmd(parent *configCmd, args []string) (*configSetCmd, error) {
 	c := &configSetCmd{configCmd: parent}
-	fs := flag.NewFlagSet("set", flag.ContinueOnError)
-	fs.StringVar(&c.Key, "key", "", "configuration key")
-	fs.StringVar(&c.Value, "value", "", "configuration value")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("set")
+	c.fs.StringVar(&c.Key, "key", "", "configuration key")
+	c.fs.StringVar(&c.Value, "value", "", "configuration value")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

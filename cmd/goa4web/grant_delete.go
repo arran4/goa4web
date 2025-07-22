@@ -11,20 +11,18 @@ import (
 // grantDeleteCmd implements "grant delete".
 type grantDeleteCmd struct {
 	*grantCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseGrantDeleteCmd(parent *grantCmd, args []string) (*grantDeleteCmd, error) {
 	c := &grantDeleteCmd{grantCmd: parent}
-	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "grant id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("delete")
+	c.fs.IntVar(&c.ID, "id", 0, "grant id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

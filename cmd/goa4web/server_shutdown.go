@@ -14,18 +14,16 @@ type serverShutdownCmd struct {
 	*serverCmd
 	fs      *flag.FlagSet
 	Timeout time.Duration
-	args    []string
 }
 
 func parseServerShutdownCmd(parent *serverCmd, args []string) (*serverShutdownCmd, error) {
 	c := &serverShutdownCmd{serverCmd: parent}
-	fs := flag.NewFlagSet("shutdown", flag.ContinueOnError)
-	fs.DurationVar(&c.Timeout, "timeout", 5*time.Second, "shutdown timeout")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("shutdown")
+	c.fs.DurationVar(&c.Timeout, "timeout", 5*time.Second, "shutdown timeout")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

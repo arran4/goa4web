@@ -11,20 +11,18 @@ import (
 // emailQueueDeleteCmd implements "email queue delete".
 type emailQueueDeleteCmd struct {
 	*emailQueueCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseEmailQueueDeleteCmd(parent *emailQueueCmd, args []string) (*emailQueueDeleteCmd, error) {
 	c := &emailQueueDeleteCmd{emailQueueCmd: parent}
-	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "pending email id")
-	c.fs = fs
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("delete")
+	c.fs.IntVar(&c.ID, "id", 0, "pending email id")
+
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 

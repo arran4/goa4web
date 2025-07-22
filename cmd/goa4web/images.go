@@ -15,33 +15,31 @@ import (
 // imagesCmd implements image cache management utilities.
 type imagesCmd struct {
 	*rootCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseImagesCmd(parent *rootCmd, args []string) (*imagesCmd, error) {
 	c := &imagesCmd{rootCmd: parent}
-	fs := flag.NewFlagSet("images", flag.ContinueOnError)
-	c.fs = fs
-	fs.Usage = c.Usage
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("images")
+	c.fs.Usage = c.Usage
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 
 func (c *imagesCmd) Run() error {
-	if len(c.args) == 0 {
+	args := c.fs.Args()
+	if len(args) == 0 {
 		c.fs.Usage()
 		return fmt.Errorf("missing images command")
 	}
-	switch c.args[0] {
+	switch args[0] {
 	case "cache":
-		return c.runCache(c.args[1:])
+		return c.runCache(args[1:])
 	default:
 		c.fs.Usage()
-		return fmt.Errorf("unknown images command %q", c.args[0])
+		return fmt.Errorf("unknown images command %q", args[0])
 	}
 }
 
@@ -100,5 +98,5 @@ func listCache(dir string) error {
 }
 
 func (c *imagesCmd) Usage() {
-	fmt.Fprintln(c.fs.Output(), "images cache [prune|list|delete <id>|open <id>]")
+	executeUsage(c.fs.Output(), templateString("images_usage.txt"), c.fs, c.rootCmd.fs.Name())
 }

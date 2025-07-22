@@ -16,12 +16,11 @@ type userRejectCmd struct {
 	ID       int
 	Username string
 	Reason   string
-	args     []string
 }
 
 func parseUserRejectCmd(parent *userCmd, args []string) (*userRejectCmd, error) {
 	c := &userRejectCmd{userCmd: parent}
-	fs, rest, err := parseFlags("reject", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("reject", args, func(fs *flag.FlagSet) {
 		fs.IntVar(&c.ID, "id", 0, "user id")
 		fs.StringVar(&c.Username, "username", "", "username")
 		fs.StringVar(&c.Reason, "reason", "", "rejection reason")
@@ -30,7 +29,6 @@ func parseUserRejectCmd(parent *userCmd, args []string) (*userRejectCmd, error) 
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

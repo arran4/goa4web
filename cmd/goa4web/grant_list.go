@@ -11,18 +11,16 @@ import (
 // grantListCmd implements "grant list".
 type grantListCmd struct {
 	*grantCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseGrantListCmd(parent *grantCmd, args []string) (*grantListCmd, error) {
 	c := &grantListCmd{grantCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("list")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

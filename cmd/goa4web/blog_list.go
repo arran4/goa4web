@@ -15,20 +15,18 @@ type blogListCmd struct {
 	UserID int
 	Limit  int
 	Offset int
-	args   []string
 }
 
 func parseBlogListCmd(parent *blogCmd, args []string) (*blogListCmd, error) {
 	c := &blogListCmd{blogCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	fs.IntVar(&c.UserID, "user", 0, "user id")
-	fs.IntVar(&c.Limit, "limit", 10, "limit")
-	fs.IntVar(&c.Offset, "offset", 0, "offset")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("list")
+	c.fs.IntVar(&c.UserID, "user", 0, "user id")
+	c.fs.IntVar(&c.Limit, "limit", 10, "limit")
+	c.fs.IntVar(&c.Offset, "offset", 0, "offset")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

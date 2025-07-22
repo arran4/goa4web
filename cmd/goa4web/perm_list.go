@@ -14,18 +14,16 @@ type permListCmd struct {
 	*permCmd
 	fs   *flag.FlagSet
 	User string
-	args []string
 }
 
 func parsePermListCmd(parent *permCmd, args []string) (*permListCmd, error) {
 	c := &permListCmd{permCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	fs.StringVar(&c.User, "user", "", "username filter")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("list")
+	c.fs.StringVar(&c.User, "user", "", "username filter")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

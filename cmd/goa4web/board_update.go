@@ -18,12 +18,11 @@ type boardUpdateCmd struct {
 	Name           string
 	Description    string
 	ApprovalNeeded bool
-	args           []string
 }
 
 func parseBoardUpdateCmd(parent *boardCmd, args []string) (*boardUpdateCmd, error) {
 	c := &boardUpdateCmd{boardCmd: parent}
-	fs, rest, err := parseFlags("update", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("update", args, func(fs *flag.FlagSet) {
 		fs.IntVar(&c.ID, "id", 0, "board id")
 		fs.IntVar(&c.Parent, "parent", 0, "parent board id")
 		fs.StringVar(&c.Name, "name", "", "board name")
@@ -34,7 +33,6 @@ func parseBoardUpdateCmd(parent *boardCmd, args []string) (*boardUpdateCmd, erro
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

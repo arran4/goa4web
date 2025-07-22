@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} audit [flags]
+
+Examples:
+  {{.Prog}} audit --limit 50
+
+Flags:
+{{template "flags" .Flags}}

@@ -1,39 +1,33 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"fmt"
 )
 
-//go:embed templates/help_usage.txt
-var helpUsageTemplate string
-
 // helpCmd displays usage information for commands.
 type helpCmd struct {
 	*rootCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseHelpCmd(parent *rootCmd, args []string) (*helpCmd, error) {
 	c := &helpCmd{rootCmd: parent}
-	fs := flag.NewFlagSet("help", flag.ContinueOnError)
-	c.fs = fs
-	fs.Usage = c.Usage
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("help")
+	c.fs.Usage = c.Usage
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 
 func (c *helpCmd) Run() error {
-	if len(c.args) == 0 {
+	args := c.fs.Args()
+	if len(args) == 0 {
 		c.rootCmd.fs.Usage()
 		return nil
 	}
-	return c.showHelp(c.args)
+	return c.showHelp(args)
 }
 
 func (c *helpCmd) showHelp(args []string) error {
@@ -180,5 +174,5 @@ func (c *helpCmd) showHelp(args []string) error {
 }
 
 func (c *helpCmd) Usage() {
-	executeUsage(c.fs.Output(), helpUsageTemplate, c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), templateString("help_usage.txt"), c.fs, c.rootCmd.fs.Name())
 }

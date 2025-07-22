@@ -13,18 +13,16 @@ type configJSONAddCmd struct {
 	*configCmd
 	fs   *flag.FlagSet
 	File string
-	args []string
 }
 
 func parseConfigJSONAddCmd(parent *configCmd, args []string) (*configJSONAddCmd, error) {
 	c := &configJSONAddCmd{configCmd: parent}
-	fs := flag.NewFlagSet("add-json", flag.ContinueOnError)
-	fs.StringVar(&c.File, "file", "", "json file to update")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("add-json")
+	c.fs.StringVar(&c.File, "file", "", "json file to update")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

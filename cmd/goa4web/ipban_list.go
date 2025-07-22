@@ -11,18 +11,16 @@ import (
 // ipBanListCmd implements "ipban list".
 type ipBanListCmd struct {
 	*ipBanCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseIpBanListCmd(parent *ipBanCmd, args []string) (*ipBanListCmd, error) {
 	c := &ipBanListCmd{ipBanCmd: parent}
-	fs, rest, err := parseFlags("list", args, nil)
+	fs, _, err := parseFlags("list", args, nil)
 	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

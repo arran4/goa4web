@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"fmt"
 	"os"
@@ -11,28 +10,23 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
-//go:embed templates/config_options.txt
-var configOptionsDefaultTemplate string
-
 // configOptionsCmd implements "config options".
 type configOptionsCmd struct {
 	*configCmd
 	fs       *flag.FlagSet
 	template string
 	extended bool
-	args     []string
 }
 
 func parseConfigOptionsCmd(parent *configCmd, args []string) (*configOptionsCmd, error) {
 	c := &configOptionsCmd{configCmd: parent}
-	fs := flag.NewFlagSet("options", flag.ContinueOnError)
-	fs.StringVar(&c.template, "template", "", "template file")
-	fs.BoolVar(&c.extended, "extended", false, "include extended usage")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("options")
+	c.fs.StringVar(&c.template, "template", "", "template file")
+	c.fs.BoolVar(&c.extended, "extended", false, "include extended usage")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 
@@ -68,7 +62,7 @@ func (c *configOptionsCmd) Run() error {
 			Extended: e,
 		})
 	}
-	tmplText := configOptionsDefaultTemplate
+	tmplText := templateString("config_options.txt")
 	if c.template != "" {
 		b, err := os.ReadFile(c.template)
 		if err != nil {

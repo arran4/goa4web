@@ -16,18 +16,15 @@ type auditCmd struct {
 	*rootCmd
 	fs    *flag.FlagSet
 	Limit int
-	args  []string
 }
 
 func parseAuditCmd(parent *rootCmd, args []string) (*auditCmd, error) {
 	c := &auditCmd{rootCmd: parent, Limit: defaultAuditLimit}
-	fs := flag.NewFlagSet("audit", flag.ContinueOnError)
-	fs.IntVar(&c.Limit, "limit", defaultAuditLimit, "number of rows to display")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("audit")
+	c.fs.IntVar(&c.Limit, "limit", defaultAuditLimit, "number of rows to display")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
 	return c, nil
 }
 
@@ -46,4 +43,8 @@ func (c *auditCmd) Run() error {
 		fmt.Printf("%d\t%s\t%s\t%s\n", r.ID, r.Username.String, r.Action, r.CreatedAt.Format(time.RFC3339))
 	}
 	return nil
+}
+
+func (c *auditCmd) Usage() {
+	executeUsage(c.fs.Output(), templateString("audit_usage.txt"), c.fs, c.rootCmd.fs.Name())
 }

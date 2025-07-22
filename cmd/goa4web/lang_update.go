@@ -15,19 +15,17 @@ type langUpdateCmd struct {
 	fs   *flag.FlagSet
 	ID   int
 	Name string
-	args []string
 }
 
 func parseLangUpdateCmd(parent *langCmd, args []string) (*langUpdateCmd, error) {
 	c := &langUpdateCmd{langCmd: parent}
-	fs := flag.NewFlagSet("update", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "language id")
-	fs.StringVar(&c.Name, "name", "", "new name")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("update")
+	c.fs.IntVar(&c.ID, "id", 0, "language id")
+	c.fs.StringVar(&c.Name, "name", "", "new name")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

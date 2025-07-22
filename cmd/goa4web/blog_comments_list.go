@@ -16,23 +16,22 @@ type blogCommentsListCmd struct {
 	fs     *flag.FlagSet
 	ID     int
 	UserID int
-	args   []string
 }
 
 func parseBlogCommentsListCmd(parent *blogCommentsCmd, args []string) (*blogCommentsListCmd, error) {
 	c := &blogCommentsListCmd{blogCommentsCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "blog id")
-	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("list")
+	c.fs.IntVar(&c.ID, "id", 0, "blog id")
+	c.fs.IntVar(&c.UserID, "user", 0, "viewer user id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
-	if c.ID == 0 && len(c.args) > 0 {
-		if id, err := strconv.Atoi(c.args[0]); err == nil {
+
+	rest := c.fs.Args()
+	if c.ID == 0 && len(rest) > 0 {
+		if id, err := strconv.Atoi(rest[0]); err == nil {
 			c.ID = id
-			c.args = c.args[1:]
+			rest = rest[1:]
 		}
 	}
 	return c, nil

@@ -14,19 +14,17 @@ type permUpdateCmd struct {
 	fs   *flag.FlagSet
 	ID   int
 	Role string
-	args []string
 }
 
 func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) {
 	c := &permUpdateCmd{permCmd: parent}
-	fs := flag.NewFlagSet("update", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "permission id")
-	fs.StringVar(&c.Role, "role", "", "permission role")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("update")
+	c.fs.IntVar(&c.ID, "id", 0, "permission id")
+	c.fs.StringVar(&c.Role, "role", "", "permission role")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

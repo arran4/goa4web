@@ -19,23 +19,21 @@ type grantAddCmd struct {
 	Item    string
 	Action  string
 	ItemID  int
-	args    []string
 }
 
 func parseGrantAddCmd(parent *grantCmd, args []string) (*grantAddCmd, error) {
 	c := &grantAddCmd{grantCmd: parent}
-	fs := flag.NewFlagSet("add", flag.ContinueOnError)
-	fs.IntVar(&c.User, "user-id", 0, "user id")
-	fs.StringVar(&c.Role, "role", "", "role name")
-	fs.StringVar(&c.Section, "section", "", "section name")
-	fs.StringVar(&c.Item, "item", "", "item name")
-	fs.StringVar(&c.Action, "action", "", "action name")
-	fs.IntVar(&c.ItemID, "item-id", 0, "item id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("add")
+	c.fs.IntVar(&c.User, "user-id", 0, "user id")
+	c.fs.StringVar(&c.Role, "role", "", "role name")
+	c.fs.StringVar(&c.Section, "section", "", "section name")
+	c.fs.StringVar(&c.Item, "item", "", "item name")
+	c.fs.StringVar(&c.Action, "action", "", "action name")
+	c.fs.IntVar(&c.ItemID, "item-id", 0, "item id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

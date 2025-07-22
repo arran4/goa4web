@@ -17,12 +17,11 @@ type ipBanUpdateCmd struct {
 	ID      int
 	Reason  string
 	Expires string
-	args    []string
 }
 
 func parseIpBanUpdateCmd(parent *ipBanCmd, args []string) (*ipBanUpdateCmd, error) {
 	c := &ipBanUpdateCmd{ipBanCmd: parent}
-	fs, rest, err := parseFlags("update", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("update", args, func(fs *flag.FlagSet) {
 		fs.IntVar(&c.ID, "id", 0, "ban id")
 		fs.StringVar(&c.Reason, "reason", "", "ban reason")
 		fs.StringVar(&c.Expires, "expires", "", "expiry date YYYY-MM-DD")
@@ -31,7 +30,6 @@ func parseIpBanUpdateCmd(parent *ipBanCmd, args []string) (*ipBanUpdateCmd, erro
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

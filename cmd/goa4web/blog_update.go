@@ -16,20 +16,18 @@ type blogUpdateCmd struct {
 	ID     int
 	LangID int
 	Text   string
-	args   []string
 }
 
 func parseBlogUpdateCmd(parent *blogCmd, args []string) (*blogUpdateCmd, error) {
 	c := &blogUpdateCmd{blogCmd: parent}
-	fs := flag.NewFlagSet("update", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "blog id")
-	fs.IntVar(&c.LangID, "lang", 0, "language id")
-	fs.StringVar(&c.Text, "text", "", "blog text")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("update")
+	c.fs.IntVar(&c.ID, "id", 0, "blog id")
+	c.fs.IntVar(&c.LangID, "lang", 0, "language id")
+	c.fs.StringVar(&c.Text, "text", "", "blog text")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

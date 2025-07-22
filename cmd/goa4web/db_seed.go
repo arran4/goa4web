@@ -17,18 +17,16 @@ type dbSeedCmd struct {
 	*dbCmd
 	fs   *flag.FlagSet
 	File string
-	args []string
 }
 
 func parseDbSeedCmd(parent *dbCmd, args []string) (*dbSeedCmd, error) {
 	c := &dbSeedCmd{dbCmd: parent}
-	fs := flag.NewFlagSet("seed", flag.ContinueOnError)
-	fs.StringVar(&c.File, "file", "seed.sql", "SQL seed file")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("seed")
+	c.fs.StringVar(&c.File, "file", "seed.sql", "SQL seed file")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

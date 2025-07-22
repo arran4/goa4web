@@ -18,33 +18,32 @@ type blogCommentsReadCmd struct {
 	CommentID int
 	UserID    int
 	All       bool
-	args      []string
 }
 
 func parseBlogCommentsReadCmd(parent *blogCommentsCmd, args []string) (*blogCommentsReadCmd, error) {
 	c := &blogCommentsReadCmd{blogCommentsCmd: parent}
-	fs := flag.NewFlagSet("read", flag.ContinueOnError)
-	fs.IntVar(&c.BlogID, "id", 0, "blog id")
-	fs.IntVar(&c.CommentID, "comment", 0, "comment id")
-	fs.IntVar(&c.UserID, "user", 0, "viewer user id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("read")
+	c.fs.IntVar(&c.BlogID, "id", 0, "blog id")
+	c.fs.IntVar(&c.CommentID, "comment", 0, "comment id")
+	c.fs.IntVar(&c.UserID, "user", 0, "viewer user id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
-	if c.BlogID == 0 && len(c.args) > 0 {
-		if id, err := strconv.Atoi(c.args[0]); err == nil {
+
+	rest := c.fs.Args()
+	if c.BlogID == 0 && len(rest) > 0 {
+		if id, err := strconv.Atoi(rest[0]); err == nil {
 			c.BlogID = id
-			c.args = c.args[1:]
+			rest = rest[1:]
 		}
 	}
-	if len(c.args) > 0 {
-		if c.args[0] == "all" {
+	if len(rest) > 0 {
+		if rest[0] == "all" {
 			c.All = true
-			c.args = c.args[1:]
-		} else if id, err := strconv.Atoi(c.args[0]); err == nil {
+			rest = rest[1:]
+		} else if id, err := strconv.Atoi(rest[0]); err == nil {
 			c.CommentID = id
-			c.args = c.args[1:]
+			rest = rest[1:]
 		}
 	}
 	return c, nil

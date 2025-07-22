@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/workers/emailqueue"
 )
 
 // ResendQueueTask triggers sending queued emails immediately.
@@ -55,7 +56,9 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 	ids := make([]int32, 0, len(rows))
 	for _, e := range rows {
-		ids = append(ids, e.ToUserID)
+		if e.ToUserID.Valid {
+			ids = append(ids, e.ToUserID.Int32)
+		}
 	}
 	users := make(map[int32]*db.GetUserByIdRow)
 	for _, id := range ids {
@@ -65,8 +68,10 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, e := range rows {
 		emailStr := ""
-		if u, ok := users[e.ToUserID]; ok && u.Email.Valid && u.Email.String != "" {
-			emailStr = u.Email.String
+		if e.ToUserID.Valid {
+			if u, ok := users[e.ToUserID.Int32]; ok && u.Email.Valid && u.Email.String != "" {
+				emailStr = u.Email.String
+			}
 		}
 		subj := ""
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {
@@ -93,7 +98,9 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		emails = append(emails, e)
-		ids = append(ids, e.ToUserID)
+		if e.ToUserID.Valid {
+			ids = append(ids, e.ToUserID.Int32)
+		}
 	}
 	users := make(map[int32]*db.GetUserByIdRow)
 	for _, id := range ids {
@@ -102,12 +109,11 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	for _, e := range emails {
-		user, ok := users[e.ToUserID]
-		if !ok || !user.Email.Valid || user.Email.String == "" {
-			log.Printf("missing or invalid user email for %d", e.ToUserID)
+		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, &db.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
+		if err != nil {
+			log.Printf("resolve address: %v", err)
 			continue
 		}
-		addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
 		if provider != nil {
 			if err := provider.Send(r.Context(), addr, []byte(e.Body)); err != nil {
 				log.Printf("send email: %v", err)

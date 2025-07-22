@@ -324,12 +324,13 @@ type Password struct {
 }
 
 type PendingEmail struct {
-	ID         int32
-	ToUserID   int32
-	Body       string
-	ErrorCount int32
-	CreatedAt  time.Time
-	SentAt     sql.NullTime
+	ID          int32
+	ToUserID    sql.NullInt32
+	DirectEmail bool
+	Body        string
+	ErrorCount  int32
+	CreatedAt   time.Time
+	SentAt      sql.NullTime
 }
 
 type PendingPassword struct {

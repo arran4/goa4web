@@ -10,7 +10,7 @@ sending mail.
 result with `InsertPendingEmail`:
 
 ```go
-_ = queries.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: uid, Body: string(msg)})
+_ = queries.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: sql.NullInt32{Int32: uid, Valid: true}, Body: string(msg), DirectEmail: false})
 ```
 
 The admin interface uses the same method when previewing templates. Rows in the

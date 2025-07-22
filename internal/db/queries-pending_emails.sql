@@ -1,9 +1,9 @@
 -- name: InsertPendingEmail :exec
-INSERT INTO pending_emails (to_user_id, body)
-VALUES (?, ?);
+INSERT INTO pending_emails (to_user_id, body, direct_email)
+VALUES (?, ?, ?);
 
 -- name: FetchPendingEmails :many
-SELECT id, to_user_id, body, error_count
+SELECT id, to_user_id, body, error_count, direct_email
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
@@ -13,13 +13,13 @@ LIMIT ?;
 UPDATE pending_emails SET sent_at = NOW() WHERE id = ?;
 
 -- name: ListUnsentPendingEmails :many
-SELECT id, to_user_id, body, error_count, created_at
+SELECT id, to_user_id, body, error_count, created_at, direct_email
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id;
 
 -- name: GetPendingEmailByID :one
-SELECT id, to_user_id, body, error_count
+SELECT id, to_user_id, body, error_count, direct_email
 FROM pending_emails
 WHERE id = ?;
 

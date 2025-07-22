@@ -379,7 +379,8 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
 -- Queue outbound emails.
 CREATE TABLE IF NOT EXISTS `pending_emails` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `to_user_id` int NOT NULL,
+  `to_user_id` int DEFAULT NULL,
+  `direct_email` tinyint(1) NOT NULL DEFAULT 0,
   `body` text NOT NULL,
   `error_count` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

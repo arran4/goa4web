@@ -3,6 +3,7 @@ package admin
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -168,7 +169,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: urow.Idusers, Body: string(msg)}); err != nil {
+	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: sql.NullInt32{Int32: urow.Idusers, Valid: true}, Body: string(msg), DirectEmail: false}); err != nil {
 		log.Printf("queue email: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)

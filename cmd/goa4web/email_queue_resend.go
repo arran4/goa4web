@@ -4,11 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
-	"net/mail"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/workers/emailqueue"
 )
 
 // emailQueueResendCmd implements "email queue resend".
@@ -47,15 +46,10 @@ func (c *emailQueueResendCmd) Run() error {
 	}
 	provider := email.ProviderFromConfig(c.rootCmd.cfg)
 	if provider != nil {
-		user, err := queries.GetUserById(ctx, e.ToUserID)
+		addr, err := emailqueue.ResolveQueuedEmailAddress(ctx, queries, &dbpkg.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
 		if err != nil {
-			return fmt.Errorf("get user: %w", err)
+			return err
 		}
-		if !user.Email.Valid || user.Email.String == "" {
-			log.Printf("invalid user email for %d", e.ToUserID)
-			return nil
-		}
-		addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
 		if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 			return fmt.Errorf("send email: %w", err)
 		}

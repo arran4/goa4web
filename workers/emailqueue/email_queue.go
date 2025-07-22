@@ -6,6 +6,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"log"
 	"net/mail"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -54,6 +55,91 @@ func EmailQueueWorker(ctx context.Context, q *db.Queries, provider email.Provide
 	}
 }
 
+// adminBypassAddr extracts the recipient address from the email body and
+// returns it when it matches one of the configured administrator emails.
+func adminBypassAddr(ctx context.Context, q *db.Queries, body string) (mail.Address, bool) {
+	m, err := mail.ReadMessage(strings.NewReader(body))
+	if err != nil {
+		return mail.Address{}, false
+	}
+	addr, err := mail.ParseAddress(m.Header.Get("To"))
+	if err != nil {
+		return mail.Address{}, false
+	}
+	for _, a := range config.GetAdminEmails(ctx, q) {
+		if strings.EqualFold(a, addr.Address) {
+			return *addr, true
+		}
+	}
+	return mail.Address{}, false
+}
+
+func isAdminEmail(ctx context.Context, q *db.Queries, addr string) bool {
+	for _, a := range config.GetAdminEmails(ctx, q) {
+		if strings.EqualFold(a, addr) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasVerificationRecord(ctx context.Context, q *db.Queries, addr string) bool {
+	if q == nil {
+		return false
+	}
+	ue, err := q.GetUserEmailByEmail(ctx, addr)
+	if err != nil {
+		return false
+	}
+	if ue.VerifiedAt.Valid {
+		return false
+	}
+	if ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now()) {
+		return false
+	}
+	return ue.LastVerificationCode.Valid
+}
+
+// ResolveQueuedEmailAddress resolves the recipient for a queued email.
+// When the user record is missing or lacks a valid address the admin or direct
+// email logic is applied.
+func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, e *db.FetchPendingEmailsRow) (mail.Address, error) {
+	if e.ToUserID.Valid {
+		user, err := q.GetUserById(ctx, e.ToUserID.Int32)
+		if err == nil && user.Email.Valid && user.Email.String != "" {
+			return mail.Address{Name: user.Username.String, Address: user.Email.String}, nil
+		}
+		if err != nil {
+			return mail.Address{}, fmt.Errorf("get user: %v", err)
+		}
+	}
+
+	m, err := mail.ReadMessage(strings.NewReader(e.Body))
+	if err != nil {
+		return mail.Address{}, fmt.Errorf("parse message: %v", err)
+	}
+	addr, err := mail.ParseAddress(m.Header.Get("To"))
+	if err != nil {
+		return mail.Address{}, fmt.Errorf("parse address: %v", err)
+	}
+
+	if e.DirectEmail {
+		if hasVerificationRecord(ctx, q, addr.Address) {
+			return *addr, nil
+		}
+		return mail.Address{}, fmt.Errorf("no verification record for %s", addr.Address)
+	}
+
+	if isAdminEmail(ctx, q, addr.Address) {
+		return *addr, nil
+	}
+
+	if e.ToUserID.Valid {
+		return mail.Address{}, fmt.Errorf("invalid email for user %d", e.ToUserID.Int32)
+	}
+	return mail.Address{}, fmt.Errorf("unknown recipient")
+}
+
 // ProcessPendingEmail sends a single queued email if available.
 func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Provider, dlqProvider dlq.DLQ) bool {
 	if q == nil || provider == nil {
@@ -75,16 +161,11 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		return false
 	}
 	e := emails[0]
-	user, err := q.GetUserById(ctx, e.ToUserID)
+	addr, err := ResolveQueuedEmailAddress(ctx, q, e)
 	if err != nil {
-		log.Printf("get user: %v", err)
+		log.Printf("%v", err)
 		return false
 	}
-	if !user.Email.Valid || user.Email.String == "" {
-		log.Printf("invalid email for user %d", e.ToUserID)
-		return false
-	}
-	addr := mail.Address{Name: user.Username.String, Address: user.Email.String}
 	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 		log.Printf("send queued mail: %v", err)
 		if err := q.IncrementEmailError(ctx, e.ID); err != nil {
@@ -94,7 +175,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		count, _ := q.GetPendingEmailErrorCount(ctx, e.ID)
 		if count > 4 {
 			if dlqProvider != nil {
-				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, user.Email.String, err, e.Body)
+				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, addr.Address, err, e.Body)
 				_ = dlqProvider.Record(ctx, msg)
 			}
 			if delErr := q.DeletePendingEmail(ctx, e.ID); delErr != nil {

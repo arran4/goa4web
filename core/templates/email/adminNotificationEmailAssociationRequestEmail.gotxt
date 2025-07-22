@@ -3,5 +3,5 @@ Email: {{.Item.Email}}
 Reason: {{.Item.Reason}}
 
 User page:
-{{.UserURL}}
+{{.Item.UserURL}}
 Manage notifications: {{.UnsubscribeUrl}}

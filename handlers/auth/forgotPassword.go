@@ -148,7 +148,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	handlers.TemplateHandler(w, r, "forgotPasswordEmailSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
 }
 
 func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request) {

@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID int32, emailAddr, page, action string, item interface{}) error {
+func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID *int32, emailAddr, page, action string, item interface{}) error {
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
@@ -31,7 +31,8 @@ func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID int32
 }
 
 // renderAndQueueEmailFromTemplates renders the provided templates and queues the result.
-func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID int32, emailAddr string, et *EmailTemplates, data interface{}, direct bool) error {
+func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID *int32, emailAddr string, et *EmailTemplates, data interface{}, direct bool) error {
+	// TODO "direct" isn't necessary as userID is a pointer
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
@@ -122,11 +123,14 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 	return email.BuildMessage(from, to, subject, textBody, htmlBody)
 }
 
-func (n *Notifier) queueEmail(ctx context.Context, userID int32, direct bool, msg []byte) error {
+func (n *Notifier) queueEmail(ctx context.Context, userID *int32, direct bool, msg []byte) error {
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
-	uid := sql.NullInt32{Int32: userID, Valid: !direct}
+	var uid sql.NullInt32
+	if userID != nil {
+		uid = sql.NullInt32{Int32: *userID, Valid: !direct}
+	}
 	if err := n.Queries.InsertPendingEmail(ctx, db.InsertPendingEmailParams{ToUserID: uid, Body: string(msg), DirectEmail: direct}); err != nil {
 		return err
 	}
@@ -147,5 +151,5 @@ func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt ev
 	if et == nil {
 		return nil
 	}
-	return n.renderAndQueueEmailFromTemplates(ctx, userID, user.Email.String, et, evt.Data, false)
+	return n.renderAndQueueEmailFromTemplates(ctx, &userID, user.Email.String, et, evt.Data, false)
 }

@@ -140,7 +140,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			emails, err := n.Queries.ListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
 				for _, e := range emails {
-					if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, e.Email, et, evt.Data, false); err != nil {
+					if err := n.renderAndQueueEmailFromTemplates(ctx, &evt.UserID, e.Email, et, evt.Data, false); err != nil {
 						return err
 					}
 				}
@@ -150,7 +150,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			if err != nil {
 				notifyMissingEmail(ctx, n.Queries, evt.UserID)
 			} else {
-				if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, ue.Email, et, evt.Data, false); err != nil {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, &evt.UserID, ue.Email, et, evt.Data, false); err != nil {
 					return err
 				}
 			}
@@ -184,7 +184,7 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent
 		return nil
 	}
 	if et := tp.DirectEmailTemplate(); et != nil {
-		if err := n.renderAndQueueEmailFromTemplates(ctx, 0, addr, et, evt.Data, true); err != nil {
+		if err := n.renderAndQueueEmailFromTemplates(ctx, nil, addr, et, evt.Data, true); err != nil {
 			return err
 		}
 	}
@@ -198,7 +198,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 			notifyMissingEmail(ctx, n.Queries, id)
 		} else {
 			if et := tp.TargetEmailTemplate(); et != nil {
-				if err := n.renderAndQueueEmailFromTemplates(ctx, id, user.Email.String, et, evt.Data, false); err != nil {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, &id, user.Email.String, et, evt.Data, false); err != nil {
 					return err
 				}
 			}
@@ -331,9 +331,9 @@ func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.TaskEvent, tp 
 		return nil
 	}
 	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
-		var uid int32
+		var uid *int32
 		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
-			uid = u.Idusers
+			uid = &u.Idusers
 		} else {
 			log.Printf("user by email %s: %v", addr, err)
 		}
@@ -351,12 +351,16 @@ func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.TaskEvent, tp 
 			if err != nil {
 				return err
 			}
-			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
-				UsersIdusers: uid,
-				Link:         sql.NullString{String: evt.Path, Valid: evt.Path != ""},
-				Message:      sql.NullString{String: string(msg), Valid: len(msg) > 0},
-			}); err != nil {
-				return err
+			if uid != nil {
+				if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+					UsersIdusers: *uid,
+					Link:         sql.NullString{String: evt.Path, Valid: evt.Path != ""},
+					Message:      sql.NullString{String: string(msg), Valid: len(msg) > 0},
+				}); err != nil {
+					return err
+				}
+			} else {
+				log.Printf("Error uid not found for %s in admin email template notification", addr)
 			}
 		}
 	}

@@ -262,6 +262,7 @@ environment variables listed below.
 | `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |
+| `PASSWORD_RESET_EXPIRY_HOURS` | `--password-reset-expiry-hours` | No | `24` | Hours a password reset request remains valid. |
 | `ADMIN_EMAILS` | `--admin-emails` | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
 | `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored when using the local provider. |

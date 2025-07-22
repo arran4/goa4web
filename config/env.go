@@ -86,6 +86,8 @@ const (
 	// EnvEmailWorkerInterval controls how often the email worker processes
 	// pending messages in seconds.
 	EnvEmailWorkerInterval = "EMAIL_WORKER_INTERVAL"
+	// EnvPasswordResetExpiryHours sets the password reset expiry in hours.
+	EnvPasswordResetExpiryHours = "PASSWORD_RESET_EXPIRY_HOURS"
 	// EnvAdminEmails is a comma-separated list of administrator email addresses.
 	EnvAdminEmails = "ADMIN_EMAILS"
 	// EnvAdminNotify toggles sending administrator notification emails.

@@ -32,6 +32,12 @@ type SelfNotificationTemplateProvider interface {
 	SelfInternalNotificationTemplate() *string
 }
 
+// SelfEmailBroadcaster indicates the notification should be sent to all
+// verified email addresses of the user instead of only the highest priority.
+type SelfEmailBroadcaster interface {
+	SelfEmailBroadcast() bool
+}
+
 // DirectEmailNotificationTemplateProvider specifies templates for an email sent
 // directly to an address independent of the user's primary email.
 // The address itself is obtained from the event data via DirectEmailAddress.

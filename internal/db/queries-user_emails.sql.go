@@ -202,6 +202,44 @@ func (q *Queries) InsertUserEmail(ctx context.Context, arg InsertUserEmailParams
 	return err
 }
 
+const listVerifiedEmailsByUserID = `-- name: ListVerifiedEmailsByUserID :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE user_id = ? AND verified_at IS NOT NULL
+ORDER BY notification_priority DESC, id
+`
+
+func (q *Queries) ListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, listVerifiedEmailsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setNotificationPriority = `-- name: SetNotificationPriority :exec
 UPDATE user_emails SET notification_priority = ? WHERE id = ?
 `

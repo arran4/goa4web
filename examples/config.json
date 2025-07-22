@@ -17,6 +17,7 @@
   "EMAIL_SIGNOFF": "",
   "EMAIL_SUBJECT_PREFIX": "goa4web",
   "EMAIL_WORKER_INTERVAL": "60",
+  "PASSWORD_RESET_EXPIRY_HOURS": "24",
   "FEEDS_ENABLED": "true",
   "HOSTNAME": "http://localhost:8080",
   "IMAGE_CACHE_DIR": "uploads/cache",

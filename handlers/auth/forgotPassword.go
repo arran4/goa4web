@@ -26,6 +26,7 @@ type ForgotPasswordTask struct {
 var _ tasks.Task = (*ForgotPasswordTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ForgotPasswordTask)(nil)
+var _ notif.SelfEmailBroadcaster = (*ForgotPasswordTask)(nil)
 
 // ForgotPasswordTask handles password reset requests.
 var forgotPasswordTask = &ForgotPasswordTask{
@@ -49,6 +50,8 @@ func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
 	s := notif.NotificationTemplateFilenameGenerator("password_reset")
 	return &s
 }
+
+func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(consts.KeyCoreData))

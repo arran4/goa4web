@@ -87,6 +87,7 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		task := r.PostFormValue("task")
 		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*common.CoreData)
 		if !ok || cd == nil {
+			// TODO make panic
 			cd = &common.CoreData{}
 			r = r.WithContext(context.WithValue(r.Context(), coreconsts.KeyCoreData, cd))
 		}

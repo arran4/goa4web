@@ -49,10 +49,12 @@ func (c *userApproveCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
-	c.rootCmd.Verbosef("approving user %d", c.ID)
 	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "user"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
-	c.rootCmd.Infof("approved user %d", c.ID)
+
+	if c.rootCmd.Verbosity > 0 {
+		fmt.Printf("approved user %d\n", c.ID)
+	}
 	return nil
 }

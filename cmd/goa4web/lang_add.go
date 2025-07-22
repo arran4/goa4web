@@ -41,10 +41,11 @@ func (c *langAddCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	c.rootCmd.Verbosef("adding language %s (%s)", c.Name, c.Code)
 	if _, err := queries.InsertLanguage(ctx, sql.NullString{String: c.Name, Valid: true}); err != nil {
 		return fmt.Errorf("insert language: %w", err)
 	}
-	c.rootCmd.Infof("added language %s (%s)", c.Name, c.Code)
+	if c.rootCmd.Verbosity > 0 {
+		fmt.Printf("added language %s (%s)\n", c.Name, c.Code)
+	}
 	return nil
 }

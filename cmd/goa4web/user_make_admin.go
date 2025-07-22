@@ -41,13 +41,14 @@ func (c *userMakeAdminCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	c.rootCmd.Verbosef("granting administrator to %s", c.Username)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
 	if _, err := queries.GetAdministratorUserRole(ctx, u.Idusers); err == nil {
-		c.rootCmd.Verbosef("%s already administrator", c.Username)
+		if c.rootCmd.Verbosity > 0 {
+			fmt.Printf("%s already administrator\n", c.Username)
+		}
 		return nil
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check admin: %w", err)
@@ -58,6 +59,8 @@ func (c *userMakeAdminCmd) Run() error {
 	}); err != nil {
 		return fmt.Errorf("grant admin: %w", err)
 	}
-	c.rootCmd.Infof("granted administrator to %s", c.Username)
+	if c.rootCmd.Verbosity > 0 {
+		fmt.Printf("granted administrator to %s\n", c.Username)
+	}
 	return nil
 }

@@ -51,13 +51,15 @@ func (c *userRejectCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
-	c.rootCmd.Verbosef("rejecting user %d", c.ID)
 	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "rejected"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
 	if c.Reason != "" {
 		_ = queries.InsertAdminUserComment(ctx, dbpkg.InsertAdminUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Reason})
 	}
-	c.rootCmd.Infof("rejected user %d", c.ID)
+
+	if c.rootCmd.Verbosity > 0 {
+		fmt.Printf("rejected user %d\n", c.ID)
+	}
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -322,26 +323,26 @@ func (AddEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 
-func (AddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) string {
+func (AddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {
 	if evt.Data != nil {
 		if email, ok := evt.Data["email"].(string); ok {
-			return email
+			return email, nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("email not provided")
 }
 
 func (ResendVerificationEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 
-func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) string {
+func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {
 	if evt.Data != nil {
 		if email, ok := evt.Data["email"].(string); ok {
-			return email
+			return email, nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("email not provided")
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {

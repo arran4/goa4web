@@ -179,7 +179,10 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 }
 
 func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent, tp DirectEmailNotificationTemplateProvider) error {
-	addr := tp.DirectEmailAddress(evt)
+	addr, err := tp.DirectEmailAddress(evt)
+	if err != nil {
+		return err
+	}
 	if addr == "" {
 		return nil
 	}
@@ -192,7 +195,11 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent
 }
 
 func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent, tp TargetUsersNotificationProvider) error {
-	for _, id := range tp.TargetUserIDs(evt) {
+	ids, err := tp.TargetUserIDs(evt)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
 		user, err := n.Queries.GetUserById(ctx, id)
 		if err != nil || !user.Email.Valid || user.Email.String == "" {
 			notifyMissingEmail(ctx, n.Queries, id)
@@ -246,7 +253,10 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	delete(internalSubs, evt.UserID)
 
 	if gp, ok := evt.Task.(GrantsRequiredProvider); ok {
-		reqs := gp.GrantsRequired(evt)
+		reqs, err := gp.GrantsRequired(evt)
+		if err != nil {
+			return err
+		}
 		if len(reqs) != 0 {
 			filterSubs := func(m map[int32]struct{}) {
 				for id := range m {
@@ -312,7 +322,11 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 		}
 	}
 	if auto {
-		task, path := tp.AutoSubscribePath(evt)
+		task, path, err := tp.AutoSubscribePath(evt)
+		if err != nil {
+			log.Printf("auto subscribe path: %v", err)
+			return
+		}
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
 		if config.AppRuntimeConfig.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")

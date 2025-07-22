@@ -303,14 +303,14 @@ func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, stri
 	return 0, "", "", sql.ErrNoRows
 }
 
-func (UserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (UserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (UserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
@@ -322,14 +322,14 @@ func (UserAllowTask) TargetInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (UserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (UserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (UserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {

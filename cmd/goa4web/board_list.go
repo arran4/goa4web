@@ -11,18 +11,16 @@ import (
 // boardListCmd implements "board list".
 type boardListCmd struct {
 	*boardCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseBoardListCmd(parent *boardCmd, args []string) (*boardListCmd, error) {
 	c := &boardListCmd{boardCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("list")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

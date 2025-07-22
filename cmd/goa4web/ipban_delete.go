@@ -11,21 +11,19 @@ import (
 // ipBanDeleteCmd implements "ipban delete".
 type ipBanDeleteCmd struct {
 	*ipBanCmd
-	fs   *flag.FlagSet
-	IP   string
-	args []string
+	fs *flag.FlagSet
+	IP string
 }
 
 func parseIpBanDeleteCmd(parent *ipBanCmd, args []string) (*ipBanDeleteCmd, error) {
 	c := &ipBanDeleteCmd{ipBanCmd: parent}
-	fs, rest, err := parseFlags("delete", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("delete", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.IP, "ip", "", "ip or cidr")
 	})
 	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

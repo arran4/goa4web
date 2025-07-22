@@ -11,20 +11,18 @@ import (
 // permRevokeCmd implements "perm revoke".
 type permRevokeCmd struct {
 	*permCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs *flag.FlagSet
+	ID int
 }
 
 func parsePermRevokeCmd(parent *permCmd, args []string) (*permRevokeCmd, error) {
 	c := &permRevokeCmd{permCmd: parent}
-	fs := flag.NewFlagSet("revoke", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "permission id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("revoke")
+	c.fs.IntVar(&c.ID, "id", 0, "permission id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

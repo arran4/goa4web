@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	_ "embed"
+
 	"errors"
 	"flag"
 	"fmt"
@@ -29,9 +29,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 )
-
-//go:embed templates/root_usage.txt
-var rootUsageTemplate string
 
 var version = "dev"
 
@@ -60,11 +57,17 @@ func init() {
 func main() {
 	root, err := parseRoot(os.Args)
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return
+		}
 		log.Printf("%v", err)
 		os.Exit(1)
 	}
 	defer root.Close()
 	if err := root.Run(); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return
+		}
 		log.Printf("%v", err)
 		os.Exit(1)
 	}
@@ -75,7 +78,6 @@ type rootCmd struct {
 	fs         *flag.FlagSet
 	cfg        config.RuntimeConfig
 	ConfigFile string
-	args       []string
 	db         *sql.DB
 	Verbosity  int
 }
@@ -101,12 +103,24 @@ func (r *rootCmd) Close() {
 
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{}
-	early := flag.NewFlagSet(args[0], flag.ContinueOnError)
+	wantHelp := false
+	for _, a := range args[1:] {
+		if a == "-h" || a == "--help" {
+			wantHelp = true
+			break
+		}
+	}
+	early := newFlagSet(args[0])
+	early.Usage = func() {}
 	var cfgPath string
 	var showVersion bool
 	early.StringVar(&cfgPath, "config-file", "", "path to config file")
 	early.BoolVar(&showVersion, "version", false, "print version and exit")
-	_ = early.Parse(args[1:])
+	earlyErr := early.Parse(args[1:])
+	if errors.Is(earlyErr, flag.ErrHelp) {
+		wantHelp = true
+	}
+	rest := early.Args()
 	if cfgPath == "" {
 		cfgPath = os.Getenv(config.EnvConfigFile)
 	}
@@ -125,139 +139,148 @@ func parseRoot(args []string) (*rootCmd, error) {
 	r.fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
 	r.fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
 	r.fs.Usage = r.Usage
-	_ = r.fs.Parse(args[1:])
-	r.args = r.fs.Args()
+	if wantHelp {
+		rest = append([]string{"-h"}, rest...)
+	}
+	if err := r.fs.Parse(rest); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			r.fs.Usage()
+			return r, flag.ErrHelp
+		}
+		return nil, err
+	}
 	r.ConfigFile = cfgPath
 	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
 	return r, nil
 }
 
 func (r *rootCmd) Run() error {
-	if len(r.args) == 0 {
+	args := r.fs.Args()
+	if len(args) == 0 {
 		r.fs.Usage()
 		return fmt.Errorf("no command provided")
 	}
-	switch r.args[0] {
+	switch args[0] {
 	case "help", "usage":
-		c, err := parseHelpCmd(r, r.args[1:])
+		c, err := parseHelpCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("help: %w", err)
 		}
 		return c.Run()
 	case "serve":
-		c, err := parseServeCmd(r, r.args[1:])
+		c, err := parseServeCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("serve: %w", err)
 		}
 		return c.Run()
 	case "user":
-		c, err := parseUserCmd(r, r.args[1:])
+		c, err := parseUserCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("user: %w", err)
 		}
 		return c.Run()
 	case "email":
-		c, err := parseEmailCmd(r, r.args[1:])
+		c, err := parseEmailCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("email: %w", err)
 		}
 		return c.Run()
 	case "db":
-		c, err := parseDbCmd(r, r.args[1:])
+		c, err := parseDbCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("db: %w", err)
 		}
 		return c.Run()
 	case "perm":
-		c, err := parsePermCmd(r, r.args[1:])
+		c, err := parsePermCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
 	case "grant":
-		c, err := parseGrantCmd(r, r.args[1:])
+		c, err := parseGrantCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("grant: %w", err)
 		}
 		return c.Run()
 	case "board":
-		c, err := parseBoardCmd(r, r.args[1:])
+		c, err := parseBoardCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("board: %w", err)
 		}
 		return c.Run()
 	case "blog", "blogs":
-		c, err := parseBlogCmd(r, r.args[1:])
+		c, err := parseBlogCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("blog: %w", err)
 		}
 		return c.Run()
 	case "writing", "writings":
-		c, err := parseWritingCmd(r, r.args[1:])
+		c, err := parseWritingCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("writing: %w", err)
 		}
 		return c.Run()
 	case "news":
-		c, err := parseNewsCmd(r, r.args[1:])
+		c, err := parseNewsCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("news: %w", err)
 		}
 		return c.Run()
 	case "faq":
-		c, err := parseFaqCmd(r, r.args[1:])
+		c, err := parseFaqCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("faq: %w", err)
 		}
 		return c.Run()
 	case "ipban":
-		c, err := parseIpBanCmd(r, r.args[1:])
+		c, err := parseIpBanCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("ipban: %w", err)
 		}
 		return c.Run()
 	case "images":
-		c, err := parseImagesCmd(r, r.args[1:])
+		c, err := parseImagesCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("images: %w", err)
 		}
 		return c.Run()
 	case "audit":
-		c, err := parseAuditCmd(r, r.args[1:])
+		c, err := parseAuditCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("audit: %w", err)
 		}
 		return c.Run()
 	case "notifications":
-		c, err := parseNotificationsCmd(r, r.args[1:])
+		c, err := parseNotificationsCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("notifications: %w", err)
 		}
 		return c.Run()
 	case "lang":
-		c, err := parseLangCmd(r, r.args[1:])
+		c, err := parseLangCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("lang: %w", err)
 		}
 		return c.Run()
 	case "server":
-		c, err := parseServerCmd(r, r.args[1:])
+		c, err := parseServerCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("server: %w", err)
 		}
 		return c.Run()
 	case "config":
-		c, err := parseConfigCmd(r, r.args[1:])
+		c, err := parseConfigCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("config: %w", err)
 		}
 		return c.Run()
 	default:
-		return fmt.Errorf("unknown command %q", r.args[0])
+		return fmt.Errorf("unknown command %q", args[0])
 	}
 }
 
 // Usage prints command usage information with examples.
 func (r *rootCmd) Usage() {
-	executeUsage(r.fs.Output(), rootUsageTemplate, r.fs, r.fs.Name())
+	executeUsage(r.fs.Output(), templateString("root_usage.txt"), r.fs, r.fs.Name())
 }

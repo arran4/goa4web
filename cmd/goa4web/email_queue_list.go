@@ -14,18 +14,16 @@ import (
 // emailQueueListCmd implements "email queue list".
 type emailQueueListCmd struct {
 	*emailQueueCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseEmailQueueListCmd(parent *emailQueueCmd, args []string) (*emailQueueListCmd, error) {
 	c := &emailQueueListCmd{emailQueueCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	c.fs = fs
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("list")
+
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 

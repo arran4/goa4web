@@ -12,18 +12,16 @@ type dbRestoreCmd struct {
 	*dbCmd
 	fs   *flag.FlagSet
 	File string
-	args []string
 }
 
 func parseDbRestoreCmd(parent *dbCmd, args []string) (*dbRestoreCmd, error) {
 	c := &dbRestoreCmd{dbCmd: parent}
-	fs := flag.NewFlagSet("restore", flag.ContinueOnError)
-	fs.StringVar(&c.File, "file", "", "SQL file to restore")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("restore")
+	c.fs.StringVar(&c.File, "file", "", "SQL file to restore")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

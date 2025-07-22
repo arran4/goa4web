@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	_ "embed"
+
 	"errors"
 	"flag"
 	"fmt"
@@ -15,25 +15,19 @@ import (
 	"github.com/arran4/goa4web/internal/app"
 )
 
-//go:embed templates/serve_usage.txt
-var serveUsageTemplate string
-
 // serveCmd starts the web server.
 type serveCmd struct {
 	*rootCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 	c := &serveCmd{rootCmd: parent}
-	fs := config.NewRuntimeFlagSet("serve")
-	fs.Usage = c.Usage
-	if err := fs.Parse(args); err != nil {
+	c.fs = config.NewRuntimeFlagSet("serve")
+	c.fs.Usage = c.Usage
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
 	return c, nil
 }
 
@@ -65,5 +59,5 @@ func (c *serveCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *serveCmd) Usage() {
-	executeUsage(c.fs.Output(), serveUsageTemplate, c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), templateString("serve_usage.txt"), c.fs, c.rootCmd.fs.Name())
 }

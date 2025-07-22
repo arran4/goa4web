@@ -14,24 +14,22 @@ import (
 // newsReadCmd implements "news read".
 type newsReadCmd struct {
 	*newsCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseNewsReadCmd(parent *newsCmd, args []string) (*newsReadCmd, error) {
 	c := &newsReadCmd{newsCmd: parent}
-	fs := flag.NewFlagSet("read", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "news id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("read")
+	c.fs.IntVar(&c.ID, "id", 0, "news id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
-	if c.ID == 0 && len(c.args) > 0 {
-		if id, err := strconv.Atoi(c.args[0]); err == nil {
+
+	rest := c.fs.Args()
+	if c.ID == 0 && len(rest) > 0 {
+		if id, err := strconv.Atoi(rest[0]); err == nil {
 			c.ID = id
-			c.args = c.args[1:]
 		}
 	}
 	return c, nil

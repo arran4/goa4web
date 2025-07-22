@@ -13,12 +13,11 @@ type userAddAdminCmd struct {
 	Username string
 	Email    string
 	Password string
-	args     []string
 }
 
 func parseUserAddAdminCmd(parent *userCmd, args []string) (*userAddAdminCmd, error) {
 	c := &userAddAdminCmd{userCmd: parent}
-	fs, rest, err := parseFlags("add-admin", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("add-admin", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.Username, "username", "", "username")
 		fs.StringVar(&c.Email, "email", "", "email address")
 		fs.StringVar(&c.Password, "password", "", "password (leave empty to prompt)")
@@ -27,7 +26,6 @@ func parseUserAddAdminCmd(parent *userCmd, args []string) (*userAddAdminCmd, err
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

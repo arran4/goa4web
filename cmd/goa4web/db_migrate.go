@@ -36,20 +36,18 @@ func openDB(cfg config.RuntimeConfig) (*sql.DB, error) {
 // dbMigrateCmd implements "db migrate".
 type dbMigrateCmd struct {
 	*dbCmd
-	fs   *flag.FlagSet
-	Dir  string
-	args []string
+	fs  *flag.FlagSet
+	Dir string
 }
 
 func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 	c := &dbMigrateCmd{dbCmd: parent}
-	fs := flag.NewFlagSet("migrate", flag.ContinueOnError)
-	fs.StringVar(&c.Dir, "dir", "migrations", "directory containing SQL migrations")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("migrate")
+	c.fs.StringVar(&c.Dir, "dir", "migrations", "directory containing SQL migrations")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

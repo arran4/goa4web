@@ -12,20 +12,18 @@ import (
 // blogDeactivateCmd implements "blog deactivate".
 type blogDeactivateCmd struct {
 	*blogCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseBlogDeactivateCmd(parent *blogCmd, args []string) (*blogDeactivateCmd, error) {
 	c := &blogDeactivateCmd{blogCmd: parent}
-	fs := flag.NewFlagSet("deactivate", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "blog id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("deactivate")
+	c.fs.IntVar(&c.ID, "id", 0, "blog id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

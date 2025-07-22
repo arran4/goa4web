@@ -15,12 +15,11 @@ type userApproveCmd struct {
 	fs       *flag.FlagSet
 	ID       int
 	Username string
-	args     []string
 }
 
 func parseUserApproveCmd(parent *userCmd, args []string) (*userApproveCmd, error) {
 	c := &userApproveCmd{userCmd: parent}
-	fs, rest, err := parseFlags("approve", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("approve", args, func(fs *flag.FlagSet) {
 		fs.IntVar(&c.ID, "id", 0, "user id")
 		fs.StringVar(&c.Username, "username", "", "username")
 	})
@@ -28,7 +27,6 @@ func parseUserApproveCmd(parent *userCmd, args []string) (*userApproveCmd, error
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

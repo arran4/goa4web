@@ -17,12 +17,11 @@ type ipBanAddCmd struct {
 	IP      string
 	Reason  string
 	Expires string
-	args    []string
 }
 
 func parseIpBanAddCmd(parent *ipBanCmd, args []string) (*ipBanAddCmd, error) {
 	c := &ipBanAddCmd{ipBanCmd: parent}
-	fs, rest, err := parseFlags("add", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("add", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.IP, "ip", "", "ip or cidr")
 		fs.StringVar(&c.Reason, "reason", "", "ban reason")
 		fs.StringVar(&c.Expires, "expires", "", "expiry date YYYY-MM-DD")
@@ -31,7 +30,6 @@ func parseIpBanAddCmd(parent *ipBanCmd, args []string) (*ipBanAddCmd, error) {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

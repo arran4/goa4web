@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	_ "embed"
+
 	"flag"
 	"fmt"
 	"net/mail"
@@ -16,77 +16,70 @@ import (
 	coretemplates "github.com/arran4/goa4web/core/templates"
 )
 
-//go:embed templates/config_test_usage.txt
-var configTestUsageTemplate string
-
 // configTestCmd implements "config test".
 type configTestCmd struct {
 	*configCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseConfigTestCmd(parent *configCmd, args []string) (*configTestCmd, error) {
 	c := &configTestCmd{configCmd: parent}
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
-	c.fs = fs
-	fs.Usage = c.Usage
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("test")
+	c.fs.Usage = c.Usage
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 
 func (c *configTestCmd) Run() error {
-	if len(c.args) == 0 {
+	args := c.fs.Args()
+	if len(args) == 0 {
 		c.fs.Usage()
 		return fmt.Errorf("missing test command")
 	}
-	switch c.args[0] {
+	switch args[0] {
 	case "email":
-		cmd, err := parseConfigTestEmailCmd(c, c.args[1:])
+		cmd, err := parseConfigTestEmailCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("email: %w", err)
 		}
 		return cmd.Run()
 	case "db":
-		cmd, err := parseConfigTestDBCmd(c, c.args[1:])
+		cmd, err := parseConfigTestDBCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("db: %w", err)
 		}
 		return cmd.Run()
 	case "dlq":
-		cmd, err := parseConfigTestDLQCmd(c, c.args[1:])
+		cmd, err := parseConfigTestDLQCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("dlq: %w", err)
 		}
 		return cmd.Run()
 	default:
 		c.fs.Usage()
-		return fmt.Errorf("unknown test command %q", c.args[0])
+		return fmt.Errorf("unknown test command %q", args[0])
 	}
 }
 
 // Usage prints command usage information with examples.
 func (c *configTestCmd) Usage() {
-	executeUsage(c.fs.Output(), configTestUsageTemplate, c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), templateString("config_test_usage.txt"), c.fs, c.rootCmd.fs.Name())
 }
 
 type configTestEmailCmd struct {
 	*configTestCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseConfigTestEmailCmd(parent *configTestCmd, args []string) (*configTestEmailCmd, error) {
 	c := &configTestEmailCmd{configTestCmd: parent}
-	fs := flag.NewFlagSet("email", flag.ContinueOnError)
-	c.fs = fs
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("email")
+
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 
@@ -136,18 +129,16 @@ func (c *configTestEmailCmd) Run() error {
 
 type configTestDBCmd struct {
 	*configTestCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseConfigTestDBCmd(parent *configTestCmd, args []string) (*configTestDBCmd, error) {
 	c := &configTestDBCmd{configTestCmd: parent}
-	fs := flag.NewFlagSet("db", flag.ContinueOnError)
-	c.fs = fs
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("db")
+
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 
@@ -164,18 +155,16 @@ func (c *configTestDBCmd) Run() error {
 
 type configTestDLQCmd struct {
 	*configTestCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseConfigTestDLQCmd(parent *configTestCmd, args []string) (*configTestDLQCmd, error) {
 	c := &configTestDLQCmd{configTestCmd: parent}
-	fs := flag.NewFlagSet("dlq", flag.ContinueOnError)
-	c.fs = fs
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("dlq")
+
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 

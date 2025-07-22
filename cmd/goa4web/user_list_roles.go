@@ -11,18 +11,16 @@ import (
 // userListRolesCmd implements the "user list-roles" command.
 type userListRolesCmd struct {
 	*userCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseUserListRolesCmd(parent *userCmd, args []string) (*userListRolesCmd, error) {
 	c := &userListRolesCmd{userCmd: parent}
-	fs, rest, err := parseFlags("list-roles", args, nil)
+	fs, _, err := parseFlags("list-roles", args, nil)
 	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

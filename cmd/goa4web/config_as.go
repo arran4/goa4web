@@ -15,18 +15,16 @@ type configAsCmd struct {
 	*configCmd
 	fs       *flag.FlagSet
 	extended bool
-	args     []string
 }
 
 func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsCmd, error) {
 	c := &configAsCmd{configCmd: parent}
-	fs := flag.NewFlagSet(name, flag.ContinueOnError)
-	fs.BoolVar(&c.extended, "extended", false, "include extended usage")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet(name)
+	c.fs.BoolVar(&c.extended, "extended", false, "include extended usage")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

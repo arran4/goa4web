@@ -15,19 +15,17 @@ type userDeactivateCmd struct {
 	*userCmd
 	fs       *flag.FlagSet
 	Username string
-	args     []string
 }
 
 func parseUserDeactivateCmd(parent *userCmd, args []string) (*userDeactivateCmd, error) {
 	c := &userDeactivateCmd{userCmd: parent}
-	fs, rest, err := parseFlags("deactivate", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("deactivate", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.Username, "username", "", "username")
 	})
 	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

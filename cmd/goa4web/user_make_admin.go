@@ -15,19 +15,17 @@ type userMakeAdminCmd struct {
 	*userCmd
 	fs       *flag.FlagSet
 	Username string
-	args     []string
 }
 
 func parseUserMakeAdminCmd(parent *userCmd, args []string) (*userMakeAdminCmd, error) {
 	c := &userMakeAdminCmd{userCmd: parent}
-	fs, rest, err := parseFlags("make-admin", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("make-admin", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.Username, "username", "", "username")
 	})
 	if err != nil {
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

@@ -15,12 +15,11 @@ type userCommentsListCmd struct {
 	fs       *flag.FlagSet
 	ID       int
 	Username string
-	args     []string
 }
 
 func parseUserCommentsListCmd(parent *userCommentsCmd, args []string) (*userCommentsListCmd, error) {
 	c := &userCommentsListCmd{userCommentsCmd: parent}
-	fs, rest, err := parseFlags("list", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("list", args, func(fs *flag.FlagSet) {
 		fs.IntVar(&c.ID, "id", 0, "user id")
 		fs.StringVar(&c.Username, "username", "", "username")
 	})
@@ -28,7 +27,6 @@ func parseUserCommentsListCmd(parent *userCommentsCmd, args []string) (*userComm
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

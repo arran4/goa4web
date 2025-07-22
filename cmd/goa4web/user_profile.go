@@ -15,12 +15,11 @@ type userProfileCmd struct {
 	fs       *flag.FlagSet
 	ID       int
 	Username string
-	args     []string
 }
 
 func parseUserProfileCmd(parent *userCmd, args []string) (*userProfileCmd, error) {
 	c := &userProfileCmd{userCmd: parent}
-	fs, rest, err := parseFlags("profile", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("profile", args, func(fs *flag.FlagSet) {
 		fs.IntVar(&c.ID, "id", 0, "user id")
 		fs.StringVar(&c.Username, "username", "", "username")
 	})
@@ -28,7 +27,6 @@ func parseUserProfileCmd(parent *userCmd, args []string) (*userProfileCmd, error
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

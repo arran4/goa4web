@@ -12,18 +12,16 @@ type dbBackupCmd struct {
 	*dbCmd
 	fs   *flag.FlagSet
 	File string
-	args []string
 }
 
 func parseDbBackupCmd(parent *dbCmd, args []string) (*dbBackupCmd, error) {
 	c := &dbBackupCmd{dbCmd: parent}
-	fs := flag.NewFlagSet("backup", flag.ContinueOnError)
-	fs.StringVar(&c.File, "file", "", "output SQL file")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("backup")
+	c.fs.StringVar(&c.File, "file", "", "output SQL file")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

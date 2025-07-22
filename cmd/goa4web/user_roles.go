@@ -2,32 +2,26 @@ package main
 
 import (
 	"context"
-	_ "embed"
+
 	"flag"
 	"fmt"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
-//go:embed templates/user_roles_usage.txt
-var userRolesUsageTemplate string
-
 // userRolesCmd implements "user roles".
 type userRolesCmd struct {
 	*userCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseUserRolesCmd(parent *userCmd, args []string) (*userRolesCmd, error) {
 	c := &userRolesCmd{userCmd: parent}
-	fs := flag.NewFlagSet("roles", flag.ContinueOnError)
-	c.fs = fs
-	fs.Usage = c.Usage
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("roles")
+	c.fs.Usage = c.Usage
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 
@@ -53,5 +47,5 @@ func (c *userRolesCmd) Run() error {
 }
 
 func (c *userRolesCmd) Usage() {
-	executeUsage(c.fs.Output(), userRolesUsageTemplate, c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), templateString("user_roles_usage.txt"), c.fs, c.rootCmd.fs.Name())
 }

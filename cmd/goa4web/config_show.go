@@ -9,18 +9,16 @@ import (
 // configShowCmd implements "config show".
 type configShowCmd struct {
 	*configCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseConfigShowCmd(parent *configCmd, args []string) (*configShowCmd, error) {
 	c := &configShowCmd{configCmd: parent}
-	fs := flag.NewFlagSet("show", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("show")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

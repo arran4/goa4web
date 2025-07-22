@@ -14,20 +14,18 @@ import (
 // emailQueueResendCmd implements "email queue resend".
 type emailQueueResendCmd struct {
 	*emailQueueCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseEmailQueueResendCmd(parent *emailQueueCmd, args []string) (*emailQueueResendCmd, error) {
 	c := &emailQueueResendCmd{emailQueueCmd: parent}
-	fs := flag.NewFlagSet("resend", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "pending email id")
-	c.fs = fs
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("resend")
+	c.fs.IntVar(&c.ID, "id", 0, "pending email id")
+
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 

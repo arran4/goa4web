@@ -1,17 +1,24 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"io"
 	"text/template"
 )
 
+// newFlagSet returns a FlagSet preconfigured to print flags using the
+// standard template.
+func newFlagSet(name string) *flag.FlagSet {
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	fs.Usage = func() { printFlags(fs) }
+	return fs
+}
+
 // parseFlags builds a FlagSet with the provided name, applies flag
 // registrations via fn, parses args and returns the FlagSet with any
 // remaining positional arguments.
 func parseFlags(name string, args []string, fn func(*flag.FlagSet)) (*flag.FlagSet, []string, error) {
-	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	fs := newFlagSet(name)
 	if fn != nil {
 		fn(fs)
 	}
@@ -20,9 +27,6 @@ func parseFlags(name string, args []string, fn func(*flag.FlagSet)) (*flag.FlagS
 	}
 	return fs, fs.Args(), nil
 }
-
-//go:embed templates/flags.txt
-var flagsTemplate string
 
 type flagInfo struct {
 	Name     string
@@ -40,13 +44,13 @@ func flagInfos(fs *flag.FlagSet) []flagInfo {
 }
 
 func printFlags(fs *flag.FlagSet) {
-	t := template.Must(template.New("flags").Parse(flagsTemplate))
+	t := template.Must(template.New("flags").Parse(templateString("flags.txt")))
 	_ = t.Execute(fs.Output(), flagInfos(fs))
 }
 
 func executeUsage(w io.Writer, tmplStr string, fs *flag.FlagSet, prog string) {
 	t := template.Must(template.New("usage").Parse(tmplStr))
-	t = template.Must(t.New("flags").Parse(flagsTemplate))
+	t = template.Must(t.New("flags").Parse(templateString("flags.txt")))
 	_ = t.Execute(w, struct {
 		Prog  string
 		Flags []flagInfo

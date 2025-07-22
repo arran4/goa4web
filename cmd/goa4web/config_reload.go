@@ -14,18 +14,16 @@ import (
 // configReloadCmd implements "config reload".
 type configReloadCmd struct {
 	*configCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseConfigReloadCmd(parent *configCmd, args []string) (*configReloadCmd, error) {
 	c := &configReloadCmd{configCmd: parent}
-	fs := flag.NewFlagSet("reload", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("reload")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

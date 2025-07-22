@@ -16,19 +16,17 @@ type permGrantCmd struct {
 	fs   *flag.FlagSet
 	User string
 	Role string
-	args []string
 }
 
 func parsePermGrantCmd(parent *permCmd, args []string) (*permGrantCmd, error) {
 	c := &permGrantCmd{permCmd: parent}
-	fs := flag.NewFlagSet("grant", flag.ContinueOnError)
-	fs.StringVar(&c.User, "user", "", "username")
-	fs.StringVar(&c.Role, "role", "", "permission role")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("grant")
+	c.fs.StringVar(&c.User, "user", "", "username")
+	c.fs.StringVar(&c.Role, "role", "", "permission role")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

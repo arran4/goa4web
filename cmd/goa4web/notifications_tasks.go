@@ -1,37 +1,31 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-//go:embed templates/notifications_tasks_usage.txt
-var notificationsTasksUsageTemplate string
-
 // notificationsTasksCmd implements "notifications tasks".
 type notificationsTasksCmd struct {
 	*notificationsCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 // Usage prints command usage information with examples.
 func (c *notificationsTasksCmd) Usage() {
-	executeUsage(c.fs.Output(), notificationsTasksUsageTemplate, c.fs, c.notificationsCmd.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), templateString("notifications_tasks_usage.txt"), c.fs, c.notificationsCmd.rootCmd.fs.Name())
 }
 
 func parseNotificationsTasksCmd(parent *notificationsCmd, args []string) (*notificationsTasksCmd, error) {
 	c := &notificationsTasksCmd{notificationsCmd: parent}
-	fs := flag.NewFlagSet("tasks", flag.ContinueOnError)
-	c.fs = fs
-	fs.Usage = c.Usage
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("tasks")
+
+	c.fs.Usage = c.Usage
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.args = fs.Args()
 	return c, nil
 }
 

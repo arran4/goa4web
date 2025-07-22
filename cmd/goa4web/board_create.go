@@ -16,20 +16,18 @@ type boardCreateCmd struct {
 	Parent      int
 	Name        string
 	Description string
-	args        []string
 }
 
 func parseBoardCreateCmd(parent *boardCmd, args []string) (*boardCreateCmd, error) {
 	c := &boardCreateCmd{boardCmd: parent}
-	fs := flag.NewFlagSet("create", flag.ContinueOnError)
-	fs.IntVar(&c.Parent, "parent", 0, "parent board id")
-	fs.StringVar(&c.Name, "name", "", "board name")
-	fs.StringVar(&c.Description, "description", "", "board description")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("create")
+	c.fs.IntVar(&c.Parent, "parent", 0, "parent board id")
+	c.fs.StringVar(&c.Name, "name", "", "board name")
+	c.fs.StringVar(&c.Description, "description", "", "board description")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

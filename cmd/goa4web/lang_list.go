@@ -11,18 +11,16 @@ import (
 // langListCmd implements "lang list".
 type langListCmd struct {
 	*langCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseLangListCmd(parent *langCmd, args []string) (*langListCmd, error) {
 	c := &langListCmd{langCmd: parent}
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("list")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

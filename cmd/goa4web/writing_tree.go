@@ -11,18 +11,16 @@ import (
 // writingTreeCmd implements "writing tree".
 type writingTreeCmd struct {
 	*writingCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseWritingTreeCmd(parent *writingCmd, args []string) (*writingTreeCmd, error) {
 	c := &writingTreeCmd{writingCmd: parent}
-	fs := flag.NewFlagSet("tree", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("tree")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

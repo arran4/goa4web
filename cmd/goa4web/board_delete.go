@@ -11,29 +11,21 @@ import (
 // boardDeleteCmd implements "board delete".
 type boardDeleteCmd struct {
 	*boardCmd
-	fs   *flag.FlagSet
-	ID   int
-	args []string
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseBoardDeleteCmd(parent *boardCmd, args []string) (*boardDeleteCmd, error) {
 	c := &boardDeleteCmd{boardCmd: parent}
-	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
-	fs.IntVar(&c.ID, "id", 0, "board id")
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("delete")
+	c.fs.IntVar(&c.ID, "id", 0, "board id")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	if c.ID == 0 && fs.NArg() > 0 {
-		_, err := fmt.Sscan(fs.Arg(0), &c.ID)
-		if err == nil {
-			c.args = fs.Args()[1:]
-		} else {
-			c.args = fs.Args()
-		}
-	} else {
-		c.args = fs.Args()
+	if c.ID == 0 && c.fs.NArg() > 0 {
+		_, _ = fmt.Sscan(c.fs.Arg(0), &c.ID)
 	}
-	c.fs = fs
+
 	return c, nil
 }
 

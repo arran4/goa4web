@@ -15,12 +15,11 @@ type userRemoveRoleCmd struct {
 	fs       *flag.FlagSet
 	Username string
 	Role     string
-	args     []string
 }
 
 func parseUserRemoveRoleCmd(parent *userCmd, args []string) (*userRemoveRoleCmd, error) {
 	c := &userRemoveRoleCmd{userCmd: parent}
-	fs, rest, err := parseFlags("remove-role", args, func(fs *flag.FlagSet) {
+	fs, _, err := parseFlags("remove-role", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&c.Username, "username", "", "username")
 		fs.StringVar(&c.Role, "role", "", "role name")
 	})
@@ -28,7 +27,6 @@ func parseUserRemoveRoleCmd(parent *userCmd, args []string) (*userRemoveRoleCmd,
 		return nil, err
 	}
 	c.fs = fs
-	c.args = rest
 	return c, nil
 }
 

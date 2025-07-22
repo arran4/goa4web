@@ -11,18 +11,16 @@ import (
 // faqTreeCmd implements "faq tree".
 type faqTreeCmd struct {
 	*faqCmd
-	fs   *flag.FlagSet
-	args []string
+	fs *flag.FlagSet
 }
 
 func parseFaqTreeCmd(parent *faqCmd, args []string) (*faqTreeCmd, error) {
 	c := &faqTreeCmd{faqCmd: parent}
-	fs := flag.NewFlagSet("tree", flag.ContinueOnError)
-	if err := fs.Parse(args); err != nil {
+	c.fs = newFlagSet("tree")
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
-	c.args = fs.Args()
+
 	return c, nil
 }
 

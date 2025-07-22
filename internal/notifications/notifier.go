@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	htemplate "html/template"
 
-	dbstart "github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/internal/app/dbstart"
 )
 
 // Notifier dispatches updates via email and internal notifications.

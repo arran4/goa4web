@@ -25,4 +25,5 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 func TestForgotPasswordTemplatesExist(t *testing.T) {
 	requireEmailTemplates(t, "passwordResetEmail")
 	requireEmailTemplates(t, "adminNotificationUserRequestPasswordResetEmail")
+	requireEmailTemplates(t, "adminNotificationEmailAssociationRequestEmail")
 }

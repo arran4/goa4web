@@ -582,3 +582,29 @@ CREATE TABLE IF NOT EXISTS `admin_user_comments` (
   KEY `admin_user_comments_user_idx` (`users_idusers`)
 );
 
+
+-- Queue user requests requiring administrator action
+CREATE TABLE IF NOT EXISTS `admin_request_queue` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `change_table` varchar(255) NOT NULL,
+  `change_field` varchar(255) NOT NULL,
+  `change_row_id` int NOT NULL,
+  `change_value` text,
+  `contact_options` text,
+  `status` varchar(20) NOT NULL DEFAULT 'pending',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `acted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `admin_request_queue_user_idx` (`users_idusers`)
+);
+
+-- Comments for administrator requests
+CREATE TABLE IF NOT EXISTS `admin_request_comments` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `request_id` int NOT NULL,
+  `comment` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `admin_request_comments_request_idx` (`request_id`)
+);

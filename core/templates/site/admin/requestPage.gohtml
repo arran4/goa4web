@@ -1,0 +1,23 @@
+{{ template "head" $ }}
+<h2>Request {{ .Req.ID }} for user <a href="/admin/user/{{ .User.Idusers }}">{{ .User.Username.String }}</a></h2>
+<p>Field: {{ .Req.ChangeTable }}.{{ .Req.ChangeField }} row {{ .Req.ChangeRowID }}</p>
+<p>Value: {{ .Req.ChangeValue.String }}</p>
+<p>Contact: {{ .Req.ContactOptions.String }}</p>
+<p>Status: {{ .Req.Status }}</p>
+{{ if .Comments }}
+<h3>Comments</h3>
+<table border="1">
+<tr><th>Date</th><th>Comment</th></tr>
+{{ range .Comments }}
+<tr><td>{{ .CreatedAt }}</td><td>{{ .Comment }}</td></tr>
+{{ end }}
+</table>
+{{ end }}
+<h3>Add Comment</h3>
+<form method="post" action="/admin/request/{{ .Req.ID }}/comment">
+    {{ csrfField }}
+    <textarea name="comment" rows="3" cols="40"></textarea>
+    <input type="submit" value="Add Comment">
+</form>
+<a href="/admin/requests">Back</a>
+{{ template "tail" $ }}

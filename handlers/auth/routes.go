@@ -23,6 +23,7 @@ func RegisterRoutes(r *mux.Router) {
 
 	fr := r.PathPrefix("/forgot").Subrouter()
 	fr.HandleFunc("", forgotPasswordTask.Page).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))
+	fr.HandleFunc("", tasks.Action(emailAssociationRequestTask)).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(emailAssociationRequestTask.Matcher())
 	fr.HandleFunc("", tasks.Action(forgotPasswordTask)).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(forgotPasswordTask.Matcher())
 }
 

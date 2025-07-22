@@ -21,13 +21,29 @@ type ForgotPasswordTask struct {
 	tasks.TaskString
 }
 
+// EmailAssociationRequestTask allows a user to request an email association.
+type EmailAssociationRequestTask struct{ tasks.TaskString }
+
 var _ tasks.Task = (*ForgotPasswordTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ForgotPasswordTask)(nil)
+var _ tasks.Task = (*EmailAssociationRequestTask)(nil)
+var _ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
 
 // ForgotPasswordTask handles password reset requests.
 var forgotPasswordTask = &ForgotPasswordTask{
 	TaskString: TaskUserResetPassword,
+}
+
+var emailAssociationRequestTask = &EmailAssociationRequestTask{TaskString: TaskEmailAssociationRequest}
+
+func (EmailAssociationRequestTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationEmailAssociationRequestEmail")
+}
+
+func (EmailAssociationRequestTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationEmailAssociationRequestEmail")
+	return &v
 }
 
 func (f ForgotPasswordTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -70,7 +86,17 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if row.Email == "" {
-		http.Error(w, "no verified email", http.StatusBadRequest)
+		type Data struct {
+			*common.CoreData
+			Username    string
+			RequestTask string
+		}
+		data := Data{
+			CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+			Username:    row.Username.String,
+			RequestTask: string(TaskEmailAssociationRequest),
+		}
+		handlers.TemplateHandler(w, r, "forgotPasswordNoEmailPage.gohtml", data)
 		return
 	}
 	hash, alg, err := HashPassword(pw)
@@ -102,4 +128,45 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
+
+func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	username := r.PostFormValue("username")
+	email := r.PostFormValue("email")
+	reason := r.PostFormValue("reason")
+	if username == "" || email == "" {
+		http.Error(w, "missing fields", http.StatusBadRequest)
+		return
+	}
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+	if row.Email != "" {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	res, err := queries.InsertAdminRequestQueue(r.Context(), db.InsertAdminRequestQueueParams{
+		UsersIdusers:   row.Idusers,
+		ChangeTable:    "user_emails",
+		ChangeField:    "email",
+		ChangeRowID:    row.Idusers,
+		ChangeValue:    sql.NullString{String: email, Valid: true},
+		ContactOptions: sql.NullString{String: email, Valid: true},
+	})
+	if err != nil {
+		log.Printf("insert admin request: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	id, _ := res.LastInsertId()
+	_ = queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: reason})
+	_ = queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
+	handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
 }

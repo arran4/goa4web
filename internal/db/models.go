@@ -9,6 +9,26 @@ import (
 	"time"
 )
 
+type AdminRequestComment struct {
+	ID        int32
+	RequestID int32
+	Comment   string
+	CreatedAt time.Time
+}
+
+type AdminRequestQueue struct {
+	ID             int32
+	UsersIdusers   int32
+	ChangeTable    string
+	ChangeField    string
+	ChangeRowID    int32
+	ChangeValue    sql.NullString
+	ContactOptions sql.NullString
+	Status         string
+	CreatedAt      time.Time
+	ActedAt        sql.NullTime
+}
+
 type AdminUserComment struct {
 	ID           int32
 	UsersIdusers int32

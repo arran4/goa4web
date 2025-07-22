@@ -5,7 +5,7 @@ const (
 	Alphabet = "abcdefghijklmnopqrstuvwxyz"
 
 	// ExpectedSchemaVersion defines the required database schema version.
-	ExpectedSchemaVersion = 42
+	ExpectedSchemaVersion = 44
 
 	// CSRFField is the name of the hidden field used by gorilla/csrf.
 	CSRFField = "gorilla.csrf.Token"

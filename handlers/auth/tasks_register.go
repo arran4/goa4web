@@ -6,5 +6,6 @@ import "github.com/arran4/goa4web/internal/tasks"
 func RegisterTasks() []tasks.NamedTask {
 	return []tasks.NamedTask{
 		forgotPasswordTask,
+		emailAssociationRequestTask,
 	}
 }

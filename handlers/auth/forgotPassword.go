@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -105,7 +106,10 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if reset, err := queries.GetPasswordResetByUser(r.Context(), row.Idusers); err == nil {
+	if reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{
+		UserID:    row.Idusers,
+		CreatedAt: time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour),
+	}); err == nil {
 		if time.Since(reset.CreatedAt) < 24*time.Hour {
 			http.Error(w, "reset recently requested", http.StatusTooManyRequests)
 			return

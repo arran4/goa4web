@@ -324,24 +324,25 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 }
 
 func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.TaskEvent, tp AdminEmailTemplateProvider) error {
+	if n.Queries == nil {
+		return nil
+	}
 	if !config.AdminNotificationsEnabled() {
 		return nil
 	}
 	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
 		var uid int32
-		if n.Queries != nil {
-			if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
-				uid = u.Idusers
-			} else {
-				log.Printf("user by email %s: %v", addr, err)
-			}
+		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
+			uid = u.Idusers
+		} else {
+			log.Printf("user by email %s: %v", addr, err)
 		}
 		if et := tp.AdminEmailTemplate(); et != nil {
 			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data); err != nil {
 				return err
 			}
 		}
-		if nt := tp.AdminInternalNotificationTemplate(); nt != nil && n.Queries != nil {
+		if nt := tp.AdminInternalNotificationTemplate(); nt != nil {
 			data := struct {
 				eventbus.TaskEvent
 				Item interface{}

@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createPasswordReset = `-- name: CreatePasswordReset :exec
@@ -37,6 +38,15 @@ DELETE FROM pending_passwords WHERE id = ?
 
 func (q *Queries) DeletePasswordReset(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deletePasswordReset, id)
+	return err
+}
+
+const deletePasswordResetsByUser = `-- name: DeletePasswordResetsByUser :exec
+DELETE FROM pending_passwords WHERE user_id = ?
+`
+
+func (q *Queries) DeletePasswordResetsByUser(ctx context.Context, userID int32) error {
+	_, err := q.db.ExecContext(ctx, deletePasswordResetsByUser, userID)
 	return err
 }
 
@@ -90,5 +100,15 @@ UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?
 
 func (q *Queries) MarkPasswordResetVerified(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, markPasswordResetVerified, id)
+	return err
+}
+
+const purgePasswordResetsBefore = `-- name: PurgePasswordResetsBefore :exec
+DELETE FROM pending_passwords
+WHERE created_at < ? OR verified_at IS NOT NULL
+`
+
+func (q *Queries) PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) error {
+	_, err := q.db.ExecContext(ctx, purgePasswordResetsBefore, createdAt)
 	return err
 }

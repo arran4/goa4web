@@ -156,6 +156,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("user: %w", err)
 		}
 		return c.Run()
+	case "password":
+		c, err := parsePasswordCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("password: %w", err)
+		}
+		return c.Run()
 	case "email":
 		c, err := parseEmailCmd(r, r.args[1:])
 		if err != nil {

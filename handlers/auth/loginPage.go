@@ -110,18 +110,19 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				session.Values["PendingResetID"] = reset.ID
-        if err := session.Save(r, w); err != nil {
-          log.Printf("save session: %v", err)
-        }
+				if err := session.Save(r, w); err != nil {
+					log.Printf("save session: %v", err)
+				}
 				handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
 				return
-      } else {
-      if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
-        Username:  username,
-        IpAddress: strings.Split(r.RemoteAddr, ":")[0],
-      }); err != nil {
-        log.Printf("insert login attempt: %v", err)
-      }
+			}
+		} else {
+			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
+				Username:  username,
+				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
+			}); err != nil {
+				log.Printf("insert login attempt: %v", err)
+			}
 			renderLoginForm(w, r, "Invalid password")
 			return
 		}

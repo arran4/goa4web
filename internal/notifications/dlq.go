@@ -43,7 +43,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string)
 						if err != nil {
 							continue
 						}
-						if err := sendInternalNotification(ctx, n.Queries, u.Idusers, "", string(nt)); err != nil {
+						if err := n.sendInternalNotification(ctx, u.Idusers, "", string(nt)); err != nil {
 							log.Printf("send internal notification: %v", err)
 						}
 					}

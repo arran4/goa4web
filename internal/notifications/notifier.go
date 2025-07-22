@@ -44,6 +44,7 @@ func WithConfig(cfg config.RuntimeConfig) Option {
 			n.EmailProvider = email.ProviderFromConfig(cfg)
 		}
 		if n.Queries == nil {
+			// TODO evaluate if this is the best way
 			if db := dbstart.GetDBPool(); db != nil {
 				n.Queries = dbpkg.New(db)
 			}

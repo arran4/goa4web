@@ -27,6 +27,9 @@ func (c *configCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing config command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "reload":
 		cmd, err := parseConfigReloadCmd(c, args[1:])

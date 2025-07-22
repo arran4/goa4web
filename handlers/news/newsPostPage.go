@@ -82,11 +82,11 @@ func (ReplyTask) AdminInternalNotificationTemplate() *string {
 // AutoSubscribePath allows commenters to automatically watch for further replies.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. A subscription to
 // the underlying discussion thread is created using event data when available.
-func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
+func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
 	}
-	return string(TaskReply), evt.Path
+	return string(TaskReply), evt.Path, nil
 }
 
 type EditTask struct{ tasks.TaskString }
@@ -143,11 +143,11 @@ func (NewPostTask) SubscribedInternalNotificationTemplate() *string {
 // AutoSubscribePath keeps authors in the loop on new post discussions.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. Subscriptions use
 // the thread path derived from postcountworker data when possible.
-func (NewPostTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
+func (NewPostTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return string(TaskNewPost), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+		return string(TaskNewPost), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
 	}
-	return string(TaskNewPost), evt.Path
+	return string(TaskNewPost), evt.Path, nil
 }
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
@@ -207,7 +207,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+				log.Printf("render no access page: %v", err)
+			}
 			return
 		default:
 			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
@@ -216,7 +218,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+			log.Printf("render no access page: %v", err)
+		}
 		return
 	}
 

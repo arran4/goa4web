@@ -3,6 +3,7 @@ package dbstart
 import (
 	"bytes"
 	_ "embed"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,9 +26,11 @@ func RenderSchemaMismatch(actual, expected int) string {
 		exe += "-admin"
 	}
 	var buf bytes.Buffer
-	_ = schemaMismatchTemplate.Execute(&buf, struct {
+	if err := schemaMismatchTemplate.Execute(&buf, struct {
 		Actual, Expected int
 		Exe              string
-	}{actual, expected, exe})
+	}{actual, expected, exe}); err != nil {
+		log.Printf("schema mismatch template execute: %v", err)
+	}
 	return strings.TrimSpace(buf.String())
 }

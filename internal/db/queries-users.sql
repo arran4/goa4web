@@ -96,7 +96,7 @@ SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.ver
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
 JOIN roles r ON ur.role_id = r.id
-WHERE ur.section = 'all' and r.name = 'administrator';
+WHERE r.is_admin = 1;
 
 -- name: UpdateUserEmail :exec
 UPDATE user_emails SET email = ? WHERE user_id = ?;
@@ -108,7 +108,7 @@ FROM users u
 WHERE NOT EXISTS (
     SELECT 1 FROM user_roles ur
     JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected')
+    WHERE ur.users_idusers = u.idusers AND (r.can_login = 1 OR r.name = 'rejected')
 )
 ORDER BY u.idusers;
 

@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -42,7 +43,9 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string)
 						if err != nil {
 							continue
 						}
-						_ = sendInternalNotification(ctx, n.Queries, u.Idusers, "", string(nt))
+						if err := sendInternalNotification(ctx, n.Queries, u.Idusers, "", string(nt)); err != nil {
+							log.Printf("send internal notification: %v", err)
+						}
 					}
 				}
 			}

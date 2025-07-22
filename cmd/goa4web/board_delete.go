@@ -23,7 +23,9 @@ func parseBoardDeleteCmd(parent *boardCmd, args []string) (*boardDeleteCmd, erro
 		return nil, err
 	}
 	if c.ID == 0 && c.fs.NArg() > 0 {
-		_, _ = fmt.Sscan(c.fs.Arg(0), &c.ID)
+		if _, err := fmt.Sscan(c.fs.Arg(0), &c.ID); err != nil {
+			return nil, fmt.Errorf("parse id: %w", err)
+		}
 	}
 
 	return c, nil

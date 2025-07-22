@@ -2,9 +2,11 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"sync"
 	ttemplate "text/template"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
@@ -84,6 +86,10 @@ func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 
 // NotifyAdmins sends a generic update notice to administrator accounts.
 func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data EmailData) error {
+	return n.notifyAdmins(ctx, et, nil, data, "")
+}
+
+func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data interface{}, link string) error {
 	if n.Queries == nil {
 		return nil
 	}
@@ -91,16 +97,63 @@ func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data Em
 		return nil
 	}
 	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
-		var uid int32
+		var uid *int32
 		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
-			uid = u.Idusers
+			id := u.Idusers
+			uid = &id
 		} else {
 			log.Printf("notify admin %s: %v", addr, err)
-			continue
 		}
-		if err := n.renderAndQueueEmailFromTemplates(ctx, &uid, addr, et, data, false); err != nil {
-			log.Printf("notify admin %s: %v", addr, err)
+		if et != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, data, false); err != nil {
+				return err
+			}
+		}
+		if nt != nil {
+			msg, err := n.renderNotification(ctx, *nt, data)
+			if err != nil {
+				return err
+			}
+			if uid != nil {
+				if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+					UsersIdusers: *uid,
+					Link:         sql.NullString{String: link, Valid: link != ""},
+					Message:      sql.NullString{String: string(msg), Valid: len(msg) > 0},
+				}); err != nil {
+					return err
+				}
+			} else {
+				log.Printf("Error uid not found for %s in admin email template notification", addr)
+			}
 		}
 	}
 	return nil
+}
+
+// NotificationPurgeWorker periodically removes old read notifications.
+func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Duration) {
+	if n.Queries == nil {
+		return
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			if err := n.Queries.PurgeReadNotifications(ctx); err != nil {
+				log.Printf("purge notifications: %v", err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// sendInternalNotification stores an internal notification for the user.
+func (n *Notifier) sendInternalNotification(ctx context.Context, userID int32, path, msg string) error {
+	return n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+		UsersIdusers: userID,
+		Link:         sql.NullString{String: path, Valid: path != ""},
+		Message:      sql.NullString{String: msg, Valid: msg != ""},
+	})
 }

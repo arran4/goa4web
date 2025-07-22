@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -73,7 +74,9 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Disposition", "attachment; filename=wordlist.txt")
 		for _, row := range rows {
 			if row.Valid {
-				_, _ = w.Write([]byte(row.String + "\n"))
+				if _, err := w.Write([]byte(row.String + "\n")); err != nil {
+					log.Printf("write wordlist row: %v", err)
+				}
 			}
 		}
 		return
@@ -160,7 +163,9 @@ func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=wordlist.txt")
 	for _, row := range rows {
 		if row.Valid {
-			_, _ = w.Write([]byte(row.String + "\n"))
+			if _, err := w.Write([]byte(row.String + "\n")); err != nil {
+				log.Printf("write wordlist row: %v", err)
+			}
 		}
 	}
 }

@@ -145,7 +145,9 @@ func (n *Notifier) queueEmail(ctx context.Context, userID *int32, direct bool, m
 func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt eventbus.TaskEvent, et *EmailTemplates) error {
 	user, err := n.Queries.GetUserById(ctx, userID)
 	if err != nil || !user.Email.Valid || user.Email.String == "" {
-		notifyMissingEmail(ctx, n.Queries, userID)
+		if nmErr := notifyMissingEmail(ctx, n.Queries, userID); nmErr != nil {
+			log.Printf("notify missing email: %v", nmErr)
+		}
 		return err
 	}
 	if et == nil {

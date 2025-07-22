@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -74,7 +75,9 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, fmt.Errorf("add role:%w", err).Error())
 		}
 		if reason != "" {
-			_ = queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: id, Comment: reason})
+			if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: id, Comment: reason}); err != nil {
+				log.Printf("insert admin user comment: %v", err)
+			}
 		}
 
 	}

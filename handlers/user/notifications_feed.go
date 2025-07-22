@@ -8,7 +8,8 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-func notificationsFeed(r *http.Request, notifications []*db.Notification) *feeds.Feed {
+// NotificationsFeed converts a list of notifications into a feed.
+func NotificationsFeed(r *http.Request, notifications []*db.Notification) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       "Notifications",
 		Link:        &feeds.Link{Href: r.URL.Path},

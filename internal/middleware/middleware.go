@@ -156,18 +156,17 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 // RedirectToLogin stores the current URL then redirects to the login page.
 func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
 	if session != nil {
-		backURL := r.URL.RequestURI()
-		session.Values["BackURL"] = backURL
-		if r.Method != http.MethodGet {
-			if err := r.ParseForm(); err == nil {
-				session.Values["BackMethod"] = r.Method
-				session.Values["BackData"] = r.Form.Encode()
-			}
-		} else {
-			delete(session.Values, "BackMethod")
-			delete(session.Values, "BackData")
+		if err := session.Save(r, w); err != nil {
+			log.Printf("save session: %v", err)
 		}
-		_ = session.Save(r, w)
 	}
-	http.Redirect(w, r, "/login?back="+url.QueryEscape(r.URL.RequestURI()), http.StatusTemporaryRedirect)
+	vals := url.Values{}
+	vals.Set("back", r.URL.RequestURI())
+	if r.Method != http.MethodGet {
+		if err := r.ParseForm(); err == nil {
+			vals.Set("method", r.Method)
+			vals.Set("data", r.Form.Encode())
+		}
+	}
+	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusTemporaryRedirect)
 }

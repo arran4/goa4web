@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -155,7 +156,10 @@ func WithEmailProvider(p MailProvider) CoreOption {
 
 // EmailProvider returns the configured email provider.
 func (cd *CoreData) EmailProvider() MailProvider {
-	p, _ := cd.emailProvider.load(func() (MailProvider, error) { return nil, nil })
+	p, err := cd.emailProvider.load(func() (MailProvider, error) { return nil, nil })
+	if err != nil {
+		log.Printf("load email provider: %v", err)
+	}
 	return p
 }
 
@@ -220,7 +224,7 @@ func pageSize(r *http.Request) int {
 
 // UserRoles returns the user roles loaded lazily.
 func (cd *CoreData) UserRoles() []string {
-	roles, _ := cd.userRoles.load(func() ([]string, error) {
+	roles, err := cd.userRoles.load(func() ([]string, error) {
 		rs := []string{"anonymous"}
 		if cd.UserID == 0 || cd.queries == nil {
 			return rs, nil
@@ -237,6 +241,9 @@ func (cd *CoreData) UserRoles() []string {
 		}
 		return rs, nil
 	})
+	if err != nil {
+		log.Printf("load user roles: %v", err)
+	}
 	return roles
 }
 
@@ -268,7 +275,10 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 // AbsoluteURL returns an absolute URL by combining the configured hostname or
 // the request host with path. The base value is cached per request.
 func (cd *CoreData) AbsoluteURL(path string) string {
-	base, _ := cd.absoluteURLBase.load(func() (string, error) { return "", nil })
+	base, err := cd.absoluteURLBase.load(func() (string, error) { return "", nil })
+	if err != nil {
+		log.Printf("load absolute URL base: %v", err)
+	}
 	return base + path
 }
 
@@ -350,7 +360,7 @@ func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
 // PreferredLanguageID returns the user's preferred language ID if set,
 // otherwise it resolves the site's default language name to an ID.
 func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
-	id, _ := cd.preferredLanguageID.load(func() (int32, error) {
+	id, err := cd.preferredLanguageID.load(func() (int32, error) {
 		if pref, err := cd.Preference(); err == nil && pref != nil {
 			if pref.LanguageIdlanguage != 0 {
 				return pref.LanguageIdlanguage, nil
@@ -365,6 +375,9 @@ func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 		}
 		return langID, nil
 	})
+	if err != nil {
+		log.Printf("load preferred language id: %v", err)
+	}
 	return id
 }
 
@@ -380,7 +393,7 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 
 // Announcement returns the active announcement row loaded lazily.
 func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
-	ann, _ := cd.announcement.load(func() (*db.GetActiveAnnouncementWithNewsRow, error) {
+	ann, err := cd.announcement.load(func() (*db.GetActiveAnnouncementWithNewsRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -390,6 +403,9 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 		}
 		return row, nil
 	})
+	if err != nil {
+		log.Printf("load announcement: %v", err)
+	}
 	return ann
 }
 
@@ -820,12 +836,15 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.GetAllImagePostsByBoar
 // current user. The value is fetched lazily on the first call and cached for
 // subsequent calls.
 func (cd *CoreData) UnreadNotificationCount() int64 {
-	count, _ := cd.unreadCount.load(func() (int64, error) {
+	count, err := cd.unreadCount.load(func() (int64, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return 0, nil
 		}
 		return cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
 	})
+	if err != nil {
+		log.Printf("load unread notification count: %v", err)
+	}
 	return count
 }
 

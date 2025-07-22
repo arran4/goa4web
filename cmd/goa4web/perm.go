@@ -27,6 +27,9 @@ func (c *permCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing perm command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "grant":
 		cmd, err := parsePermGrantCmd(c, args[1:])

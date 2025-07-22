@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
@@ -54,7 +55,9 @@ func (c *userRejectCmd) Run() error {
 		return fmt.Errorf("add role: %w", err)
 	}
 	if c.Reason != "" {
-		_ = queries.InsertAdminUserComment(ctx, dbpkg.InsertAdminUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Reason})
+		if err := queries.InsertAdminUserComment(ctx, dbpkg.InsertAdminUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Reason}); err != nil {
+			log.Printf("insert admin user comment: %v", err)
+		}
 	}
 	c.rootCmd.Infof("rejected user %d", c.ID)
 	return nil

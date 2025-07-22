@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"log"
 	"net/url"
 	"strings"
 )
@@ -35,6 +36,7 @@ type A4code2html struct {
 	CodeType CodeType
 	makeTC   bool
 	stack    []string
+	err      error
 	// ImageURLMapper optionally maps tag URLs to fully qualified versions.
 	// The first parameter provides the tag name, e.g. "img" or "a".
 	ImageURLMapper func(tag, val string) string
@@ -93,6 +95,7 @@ func (c *A4code2html) clear() {
 	c.stack = nil
 	c.r = nil
 	c.w = nil
+	c.err = nil
 }
 
 // SetInput assigns the text to be processed.
@@ -472,9 +475,15 @@ func (c *A4code2html) Process() io.Reader {
 	} else if b, ok := dest.(*bytes.Buffer); ok {
 		buf = b
 	}
-	_ = c.ProcessReader(c.r, dest)
+	if err := c.ProcessReader(c.r, dest); err != nil {
+		c.err = fmt.Errorf("process reader: %w", err)
+		log.Print(c.err)
+	}
 	if buf != nil {
 		return bytes.NewReader(buf.Bytes())
 	}
 	return bytes.NewReader(nil)
 }
+
+// Error returns the last processing error, if any.
+func (c *A4code2html) Error() error { return c.err }

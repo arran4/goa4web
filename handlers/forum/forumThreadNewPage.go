@@ -76,12 +76,11 @@ func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
 // AutoSubscribePath implements notif.AutoSubscribeProvider. When the
 // postcountworker provides context, a subscription to the created thread is
 // generated.
-func (CreateThreadTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
+func (CreateThreadTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return string(TaskCreateThread), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+		return string(TaskCreateThread), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
 	}
-
-	return string(TaskCreateThread), evt.Path
+	return string(TaskCreateThread), evt.Path, nil
 }
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {

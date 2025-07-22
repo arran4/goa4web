@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -212,7 +213,9 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var buf [8]byte
-	_, _ = rand.Read(buf[:])
+	if _, err := rand.Read(buf[:]); err != nil {
+		log.Printf("rand read: %v", err)
+	}
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0}); err != nil {
@@ -255,10 +258,14 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var buf [8]byte
-	_, _ = rand.Read(buf[:])
+	if _, err := rand.Read(buf[:]); err != nil {
+		log.Printf("rand read: %v", err)
+	}
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
-	_ = queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)})
+	if err := queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)}); err != nil {
+		log.Printf("set verification code: %v", err)
+	}
 	path := "/usr/email/verify?code=" + code
 	page := "http://" + r.Host + path
 	if config.AppRuntimeConfig.HTTPHostname != "" {
@@ -289,7 +296,9 @@ func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err == nil && ue.UserID == uid {
-		_ = queries.DeleteUserEmail(r.Context(), int32(id))
+		if err := queries.DeleteUserEmail(r.Context(), int32(id)); err != nil {
+			log.Printf("delete user email: %v", err)
+		}
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
@@ -314,7 +323,9 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	case int32:
 		maxPr = v
 	}
-	_ = queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)})
+	if err := queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)}); err != nil {
+		log.Printf("set notification priority: %v", err)
+	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
@@ -322,26 +333,26 @@ func (AddEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 
-func (AddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) string {
+func (AddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {
 	if evt.Data != nil {
 		if email, ok := evt.Data["email"].(string); ok {
-			return email
+			return email, nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("email not provided")
 }
 
 func (ResendVerificationEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 
-func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) string {
+func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {
 	if evt.Data != nil {
 		if email, ok := evt.Data["email"].(string); ok {
-			return email
+			return email, nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("email not provided")
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
@@ -378,8 +389,12 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 			handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
 			return
 		}
-		_ = queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID})
-		_ = queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID})
+		if err := queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID}); err != nil {
+			log.Printf("update user email verification: %v", err)
+		}
+		if err := queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID}); err != nil {
+			log.Printf("delete user emails: %v", err)
+		}
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 		return
 	}

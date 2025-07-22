@@ -27,6 +27,9 @@ func (c *faqCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing faq command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "tree":
 		cmd, err := parseFaqTreeCmd(c, args[1:])

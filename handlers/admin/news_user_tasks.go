@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -134,14 +135,14 @@ func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, stri
 	return 0, "", "", sql.ErrNoRows
 }
 
-func (NewsUserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (NewsUserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (NewsUserAllowTask) TargetEmailTemplate() *notifications.EmailTemplates {
@@ -153,14 +154,14 @@ func (NewsUserAllowTask) TargetInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (NewsUserRemoveTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (NewsUserRemoveTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (NewsUserRemoveTask) TargetEmailTemplate() *notifications.EmailTemplates {

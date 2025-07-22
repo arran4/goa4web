@@ -17,6 +17,7 @@ Commands:
   db      manage database
   lang    manage languages
   server  manage the running server
+  password manage pending password resets
   email   manage emails
   config  manage configuration
 

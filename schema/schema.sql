@@ -203,6 +203,8 @@ CREATE TABLE `linker_search` (
 CREATE TABLE `roles` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` tinytext NOT NULL,
+  `can_login` tinyint(1) NOT NULL DEFAULT 0,
+  `is_admin` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `roles_name_idx` (`name`(255))
 );

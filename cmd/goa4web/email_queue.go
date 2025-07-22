@@ -27,6 +27,9 @@ func (c *emailQueueCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing queue command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "list":
 		cmd, err := parseEmailQueueListCmd(c, args[1:])

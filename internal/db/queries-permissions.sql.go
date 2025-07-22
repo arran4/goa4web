@@ -159,7 +159,7 @@ const getAdministratorUserRole = `-- name: GetAdministratorUserRole :one
 SELECT ur.iduser_roles, ur.users_idusers, ur.role_id
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.name = 'administrator'
+WHERE ur.users_idusers = ? AND r.is_admin = 1
 `
 
 func (q *Queries) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error) {
@@ -442,6 +442,21 @@ type UpdatePermissionParams struct {
 func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
 	_, err := q.db.ExecContext(ctx, updatePermission, arg.Name, arg.IduserRoles)
 	return err
+}
+
+const userHasLoginRole = `-- name: UserHasLoginRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.can_login = 1
+LIMIT 1
+`
+
+func (q *Queries) UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, userHasLoginRole, usersIdusers)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const userHasRole = `-- name: UserHasRole :one

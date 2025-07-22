@@ -27,6 +27,9 @@ func (c *boardCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing board command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "list":
 		cmd, err := parseBoardListCmd(c, args[1:])

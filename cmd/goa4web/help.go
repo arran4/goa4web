@@ -35,6 +35,9 @@ func (c *helpCmd) showHelp(args []string) error {
 		c.rootCmd.fs.Usage()
 		return nil
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "serve":
 		_, err := parseServeCmd(c.rootCmd, append(args[1:], "-h"))
@@ -197,6 +200,7 @@ func (c *helpCmd) showHelp(args []string) error {
 		}
 		return nil
 	default:
+		c.fs.Usage()
 		return fmt.Errorf("unknown help topic %q", args[0])
 	}
 }

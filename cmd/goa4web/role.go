@@ -33,6 +33,9 @@ func (c *roleCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing role command")
 	}
+	if err := usageIfHelp(c.fs, c.args); err != nil {
+		return err
+	}
 	switch c.args[0] {
 	case "users":
 		cmd, err := parseRoleUsersCmd(c, c.args[1:])

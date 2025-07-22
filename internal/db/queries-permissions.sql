@@ -38,7 +38,7 @@ WHERE iduser_roles = ?;
 SELECT ur.*
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.name = 'administrator';
+WHERE ur.users_idusers = ? AND r.is_admin = 1;
 
 
 
@@ -100,6 +100,13 @@ SELECT 1
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
 WHERE ur.users_idusers = ? AND r.name = ?
+LIMIT 1;
+
+-- name: UserHasLoginRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.can_login = 1
 LIMIT 1;
 
 -- name: GetPermissionsByUserID :many

@@ -28,6 +28,9 @@ func (c *newsCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing news command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "list":
 		cmd, err := parseNewsListCmd(c, args[1:])

@@ -1,3 +1,5 @@
+{{define "flags"}}
 {{range .}}-{{.Name}} {{.DefValue}}
     {{.Usage}}
+{{end}}
 {{end}}

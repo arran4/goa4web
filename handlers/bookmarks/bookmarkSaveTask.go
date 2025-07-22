@@ -3,30 +3,24 @@ package bookmarks
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
+// SaveTask renders the edit page and persists bookmark changes.
 type SaveTask struct{ tasks.TaskString }
 
 var saveTask = &SaveTask{TaskString: TaskSave}
 
 // ensure SaveTask implements tasks.Task for routing
 var _ tasks.Task = (*SaveTask)(nil)
-
-type CreateTask struct{ tasks.TaskString }
-
-var createTask = &CreateTask{TaskString: TaskCreate}
-
-// ensure CreateTask implements tasks.Task for routing
-var _ tasks.Task = (*CreateTask)(nil)
 
 func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -51,7 +45,7 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("error getBookmarksForUser: %s", err)
-			http.Error(w, "ERROR", 500)
+			http.Error(w, "ERROR", http.StatusInternalServerError)
 			return
 		}
 	} else {
@@ -83,29 +77,4 @@ func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/bookmarks/mine", http.StatusTemporaryRedirect)
-
-}
-
-func (CreateTask) Action(w http.ResponseWriter, r *http.Request) {
-	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	uid, _ := session.Values["UID"].(int32)
-
-	if err := queries.CreateBookmarks(r.Context(), db.CreateBookmarksParams{
-		List: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-		UsersIdusers: uid,
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	http.Redirect(w, r, "/bookmarks/mine", http.StatusTemporaryRedirect)
-
 }

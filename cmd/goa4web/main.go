@@ -215,7 +215,7 @@ func (r *rootCmd) Run() error {
 		}
 		return c.Run()
 	case "role":
-		c, err := parseRoleCmd(r, r.args[1:])
+		c, err := parseRoleCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("role: %w", err)
 		}

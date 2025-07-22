@@ -107,7 +107,7 @@ func (c *userCmd) Run() error {
 		}
 		return cmd.Run()
 	case "password":
-		cmd, err := parseUserPasswordCmd(c, c.args[1:])
+		cmd, err := parseUserPasswordCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("password: %w", err)
 		}

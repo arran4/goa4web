@@ -32,11 +32,10 @@ func (c *dbBackupCmd) Run() error {
 		return fmt.Errorf("file required")
 	}
 	cfg := c.rootCmd.cfg
+	c.rootCmd.Verbosef("creating backup using %s", cfg.DBDriver)
 	if err := dbdrivers.Backup(cfg.DBDriver, cfg.DBConn, c.File); err != nil {
 		return err
 	}
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Printf("database backup written to %s\n", c.File)
-	}
+	c.rootCmd.Infof("database backup written to %s", c.File)
 	return nil
 }

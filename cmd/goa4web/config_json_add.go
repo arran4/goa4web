@@ -36,11 +36,10 @@ func (c *configJSONAddCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
+	c.rootCmd.Verbosef("updating %s", c.File)
 	if err := config.AddMissingJSONOptions(core.OSFS{}, c.File, values); err != nil {
 		return fmt.Errorf("update json: %w", err)
 	}
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Printf("updated %s\n", c.File)
-	}
+	c.rootCmd.Infof("updated %s", c.File)
 	return nil
 }

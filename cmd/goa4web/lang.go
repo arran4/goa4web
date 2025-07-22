@@ -27,6 +27,9 @@ func (c *langCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing lang command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "add":
 		cmd, err := parseLangAddCmd(c, args[1:])

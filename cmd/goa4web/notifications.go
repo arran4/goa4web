@@ -28,6 +28,9 @@ func (c *notificationsCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing notifications command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "tasks":
 		cmd, err := parseNotificationsTasksCmd(c, args[1:])

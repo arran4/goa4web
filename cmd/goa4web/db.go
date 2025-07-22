@@ -27,6 +27,9 @@ func (c *dbCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing db command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "migrate":
 		cmd, err := parseDbMigrateCmd(c, args[1:])

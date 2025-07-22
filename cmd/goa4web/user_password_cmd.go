@@ -33,6 +33,9 @@ func (c *userPasswordCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing password command")
 	}
+	if err := usageIfHelp(c.fs, c.args); err != nil {
+		return err
+	}
 	switch c.args[0] {
 	case "clear-expired":
 		cmd, err := parseUserPasswordClearExpiredCmd(c, c.args[1:])

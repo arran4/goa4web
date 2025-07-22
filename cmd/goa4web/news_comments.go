@@ -28,6 +28,9 @@ func (c *newsCommentsCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing comments command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "list":
 		cmd, err := parseNewsCommentsListCmd(c, args[1:])

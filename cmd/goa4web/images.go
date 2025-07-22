@@ -34,6 +34,9 @@ func (c *imagesCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing images command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "cache":
 		return c.runCache(args[1:])
@@ -47,6 +50,9 @@ func (c *imagesCmd) runCache(args []string) error {
 	if len(args) == 0 {
 		c.fs.Usage()
 		return fmt.Errorf("missing cache command")
+	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
 	}
 	dir := config.AppRuntimeConfig.ImageCacheDir
 	switch args[0] {

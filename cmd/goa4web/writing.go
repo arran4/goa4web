@@ -28,6 +28,9 @@ func (c *writingCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing writing command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "tree":
 		cmd, err := parseWritingTreeCmd(c, args[1:])

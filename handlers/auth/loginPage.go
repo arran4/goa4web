@@ -107,7 +107,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := queries.UserHasRole(r.Context(), db.UserHasRoleParams{UsersIdusers: row.Idusers, Name: "user"}); err != nil {
+	if _, err := queries.UserHasLoginRole(r.Context(), row.Idusers); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			renderLoginForm(w, r, "approval is pending")
 		} else {

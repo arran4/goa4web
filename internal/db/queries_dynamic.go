@@ -142,9 +142,9 @@ func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredPa
 	if arg.Status != "" {
 		switch arg.Status {
 		case "pending":
-			cond = append(cond, "NOT EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected'))")
+			cond = append(cond, "NOT EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND (r.can_login = 1 OR r.name = 'rejected'))")
 		case "active":
-			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'user')")
+			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.can_login = 1)")
 		case "rejected":
 			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'rejected')")
 		}
@@ -195,9 +195,9 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 	if arg.Status != "" {
 		switch arg.Status {
 		case "pending":
-			cond = append(cond, "NOT EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name IN ('user','rejected'))")
+			cond = append(cond, "NOT EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND (r.can_login = 1 OR r.name = 'rejected'))")
 		case "active":
-			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'user')")
+			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.can_login = 1)")
 		case "rejected":
 			cond = append(cond, "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = u.idusers AND r.name = 'rejected')")
 		}

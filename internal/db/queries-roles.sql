@@ -1,5 +1,5 @@
 -- name: ListRoles :many
-SELECT id, name FROM roles ORDER BY id;
+SELECT id, name, can_login, is_admin FROM roles ORDER BY id;
 
 -- name: ListRolesWithUsers :many
 SELECT r.id, r.name, GROUP_CONCAT(u.username ORDER BY u.username) AS users

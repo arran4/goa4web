@@ -15,11 +15,11 @@ func TestAllRolesLazy(t *testing.T) {
 	}
 	defer db.Close()
 
-	rows := sqlmock.NewRows([]string{"id", "name"}).
-		AddRow(int32(1), "user").
-		AddRow(int32(2), "administrator")
+	rows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin"}).
+		AddRow(int32(1), "user", true, false).
+		AddRow(int32(2), "administrator", true, true)
 
-	mock.ExpectQuery("SELECT id, name FROM roles ORDER BY id").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT id, name, can_login, is_admin FROM roles ORDER BY id").WillReturnRows(rows)
 
 	cd := NewCoreData(context.Background(), dbpkg.New(db))
 

@@ -79,6 +79,7 @@ var IntOptions = []IntOption{
 	{"image-max-bytes", EnvImageMaxBytes, "maximum allowed upload size in bytes", 0, "", func(c *RuntimeConfig) *int { return &c.ImageMaxBytes }},
 	{"image-cache-max-bytes", EnvImageCacheMaxBytes, "maximum image cache size in bytes", -1, "", func(c *RuntimeConfig) *int { return &c.ImageCacheMaxBytes }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "interval in seconds between email worker runs", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
+	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "password reset expiry in hours", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},
 	{"stats-start-year", EnvStatsStartYear, "start year for usage stats", 0, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
 }
 

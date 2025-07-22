@@ -165,15 +165,6 @@ func (c *helpCmd) showHelp(args []string) error {
 			_ = cmd.Run()
 		}
 		return nil
-	case "password":
-		cmd, err := parsePasswordCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("password: %w", err)
-		}
-		if err == nil {
-			_ = cmd.Run()
-		}
-		return nil
 	case "config":
 		cmd, err := parseConfigCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {

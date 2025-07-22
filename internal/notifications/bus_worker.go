@@ -307,7 +307,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 
 	if len(msg) != 0 {
 		for id := range internalSubs {
-			if err := sendInternalNotification(ctx, n.Queries, id, evt.Path, string(msg)); err != nil {
+			if err := n.sendInternalNotification(ctx, id, evt.Path, string(msg)); err != nil {
 				return fmt.Errorf("deliver internal to %d: %w", id, err)
 			}
 		}

@@ -103,7 +103,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	feed := notificationsFeed(r, notifs)
+	feed := NotificationsFeed(r, notifs)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

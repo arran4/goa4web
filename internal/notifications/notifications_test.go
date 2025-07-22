@@ -3,7 +3,6 @@ package notifications
 import (
 	"context"
 	"database/sql"
-	"net/http/httptest"
 	"net/mail"
 	"testing"
 	"time"
@@ -43,15 +42,6 @@ func TestNotificationsQueries(t *testing.T) {
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)
-	}
-}
-
-func TestNotificationsFeed(t *testing.T) {
-	r := httptest.NewRequest("GET", "/notifications/rss", nil)
-	n := []*dbpkg.Notification{{ID: 1, Link: sql.NullString{String: "/l", Valid: true}, Message: sql.NullString{String: "m", Valid: true}}}
-	feed := NotificationsFeed(r, n)
-	if len(feed.Items) != 1 || feed.Items[0].Link.Href != "/l" {
-		t.Fatalf("feed item incorrect")
 	}
 }
 

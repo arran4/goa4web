@@ -42,7 +42,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string)
 						if err != nil {
 							continue
 						}
-						_ = sendInternalNotification(ctx, n.Queries, u.Idusers, "", string(nt))
+						_ = n.sendInternalNotification(ctx, u.Idusers, "", string(nt))
 					}
 				}
 			}

@@ -54,16 +54,19 @@ func printFlags(fs *flag.FlagSet) {
 	}
 }
 
-var compiledTemplates *template.Template
+var (
+	compiledTemplates *template.Template
+	templatesOnce     sync.Once
+)
 
 func executeUsage(w io.Writer, filename string, fs *flag.FlagSet, prog string) error {
-	sync.OnceFunc(func() {
+	templatesOnce.Do(func() {
 		sub, err := fs2.Sub(templatesFS, "templates")
 		if err != nil {
 			log.Panicf("template sub err: %v", err)
 		}
 		compiledTemplates = template.Must(template.New("").ParseFS(sub, "*.txt"))
-	})()
+	})
 	type Data struct {
 		Prog  string
 		Flags []flagInfo

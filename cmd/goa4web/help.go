@@ -48,7 +48,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("user: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "email":
@@ -57,7 +59,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("email: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "db":
@@ -66,7 +70,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("db: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "perm":
@@ -75,7 +81,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "board":
@@ -84,7 +92,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("board: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "blog", "blogs":
@@ -93,7 +103,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("blog: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "writing", "writings":
@@ -102,7 +114,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("writing: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "news":
@@ -111,7 +125,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("news: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "faq":
@@ -120,7 +136,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("faq: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "ipban":
@@ -129,7 +147,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("ipban: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "audit":
@@ -138,7 +158,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("audit: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "lang":
@@ -147,7 +169,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("lang: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "server":
@@ -156,7 +180,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("server: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	case "config":
@@ -165,7 +191,9 @@ func (c *helpCmd) showHelp(args []string) error {
 			return fmt.Errorf("config: %w", err)
 		}
 		if err == nil {
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 		return nil
 	default:

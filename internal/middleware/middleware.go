@@ -167,7 +167,9 @@ func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.S
 			delete(session.Values, "BackMethod")
 			delete(session.Values, "BackData")
 		}
-		_ = session.Save(r, w)
+		if err := session.Save(r, w); err != nil {
+			log.Printf("save session: %v", err)
+		}
 	}
 	http.Redirect(w, r, "/login?back="+url.QueryEscape(r.URL.RequestURI()), http.StatusTemporaryRedirect)
 }

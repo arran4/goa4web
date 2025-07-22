@@ -108,7 +108,9 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if ccp, ok := cp.(upload.CacheProvider); ok {
-			_ = ccp.Cleanup(r.Context(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes))
+			if err := ccp.Cleanup(r.Context(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes)); err != nil {
+				log.Printf("cache cleanup: %v", err)
+			}
 		}
 	}
 
@@ -132,5 +134,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-	_, _ = w.Write([]byte(imagesign.SignedRef("image:" + fname)))
+	if _, err := w.Write([]byte(imagesign.SignedRef("image:" + fname))); err != nil {
+		log.Printf("write response: %v", err)
+	}
 }

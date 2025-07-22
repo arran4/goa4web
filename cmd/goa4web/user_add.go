@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -78,7 +79,9 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		return fmt.Errorf("last insert id: %w", err)
 	}
 	if email != "" {
-		_ = queries.InsertUserEmail(ctx, dbpkg.InsertUserEmailParams{UserID: int32(id), Email: email, VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, LastVerificationCode: sql.NullString{}, NotificationPriority: 100})
+		if err := queries.InsertUserEmail(ctx, dbpkg.InsertUserEmailParams{UserID: int32(id), Email: email, VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, LastVerificationCode: sql.NullString{}, NotificationPriority: 100}); err != nil {
+			log.Printf("insert user email: %v", err)
+		}
 	}
 	if err := queries.InsertPassword(ctx, dbpkg.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
 		return fmt.Errorf("insert password: %w", err)

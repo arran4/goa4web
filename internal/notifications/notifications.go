@@ -40,7 +40,7 @@ func NotificationsFeed(r *http.Request, notifications []*db.Notification) *feeds
 	return feed
 }
 
-// notificationPurgeWorker periodically removes old read notifications.
+// NotificationPurgeWorker periodically removes old read notifications.
 func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Duration) {
 	if n.Queries == nil {
 		return

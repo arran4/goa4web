@@ -11,7 +11,7 @@ import (
 )
 
 const listRoles = `-- name: ListRoles :many
-SELECT id, name FROM roles ORDER BY id
+SELECT id, name, can_login, is_admin FROM roles ORDER BY id
 `
 
 func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
@@ -23,7 +23,12 @@ func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
 	var items []*Role
 	for rows.Next() {
 		var i Role
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.CanLogin,
+			&i.IsAdmin,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

@@ -353,8 +353,10 @@ type Preference struct {
 }
 
 type Role struct {
-	ID   int32
-	Name string
+	ID       int32
+	Name     string
+	CanLogin bool
+	IsAdmin  bool
 }
 
 type SchemaVersion struct {

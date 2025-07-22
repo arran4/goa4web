@@ -45,6 +45,12 @@ func TestForgotPasswordEventData(t *testing.T) {
 	if _, ok := evt.Data["reset"]; !ok {
 		t.Fatalf("missing reset data")
 	}
+	if _, ok := evt.Data["Username"]; !ok {
+		t.Fatalf("missing Username data")
+	}
+	if _, ok := evt.Data["Code"]; !ok {
+		t.Fatalf("missing Code data")
+	}
 	if _, ok := evt.Data["ResetURL"]; !ok {
 		t.Fatalf("missing ResetURL data")
 	}

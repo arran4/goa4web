@@ -17,6 +17,9 @@ func RegisterTasks() []tasks.NamedTask {
 		sendNotificationTask,
 		addIPBanTask,
 		deleteIPBanTask,
+		acceptRequestTask,
+		rejectRequestTask,
+		queryRequestTask,
 		newsUserAllow,
 		newsUserRemove,
 	}

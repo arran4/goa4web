@@ -21,4 +21,7 @@ const (
 
 	// TaskPasswordVerify verifies a password reset code.
 	TaskPasswordVerify = "Password Verify"
+
+	// TaskEmailAssociationRequest requests an administrator to associate an email address.
+	TaskEmailAssociationRequest tasks.TaskString = "Email Association Request"
 )

@@ -25,6 +25,15 @@ const (
 	// TaskApprove approves an item in moderation queues.
 	TaskApprove tasks.TaskString = "Approve"
 
+	// TaskAccept accepts a queued request.
+	TaskAccept tasks.TaskString = "Accept"
+
+	// TaskReject rejects a queued request.
+	TaskReject tasks.TaskString = "Reject"
+
+	// TaskQuery asks for more details about a queued request.
+	TaskQuery tasks.TaskString = "Query"
+
 	// TaskAsk submits a new question to the FAQ system.
 	TaskAsk tasks.TaskString = "Ask"
 

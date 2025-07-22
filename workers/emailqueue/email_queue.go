@@ -104,7 +104,7 @@ func hasVerificationRecord(ctx context.Context, q *db.Queries, addr string) bool
 // When the user record is missing or lacks a valid address the admin or direct
 // email logic is applied.
 func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, e *db.FetchPendingEmailsRow) (mail.Address, error) {
-	if e.ToUserID.Valid {
+	if e.ToUserID.Valid && e.ToUserID.Int32 != 0 {
 		user, err := q.GetUserById(ctx, e.ToUserID.Int32)
 		if err == nil && user.Email.Valid && user.Email.String != "" {
 			return mail.Address{Name: user.Username.String, Address: user.Email.String}, nil

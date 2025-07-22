@@ -13,6 +13,12 @@ FROM user_emails
 WHERE user_id = ? AND verified_at IS NOT NULL
 ORDER BY notification_priority DESC, id;
 
+-- name: listEmailsByUserID :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE user_id = ?
+ORDER BY notification_priority DESC, id;
+
 -- name: GetUserEmailByEmail :one
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
 FROM user_emails

@@ -27,12 +27,16 @@ type ForgotPasswordTask struct {
 // EmailAssociationRequestTask allows a user to request an email association.
 type EmailAssociationRequestTask struct{ tasks.TaskString }
 
-var _ tasks.Task = (*ForgotPasswordTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*ForgotPasswordTask)(nil)
-var _ tasks.Task = (*EmailAssociationRequestTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
-var _ notif.SelfEmailBroadcaster = (*ForgotPasswordTask)(nil)
+var (
+	_ tasks.Task                             = (*ForgotPasswordTask)(nil)
+	_ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
+	_ notif.AdminEmailTemplateProvider       = (*ForgotPasswordTask)(nil)
+	_ notif.SelfEmailBroadcaster             = (*ForgotPasswordTask)(nil)
+
+	_ tasks.Task = (*EmailAssociationRequestTask)(nil)
+
+	_ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
+)
 
 // ForgotPasswordTask handles password reset requests.
 var forgotPasswordTask = &ForgotPasswordTask{

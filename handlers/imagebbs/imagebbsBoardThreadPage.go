@@ -56,8 +56,8 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
-	return string(TaskReply), evt.Path
+func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
+	return string(TaskReply), evt.Path, nil
 }
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {

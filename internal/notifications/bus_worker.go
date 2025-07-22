@@ -78,7 +78,11 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	}
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		if err := n.notifyAdmins(ctx, evt, tp); err != nil {
+		data := struct {
+			eventbus.TaskEvent
+			Item interface{}
+		}{TaskEvent: evt, Item: evt.Data}
+		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(), tp.AdminInternalNotificationTemplate(), data, evt.Path); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", err)); dlqErr != nil {
 				return dlqErr
 			}
@@ -179,7 +183,10 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 }
 
 func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent, tp DirectEmailNotificationTemplateProvider) error {
-	addr := tp.DirectEmailAddress(evt)
+	addr, err := tp.DirectEmailAddress(evt)
+	if err != nil {
+		return err
+	}
 	if addr == "" {
 		return nil
 	}
@@ -192,7 +199,11 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent
 }
 
 func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent, tp TargetUsersNotificationProvider) error {
-	for _, id := range tp.TargetUserIDs(evt) {
+	ids, err := tp.TargetUserIDs(evt)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
 		user, err := n.Queries.GetUserById(ctx, id)
 		if err != nil || !user.Email.Valid || user.Email.String == "" {
 			notifyMissingEmail(ctx, n.Queries, id)
@@ -246,7 +257,10 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	delete(internalSubs, evt.UserID)
 
 	if gp, ok := evt.Task.(GrantsRequiredProvider); ok {
-		reqs := gp.GrantsRequired(evt)
+		reqs, err := gp.GrantsRequired(evt)
+		if err != nil {
+			return err
+		}
 		if len(reqs) != 0 {
 			filterSubs := func(m map[int32]struct{}) {
 				for id := range m {
@@ -312,7 +326,11 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 		}
 	}
 	if auto {
-		task, path := tp.AutoSubscribePath(evt)
+		task, path, err := tp.AutoSubscribePath(evt)
+		if err != nil {
+			log.Printf("auto subscribe path: %v", err)
+			return
+		}
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
 		if config.AppRuntimeConfig.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
@@ -321,50 +339,6 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
 		}
 	}
-}
-
-func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.TaskEvent, tp AdminEmailTemplateProvider) error {
-	if n.Queries == nil {
-		return nil
-	}
-	if !config.AdminNotificationsEnabled() {
-		return nil
-	}
-	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
-		var uid *int32
-		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
-			uid = &u.Idusers
-		} else {
-			log.Printf("user by email %s: %v", addr, err)
-		}
-		if et := tp.AdminEmailTemplate(); et != nil {
-			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data, false); err != nil {
-				return err
-			}
-		}
-		if nt := tp.AdminInternalNotificationTemplate(); nt != nil {
-			data := struct {
-				eventbus.TaskEvent
-				Item interface{}
-			}{TaskEvent: evt, Item: evt.Data}
-			msg, err := n.renderNotification(ctx, *nt, data)
-			if err != nil {
-				return err
-			}
-			if uid != nil {
-				if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
-					UsersIdusers: *uid,
-					Link:         sql.NullString{String: evt.Path, Valid: evt.Path != ""},
-					Message:      sql.NullString{String: string(msg), Valid: len(msg) > 0},
-				}); err != nil {
-					return err
-				}
-			} else {
-				log.Printf("Error uid not found for %s in admin email template notification", addr)
-			}
-		}
-	}
-	return nil
 }
 
 func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pattern, method string) {

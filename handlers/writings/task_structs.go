@@ -36,11 +36,11 @@ func (SubmitWritingTask) SubscribedInternalNotificationTemplate() *string {
 
 // GrantsRequired implements notif.GrantsRequiredProvider. The newly created article
 // is referenced in evt.Data under the "target" key by the page handler.
-func (SubmitWritingTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+func (SubmitWritingTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
-		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}
+		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target not provided")
 }
 
 // ReplyTask posts a comment reply.
@@ -85,21 +85,21 @@ func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for replies.
-func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
-		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}
+		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target not provided")
 }
 
 // AutoSubscribePath implements notif.AutoSubscribeProvider. It builds the
 // subscription path for the writing's forum thread when that data is provided
 // by the event.
-func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
+func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
 	}
-	return string(TaskReply), evt.Path
+	return string(TaskReply), evt.Path, nil
 }
 
 var _ searchworker.IndexedTask = ReplyTask{}
@@ -167,11 +167,11 @@ func (UpdateWritingTask) SubscribedInternalNotificationTemplate() *string {
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for article updates.
-func (UpdateWritingTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+func (UpdateWritingTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
-		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}
+		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target not provided")
 }
 
 // UserAllowTask grants a user a permission.
@@ -190,14 +190,14 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsPermissionUserAllowPage(w, r)
 }
 
-func (UserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (UserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (UserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
@@ -225,14 +225,14 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 	UsersPermissionsDisallowPage(w, r)
 }
 
-func (UserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (UserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (UserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {

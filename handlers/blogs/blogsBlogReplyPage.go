@@ -46,11 +46,11 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for blog replies.
-func (ReplyBlogTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+func (ReplyBlogTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
-		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}
+		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target not provided")
 }
 
 // AutoSubscribePath records the reply so the commenter automatically watches
@@ -61,11 +61,11 @@ func (ReplyBlogTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequire
 // posted so participants stay in the loop.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. It derives the
 // subscription path from postcountworker event data when present.
-func (ReplyBlogTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
+func (ReplyBlogTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
 	}
-	return string(TaskReply), evt.Path
+	return string(TaskReply), evt.Path, nil
 	//return TaskReply, evt.Path
 }
 

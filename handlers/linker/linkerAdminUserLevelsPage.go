@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -169,14 +170,14 @@ func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, stri
 	return 0, "", "", sql.ErrNoRows
 }
 
-func (userAllowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (userAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (userAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
@@ -188,14 +189,14 @@ func (userAllowTask) TargetInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (userDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 {
+func (userDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
-		return []int32{id}
+		return []int32{id}, nil
 	}
 	if id, ok := evt.Data["targetUserID"].(int); ok {
-		return []int32{int32(id)}
+		return []int32{int32(id)}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target user id not provided")
 }
 
 func (userDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {

@@ -1,6 +1,6 @@
 Multiple users had blog permissions revoked.
 
 Blog section:
-{{.BlogURL}}
+{{.Item.BlogURL}}
 Manage notifications: {{.UnsubscribeUrl}}
 

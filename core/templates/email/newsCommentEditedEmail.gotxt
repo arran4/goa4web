@@ -1,5 +1,5 @@
 Comment edited by {{.Item.Username}}.
 
 View comment:
-{{.CommentURL}}
+{{.Item.CommentURL}}
 Manage notifications: {{.UnsubscribeUrl}}

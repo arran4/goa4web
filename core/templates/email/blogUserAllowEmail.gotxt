@@ -2,6 +2,6 @@ Hi {{.Item.Username}},
 You have been granted blog permissions.
 
 Blog section:
-{{.BlogURL}}
+{{.Item.BlogURL}}
 Manage notifications: {{.UnsubscribeUrl}}
 

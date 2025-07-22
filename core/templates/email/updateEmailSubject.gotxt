@@ -1,1 +1,1 @@
-[{{.SubjectPrefix}}] {{.Action}}
+[{{.SubjectPrefix}}] {{.Item.Action}}

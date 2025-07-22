@@ -1,4 +1,4 @@
 New FAQ question submitted.
 
-{{.Question}}
+{{.Item.Question}}
 Manage notifications: {{.UnsubscribeUrl}}

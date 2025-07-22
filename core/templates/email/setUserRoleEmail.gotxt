@@ -1,4 +1,4 @@
 Hi {{.Item.Username}},
 You have been assigned the "{{.Item.Role}}" role.
 
-Manage notifications: {{.UnsubURL}}
+Manage notifications: {{.Item.UnsubURL}}

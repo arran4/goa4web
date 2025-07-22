@@ -1,6 +1,6 @@
 Hello,
 
-A new user {{.Item.Username}} has registered at {{.Time}}.
+A new user {{.Item.Username}} has registered at {{.Item.Time}}.
 Please add them to the user group to approve the account.
 
 Review the account here:

@@ -1,6 +1,6 @@
 News post edited by {{.Item.Username}}.
 
 View post:
-{{.PostURL}}
+{{.Item.PostURL}}
 Manage notifications: {{.UnsubscribeUrl}}
 

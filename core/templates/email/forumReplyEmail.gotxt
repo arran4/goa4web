@@ -2,5 +2,5 @@ Hi {{.Item.Username}},
 Your reply has been posted.
 
 View comment:
-{{.CommentURL}}
+{{.Item.CommentURL}}
 Manage notifications: {{.UnsubscribeUrl}}

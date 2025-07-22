@@ -1,6 +1,6 @@
 Hello,
 
-A new thread "{{.Item.TopicTitle}}" was started at {{.Path}}.
+A new thread "{{.Item.TopicTitle}}" was started at {{.Item.Path}}.
 
 View it here:
 {{.URL}}

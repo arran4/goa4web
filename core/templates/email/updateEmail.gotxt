@@ -1,6 +1,6 @@
 Hello,
 
-{{.Action}} occurred at {{.URL}} on {{.Time}}.
+{{.Item.Action}} occurred at {{.URL}} on {{.Item.Time}}.
 
 {{if .URL}}View details here:
 {{.URL}}

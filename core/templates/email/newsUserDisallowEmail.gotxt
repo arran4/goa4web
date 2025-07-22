@@ -2,6 +2,6 @@ Hi {{.Item.Username}},
 Your news permissions have been revoked.
 
 News section:
-{{.NewsURL}}
+{{.Item.NewsURL}}
 Manage notifications: {{.UnsubscribeUrl}}
 

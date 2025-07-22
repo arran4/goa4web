@@ -1,5 +1,5 @@
 User {{.Item.Username}} replied to a forum thread.
 
 View comment:
-{{.CommentURL}}
+{{.Item.CommentURL}}
 Manage notifications: {{.UnsubscribeUrl}}

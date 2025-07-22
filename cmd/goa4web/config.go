@@ -99,5 +99,5 @@ func (c *configCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *configCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("config_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "config_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

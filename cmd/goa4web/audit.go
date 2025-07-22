@@ -46,5 +46,5 @@ func (c *auditCmd) Run() error {
 }
 
 func (c *auditCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("audit_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "audit_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

@@ -63,5 +63,5 @@ func (c *permCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *permCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("perm_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "perm_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

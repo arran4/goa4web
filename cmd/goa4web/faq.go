@@ -50,5 +50,5 @@ func (c *faqCmd) Run() error {
 }
 
 func (c *faqCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("faq_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "faq_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

@@ -104,5 +104,5 @@ func listCache(dir string) error {
 }
 
 func (c *imagesCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("images_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "images_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

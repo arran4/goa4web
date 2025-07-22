@@ -206,5 +206,5 @@ func (c *helpCmd) showHelp(args []string) error {
 }
 
 func (c *helpCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("help_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "help_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

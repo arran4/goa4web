@@ -68,7 +68,7 @@ func (c *configTestCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *configTestCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("config_test_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "config_test_usage.txt", c.fs, c.rootCmd.fs.Name())
 }
 
 type configTestEmailCmd struct {

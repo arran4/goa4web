@@ -64,5 +64,5 @@ func (c *writingCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *writingCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("writing_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "writing_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

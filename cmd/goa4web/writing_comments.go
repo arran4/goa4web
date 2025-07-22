@@ -51,5 +51,5 @@ func (c *writingCommentsCmd) Run() error {
 }
 
 func (c *writingCommentsCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("writing_comments_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "writing_comments_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

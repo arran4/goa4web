@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	fs2 "io/fs"
+	"log"
+	"sync"
 	"text/template"
 )
 
@@ -45,19 +48,30 @@ func flagInfos(fs *flag.FlagSet) []flagInfo {
 }
 
 func printFlags(fs *flag.FlagSet) {
-	t := template.Must(template.New("flags").Parse(templateString("flags.txt")))
+	t := template.Must(template.New("flags").Parse("flags.txt"))
 	if err := t.Execute(fs.Output(), flagInfos(fs)); err != nil {
 		fmt.Fprintf(fs.Output(), "template execute: %v\n", err)
 	}
 }
 
-func executeUsage(w io.Writer, tmplStr string, fs *flag.FlagSet, prog string) {
-	t := template.Must(template.New("usage").Parse(tmplStr))
-	t = template.Must(t.New("flags").Parse(templateString("flags.txt")))
-	if err := t.Execute(w, struct {
+var compiledTemplates *template.Template
+
+func executeUsage(w io.Writer, filename string, fs *flag.FlagSet, prog string) error {
+	sync.OnceFunc(func() {
+		sub, err := fs2.Sub(templatesFS, "templates")
+		if err != nil {
+			log.Panicf("template sub err: %v", err)
+		}
+		compiledTemplates = template.Must(template.New("").ParseFS(sub, "*.txt"))
+	})()
+	type Data struct {
 		Prog  string
 		Flags []flagInfo
-	}{Prog: prog, Flags: flagInfos(fs)}); err != nil {
-		fmt.Fprintf(w, "template execute: %v\n", err)
 	}
+	data := &Data{Prog: prog, Flags: flagInfos(fs)}
+	if err := compiledTemplates.ExecuteTemplate(w, filename, data); err != nil {
+		_, _ = fmt.Fprintf(w, "template execute: %v\n", err)
+		return fmt.Errorf("execute template: %v", err)
+	}
+	return nil
 }

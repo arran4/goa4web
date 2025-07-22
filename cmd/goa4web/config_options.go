@@ -1,11 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"flag"
-	"fmt"
-	"os"
 	"sort"
-	"text/template"
 
 	"github.com/arran4/goa4web/config"
 )
@@ -62,17 +60,5 @@ func (c *configOptionsCmd) Run() error {
 			Extended: e,
 		})
 	}
-	tmplText := templateString("config_options.txt")
-	if c.template != "" {
-		b, err := os.ReadFile(c.template)
-		if err != nil {
-			return fmt.Errorf("read template: %w", err)
-		}
-		tmplText = string(b)
-	}
-	t, err := template.New("options").Parse(tmplText)
-	if err != nil {
-		return fmt.Errorf("parse template: %w", err)
-	}
-	return t.Execute(os.Stdout, opts)
+	return executeUsage(bytes.NewBuffer(nil), "config_options.txt", c.fs, c.rootCmd.fs.Name())
 }

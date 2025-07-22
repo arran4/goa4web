@@ -56,5 +56,5 @@ func (c *grantCmd) Run() error {
 }
 
 func (c *grantCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("grant_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "grant_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

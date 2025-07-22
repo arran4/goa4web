@@ -47,5 +47,5 @@ func (c *userRolesCmd) Run() error {
 }
 
 func (c *userRolesCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("user_roles_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "user_roles_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

@@ -63,5 +63,5 @@ func (c *dbCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *dbCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("db_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "db_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

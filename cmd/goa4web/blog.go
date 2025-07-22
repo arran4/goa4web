@@ -74,5 +74,5 @@ func (c *blogCmd) Run() error {
 }
 
 func (c *blogCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("blog_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "blog_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

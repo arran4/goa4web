@@ -56,5 +56,5 @@ func (c *langCmd) Run() error {
 }
 
 func (c *langCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("lang_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "lang_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

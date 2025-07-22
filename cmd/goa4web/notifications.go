@@ -46,5 +46,5 @@ func (c *notificationsCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *notificationsCmd) Usage() {
-	executeUsage(c.fs.Output(), templateString("notifications_usage.txt"), c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "notifications_usage.txt", c.fs, c.rootCmd.fs.Name())
 }

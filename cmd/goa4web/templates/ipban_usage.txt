@@ -12,5 +12,4 @@ Examples:
   {{.Prog}} ipban list
   {{.Prog}} ipban update -id 1 -reason updated
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

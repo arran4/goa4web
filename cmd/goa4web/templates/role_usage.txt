@@ -7,5 +7,4 @@ Commands:
 Examples:
   {{.Prog}} role users
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

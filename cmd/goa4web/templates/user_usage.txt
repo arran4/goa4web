@@ -28,5 +28,4 @@ Examples:
   {{.Prog}} user roles
   {{.Prog}} user password clear-expired
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

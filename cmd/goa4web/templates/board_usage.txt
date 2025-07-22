@@ -13,5 +13,4 @@ Examples:
   {{.Prog}} board delete -id 1
   {{.Prog}} board update -id 1 -name new
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

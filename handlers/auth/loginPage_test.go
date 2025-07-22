@@ -88,3 +88,31 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 		t.Fatalf("body=%q", body)
 	}
 }
+
+func TestLoginPageHiddenFields(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
+	cd := common.NewCoreData(context.Background(), q)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	loginTask.Page(rr, req)
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "name=\"code\" value=\"abc\"") {
+		t.Fatalf("missing code field: %q", body)
+	}
+	if !strings.Contains(body, "name=\"back\" value=\"/foo\"") {
+		t.Fatalf("missing back field: %q", body)
+	}
+	if !strings.Contains(body, "name=\"method\" value=\"POST\"") {
+		t.Fatalf("missing method field: %q", body)
+	}
+	if !strings.Contains(body, "name=\"data\" value=\"x\"") {
+		t.Fatalf("missing data field: %q", body)
+	}
+}

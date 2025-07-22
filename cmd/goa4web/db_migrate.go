@@ -54,9 +54,7 @@ func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 }
 
 func (c *dbMigrateCmd) Run() error {
-	if c.rootCmd.Verbosity >= 0 {
-		fmt.Printf("connecting to database using %s\n", c.rootCmd.cfg.DBConn)
-	}
+	c.rootCmd.Verbosef("connecting to database using %s", c.rootCmd.cfg.DBConn)
 	db, err := openDB(c.rootCmd.cfg)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
@@ -64,11 +62,10 @@ func (c *dbMigrateCmd) Run() error {
 	defer db.Close()
 	ctx := context.Background()
 	fsys := os.DirFS(c.Dir)
-	if c.rootCmd.Verbosity >= 0 {
-		fmt.Printf("applying migrations from %s\n", c.Dir)
-	}
+	c.rootCmd.Verbosef("applying migrations from %s", c.Dir)
 	if err := dbstart.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0); err != nil {
 		return err
 	}
+	c.rootCmd.Infof("database migrated successfully")
 	return nil
 }

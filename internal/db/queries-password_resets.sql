@@ -19,3 +19,10 @@ UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?;
 
 -- name: DeletePasswordReset :exec
 DELETE FROM pending_passwords WHERE id = ?;
+
+-- name: DeletePasswordResetsByUser :exec
+DELETE FROM pending_passwords WHERE user_id = ?;
+
+-- name: PurgePasswordResetsBefore :exec
+DELETE FROM pending_passwords
+WHERE created_at < ? OR verified_at IS NOT NULL;

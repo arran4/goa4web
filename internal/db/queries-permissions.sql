@@ -119,3 +119,10 @@ WHERE (sqlc.arg(username) = '' OR u.username = sqlc.arg(username));
 
 -- name: UpdatePermission :exec
 UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?;
+-- name: ListUsersWithRoles :many
+SELECT u.idusers, u.username, GROUP_CONCAT(r.name ORDER BY r.name) AS roles
+FROM users u
+LEFT JOIN user_roles ur ON u.idusers = ur.users_idusers
+LEFT JOIN roles r ON r.id = ur.role_id
+GROUP BY u.idusers
+ORDER BY u.idusers;

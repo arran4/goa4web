@@ -2,9 +2,11 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -23,6 +25,7 @@ func TestForgotPasswordEventData(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "u"))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO pending_passwords").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
@@ -44,6 +47,9 @@ func TestForgotPasswordEventData(t *testing.T) {
 	}
 	if _, ok := evt.Data["ResetURL"]; !ok {
 		t.Fatalf("missing ResetURL data")
+	}
+	if _, ok := evt.Data["UserURL"]; !ok {
+		t.Fatalf("missing UserURL data")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

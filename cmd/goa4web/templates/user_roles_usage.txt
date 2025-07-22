@@ -1,0 +1,11 @@
+Usage:
+  {{.Prog}} user roles
+
+Description:
+  list usernames with their assigned roles
+
+Examples:
+  {{.Prog}} user roles
+
+Flags:
+{{template "flags" .Flags}}

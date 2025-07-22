@@ -35,11 +35,10 @@ func (c *configSetCmd) Run() error {
 		return fmt.Errorf("key required")
 	}
 	path := c.rootCmd.ConfigFile
+	c.rootCmd.Verbosef("updating %s in %s", c.Key, path)
 	if err := config.UpdateConfigKey(core.OSFS{}, path, c.Key, c.Value); err != nil {
 		return fmt.Errorf("update config: %w", err)
 	}
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Printf("updated %s\n", c.Key)
-	}
+	c.rootCmd.Infof("updated %s", c.Key)
 	return nil
 }

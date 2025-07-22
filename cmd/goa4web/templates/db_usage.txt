@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} db <command> [<args>]
+
+Commands:
+  migrate    run database migrations
+  backup     create a database backup
+  restore    restore a database backup
+  seed       load seed data
+
+Examples:
+  {{.Prog}} db migrate
+  {{.Prog}} db backup -o backup.sql
+  {{.Prog}} db restore -i backup.sql
+  {{.Prog}} db seed
+
+Flags:
+{{template "flags" .Flags}}

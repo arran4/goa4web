@@ -1,0 +1,11 @@
+Usage:
+  {{.Prog}} role <command> [<args>]
+
+Commands:
+  users  list users for each role
+
+Examples:
+  {{.Prog}} role users
+
+Flags:
+{{template "flags" .Flags}}

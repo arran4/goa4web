@@ -84,7 +84,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+				log.Printf("render no access page: %v", err)
+			}
 			return
 		default:
 			log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
@@ -94,7 +96,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+			log.Printf("render no access page: %v", err)
+		}
 		return
 	}
 
@@ -289,7 +293,9 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd); err != nil {
+				log.Printf("render no access page: %v", err)
+			}
 			return
 		default:
 			log.Printf("getArticlePost Error: %s", err)

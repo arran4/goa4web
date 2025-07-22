@@ -81,7 +81,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+				log.Printf("render no access page: %v", err)
+			}
 			return
 		default:
 			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
@@ -90,7 +92,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !data.CoreData.HasGrant("blogs", "entry", "view", blog.Idblogs) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+			log.Printf("render no access page: %v", err)
+		}
 		return
 	}
 

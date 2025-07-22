@@ -49,7 +49,10 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		Thread             *db.GetThreadLastPosterAndPermsRow
 	}
 
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	offset := 0
+	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
+		offset = off
+	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := Data{
@@ -60,7 +63,10 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
-	linkId, _ := strconv.Atoi(vars["link"])
+	linkId := 0
+	if lid, err := strconv.Atoi(vars["link"]); err == nil {
+		linkId = lid
+	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -85,7 +91,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd); err != nil {
+				log.Printf("render no access page: %v", err)
+			}
 			return
 		default:
 			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
@@ -134,10 +142,15 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
+		offset = off
+	}
 
 	commentIdString := r.URL.Query().Get("comment")
-	commentId, _ := strconv.Atoi(commentIdString)
+	var commentId int
+	if cid, err := strconv.Atoi(commentIdString); err == nil {
+		commentId = cid
+	}
 	for i, row := range commentRows {
 		editUrl := ""
 		editSaveUrl := ""
@@ -214,7 +227,9 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd); err != nil {
+				log.Printf("render no access page: %v", err)
+			}
 			return
 		default:
 			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
@@ -280,7 +295,10 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	text := r.PostFormValue("replytext")
-	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+	languageId := 0
+	if lid, err := strconv.Atoi(r.PostFormValue("language")); err == nil {
+		languageId = lid
+	}
 	uid, _ := session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)

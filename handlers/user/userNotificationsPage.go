@@ -78,7 +78,9 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		for _, no := range n {
 			if int(no.ID) == id {
-				_ = queries.MarkNotificationRead(r.Context(), no.ID)
+				if err := queries.MarkNotificationRead(r.Context(), no.ID); err != nil {
+					log.Printf("mark notification read: %v", err)
+				}
 				break
 			}
 		}
@@ -133,7 +135,9 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 		maxPr = v
 	}
 	if id != 0 {
-		_ = queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)})
+		if err := queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)}); err != nil {
+			log.Printf("set notification priority: %v", err)
+		}
 	}
 	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
 }

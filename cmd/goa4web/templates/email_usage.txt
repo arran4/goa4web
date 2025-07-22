@@ -7,5 +7,4 @@ Commands:
 Examples:
   {{.Prog}} email queue list
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

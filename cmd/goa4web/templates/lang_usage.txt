@@ -11,5 +11,4 @@ Examples:
   {{.Prog}} lang add --code en --name English
   {{.Prog}} lang update -id 1 -name New
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

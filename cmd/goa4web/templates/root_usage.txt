@@ -39,5 +39,4 @@ Examples:
   {{.Prog}} lang list
   {{.Prog}} config show
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

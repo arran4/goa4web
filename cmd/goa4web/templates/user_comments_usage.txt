@@ -9,5 +9,4 @@ Examples:
   {{.Prog}} user comments list -id 3
   {{.Prog}} user comments add -id 3 -comment "needs review"
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

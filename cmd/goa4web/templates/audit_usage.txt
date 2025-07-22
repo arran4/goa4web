@@ -4,5 +4,4 @@ Usage:
 Examples:
   {{.Prog}} audit --limit 50
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

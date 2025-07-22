@@ -9,5 +9,4 @@ Examples:
   {{.Prog}} faq tree
   {{.Prog}} faq read 1
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

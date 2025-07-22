@@ -11,5 +11,4 @@ Examples:
   {{.Prog}} config test db
   {{.Prog}} config test dlq
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

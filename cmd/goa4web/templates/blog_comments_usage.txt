@@ -10,5 +10,4 @@ Examples:
   {{.Prog}} blog comments read 3 1
   {{.Prog}} blog comments read 3 all
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

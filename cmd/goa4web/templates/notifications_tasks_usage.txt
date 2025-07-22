@@ -3,5 +3,4 @@ Usage:
 
 Displays a table of tasks and their notification templates.
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

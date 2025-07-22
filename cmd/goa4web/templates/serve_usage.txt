@@ -1,5 +1,4 @@
 Usage:
   {{.Prog}} serve [flags]
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

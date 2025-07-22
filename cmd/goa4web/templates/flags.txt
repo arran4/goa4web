@@ -3,3 +3,10 @@
     {{.Usage}}
 {{end}}
 {{end}}
+
+{{define "flags_section"}}
+{{if .}}
+Flags:
+{{template "flags" .}}
+{{end}}
+{{end}}

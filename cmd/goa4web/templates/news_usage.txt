@@ -11,5 +11,4 @@ Examples:
   {{.Prog}} news read 1
   {{.Prog}} news comments list 1
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

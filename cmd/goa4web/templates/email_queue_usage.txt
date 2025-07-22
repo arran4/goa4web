@@ -11,5 +11,4 @@ Examples:
   {{.Prog}} email queue resend -id 1
   {{.Prog}} email queue delete -id 1
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

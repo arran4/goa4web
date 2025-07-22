@@ -13,5 +13,4 @@ Examples:
   {{.Prog}} db restore -i backup.sql
   {{.Prog}} db seed
 
-Flags:
-{{template "flags" .Flags}}
+{{template "flags_section" .Flags}}

@@ -6,6 +6,7 @@ Commands:
   serve   run the web server
   user    manage users
   perm    manage permissions
+  role    manage roles
   board   manage image boards
   blog    manage blog entries
   news    manage news posts
@@ -23,6 +24,7 @@ Examples:
   {{.Prog}} serve
   {{.Prog}} user add -username alice -password secret
   {{.Prog}} perm list
+  {{.Prog}} role users
   {{.Prog}} config reload
   {{.Prog}} help config
   {{.Prog}} board list

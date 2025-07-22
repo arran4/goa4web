@@ -174,6 +174,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("perm: %w", err)
 		}
 		return c.Run()
+	case "role":
+		c, err := parseRoleCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("role: %w", err)
+		}
+		return c.Run()
 	case "grant":
 		c, err := parseGrantCmd(r, r.args[1:])
 		if err != nil {

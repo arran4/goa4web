@@ -28,6 +28,9 @@ func (c *serverCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing server command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "shutdown":
 		cmd, err := parseServerShutdownCmd(c, args[1:])

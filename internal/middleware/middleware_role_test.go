@@ -67,7 +67,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-  // TODO find a way of avoid tests which impact global state
+	// TODO find a way of avoid tests which impact global state
 	defer SetDBPool(nil, 0)
 	SetDBPool(db, 0)
 	mock.MatchExpectationsInOrder(false)

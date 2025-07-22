@@ -28,6 +28,9 @@ func (c *writingCommentsCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing comments command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "list":
 		cmd, err := parseWritingCommentsListCmd(c, args[1:])

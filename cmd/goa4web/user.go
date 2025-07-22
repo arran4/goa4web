@@ -27,6 +27,9 @@ func (c *userCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing user command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "add":
 		cmd, err := parseUserAddCmd(c, args[1:])

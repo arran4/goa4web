@@ -120,24 +120,20 @@ func (r *rootCmd) Verbosef(format string, args ...any) {
 
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{}
-	wantHelp := false
-	for _, a := range args[1:] {
-		if a == "-h" || a == "--help" {
-			wantHelp = true
-			break
-		}
-	}
+
 	early := newFlagSet(args[0])
 	early.Usage = func() {}
+
 	var cfgPath string
 	var showVersion bool
+
 	early.StringVar(&cfgPath, "config-file", "", "path to config file")
 	early.BoolVar(&showVersion, "version", false, "print version and exit")
+
 	earlyErr := early.Parse(args[1:])
-	if errors.Is(earlyErr, flag.ErrHelp) {
-		wantHelp = true
-	}
+	wantHelp := errors.Is(earlyErr, flag.ErrHelp)
 	rest := early.Args()
+
 	if cfgPath == "" {
 		cfgPath = os.Getenv(config.EnvConfigFile)
 	}
@@ -145,6 +141,18 @@ func parseRoot(args []string) (*rootCmd, error) {
 		fmt.Println(version)
 		os.Exit(0)
 	}
+
+	r.fs = config.NewRuntimeFlagSet(args[0])
+	r.fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
+	r.fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
+	r.fs.Usage = r.Usage
+
+	if wantHelp && len(rest) == 0 {
+		_ = r.fs.Parse([]string{"-h"})
+		r.fs.Usage()
+		return r, flag.ErrHelp
+	}
+
 	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, cfgPath)
 	if err != nil {
 		if errors.Is(err, config.ErrConfigFileNotFound) {
@@ -152,13 +160,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 		}
 		return nil, fmt.Errorf("load config file: %w", err)
 	}
-	r.fs = config.NewRuntimeFlagSet(args[0])
-	r.fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
-	r.fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
-	r.fs.Usage = r.Usage
-	if wantHelp {
-		rest = append([]string{"-h"}, rest...)
-	}
+
 	if err := r.fs.Parse(rest); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			r.fs.Usage()
@@ -166,6 +168,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 		}
 		return nil, err
 	}
+
 	r.ConfigFile = cfgPath
 	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
 	return r, nil
@@ -299,6 +302,7 @@ func (r *rootCmd) Run() error {
 		}
 		return c.Run()
 	default:
+		r.fs.Usage()
 		return fmt.Errorf("unknown command %q", args[0])
 	}
 }

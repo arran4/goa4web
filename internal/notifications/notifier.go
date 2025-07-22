@@ -84,18 +84,19 @@ func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 
 // NotifyAdmins sends a generic update notice to administrator accounts.
 func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data EmailData) error {
+	if n.Queries == nil {
+		return nil
+	}
 	if !config.AdminNotificationsEnabled() {
 		return nil
 	}
 	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
 		var uid int32
-		if n.Queries != nil {
-			if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
-				uid = u.Idusers
-			} else {
-				log.Printf("notify admin %s: %v", addr, err)
-				continue
-			}
+		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
+			uid = u.Idusers
+		} else {
+			log.Printf("notify admin %s: %v", addr, err)
+			continue
 		}
 		if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, data); err != nil {
 			log.Printf("notify admin %s: %v", addr, err)

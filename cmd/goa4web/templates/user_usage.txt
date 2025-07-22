@@ -15,6 +15,7 @@ Commands:
   reject      reject a pending user
   comments    manage admin comments for a user
   roles       list user roles
+  password    manage reset password requests
   profile     show user profile information
 
 Examples:
@@ -25,6 +26,7 @@ Examples:
   {{.Prog}} user reject -id 3 -reason spam
   {{.Prog}} user comments list -id 3
   {{.Prog}} user roles
+  {{.Prog}} user password clear-expired
 
 Flags:
 {{template "flags" .Flags}}

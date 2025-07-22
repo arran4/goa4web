@@ -9,16 +9,17 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
-// passwordClearUserCmd implements "password clear-user".
-type passwordClearUserCmd struct {
-	*passwordCmd
+// userPasswordClearUserCmd implements "user password clear-user".
+// It deletes reset password requests for a specific user.
+type userPasswordClearUserCmd struct {
+	*userPasswordCmd
 	fs       *flag.FlagSet
 	Username string
 	args     []string
 }
 
-func parsePasswordClearUserCmd(parent *passwordCmd, args []string) (*passwordClearUserCmd, error) {
-	c := &passwordClearUserCmd{passwordCmd: parent}
+func parseUserPasswordClearUserCmd(parent *userPasswordCmd, args []string) (*userPasswordClearUserCmd, error) {
+	c := &userPasswordClearUserCmd{userPasswordCmd: parent}
 	fs := flag.NewFlagSet("clear-user", flag.ContinueOnError)
 	fs.StringVar(&c.Username, "username", "", "username")
 	c.fs = fs
@@ -29,7 +30,7 @@ func parsePasswordClearUserCmd(parent *passwordCmd, args []string) (*passwordCle
 	return c, nil
 }
 
-func (c *passwordClearUserCmd) Run() error {
+func (c *userPasswordClearUserCmd) Run() error {
 	if c.Username == "" {
 		return fmt.Errorf("username required")
 	}

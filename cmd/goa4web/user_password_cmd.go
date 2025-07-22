@@ -6,18 +6,18 @@ import (
 	"fmt"
 )
 
-//go:embed templates/password_usage.txt
-var passwordUsageTemplate string
+//go:embed templates/user_password_usage.txt
+var userPasswordUsageTemplate string
 
-// passwordCmd handles pending password operations.
-type passwordCmd struct {
-	*rootCmd
+// userPasswordCmd handles reset password requests.
+type userPasswordCmd struct {
+	*userCmd
 	fs   *flag.FlagSet
 	args []string
 }
 
-func parsePasswordCmd(parent *rootCmd, args []string) (*passwordCmd, error) {
-	c := &passwordCmd{rootCmd: parent}
+func parseUserPasswordCmd(parent *userCmd, args []string) (*userPasswordCmd, error) {
+	c := &userPasswordCmd{userCmd: parent}
 	fs := flag.NewFlagSet("password", flag.ContinueOnError)
 	c.fs = fs
 	fs.Usage = c.Usage
@@ -28,20 +28,20 @@ func parsePasswordCmd(parent *rootCmd, args []string) (*passwordCmd, error) {
 	return c, nil
 }
 
-func (c *passwordCmd) Run() error {
+func (c *userPasswordCmd) Run() error {
 	if len(c.args) == 0 {
 		c.fs.Usage()
 		return fmt.Errorf("missing password command")
 	}
 	switch c.args[0] {
 	case "clear-expired":
-		cmd, err := parsePasswordClearExpiredCmd(c, c.args[1:])
+		cmd, err := parseUserPasswordClearExpiredCmd(c, c.args[1:])
 		if err != nil {
 			return fmt.Errorf("clear-expired: %w", err)
 		}
 		return cmd.Run()
 	case "clear-user":
-		cmd, err := parsePasswordClearUserCmd(c, c.args[1:])
+		cmd, err := parseUserPasswordClearUserCmd(c, c.args[1:])
 		if err != nil {
 			return fmt.Errorf("clear-user: %w", err)
 		}
@@ -53,6 +53,6 @@ func (c *passwordCmd) Run() error {
 }
 
 // Usage prints command usage information with examples.
-func (c *passwordCmd) Usage() {
-	executeUsage(c.fs.Output(), passwordUsageTemplate, c.fs, c.rootCmd.fs.Name())
+func (c *userPasswordCmd) Usage() {
+	executeUsage(c.fs.Output(), userPasswordUsageTemplate, c.fs, c.rootCmd.fs.Name())
 }

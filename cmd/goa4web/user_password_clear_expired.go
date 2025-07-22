@@ -9,16 +9,17 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
-// passwordClearExpiredCmd implements "password clear-expired".
-type passwordClearExpiredCmd struct {
-	*passwordCmd
+// userPasswordClearExpiredCmd implements "user password clear-expired".
+// It removes expired entries from the reset password queue.
+type userPasswordClearExpiredCmd struct {
+	*userPasswordCmd
 	fs    *flag.FlagSet
 	Hours int
 	args  []string
 }
 
-func parsePasswordClearExpiredCmd(parent *passwordCmd, args []string) (*passwordClearExpiredCmd, error) {
-	c := &passwordClearExpiredCmd{passwordCmd: parent, Hours: 24}
+func parseUserPasswordClearExpiredCmd(parent *userPasswordCmd, args []string) (*userPasswordClearExpiredCmd, error) {
+	c := &userPasswordClearExpiredCmd{userPasswordCmd: parent, Hours: 24}
 	fs := flag.NewFlagSet("clear-expired", flag.ContinueOnError)
 	fs.IntVar(&c.Hours, "hours", 24, "expiration age in hours")
 	c.fs = fs
@@ -29,7 +30,7 @@ func parsePasswordClearExpiredCmd(parent *passwordCmd, args []string) (*password
 	return c, nil
 }
 
-func (c *passwordClearExpiredCmd) Run() error {
+func (c *userPasswordClearExpiredCmd) Run() error {
 	db, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)

@@ -147,7 +147,6 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 					evt.Data = map[string]any{}
 				}
 				evt.UserID = row.Idusers
-				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
 				// Expose fields directly for email templates
 				evt.Data["Username"] = row.Username.String
 				evt.Data["Code"] = code

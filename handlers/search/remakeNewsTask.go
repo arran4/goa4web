@@ -17,7 +17,7 @@ type RemakeNewsTask struct{ tasks.TaskString }
 var remakeNewsTask = &RemakeNewsTask{TaskString: TaskRemakeNewsSearch}
 var _ tasks.Task = (*RemakeNewsTask)(nil)
 
-func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
@@ -36,4 +36,5 @@ func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }

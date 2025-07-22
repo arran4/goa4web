@@ -20,17 +20,17 @@ var topicGrantCreateTask = &TopicGrantCreateTask{TaskString: TaskTopicGrantCreat
 
 var _ tasks.Task = (*TopicGrantCreateTask)(nil)
 
-func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	topicID, err := strconv.Atoi(vars["topic"])
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+		return nil
 	}
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+		return nil
 	}
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
@@ -44,7 +44,7 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("GetUserByUsername: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 		uid = sql.NullInt32{Int32: u.Idusers, Valid: true}
 	}
@@ -54,7 +54,7 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("ListRoles: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 		for _, ro := range roles {
 			if ro.Name == role {
@@ -80,10 +80,11 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) {
 		}); err != nil {
 			log.Printf("CreateGrant: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 // TopicGrantDeleteTask removes a grant from a forum topic.
@@ -93,17 +94,18 @@ var topicGrantDeleteTask = &TopicGrantDeleteTask{TaskString: TaskTopicGrantDelet
 
 var _ tasks.Task = (*TopicGrantDeleteTask)(nil)
 
-func (TopicGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+func (TopicGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	grantID, err := strconv.Atoi(r.PostFormValue("grantid"))
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+		return nil
 	}
 	if err := queries.DeleteGrant(r.Context(), int32(grantID)); err != nil {
 		log.Printf("DeleteGrant: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

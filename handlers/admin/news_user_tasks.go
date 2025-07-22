@@ -37,7 +37,7 @@ func (NewsUserAllowTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
@@ -45,7 +45,7 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("GetUserByUsername Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
@@ -54,7 +54,7 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("permissionUserAllow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
@@ -67,6 +67,7 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 // NewsUserRemoveTask revokes a role from a user and notifies admins.
@@ -90,13 +91,13 @@ func (NewsUserRemoveTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
+func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid, err := strconv.Atoi(r.PostFormValue("permid"))
 	if err != nil {
 		log.Printf("strconv.Atoi(permid) Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	id, username, role, err := roleInfoByPermID(r.Context(), queries, int32(permid))
 	if err != nil {
@@ -105,7 +106,7 @@ func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
 		log.Printf("permissionUserDisallow Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if err == nil {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -120,6 +121,7 @@ func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, string, string, error) {

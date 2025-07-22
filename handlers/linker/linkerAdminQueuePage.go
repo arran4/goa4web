@@ -130,7 +130,7 @@ var (
 	_ notif.AdminEmailTemplateProvider              = (*deleteTask)(nil)
 )
 
-func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
+func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	var link *db.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
@@ -145,7 +145,7 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if link != nil {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -166,6 +166,7 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func (deleteTask) SubscribedEmailTemplate() *notif.EmailTemplates {
@@ -228,14 +229,14 @@ func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData 
 	return nil
 }
 
-func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
+func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -247,7 +248,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("getLinkerItemById Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
@@ -269,6 +270,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 type bulkDeleteTask struct{ tasks.TaskString }
@@ -281,7 +283,7 @@ var (
 	_ notif.AdminEmailTemplateProvider              = (*bulkDeleteTask)(nil)
 )
 
-func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
@@ -330,6 +332,7 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func (bulkDeleteTask) SubscribedEmailTemplate() *notif.EmailTemplates {
@@ -388,7 +391,7 @@ func (bulkApproveTask) IndexData(data map[string]any) []searchworker.IndexEventD
 	return nil
 }
 
-func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
+func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
@@ -433,6 +436,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func (bulkApproveTask) SubscribedEmailTemplate() *notif.EmailTemplates {

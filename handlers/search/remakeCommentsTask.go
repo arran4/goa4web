@@ -17,7 +17,7 @@ type RemakeCommentsTask struct{ tasks.TaskString }
 var remakeCommentsTask = &RemakeCommentsTask{TaskString: TaskRemakeCommentsSearch}
 var _ tasks.Task = (*RemakeCommentsTask)(nil)
 
-func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
@@ -36,4 +36,5 @@ func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }

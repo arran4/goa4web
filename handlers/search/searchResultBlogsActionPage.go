@@ -22,7 +22,7 @@ type SearchBlogsTask struct{ tasks.TaskString }
 var searchBlogsTask = &SearchBlogsTask{TaskString: TaskSearchBlogs}
 var _ tasks.Task = (*SearchBlogsTask)(nil)
 
-func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	type Data struct {
 		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
@@ -39,7 +39,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -47,11 +47,11 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	if comments, emptyWords, noResults, err := ForumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbn.Idforumtopic}, uid); err != nil {
-		return
+		return nil
 	} else {
 		data.Comments = comments
 		data.CommentsNoResults = emptyWords
@@ -59,7 +59,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if blogs, emptyWords, noResults, err := BlogSearch(w, r, queries, uid); err != nil {
-		return
+		return nil
 	} else {
 		data.Blogs = blogs
 		data.NoResults = emptyWords
@@ -67,6 +67,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "resultBlogsActionPage.gohtml", data)
+	return nil
 }
 
 func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.Blog, bool, bool, error) {

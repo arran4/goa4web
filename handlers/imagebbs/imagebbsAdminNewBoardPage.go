@@ -58,7 +58,7 @@ func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminNewBoardPage.gohtml", data)
 }
 
-func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) {
+func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
@@ -73,8 +73,9 @@ func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error: createImageBoard: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	http.Redirect(w, r, "/admin/imagebbs/boards", http.StatusTemporaryRedirect)
+	return nil
 }

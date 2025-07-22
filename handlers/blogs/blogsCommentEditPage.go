@@ -35,11 +35,11 @@ func (EditReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	text := r.PostFormValue("replytext")
 
@@ -49,7 +49,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	commentId, _ := strconv.Atoi(vars["comment"])
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -66,7 +66,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		default:
 			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 	}
 
@@ -79,7 +79,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		},
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -93,6 +93,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
+	return nil
 }
 
 // CancelTask cancels comment editing.
@@ -112,8 +113,9 @@ func (CancelTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
+	return nil
 }

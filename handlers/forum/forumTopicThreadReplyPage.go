@@ -73,10 +73,10 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 	return string(TaskReply), evt.Path, nil
 }
 
-func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
@@ -113,7 +113,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error: CreateComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -135,6 +135,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	return nil
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {

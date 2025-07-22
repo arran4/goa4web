@@ -27,11 +27,11 @@ func (t EditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
 	t.Action(w, r)
 }
 
-func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	text := r.PostFormValue("replytext")
 
@@ -42,7 +42,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -59,7 +59,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		default:
 			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 	}
 
@@ -72,7 +72,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		},
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -85,6 +85,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/linker/comments/%d", linkId), http.StatusTemporaryRedirect)
+	return nil
 }
 
 // CommentEditActionCancelPage aborts editing a comment.

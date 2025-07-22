@@ -44,8 +44,9 @@ var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*AddEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*ResendVerificationEmailTask)(nil)
 
-func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) {
+func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	addEmailTask.Resend(w, r)
+	return nil
 }
 
 var (
@@ -104,20 +105,20 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TemplateHandler(w, r, "emailPage.gohtml", data)
 }
-func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
 		http.Error(w, "forbidden", http.StatusForbidden)
-		return
+		return nil
 	}
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -130,7 +131,7 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("preference load: %v", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if err != nil {
@@ -156,24 +157,25 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("save email pref: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+	return nil
 }
 
-func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
+func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
 		http.Error(w, "email unknown", http.StatusBadRequest)
-		return
+		return nil
 	}
 	if cd.EmailProvider() == nil {
 		q := url.QueryEscape(ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q
 		handlers.TaskErrorAcknowledgementPage(w, r)
-		return
+		return nil
 	}
 	if evt := cd.Event(); evt != nil {
 		if evt.Data == nil {
@@ -181,6 +183,7 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+	return nil
 }
 
 func (TestMailTask) SelfEmailTemplate() *notif.EmailTemplates {
@@ -192,25 +195,25 @@ func (TestMailTask) SelfInternalNotificationTemplate() *string {
 	return &s
 }
 
-func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-		return
+		return nil
 	}
 	emailAddr := r.FormValue("new_email")
 	if emailAddr == "" {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-		return
+		return nil
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
-		return
+		return nil
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
@@ -222,7 +225,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		// TODO better error for NOT Duplicate entry for key 'user_emails_email_code_idx'
 		log.Printf("insert user email: %v", err)
 		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
-		return
+		return nil
 	}
 	path := "/usr/email/verify?code=" + code
 	page := "http://" + r.Host + path
@@ -238,6 +241,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		evt.Data["Username"] = user.Username.String
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+	return nil
 }
 
 func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
@@ -282,15 +286,15 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-		return
+		return nil
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -301,6 +305,7 @@ func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+	return nil
 }
 
 func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {

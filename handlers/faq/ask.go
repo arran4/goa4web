@@ -59,21 +59,21 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "askPage.gohtml", data)
 }
 
-func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -86,7 +86,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 		LanguageIdlanguage: int32(languageId),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -101,4 +101,5 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) {
 	// Setting Admin=true signals administrators should be alerted.
 
 	http.Redirect(w, r, "/faq", http.StatusTemporaryRedirect)
+	return nil
 }

@@ -40,7 +40,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
 }
 
-func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -69,4 +69,5 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

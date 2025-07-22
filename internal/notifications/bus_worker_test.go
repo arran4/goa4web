@@ -112,8 +112,9 @@ type TestTask struct {
 	TaskString tasks.TaskString
 }
 
-func (t TestTask) Action(w http.ResponseWriter, r *http.Request) {
+func (t TestTask) Action(w http.ResponseWriter, r *http.Request) any {
 
+	return nil
 }
 
 type errProvider struct{}
@@ -241,7 +242,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 
 type targetTask struct{ tasks.TaskString }
 
-func (targetTask) Action(http.ResponseWriter, *http.Request) {}
+func (targetTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (targetTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) { return []int32{2, 3}, nil }
 
@@ -329,7 +330,7 @@ func TestBusWorker(t *testing.T) {
 
 type autoSubTask struct{ tasks.TaskString }
 
-func (autoSubTask) Action(http.ResponseWriter, *http.Request) {}
+func (autoSubTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (autoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {

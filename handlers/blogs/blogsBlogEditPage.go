@@ -35,8 +35,11 @@ func (EditBlogTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogEditPage(w, r) }
-func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogEditActionPage(w, r) }
+func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request) { BlogEditPage(w, r) }
+func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
+	BlogEditActionPage(w, r)
+	return nil
+}
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

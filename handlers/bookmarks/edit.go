@@ -62,12 +62,12 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "editPage.gohtml", data)
 }
 
-func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -79,19 +79,20 @@ func (SaveTask) Action(w http.ResponseWriter, r *http.Request) {
 		UsersIdusers: uid,
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	http.Redirect(w, r, "/bookmarks/mine", http.StatusTemporaryRedirect)
 
+	return nil
 }
 
-func (CreateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -103,9 +104,10 @@ func (CreateTask) Action(w http.ResponseWriter, r *http.Request) {
 		UsersIdusers: uid,
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	http.Redirect(w, r, "/bookmarks/mine", http.StatusTemporaryRedirect)
 
+	return nil
 }

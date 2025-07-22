@@ -70,7 +70,7 @@ func (PermissionUserAllowTask) AdminInternalNotificationTemplate() *string {
 
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
 
-func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
@@ -103,6 +103,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }
 
 // PermissionUserDisallowTask removes a user's permission.
@@ -125,7 +126,7 @@ func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
 
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
 
-func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	data := struct {
@@ -174,6 +175,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }
 
 // PermissionUpdateTask updates an existing permission entry.
@@ -184,7 +186,7 @@ var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
 var _ tasks.Task = (*PermissionUpdateTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
-func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
@@ -225,6 +227,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }
 
 func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, string, string, error) {

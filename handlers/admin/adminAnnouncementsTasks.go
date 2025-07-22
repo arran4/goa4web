@@ -32,18 +32,19 @@ var _ tasks.Task = (*DeleteAnnouncementTask)(nil)
 // deleteAnnouncementTask also notifies admins of changes for transparency.
 var _ notif.AdminEmailTemplateProvider = (*DeleteAnnouncementTask)(nil)
 
-func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
 		log.Printf("news id: %v", err)
 		handlers.TaskDoneAutoRefreshPage(w, r)
-		return
+		return nil
 	}
 	if err := queries.CreateAnnouncement(r.Context(), int32(nid)); err != nil {
 		log.Printf("create announcement: %v", err)
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func (AddAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -55,7 +56,7 @@ func (AddAnnouncementTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -67,6 +68,7 @@ func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func (DeleteAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {

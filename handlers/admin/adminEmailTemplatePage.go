@@ -89,10 +89,10 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "emailTemplatePage.gohtml", data)
 }
 
-func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+		return nil
 	}
 	body := r.PostFormValue("body")
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -100,14 +100,15 @@ func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 		log.Printf("db save template: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
+	return nil
 }
 
-func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
 		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
 		r.URL.RawQuery = "error=" + q
 		handlers.TaskErrorAcknowledgementPage(w, r)
-		return
+		return nil
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -116,11 +117,11 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("get user: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if !urow.Email.Valid || urow.Email.String == "" {
 		http.Error(w, "email unknown", http.StatusBadRequest)
-		return
+		return nil
 	}
 
 	base := "http://" + r.Host
@@ -134,7 +135,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("parse template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	unsub := "/usr/subscriptions"
 	if config.AppRuntimeConfig.HTTPHostname != "" {
@@ -153,7 +154,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.Execute(&buf, content); err != nil {
 		log.Printf("execute template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	toAddr := mail.Address{Name: urow.Username.String, Address: urow.Email.String}
 	var fromAddr mail.Address
@@ -167,10 +168,11 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("build message: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: sql.NullInt32{Int32: urow.Idusers, Valid: true}, Body: string(msg), DirectEmail: false}); err != nil {
 		log.Printf("queue email: %v", err)
 	}
 	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
+	return nil
 }

@@ -42,13 +42,13 @@ func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 	return tasks.HasTask(TaskCreateCategory)(r, m)
 }
 
-func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("cname")
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -61,31 +61,33 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if err := queries.DeleteFAQCategory(r.Context(), int32(cid)); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("cname")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -95,8 +97,9 @@ func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

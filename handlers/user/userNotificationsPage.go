@@ -58,19 +58,19 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
 }
 
-func (DismissTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if !handlers.NotificationsEnabled() {
 		http.NotFound(w, r)
-		return
+		return nil
 	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
-		return
+		return nil
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -86,6 +86,7 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+	return nil
 }
 
 func notificationsRssPage(w http.ResponseWriter, r *http.Request) {

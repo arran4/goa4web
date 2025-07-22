@@ -197,10 +197,10 @@ func (replyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = replyTask{}
 
-func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 
 	vars := mux.Vars(r)
@@ -208,12 +208,12 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	if linkId == 0 {
 		log.Printf("Error: no bid")
 		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -230,11 +230,11 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 			if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
-			return
+			return nil
 		default:
 			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 	}
 
@@ -242,7 +242,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
 		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
+		return nil
 	}
 
 	var pthid int32 = link.ForumthreadID
@@ -266,13 +266,13 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
 		log.Printf("Error: findForumTopicByTitle: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	} else {
 		ptid = pt.Idforumtopic
 	}
@@ -281,7 +281,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignLinkerThisThreadId(r.Context(), db.AssignLinkerThisThreadIdParams{
@@ -290,7 +290,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}); err != nil {
 			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 	}
 
@@ -315,7 +315,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -337,4 +337,5 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	return nil
 }

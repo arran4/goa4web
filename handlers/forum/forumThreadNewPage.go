@@ -108,13 +108,13 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }
 
-func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -122,18 +122,18 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("UserCanCreateThread error: %v", err)
 		http.Error(w, "forbidden", http.StatusForbidden)
-		return
+		return nil
 	}
 	if !allowed {
 		http.Error(w, "forbidden", http.StatusForbidden)
-		return
+		return nil
 	}
 
 	threadId, err := queries.MakeThread(r.Context(), int32(topicId))
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	var topicTitle, author string
@@ -170,7 +170,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -192,6 +192,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	return nil
 }
 
 func ThreadNewCancelPage(w http.ResponseWriter, r *http.Request) {

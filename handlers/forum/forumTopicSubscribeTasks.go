@@ -21,10 +21,10 @@ var subscribeTopicTaskAction = &subscribeTopicTask{TaskString: TaskSubscribeToTo
 
 var _ tasks.Task = (*subscribeTopicTask)(nil)
 
-func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) {
+func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
@@ -35,6 +35,7 @@ func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) {
 		log.Printf("insert subscription: %v", err)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d", topicID), http.StatusSeeOther)
+	return nil
 }
 
 // unsubscribeTopicTask removes a topic subscription.
@@ -44,10 +45,10 @@ var unsubscribeTopicTaskAction = &unsubscribeTopicTask{TaskString: TaskUnsubscri
 
 var _ tasks.Task = (*unsubscribeTopicTask)(nil)
 
-func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) {
+func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
@@ -58,4 +59,5 @@ func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) {
 		log.Printf("delete subscription: %v", err)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d", topicID), http.StatusSeeOther)
+	return nil
 }

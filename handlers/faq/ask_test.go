@@ -103,7 +103,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	handler := middleware.TaskEventMiddleware(http.HandlerFunc(askTask.Action))
+	handler := middleware.TaskEventMiddleware(Action2HandlerFunc(askTask))
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
@@ -121,4 +121,12 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
+}
+
+func Action2HandlerFunc(task tasks.Task) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if result := task.Action(w, r); result != nil {
+			panic(result)
+		}
+	})
 }

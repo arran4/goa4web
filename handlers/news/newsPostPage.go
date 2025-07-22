@@ -321,10 +321,10 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)
 }
 
-func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 
 	vars := mux.Vars(r)
@@ -332,12 +332,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	if pid == 0 {
 		log.Printf("Error: no bid")
 		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	uid, _ := session.Values["UID"].(int32)
@@ -346,7 +346,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
+		return nil
 	}
 
 	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
@@ -357,7 +357,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	var pthid = post.ForumthreadID
@@ -381,13 +381,13 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
 		log.Printf("Error: findForumTopicByTitle: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	} else {
 		ptid = pt.Idforumtopic
 	}
@@ -396,7 +396,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignNewsThisThreadId(r.Context(), db.AssignNewsThisThreadIdParams{
@@ -405,7 +405,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		}); err != nil {
 			log.Printf("Error: assign_news_to_thread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 	}
 
@@ -432,7 +432,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -453,18 +453,19 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (EditTask) Action(w http.ResponseWriter, r *http.Request) {
+func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
 		handlers.TaskErrorAcknowledgementPage(w, r)
-		return
+		return nil
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -475,7 +476,7 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) {
 	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
-		return
+		return nil
 	}
 	err = queries.UpdateNewsPost(r.Context(), db.UpdateNewsPostParams{
 		Idsitenews:         int32(postId),
@@ -487,35 +488,36 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
+func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
 		handlers.TaskErrorAcknowledgementPage(w, r)
-		return
+		return nil
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
 	if cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData); !cd.HasGrant("news", "post", "post", 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
-		return
+		return nil
 	}
 	id, err := queries.CreateNewsPost(r.Context(), db.CreateNewsPostParams{
 		LanguageIdlanguage: int32(languageId),
@@ -527,7 +529,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	// give the author edit rights on the new post
@@ -558,4 +560,5 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

@@ -74,7 +74,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "notificationsPage.gohtml", data)
 }
 
-func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) {
+func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -86,17 +86,19 @@ func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) {
+func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		log.Printf("purge notifications: %v", err)
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	message := r.PostFormValue("message")
 	link := r.PostFormValue("link")
@@ -143,4 +145,5 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

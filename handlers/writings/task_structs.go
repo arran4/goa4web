@@ -22,8 +22,11 @@ var _ tasks.Task = (*SubmitWritingTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*SubmitWritingTask)(nil)
 var _ notif.GrantsRequiredProvider = (*SubmitWritingTask)(nil)
 
-func (SubmitWritingTask) Page(w http.ResponseWriter, r *http.Request)   { ArticleAddPage(w, r) }
-func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleAddActionPage(w, r) }
+func (SubmitWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleAddPage(w, r) }
+func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
+	ArticleAddActionPage(w, r)
+	return nil
+}
 
 func (SubmitWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("writingEmail")
@@ -105,7 +108,10 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 var _ searchworker.IndexedTask = ReplyTask{}
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 
-func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) { ArticleReplyActionPage(w, r) }
+func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
+	ArticleReplyActionPage(w, r)
+	return nil
+}
 
 // EditReplyTask updates an existing comment.
 type EditReplyTask struct{ tasks.TaskString }
@@ -118,8 +124,9 @@ var _ tasks.Task = (*EditReplyTask)(nil)
 // admins need to know when discussions change, notify them of edits
 var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
 
-func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ArticleCommentEditActionPage(w, r)
+	return nil
 }
 
 func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -140,8 +147,9 @@ var cancelTask = &CancelTask{TaskString: TaskCancel}
 // fits the routing interface even though no additional behaviour is required.
 var _ tasks.Task = (*CancelTask)(nil)
 
-func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ArticleCommentEditActionCancelPage(w, r)
+	return nil
 }
 
 // UpdateWritingTask applies changes to an article.
@@ -155,7 +163,10 @@ var _ notif.GrantsRequiredProvider = (*UpdateWritingTask)(nil)
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
-func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) { ArticleEditActionPage(w, r) }
+func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
+	ArticleEditActionPage(w, r)
+	return nil
+}
 
 func (UpdateWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
 	return notif.NewEmailTemplates("writingUpdateEmail")
@@ -182,12 +193,13 @@ var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 var _ tasks.Task = (*UserAllowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserAllowTask)(nil)
 
-func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if r.URL.Path == "/admin/writings/users/roles" {
 		AdminUserLevelsAllowActionPage(w, r)
-		return
+		return nil
 	}
 	UsersPermissionsPermissionUserAllowPage(w, r)
+	return nil
 }
 
 func (UserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
@@ -217,12 +229,13 @@ var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 var _ tasks.Task = (*UserDisallowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserDisallowTask)(nil)
 
-func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if r.URL.Path == "/admin/writings/users/roles" {
 		AdminUserLevelsRemoveActionPage(w, r)
-		return
+		return nil
 	}
 	UsersPermissionsDisallowPage(w, r)
+	return nil
 }
 
 func (UserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
@@ -251,8 +264,9 @@ var writingCategoryChangeTask = &WritingCategoryChangeTask{TaskString: TaskWriti
 
 var _ tasks.Task = (*WritingCategoryChangeTask)(nil)
 
-func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) {
+func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) any {
 	AdminCategoriesModifyPage(w, r)
+	return nil
 }
 
 // WritingCategoryCreateTask creates a new category.
@@ -262,6 +276,7 @@ var writingCategoryCreateTask = &WritingCategoryCreateTask{TaskString: TaskWriti
 
 var _ tasks.Task = (*WritingCategoryCreateTask)(nil)
 
-func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) {
+func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	AdminCategoriesCreatePage(w, r)
+	return nil
 }

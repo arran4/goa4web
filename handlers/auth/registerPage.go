@@ -34,14 +34,14 @@ func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterActionPage handles user creation from the registration form.
-func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+		return nil
 	}
 	uVals, uOK := r.PostForm["username"]
 	pVals, pOK := r.PostForm["password"]
@@ -50,14 +50,14 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 		!pOK || len(pVals) == 0 || pVals[0] == "" ||
 		!eOK || len(eVals) == 0 || eVals[0] == "" {
 		http.Error(w, "missing required fields", http.StatusBadRequest)
-		return
+		return nil
 	}
 	username := uVals[0]
 	password := pVals[0]
 	email := eVals[0]
 	if !strings.Contains(email, "@") {
 		http.Error(w, "invalid email", http.StatusBadRequest)
-		return
+		return nil
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -68,27 +68,27 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		log.Printf("UserByUsername Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	} else {
 		http.Error(w, "User already exists", http.StatusForbidden)
-		return
+		return nil
 	}
 
 	if _, err := queries.UserByEmail(r.Context(), email); errors.Is(err, sql.ErrNoRows) {
 	} else if err != nil {
 		log.Printf("UserByUsername Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	} else {
 		http.Error(w, "User already exists", http.StatusForbidden)
-		return
+		return nil
 	}
 
 	hash, alg, err := HashPassword(password)
 	if err != nil {
 		log.Printf("hashPassword Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	result, err := queries.DB().ExecContext(r.Context(),
 		"INSERT INTO users (username) VALUES (?)",
@@ -97,28 +97,28 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			http.Error(w, "User already exists", http.StatusForbidden)
-			return
+			return nil
 		}
 		log.Printf("InsertUser Error: %s", err)
 		http.Error(w, "Can't create user", http.StatusForbidden)
-		return
+		return nil
 	}
 
 	lastInsertID, err := result.LastInsertId()
 	if err != nil {
 		log.Printf("LastInsertId Error: %s", err)
 		http.Error(w, "Session error", http.StatusForbidden)
-		return
+		return nil
 	}
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: int32(lastInsertID), Email: email, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
 		log.Printf("InsertUserEmail Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(lastInsertID), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
 		log.Printf("InsertPassword Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -136,4 +136,5 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	renderLoginForm(w, r, "approval is pending")
 
+	return nil
 }

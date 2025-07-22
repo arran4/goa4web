@@ -154,16 +154,16 @@ func updateDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) erro
 	})
 }
 
-func (SaveLanguagesTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveLanguagesTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	uid, _ := session.Values["UID"].(int32)
@@ -172,22 +172,23 @@ func (SaveLanguagesTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := updateLanguageSelections(r, cd, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (SaveLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -195,22 +196,23 @@ func (SaveLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := updateDefaultLanguage(r, queries, uid); err != nil {
 		log.Printf("Save language Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (SaveAllTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SaveAllTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	uid, _ := session.Values["UID"].(int32)
@@ -219,14 +221,15 @@ func (SaveAllTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := updateLanguageSelections(r, cd, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if err := updateDefaultLanguage(r, queries, uid); err != nil {
 		log.Printf("Save language Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

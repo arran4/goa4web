@@ -43,38 +43,39 @@ func (CreateQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 	return tasks.HasTask(TaskCreate)(r, m)
 }
 
-func (DeleteQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	faq, err := strconv.Atoi(r.PostFormValue("faq"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
+func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
 	category, err := strconv.Atoi(r.PostFormValue("category"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	faq, err := strconv.Atoi(r.PostFormValue("faq"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -86,25 +87,26 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
 	category, err := strconv.Atoi(r.PostFormValue("category"))
 	if err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -116,8 +118,9 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) {
 	); err != nil {
 		log.Printf("Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

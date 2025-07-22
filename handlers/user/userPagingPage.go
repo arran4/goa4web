@@ -45,14 +45,14 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "pagingPage.gohtml", data)
 }
 
-func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
+func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/paging", http.StatusSeeOther)
-		return
+		return nil
 	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 	size, _ := strconv.Atoi(r.FormValue("size"))
@@ -69,7 +69,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("preference load: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -89,7 +89,8 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("save paging: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	http.Redirect(w, r, "/usr/paging", http.StatusSeeOther)
+	return nil
 }

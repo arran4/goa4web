@@ -82,7 +82,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
 }
 
-func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
+func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
@@ -125,9 +125,10 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm: %v", err)
@@ -139,4 +140,5 @@ func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

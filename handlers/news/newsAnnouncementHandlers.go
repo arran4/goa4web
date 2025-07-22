@@ -49,7 +49,7 @@ func (AnnouncementDeleteTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
@@ -71,9 +71,10 @@ func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
@@ -85,7 +86,7 @@ func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("announcementForNews: %v", err)
 		}
 		handlers.TaskDoneAutoRefreshPage(w, r)
-		return
+		return nil
 	}
 	if ann != nil && ann.Active {
 		if err := queries.SetAnnouncementActive(r.Context(), db.SetAnnouncementActiveParams{Active: false, ID: ann.ID}); err != nil {
@@ -93,4 +94,5 @@ func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

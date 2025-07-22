@@ -39,8 +39,9 @@ func (UserAllowTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	UsersPermissionsPermissionUserAllowPage(w, r)
+	return nil
 }
 
 // UserDisallowTask removes a user's permission.
@@ -61,8 +62,9 @@ func (UserDisallowTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	UsersPermissionsDisallowPage(w, r)
+	return nil
 }
 
 // UsersAllowTask grants multiple users permissions.
@@ -82,8 +84,9 @@ func (UsersAllowTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (UsersAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	UsersPermissionsBulkAllowPage(w, r)
+	return nil
 }
 
 // UsersDisallowTask removes permissions from multiple users.
@@ -103,8 +106,9 @@ func (UsersDisallowTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (UsersDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UsersDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	UsersPermissionsBulkDisallowPage(w, r)
+	return nil
 }
 
 func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {

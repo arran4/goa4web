@@ -14,3 +14,7 @@ func (e UserError) Error() string {
 	}
 	return e.ErrorMessage
 }
+
+func (e UserError) UserErrorMessage() string {
+	return e.ErrorMessage
+}

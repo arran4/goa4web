@@ -83,7 +83,7 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "userPermissionsPage.gohtml", data)
 }
 
-func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
@@ -106,9 +106,10 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }
 
-func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	data := struct {
@@ -126,4 +127,5 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }

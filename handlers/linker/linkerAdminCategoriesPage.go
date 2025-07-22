@@ -45,7 +45,7 @@ type updateCategoryTask struct{ tasks.TaskString }
 var UpdateCategoryTask = &updateCategoryTask{TaskString: TaskUpdate}
 var _ tasks.Task = (*updateCategoryTask)(nil)
 
-func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
@@ -57,7 +57,7 @@ func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	order, _ := strconv.Atoi(r.PostFormValue("order"))
 	if err := queries.UpdateLinkerCategorySortOrder(r.Context(), db.UpdateLinkerCategorySortOrderParams{
@@ -66,9 +66,10 @@ func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("updateLinkerCategorySortOrder Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 type renameCategoryTask struct{ tasks.TaskString }
@@ -76,7 +77,7 @@ type renameCategoryTask struct{ tasks.TaskString }
 var RenameCategoryTask = &renameCategoryTask{TaskString: TaskRenameCategory}
 var _ tasks.Task = (*renameCategoryTask)(nil)
 
-func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	title := r.PostFormValue("title")
@@ -88,9 +89,10 @@ func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 type deleteCategoryTask struct{ tasks.TaskString }
@@ -98,7 +100,7 @@ type deleteCategoryTask struct{ tasks.TaskString }
 var DeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
 var _ tasks.Task = (*deleteCategoryTask)(nil)
 
-func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cid, _ := strconv.Atoi(r.PostFormValue("cid"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -106,25 +108,26 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	for _, c := range rows {
 		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
 			http.Error(w, "Category in use", http.StatusBadRequest)
-			return
+			return nil
 		}
 	}
 	count, err := queries.CountLinksByCategory(r.Context(), int32(cid))
 	if err != nil {
 		log.Printf("countLinks Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if count > 0 {
 		http.Error(w, "Category in use", http.StatusBadRequest)
-		return
+		return nil
 	}
 	if err := queries.DeleteLinkerCategory(r.Context(), int32(cid)); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 type createCategoryTask struct{ tasks.TaskString }
@@ -132,7 +135,7 @@ type createCategoryTask struct{ tasks.TaskString }
 var CreateCategoryTask = &createCategoryTask{TaskString: TaskCreateCategory}
 var _ tasks.Task = (*createCategoryTask)(nil)
 
-func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
+func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	title := r.PostFormValue("title")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -144,7 +147,8 @@ func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("renameLinkerCategory Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

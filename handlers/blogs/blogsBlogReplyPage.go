@@ -80,7 +80,10 @@ func (ReplyBlogTask) IndexData(data map[string]any) []searchworker.IndexEventDat
 
 var _ searchworker.IndexedTask = ReplyBlogTask{}
 
-func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogReplyPostPage(w, r) }
+func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
+	BlogReplyPostPage(w, r)
+	return nil
+}
 
 func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

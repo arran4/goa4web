@@ -98,7 +98,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "boardPage.gohtml", data)
 }
 
-func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 
 	vars := mux.Vars(r)
@@ -106,7 +106,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -116,19 +116,19 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("GetImageBoardById Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
 		http.Error(w, "bad upload", http.StatusBadRequest)
-		return
+		return nil
 	}
 
 	file, header, err := r.FormFile("image")
 	if err != nil {
 		http.Error(w, "image required", http.StatusBadRequest)
-		return
+		return nil
 	}
 	defer file.Close()
 
@@ -138,7 +138,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("copy upload error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	shaHex := fmt.Sprintf("%x", h.Sum(nil))
@@ -149,14 +149,14 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("decode image error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	fname := shaHex + ext
 	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			log.Printf("upload write: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 		src := img.Bounds()
 		var crop image.Rectangle
@@ -176,18 +176,18 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("encode thumb: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 		if err := enc(&buf, thumb); err != nil {
 			log.Printf("encode thumb: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 		thumbName := shaHex + "_thumb" + ext
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, thumbName), buf.Bytes()); err != nil {
 			log.Printf("thumb write: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 	}
 
@@ -210,7 +210,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("CreateImagePost Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -223,4 +223,5 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

@@ -17,7 +17,7 @@ type RemakeLinkerTask struct{ tasks.TaskString }
 var remakeLinkerTask = &RemakeLinkerTask{TaskString: TaskRemakeLinkerSearch}
 var _ tasks.Task = (*RemakeLinkerTask)(nil)
 
-func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
@@ -36,4 +36,5 @@ func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }

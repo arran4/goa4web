@@ -85,7 +85,7 @@ var UserAllowTask = &userAllowTask{TaskString: TaskUserAllow}
 var _ notif.TargetUsersNotificationProvider = (*userAllowTask)(nil)
 var _ tasks.Task = (*userAllowTask)(nil)
 
-func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	usernames := r.PostFormValue("usernames")
 	role := r.PostFormValue("role")
@@ -118,6 +118,7 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 type userDisallowTask struct{ tasks.TaskString }
@@ -127,7 +128,7 @@ var UserDisallowTask = &userDisallowTask{TaskString: TaskUserDisallow}
 var _ notif.TargetUsersNotificationProvider = (*userDisallowTask)(nil)
 var _ tasks.Task = (*userDisallowTask)(nil)
 
-func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
+func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	r.ParseForm()
 	ids := r.Form["permids"]
@@ -155,6 +156,7 @@ func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, string, string, error) {

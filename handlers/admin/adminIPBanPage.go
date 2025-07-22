@@ -50,7 +50,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "iPBanPage.gohtml", data)
 }
 
-func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
@@ -84,9 +84,10 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
-func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := r.ParseForm(); err != nil {
@@ -112,6 +113,7 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func (AddIPBanTask) AdminEmailTemplate() *notif.EmailTemplates {

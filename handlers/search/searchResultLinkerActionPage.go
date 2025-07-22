@@ -23,7 +23,7 @@ type SearchLinkerTask struct{ tasks.TaskString }
 var searchLinkerTask = &SearchLinkerTask{TaskString: TaskSearchLinker}
 var _ tasks.Task = (*SearchLinkerTask)(nil)
 
-func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	type Data struct {
 		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
@@ -41,7 +41,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -49,11 +49,11 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	if comments, emptyWords, noResults, err := ForumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbn.Idforumtopic}, uid); err != nil {
-		return
+		return nil
 	} else {
 		data.Comments = comments
 		data.CommentsNoResults = emptyWords
@@ -61,7 +61,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if Linkers, emptyWords, noResults, err := LinkerSearch(w, r, queries, uid); err != nil {
-		return
+		return nil
 	} else {
 		data.Links = Linkers
 		data.NoResults = emptyWords
@@ -69,6 +69,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "resultLinkerActionPage.gohtml", data)
+	return nil
 }
 
 func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {

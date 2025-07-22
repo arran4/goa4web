@@ -12,8 +12,9 @@ type RenameLanguageTask struct{ tasks.TaskString }
 
 var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
 
-func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	adminLanguagesRenamePage(w, r)
+	return nil
 }
 
 func (RenameLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -30,8 +31,9 @@ type DeleteLanguageTask struct{ tasks.TaskString }
 
 var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delete Language")}
 
-func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	adminLanguagesDeletePage(w, r)
+	return nil
 }
 
 func (DeleteLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {
@@ -48,8 +50,9 @@ type CreateLanguageTask struct{ tasks.TaskString }
 
 var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}
 
-func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	adminLanguagesCreatePage(w, r)
+	return nil
 }
 
 func (CreateLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {

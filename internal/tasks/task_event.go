@@ -10,7 +10,11 @@ import (
 // It provides handlers for performing the action and rendering the result as
 // well as a factory for creating an EventNotification.
 type Task interface {
-	Action(w http.ResponseWriter, r *http.Request)
+	// Action results are either:
+	// * http.Handler / http.HandlerFunc
+	// * type Template string
+	// * error
+	Action(w http.ResponseWriter, r *http.Request) any
 }
 
 type TaskMatcher interface {
@@ -21,24 +25,13 @@ type Name interface {
 	Name() string
 }
 
-// ActionResult represents a follow-up action to execute after a task completes.
-type ActionResult interface {
-	Action(w http.ResponseWriter, r *http.Request)
-}
-
-// ActionResultV2 is implemented by tasks that may return a follow-up ActionResult
-// along with an error.
-type ActionResultV2 interface {
-	Action(w http.ResponseWriter, r *http.Request) (ActionResult, error)
-}
-
 type TaskString string
 
 func (t TaskString) Name() string {
 	return string(t)
 }
 
-func (t TaskString) Action(http.ResponseWriter, *http.Request) {}
+func (t TaskString) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (t TaskString) Matcher() mux.MatcherFunc {
 	return HasTask(string(t))

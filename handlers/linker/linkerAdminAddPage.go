@@ -68,12 +68,12 @@ var _ tasks.Task = (*addTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*addTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*addTask)(nil)
 
-func (addTask) Action(w http.ResponseWriter, r *http.Request) {
+func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 
 	uid, _ := session.Values["UID"].(int32)
@@ -92,11 +92,12 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("createLinkerItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
 
+	return nil
 }
 
 func (addTask) SubscribedEmailTemplate() *notif.EmailTemplates {

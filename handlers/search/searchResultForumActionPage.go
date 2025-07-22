@@ -22,7 +22,7 @@ type SearchForumTask struct{ tasks.TaskString }
 var searchForumTask = &SearchForumTask{TaskString: TaskSearchForum}
 var _ tasks.Task = (*SearchForumTask)(nil)
 
-func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 	type Data struct {
 		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
@@ -36,12 +36,12 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
 	if comments, emptyWords, noResults, err := ForumCommentSearchNotInRestrictedTopic(w, r, queries, uid); err != nil {
-		return
+		return nil
 	} else {
 		data.Comments = comments
 		data.CommentsNoResults = emptyWords
@@ -49,6 +49,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "resultForumActionPage.gohtml", data)
+	return nil
 }
 
 func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {

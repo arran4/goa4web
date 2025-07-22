@@ -153,12 +153,15 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
 }
 
-func (AcceptRequestTask) Action(w http.ResponseWriter, r *http.Request) {
+func (AcceptRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	handleRequestAction(w, r, "accepted")
+	return nil
 }
-func (RejectRequestTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RejectRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	handleRequestAction(w, r, "rejected")
+	return nil
 }
-func (QueryRequestTask) Action(w http.ResponseWriter, r *http.Request) {
+func (QueryRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	handleRequestAction(w, r, "query")
+	return nil
 }

@@ -67,12 +67,12 @@ var _ tasks.Task = (*SuggestTask)(nil)
 
 func (SuggestTask) Page(w http.ResponseWriter, r *http.Request) { SuggestPage(w, r) }
 
-func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 
 	uid, _ := session.Values["UID"].(int32)
@@ -91,8 +91,9 @@ func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("createLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

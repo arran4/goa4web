@@ -34,30 +34,30 @@ var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 // ensure UploadImageTask conforms to tasks.Task
 var _ tasks.Task = (*UploadImageTask)(nil)
 
-func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
+func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
 		http.Error(w, "bad upload", http.StatusBadRequest)
-		return
+		return nil
 	}
 	file, header, err := r.FormFile("image")
 	if err != nil {
 		http.Error(w, "image required", http.StatusBadRequest)
-		return
+		return nil
 	}
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	size := int64(len(data))
 
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		http.Error(w, "invalid image", http.StatusBadRequest)
-		return
+		return nil
 	}
 
 	id := r.FormValue("id")
@@ -71,7 +71,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			log.Printf("upload write: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 	}
 	width := img.Bounds().Dx()
@@ -95,17 +95,17 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	enc, err := imagesign.EncoderByExtension(ext)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if err := enc(&tbuf, thumb); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	if cp := upload.CacheProviderFromConfig(config.AppRuntimeConfig); cp != nil {
 		if err := cp.Write(r.Context(), path.Join(sub1, sub2, thumbName), tbuf.Bytes()); err != nil {
 			log.Printf("cache write: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 		if ccp, ok := cp.(upload.CacheProvider); ok {
 			if err := ccp.Cleanup(r.Context(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes)); err != nil {
@@ -130,11 +130,12 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write([]byte(imagesign.SignedRef("image:" + fname))); err != nil {
 		log.Printf("write response: %v", err)
 	}
+	return nil
 }

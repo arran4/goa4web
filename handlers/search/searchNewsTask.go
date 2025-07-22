@@ -13,6 +13,7 @@ type SearchNewsTask struct{ tasks.TaskString }
 var searchNewsTask = &SearchNewsTask{TaskString: TaskSearchNews}
 var _ tasks.Task = (*SearchNewsTask)(nil)
 
-func (SearchNewsTask) Action(w http.ResponseWriter, r *http.Request) {
+func (SearchNewsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	news.SearchResultNewsActionPage(w, r)
+	return nil
 }

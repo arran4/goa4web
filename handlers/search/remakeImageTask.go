@@ -17,7 +17,7 @@ type RemakeImageTask struct{ tasks.TaskString }
 var remakeImageTask = &RemakeImageTask{TaskString: TaskRemakeImageSearch}
 var _ tasks.Task = (*RemakeImageTask)(nil)
 
-func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) {
+func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
@@ -36,4 +36,5 @@ func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	return nil
 }

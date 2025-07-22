@@ -21,16 +21,17 @@ var _ notif.SelfNotificationTemplateProvider = (*ApprovePostTask)(nil)
 
 var approvePostTask = &ApprovePostTask{TaskString: TaskApprove}
 
-func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) {
+func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.ApproveImagePost(r.Context(), int32(pid)); err != nil {
 		log.Printf("ApproveImagePost error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }
 
 func (ApprovePostTask) SelfEmailTemplate() *notif.EmailTemplates {

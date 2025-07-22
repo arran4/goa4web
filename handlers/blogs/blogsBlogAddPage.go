@@ -56,8 +56,11 @@ func (AddBlogTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirem
 	return nil, fmt.Errorf("target not provided")
 }
 
-func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(w, r) }
-func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) { BlogAddActionPage(w, r) }
+func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request) { BlogAddPage(w, r) }
+func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
+	BlogAddActionPage(w, r)
+	return nil
+}
 
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

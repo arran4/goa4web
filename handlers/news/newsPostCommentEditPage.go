@@ -34,11 +34,11 @@ func (EditReplyTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
+func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	text := r.PostFormValue("replytext")
 
@@ -49,7 +49,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -62,7 +62,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{
@@ -71,7 +71,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 		Text:               sql.NullString{String: text, Valid: true},
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -85,6 +85,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
+	return nil
 }
 
 // CancelTask cancels comment editing.
@@ -104,8 +105,9 @@ func (CancelTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
-func (CancelTask) Action(w http.ResponseWriter, r *http.Request) {
+func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
 	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
+	return nil
 }

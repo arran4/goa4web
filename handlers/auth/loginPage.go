@@ -45,7 +45,7 @@ func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoginActionPage processes the submitted login form.
-func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
+func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		sess, _ := core.GetSession(r)
 		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
@@ -67,11 +67,11 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 				log.Printf("insert login attempt: %v", err)
 			}
 			renderLoginForm(w, r, "No such user")
-			return
+			return nil
 		default:
 			log.Printf("query Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil
 		}
 	}
 
@@ -86,14 +86,14 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 			} else {
 				session, ok := core.GetSessionOrFail(w, r)
 				if !ok {
-					return
+					return nil
 				}
 				session.Values["PendingResetID"] = reset.ID
 				if err := session.Save(r, w); err != nil {
 					log.Printf("save session: %v", err)
 				}
 				handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
-				return
+				return nil
 			}
 		} else {
 			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
@@ -103,7 +103,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 				log.Printf("insert login attempt: %v", err)
 			}
 			renderLoginForm(w, r, "Invalid password")
-			return
+			return nil
 		}
 	}
 
@@ -114,7 +114,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("user role: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
-		return
+		return nil
 	}
 
 	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
@@ -130,7 +130,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	session.Values["UID"] = int32(user.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
@@ -143,7 +143,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := session.Save(r, w); err != nil {
 		log.Printf("session.Save Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
@@ -153,7 +153,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	if backURL != "" {
 		if backMethod == "" || backMethod == http.MethodGet {
 			http.Redirect(w, r, backURL, http.StatusTemporaryRedirect)
-			return
+			return nil
 		}
 		vals, _ := url.ParseQuery(backData)
 		type Data struct {
@@ -173,25 +173,26 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Template Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
-		return
+		return nil
 	}
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	return nil
 }
 
-func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
+func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 	id, _ := session.Values["PendingResetID"].(int32)
 	if id == 0 {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
+		return nil
 	}
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
+		return nil
 	}
 	code := r.FormValue("code")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -199,7 +200,7 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 	reset, err := queries.GetPasswordResetByCode(r.Context(), db.GetPasswordResetByCodeParams{VerificationCode: code, CreatedAt: expiry})
 	if err != nil || reset.ID != id {
 		http.Error(w, "invalid code", http.StatusUnauthorized)
-		return
+		return nil
 	}
 	if err := queries.MarkPasswordResetVerified(r.Context(), reset.ID); err != nil {
 		log.Printf("mark reset verified: %v", err)
@@ -212,4 +213,5 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		log.Printf("save session: %v", err)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	return nil
 }

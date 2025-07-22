@@ -21,9 +21,10 @@ var threadNewCancelAction = &threadNewCancelTask{TaskString: TaskCancel}
 
 var _ tasks.Task = (*threadNewCancelTask)(nil)
 
-func (threadNewCancelTask) Action(w http.ResponseWriter, r *http.Request) {
+func (threadNewCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	topicID, _ := strconv.Atoi(mux.Vars(r)["topic"])
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d", topicID), http.StatusTemporaryRedirect)
+	return nil
 }
 
 // topicThreadReplyCancelTask cancels replying to a thread.
@@ -33,11 +34,12 @@ var topicThreadReplyCancel = &topicThreadReplyCancelTask{TaskString: TaskCancel}
 
 var _ tasks.Task = (*topicThreadReplyCancelTask)(nil)
 
-func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request) {
+func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 	http.Redirect(w, r, endURL, http.StatusTemporaryRedirect)
+	return nil
 }
 
 // topicThreadCommentEditActionTask updates a comment and refreshes thread metadata.
@@ -47,11 +49,11 @@ var topicThreadCommentEditAction = &topicThreadCommentEditActionTask{TaskString:
 
 var _ tasks.Task = (*topicThreadCommentEditActionTask)(nil)
 
-func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Request) {
+func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageID, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 	text := r.PostFormValue("replytext")
 
@@ -66,7 +68,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 		Text:               sql.NullString{String: text, Valid: true},
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -79,6 +81,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentID), http.StatusTemporaryRedirect)
+	return nil
 }
 
 // topicThreadCommentEditActionCancelTask aborts editing a comment.
@@ -88,9 +91,10 @@ var topicThreadCommentEditActionCancel = &topicThreadCommentEditActionCancelTask
 
 var _ tasks.Task = (*topicThreadCommentEditActionCancelTask)(nil)
 
-func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *http.Request) {
+func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 	http.Redirect(w, r, endURL, http.StatusTemporaryRedirect)
+	return nil
 }

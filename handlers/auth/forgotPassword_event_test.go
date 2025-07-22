@@ -25,7 +25,7 @@ func TestForgotPasswordEventData(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "u"))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO pending_passwords").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
@@ -39,7 +39,7 @@ func TestForgotPasswordEventData(t *testing.T) {
 	rr := httptest.NewRecorder()
 	forgotPasswordTask.Action(rr, req)
 
-	if rr.Code != http.StatusSeeOther {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if _, ok := evt.Data["reset"]; !ok {

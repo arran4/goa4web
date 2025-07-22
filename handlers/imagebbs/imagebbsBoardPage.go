@@ -23,7 +23,12 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/disintegration/imaging"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
+
+	"github.com/anthonynsimon/bild/transform"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -140,7 +145,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
 	data := buf.Bytes()
-	img, err := imaging.Decode(bytes.NewReader(data))
+	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Printf("decode image error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -153,9 +158,19 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		thumb := imaging.Thumbnail(img, 200, 200, imaging.Lanczos)
+		thumb := transform.Resize(img, 200, 200, transform.Lanczos)
 		var buf bytes.Buffer
-		if err := imaging.Encode(&buf, thumb, imaging.PNG); err != nil {
+		switch ext {
+		case ".jpg", ".jpeg":
+			err = jpeg.Encode(&buf, thumb, &jpeg.Options{Quality: 95})
+		case ".png":
+			err = png.Encode(&buf, thumb)
+		case ".gif":
+			err = gif.Encode(&buf, thumb, nil)
+		default:
+			err = png.Encode(&buf, thumb)
+		}
+		if err != nil {
 			log.Printf("encode thumb: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

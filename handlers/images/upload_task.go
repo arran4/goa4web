@@ -19,7 +19,12 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
-	"github.com/disintegration/imaging"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
+
+	"github.com/anthonynsimon/bild/transform"
 )
 
 // UploadImageTask processes authenticated image uploads.
@@ -50,7 +55,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	size := int64(len(data))
 
-	img, err := imaging.Decode(bytes.NewReader(data))
+	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		http.Error(w, "invalid image", http.StatusBadRequest)
 		return
@@ -72,11 +77,20 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
-	thumb := imaging.Thumbnail(img, 200, 200, imaging.Lanczos)
+	thumb := transform.Resize(img, 200, 200, transform.Lanczos)
 	thumbName := id + "_thumb" + ext
 	var tbuf bytes.Buffer
-	imgFmt, _ := imaging.FormatFromExtension(ext)
-	if err := imaging.Encode(&tbuf, thumb, imgFmt); err != nil {
+	switch ext {
+	case ".jpg", ".jpeg":
+		err = jpeg.Encode(&tbuf, thumb, &jpeg.Options{Quality: 95})
+	case ".png":
+		err = png.Encode(&tbuf, thumb)
+	case ".gif":
+		err = gif.Encode(&tbuf, thumb, nil)
+	default:
+		err = png.Encode(&tbuf, thumb)
+	}
+	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

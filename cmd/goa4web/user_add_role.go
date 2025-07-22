@@ -43,14 +43,13 @@ func (c *userAddRoleCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	c.rootCmd.Verbosef("adding role %s to %s", c.Role, c.Username)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
 	if _, err := queries.UserHasRole(ctx, dbpkg.UserHasRoleParams{UsersIdusers: u.Idusers, Name: c.Role}); err == nil {
-		if c.rootCmd.Verbosity > 0 {
-			fmt.Printf("%s already has role %s\n", c.Username, c.Role)
-		}
+		c.rootCmd.Verbosef("%s already has role %s", c.Username, c.Role)
 		return nil
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check role: %w", err)
@@ -61,8 +60,6 @@ func (c *userAddRoleCmd) Run() error {
 	}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Printf("added role %s to %s\n", c.Role, c.Username)
-	}
+	c.rootCmd.Infof("added role %s to %s", c.Role, c.Username)
 	return nil
 }

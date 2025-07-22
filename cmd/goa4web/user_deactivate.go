@@ -52,6 +52,7 @@ func (c *userDeactivateCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
+	c.rootCmd.Verbosef("deactivating user %s", c.Username)
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
@@ -204,8 +205,6 @@ func (c *userDeactivateCmd) Run() error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Printf("deactivated user %s\n", c.Username)
-	}
+	c.rootCmd.Infof("deactivated user %s", c.Username)
 	return nil
 }

@@ -42,6 +42,7 @@ func (c *userRemoveRoleCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	c.rootCmd.Verbosef("removing role %s from %s", c.Role, c.Username)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
@@ -55,9 +56,7 @@ func (c *userRemoveRoleCmd) Run() error {
 			if err := queries.DeleteUserRole(ctx, p.IduserRoles); err != nil {
 				return fmt.Errorf("remove role: %w", err)
 			}
-			if c.rootCmd.Verbosity > 0 {
-				fmt.Printf("removed role %s from %s\n", c.Role, c.Username)
-			}
+			c.rootCmd.Infof("removed role %s from %s", c.Role, c.Username)
 			return nil
 		}
 	}

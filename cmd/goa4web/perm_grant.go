@@ -42,15 +42,14 @@ func (c *permGrantCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	c.rootCmd.Verbosef("granting %s to %s", c.Role, c.User)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.User, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
 	if c.Role == "administrator" {
 		if _, err := queries.GetAdministratorUserRole(ctx, u.Idusers); err == nil {
-			if c.rootCmd.Verbosity > 0 {
-				fmt.Printf("%s already administrator\n", c.User)
-			}
+			c.rootCmd.Verbosef("%s already administrator", c.User)
 			return nil
 		} else if !errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("check admin: %w", err)
@@ -62,5 +61,6 @@ func (c *permGrantCmd) Run() error {
 	}); err != nil {
 		return fmt.Errorf("grant: %w", err)
 	}
+	c.rootCmd.Infof("granted %s to %s", c.Role, c.User)
 	return nil
 }

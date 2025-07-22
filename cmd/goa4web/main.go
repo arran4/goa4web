@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
@@ -95,6 +96,22 @@ func (r *rootCmd) Close() {
 	if r.db != nil {
 		if err := r.db.Close(); err != nil {
 			log.Printf("close db: %v", err)
+		}
+	}
+}
+
+func (r *rootCmd) Infof(format string, args ...any) {
+	fmt.Printf(format, args...)
+	if !strings.HasSuffix(format, "\n") {
+		fmt.Println()
+	}
+}
+
+func (r *rootCmd) Verbosef(format string, args ...any) {
+	if r.Verbosity > 0 {
+		fmt.Printf(format, args...)
+		if !strings.HasSuffix(format, "\n") {
+			fmt.Println()
 		}
 	}
 }

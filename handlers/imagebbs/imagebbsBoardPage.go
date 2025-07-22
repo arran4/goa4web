@@ -6,6 +6,10 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"log"
 	"net/http"
@@ -23,8 +27,9 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
-	"github.com/disintegration/imaging"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/mux"
+	"golang.org/x/image/draw"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/upload"
@@ -140,7 +145,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
 	data := buf.Bytes()
-	img, err := imaging.Decode(bytes.NewReader(data))
+	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Printf("decode image error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -153,9 +158,27 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		thumb := imaging.Thumbnail(img, 200, 200, imaging.Lanczos)
+		src := img.Bounds()
+		var crop image.Rectangle
+		if src.Dx() > src.Dy() {
+			side := src.Dy()
+			x0 := src.Min.X + (src.Dx()-side)/2
+			crop = image.Rect(x0, src.Min.Y, x0+side, src.Min.Y+side)
+		} else {
+			side := src.Dx()
+			y0 := src.Min.Y + (src.Dy()-side)/2
+			crop = image.Rect(src.Min.X, y0, src.Min.X+side, y0+side)
+		}
+		thumb := image.NewRGBA(image.Rect(0, 0, 200, 200))
+		draw.CatmullRom.Scale(thumb, thumb.Bounds(), img, crop, draw.Over, nil)
 		var buf bytes.Buffer
-		if err := imaging.Encode(&buf, thumb, imaging.PNG); err != nil {
+		enc, err := imagesign.EncoderByExtension(ext)
+		if err != nil {
+			log.Printf("encode thumb: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		if err := enc(&buf, thumb); err != nil {
 			log.Printf("encode thumb: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

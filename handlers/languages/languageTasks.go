@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
+// RenameLanguageTask performs a language rename action.
 type RenameLanguageTask struct{ tasks.TaskString }
 
 var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
@@ -24,6 +25,7 @@ func (RenameLanguageTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// DeleteLanguageTask removes a language entry.
 type DeleteLanguageTask struct{ tasks.TaskString }
 
 var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delete Language")}
@@ -41,6 +43,7 @@ func (DeleteLanguageTask) AdminInternalNotificationTemplate() *string {
 	return &v
 }
 
+// CreateLanguageTask creates a new language.
 type CreateLanguageTask struct{ tasks.TaskString }
 
 var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}

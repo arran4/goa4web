@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -127,7 +126,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["signup"] = notifications.SignupInfo{Username: username}
+			evt.Data["Username"] = username
 		}
 	}
 

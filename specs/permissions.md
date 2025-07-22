@@ -12,6 +12,11 @@ Roles define high level capabilities that can be assigned to users. The standard
 - **moderator** – moderation abilities
 - **administrator** – full access
 
+Each role includes the following flags:
+
+- **can_login** – whether accounts assigned the role are permitted to authenticate
+- **is_admin** – marks administrator roles that bypass permission checks
+
 Users can hold multiple roles through the `user_roles` table. Role inheritance is
 modelled via entries in the `grants` table with `section = 'role'`. For example,
 `administrator` inherits `moderator` and `content writer` which in turn inherit

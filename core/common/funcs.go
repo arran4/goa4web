@@ -5,6 +5,7 @@ import (
 	"github.com/arran4/goa4web"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -29,14 +30,26 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTHTML
 			c.SetInput(s)
-			out, _ := io.ReadAll(c.Process())
+			out, err := io.ReadAll(c.Process())
+			if err != nil {
+				log.Printf("read markup: %v", err)
+			}
+			if cerr := c.Error(); cerr != nil {
+				log.Printf("process markup: %v", cerr)
+			}
 			return template.HTML(out)
 		},
 		"a4code2string": func(s string) string {
 			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTWordsOnly
 			c.SetInput(s)
-			out, _ := io.ReadAll(c.Process())
+			out, err := io.ReadAll(c.Process())
+			if err != nil {
+				log.Printf("read markup: %v", err)
+			}
+			if cerr := c.Error(); cerr != nil {
+				log.Printf("process markup: %v", cerr)
+			}
 			return string(out)
 		},
 		"firstline": func(s string) string {

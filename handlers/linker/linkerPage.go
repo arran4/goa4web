@@ -33,11 +33,19 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
+		data.Offset = off
+	}
 	data.HasOffset = data.Offset != 0
-	data.CatId, _ = strconv.Atoi(r.URL.Query().Get("category"))
-	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
-	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
+	if cid, err := strconv.Atoi(r.URL.Query().Get("category")); err == nil {
+		data.CatId = cid
+	}
+	if cid, err := strconv.Atoi(r.URL.Query().Get("comment")); err == nil {
+		data.CommentOnId = cid
+	}
+	if rid, err := strconv.Atoi(r.URL.Query().Get("reply")); err == nil {
+		data.ReplyToId = rid
+	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -113,7 +121,10 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	categoryId := vars["category"]
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	offset := 0
+	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
+		offset = off
+	}
 	if categoryId == "" {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Next 15",

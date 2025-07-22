@@ -81,10 +81,12 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			log.Printf("No rows Error: %s", err)
-			_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
+			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 				Username:  username,
 				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
-			})
+			}); err != nil {
+				log.Printf("insert login attempt: %v", err)
+			}
 			renderLoginForm(w, r, "No such user")
 			return
 		default:
@@ -108,21 +110,25 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				session.Values["PendingResetID"] = reset.ID
-				_ = session.Save(r, w)
+				if err := session.Save(r, w); err != nil {
+					log.Printf("save session: %v", err)
+				}
 				handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
 				return
 			}
 		} else {
-			_ = queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
+			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
 				Username:  username,
 				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
-			})
+			}); err != nil {
+				log.Printf("insert login attempt: %v", err)
+			}
 			renderLoginForm(w, r, "Invalid password")
 			return
 		}
 	}
 
-	if _, err := queries.UserHasRole(r.Context(), db.UserHasRoleParams{UsersIdusers: row.Idusers, Name: "user"}); err != nil {
+	if _, err := queries.UserHasLoginRole(r.Context(), row.Idusers); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			renderLoginForm(w, r, "approval is pending")
 		} else {
@@ -135,7 +141,9 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
 		newHash, newAlg, err := HashPassword(password)
 		if err == nil {
-			_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: row.Idusers, Passwd: newHash, PasswdAlgorithm: sql.NullString{String: newAlg, Valid: true}})
+			if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: row.Idusers, Passwd: newHash, PasswdAlgorithm: sql.NullString{String: newAlg, Valid: true}}); err != nil {
+				log.Printf("insert password: %v", err)
+			}
 		}
 	}
 
@@ -214,9 +222,15 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid code", http.StatusUnauthorized)
 		return
 	}
-	_ = queries.MarkPasswordResetVerified(r.Context(), reset.ID)
-	_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
+	if err := queries.MarkPasswordResetVerified(r.Context(), reset.ID); err != nil {
+		log.Printf("mark reset verified: %v", err)
+	}
+	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}}); err != nil {
+		log.Printf("insert password: %v", err)
+	}
 	delete(session.Values, "PendingResetID")
-	_ = session.Save(r, w)
+	if err := session.Save(r, w); err != nil {
+		log.Printf("save session: %v", err)
+	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

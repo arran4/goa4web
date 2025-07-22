@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"text/template"
 )
@@ -45,14 +46,18 @@ func flagInfos(fs *flag.FlagSet) []flagInfo {
 
 func printFlags(fs *flag.FlagSet) {
 	t := template.Must(template.New("flags").Parse(templateString("flags.txt")))
-	_ = t.Execute(fs.Output(), flagInfos(fs))
+	if err := t.Execute(fs.Output(), flagInfos(fs)); err != nil {
+		fmt.Fprintf(fs.Output(), "template execute: %v\n", err)
+	}
 }
 
 func executeUsage(w io.Writer, tmplStr string, fs *flag.FlagSet, prog string) {
 	t := template.Must(template.New("usage").Parse(tmplStr))
 	t = template.Must(t.New("flags").Parse(templateString("flags.txt")))
-	_ = t.Execute(w, struct {
+	if err := t.Execute(w, struct {
 		Prog  string
 		Flags []flagInfo
-	}{Prog: prog, Flags: flagInfos(fs)})
+	}{Prog: prog, Flags: flagInfos(fs)}); err != nil {
+		fmt.Fprintf(w, "template execute: %v\n", err)
+	}
 }

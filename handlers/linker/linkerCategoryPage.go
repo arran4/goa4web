@@ -30,12 +30,20 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	data.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
+		data.Offset = off
+	}
 	data.HasOffset = data.Offset != 0
 	vars := mux.Vars(r)
-	data.CatId, _ = strconv.Atoi(vars["category"])
-	data.CommentOnId, _ = strconv.Atoi(r.URL.Query().Get("comment"))
-	data.ReplyToId, _ = strconv.Atoi(r.URL.Query().Get("reply"))
+	if cid, err := strconv.Atoi(vars["category"]); err == nil {
+		data.CatId = cid
+	}
+	if cid, err := strconv.Atoi(r.URL.Query().Get("comment")); err == nil {
+		data.CommentOnId = cid
+	}
+	if rid, err := strconv.Atoi(r.URL.Query().Get("reply")); err == nil {
+		data.ReplyToId = rid
+	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 

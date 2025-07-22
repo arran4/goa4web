@@ -1,12 +1,12 @@
 -- Basic role definitions
-INSERT INTO roles (name) VALUES
-  ('anonymous'),
-  ('user'),
-  ('content writer'),
-  ('moderator'),
-  ('administrator'),
-  ('rejected')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+INSERT INTO roles (name, can_login, is_admin) VALUES
+  ('anonymous', 0, 0),
+  ('user', 1, 0),
+  ('content writer', 1, 0),
+  ('moderator', 1, 0),
+  ('administrator', 1, 1),
+  ('rejected', 0, 0)
+ON DUPLICATE KEY UPDATE name = VALUES(name), can_login = VALUES(can_login), is_admin = VALUES(is_admin);
 
 -- Grant user role to all users without any role
 INSERT INTO user_roles (users_idusers, role_id)

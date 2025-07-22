@@ -243,7 +243,7 @@ type targetTask struct{ tasks.TaskString }
 
 func (targetTask) Action(http.ResponseWriter, *http.Request) {}
 
-func (targetTask) TargetUserIDs(evt eventbus.TaskEvent) []int32 { return []int32{2, 3} }
+func (targetTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) { return []int32{2, 3}, nil }
 
 func (targetTask) TargetEmailTemplate() *EmailTemplates { return nil }
 
@@ -331,11 +331,11 @@ type autoSubTask struct{ tasks.TaskString }
 
 func (autoSubTask) Action(http.ResponseWriter, *http.Request) {}
 
-func (autoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string) {
+func (autoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return "AutoSub", fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID)
+		return "AutoSub", fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
 	}
-	return "AutoSub", evt.Path
+	return "AutoSub", evt.Path, nil
 }
 
 func TestProcessEventAutoSubscribe(t *testing.T) {

@@ -43,7 +43,7 @@ type SelfEmailBroadcaster interface {
 // The address itself is obtained from the event data via DirectEmailAddress.
 // Internal notifications are not supported for this provider.
 type DirectEmailNotificationTemplateProvider interface {
-	DirectEmailAddress(evt eventbus.TaskEvent) string
+	DirectEmailAddress(evt eventbus.TaskEvent) (string, error)
 	DirectEmailTemplate() *EmailTemplates
 }
 
@@ -60,13 +60,13 @@ type AutoSubscribeProvider interface {
 	// AutoSubscribePath returns the action name and URI used when creating the
 	// subscription. The event may provide additional context required to build
 	// the path.
-	AutoSubscribePath(evt eventbus.TaskEvent) (string, string)
+	AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error)
 }
 
 // TargetUsersNotificationProvider indicates the notification should be delivered
 // to the returned user IDs.
 type TargetUsersNotificationProvider interface {
-	TargetUserIDs(evt eventbus.TaskEvent) []int32
+	TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error)
 	TargetEmailTemplate() *EmailTemplates
 	TargetInternalNotificationTemplate() *string
 }
@@ -75,5 +75,5 @@ type TargetUsersNotificationProvider interface {
 // notifications. Implementations return one or more GrantRequirement values
 // checked with `CheckGrant` before delivering a message.
 type GrantsRequiredProvider interface {
-	GrantsRequired(evt eventbus.TaskEvent) []GrantRequirement
+	GrantsRequired(evt eventbus.TaskEvent) ([]GrantRequirement, error)
 }

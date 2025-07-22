@@ -49,11 +49,11 @@ func (AddBlogTask) SubscribedInternalNotificationTemplate() *string {
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for new blog entries.
-func (AddBlogTask) GrantsRequired(evt eventbus.TaskEvent) []notif.GrantRequirement {
+func (AddBlogTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
-		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}
+		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("target not provided")
 }
 
 func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request)   { BlogAddPage(w, r) }

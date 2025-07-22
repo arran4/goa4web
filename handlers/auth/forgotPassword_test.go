@@ -1,29 +1,52 @@
 package auth
 
 import (
-	"github.com/arran4/goa4web/internal/notifications"
 	"testing"
 
 	"github.com/arran4/goa4web/core/templates"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func requireEmailTemplates(t *testing.T, prefix string) {
+func requireEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
 	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
 	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	if htmlTmpls.Lookup(notifications.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
-		t.Errorf("missing html template %s.gohtml", prefix)
+	if htmlTmpls.Lookup(et.HTML) == nil {
+		t.Errorf("missing html template %s", et.HTML)
 	}
-	if textTmpls.Lookup(notifications.EmailTextTemplateFilenameGenerator(prefix)) == nil {
-		t.Errorf("missing text template %s.gotxt", prefix)
+	if textTmpls.Lookup(et.Text) == nil {
+		t.Errorf("missing text template %s", et.Text)
 	}
-	if textTmpls.Lookup(notifications.EmailSubjectTemplateFilenameGenerator(prefix)) == nil {
-		t.Errorf("missing subject template %sSubject.gotxt", prefix)
+	if textTmpls.Lookup(et.Subject) == nil {
+		t.Errorf("missing subject template %s", et.Subject)
+	}
+}
+
+func requireNotificationTemplate(t *testing.T, name *string) {
+	if name == nil {
+		return
+	}
+	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	if nt.Lookup(*name) == nil {
+		t.Errorf("missing notification template %s", *name)
 	}
 }
 
 func TestForgotPasswordTemplatesExist(t *testing.T) {
-	requireEmailTemplates(t, "passwordResetEmail")
-	requireEmailTemplates(t, "adminNotificationUserRequestPasswordResetEmail")
-	requireEmailTemplates(t, "adminNotificationEmailAssociationRequestEmail")
+	admins := []notif.AdminEmailTemplateProvider{
+		forgotPasswordTask,
+		emailAssociationRequestTask,
+	}
+	for _, p := range admins {
+		requireEmailTemplates(t, p.AdminEmailTemplate())
+		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate())
+	}
+
+	selfProviders := []notif.SelfNotificationTemplateProvider{
+		forgotPasswordTask,
+	}
+	for _, p := range selfProviders {
+		requireEmailTemplates(t, p.SelfEmailTemplate())
+		requireNotificationTemplate(t, p.SelfInternalNotificationTemplate())
+	}
 }

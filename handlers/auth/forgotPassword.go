@@ -168,5 +168,17 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	id, _ := res.LastInsertId()
 	_ = queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: reason})
 	_ = queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Path = fmt.Sprintf("/admin/request/%d", id)
+			evt.Data["Username"] = row.Username.String
+			evt.Data["Email"] = email
+			evt.Data["Reason"] = reason
+			evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
+		}
+	}
 	handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
 }

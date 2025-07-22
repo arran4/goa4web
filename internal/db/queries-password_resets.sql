@@ -20,9 +20,23 @@ UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?;
 -- name: DeletePasswordReset :exec
 DELETE FROM pending_passwords WHERE id = ?;
 
--- name: DeletePasswordResetsByUser :exec
+-- name: DeletePasswordResetsByUser :execresult
+-- Delete all password reset entries for the given user and return the result
 DELETE FROM pending_passwords WHERE user_id = ?;
 
--- name: PurgePasswordResetsBefore :exec
+-- name: PurgePasswordResetsBefore :execresult
+-- Remove password reset entries that have expired or were already verified
 DELETE FROM pending_passwords
+WHERE created_at < ? OR verified_at IS NOT NULL;
+
+-- name: ListPasswordResetsByUser :many
+-- List password reset entries for the specified user
+SELECT id, user_id, verification_code, created_at, verified_at
+FROM pending_passwords
+WHERE user_id = ?;
+
+-- name: ListPasswordResetsBefore :many
+-- List password reset entries that have expired or were already verified
+SELECT id, user_id, verification_code, created_at, verified_at
+FROM pending_passwords
 WHERE created_at < ? OR verified_at IS NOT NULL;

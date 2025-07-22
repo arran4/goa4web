@@ -27,6 +27,9 @@ func (c *ipBanCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing ipban command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "add":
 		cmd, err := parseIpBanAddCmd(c, args[1:])

@@ -27,6 +27,9 @@ func (c *grantCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing grant command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "add":
 		cmd, err := parseGrantAddCmd(c, args[1:])

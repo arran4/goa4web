@@ -38,6 +38,9 @@ func (c *configTestCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing test command")
 	}
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
 	switch args[0] {
 	case "email":
 		cmd, err := parseConfigTestEmailCmd(c, args[1:])

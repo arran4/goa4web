@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -41,13 +42,13 @@ func (q *Queries) DeletePasswordReset(ctx context.Context, id int32) error {
 	return err
 }
 
-const deletePasswordResetsByUser = `-- name: DeletePasswordResetsByUser :exec
+const deletePasswordResetsByUser = `-- name: DeletePasswordResetsByUser :execresult
 DELETE FROM pending_passwords WHERE user_id = ?
 `
 
-func (q *Queries) DeletePasswordResetsByUser(ctx context.Context, userID int32) error {
-	_, err := q.db.ExecContext(ctx, deletePasswordResetsByUser, userID)
-	return err
+// Delete all password reset entries for the given user and return the result
+func (q *Queries) DeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deletePasswordResetsByUser, userID)
 }
 
 const getPasswordResetByCode = `-- name: GetPasswordResetByCode :one
@@ -104,6 +105,94 @@ func (q *Queries) GetPasswordResetByUser(ctx context.Context, arg GetPasswordRes
 	return &i, err
 }
 
+const listPasswordResetsBefore = `-- name: ListPasswordResetsBefore :many
+SELECT id, user_id, verification_code, created_at, verified_at
+FROM pending_passwords
+WHERE created_at < ? OR verified_at IS NOT NULL
+`
+
+type ListPasswordResetsBeforeRow struct {
+	ID               int32
+	UserID           int32
+	VerificationCode string
+	CreatedAt        time.Time
+	VerifiedAt       sql.NullTime
+}
+
+// List password reset entries that have expired or were already verified
+func (q *Queries) ListPasswordResetsBefore(ctx context.Context, createdAt time.Time) ([]*ListPasswordResetsBeforeRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPasswordResetsBefore, createdAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListPasswordResetsBeforeRow
+	for rows.Next() {
+		var i ListPasswordResetsBeforeRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.VerificationCode,
+			&i.CreatedAt,
+			&i.VerifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPasswordResetsByUser = `-- name: ListPasswordResetsByUser :many
+SELECT id, user_id, verification_code, created_at, verified_at
+FROM pending_passwords
+WHERE user_id = ?
+`
+
+type ListPasswordResetsByUserRow struct {
+	ID               int32
+	UserID           int32
+	VerificationCode string
+	CreatedAt        time.Time
+	VerifiedAt       sql.NullTime
+}
+
+// List password reset entries for the specified user
+func (q *Queries) ListPasswordResetsByUser(ctx context.Context, userID int32) ([]*ListPasswordResetsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPasswordResetsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListPasswordResetsByUserRow
+	for rows.Next() {
+		var i ListPasswordResetsByUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.VerificationCode,
+			&i.CreatedAt,
+			&i.VerifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markPasswordResetVerified = `-- name: MarkPasswordResetVerified :exec
 UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?
 `
@@ -113,12 +202,12 @@ func (q *Queries) MarkPasswordResetVerified(ctx context.Context, id int32) error
 	return err
 }
 
-const purgePasswordResetsBefore = `-- name: PurgePasswordResetsBefore :exec
+const purgePasswordResetsBefore = `-- name: PurgePasswordResetsBefore :execresult
 DELETE FROM pending_passwords
 WHERE created_at < ? OR verified_at IS NOT NULL
 `
 
-func (q *Queries) PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) error {
-	_, err := q.db.ExecContext(ctx, purgePasswordResetsBefore, createdAt)
-	return err
+// Remove password reset entries that have expired or were already verified
+func (q *Queries) PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error) {
+	return q.db.ExecContext(ctx, purgePasswordResetsBefore, createdAt)
 }

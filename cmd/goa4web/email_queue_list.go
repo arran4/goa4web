@@ -40,7 +40,9 @@ func (c *emailQueueListCmd) Run() error {
 	}
 	ids := make([]int32, 0, len(rows))
 	for _, e := range rows {
-		ids = append(ids, e.ToUserID)
+		if e.ToUserID.Valid {
+			ids = append(ids, e.ToUserID.Int32)
+		}
 	}
 	users := make(map[int32]*dbpkg.GetUserByIdRow)
 	for _, id := range ids {
@@ -50,8 +52,10 @@ func (c *emailQueueListCmd) Run() error {
 	}
 	for _, e := range rows {
 		emailStr := ""
-		if u, ok := users[e.ToUserID]; ok && u.Email.Valid && u.Email.String != "" {
-			emailStr = u.Email.String
+		if e.ToUserID.Valid {
+			if u, ok := users[e.ToUserID.Int32]; ok && u.Email.Valid && u.Email.String != "" {
+				emailStr = u.Email.String
+			}
 		}
 		subj := ""
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {

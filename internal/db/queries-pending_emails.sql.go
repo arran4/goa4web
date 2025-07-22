@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -20,7 +21,7 @@ func (q *Queries) DeletePendingEmail(ctx context.Context, id int32) error {
 }
 
 const fetchPendingEmails = `-- name: FetchPendingEmails :many
-SELECT id, to_user_id, body, error_count
+SELECT id, to_user_id, body, error_count, direct_email
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
@@ -28,10 +29,11 @@ LIMIT ?
 `
 
 type FetchPendingEmailsRow struct {
-	ID         int32
-	ToUserID   int32
-	Body       string
-	ErrorCount int32
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	DirectEmail bool
 }
 
 func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*FetchPendingEmailsRow, error) {
@@ -48,6 +50,7 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Fetch
 			&i.ToUserID,
 			&i.Body,
 			&i.ErrorCount,
+			&i.DirectEmail,
 		); err != nil {
 			return nil, err
 		}
@@ -63,16 +66,17 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Fetch
 }
 
 const getPendingEmailByID = `-- name: GetPendingEmailByID :one
-SELECT id, to_user_id, body, error_count
+SELECT id, to_user_id, body, error_count, direct_email
 FROM pending_emails
 WHERE id = ?
 `
 
 type GetPendingEmailByIDRow struct {
-	ID         int32
-	ToUserID   int32
-	Body       string
-	ErrorCount int32
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	DirectEmail bool
 }
 
 func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*GetPendingEmailByIDRow, error) {
@@ -83,6 +87,7 @@ func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*GetPendin
 		&i.ToUserID,
 		&i.Body,
 		&i.ErrorCount,
+		&i.DirectEmail,
 	)
 	return &i, err
 }
@@ -108,33 +113,35 @@ func (q *Queries) IncrementEmailError(ctx context.Context, id int32) error {
 }
 
 const insertPendingEmail = `-- name: InsertPendingEmail :exec
-INSERT INTO pending_emails (to_user_id, body)
-VALUES (?, ?)
+INSERT INTO pending_emails (to_user_id, body, direct_email)
+VALUES (?, ?, ?)
 `
 
 type InsertPendingEmailParams struct {
-	ToUserID int32
-	Body     string
+	ToUserID    sql.NullInt32
+	Body        string
+	DirectEmail bool
 }
 
 func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
-	_, err := q.db.ExecContext(ctx, insertPendingEmail, arg.ToUserID, arg.Body)
+	_, err := q.db.ExecContext(ctx, insertPendingEmail, arg.ToUserID, arg.Body, arg.DirectEmail)
 	return err
 }
 
 const listUnsentPendingEmails = `-- name: ListUnsentPendingEmails :many
-SELECT id, to_user_id, body, error_count, created_at
+SELECT id, to_user_id, body, error_count, created_at, direct_email
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
 `
 
 type ListUnsentPendingEmailsRow struct {
-	ID         int32
-	ToUserID   int32
-	Body       string
-	ErrorCount int32
-	CreatedAt  time.Time
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	CreatedAt   time.Time
+	DirectEmail bool
 }
 
 func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*ListUnsentPendingEmailsRow, error) {
@@ -152,6 +159,7 @@ func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*ListUnsentPen
 			&i.Body,
 			&i.ErrorCount,
 			&i.CreatedAt,
+			&i.DirectEmail,
 		); err != nil {
 			return nil, err
 		}

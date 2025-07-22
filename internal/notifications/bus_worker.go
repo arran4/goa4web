@@ -140,7 +140,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			emails, err := n.Queries.ListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
 				for _, e := range emails {
-					if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, e.Email, et, evt.Data); err != nil {
+					if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, e.Email, et, evt.Data, false); err != nil {
 						return err
 					}
 				}
@@ -150,7 +150,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			if err != nil {
 				notifyMissingEmail(ctx, n.Queries, evt.UserID)
 			} else {
-				if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, ue.Email, et, evt.Data); err != nil {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, ue.Email, et, evt.Data, false); err != nil {
 					return err
 				}
 			}
@@ -184,7 +184,7 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent
 		return nil
 	}
 	if et := tp.DirectEmailTemplate(); et != nil {
-		if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, addr, et, evt.Data); err != nil {
+		if err := n.renderAndQueueEmailFromTemplates(ctx, 0, addr, et, evt.Data, true); err != nil {
 			return err
 		}
 	}
@@ -198,7 +198,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 			notifyMissingEmail(ctx, n.Queries, id)
 		} else {
 			if et := tp.TargetEmailTemplate(); et != nil {
-				if err := n.renderAndQueueEmailFromTemplates(ctx, id, user.Email.String, et, evt.Data); err != nil {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, id, user.Email.String, et, evt.Data, false); err != nil {
 					return err
 				}
 			}
@@ -338,7 +338,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, evt eventbus.TaskEvent, tp 
 			log.Printf("user by email %s: %v", addr, err)
 		}
 		if et := tp.AdminEmailTemplate(); et != nil {
-			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data); err != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, evt.Data, false); err != nil {
 				return err
 			}
 		}

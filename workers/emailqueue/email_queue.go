@@ -131,6 +131,7 @@ func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, e *db.FetchPe
 	}
 
 	if isAdminEmail(ctx, q, addr.Address) {
+		addr.Name = "Admin"
 		return *addr, nil
 	}
 

@@ -158,10 +158,10 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) {
 				if u != nil {
 					mod = u.Username.String
 				}
-				info := notif.LinkInfo{Title: link.Title.String, URL: link.Url.String, Username: link.Username.String, Moderator: mod}
-				evt.Data["link"] = info
-				evt.Data["LinkURL"] = link.Url.String
+				evt.Data["Title"] = link.Title.String
+				evt.Data["Username"] = link.Username.String
 				evt.Data["Moderator"] = mod
+				evt.Data["LinkURL"] = link.Url.String
 			}
 		}
 	}
@@ -261,9 +261,10 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) {
 			if u != nil {
 				mod = u.Username.String
 			}
-			evt.Data["link"] = notif.LinkInfo{Title: link.Title.String, URL: link.Url.String, Username: link.Username.String, Moderator: mod}
-			evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
+			evt.Data["Title"] = link.Title.String
+			evt.Data["Username"] = link.Username.String
 			evt.Data["Moderator"] = mod
+			evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 		}
 	}
@@ -285,7 +286,7 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
-	var info []notif.LinkInfo
+	var info []map[string]any
 	if rows, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context()); err == nil {
 		ids := make(map[int]struct{})
 		for _, q := range r.Form["qid"] {
@@ -294,7 +295,7 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, it := range rows {
 			if _, ok := ids[int(it.Idlinkerqueue)]; ok {
-				info = append(info, notif.LinkInfo{Title: it.Title.String, URL: it.Url.String, Username: it.Username.String})
+				info = append(info, map[string]any{"Title": it.Title.String, "URL": it.Url.String, "Username": it.Username.String})
 			}
 		}
 	}
@@ -316,11 +317,13 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) {
 					mod = u.Username.String
 				}
 				for i := range info {
-					info[i].Moderator = mod
+					info[i]["Moderator"] = mod
 				}
 				evt.Data["links"] = info
 				if len(info) == 1 {
-					evt.Data["LinkURL"] = info[0].URL
+					if url, ok := info[0]["URL"].(string); ok {
+						evt.Data["LinkURL"] = url
+					}
 				}
 				evt.Data["Moderator"] = mod
 			}
@@ -390,7 +393,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
 	}
-	var links []notif.LinkInfo
+	var links []map[string]any
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
 		lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(id))
@@ -419,7 +422,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) {
 				if u != nil {
 					mod = u.Username.String
 				}
-				links = append(links, notif.LinkInfo{Title: link.Title.String, URL: link.Url.String, Username: link.Username.String, Moderator: mod})
+				links = append(links, map[string]any{"Title": link.Title.String, "URL": link.Url.String, "Username": link.Username.String, "Moderator": mod})
 				evt.Data["Moderator"] = mod
 				evt.Data["links"] = links
 				if len(links) == 1 {

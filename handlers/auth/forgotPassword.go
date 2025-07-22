@@ -146,7 +146,8 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["reset"] = notif.PasswordResetInfo{Username: row.Username.String, Code: code}
+				evt.Data["Username"] = row.Username.String
+				evt.Data["Code"] = code
 				evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
 				evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
 			}

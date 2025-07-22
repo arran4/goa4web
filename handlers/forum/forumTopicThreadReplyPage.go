@@ -87,7 +87,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["reply"] = notif.ForumReplyInfo{TopicTitle: topicRow.Title.String, ThreadID: threadRow.Idforumthread, Thread: threadRow}
+			evt.Data["TopicTitle"] = topicRow.Title.String
+			evt.Data["ThreadID"] = threadRow.Idforumthread
+			evt.Data["Thread"] = threadRow
 		}
 	}
 

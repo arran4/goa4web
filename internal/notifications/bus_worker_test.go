@@ -317,7 +317,7 @@ func TestBusWorker(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	bus.Publish(eventbus.TaskEvent{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"signup": SignupInfo{Username: "bob"}}})
+	bus.Publish(eventbus.TaskEvent{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"Username": "bob"}})
 	time.Sleep(200 * time.Millisecond)
 	cancel()
 	wg.Wait()

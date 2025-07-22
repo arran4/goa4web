@@ -149,7 +149,8 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["thread"] = notif.ThreadInfo{TopicTitle: topicTitle, Author: author}
+			evt.Data["TopicTitle"] = topicTitle
+			evt.Data["Author"] = author
 		}
 	}
 

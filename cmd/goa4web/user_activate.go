@@ -49,6 +49,7 @@ func (c *userActivateCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
+	c.rootCmd.Verbosef("restoring user %d", c.ID)
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
@@ -146,8 +147,6 @@ func (c *userActivateCmd) Run() error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Printf("restored user %d\n", c.ID)
-	}
+	c.rootCmd.Infof("restored user %d", c.ID)
 	return nil
 }

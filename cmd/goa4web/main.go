@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
@@ -99,6 +100,22 @@ func (r *rootCmd) Close() {
 	}
 }
 
+func (r *rootCmd) Infof(format string, args ...any) {
+	fmt.Printf(format, args...)
+	if !strings.HasSuffix(format, "\n") {
+		fmt.Println()
+	}
+}
+
+func (r *rootCmd) Verbosef(format string, args ...any) {
+	if r.Verbosity > 0 {
+		fmt.Printf(format, args...)
+		if !strings.HasSuffix(format, "\n") {
+			fmt.Println()
+		}
+	}
+}
+
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{}
 	early := flag.NewFlagSet(args[0], flag.ContinueOnError)
@@ -121,14 +138,14 @@ func parseRoot(args []string) (*rootCmd, error) {
 		}
 		return nil, fmt.Errorf("load config file: %w", err)
 	}
-	fs := config.NewRuntimeFlagSet(args[0])
-	fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
-	fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
-	_ = fs.Parse(args[1:])
-	r.fs = fs
-	r.args = fs.Args()
+	r.fs = config.NewRuntimeFlagSet(args[0])
+	r.fs.StringVar(&cfgPath, "config-file", cfgPath, "path to config file")
+	r.fs.IntVar(&r.Verbosity, "verbosity", 0, "verbosity level")
+	r.fs.Usage = r.Usage
+	_ = r.fs.Parse(args[1:])
+	r.args = r.fs.Args()
 	r.ConfigFile = cfgPath
-	r.cfg = config.GenerateRuntimeConfig(fs, fileVals, os.Getenv)
+	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
 	return r, nil
 }
 
@@ -156,6 +173,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("user: %w", err)
 		}
 		return c.Run()
+	case "password":
+		c, err := parsePasswordCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("password: %w", err)
+		}
+		return c.Run()
 	case "email":
 		c, err := parseEmailCmd(r, r.args[1:])
 		if err != nil {
@@ -172,6 +195,12 @@ func (r *rootCmd) Run() error {
 		c, err := parsePermCmd(r, r.args[1:])
 		if err != nil {
 			return fmt.Errorf("perm: %w", err)
+		}
+		return c.Run()
+	case "role":
+		c, err := parseRoleCmd(r, r.args[1:])
+		if err != nil {
+			return fmt.Errorf("role: %w", err)
 		}
 		return c.Run()
 	case "grant":

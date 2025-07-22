@@ -2,6 +2,6 @@ Hi {{.Item.Username}},
 Your news post has been updated.
 
 View post:
-{{.PostURL}}
+{{.Item.PostURL}}
 Manage notifications: {{.UnsubscribeUrl}}
 

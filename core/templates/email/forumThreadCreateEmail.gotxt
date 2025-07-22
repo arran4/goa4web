@@ -2,5 +2,5 @@ Hi {{.Item.Username}},
 Your forum thread has been created successfully.
 
 View thread:
-{{.ThreadURL}}
+{{.Item.ThreadURL}}
 Manage notifications: {{.UnsubscribeUrl}}

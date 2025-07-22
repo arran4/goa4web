@@ -4,10 +4,12 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -29,6 +31,7 @@ var _ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ForgotPasswordTask)(nil)
 var _ tasks.Task = (*EmailAssociationRequestTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
+var _ notif.SelfEmailBroadcaster = (*ForgotPasswordTask)(nil)
 
 // ForgotPasswordTask handles password reset requests.
 var forgotPasswordTask = &ForgotPasswordTask{
@@ -64,6 +67,8 @@ func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
 	return &s
 }
 
+func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
+
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(consts.KeyCoreData))
 }
@@ -97,6 +102,18 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 			RequestTask: string(TaskEmailAssociationRequest),
 		}
 		handlers.TemplateHandler(w, r, "forgotPasswordNoEmailPage.gohtml", data)
+		return
+	}
+
+	if reset, err := queries.GetPasswordResetByUser(r.Context(), row.Idusers); err == nil {
+		if time.Since(reset.CreatedAt) < 24*time.Hour {
+			http.Error(w, "reset recently requested", http.StatusTooManyRequests)
+			return
+		}
+		_ = queries.DeletePasswordReset(r.Context(), reset.ID)
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("get reset: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	hash, alg, err := HashPassword(pw)

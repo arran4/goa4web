@@ -87,7 +87,8 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
-		reset, err := queries.GetPasswordResetByUser(r.Context(), row.Idusers)
+		expiry := time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour)
+		reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{UserID: row.Idusers, CreatedAt: expiry})
 		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
 			session, ok := core.GetSessionOrFail(w, r)
 			if !ok {
@@ -195,7 +196,8 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	code := r.FormValue("code")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	reset, err := queries.GetPasswordResetByCode(r.Context(), code)
+	expiry := time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour)
+	reset, err := queries.GetPasswordResetByCode(r.Context(), db.GetPasswordResetByCodeParams{VerificationCode: code, CreatedAt: expiry})
 	if err != nil || reset.ID != id {
 		http.Error(w, "invalid code", http.StatusUnauthorized)
 		return

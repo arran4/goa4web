@@ -1,5 +1,5 @@
 User {{.Item.Username}} created a new image board.
 
 Board link:
-{{.BoardURL}}
+{{.Item.BoardURL}}
 Manage notifications: {{.UnsubscribeUrl}}

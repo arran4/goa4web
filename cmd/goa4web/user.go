@@ -51,10 +51,22 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("make-admin: %w", err)
 		}
 		return cmd.Run()
-	case "update":
-		cmd, err := parseUserUpdateCmd(c, c.args[1:])
+	case "add-role":
+		cmd, err := parseUserAddRoleCmd(c, c.args[1:])
 		if err != nil {
-			return fmt.Errorf("update: %w", err)
+			return fmt.Errorf("add-role: %w", err)
+		}
+		return cmd.Run()
+	case "remove-role":
+		cmd, err := parseUserRemoveRoleCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("remove-role: %w", err)
+		}
+		return cmd.Run()
+	case "list-roles":
+		cmd, err := parseUserListRolesCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("list-roles: %w", err)
 		}
 		return cmd.Run()
 	case "list":
@@ -91,6 +103,12 @@ func (c *userCmd) Run() error {
 		cmd, err := parseUserCommentsCmd(c, c.args[1:])
 		if err != nil {
 			return fmt.Errorf("comments: %w", err)
+		}
+		return cmd.Run()
+	case "roles":
+		cmd, err := parseUserRolesCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("roles: %w", err)
 		}
 		return cmd.Run()
 	case "profile":

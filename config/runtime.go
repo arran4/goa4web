@@ -54,6 +54,8 @@ type RuntimeConfig struct {
 
 	// EmailWorkerInterval sets how often the email worker runs in seconds.
 	EmailWorkerInterval int
+	// PasswordResetExpiryHours sets how long password reset requests remain valid.
+	PasswordResetExpiryHours int
 
 	PageSizeMin     int
 	PageSizeMax     int
@@ -275,6 +277,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.EmailWorkerInterval == 0 {
 		cfg.EmailWorkerInterval = 60
+	}
+	if cfg.PasswordResetExpiryHours == 0 {
+		cfg.PasswordResetExpiryHours = 24
 	}
 }
 

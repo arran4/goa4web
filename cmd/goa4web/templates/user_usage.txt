@@ -5,12 +5,16 @@ Commands:
   add         add a user
   add-admin   add a user with administrator rights
   make-admin  grant administrator rights to a user
+  add-role    grant a role to a user
+  remove-role remove a role from a user
+  list-roles  list available roles
   list        list users
   deactivate  deactivate a user
   activate    restore a deactivated user
   approve     approve a pending user
   reject      reject a pending user
   comments    manage admin comments for a user
+  roles       list user roles
   profile     show user profile information
 
 Examples:
@@ -20,6 +24,7 @@ Examples:
   {{.Prog}} user approve -id 3
   {{.Prog}} user reject -id 3 -reason spam
   {{.Prog}} user comments list -id 3
+  {{.Prog}} user roles
 
 Flags:
 {{template "flags" .Flags}}

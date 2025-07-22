@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createPasswordReset = `-- name: CreatePasswordReset :exec
@@ -40,14 +41,28 @@ func (q *Queries) DeletePasswordReset(ctx context.Context, id int32) error {
 	return err
 }
 
+const deletePasswordResetsByUser = `-- name: DeletePasswordResetsByUser :exec
+DELETE FROM pending_passwords WHERE user_id = ?
+`
+
+func (q *Queries) DeletePasswordResetsByUser(ctx context.Context, userID int32) error {
+	_, err := q.db.ExecContext(ctx, deletePasswordResetsByUser, userID)
+	return err
+}
+
 const getPasswordResetByCode = `-- name: GetPasswordResetByCode :one
 SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at
 FROM pending_passwords
-WHERE verification_code = ? AND verified_at IS NULL
+WHERE verification_code = ? AND verified_at IS NULL AND created_at > ?
 `
 
-func (q *Queries) GetPasswordResetByCode(ctx context.Context, verificationCode string) (*PendingPassword, error) {
-	row := q.db.QueryRowContext(ctx, getPasswordResetByCode, verificationCode)
+type GetPasswordResetByCodeParams struct {
+	VerificationCode string
+	CreatedAt        time.Time
+}
+
+func (q *Queries) GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error) {
+	row := q.db.QueryRowContext(ctx, getPasswordResetByCode, arg.VerificationCode, arg.CreatedAt)
 	var i PendingPassword
 	err := row.Scan(
 		&i.ID,
@@ -64,13 +79,18 @@ func (q *Queries) GetPasswordResetByCode(ctx context.Context, verificationCode s
 const getPasswordResetByUser = `-- name: GetPasswordResetByUser :one
 SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at
 FROM pending_passwords
-WHERE user_id = ? AND verified_at IS NULL
+WHERE user_id = ? AND verified_at IS NULL AND created_at > ?
 ORDER BY created_at DESC
 LIMIT 1
 `
 
-func (q *Queries) GetPasswordResetByUser(ctx context.Context, userID int32) (*PendingPassword, error) {
-	row := q.db.QueryRowContext(ctx, getPasswordResetByUser, userID)
+type GetPasswordResetByUserParams struct {
+	UserID    int32
+	CreatedAt time.Time
+}
+
+func (q *Queries) GetPasswordResetByUser(ctx context.Context, arg GetPasswordResetByUserParams) (*PendingPassword, error) {
+	row := q.db.QueryRowContext(ctx, getPasswordResetByUser, arg.UserID, arg.CreatedAt)
 	var i PendingPassword
 	err := row.Scan(
 		&i.ID,
@@ -90,5 +110,15 @@ UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?
 
 func (q *Queries) MarkPasswordResetVerified(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, markPasswordResetVerified, id)
+	return err
+}
+
+const purgePasswordResetsBefore = `-- name: PurgePasswordResetsBefore :exec
+DELETE FROM pending_passwords
+WHERE created_at < ? OR verified_at IS NOT NULL
+`
+
+func (q *Queries) PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) error {
+	_, err := q.db.ExecContext(ctx, purgePasswordResetsBefore, createdAt)
 	return err
 }

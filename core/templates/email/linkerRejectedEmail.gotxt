@@ -2,5 +2,5 @@ Hi {{.Item.Username}},
 Your link "{{.Item.Title}}" was rejected by {{.Item.Moderator}}.
 
 View link:
-{{.LinkURL}}
-Manage notifications: {{.UnsubURL}}
+{{.Item.LinkURL}}
+Manage notifications: {{.Item.UnsubURL}}

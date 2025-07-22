@@ -32,11 +32,10 @@ func (c *dbRestoreCmd) Run() error {
 		return fmt.Errorf("file required")
 	}
 	cfg := c.rootCmd.cfg
+	c.rootCmd.Verbosef("restoring from %s", c.File)
 	if err := dbdrivers.Restore(cfg.DBDriver, cfg.DBConn, c.File); err != nil {
 		return err
 	}
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Printf("database restored from %s\n", c.File)
-	}
+	c.rootCmd.Infof("database restored from %s", c.File)
 	return nil
 }

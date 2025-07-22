@@ -34,9 +34,8 @@ func (c *configReloadCmd) Run() error {
 	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		return fmt.Errorf("load config file: %w", err)
 	}
+	c.rootCmd.Verbosef("reloading configuration")
 	admin.Srv.Config = config.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
-	if c.rootCmd.Verbosity > 0 {
-		fmt.Println("configuration reloaded")
-	}
+	c.rootCmd.Infof("configuration reloaded")
 	return nil
 }

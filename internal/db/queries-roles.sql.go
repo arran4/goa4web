@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const listRoles = `-- name: ListRoles :many
@@ -23,6 +24,44 @@ func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRolesWithUsers = `-- name: ListRolesWithUsers :many
+SELECT r.id, r.name, GROUP_CONCAT(u.username ORDER BY u.username) AS users
+FROM roles r
+LEFT JOIN user_roles ur ON ur.role_id = r.id
+LEFT JOIN users u ON u.idusers = ur.users_idusers
+GROUP BY r.id
+ORDER BY r.id
+`
+
+type ListRolesWithUsersRow struct {
+	ID    int32
+	Name  string
+	Users sql.NullString
+}
+
+func (q *Queries) ListRolesWithUsers(ctx context.Context) ([]*ListRolesWithUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listRolesWithUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListRolesWithUsersRow
+	for rows.Next() {
+		var i ListRolesWithUsersRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Users); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

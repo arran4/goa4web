@@ -135,13 +135,24 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 }
 
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
-	user, err := n.Queries.GetUserById(ctx, evt.UserID)
-	if err != nil || !user.Email.Valid || user.Email.String == "" {
-		notifyMissingEmail(ctx, n.Queries, evt.UserID)
-	} else {
-		if et := tp.SelfEmailTemplate(); et != nil {
-			if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, user.Email.String, et, evt.Data); err != nil {
-				return err
+	if et := tp.SelfEmailTemplate(); et != nil {
+		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
+			emails, err := n.Queries.ListVerifiedEmailsByUserID(ctx, evt.UserID)
+			if err == nil {
+				for _, e := range emails {
+					if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, e.Email, et, evt.Data); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			ue, err := n.Queries.GetNotificationEmailByUserID(ctx, evt.UserID)
+			if err != nil {
+				notifyMissingEmail(ctx, n.Queries, evt.UserID)
+			} else {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, evt.UserID, ue.Email, et, evt.Data); err != nil {
+					return err
+				}
 			}
 		}
 	}

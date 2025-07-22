@@ -392,6 +392,44 @@ func (q *Queries) ListGrants(ctx context.Context) ([]*Grant, error) {
 	return items, nil
 }
 
+const listUsersWithRoles = `-- name: ListUsersWithRoles :many
+SELECT u.idusers, u.username, GROUP_CONCAT(r.name ORDER BY r.name) AS roles
+FROM users u
+LEFT JOIN user_roles ur ON u.idusers = ur.users_idusers
+LEFT JOIN roles r ON r.id = ur.role_id
+GROUP BY u.idusers
+ORDER BY u.idusers
+`
+
+type ListUsersWithRolesRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Roles    sql.NullString
+}
+
+func (q *Queries) ListUsersWithRoles(ctx context.Context) ([]*ListUsersWithRolesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersWithRoles)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListUsersWithRolesRow
+	for rows.Next() {
+		var i ListUsersWithRolesRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Roles); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePermission = `-- name: UpdatePermission :exec
 UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?
 `

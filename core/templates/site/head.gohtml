@@ -19,8 +19,8 @@
             <tr valign=top>
                 <td width=200px>{{template "index" $}}
                 <td>
-                    {{- if cd.Announcement }}
-                    <a href="/news/news/{{ cd.Announcement.Idsitenews }}"><strong>{{ cd.Announcement.News.String }}</strong></a><br />
-                    {{- end }}
+                    {{- with $a := cd.AnnouncementLoaded }}{{ if $a }}
+                    <a href="/news/news/{{ $a.Idsitenews }}"><strong>{{ $a.News.String }}</strong></a><br />
+                    {{- end }}{{ end }}
 
                     {{- end}}

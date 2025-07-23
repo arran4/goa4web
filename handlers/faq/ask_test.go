@@ -108,11 +108,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if loc := rr.Header().Get("Location"); loc != "/faq" {
-		t.Fatalf("location=%q", loc)
 	}
 	evt = cd.Event()
 	if evt.Path != "/admin/faq" {

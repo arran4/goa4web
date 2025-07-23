@@ -1,6 +1,6 @@
 {{define "header"}}
 <strong>{{cd.Title}}</strong>
-{{ if cd.CurrentUser.Username.String }}<br>
-Logged in as {{ cd.CurrentUser.Username.String }}
-{{ end }}
+{{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<br>
+Logged in as {{ $u.Username.String }}
+{{ end }}{{ end }}
 {{end}}

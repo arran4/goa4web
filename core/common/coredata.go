@@ -302,6 +302,15 @@ func (cd *CoreData) CurrentUser() (*db.User, error) {
 	})
 }
 
+// CurrentUserLoaded returns the cached current user without triggering a database lookup.
+func (cd *CoreData) CurrentUserLoaded() *db.User {
+	u, ok := cd.user.peek()
+	if !ok {
+		return nil
+	}
+	return u
+}
+
 // Permissions returns the user's permissions loaded on demand.
 func (cd *CoreData) Permissions() ([]*db.GetPermissionsByUserIDRow, error) {
 	return cd.perms.load(func() ([]*db.GetPermissionsByUserIDRow, error) {
@@ -408,6 +417,15 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 	})
 	if err != nil {
 		log.Printf("load announcement: %v", err)
+	}
+	return ann
+}
+
+// AnnouncementLoaded returns the cached active announcement without querying the database.
+func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsRow {
+	ann, ok := cd.announcement.peek()
+	if !ok {
+		return nil
 	}
 	return ann
 }

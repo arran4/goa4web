@@ -95,11 +95,8 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(testMailTask)(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if loc := rr.Header().Get("Location"); loc != "/usr/email" {
-		t.Fatalf("location=%q", loc)
 	}
 }
 

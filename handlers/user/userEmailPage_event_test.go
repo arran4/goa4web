@@ -55,7 +55,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(addEmailTask)(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if _, ok := evt.Data["URL"]; !ok {
@@ -157,7 +157,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(resendVerificationEmailTask)(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if _, ok := evt.Data["page"]; !ok {

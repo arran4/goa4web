@@ -1,0 +1,55 @@
+package user
+
+import (
+	"errors"
+	"net/http"
+	"net/url"
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
+)
+
+// ErrMailNotConfigured is returned when test mail has no provider configured.
+var ErrMailNotConfigured = errors.New("mail isn't configured")
+
+// TestMailTask sends a test email to the current user.
+type TestMailTask struct{ tasks.TaskString }
+
+var testMailTask = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
+
+var _ tasks.Task = (*TestMailTask)(nil)
+var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
+
+func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	user, _ := cd.CurrentUser()
+	if user == nil {
+		http.Error(w, "email unknown", http.StatusBadRequest)
+		return nil
+	}
+	if cd.EmailProvider() == nil {
+		q := url.QueryEscape(ErrMailNotConfigured.Error())
+		r.URL.RawQuery = "error=" + q
+		handlers.TaskErrorAcknowledgementPage(w, r)
+		return nil
+	}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+	}
+	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+	return nil
+}
+
+func (TestMailTask) SelfEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("testEmail")
+}
+
+func (TestMailTask) SelfInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("testEmail")
+	return &s
+}

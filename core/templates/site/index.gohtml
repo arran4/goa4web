@@ -5,9 +5,8 @@
         <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}
     {{ if cd.HasRole "administrator" }}
-        <hr>
-        <a href="{{ addmode "/admin/linker/categories" }}">Linker admin</a><br>
         {{ if cd.AdminMode }}
+            <a href="{{ addmode "/admin" }}">Admin</a><br>
             <a href="?">Disable admin mode</a><br>
         {{ else }}
             <a href="?mode=admin">Enable admin mode</a><br>

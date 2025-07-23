@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -18,6 +19,42 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 )
+
+type loginFormHandler struct{ msg string }
+
+func (l loginFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	renderLoginForm(w, r, l.msg)
+}
+
+var _ http.Handler = (*loginFormHandler)(nil)
+
+type redirectBackPageHandler struct {
+	BackURL string
+	Method  string
+	Values  url.Values
+}
+
+func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*common.CoreData
+		BackURL string
+		Method  string
+		Values  url.Values
+	}
+	data := Data{
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		BackURL:  h.BackURL,
+		Method:   h.Method,
+		Values:   h.Values,
+	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
+		log.Printf("Template Error: %s", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
+var _ http.Handler = (*redirectBackPageHandler)(nil)
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	type Data struct {
@@ -50,6 +87,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		sess, _ := core.GetSession(r)
 		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
 	}
+
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
@@ -57,22 +95,13 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			log.Printf("No rows Error: %s", err)
-			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
-				Username:  username,
-				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
-			}); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			renderLoginForm(w, r, "No such user")
-			return nil
-		default:
-			log.Printf("query Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return loginFormHandler{msg: "No such user"}
 		}
+		return fmt.Errorf("login query fail %w", err)
 	}
 
 	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
@@ -86,35 +115,29 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 			} else {
 				session, ok := core.GetSessionOrFail(w, r)
 				if !ok {
-					return nil
+					return handlers.SessionFetchFail{}
 				}
 				session.Values["PendingResetID"] = reset.ID
 				if err := session.Save(r, w); err != nil {
 					log.Printf("save session: %v", err)
 				}
-				handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
-				return nil
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
+				})
 			}
 		} else {
-			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{
-				Username:  username,
-				IpAddress: strings.Split(r.RemoteAddr, ":")[0],
-			}); err != nil {
+			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			renderLoginForm(w, r, "Invalid password")
-			return nil
+			return loginFormHandler{msg: "Invalid password"}
 		}
 	}
 
 	if _, err := queries.UserHasLoginRole(r.Context(), row.Idusers); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			renderLoginForm(w, r, "approval is pending")
-		} else {
-			log.Printf("user role: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return loginFormHandler{msg: "approval is pending"}
 		}
-		return nil
+		return fmt.Errorf("user role %w", err)
 	}
 
 	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
@@ -126,13 +149,11 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	user := &db.User{Idusers: row.Idusers}
-
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
-	session.Values["UID"] = int32(user.Idusers)
+	session.Values["UID"] = int32(row.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 
@@ -141,66 +162,45 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	backData := r.FormValue("data")
 
 	if err := session.Save(r, w); err != nil {
-		log.Printf("session.Save Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("session save %w", err)
 	}
 
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("login success uid=%d session=%s", user.Idusers, session.ID)
+		log.Printf("login success uid=%d session=%s", row.Idusers, session.ID)
 	}
 
 	if backURL != "" {
 		if backMethod == "" || backMethod == http.MethodGet {
-			http.Redirect(w, r, backURL, http.StatusTemporaryRedirect)
-			return nil
+			return handlers.RedirectHandler(backURL)
 		}
-		vals, _ := url.ParseQuery(backData)
-		type Data struct {
-			*common.CoreData
-			BackURL string
-			Method  string
-			Values  url.Values
+		vals, err := url.ParseQuery(backData)
+		if err != nil {
+			return fmt.Errorf("parse back data %w", err)
 		}
-		data := Data{
-			CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-			BackURL:  backURL,
-			Method:   backMethod,
-			Values:   vals,
-		}
-		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-		if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
-			log.Printf("Template Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		}
-		return nil
+		return redirectBackPageHandler{BackURL: backURL, Method: backMethod, Values: vals}
 	}
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler("/")
 }
 
 func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	id, _ := session.Values["PendingResetID"].(int32)
 	if id == 0 {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return nil
+		return handlers.RedirectHandler("/login")
 	}
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return nil
+		return handlers.RedirectHandler("/login")
 	}
 	code := r.FormValue("code")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	expiry := time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour)
 	reset, err := queries.GetPasswordResetByCode(r.Context(), db.GetPasswordResetByCodeParams{VerificationCode: code, CreatedAt: expiry})
 	if err != nil || reset.ID != id {
-		http.Error(w, "invalid code", http.StatusUnauthorized)
-		return nil
+		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid code"))
 	}
 	if err := queries.MarkPasswordResetVerified(r.Context(), reset.ID); err != nil {
 		log.Printf("mark reset verified: %v", err)
@@ -212,6 +212,5 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := session.Save(r, w); err != nil {
 		log.Printf("save session: %v", err)
 	}
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/login")
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
@@ -37,9 +38,9 @@ func TestForgotPasswordRateLimit(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	forgotPasswordTask.Action(rr, req)
+	handlers.TaskHandler(forgotPasswordTask)(rr, req)
 
-	if rr.Code != http.StatusTooManyRequests {
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -70,7 +71,7 @@ func TestForgotPasswordReplaceOld(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	forgotPasswordTask.Action(rr, req)
+	handlers.TaskHandler(forgotPasswordTask)(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)

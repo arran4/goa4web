@@ -79,21 +79,15 @@ func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return nil
+	if err := handlers.ValidateForm(r, []string{"username", "password"}, []string{"username", "password"}); err != nil {
+		return fmt.Errorf("validation fail %w", err)
 	}
 	username := r.PostFormValue("username")
 	pw := r.PostFormValue("password")
-	if username == "" || pw == "" {
-		http.Error(w, "missing fields", http.StatusBadRequest)
-		return nil
-	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return nil
+		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if row.Email == "" {
 		type Data struct {
@@ -106,8 +100,9 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Username:    row.Username.String,
 			RequestTask: string(TaskEmailAssociationRequest),
 		}
-		handlers.TemplateHandler(w, r, "forgotPasswordNoEmailPage.gohtml", data)
-		return nil
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.TemplateHandler(w, r, "forgotPasswordNoEmailPage.gohtml", data)
+		})
 	}
 
 	if reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{
@@ -115,30 +110,25 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CreatedAt: time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour),
 	}); err == nil {
 		if time.Since(reset.CreatedAt) < 24*time.Hour {
-			http.Error(w, "reset recently requested", http.StatusTooManyRequests)
-			return nil
+			return handlers.ErrRedirectOnSamePageHandler(errors.New("reset recently requested"))
 		}
 		_ = queries.DeletePasswordReset(r.Context(), reset.ID)
 	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get reset: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("get reset %w", err)
 	}
 	hash, alg, err := HashPassword(pw)
 	if err != nil {
-		http.Error(w, "hash error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("hash error %w", err)
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
-		http.Error(w, "rand", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("rand %w", err)
 	}
 	code := hex.EncodeToString(buf[:])
 	if err := queries.CreatePasswordReset(r.Context(), db.CreatePasswordResetParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
 		log.Printf("create reset: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("create reset %w", err)
 	}
 	if row.Email != "" {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -155,31 +145,25 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	handlers.TemplateHandler(w, r, "forgotPasswordEmailSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
-	return nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlers.TemplateHandler(w, r, "forgotPasswordEmailSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
+	})
 }
 
 func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return nil
+	if err := handlers.ValidateForm(r, []string{"username", "email", "reason"}, []string{"username", "email"}); err != nil {
+		return fmt.Errorf("validation fail %w", err)
 	}
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	reason := r.PostFormValue("reason")
-	if username == "" || email == "" {
-		http.Error(w, "missing fields", http.StatusBadRequest)
-		return nil
-	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return nil
+		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if row.Email != "" {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return nil
+		return handlers.RedirectHandler("/login")
 	}
 	res, err := queries.InsertAdminRequestQueue(r.Context(), db.InsertAdminRequestQueueParams{
 		UsersIdusers:   row.Idusers,
@@ -191,8 +175,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	})
 	if err != nil {
 		log.Printf("insert admin request: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("insert admin request %w", err)
 	}
 	id, _ := res.LastInsertId()
 	_ = queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: reason})
@@ -209,6 +192,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 			evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
 		}
 	}
-	handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
-	return nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
+	})
 }

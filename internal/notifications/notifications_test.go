@@ -80,3 +80,20 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestNotifierInitialization(t *testing.T) {
+	n := New()
+	if n.Queries != nil {
+		t.Fatalf("expected nil Queries")
+	}
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := dbpkg.New(db)
+	n = New(WithQueries(q))
+	if n.Queries != q {
+		t.Fatalf("queries not set via option")
+	}
+}

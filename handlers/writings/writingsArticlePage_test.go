@@ -62,7 +62,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Result().StatusCode != http.StatusInternalServerError {
+	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
 }

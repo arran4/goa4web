@@ -29,6 +29,7 @@ func EmailQueueWorker(ctx context.Context, q *db.Queries, provider email.Provide
 	}
 	for {
 		ProcessPendingEmail(ctx, q, provider, dlqProvider)
+		log.Printf("email queue worker: waiting %s", delay)
 		if ch == nil {
 			select {
 			case <-time.After(delay):

@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -55,20 +56,15 @@ func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Position:         int32(pos),
 		Idlinkercategory: int32(cid),
 	}); err != nil {
-		log.Printf("renameLinkerCategory Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("rename linker category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	order, _ := strconv.Atoi(r.PostFormValue("order"))
 	if err := queries.UpdateLinkerCategorySortOrder(r.Context(), db.UpdateLinkerCategorySortOrderParams{
 		Sortorder:        int32(order),
 		Idlinkercategory: int32(cid),
 	}); err != nil {
-		log.Printf("updateLinkerCategorySortOrder Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("update linker category sort order fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -87,11 +83,8 @@ func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Position:         int32(pos),
 		Idlinkercategory: int32(cid),
 	}); err != nil {
-		log.Printf("renameLinkerCategory Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("rename linker category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -113,20 +106,15 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	count, err := queries.CountLinksByCategory(r.Context(), int32(cid))
 	if err != nil {
-		log.Printf("countLinks Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("count links fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if count > 0 {
 		http.Error(w, "Category in use", http.StatusBadRequest)
 		return nil
 	}
 	if err := queries.DeleteLinkerCategory(r.Context(), int32(cid)); err != nil {
-		log.Printf("renameLinkerCategory Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("delete linker category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -145,10 +133,7 @@ func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Title:    sql.NullString{Valid: true, String: title},
 		Position: int32(pos),
 	}); err != nil {
-		log.Printf("renameLinkerCategory Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("create linker category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

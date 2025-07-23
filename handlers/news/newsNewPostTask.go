@@ -62,20 +62,17 @@ func (NewPostTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, er
 
 func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
-		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
-		handlers.TaskErrorAcknowledgementPage(w, r)
-		return nil
+		return fmt.Errorf("validation fail %w", err)
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -93,8 +90,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 		UsersIdusers: uid,
 	})
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("create news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	// give the author edit rights on the new post
@@ -124,6 +120,5 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

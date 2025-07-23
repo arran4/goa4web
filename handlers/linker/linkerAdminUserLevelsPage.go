@@ -117,7 +117,6 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -155,7 +154,6 @@ func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 

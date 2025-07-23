@@ -2,6 +2,7 @@ package news
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/url"
@@ -34,14 +35,11 @@ func (EditTask) AdminInternalNotificationTemplate() *string {
 
 func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
-		r.URL.RawQuery = "error=" + url.QueryEscape(err.Error())
-		handlers.TaskErrorAcknowledgementPage(w, r)
-		return nil
+		return fmt.Errorf("validation fail %w", err)
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -63,10 +61,8 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 		},
 	})
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("update news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

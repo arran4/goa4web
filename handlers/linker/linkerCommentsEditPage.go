@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
+	"github.com/arran4/goa4web/handlers"
 	"net/http"
 	"strconv"
 
@@ -30,8 +30,7 @@ func (t EditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("language parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("replytext")
 
@@ -42,7 +41,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -57,9 +56,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("thread lookup fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -71,8 +68,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Valid:  true,
 		},
 	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -84,8 +80,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/linker/comments/%d", linkId), http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/linker/comments/%d", linkId))
 }
 
 // CommentEditActionCancelPage aborts editing a comment.

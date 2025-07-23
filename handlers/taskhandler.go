@@ -22,10 +22,16 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 		}
 		result := t.Action(w, r)
 		switch result := result.(type) {
+		case RedirectHandler:
+			http.Redirect(w, r, string(result), http.StatusTemporaryRedirect)
 		case http.HandlerFunc:
 			result(w, r)
 		case http.Handler:
 			result.ServeHTTP(w, r)
+		case SessionFetchFail:
+			loginRedirect(w, r)
+		case *SessionFetchFail:
+			loginRedirect(w, r)
 		case error:
 			var ue interface {
 				error
@@ -47,4 +53,16 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}
+}
+
+func loginRedirect(w http.ResponseWriter, r *http.Request) {
+	vals := url.Values{}
+	vals.Set("back", r.URL.RequestURI())
+	if r.Method != http.MethodGet {
+		if err := r.ParseForm(); err == nil {
+			vals.Set("method", r.Method)
+			vals.Set("data", r.Form.Encode())
+		}
+	}
+	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusTemporaryRedirect)
 }

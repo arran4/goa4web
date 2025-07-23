@@ -24,7 +24,7 @@ func RegisterRoutes(r *mux.Router) {
 	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	faqr.HandleFunc("", Page).Methods("GET", "POST")
 	faqr.HandleFunc("/ask", askTask.Page).Methods("GET")
-	faqr.HandleFunc("/ask", tasks.Action(askTask)).Methods("POST").MatcherFunc(askTask.Matcher())
+	faqr.HandleFunc("/ask", handlers.TaskHandler(askTask)).Methods("POST").MatcherFunc(askTask.Matcher())
 }
 
 // RegisterAdminRoutes attaches the admin FAQ endpoints to the router.

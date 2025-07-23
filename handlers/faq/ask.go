@@ -2,6 +2,7 @@ package faq
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
@@ -61,19 +62,17 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 
 func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("validation fail %w", err)
 	}
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -85,8 +84,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 		UsersIdusers:       uid,
 		LanguageIdlanguage: int32(languageId),
 	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("faq fetch fail: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -100,6 +98,5 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	// The BusWorker sends notifications based on event metadata.
 	// Setting Admin=true signals administrators should be alerted.
 
-	http.Redirect(w, r, "/faq", http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler("/faq")
 }

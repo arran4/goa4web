@@ -7,7 +7,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func noTask() mux.MatcherFunc {
@@ -32,16 +31,16 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	farq := ar.PathPrefix("/faq").Subrouter()
 	farq.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	farq.HandleFunc("/answer", AdminAnswerPage).Methods("GET", "POST").MatcherFunc(noTask())
-	farq.HandleFunc("/answer", tasks.Action(answerTask)).Methods("POST").MatcherFunc(answerTask.Matcher())
-	farq.HandleFunc("/answer", tasks.Action(removeQuestionTask)).Methods("POST").MatcherFunc(removeQuestionTask.Matcher())
+	farq.HandleFunc("/answer", handlers.TaskHandler(answerTask)).Methods("POST").MatcherFunc(answerTask.Matcher())
+	farq.HandleFunc("/answer", handlers.TaskHandler(removeQuestionTask)).Methods("POST").MatcherFunc(removeQuestionTask.Matcher())
 	farq.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
-	farq.HandleFunc("/categories", tasks.Action(renameCategoryTask)).Methods("POST").MatcherFunc(renameCategoryTask.Matcher())
-	farq.HandleFunc("/categories", tasks.Action(deleteCategoryTask)).Methods("POST").MatcherFunc(deleteCategoryTask.Matcher())
-	farq.HandleFunc("/categories", tasks.Action(createCategoryTask)).Methods("POST").MatcherFunc(createCategoryTask.Matcher())
+	farq.HandleFunc("/categories", handlers.TaskHandler(renameCategoryTask)).Methods("POST").MatcherFunc(renameCategoryTask.Matcher())
+	farq.HandleFunc("/categories", handlers.TaskHandler(deleteCategoryTask)).Methods("POST").MatcherFunc(deleteCategoryTask.Matcher())
+	farq.HandleFunc("/categories", handlers.TaskHandler(createCategoryTask)).Methods("POST").MatcherFunc(createCategoryTask.Matcher())
 	farq.HandleFunc("/questions", AdminQuestionsPage).Methods("GET", "POST").MatcherFunc(noTask())
-	farq.HandleFunc("/questions", tasks.Action(editQuestionTask)).Methods("POST").MatcherFunc(editQuestionTask.Matcher())
-	farq.HandleFunc("/questions", tasks.Action(deleteQuestionTask)).Methods("POST").MatcherFunc(deleteQuestionTask.Matcher())
-	farq.HandleFunc("/questions", tasks.Action(createQuestionTask)).Methods("POST").MatcherFunc(createQuestionTask.Matcher())
+	farq.HandleFunc("/questions", handlers.TaskHandler(editQuestionTask)).Methods("POST").MatcherFunc(editQuestionTask.Matcher())
+	farq.HandleFunc("/questions", handlers.TaskHandler(deleteQuestionTask)).Methods("POST").MatcherFunc(deleteQuestionTask.Matcher())
+	farq.HandleFunc("/questions", handlers.TaskHandler(createQuestionTask)).Methods("POST").MatcherFunc(createQuestionTask.Matcher())
 }
 
 // Register registers the faq router module.

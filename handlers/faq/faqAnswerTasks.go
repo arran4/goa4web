@@ -2,7 +2,7 @@ package faq
 
 import (
 	"database/sql"
-	"log"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -65,15 +65,11 @@ func (AnswerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	answer := r.PostFormValue("answer")
 	category, err := strconv.Atoi(r.PostFormValue("category"))
 	if err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("category parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	faq, err := strconv.Atoi(r.PostFormValue("faq"))
 	if err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -83,30 +79,22 @@ func (AnswerTask) Action(w http.ResponseWriter, r *http.Request) any {
 		FaqcategoriesIdfaqcategories: int32(category),
 		Idfaq:                        int32(faq),
 	}); err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("faq update fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
 func (RemoveQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	faq, err := strconv.Atoi(r.PostFormValue("faq"))
 	if err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("delete faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

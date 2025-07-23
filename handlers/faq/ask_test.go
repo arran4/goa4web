@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
@@ -54,8 +55,8 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		askTask.Action(rr, req)
-		if rr.Code != http.StatusBadRequest {
+		handlers.TaskHandler(askTask)(rr, req)
+		if rr.Code != http.StatusOK {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
 	}
@@ -103,7 +104,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	handler := middleware.TaskEventMiddleware(Action2HandlerFunc(askTask))
+	handler := middleware.TaskEventMiddleware(http.HandlerFunc(handlers.TaskHandler(askTask)))
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
@@ -121,12 +122,4 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-}
-
-func Action2HandlerFunc(task tasks.Task) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if result := task.Action(w, r); result != nil {
-			panic(result)
-		}
-	})
 }

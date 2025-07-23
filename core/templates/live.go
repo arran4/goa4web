@@ -5,9 +5,14 @@ package templates
 
 import (
 	htemplate "html/template"
+	"log"
 	"os"
 	ttemplate "text/template"
 )
+
+func init() {
+	log.Printf("Live Template Mode")
+}
 
 func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
 	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/site"), "*.gohtml", "*/*.gohtml"))

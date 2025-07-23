@@ -7,6 +7,7 @@ import (
 	"embed"
 	htemplate "html/template"
 	"io/fs"
+	"log"
 	ttemplate "text/template"
 )
 
@@ -28,6 +29,10 @@ var (
 	//go:embed "assets/notifications.js"
 	notificationsJSData []byte
 )
+
+func init() {
+	log.Printf("Embedded Templatee Mode")
+}
 
 func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
 	f, err := fs.Sub(siteTemplatesFS, "site")

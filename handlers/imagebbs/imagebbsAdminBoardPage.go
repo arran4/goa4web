@@ -2,9 +2,10 @@ package imagebbs
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
+	"github.com/arran4/goa4web/handlers"
 	"net/http"
 	"strconv"
 
@@ -47,11 +48,7 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Idimageboard:           int32(bid),
 	})
 	if err != nil {
-		log.Printf("Error: createImageBoard: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("update image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
-	http.Redirect(w, r, "/admin/imagebbs/boards", http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler("/admin/imagebbs/boards")
 }

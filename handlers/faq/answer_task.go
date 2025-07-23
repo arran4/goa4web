@@ -18,19 +18,9 @@ import (
 // AnswerTask submits an answer in the FAQ admin interface.
 type AnswerTask struct{ tasks.TaskString }
 
-// RemoveQuestionTask deletes a question from the FAQ list.
-type RemoveQuestionTask struct{ tasks.TaskString }
-
 var answerTask = &AnswerTask{TaskString: TaskAnswer}
 
 var _ tasks.Task = (*AnswerTask)(nil)
-var removeQuestionTask = &RemoveQuestionTask{TaskString: TaskRemoveRemove}
-
-var _ tasks.Task = (*RemoveQuestionTask)(nil)
-
-// Implementing these interfaces means answering a FAQ automatically notifies
-// the original asker and the administrators. From a user's perspective this
-// ensures they are kept in the loop once their question is addressed.
 var _ notif.AdminEmailTemplateProvider = (*AnswerTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*AnswerTask)(nil)
 
@@ -56,10 +46,6 @@ func (AnswerTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 	return tasks.HasTask(TaskAnswer)(r, m)
 }
 
-func (RemoveQuestionTask) Match(req *http.Request, m *mux.RouteMatch) bool {
-	return tasks.HasTask(TaskRemoveRemove)(req, m)
-}
-
 func (AnswerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
@@ -80,20 +66,6 @@ func (AnswerTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Idfaq:                        int32(faq),
 	}); err != nil {
 		return fmt.Errorf("faq update fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-
-	return nil
-}
-
-func (RemoveQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
-	faq, err := strconv.Atoi(r.PostFormValue("faq"))
-	if err != nil {
-		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
-	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
-		return fmt.Errorf("delete faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	return nil

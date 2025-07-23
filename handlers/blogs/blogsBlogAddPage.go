@@ -58,8 +58,44 @@ func (AddBlogTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirem
 
 func (AddBlogTask) Page(w http.ResponseWriter, r *http.Request) { BlogAddPage(w, r) }
 func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
-	BlogAddActionPage(w, r)
-	return nil
+	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
+		return fmt.Errorf("validation fail %w", err)
+	}
+	languageId, err := strconv.Atoi(r.PostFormValue("language"))
+	if err != nil {
+		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	text := r.PostFormValue("text")
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return handlers.SessionFetchFail{}
+	}
+	uid, _ := session.Values["UID"].(int32)
+
+	id, err := queries.CreateBlogEntry(r.Context(), db.CreateBlogEntryParams{
+		UsersIdusers:       uid,
+		LanguageIdlanguage: int32(languageId),
+		Blog: sql.NullString{
+			String: text,
+			Valid:  true,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("blog create fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d", id))
+			evt.Data["target"] = notif.Target{Type: "blog", ID: int32(id)}
+		}
+	}
+
+	return handlers.RedirectHandler(fmt.Sprintf("/blogs/blog/%d", id))
 }
 
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
@@ -89,48 +125,4 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	data.Languages = languageRows
 
 	handlers.TemplateHandler(w, r, "blogAddPage.gohtml", data)
-}
-
-func BlogAddActionPage(w http.ResponseWriter, r *http.Request) {
-	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	languageId, err := strconv.Atoi(r.PostFormValue("language"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	uid, _ := session.Values["UID"].(int32)
-
-	id, err := queries.CreateBlogEntry(r.Context(), db.CreateBlogEntryParams{
-		UsersIdusers:       uid,
-		LanguageIdlanguage: int32(languageId),
-		Blog: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-	})
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d", id))
-			evt.Data["target"] = notif.Target{Type: "blog", ID: int32(id)}
-		}
-	}
-
-	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d", id), http.StatusTemporaryRedirect)
 }

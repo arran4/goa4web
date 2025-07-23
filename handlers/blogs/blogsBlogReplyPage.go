@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -81,33 +80,23 @@ func (ReplyBlogTask) IndexData(data map[string]any) []searchworker.IndexEventDat
 var _ searchworker.IndexedTask = ReplyBlogTask{}
 
 func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
-	BlogReplyPostPage(w, r)
-	return nil
-}
-
-func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := handlers.ValidateForm(r, []string{"language", "replytext"}, []string{"language", "replytext"}); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return fmt.Errorf("validation fail %w", err)
 	}
 
 	vars := mux.Vars(r)
 	bid, err := strconv.Atoi(vars["blog"])
-
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("blog id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if bid == 0 {
-		log.Printf("Error: no bid")
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("no bid")))
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -121,11 +110,9 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
-			return
+			return nil
 		default:
-			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return fmt.Errorf("getBlogEntryForUserById fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -151,33 +138,25 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 		if err != nil {
-			log.Printf("Error: createForumTopic: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return fmt.Errorf("createForumTopic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
-		log.Printf("Error: findForumTopicByTitle: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("findForumTopicByTitle fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else {
 		ptid = pt.Idforumtopic
 	}
 	if pthid == 0 {
 		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
-			log.Printf("Error: makeThread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return fmt.Errorf("makeThread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignThreadIdToBlogEntry(r.Context(), db.AssignThreadIdToBlogEntryParams{
 			ForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
 			Idblogs:       int32(bid),
 		}); err != nil {
-			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return fmt.Errorf("assignThreadIdToBlogEntry fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -196,9 +175,7 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -220,6 +197,5 @@ func BlogReplyPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
-
+	return handlers.RedirectHandler(endUrl)
 }

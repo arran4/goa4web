@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -33,22 +34,19 @@ var _ notif.DirectEmailNotificationTemplateProvider = (*AddEmailTask)(nil)
 func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	emailAddr := r.FormValue("new_email")
 	if emailAddr == "" {
-		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-		return nil
+		return handlers.RedirectHandler("/usr/email")
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
-		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
-		return nil
+		return handlers.RedirectHandler("/usr/email?error=email+exists")
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
@@ -58,8 +56,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	expire := time.Now().Add(24 * time.Hour)
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0}); err != nil {
 		log.Printf("insert user email: %v", err)
-		http.Redirect(w, r, "/usr/email?error=email+exists", http.StatusSeeOther)
-		return nil
+		return fmt.Errorf("insert user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	path := "/usr/email/verify?code=" + code
 	page := "http://" + r.Host + path
@@ -74,26 +71,23 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
 	}
-	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/usr/email")
 }
 
-func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
+func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-		return
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
-		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-		return
+		return handlers.RedirectHandler("/usr/email")
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
@@ -117,7 +111,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) {
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
 	}
-	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+	return handlers.RedirectHandler("/usr/email")
 }
 
 func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {

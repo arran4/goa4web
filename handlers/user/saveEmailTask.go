@@ -3,12 +3,14 @@ package user
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -23,17 +25,15 @@ var _ tasks.Task = (*SaveEmailTask)(nil)
 func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return nil
+		return common.UserError{ErrorMessage: "forbidden"}
 	}
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -45,8 +45,7 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	_, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("preference load: %v", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("preference load fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if err != nil {
@@ -71,10 +70,8 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if err != nil {
 		log.Printf("save email pref: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("save email pref fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/usr/email")
 }

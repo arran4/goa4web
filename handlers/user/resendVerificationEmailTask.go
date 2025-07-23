@@ -17,8 +17,7 @@ var _ tasks.Task = (*ResendVerificationEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*ResendVerificationEmailTask)(nil)
 
 func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
-	addEmailTask.Resend(w, r)
-	return nil
+	return addEmailTask.Resend(w, r)
 }
 
 func (ResendVerificationEmailTask) DirectEmailTemplate() *notif.EmailTemplates {

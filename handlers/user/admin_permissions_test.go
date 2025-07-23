@@ -12,11 +12,11 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestPermissionUserTasksTemplates(t *testing.T) {
@@ -69,7 +69,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	handler := middleware.TaskEventMiddleware(http.HandlerFunc(tasks.Action(permissionUserAllowTask)))
+	handler := middleware.TaskEventMiddleware(http.HandlerFunc(handlers.TaskHandler(permissionUserAllowTask)))
 	handler.ServeHTTP(rr, req)
 
 	select {

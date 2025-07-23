@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -47,12 +48,11 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 
 func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/usr/paging", http.StatusSeeOther)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 	size, _ := strconv.Atoi(r.FormValue("size"))
@@ -68,8 +68,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("preference load: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("preference load fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -88,9 +87,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if err != nil {
 		log.Printf("save paging: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("save paging fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	http.Redirect(w, r, "/usr/paging", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/usr/paging")
 }

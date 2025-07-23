@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -65,12 +66,11 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -85,8 +85,7 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/usr/notifications")
 }
 
 func notificationsRssPage(w http.ResponseWriter, r *http.Request) {

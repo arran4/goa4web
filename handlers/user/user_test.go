@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/handlers"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
@@ -60,7 +62,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	testMailTask.Action(rr, req)
+	handlers.TaskHandler(testMailTask)(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
@@ -91,9 +93,9 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	testMailTask.Action(rr, req)
+	handlers.TaskHandler(testMailTask)(rr, req)
 
-	if rr.Code != http.StatusSeeOther {
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/usr/email" {

@@ -20,7 +20,7 @@
                 <td width=200px>{{template "index" $}}
                 <td>
                     {{- if cd.Announcement }}<br>
-                    <p><a href="/news/news/{{ cd.Announcement.Idsitenews }}"><strong>{{ cd.Announcement.News.String }}</strong></a></p>
+                    <a href="/news/news/{{ cd.Announcement.Idsitenews }}"><strong>{{ cd.Announcement.News.String }}</strong></a><br />
                     {{- end }}
 
                     {{- end}}

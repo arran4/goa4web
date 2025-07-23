@@ -2,6 +2,7 @@ package admin
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -77,24 +78,22 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm: %v", err)
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
 		if err := queries.MarkNotificationRead(r.Context(), int32(id)); err != nil {
-			log.Printf("mark read: %v", err)
+			return fmt.Errorf("mark read fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
 func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
-		log.Printf("purge notifications: %v", err)
+		return fmt.Errorf("purge notifications fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -114,25 +113,22 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 			u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: name, Valid: true})
 			if err != nil {
-				log.Printf("get user %s: %v", name, err)
-				continue
+				return fmt.Errorf("get user %s fail %w", name, handlers.ErrRedirectOnSamePageHandler(err))
 			}
 			ids = append(ids, u.Idusers)
 		}
 	} else if role != "" && role != "anonymous" {
 		rows, err := queries.ListUserIDsByRole(r.Context(), role)
 		if err != nil {
-			log.Printf("list role: %v", err)
-		} else {
-			ids = append(ids, rows...)
+			return fmt.Errorf("list role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
+		ids = append(ids, rows...)
 	} else {
 		rows, err := queries.AllUserIDs(r.Context())
 		if err != nil {
-			log.Printf("list users: %v", err)
-		} else {
-			ids = append(ids, rows...)
+			return fmt.Errorf("list users fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
+		ids = append(ids, rows...)
 	}
 	for _, id := range ids {
 		err := queries.InsertNotification(r.Context(), db.InsertNotificationParams{
@@ -141,9 +137,8 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Message:      sql.NullString{String: message, Valid: message != ""},
 		})
 		if err != nil {
-			log.Printf("insert notification: %v", err)
+			return fmt.Errorf("insert notification fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

@@ -63,8 +63,6 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	mock.ExpectExec("UPDATE linker SET last_index").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	bus := eventbus.NewBus()
-	eventbus.DefaultBus = bus
-	defer func() { eventbus.DefaultBus = eventbus.NewBus() }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go searchworker.Worker(ctx, bus, queries)
@@ -73,12 +71,13 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	cd := common.NewCoreData(req.Context(), queries)
 	cd.SetEvent(evt)
+	cd.SetEventTask(ApproveTask)
 	ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctxreq)
 	rr := httptest.NewRecorder()
 	ApproveTask.Action(rr, req)
 
-	if err := eventbus.DefaultBus.Publish(*evt); err != nil {
+	if err := bus.Publish(*evt); err != nil {
 		t.Fatalf("publish: %v", err)
 	}
 

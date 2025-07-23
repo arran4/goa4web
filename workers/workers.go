@@ -35,10 +35,13 @@ func safeGo(fn func()) {
 }
 
 // Start launches all background workers using the given configuration.
-func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg config.RuntimeConfig) {
+func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, bus *eventbus.Bus, cfg config.RuntimeConfig) {
+	if bus == nil {
+		bus = eventbus.DefaultBus
+	}
 	log.Printf("Starting email worker")
 	safeGo(func() {
-		emailqueue.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, eventbus.DefaultBus, time.Duration(cfg.EmailWorkerInterval)*time.Second)
+		emailqueue.EmailQueueWorker(ctx, dbpkg.New(db), provider, dlqProvider, bus, time.Duration(cfg.EmailWorkerInterval)*time.Second)
 	})
 	log.Printf("Starting notification purger worker")
 	safeGo(func() {
@@ -49,19 +52,19 @@ func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider
 		n.NotificationPurgeWorker(ctx, time.Hour)
 	})
 	log.Printf("Starting event bus logger worker")
-	safeGo(func() { logworker.Worker(ctx, eventbus.DefaultBus) })
+	safeGo(func() { logworker.Worker(ctx, bus) })
 	log.Printf("Starting audit worker")
-	safeGo(func() { auditworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
+	safeGo(func() { auditworker.Worker(ctx, bus, dbpkg.New(db)) })
 	log.Printf("Starting notification bus worker")
 	safeGo(func() {
 		n := notifications.New(
 			notifications.WithQueries(dbpkg.New(db)),
 			notifications.WithEmailProvider(provider),
 		)
-		n.BusWorker(ctx, eventbus.DefaultBus, dlqProvider)
+		n.BusWorker(ctx, bus, dlqProvider)
 	})
 	log.Printf("Starting search index worker")
-	safeGo(func() { searchworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
+	safeGo(func() { searchworker.Worker(ctx, bus, dbpkg.New(db)) })
 	log.Printf("Starting post count worker")
-	safeGo(func() { postcountworker.Worker(ctx, eventbus.DefaultBus, dbpkg.New(db)) })
+	safeGo(func() { postcountworker.Worker(ctx, bus, dbpkg.New(db)) })
 }

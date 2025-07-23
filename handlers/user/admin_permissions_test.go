@@ -38,8 +38,6 @@ func TestPermissionUserTasksTemplates(t *testing.T) {
 
 func TestPermissionUserAllowEventData(t *testing.T) {
 	bus := eventbus.NewBus()
-	eventbus.DefaultBus = bus
-	defer func() { eventbus.DefaultBus = eventbus.NewBus() }()
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -69,7 +67,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	handler := middleware.TaskEventMiddleware(http.HandlerFunc(handlers.TaskHandler(permissionUserAllowTask)))
+	handler := middleware.TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(handlers.TaskHandler(permissionUserAllowTask)))
 	handler.ServeHTTP(rr, req)
 
 	select {

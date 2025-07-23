@@ -2,6 +2,7 @@ package forum
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -25,12 +26,10 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	topicID, err := strconv.Atoi(vars["topic"])
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("topic id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
@@ -43,8 +42,7 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 		if err != nil {
 			log.Printf("GetUserByUsername: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("get user by username %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		uid = sql.NullInt32{Int32: u.Idusers, Valid: true}
 	}
@@ -53,8 +51,7 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		roles, err := queries.ListRoles(r.Context())
 		if err != nil {
 			log.Printf("ListRoles: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("list roles %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		for _, ro := range roles {
 			if ro.Name == role {
@@ -79,11 +76,9 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Extra:    sql.NullString{},
 		}); err != nil {
 			log.Printf("CreateGrant: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -98,14 +93,11 @@ func (TopicGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	grantID, err := strconv.Atoi(r.PostFormValue("grantid"))
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("grant id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := queries.DeleteGrant(r.Context(), int32(grantID)); err != nil {
 		log.Printf("DeleteGrant: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

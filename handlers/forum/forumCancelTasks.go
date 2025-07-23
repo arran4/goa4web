@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"net/http"
 	"strconv"
 
@@ -23,8 +24,7 @@ var _ tasks.Task = (*threadNewCancelTask)(nil)
 
 func (threadNewCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	topicID, _ := strconv.Atoi(mux.Vars(r)["topic"])
-	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d", topicID), http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
 }
 
 // topicThreadReplyCancelTask cancels replying to a thread.
@@ -38,8 +38,7 @@ func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request)
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
-	http.Redirect(w, r, endURL, http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(endURL)
 }
 
 // topicThreadCommentEditActionTask updates a comment and refreshes thread metadata.
@@ -52,8 +51,7 @@ var _ tasks.Task = (*topicThreadCommentEditActionTask)(nil)
 func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageID, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("language parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("replytext")
 
@@ -67,8 +65,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 		LanguageIdlanguage: int32(languageID),
 		Text:               sql.NullString{String: text, Valid: true},
 	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("update comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -80,8 +77,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentID), http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentID))
 }
 
 // topicThreadCommentEditActionCancelTask aborts editing a comment.
@@ -95,6 +91,5 @@ func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *h
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
-	http.Redirect(w, r, endURL, http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(endURL)
 }

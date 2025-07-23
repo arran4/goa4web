@@ -5,6 +5,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
@@ -24,7 +25,7 @@ var _ tasks.Task = (*subscribeTopicTask)(nil)
 func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
@@ -33,9 +34,9 @@ func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pattern := topicSubscriptionPattern(int32(topicID))
 	if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: "internal"}); err != nil {
 		log.Printf("insert subscription: %v", err)
+		return fmt.Errorf("insert subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d", topicID), http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
 }
 
 // unsubscribeTopicTask removes a topic subscription.
@@ -48,7 +49,7 @@ var _ tasks.Task = (*unsubscribeTopicTask)(nil)
 func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
@@ -57,7 +58,7 @@ func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pattern := topicSubscriptionPattern(int32(topicID))
 	if err := queries.DeleteSubscription(r.Context(), db.DeleteSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: "internal"}); err != nil {
 		log.Printf("delete subscription: %v", err)
+		return fmt.Errorf("delete subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d", topicID), http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
 }

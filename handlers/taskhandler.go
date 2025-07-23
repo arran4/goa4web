@@ -10,9 +10,9 @@ import (
 	"net/url"
 )
 
-// ActionV2 wraps t.Action to record the task on the request event and handle the
+// TaskHandler wraps t.Action to record the task on the request event and handle the
 // returned result
-func ActionV2(t tasks.Task) func(http.ResponseWriter, *http.Request) {
+func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 	if nt, ok := t.(tasks.NamedTask); ok {
 		tasks.Register(nt)
 	}

@@ -164,3 +164,20 @@ func TestTaskEventMiddleware_EventProvided(t *testing.T) {
 		t.Fatalf("status=%d", rec.Code)
 	}
 }
+
+func TestTaskEventMiddleware_NoCoreDataPanic(t *testing.T) {
+	handler := TaskEventMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatal("inner handler should not run")
+	}))
+
+	req := httptest.NewRequest("GET", "/p", nil)
+	rec := httptest.NewRecorder()
+
+	defer func() {
+		if recover() == nil {
+			t.Fatal("expected panic")
+		}
+	}()
+
+	handler.ServeHTTP(rec, req)
+}

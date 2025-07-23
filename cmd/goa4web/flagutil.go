@@ -54,15 +54,14 @@ type usageData interface {
 func flagInfos(fs *flag.FlagSet) []flagInfo {
 	var list []flagInfo
 	fs.VisitAll(func(f *flag.Flag) {
-		name, usage := flag.UnquoteUsage(f)
-		list = append(list, flagInfo{Name: name, Usage: usage, DefValue: f.DefValue})
+		//name, usage := flag.UnquoteUsage(f)
+		list = append(list, flagInfo{Name: f.Name, Usage: f.Usage, DefValue: f.DefValue})
 	})
 	return list
 }
 
 func printFlags(fs *flag.FlagSet) {
-	t := template.Must(template.New("flags").Parse("flags.txt"))
-	if err := t.Execute(fs.Output(), flagInfos(fs)); err != nil {
+	if err := getTemplates().ExecuteTemplate(fs.Output(), "flag_group", flagInfos(fs)); err != nil {
 		fmt.Fprintf(fs.Output(), "template execute: %v\n", err)
 	}
 }
@@ -72,7 +71,7 @@ var (
 	templatesOnce     sync.Once
 )
 
-func executeUsage(w io.Writer, filename string, data usageData) error {
+func getTemplates() *template.Template {
 	templatesOnce.Do(func() {
 		sub, err := fs2.Sub(templatesFS, "templates")
 		if err != nil {
@@ -80,7 +79,11 @@ func executeUsage(w io.Writer, filename string, data usageData) error {
 		}
 		compiledTemplates = template.Must(template.New("").ParseFS(sub, "*.txt"))
 	})
-	if err := compiledTemplates.ExecuteTemplate(w, filename, data); err != nil {
+	return compiledTemplates
+}
+
+func executeUsage(w io.Writer, filename string, data usageData) error {
+	if err := getTemplates().ExecuteTemplate(w, filename, data); err != nil {
 		_, _ = fmt.Fprintf(w, "template execute: %v\n", err)
 		return fmt.Errorf("execute template: %v", err)
 	}

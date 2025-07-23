@@ -79,10 +79,7 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	}
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		data := struct {
-			eventbus.TaskEvent
-			Item interface{}
-		}{TaskEvent: evt, Item: evt.Data}
+		data := NotificationData{TaskEvent: evt, Item: evt.Data}
 		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(), tp.AdminInternalNotificationTemplate(), data, evt.Path); err != nil {
 			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", err)); dlqErr != nil {
 				return dlqErr
@@ -139,6 +136,11 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	return nil
 }
 
+type NotificationData struct {
+	TaskEvent eventbus.TaskEvent
+	Item      map[string]any
+}
+
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
 	if et := tp.SelfEmailTemplate(); et != nil {
 		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
@@ -164,10 +166,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 		}
 	}
 	if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
-		data := struct {
-			eventbus.TaskEvent
-			Item interface{}
-		}{TaskEvent: evt, Item: evt.Data}
+		data := NotificationData{TaskEvent: evt, Item: evt.Data}
 		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {
 			return err
@@ -220,10 +219,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 			}
 		}
 		if nt := tp.TargetInternalNotificationTemplate(); nt != nil {
-			data := struct {
-				eventbus.TaskEvent
-				Item interface{}
-			}{TaskEvent: evt, Item: evt.Data}
+			data := NotificationData{TaskEvent: evt, Item: evt.Data}
 			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {
 				return err
@@ -290,10 +286,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	}
 
 	var msg []byte
-	data := struct {
-		eventbus.TaskEvent
-		Item interface{}
-	}{TaskEvent: evt, Item: evt.Data}
+	data := NotificationData{TaskEvent: evt, Item: evt.Data}
 	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
 		var err error
 		msg, err = n.renderNotification(ctx, *nt, data)

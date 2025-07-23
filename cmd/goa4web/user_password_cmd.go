@@ -6,9 +6,6 @@ import (
 	"fmt"
 )
 
-//go:embed templates/user_password_usage.txt
-var userPasswordUsageTemplate string
-
 // userPasswordCmd handles reset password requests.
 type userPasswordCmd struct {
 	*userCmd
@@ -57,7 +54,7 @@ func (c *userPasswordCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *userPasswordCmd) Usage() {
-	executeUsage(c.fs.Output(), userPasswordUsageTemplate, c)
+	executeUsage(c.fs.Output(), "user_password_usage.txt", c)
 }
 
 func (c *userPasswordCmd) FlagGroups() []flagGroup {

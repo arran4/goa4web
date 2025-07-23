@@ -1,17 +1,17 @@
 {{define "flags"}}
-{{range .}}-{{.Name}} {{.DefValue}}
-    {{.Usage}}
+{{- range .}}
+-{{printf "%-30s" .Name}} {{printf "%-20s" .DefValue}}{{printf "%-20s" .Usage}}
+{{- end}}
+{{- end}}
+
+{{- define "flag_group"}}
+{{- if .Title}}{{.Title}}:
 {{end}}
+{{- template "flags" .Flags}}
 {{end}}
 
-{{define "flag_group"}}
-{{if .Title}}{{.Title}}:
-{{end}}
-{{template "flags" .Flags}}
-{{end}}
-
-{{define "flag_groups_section"}}
+{{- define "flag_groups_section"}}
 {{range .}}
-{{template "flag_group" .}}
+{{- template "flag_group" .}}
 {{end}}
-{{end}}
+{{- end -}}

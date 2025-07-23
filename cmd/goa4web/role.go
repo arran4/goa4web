@@ -6,9 +6,6 @@ import (
 	"fmt"
 )
 
-//go:embed templates/role_usage.txt
-var roleUsageTemplate string
-
 // roleCmd implements "role" top-level command.
 type roleCmd struct {
 	*rootCmd
@@ -50,7 +47,7 @@ func (c *roleCmd) Run() error {
 }
 
 func (c *roleCmd) Usage() {
-	executeUsage(c.fs.Output(), roleUsageTemplate, c)
+	executeUsage(c.fs.Output(), "role_usage.txt", c)
 }
 
 func (c *roleCmd) FlagGroups() []flagGroup {

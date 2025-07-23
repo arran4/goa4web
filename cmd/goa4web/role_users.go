@@ -9,9 +9,6 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
-//go:embed templates/role_users_usage.txt
-var roleUsersUsageTemplate string
-
 // roleUsersCmd implements "role users".
 type roleUsersCmd struct {
 	*roleCmd
@@ -53,7 +50,7 @@ func (c *roleUsersCmd) Run() error {
 }
 
 func (c *roleUsersCmd) Usage() {
-	executeUsage(c.fs.Output(), roleUsersUsageTemplate, c)
+	executeUsage(c.fs.Output(), "role_users_usage.txt", c)
 }
 
 func (c *roleUsersCmd) FlagGroups() []flagGroup {

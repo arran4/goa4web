@@ -2,7 +2,6 @@ package admin
 
 import (
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 
 	faq "github.com/arran4/goa4web/handlers/faq"
@@ -36,33 +35,33 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
-	ar.HandleFunc("/email/queue", tasks.Action(resendQueueTask)).Methods("POST").MatcherFunc(resendQueueTask.Matcher())
-	ar.HandleFunc("/email/queue", tasks.Action(deleteQueueTask)).Methods("POST").MatcherFunc(deleteQueueTask.Matcher())
+	ar.HandleFunc("/email/queue", handlers.TaskHandler(resendQueueTask)).Methods("POST").MatcherFunc(resendQueueTask.Matcher())
+	ar.HandleFunc("/email/queue", handlers.TaskHandler(deleteQueueTask)).Methods("POST").MatcherFunc(deleteQueueTask.Matcher())
 	ar.HandleFunc("/email/template", AdminEmailTemplatePage).Methods("GET")
-	ar.HandleFunc("/email/template", tasks.Action(saveTemplateTask)).Methods("POST").MatcherFunc(saveTemplateTask.Matcher())
-	ar.HandleFunc("/email/template", tasks.Action(testTemplateTask)).Methods("POST").MatcherFunc(testTemplateTask.Matcher())
+	ar.HandleFunc("/email/template", handlers.TaskHandler(saveTemplateTask)).Methods("POST").MatcherFunc(saveTemplateTask.Matcher())
+	ar.HandleFunc("/email/template", handlers.TaskHandler(testTemplateTask)).Methods("POST").MatcherFunc(testTemplateTask.Matcher())
 	ar.HandleFunc("/dlq", AdminDLQPage).Methods("GET")
-	ar.HandleFunc("/dlq", tasks.Action(deleteDLQTask)).Methods("POST").MatcherFunc(deleteDLQTask.Matcher())
+	ar.HandleFunc("/dlq", handlers.TaskHandler(deleteDLQTask)).Methods("POST").MatcherFunc(deleteDLQTask.Matcher())
 	ar.HandleFunc("/notifications", AdminNotificationsPage).Methods("GET")
-	ar.HandleFunc("/notifications", tasks.Action(markReadTask)).Methods("POST").MatcherFunc(markReadTask.Matcher())
-	ar.HandleFunc("/notifications", tasks.Action(purgeNotificationsTask)).Methods("POST").MatcherFunc(purgeNotificationsTask.Matcher())
-	ar.HandleFunc("/notifications", tasks.Action(sendNotificationTask)).Methods("POST").MatcherFunc(sendNotificationTask.Matcher())
+	ar.HandleFunc("/notifications", handlers.TaskHandler(markReadTask)).Methods("POST").MatcherFunc(markReadTask.Matcher())
+	ar.HandleFunc("/notifications", handlers.TaskHandler(purgeNotificationsTask)).Methods("POST").MatcherFunc(purgeNotificationsTask.Matcher())
+	ar.HandleFunc("/notifications", handlers.TaskHandler(sendNotificationTask)).Methods("POST").MatcherFunc(sendNotificationTask.Matcher())
 	ar.HandleFunc("/requests", AdminRequestQueuePage).Methods("GET")
 	ar.HandleFunc("/requests/archive", AdminRequestArchivePage).Methods("GET")
 	ar.HandleFunc("/request/{id}", adminRequestPage).Methods("GET")
 	ar.HandleFunc("/request/{id}/comment", adminRequestAddCommentPage).Methods("POST")
-	ar.HandleFunc("/request/{id}/accept", tasks.Action(acceptRequestTask)).Methods("POST").MatcherFunc(acceptRequestTask.Matcher())
-	ar.HandleFunc("/request/{id}/reject", tasks.Action(rejectRequestTask)).Methods("POST").MatcherFunc(rejectRequestTask.Matcher())
-	ar.HandleFunc("/request/{id}/query", tasks.Action(queryRequestTask)).Methods("POST").MatcherFunc(queryRequestTask.Matcher())
+	ar.HandleFunc("/request/{id}/accept", handlers.TaskHandler(acceptRequestTask)).Methods("POST").MatcherFunc(acceptRequestTask.Matcher())
+	ar.HandleFunc("/request/{id}/reject", handlers.TaskHandler(rejectRequestTask)).Methods("POST").MatcherFunc(rejectRequestTask.Matcher())
+	ar.HandleFunc("/request/{id}/query", handlers.TaskHandler(queryRequestTask)).Methods("POST").MatcherFunc(queryRequestTask.Matcher())
 	ar.HandleFunc("/user", adminUserListPage).Methods("GET")
 	ar.HandleFunc("/user/{id}", adminUserProfilePage).Methods("GET")
 	ar.HandleFunc("/user/{id}/comment", adminUserAddCommentPage).Methods("POST")
 	ar.HandleFunc("/announcements", AdminAnnouncementsPage).Methods("GET")
-	ar.HandleFunc("/announcements", tasks.Action(addAnnouncementTask)).Methods("POST").MatcherFunc(addAnnouncementTask.Matcher())
-	ar.HandleFunc("/announcements", tasks.Action(deleteAnnouncementTask)).Methods("POST").MatcherFunc(deleteAnnouncementTask.Matcher())
+	ar.HandleFunc("/announcements", handlers.TaskHandler(addAnnouncementTask)).Methods("POST").MatcherFunc(addAnnouncementTask.Matcher())
+	ar.HandleFunc("/announcements", handlers.TaskHandler(deleteAnnouncementTask)).Methods("POST").MatcherFunc(deleteAnnouncementTask.Matcher())
 	ar.HandleFunc("/ipbans", AdminIPBanPage).Methods("GET")
-	ar.HandleFunc("/ipbans", tasks.Action(addIPBanTask)).Methods("POST").MatcherFunc(addIPBanTask.Matcher())
-	ar.HandleFunc("/ipbans", tasks.Action(deleteIPBanTask)).Methods("POST").MatcherFunc(deleteIPBanTask.Matcher())
+	ar.HandleFunc("/ipbans", handlers.TaskHandler(addIPBanTask)).Methods("POST").MatcherFunc(addIPBanTask.Matcher())
+	ar.HandleFunc("/ipbans", handlers.TaskHandler(deleteIPBanTask)).Methods("POST").MatcherFunc(deleteIPBanTask.Matcher())
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/page-size", AdminPageSizePage).Methods("GET", "POST")
@@ -85,8 +84,8 @@ func RegisterRoutes(ar *mux.Router) {
 	// news admin
 	nar := ar.PathPrefix("/news").Subrouter()
 	nar.HandleFunc("/users/roles", news.AdminUserRolesPage).Methods("GET")
-	nar.HandleFunc("/users/roles", tasks.Action(newsUserAllow)).Methods("POST").MatcherFunc(newsUserAllow.Matcher())
-	nar.HandleFunc("/users/roles", tasks.Action(newsUserRemove)).Methods("POST").MatcherFunc(newsUserRemove.Matcher())
+	nar.HandleFunc("/users/roles", handlers.TaskHandler(newsUserAllow)).Methods("POST").MatcherFunc(newsUserAllow.Matcher())
+	nar.HandleFunc("/users/roles", handlers.TaskHandler(newsUserRemove)).Methods("POST").MatcherFunc(newsUserRemove.Matcher())
 
 	// writings admin
 	writings.RegisterAdminRoutes(ar)

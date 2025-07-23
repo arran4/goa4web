@@ -322,15 +322,15 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 }
 
 func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, tp AutoSubscribeProvider) error {
-	auto := true
-	email := false
-	if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
-		auto = pref.AutoSubscribeReplies
-		if pref.Emailforumupdates.Valid {
-			email = pref.Emailforumupdates.Bool
-		}
-	} else {
+	var auto bool
+	var email bool
+	pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID)
+	if err != nil {
 		return fmt.Errorf("get preference by user_id: %w", err)
+	}
+	auto = pref.AutoSubscribeReplies
+	if pref.Emailforumupdates.Valid {
+		email = pref.Emailforumupdates.Bool
 	}
 	if auto {
 		task, path, err := tp.AutoSubscribePath(evt)

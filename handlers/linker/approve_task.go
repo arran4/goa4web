@@ -1,0 +1,96 @@
+package linker
+
+import (
+	"database/sql"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/workers/searchworker"
+)
+
+// approveTask approves a queued linker item.
+type approveTask struct{ tasks.TaskString }
+
+var ApproveTask = &approveTask{TaskString: TaskApprove}
+var _ tasks.Task = (*approveTask)(nil)
+
+var (
+	_ tasks.Task                                    = (*approveTask)(nil)
+	_ notif.SubscribersNotificationTemplateProvider = (*approveTask)(nil)
+	_ notif.AdminEmailTemplateProvider              = (*approveTask)(nil)
+	_ searchworker.IndexedTask                      = approveTask{}
+)
+
+func (approveTask) IndexType() string { return searchworker.TypeLinker }
+
+func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData {
+	if v, ok := data[searchworker.EventKey].(searchworker.IndexEventData); ok {
+		return []searchworker.IndexEventData{v}
+	}
+	return nil
+}
+
+func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
+	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
+	if err != nil {
+		return fmt.Errorf("approve linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+		ViewerID:     cd.UserID,
+		Idlinker:     int32(lid),
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
+	if err != nil {
+		return fmt.Errorf("get linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			u, _ := cd.CurrentUser()
+			mod := ""
+			if u != nil {
+				mod = u.Username.String
+			}
+			evt.Data["Title"] = link.Title.String
+			evt.Data["Username"] = link.Username.String
+			evt.Data["Moderator"] = mod
+			evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
+		}
+	}
+	return nil
+}
+
+func (approveTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("linkerApprovedEmail")
+}
+
+func (approveTask) SubscribedInternalNotificationTemplate() *string {
+	s := notif.NotificationTemplateFilenameGenerator("linker_approved")
+	return &s
+}
+
+func (approveTask) AdminEmailTemplate() *notif.EmailTemplates {
+	return notif.NewEmailTemplates("adminNotificationLinkerApprovedEmail")
+}
+
+func (approveTask) AdminInternalNotificationTemplate() *string {
+	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerApprovedEmail")
+	return &v
+}

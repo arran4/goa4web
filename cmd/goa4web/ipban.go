@@ -63,5 +63,11 @@ func (c *ipBanCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *ipBanCmd) Usage() {
-	executeUsage(c.fs.Output(), "ipban_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "ipban_usage.txt", c)
 }
+
+func (c *ipBanCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*ipBanCmd)(nil)

@@ -38,6 +38,19 @@ type flagInfo struct {
 	DefValue string
 }
 
+// flagGroup describes a set of related flags that belong to a command level.
+type flagGroup struct {
+	Title string
+	Flags []flagInfo
+}
+
+// usageData is implemented by commands that can describe their flag groups and
+// report the program name for usage templates.
+type usageData interface {
+	FlagGroups() []flagGroup
+	Prog() string
+}
+
 func flagInfos(fs *flag.FlagSet) []flagInfo {
 	var list []flagInfo
 	fs.VisitAll(func(f *flag.Flag) {
@@ -59,7 +72,7 @@ var (
 	templatesOnce     sync.Once
 )
 
-func executeUsage(w io.Writer, filename string, fs *flag.FlagSet, prog string) error {
+func executeUsage(w io.Writer, filename string, data usageData) error {
 	templatesOnce.Do(func() {
 		sub, err := fs2.Sub(templatesFS, "templates")
 		if err != nil {
@@ -67,11 +80,6 @@ func executeUsage(w io.Writer, filename string, fs *flag.FlagSet, prog string) e
 		}
 		compiledTemplates = template.Must(template.New("").ParseFS(sub, "*.txt"))
 	})
-	type Data struct {
-		Prog  string
-		Flags []flagInfo
-	}
-	data := &Data{Prog: prog, Flags: flagInfos(fs)}
 	if err := compiledTemplates.ExecuteTemplate(w, filename, data); err != nil {
 		_, _ = fmt.Fprintf(w, "template execute: %v\n", err)
 		return fmt.Errorf("execute template: %v", err)

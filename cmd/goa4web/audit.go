@@ -46,5 +46,11 @@ func (c *auditCmd) Run() error {
 }
 
 func (c *auditCmd) Usage() {
-	executeUsage(c.fs.Output(), "audit_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "audit_usage.txt", c)
 }
+
+func (c *auditCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*auditCmd)(nil)

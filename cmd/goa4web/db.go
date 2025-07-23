@@ -63,5 +63,11 @@ func (c *dbCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *dbCmd) Usage() {
-	executeUsage(c.fs.Output(), "db_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "db_usage.txt", c)
 }
+
+func (c *dbCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*dbCmd)(nil)

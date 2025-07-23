@@ -17,4 +17,4 @@ Examples:
   {{.Prog}} blog update -id 1 -text 'changed'
   {{.Prog}} blog deactivate -id 1
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

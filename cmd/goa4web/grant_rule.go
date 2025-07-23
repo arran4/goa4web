@@ -56,5 +56,11 @@ func (c *grantCmd) Run() error {
 }
 
 func (c *grantCmd) Usage() {
-	executeUsage(c.fs.Output(), "grant_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "grant_usage.txt", c)
 }
+
+func (c *grantCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*grantCmd)(nil)

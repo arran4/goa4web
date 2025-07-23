@@ -13,4 +13,4 @@ Examples:
   {{.Prog}} writing read 1
   {{.Prog}} writing comments list 1
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

@@ -60,5 +60,11 @@ func (c *configOptionsCmd) Run() error {
 			Extended: e,
 		})
 	}
-	return executeUsage(bytes.NewBuffer(nil), "config_options.txt", c.fs, c.rootCmd.fs.Name())
+	return executeUsage(bytes.NewBuffer(nil), "config_options.txt", c)
 }
+
+func (c *configOptionsCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*configOptionsCmd)(nil)

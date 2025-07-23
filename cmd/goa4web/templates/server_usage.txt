@@ -7,4 +7,4 @@ Commands:
 Examples:
   {{.Prog}} server shutdown --timeout 5s
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

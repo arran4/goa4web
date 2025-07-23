@@ -74,5 +74,11 @@ func (c *blogCmd) Run() error {
 }
 
 func (c *blogCmd) Usage() {
-	executeUsage(c.fs.Output(), "blog_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "blog_usage.txt", c)
 }
+
+func (c *blogCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*blogCmd)(nil)

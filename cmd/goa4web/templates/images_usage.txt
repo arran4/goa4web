@@ -1,4 +1,4 @@
 Usage:
   {{.Prog}} images cache [prune|list|delete <id>|open <id>]
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

@@ -4,6 +4,9 @@ import "net/http"
 
 type RedirectHandler string
 
+// TextByteWriter responds with a plain text byte slice.
+type TextByteWriter []byte
+
 // templateWithDataHandler is a small wrapper that renders tmpl with the
 // provided data when ServeHTTP is called.
 type templateWithDataHandler struct {

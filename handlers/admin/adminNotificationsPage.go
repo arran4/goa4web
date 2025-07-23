@@ -23,6 +23,7 @@ var markReadTask = &MarkReadTask{TaskString: TaskDismiss}
 
 // ensures MarkReadTask implements the tasks.Task interface
 var _ tasks.Task = (*MarkReadTask)(nil)
+var _ tasks.AuditableTask = (*MarkReadTask)(nil)
 
 // PurgeNotificationsTask removes old read notifications.
 type PurgeNotificationsTask struct{ tasks.TaskString }
@@ -31,6 +32,7 @@ var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
 
 // ensures PurgeNotificationsTask implements the tasks.Task interface
 var _ tasks.Task = (*PurgeNotificationsTask)(nil)
+var _ tasks.AuditableTask = (*PurgeNotificationsTask)(nil)
 
 // SendNotificationTask creates a site notification for users.
 type SendNotificationTask struct{ tasks.TaskString }
@@ -39,6 +41,7 @@ var sendNotificationTask = &SendNotificationTask{TaskString: TaskNotify}
 
 // ensures SendNotificationTask implements the tasks.Task interface
 var _ tasks.Task = (*SendNotificationTask)(nil)
+var _ tasks.AuditableTask = (*SendNotificationTask)(nil)
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -85,6 +88,14 @@ func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if err := queries.MarkNotificationRead(r.Context(), int32(id)); err != nil {
 			return fmt.Errorf("mark read fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["MarkedID"] = appendID(evt.Data["MarkedID"], id)
+			}
+		}
 	}
 	return nil
 }
@@ -93,6 +104,14 @@ func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		return fmt.Errorf("purge notifications fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["Purged"] = true
+		}
 	}
 	return nil
 }
@@ -140,5 +159,34 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("insert notification fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["Count"] = len(ids)
+		}
+	}
 	return nil
+}
+
+// AuditRecord summarises notifications being marked read.
+func (MarkReadTask) AuditRecord(data map[string]any) string {
+	if ids, ok := data["MarkedID"].(string); ok {
+		return "marked notifications " + ids + " read"
+	}
+	return "marked notifications read"
+}
+
+// AuditRecord summarises purging notifications.
+func (PurgeNotificationsTask) AuditRecord(map[string]any) string {
+	return "purged read notifications"
+}
+
+// AuditRecord summarises sending a site notification.
+func (SendNotificationTask) AuditRecord(data map[string]any) string {
+	if c, ok := data["Count"].(int); ok {
+		return fmt.Sprintf("sent notification to %d users", c)
+	}
+	return "sent site notification"
 }

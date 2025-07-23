@@ -31,6 +31,7 @@ var saveTemplateTask = &SaveTemplateTask{TaskString: TaskUpdate}
 
 // compile-time interface check for SaveTemplateTask
 var _ tasks.Task = (*SaveTemplateTask)(nil)
+var _ tasks.AuditableTask = (*SaveTemplateTask)(nil)
 
 // TestTemplateTask queues an email using the template for preview.
 type TestTemplateTask struct{ tasks.TaskString }
@@ -39,6 +40,7 @@ var testTemplateTask = &TestTemplateTask{TaskString: TaskTestMail}
 
 // compile-time interface check for TestTemplateTask
 var _ tasks.Task = (*TestTemplateTask)(nil)
+var _ tasks.AuditableTask = (*TestTemplateTask)(nil)
 
 func getUpdateEmailText(ctx context.Context) string {
 	if cd, ok := ctx.Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
@@ -96,6 +98,14 @@ func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail", Body: body}); err != nil {
 		return fmt.Errorf("db save template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["Template"] = "updateEmail"
+		}
 	}
 	return handlers.RedirectHandler("/admin/email/template")
 }
@@ -158,5 +168,30 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: sql.NullInt32{Int32: urow.Idusers, Valid: true}, Body: string(msg), DirectEmail: false}); err != nil {
 		return fmt.Errorf("queue email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	if cd != nil {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["Template"] = "updateEmail"
+			evt.Data["PreviewEmail"] = urow.Email.String
+		}
+	}
 	return handlers.RedirectHandler("/admin/email/template")
+}
+
+// AuditRecord summarises saving the update email template.
+func (SaveTemplateTask) AuditRecord(data map[string]any) string {
+	if t, ok := data["Template"].(string); ok {
+		return "saved template " + t
+	}
+	return "saved email template"
+}
+
+// AuditRecord summarises sending a preview email.
+func (TestTemplateTask) AuditRecord(data map[string]any) string {
+	if addr, ok := data["PreviewEmail"].(string); ok {
+		return "sent preview email to " + addr
+	}
+	return "sent preview email"
 }

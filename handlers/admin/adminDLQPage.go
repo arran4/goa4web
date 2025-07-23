@@ -23,6 +23,7 @@ var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
 
 // compile-time interface check so DeleteDLQTask is usable as a generic task.
 var _ tasks.Task = (*DeleteDLQTask)(nil)
+var _ tasks.AuditableTask = (*DeleteDLQTask)(nil)
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
@@ -56,6 +57,14 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if err := queries.DeleteDeadLetter(r.Context(), int32(id)); err != nil {
 				return fmt.Errorf("delete error %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
+			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+				if evt := cd.Event(); evt != nil {
+					if evt.Data == nil {
+						evt.Data = map[string]any{}
+					}
+					evt.Data["DeletedErrorID"] = appendID(evt.Data["DeletedErrorID"], id)
+				}
+			}
 		}
 	case string(TaskPurge):
 		before := r.PostFormValue("before")
@@ -68,6 +77,25 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if err := queries.PurgeDeadLettersBefore(r.Context(), t); err != nil {
 			return fmt.Errorf("purge errors %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["PurgeBefore"] = t.Format(time.RFC3339)
+			}
+		}
 	}
 	return nil
+}
+
+// AuditRecord summarises dead letters being removed or purged.
+func (DeleteDLQTask) AuditRecord(data map[string]any) string {
+	if ids, ok := data["DeletedErrorID"].(string); ok && ids != "" {
+		return "deleted dead letters " + ids
+	}
+	if before, ok := data["PurgeBefore"].(string); ok && before != "" {
+		return "purged dead letters before " + before
+	}
+	return "modified dead letter queue"
 }

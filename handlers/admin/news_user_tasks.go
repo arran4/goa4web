@@ -25,6 +25,7 @@ const TaskNewsUserAllow tasks.TaskString = "allow"
 var newsUserAllow = &NewsUserAllowTask{TaskString: TaskNewsUserAllow}
 
 var _ tasks.Task = (*NewsUserAllowTask)(nil)
+var _ tasks.AuditableTask = (*NewsUserAllowTask)(nil)
 var _ notifications.AdminEmailTemplateProvider = (*NewsUserAllowTask)(nil)
 var _ notifications.TargetUsersNotificationProvider = (*NewsUserAllowTask)(nil)
 
@@ -74,6 +75,7 @@ const TaskNewsUserRemove tasks.TaskString = "remove"
 var newsUserRemove = &NewsUserRemoveTask{TaskString: TaskNewsUserRemove}
 
 var _ tasks.Task = (*NewsUserRemoveTask)(nil)
+var _ tasks.AuditableTask = (*NewsUserRemoveTask)(nil)
 var _ notifications.AdminEmailTemplateProvider = (*NewsUserRemoveTask)(nil)
 var _ notifications.TargetUsersNotificationProvider = (*NewsUserRemoveTask)(nil)
 
@@ -163,4 +165,24 @@ func (NewsUserRemoveTask) TargetEmailTemplate() *notifications.EmailTemplates {
 func (NewsUserRemoveTask) TargetInternalNotificationTemplate() *string {
 	v := notifications.NotificationTemplateFilenameGenerator("delete_user_role")
 	return &v
+}
+
+// AuditRecord summarises granting a role to a user.
+func (NewsUserAllowTask) AuditRecord(data map[string]any) string {
+	u, _ := data["Username"].(string)
+	role, _ := data["Role"].(string)
+	if u != "" && role != "" {
+		return fmt.Sprintf("granted %s to %s", role, u)
+	}
+	return "granted user role"
+}
+
+// AuditRecord summarises revoking a user role.
+func (NewsUserRemoveTask) AuditRecord(data map[string]any) string {
+	u, _ := data["Username"].(string)
+	role, _ := data["Role"].(string)
+	if u != "" && role != "" {
+		return fmt.Sprintf("revoked %s from %s", role, u)
+	}
+	return "revoked user role"
 }

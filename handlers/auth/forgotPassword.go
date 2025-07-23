@@ -29,11 +29,13 @@ type EmailAssociationRequestTask struct{ tasks.TaskString }
 
 var (
 	_ tasks.Task                             = (*ForgotPasswordTask)(nil)
+	_ tasks.AuditableTask                    = (*ForgotPasswordTask)(nil)
 	_ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
 	_ notif.AdminEmailTemplateProvider       = (*ForgotPasswordTask)(nil)
 	_ notif.SelfEmailBroadcaster             = (*ForgotPasswordTask)(nil)
 
-	_ tasks.Task = (*EmailAssociationRequestTask)(nil)
+	_ tasks.Task          = (*EmailAssociationRequestTask)(nil)
+	_ tasks.AuditableTask = (*EmailAssociationRequestTask)(nil)
 
 	_ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
 )
@@ -195,4 +197,22 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
 	})
+}
+
+// AuditRecord summarises a password reset request for logging.
+func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
+	if u, ok := data["Username"].(string); ok {
+		return "password reset requested for " + u
+	}
+	return "password reset requested"
+}
+
+// AuditRecord summarises an email association request for logging.
+func (EmailAssociationRequestTask) AuditRecord(data map[string]any) string {
+	u, _ := data["Username"].(string)
+	e, _ := data["Email"].(string)
+	if u != "" && e != "" {
+		return fmt.Sprintf("email association request for %s -> %s", u, e)
+	}
+	return "email association request"
 }

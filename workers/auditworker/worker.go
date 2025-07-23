@@ -2,6 +2,8 @@ package auditworker
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"log"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
@@ -26,12 +28,18 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 			if evt.UserID == 0 || !ok {
 				continue
 			}
-			if admin, ok := evt.Task.(tasks.AdminTask); !ok || !admin.IsAdminTask() {
+			aud, ok := evt.Task.(tasks.AuditableTask)
+			if !ok {
 				continue
 			}
+			details := aud.AuditRecord(evt.Data)
+			data, _ := json.Marshal(evt.Data)
 			if err := q.InsertAuditLog(ctx, dbpkg.InsertAuditLogParams{
 				UsersIdusers: evt.UserID,
 				Action:       named.Name(),
+				Path:         evt.Path,
+				Details:      sql.NullString{String: details, Valid: details != ""},
+				Data:         sql.NullString{String: string(data), Valid: len(data) > 0},
 			}); err != nil {
 				log.Printf("insert audit log: %v", err)
 			}

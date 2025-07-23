@@ -98,7 +98,7 @@ func (q *Queries) ForumTopicThreadCounts(ctx context.Context) ([]*ForumTopicThre
 }
 
 const getRecentAuditLogs = `-- name: GetRecentAuditLogs :many
-SELECT a.id, a.users_idusers, u.username, a.action, a.created_at
+SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
 FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
 ORDER BY a.id DESC LIMIT ?
 `
@@ -108,6 +108,9 @@ type GetRecentAuditLogsRow struct {
 	UsersIdusers int32
 	Username     sql.NullString
 	Action       string
+	Path         string
+	Details      sql.NullString
+	Data         sql.NullString
 	CreatedAt    time.Time
 }
 
@@ -125,6 +128,9 @@ func (q *Queries) GetRecentAuditLogs(ctx context.Context, limit int32) ([]*GetRe
 			&i.UsersIdusers,
 			&i.Username,
 			&i.Action,
+			&i.Path,
+			&i.Details,
+			&i.Data,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

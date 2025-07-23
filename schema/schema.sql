@@ -475,6 +475,9 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   `id` int NOT NULL AUTO_INCREMENT,
   `users_idusers` int NOT NULL,
   `action` text NOT NULL,
+  `path` text NOT NULL,
+  `details` text,
+  `data` text,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `audit_log_user_idx` (`users_idusers`)

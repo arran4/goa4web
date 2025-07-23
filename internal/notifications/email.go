@@ -31,8 +31,8 @@ func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID *int3
 }
 
 // renderAndQueueEmailFromTemplates renders the provided templates and queues the result.
-func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID *int32, emailAddr string, et *EmailTemplates, data interface{}, direct bool) error {
-	// TODO "direct" isn't necessary as userID is a pointer
+func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID *int32, emailAddr string, et *EmailTemplates, data interface{}) error {
+	// userID == nil implies the email is direct
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
@@ -40,6 +40,7 @@ func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID 
 	if err != nil {
 		return err
 	}
+	direct := userID == nil
 	return n.queueEmail(ctx, userID, direct, msg)
 }
 
@@ -153,5 +154,5 @@ func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt ev
 	if et == nil {
 		return nil
 	}
-	return n.renderAndQueueEmailFromTemplates(ctx, &userID, user.Email.String, et, evt.Data, false)
+	return n.renderAndQueueEmailFromTemplates(ctx, &userID, user.Email.String, et, evt.Data)
 }

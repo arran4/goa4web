@@ -145,7 +145,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			emails, err := n.Queries.ListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
 				for _, e := range emails {
-					if err := n.renderAndQueueEmailFromTemplates(ctx, &evt.UserID, e.Email, et, evt.Data, false); err != nil {
+					if err := n.renderAndQueueEmailFromTemplates(ctx, &evt.UserID, e.Email, et, evt.Data); err != nil {
 						return err
 					}
 				}
@@ -157,7 +157,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 					log.Printf("notify missing email: %v", nmErr)
 				}
 			} else {
-				if err := n.renderAndQueueEmailFromTemplates(ctx, &evt.UserID, ue.Email, et, evt.Data, false); err != nil {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, &evt.UserID, ue.Email, et, evt.Data); err != nil {
 					return err
 				}
 			}
@@ -194,7 +194,7 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent
 		return nil
 	}
 	if et := tp.DirectEmailTemplate(); et != nil {
-		if err := n.renderAndQueueEmailFromTemplates(ctx, nil, addr, et, evt.Data, true); err != nil {
+		if err := n.renderAndQueueEmailFromTemplates(ctx, nil, addr, et, evt.Data); err != nil {
 			return err
 		}
 	}
@@ -214,7 +214,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 			}
 		} else {
 			if et := tp.TargetEmailTemplate(); et != nil {
-				if err := n.renderAndQueueEmailFromTemplates(ctx, &id, user.Email.String, et, evt.Data, false); err != nil {
+				if err := n.renderAndQueueEmailFromTemplates(ctx, &id, user.Email.String, et, evt.Data); err != nil {
 					return err
 				}
 			}

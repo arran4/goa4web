@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -38,8 +38,7 @@ func (EditReplyTask) AdminInternalNotificationTemplate() *string {
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("replytext")
 
@@ -49,7 +48,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	commentId, _ := strconv.Atoi(vars["comment"])
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -64,9 +63,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("thread lookup fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -78,8 +75,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Valid:  true,
 		},
 	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -92,6 +88,5 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/blogs/blog/%d/comments", blogId))
 }

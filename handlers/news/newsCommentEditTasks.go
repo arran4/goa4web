@@ -11,6 +11,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -37,8 +38,7 @@ func (EditReplyTask) AdminInternalNotificationTemplate() *string {
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("replytext")
 
@@ -49,7 +49,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -61,8 +61,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("thread fetch fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{
@@ -70,8 +69,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		LanguageIdlanguage: int32(languageId),
 		Text:               sql.NullString{String: text, Valid: true},
 	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -84,8 +82,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/news/news/%d", postId))
 }
 
 // CancelTask cancels comment editing.
@@ -108,6 +105,5 @@ func (CancelTask) AdminInternalNotificationTemplate() *string {
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["post"])
-	http.Redirect(w, r, fmt.Sprintf("/news/news/%d", postId), http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/news/news/%d", postId))
 }

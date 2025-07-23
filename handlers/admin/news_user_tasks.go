@@ -43,18 +43,14 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	role := r.PostFormValue("role")
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
-		log.Printf("GetUserByUsername Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("get user by username fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         role,
 	}); err != nil {
-		log.Printf("permissionUserAllow Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("create user role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
@@ -66,7 +62,6 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["Role"] = role
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -95,18 +90,14 @@ func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid, err := strconv.Atoi(r.PostFormValue("permid"))
 	if err != nil {
-		log.Printf("strconv.Atoi(permid) Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("permid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, username, role, err := roleInfoByPermID(r.Context(), queries, int32(permid))
 	if err != nil {
 		log.Printf("lookup role: %v", err)
 	}
 	if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
-		log.Printf("permissionUserDisallow Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("delete user role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err == nil {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -120,7 +111,6 @@ func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 

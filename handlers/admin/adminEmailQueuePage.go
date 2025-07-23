@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -86,7 +87,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm: %v", err)
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	var emails []*db.GetPendingEmailByIDRow
 	var ids []int32
@@ -94,8 +95,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 		id, _ := strconv.Atoi(idStr)
 		e, err := queries.GetPendingEmailByID(r.Context(), int32(id))
 		if err != nil {
-			log.Printf("get email: %v", err)
-			continue
+			return fmt.Errorf("get email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		emails = append(emails, e)
 		if e.ToUserID.Valid {
@@ -111,34 +111,30 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	for _, e := range emails {
 		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, &db.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
 		if err != nil {
-			log.Printf("resolve address: %v", err)
-			continue
+			return fmt.Errorf("resolve address fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if provider != nil {
 			if err := provider.Send(r.Context(), addr, []byte(e.Body)); err != nil {
-				log.Printf("send email: %v", err)
-				continue
+				return fmt.Errorf("send email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}
 		if err := queries.MarkEmailSent(r.Context(), e.ID); err != nil {
-			log.Printf("mark sent: %v", err)
+			return fmt.Errorf("mark sent fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
 func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm: %v", err)
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
 		if err := queries.DeletePendingEmail(r.Context(), int32(id)); err != nil {
-			log.Printf("delete email: %v", err)
+			return fmt.Errorf("delete email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

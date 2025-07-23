@@ -19,6 +19,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -37,27 +38,23 @@ var _ tasks.Task = (*UploadImageTask)(nil)
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
-		http.Error(w, "bad upload", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("bad upload %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	file, header, err := r.FormFile("image")
 	if err != nil {
-		http.Error(w, "image required", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("image required %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("read file %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	size := int64(len(data))
 
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
-		http.Error(w, "invalid image", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("decode image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	id := r.FormValue("id")
@@ -70,8 +67,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			log.Printf("upload write: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("upload write %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 	width := img.Bounds().Dx()
@@ -94,18 +90,15 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	draw.CatmullRom.Scale(thumb, thumb.Bounds(), img, crop, draw.Over, nil)
 	enc, err := imagesign.EncoderByExtension(ext)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("encoder ext %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := enc(&tbuf, thumb); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("thumb encode %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cp := upload.CacheProviderFromConfig(config.AppRuntimeConfig); cp != nil {
 		if err := cp.Write(r.Context(), path.Join(sub1, sub2, thumbName), tbuf.Bytes()); err != nil {
 			log.Printf("cache write: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("cache write %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if ccp, ok := cp.(upload.CacheProvider); ok {
 			if err := ccp.Cleanup(r.Context(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes)); err != nil {
@@ -129,13 +122,9 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		FileSize:     int32(size),
 	})
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("create uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
-	if _, err := w.Write([]byte(imagesign.SignedRef("image:" + fname))); err != nil {
-		log.Printf("write response: %v", err)
-	}
-	return nil
+	signed := imagesign.SignedRef("image:" + fname)
+	return handlers.TextByteWriter([]byte(signed))
 }

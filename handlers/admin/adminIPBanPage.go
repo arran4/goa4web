@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -65,11 +66,13 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	if ipNet != "" {
-		_ = queries.InsertBannedIp(r.Context(), db.InsertBannedIpParams{
+		if err := queries.InsertBannedIp(r.Context(), db.InsertBannedIpParams{
 			IpNet:     ipNet,
 			Reason:    sql.NullString{String: reason, Valid: reason != ""},
 			ExpiresAt: expires,
-		})
+		}); err != nil {
+			return fmt.Errorf("insert banned ip fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
 	}
 	if evt := cd.Event(); evt != nil {
 		if evt.Data == nil {
@@ -83,7 +86,6 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["Moderator"] = u.Username
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -91,13 +93,13 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm: %v", err)
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	var ips []string
 	for _, ip := range r.Form["ip"] {
 		ipNet := NormalizeIPNet(ip)
 		if err := queries.CancelBannedIp(r.Context(), ipNet); err != nil {
-			log.Printf("cancel banned ip %s: %v", ipNet, err)
+			return fmt.Errorf("cancel banned ip %s fail %w", ipNet, handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if ipNet != "" {
 			ips = append(ips, ipNet)
@@ -112,7 +114,6 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["Moderator"] = u.Username
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 

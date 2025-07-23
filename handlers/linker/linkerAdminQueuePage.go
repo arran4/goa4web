@@ -143,9 +143,7 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
-		log.Printf("updateLinkerQueuedItem Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("delete linker queued item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if link != nil {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -165,7 +163,6 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -234,9 +231,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
 	if err != nil {
-		log.Printf("updateLinkerQueuedItem Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("approve linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -246,9 +241,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		log.Printf("getLinkerItemById Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("get linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
@@ -269,7 +262,6 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -331,7 +323,6 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -435,7 +426,6 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 

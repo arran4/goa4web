@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -36,14 +36,11 @@ func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	nid, err := strconv.Atoi(r.PostFormValue("news_id"))
 	if err != nil {
-		log.Printf("news id: %v", err)
-		handlers.TaskDoneAutoRefreshPage(w, r)
-		return nil
+		return fmt.Errorf("news id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := queries.CreateAnnouncement(r.Context(), int32(nid)); err != nil {
-		log.Printf("create announcement: %v", err)
+		return fmt.Errorf("create announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -59,15 +56,14 @@ func (AddAnnouncementTask) AdminInternalNotificationTemplate() *string {
 func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm: %v", err)
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
 		if err := queries.DeleteAnnouncement(r.Context(), int32(id)); err != nil {
-			log.Printf("delete announcement: %v", err)
+			return fmt.Errorf("delete announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 

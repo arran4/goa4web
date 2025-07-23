@@ -106,7 +106,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -114,21 +114,17 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {
-		log.Printf("GetImageBoardById Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("get image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
-		http.Error(w, "bad upload", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	file, header, err := r.FormFile("image")
 	if err != nil {
-		http.Error(w, "image required", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("image required %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	defer file.Close()
 
@@ -136,9 +132,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	h := sha1.New()
 	size, err := io.Copy(io.MultiWriter(&buf, h), file)
 	if err != nil {
-		log.Printf("copy upload error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("copy upload error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	shaHex := fmt.Sprintf("%x", h.Sum(nil))
@@ -147,16 +141,12 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	data := buf.Bytes()
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
-		log.Printf("decode image error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("decode image error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	fname := shaHex + ext
 	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
-			log.Printf("upload write: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		src := img.Bounds()
 		var crop image.Rectangle
@@ -174,20 +164,14 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		var buf bytes.Buffer
 		enc, err := imagesign.EncoderByExtension(ext)
 		if err != nil {
-			log.Printf("encode thumb: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("encoder fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if err := enc(&buf, thumb); err != nil {
-			log.Printf("encode thumb: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("encode thumb fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		thumbName := shaHex + "_thumb" + ext
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, thumbName), buf.Bytes()); err != nil {
-			log.Printf("thumb write: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
+			return fmt.Errorf("thumb write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -208,9 +192,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		FileSize:               int32(size),
 	})
 	if err != nil {
-		log.Printf("CreateImagePost Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("create image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -222,6 +204,5 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

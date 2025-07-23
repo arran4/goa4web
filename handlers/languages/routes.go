@@ -1,7 +1,7 @@
 package languages
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -13,9 +13,9 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	nav.RegisterAdminControlCenter("Languages", "/admin/languages", SectionWeight)
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
 	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
-	ar.HandleFunc("/languages", tasks.Action(renameLanguageTask)).Methods("POST").MatcherFunc(renameLanguageTask.Matcher())
-	ar.HandleFunc("/languages", tasks.Action(deleteLanguageTask)).Methods("POST").MatcherFunc(deleteLanguageTask.Matcher())
-	ar.HandleFunc("/languages", tasks.Action(createLanguageTask)).Methods("POST").MatcherFunc(createLanguageTask.Matcher())
+	ar.HandleFunc("/languages", handlers.TaskHandler(renameLanguageTask)).Methods("POST").MatcherFunc(renameLanguageTask.Matcher())
+	ar.HandleFunc("/languages", handlers.TaskHandler(deleteLanguageTask)).Methods("POST").MatcherFunc(deleteLanguageTask.Matcher())
+	ar.HandleFunc("/languages", handlers.TaskHandler(createLanguageTask)).Methods("POST").MatcherFunc(createLanguageTask.Matcher())
 }
 
 // Register registers the languages router module.

@@ -200,20 +200,17 @@ var _ searchworker.IndexedTask = replyTask{}
 func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])
 
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("link id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if linkId == 0 {
-		log.Printf("Error: no bid")
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return nil
+		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("no bid"))
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -264,33 +261,25 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			},
 		})
 		if err != nil {
-			log.Printf("Error: createForumTopic: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
-		log.Printf("Error: findForumTopicByTitle: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("find forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else {
 		ptid = pt.Idforumtopic
 	}
 	if pthid == 0 {
 		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
-			log.Printf("Error: makeThread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignLinkerThisThreadId(r.Context(), db.AssignLinkerThisThreadIdParams{
 			ForumthreadID: pthid,
 			Idlinker:      int32(linkId),
 		}); err != nil {
-			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("assign linker thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -313,9 +302,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		},
 	})
 	if err != nil {
-		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -336,6 +323,5 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(endUrl)
 }

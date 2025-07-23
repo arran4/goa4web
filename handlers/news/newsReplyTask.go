@@ -77,20 +77,18 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 
 	vars := mux.Vars(r)
 	pid, err := strconv.Atoi(vars["post"])
 
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("post id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if pid == 0 {
 		log.Printf("Error: no bid")
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(errors.New("No bid")))
 	}
 
 	uid, _ := session.Values["UID"].(int32)
@@ -133,14 +131,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
 		log.Printf("Error: findForumTopicByTitle: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("find forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else {
 		ptid = pt.Idforumtopic
 	}
@@ -148,8 +144,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignNewsThisThreadId(r.Context(), db.AssignNewsThisThreadIdParams{
@@ -157,8 +152,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Idsitenews:    int32(pid),
 		}); err != nil {
 			log.Printf("Error: assign_news_to_thread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return nil
+			return fmt.Errorf("assign news thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -184,8 +178,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	})
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -205,6 +198,5 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

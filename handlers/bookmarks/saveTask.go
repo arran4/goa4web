@@ -14,19 +14,13 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
+// SaveTask persists changes for a bookmark list.
 type SaveTask struct{ tasks.TaskString }
 
 var saveTask = &SaveTask{TaskString: TaskSave}
 
 // ensure SaveTask implements tasks.Task for routing
 var _ tasks.Task = (*SaveTask)(nil)
-
-type CreateTask struct{ tasks.TaskString }
-
-var createTask = &CreateTask{TaskString: TaskCreate}
-
-// ensure CreateTask implements tasks.Task for routing
-var _ tasks.Task = (*CreateTask)(nil)
 
 func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -72,31 +66,6 @@ func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := queries.UpdateBookmarks(r.Context(), db.UpdateBookmarksParams{
-		List: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-		UsersIdusers: uid,
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
-	}
-
-	http.Redirect(w, r, "/bookmarks/mine", http.StatusTemporaryRedirect)
-
-	return nil
-}
-
-func (CreateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return nil
-	}
-	uid, _ := session.Values["UID"].(int32)
-
-	if err := queries.CreateBookmarks(r.Context(), db.CreateBookmarksParams{
 		List: sql.NullString{
 			String: text,
 			Valid:  true,

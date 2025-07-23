@@ -36,7 +36,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -48,8 +48,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data.CommentsEmptyWords = noResults
 	}
 
-	handlers.TemplateHandler(w, r, "resultForumActionPage.gohtml", data)
-	return nil
+	return handlers.TemplateWithDataHandler("resultForumActionPage.gohtml", data)
 }
 
 func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {

@@ -3,43 +3,17 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
-
-// threadNewCancelTask aborts creating a new thread.
-type threadNewCancelTask struct{ tasks.TaskString }
-
-var threadNewCancelAction = &threadNewCancelTask{TaskString: TaskCancel}
-
-var _ tasks.Task = (*threadNewCancelTask)(nil)
-
-func (threadNewCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
-	topicID, _ := strconv.Atoi(mux.Vars(r)["topic"])
-	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
-}
-
-// topicThreadReplyCancelTask cancels replying to a thread.
-type topicThreadReplyCancelTask struct{ tasks.TaskString }
-
-var topicThreadReplyCancel = &topicThreadReplyCancelTask{TaskString: TaskCancel}
-
-var _ tasks.Task = (*topicThreadReplyCancelTask)(nil)
-
-func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
-	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
-	return handlers.RedirectHandler(endURL)
-}
 
 // topicThreadCommentEditActionTask updates a comment and refreshes thread metadata.
 type topicThreadCommentEditActionTask struct{ tasks.TaskString }
@@ -78,18 +52,4 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 
 	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentID))
-}
-
-// topicThreadCommentEditActionCancelTask aborts editing a comment.
-type topicThreadCommentEditActionCancelTask struct{ tasks.TaskString }
-
-var topicThreadCommentEditActionCancel = &topicThreadCommentEditActionCancelTask{TaskString: TaskCancel}
-
-var _ tasks.Task = (*topicThreadCommentEditActionCancelTask)(nil)
-
-func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
-	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
-	return handlers.RedirectHandler(endURL)
 }

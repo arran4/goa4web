@@ -9,7 +9,6 @@ import (
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers/forum/comments"
-	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/gorilla/mux"
 
@@ -50,18 +49,18 @@ func RegisterRoutes(r *mux.Router) {
 	nr.HandleFunc("", runTemplate("newsPage")).Methods("GET")
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
-	nr.HandleFunc("/news/{post}", tasks.Action(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
-	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
-	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(tasks.Action(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())
-	nr.HandleFunc("/news/{post}", tasks.Action(editTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editTask.Matcher())
-	nr.HandleFunc("/news/{post}", tasks.Action(newPostTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(newPostTask.Matcher())
-	nr.HandleFunc("/news/{post}/announcement", tasks.Action(announcementAddTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementAddTask.Matcher())
-	nr.HandleFunc("/news/{post}/announcement", tasks.Action(announcementDeleteTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementDeleteTask.Matcher())
+	nr.HandleFunc("/news/{post}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
+	nr.Handle("/news/{post}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())
+	nr.HandleFunc("/news/{post}", handlers.TaskHandler(editTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editTask.Matcher())
+	nr.HandleFunc("/news/{post}", handlers.TaskHandler(newPostTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(newPostTask.Matcher())
+	nr.HandleFunc("/news/{post}/announcement", handlers.TaskHandler(announcementAddTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementAddTask.Matcher())
+	nr.HandleFunc("/news/{post}/announcement", handlers.TaskHandler(announcementDeleteTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementDeleteTask.Matcher())
 	nr.HandleFunc("/news/{post}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{post}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/user/permissions", NewsUserPermissionsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
-	nr.HandleFunc("/users/permissions", tasks.Action(userAllowTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Matcher())
-	nr.HandleFunc("/users/permissions", tasks.Action(userDisallowTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Matcher())
+	nr.HandleFunc("/users/permissions", handlers.TaskHandler(userAllowTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Matcher())
+	nr.HandleFunc("/users/permissions", handlers.TaskHandler(userDisallowTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Matcher())
 }
 
 // Register registers the news router module.

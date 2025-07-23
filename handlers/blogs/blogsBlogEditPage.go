@@ -37,8 +37,35 @@ func (EditBlogTask) AdminInternalNotificationTemplate() *string {
 
 func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request) { BlogEditPage(w, r) }
 func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
-	BlogEditActionPage(w, r)
-	return nil
+	languageId, err := strconv.Atoi(r.PostFormValue("language"))
+	if err != nil {
+		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	text := r.PostFormValue("text")
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	row := r.Context().Value(consts.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
+
+	if err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
+		Idblogs:            row.Idblogs,
+		LanguageIdlanguage: int32(languageId),
+		Blog: sql.NullString{
+			String: text,
+			Valid:  true,
+		},
+	}); err != nil {
+		return fmt.Errorf("update blog fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d", row.Idblogs))
+		}
+	}
+
+	return handlers.RedirectHandler(fmt.Sprintf("/blogs/blog/%d", row.Idblogs))
 }
 
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
@@ -72,39 +99,4 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	data.Blog = row
 
 	handlers.TemplateHandler(w, r, "blogEditPage.gohtml", data)
-}
-
-func BlogEditActionPage(w http.ResponseWriter, r *http.Request) {
-	languageId, err := strconv.Atoi(r.PostFormValue("language"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	row := r.Context().Value(consts.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
-
-	err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
-		Idblogs:            row.Idblogs,
-		LanguageIdlanguage: int32(languageId),
-		Blog: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-	})
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["PostURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d", row.Idblogs))
-		}
-	}
-
-	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d", row.Idblogs), http.StatusTemporaryRedirect)
 }

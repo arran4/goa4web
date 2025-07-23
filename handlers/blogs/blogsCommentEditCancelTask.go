@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/handlers"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -31,6 +32,5 @@ func (CancelTask) AdminInternalNotificationTemplate() *string {
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
-	http.Redirect(w, r, fmt.Sprintf("/blogs/blog/%d/comments", blogId), http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(fmt.Sprintf("/blogs/blog/%d/comments", blogId))
 }

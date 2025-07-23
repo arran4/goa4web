@@ -50,5 +50,5 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("update image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler("/admin/imagebbs/boards")
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/imagebbs/boards"}
 }

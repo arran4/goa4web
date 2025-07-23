@@ -1,20 +1,15 @@
 package handlers
 
 import (
-	"net/http"
-
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"net/http"
 )
 
 func TaskDoneAutoRefreshPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-	}
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.AutoRefresh = true
-
+	type Data struct{}
+	data := Data{}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.AutoRefresh = "5"
 	TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", data)
 }

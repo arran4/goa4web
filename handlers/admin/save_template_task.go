@@ -38,7 +38,7 @@ func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["Template"] = "updateEmail"
 		}
 	}
-	return handlers.RedirectHandler("/admin/email/template")
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/email/template"}
 }
 
 // AuditRecord summarises saving the update email template.

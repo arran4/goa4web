@@ -34,12 +34,13 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
+	// TODO avoid using sessions for "conversational" or "short term data storage" instead store it as query args or post if it's not sensitive
 	id, _ := session.Values["PendingResetID"].(int32)
 	if id == 0 {
-		return handlers.RedirectHandler("/login")
+		return handlers.RefreshDirectHandler{TargetURL: "/login"}
 	}
 	if err := r.ParseForm(); err != nil {
-		return handlers.RedirectHandler("/login")
+		return handlers.RefreshDirectHandler{TargetURL: "/login"}
 	}
 	code := r.FormValue("code")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -58,5 +59,5 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := session.Save(r, w); err != nil {
 		log.Printf("save session: %v", err)
 	}
-	return handlers.RedirectHandler("/login")
+	return handlers.RefreshDirectHandler{TargetURL: "/login"}
 }

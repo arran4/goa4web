@@ -33,12 +33,12 @@ func (DeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	idStr := r.PostFormValue("id")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if idStr == "" {
-		return handlers.RedirectHandler("/usr/subscriptions?error=missing id")
+		return handlers.RefreshDirectHandler{TargetURL: "/usr/subscriptions?error=missing id"}
 	}
 	id, _ := strconv.Atoi(idStr)
 	if err := queries.DeleteSubscriptionByID(r.Context(), db.DeleteSubscriptionByIDParams{UsersIdusers: uid, ID: int32(id)}); err != nil {
 		log.Printf("delete sub: %v", err)
 		return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler("/usr/subscriptions")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/subscriptions"}
 }

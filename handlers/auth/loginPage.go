@@ -38,6 +38,7 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Method:   h.Method,
 		Values:   h.Values,
 	}
+	// TODO consider using RefreshDirect if the target method is "GET" or ""
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)

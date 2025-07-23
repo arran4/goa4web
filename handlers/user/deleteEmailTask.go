@@ -38,5 +38,5 @@ func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("delete user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RedirectHandler("/usr/email")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }

@@ -75,5 +75,5 @@ func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	return handlers.RedirectHandler("/admin/imagebbs/boards")
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/imagebbs/boards"}
 }

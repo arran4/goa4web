@@ -49,7 +49,7 @@ type CoreData struct {
 	CustomIndexItems []IndexItem
 	UserID           int32
 	Title            string
-	AutoRefresh      bool
+	AutoRefresh      string
 	FeedsEnabled     bool
 	RSSFeedUrl       string
 	AtomFeedUrl      string

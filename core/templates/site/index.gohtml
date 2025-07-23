@@ -1,16 +1,16 @@
 {{- define "index"}}
     {{- template "indexItems" $ }}
     {{- template "userPanel" $ }}
-    {{ range $i := $.CustomIndexItems }}
+    {{ range $i := cd.CustomIndexItems }}
         <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}
-    {{ if $.HasRole "administrator" }}
+    {{ if cd.HasRole "administrator" }}
         <hr>
         <a href="{{ addmode "/admin/linker/categories" }}">Linker admin</a><br>
-        {{ if $.AdminMode }}
-            <a href="/">Disable admin mode</a><br>
+        {{ if cd.AdminMode }}
+            <a href="?">Disable admin mode</a><br>
         {{ else }}
-            <a href="/?mode=admin">Enable admin mode</a><br>
+            <a href="?mode=admin">Enable admin mode</a><br>
         {{ end }}
     {{ end }}
 {{- end}}

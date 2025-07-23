@@ -42,11 +42,11 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	emailAddr := r.FormValue("new_email")
 	if emailAddr == "" {
-		return handlers.RedirectHandler("/usr/email")
+		return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
-		return handlers.RedirectHandler("/usr/email?error=email+exists")
+		return handlers.RefreshDirectHandler{TargetURL: "/usr/email?error=email+exists"}
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
@@ -71,7 +71,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
 	}
-	return handlers.RedirectHandler("/usr/email")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 
 func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
@@ -87,7 +87,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
-		return handlers.RedirectHandler("/usr/email")
+		return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
@@ -111,7 +111,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
 	}
-	return handlers.RedirectHandler("/usr/email")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 
 func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {

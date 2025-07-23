@@ -36,7 +36,7 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data = map[string]any{}
 		}
 	}
-	return handlers.RedirectHandler("/usr/email")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 
 func (TestMailTask) SelfEmailTemplate() *notif.EmailTemplates {

@@ -24,6 +24,10 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 		switch result := result.(type) {
 		case RedirectHandler:
 			http.Redirect(w, r, string(result), http.StatusTemporaryRedirect)
+		case RefreshDirectHandler:
+			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			cd.AutoRefresh = result.Content()
+			TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", result)
 		case TextByteWriter:
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			if _, err := w.Write([]byte(result)); err != nil {

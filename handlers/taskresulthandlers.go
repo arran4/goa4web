@@ -1,8 +1,35 @@
 package handlers
 
-import "net/http"
+import (
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
 
+// RedirectHandler Preserves HTTP method probably wrong for the majority of uses.
 type RedirectHandler string
+
+// RefreshDirectHandler should be used over RedirectHandler for most of goa4web's tasks as the router is METHOD aware.
+type RefreshDirectHandler struct {
+	// TargetURL where to refresh direct to
+	TargetURL string
+	// Duration time to wait (default 1 sec)
+	Duration time.Duration
+}
+
+func (rdh RefreshDirectHandler) Content() string {
+	data := []string{}
+	if rdh.Duration == 0 {
+		data = append(data, "0")
+	} else {
+		data = append(data, strconv.Itoa(int(rdh.Duration/time.Second)))
+	}
+	if rdh.TargetURL != "" {
+		data = append(data, "url="+rdh.TargetURL)
+	}
+	return strings.Join(data, "; ")
+}
 
 // TextByteWriter responds with a plain text byte slice.
 type TextByteWriter []byte

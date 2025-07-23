@@ -89,5 +89,5 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("save paging: %v", err)
 		return fmt.Errorf("save paging fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler("/usr/paging")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/paging"}
 }

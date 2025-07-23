@@ -2,14 +2,14 @@
 <!DOCTYPE html>
 <html>
         <head>
-                <title>{{$.Title}}</title>
+                <title>{{cd.Title}}</title>
                 {{template "headdata"}}
                <link rel="stylesheet" href="/main.css">
                <link rel="icon" href="/favicon.svg" type="image/svg+xml">
                <script src="/images/pasteimg.js"></script>
-               <script src="/notifications.js"></script>
-       {{ if $.AutoRefresh }}
-            <meta http-equiv="refresh" content="1">
+               <script src="/websocket/notifications.js"></script>
+       {{ if cd.AutoRefresh }}
+            <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">
         {{ end }}
     </head>
     <body>
@@ -18,4 +18,9 @@
         <table border=0>
             <tr valign=top>
                 <td width=200px>{{template "index" $}}
-                <td>{{end}}
+                <td>
+                    {{- if cd.Announcement }}<br>
+                    <p><a href="/news/news/{{ cd.Announcement.Idsitenews }}"><strong>{{ cd.Announcement.News.String }}</strong></a></p>
+                    {{- end }}
+
+                    {{- end}}

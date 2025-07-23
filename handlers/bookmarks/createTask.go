@@ -39,5 +39,5 @@ func (CreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}); err != nil {
 		return fmt.Errorf("create bookmarks fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler("/bookmarks/mine")
+	return handlers.RefreshDirectHandler{TargetURL: "/bookmarks/mine"}
 }

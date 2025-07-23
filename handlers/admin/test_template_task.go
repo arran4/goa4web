@@ -97,7 +97,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["PreviewEmail"] = urow.Email.String
 		}
 	}
-	return handlers.RedirectHandler("/admin/email/template")
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/email/template"}
 }
 
 // AuditRecord summarises sending a preview email.

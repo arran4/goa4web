@@ -1,9 +1,6 @@
 {{define "header"}}
-<strong>Arran's Site</strong>
-{{ if $.Username }}<br>
-Logged in as {{ $.Username }}
-{{ end }}
-{{ if $.Announcement }}<br>
-<a href="/news/news/{{ $.Announcement.Idsitenews }}"><strong>{{ $.Announcement.News.String }}</strong></a>
+<strong>{{cd.Title}}</strong>
+{{ if cd.CurrentUser.Username.String }}<br>
+Logged in as {{ cd.CurrentUser.Username.String }}
 {{ end }}
 {{end}}

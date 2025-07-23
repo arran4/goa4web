@@ -38,7 +38,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if row.Email != "" {
-		return handlers.RedirectHandler("/login")
+		return handlers.RefreshDirectHandler{TargetURL: "/login"}
 	}
 	res, err := queries.InsertAdminRequestQueue(r.Context(), db.InsertAdminRequestQueueParams{
 		UsersIdusers:   row.Idusers,

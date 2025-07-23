@@ -135,5 +135,5 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return redirectBackPageHandler{BackURL: backURL, Method: backMethod, Values: vals}
 	}
 
-	return handlers.RedirectHandler("/")
+	return handlers.RefreshDirectHandler{TargetURL: "/"}
 }

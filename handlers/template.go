@@ -18,19 +18,14 @@ import (
 // Template helpers are provided via data.CoreData.Funcs(r).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data any) {
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil {
-		cd = &common.CoreData{}
-	}
 	if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, tmpl, data); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {
-			*common.CoreData
 			Error   string
 			BackURL string
 		}{
-			CoreData: cd,
-			Error:    err.Error(),
-			BackURL:  r.Referer(),
+			Error:   err.Error(),
+			BackURL: r.Referer(),
 		}
 		if err2 := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "taskErrorAcknowledgementPage.gohtml", errData); err2 != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

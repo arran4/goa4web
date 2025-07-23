@@ -58,5 +58,5 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 			}
 		}
 	}
-	return handlers.RedirectHandler("/usr/subscriptions")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/subscriptions"}
 }

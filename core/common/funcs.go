@@ -23,6 +23,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	var LatestWritings any
 	mapper := cd.ImageURLMapper
 	return map[string]any{
+		"cd":        func() *CoreData { return cd },
 		"now":       func() time.Time { return time.Now() },
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
 		"version":   func() string { return goa4web.Version },

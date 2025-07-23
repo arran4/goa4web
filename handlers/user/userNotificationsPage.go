@@ -85,7 +85,7 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	return handlers.RedirectHandler("/usr/notifications")
+	return handlers.RefreshDirectHandler{TargetURL: "/usr/notifications"}
 }
 
 func notificationsRssPage(w http.ResponseWriter, r *http.Request) {

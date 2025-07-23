@@ -25,13 +25,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*common.CoreData
 		FAQ []*CategoryFAQs
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
+	data := Data{}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 

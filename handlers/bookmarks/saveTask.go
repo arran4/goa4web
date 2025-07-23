@@ -75,5 +75,5 @@ func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}); err != nil {
 		return fmt.Errorf("update bookmarks fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler("/bookmarks/mine")
+	return handlers.RefreshDirectHandler{TargetURL: "/bookmarks/mine"}
 }

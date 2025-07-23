@@ -98,5 +98,5 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	// The BusWorker sends notifications based on event metadata.
 	// Setting Admin=true signals administrators should be alerted.
 
-	return handlers.RedirectHandler("/faq")
+	return handlers.RefreshDirectHandler{TargetURL: "/faq"}
 }

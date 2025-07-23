@@ -2,7 +2,6 @@ package images
 
 import (
 	"bytes"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -40,7 +39,7 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 func RegisterRoutes(r *mux.Router) {
 	ir := r.PathPrefix("/images").Subrouter()
 	ir.Use(handlers.IndexMiddleware(CustomIndex))
-	ir.HandleFunc("/upload/image", tasks.Action(uploadImageTask)).
+	ir.HandleFunc("/upload/image", handlers.TaskHandler(uploadImageTask)).
 		Methods(http.MethodPost).
 		MatcherFunc(handlers.RequiresAnAccount()).
 		MatcherFunc(uploadImageTask.Matcher())

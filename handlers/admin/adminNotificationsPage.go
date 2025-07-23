@@ -1,47 +1,15 @@
 package admin
 
 import (
-	"database/sql"
-	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
-
-// MarkReadTask marks notifications as read.
-type MarkReadTask struct{ tasks.TaskString }
-
-var markReadTask = &MarkReadTask{TaskString: TaskDismiss}
-
-// ensures MarkReadTask implements the tasks.Task interface
-var _ tasks.Task = (*MarkReadTask)(nil)
-var _ tasks.AuditableTask = (*MarkReadTask)(nil)
-
-// PurgeNotificationsTask removes old read notifications.
-type PurgeNotificationsTask struct{ tasks.TaskString }
-
-var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
-
-// ensures PurgeNotificationsTask implements the tasks.Task interface
-var _ tasks.Task = (*PurgeNotificationsTask)(nil)
-var _ tasks.AuditableTask = (*PurgeNotificationsTask)(nil)
-
-// SendNotificationTask creates a site notification for users.
-type SendNotificationTask struct{ tasks.TaskString }
-
-var sendNotificationTask = &SendNotificationTask{TaskString: TaskNotify}
-
-// ensures SendNotificationTask implements the tasks.Task interface
-var _ tasks.Task = (*SendNotificationTask)(nil)
-var _ tasks.AuditableTask = (*SendNotificationTask)(nil)
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -76,117 +44,4 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Total = len(items)
 	data.Unread = unread
 	handlers.TemplateHandler(w, r, "notificationsPage.gohtml", data)
-}
-
-func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := r.ParseForm(); err != nil {
-		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	for _, idStr := range r.Form["id"] {
-		id, _ := strconv.Atoi(idStr)
-		if err := queries.MarkNotificationRead(r.Context(), int32(id)); err != nil {
-			return fmt.Errorf("mark read fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
-				}
-				evt.Data["MarkedID"] = appendID(evt.Data["MarkedID"], id)
-			}
-		}
-	}
-	return nil
-}
-
-func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
-		return fmt.Errorf("purge notifications fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["Purged"] = true
-		}
-	}
-	return nil
-}
-
-func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	message := r.PostFormValue("message")
-	link := r.PostFormValue("link")
-	role := r.PostFormValue("role")
-	names := r.PostFormValue("users")
-
-	var ids []int32
-	if names != "" {
-		for _, name := range strings.Split(names, ",") {
-			name = strings.TrimSpace(name)
-			if name == "" {
-				continue
-			}
-			u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: name, Valid: true})
-			if err != nil {
-				return fmt.Errorf("get user %s fail %w", name, handlers.ErrRedirectOnSamePageHandler(err))
-			}
-			ids = append(ids, u.Idusers)
-		}
-	} else if role != "" && role != "anonymous" {
-		rows, err := queries.ListUserIDsByRole(r.Context(), role)
-		if err != nil {
-			return fmt.Errorf("list role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		ids = append(ids, rows...)
-	} else {
-		rows, err := queries.AllUserIDs(r.Context())
-		if err != nil {
-			return fmt.Errorf("list users fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		ids = append(ids, rows...)
-	}
-	for _, id := range ids {
-		err := queries.InsertNotification(r.Context(), db.InsertNotificationParams{
-			UsersIdusers: id,
-			Link:         sql.NullString{String: link, Valid: link != ""},
-			Message:      sql.NullString{String: message, Valid: message != ""},
-		})
-		if err != nil {
-			return fmt.Errorf("insert notification fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["Count"] = len(ids)
-		}
-	}
-	return nil
-}
-
-// AuditRecord summarises notifications being marked read.
-func (MarkReadTask) AuditRecord(data map[string]any) string {
-	if ids, ok := data["MarkedID"].(string); ok {
-		return "marked notifications " + ids + " read"
-	}
-	return "marked notifications read"
-}
-
-// AuditRecord summarises purging notifications.
-func (PurgeNotificationsTask) AuditRecord(map[string]any) string {
-	return "purged read notifications"
-}
-
-// AuditRecord summarises sending a site notification.
-func (SendNotificationTask) AuditRecord(data map[string]any) string {
-	if c, ok := data["Count"].(int); ok {
-		return fmt.Sprintf("sent notification to %d users", c)
-	}
-	return "sent site notification"
 }

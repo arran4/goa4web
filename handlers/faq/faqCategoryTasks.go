@@ -2,7 +2,7 @@ package faq
 
 import (
 	"database/sql"
-	"log"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -46,9 +46,7 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("cname")
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -59,31 +57,23 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		},
 		Idfaqcategories: int32(cid),
 	}); err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("rename faq category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
 func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if err := queries.DeleteFAQCategory(r.Context(), int32(cid)); err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("delete category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -95,11 +85,8 @@ func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		String: text,
 		Valid:  true,
 	}); err != nil {
-		log.Printf("Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("create category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

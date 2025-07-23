@@ -32,6 +32,8 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			loginRedirect(w, r)
 		case *SessionFetchFail:
 			loginRedirect(w, r)
+		case nil:
+			TaskDoneAutoRefreshPage(w, r)
 		case error:
 			var ue interface {
 				error

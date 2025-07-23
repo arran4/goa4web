@@ -22,12 +22,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	defer SetDBPool(nil, 0)
-	SetDBPool(db, 0)
 	mock.MatchExpectationsInOrder(false)
-
-	SetDBPool(db, 0)
-	t.Cleanup(func() { SetDBPool(nil, 0) })
 
 	mock.ExpectExec("INSERT INTO sessions").WithArgs("sessid", int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -49,7 +44,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -68,12 +63,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	}
 	defer db.Close()
 	// TODO find a way of avoid tests which impact global state
-	defer SetDBPool(nil, 0)
-	SetDBPool(db, 0)
 	mock.MatchExpectationsInOrder(false)
-
-	SetDBPool(db, 0)
-	t.Cleanup(func() { SetDBPool(nil, 0) })
 
 	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").
 		WillReturnResult(sqlmock.NewResult(0, 0))
@@ -91,7 +81,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddleware(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

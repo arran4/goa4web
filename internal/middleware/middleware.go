@@ -29,82 +29,89 @@ func handleDie(w http.ResponseWriter, message string) {
 }
 
 // CoreAdderMiddleware populates request context with CoreData for templates.
-func CoreAdderMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := core.GetSession(r)
-		if err != nil {
-			core.SessionErrorRedirect(w, r, err)
-			return
-		}
-		var uid int32
-		if v, ok := session.Values["UID"].(int32); ok {
-			uid = v
-		}
-		if expi, ok := session.Values["ExpiryTime"]; ok {
-			var exp int64
-			switch t := expi.(type) {
-			case int64:
-				exp = t
-			case int:
-				exp = int64(t)
-			case float64:
-				exp = int64(t)
-			}
-			if exp != 0 && time.Now().Unix() > exp {
-				delete(session.Values, "UID")
-				delete(session.Values, "LoginTime")
-				delete(session.Values, "ExpiryTime")
-				RedirectToLogin(w, r, session)
+func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session, err := core.GetSession(r)
+			if err != nil {
+				core.SessionErrorRedirect(w, r, err)
 				return
 			}
-		}
-		if DBPool == nil {
-			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
-			return
-		}
-
-		queries := dbpkg.New(DBPool)
-		if dbLogVerbosity > 0 {
-			log.Printf("db pool stats: %+v", DBPool.Stats())
-		}
-
-		if session.ID != "" {
-			if uid != 0 {
-				if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
-					log.Printf("insert session: %v", err)
+			var uid int32
+			if v, ok := session.Values["UID"].(int32); ok {
+				uid = v
+			}
+			if expi, ok := session.Values["ExpiryTime"]; ok {
+				var exp int64
+				switch t := expi.(type) {
+				case int64:
+					exp = t
+				case int:
+					exp = int64(t)
+				case float64:
+					exp = int64(t)
 				}
-			} else {
-				if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
-					log.Printf("delete session: %v", err)
+				if exp != 0 && time.Now().Unix() > exp {
+					delete(session.Values, "UID")
+					delete(session.Values, "LoginTime")
+					delete(session.Values, "ExpiryTime")
+					RedirectToLogin(w, r, session)
+					return
 				}
 			}
-		}
+			if db == nil {
+				ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+				log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+				http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
+				return
+			}
 
-		base := "http://" + r.Host
-		if config.AppRuntimeConfig.HTTPHostname != "" {
-			base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
-		}
-		cd := common.NewCoreData(r.Context(), queries,
-			common.WithImageURLMapper(imagesign.MapURL),
-			common.WithSession(session),
-			common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)),
-			common.WithAbsoluteURLBase(base))
-		cd.UserID = uid
-		_ = cd.UserRoles()
+			queries := dbpkg.New(db)
+			if dbLogVerbosity > 0 {
+				log.Printf("db pool stats: %+v", db.Stats())
+			}
 
-		idx := nav.IndexItems()
-		cd.IndexItems = idx
-		cd.Title = "Arran's Site"
-		cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
-		cd.AdminMode = r.URL.Query().Get("mode") == "admin"
-		if uid != 0 && handlers.NotificationsEnabled() {
-			cd.NotificationCount = int32(cd.UnreadNotificationCount())
-		}
-		ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+			if session.ID != "" {
+				if uid != 0 {
+					if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
+						log.Printf("insert session: %v", err)
+					}
+				} else {
+					if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
+						log.Printf("delete session: %v", err)
+					}
+				}
+			}
+
+			base := "http://" + r.Host
+			if config.AppRuntimeConfig.HTTPHostname != "" {
+				base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
+			}
+			cd := common.NewCoreData(r.Context(), queries,
+				common.WithImageURLMapper(imagesign.MapURL),
+				common.WithSession(session),
+				common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)),
+				common.WithAbsoluteURLBase(base))
+			cd.UserID = uid
+			_ = cd.UserRoles()
+
+			idx := nav.IndexItems()
+			cd.IndexItems = idx
+			cd.Title = "Arran's Site"
+			cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
+			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+			if uid != 0 && handlers.NotificationsEnabled() {
+				cd.NotificationCount = int32(cd.UnreadNotificationCount())
+			}
+			ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// CoreAdderMiddleware populates request context with CoreData for templates using the global DBPool.
+func CoreAdderMiddleware(next http.Handler) http.Handler {
+	return CoreAdderMiddlewareWithDB(DBPool)(next)
 }
 
 // DBPool should be assigned by the parent package to supply the database.

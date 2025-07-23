@@ -95,6 +95,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
+	bus := eventbus.NewBus()
 	q := db.New(dbconn)
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
 	cd := common.NewCoreData(req.Context(), q)
@@ -104,7 +105,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	handler := middleware.TaskEventMiddleware(http.HandlerFunc(handlers.TaskHandler(askTask)))
+	handler := middleware.TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(handlers.TaskHandler(askTask)))
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 

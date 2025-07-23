@@ -14,6 +14,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 
+	"github.com/arran4/goa4web/handlers"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -57,7 +59,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 		WillReturnError(sqlmock.ErrCancelled)
 
 	rr := httptest.NewRecorder()
-	ArticleReplyActionPage(rr, req)
+	handlers.TaskHandler(replyTask)(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

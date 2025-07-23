@@ -397,7 +397,10 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		row, err := cd.queries.GetActiveAnnouncementWithNews(cd.ctx)
+		row, err := cd.queries.GetActiveAnnouncementWithNews(cd.ctx, db.GetActiveAnnouncementWithNewsParams{
+			ViewerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
 		if err != nil {
 			return nil, err
 		}

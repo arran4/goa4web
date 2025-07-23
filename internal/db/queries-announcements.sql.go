@@ -31,13 +31,36 @@ func (q *Queries) DeleteAnnouncement(ctx context.Context, id int32) error {
 }
 
 const getActiveAnnouncementWithNews = `-- name: GetActiveAnnouncementWithNews :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id
 WHERE a.active = 1
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='news'
+        AND g.item='post'
+        AND g.action='view'
+        AND g.active=1
+        AND g.item_id = n.idsiteNews
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY a.created_at DESC
 LIMIT 1
 `
+
+type GetActiveAnnouncementWithNewsParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+}
 
 type GetActiveAnnouncementWithNewsRow struct {
 	ID         int32
@@ -45,8 +68,8 @@ type GetActiveAnnouncementWithNewsRow struct {
 	News       sql.NullString
 }
 
-func (q *Queries) GetActiveAnnouncementWithNews(ctx context.Context) (*GetActiveAnnouncementWithNewsRow, error) {
-	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNews)
+func (q *Queries) GetActiveAnnouncementWithNews(ctx context.Context, arg GetActiveAnnouncementWithNewsParams) (*GetActiveAnnouncementWithNewsRow, error) {
+	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNews, arg.ViewerID, arg.UserID)
 	var i GetActiveAnnouncementWithNewsRow
 	err := row.Scan(&i.ID, &i.Idsitenews, &i.News)
 	return &i, err

@@ -3,8 +3,8 @@ package user
 import (
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/handlers"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // RegisterAdminRoutes attaches user admin endpoints to the router.
@@ -21,7 +21,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
 	ar.HandleFunc("/login/attempts", adminLoginAttemptsPage).Methods("GET")
 	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", tasks.Action(permissionUserAllowTask)).Methods("POST").MatcherFunc(permissionUserAllowTask.Matcher())
-	ar.HandleFunc("/users/permissions", tasks.Action(permissionUserDisallowTask)).Methods("POST").MatcherFunc(permissionUserDisallowTask.Matcher())
-	ar.HandleFunc("/users/permissions", tasks.Action(permissionUpdateTask)).Methods("POST").MatcherFunc(permissionUpdateTask.Matcher())
+	ar.HandleFunc("/users/permissions", handlers.TaskHandler(permissionUserAllowTask)).Methods("POST").MatcherFunc(permissionUserAllowTask.Matcher())
+	ar.HandleFunc("/users/permissions", handlers.TaskHandler(permissionUserDisallowTask)).Methods("POST").MatcherFunc(permissionUserDisallowTask.Matcher())
+	ar.HandleFunc("/users/permissions", handlers.TaskHandler(permissionUpdateTask)).Methods("POST").MatcherFunc(permissionUpdateTask.Matcher())
 }

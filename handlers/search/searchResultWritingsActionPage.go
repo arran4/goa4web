@@ -40,7 +40,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -67,8 +67,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data.EmptyWords = noResults
 	}
 
-	handlers.TemplateHandler(w, r, "resultWritingsActionPage.gohtml", data)
-	return nil
+	return handlers.TemplateWithDataHandler("resultWritingsActionPage.gohtml", data)
 }
 
 func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetWritingsByIdsForUserDescendingByPublishedDateRow, bool, bool, error) {

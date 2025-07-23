@@ -112,9 +112,12 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
+	if err != nil {
+		return fmt.Errorf("topic id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -132,8 +135,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	threadId, err := queries.MakeThread(r.Context(), int32(topicId))
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("make thread %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	var topicTitle, author string
@@ -169,8 +171,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	})
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -191,8 +192,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
-	return nil
+	return handlers.RedirectHandler(endUrl)
 }
 
 func ThreadNewCancelPage(w http.ResponseWriter, r *http.Request) {

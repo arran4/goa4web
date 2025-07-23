@@ -3,7 +3,6 @@ package user
 import (
 	"errors"
 	"net/http"
-	"net/url"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -27,22 +26,17 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	user, _ := cd.CurrentUser()
 	if user == nil {
-		http.Error(w, "email unknown", http.StatusBadRequest)
-		return nil
+		return common.UserError{ErrorMessage: "email unknown"}
 	}
 	if cd.EmailProvider() == nil {
-		q := url.QueryEscape(ErrMailNotConfigured.Error())
-		r.URL.RawQuery = "error=" + q
-		handlers.TaskErrorAcknowledgementPage(w, r)
-		return nil
+		return common.UserError{ErrorMessage: ErrMailNotConfigured.Error()}
 	}
 	if evt := cd.Event(); evt != nil {
 		if evt.Data == nil {
 			evt.Data = map[string]any{}
 		}
 	}
-	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/usr/email")
 }
 
 func (TestMailTask) SelfEmailTemplate() *notif.EmailTemplates {

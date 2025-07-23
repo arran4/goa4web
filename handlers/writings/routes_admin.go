@@ -3,6 +3,8 @@ package writings
 import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/handlers"
 )
 
 // RegisterAdminRoutes attaches writings admin endpoints to ar.

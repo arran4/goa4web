@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/gorilla/sessions"
@@ -52,9 +53,9 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	addEmailTask.Action(rr, req)
+	handlers.TaskHandler(addEmailTask)(rr, req)
 
-	if rr.Code != http.StatusSeeOther {
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if _, ok := evt.Data["URL"]; !ok {
@@ -154,9 +155,9 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	resendVerificationEmailTask.Action(rr, req)
+	handlers.TaskHandler(resendVerificationEmailTask)(rr, req)
 
-	if rr.Code != http.StatusSeeOther {
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if _, ok := evt.Data["page"]; !ok {

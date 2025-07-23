@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -90,12 +91,8 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Url:              sql.NullString{Valid: true, String: url},
 		Description:      sql.NullString{Valid: true, String: description},
 	}); err != nil {
-		log.Printf("createLinkerItem Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("create linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
-	handlers.TaskDoneAutoRefreshPage(w, r)
 
 	return nil
 }

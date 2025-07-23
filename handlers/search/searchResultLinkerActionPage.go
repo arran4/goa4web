@@ -41,7 +41,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -68,8 +68,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data.EmptyWords = noResults
 	}
 
-	handlers.TemplateHandler(w, r, "resultLinkerActionPage.gohtml", data)
-	return nil
+	return handlers.TemplateWithDataHandler("resultLinkerActionPage.gohtml", data)
 }
 
 func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {

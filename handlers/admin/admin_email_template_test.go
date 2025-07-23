@@ -7,17 +7,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/mail"
-	"net/url"
 	"os"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	userhandlers "github.com/arran4/goa4web/handlers/user"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	logProv "github.com/arran4/goa4web/internal/email/log"
@@ -36,17 +34,10 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	testTemplateTask.Action(rr, req)
+	handlers.TaskHandler(testTemplateTask)(rr, req)
 
-	if rr.Code != http.StatusOK {
+	if rr.Code != http.StatusInternalServerError {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	want := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
-	if req.URL.RawQuery != "error="+want {
-		t.Fatalf("query=%q", req.URL.RawQuery)
-	}
-	if !strings.Contains(rr.Body.String(), "<a href=") {
-		t.Fatalf("body=%q", rr.Body.String())
 	}
 }
 
@@ -74,9 +65,9 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	testTemplateTask.Action(rr, req)
+	handlers.TaskHandler(testTemplateTask)(rr, req)
 
-	if rr.Code != http.StatusSeeOther {
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/admin/email/template" {

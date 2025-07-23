@@ -29,9 +29,11 @@ type DeleteIPBanTask struct{ tasks.TaskString }
 var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
 var _ tasks.Task = (*AddIPBanTask)(nil)
+var _ tasks.AuditableTask = (*AddIPBanTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddIPBanTask)(nil)
 
 var _ tasks.Task = (*DeleteIPBanTask)(nil)
+var _ tasks.AuditableTask = (*DeleteIPBanTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*DeleteIPBanTask)(nil)
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
@@ -133,4 +135,22 @@ func (DeleteIPBanTask) AdminEmailTemplate() *notif.EmailTemplates {
 func (DeleteIPBanTask) AdminInternalNotificationTemplate() *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminRemoveIPBanEmail")
 	return &v
+}
+
+// AuditRecord summarises the addition of an IP ban.
+func (AddIPBanTask) AuditRecord(data map[string]any) string {
+	ip, _ := data["IP"].(string)
+	mod, _ := data["Moderator"].(string)
+	reason, _ := data["Reason"].(string)
+	if reason != "" {
+		return fmt.Sprintf("%s banned %s (%s)", mod, ip, reason)
+	}
+	return fmt.Sprintf("%s banned %s", mod, ip)
+}
+
+// AuditRecord summarises the removal of an IP ban.
+func (DeleteIPBanTask) AuditRecord(data map[string]any) string {
+	ip, _ := data["IP"].(string)
+	mod, _ := data["Moderator"].(string)
+	return fmt.Sprintf("%s removed ban on %s", mod, ip)
 }

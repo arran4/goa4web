@@ -71,6 +71,6 @@ GROUP BY u.idusers
 ORDER BY u.idusers;
 
 -- name: GetRecentAuditLogs :many
-SELECT a.id, a.users_idusers, u.username, a.action, a.created_at
+SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
 FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
 ORDER BY a.id DESC LIMIT ?;

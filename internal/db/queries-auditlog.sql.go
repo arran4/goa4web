@@ -12,21 +12,30 @@ import (
 )
 
 const insertAuditLog = `-- name: InsertAuditLog :exec
-INSERT INTO audit_log (users_idusers, action) VALUES (?, ?)
+INSERT INTO audit_log (users_idusers, action, path, details, data) VALUES (?, ?, ?, ?, ?)
 `
 
 type InsertAuditLogParams struct {
 	UsersIdusers int32
 	Action       string
+	Path         string
+	Details      sql.NullString
+	Data         sql.NullString
 }
 
 func (q *Queries) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error {
-	_, err := q.db.ExecContext(ctx, insertAuditLog, arg.UsersIdusers, arg.Action)
+	_, err := q.db.ExecContext(ctx, insertAuditLog,
+		arg.UsersIdusers,
+		arg.Action,
+		arg.Path,
+		arg.Details,
+		arg.Data,
+	)
 	return err
 }
 
 const listAuditLogs = `-- name: ListAuditLogs :many
-SELECT a.id, a.users_idusers, a.action, a.created_at, u.username
+SELECT a.id, a.users_idusers, a.action, a.path, a.details, a.data, a.created_at, u.username
 FROM audit_log a
 LEFT JOIN users u ON a.users_idusers = u.idusers
 WHERE u.username LIKE ? AND a.action LIKE ?
@@ -45,6 +54,9 @@ type ListAuditLogsRow struct {
 	ID           int32
 	UsersIdusers int32
 	Action       string
+	Path         string
+	Details      sql.NullString
+	Data         sql.NullString
 	CreatedAt    time.Time
 	Username     sql.NullString
 }
@@ -67,6 +79,9 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 			&i.ID,
 			&i.UsersIdusers,
 			&i.Action,
+			&i.Path,
+			&i.Details,
+			&i.Data,
 			&i.CreatedAt,
 			&i.Username,
 		); err != nil {

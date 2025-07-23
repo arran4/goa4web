@@ -40,6 +40,9 @@ type AuditLog struct {
 	ID           int32
 	UsersIdusers int32
 	Action       string
+	Path         string
+	Details      sql.NullString
+	Data         sql.NullString
 	CreatedAt    time.Time
 }
 

@@ -30,8 +30,11 @@ type QueryRequestTask struct{ tasks.TaskString }
 var queryRequestTask = &QueryRequestTask{TaskString: TaskQuery}
 
 var _ tasks.Task = (*AcceptRequestTask)(nil)
+var _ tasks.AuditableTask = (*AcceptRequestTask)(nil)
 var _ tasks.Task = (*RejectRequestTask)(nil)
+var _ tasks.AuditableTask = (*RejectRequestTask)(nil)
 var _ tasks.Task = (*QueryRequestTask)(nil)
+var _ tasks.AuditableTask = (*QueryRequestTask)(nil)
 
 func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -143,6 +146,16 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 		_ = queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: comment})
 	}
 	_ = queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: req.UsersIdusers, Comment: auto})
+
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["RequestID"] = id
+			evt.Data["Status"] = status
+		}
+	}
 	data := struct {
 		*common.CoreData
 		Back string
@@ -164,4 +177,25 @@ func (RejectRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
 func (QueryRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	handleRequestAction(w, r, "query")
 	return nil
+}
+
+// AuditRecord summarises a request queue action.
+func (AcceptRequestTask) AuditRecord(data map[string]any) string {
+	return requestAuditSummary("accepted", data)
+}
+
+func (RejectRequestTask) AuditRecord(data map[string]any) string {
+	return requestAuditSummary("rejected", data)
+}
+
+func (QueryRequestTask) AuditRecord(data map[string]any) string {
+	return requestAuditSummary("query", data)
+}
+
+func requestAuditSummary(action string, data map[string]any) string {
+	id, _ := data["RequestID"].(int)
+	if id != 0 {
+		return fmt.Sprintf("request %d %s", id, action)
+	}
+	return "request " + action
 }

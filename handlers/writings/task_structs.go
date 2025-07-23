@@ -1,9 +1,16 @@
 package writings
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -194,11 +201,30 @@ var _ tasks.Task = (*UserAllowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserAllowTask)(nil)
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if r.URL.Path == "/admin/writings/users/roles" {
-		AdminUserLevelsAllowActionPage(w, r)
-		return nil
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	username := r.PostFormValue("username")
+	role := r.PostFormValue("role")
+	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
+	if err != nil {
+		return fmt.Errorf("get user by username fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	UsersPermissionsPermissionUserAllowPage(w, r)
+
+	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
+		UsersIdusers: u.Idusers,
+		Name:         role,
+	}); err != nil {
+		return fmt.Errorf("create user role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["targetUserID"] = u.Idusers
+			evt.Data["Username"] = u.Username.String
+			evt.Data["Role"] = role
+		}
+	}
 	return nil
 }
 
@@ -230,11 +256,29 @@ var _ tasks.Task = (*UserDisallowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserDisallowTask)(nil)
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if r.URL.Path == "/admin/writings/users/roles" {
-		AdminUserLevelsRemoveActionPage(w, r)
-		return nil
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	permid, err := strconv.Atoi(r.PostFormValue("permid"))
+	if err != nil {
+		return fmt.Errorf("permid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	UsersPermissionsDisallowPage(w, r)
+	id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permid))
+	if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
+		return fmt.Errorf("delete user role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if err2 == nil {
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["targetUserID"] = id
+				evt.Data["Username"] = username
+				evt.Data["Role"] = role
+			}
+		}
+	} else {
+		log.Printf("lookup role: %v", err2)
+	}
 	return nil
 }
 
@@ -265,7 +309,33 @@ var writingCategoryChangeTask = &WritingCategoryChangeTask{TaskString: TaskWriti
 var _ tasks.Task = (*WritingCategoryChangeTask)(nil)
 
 func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) any {
-	AdminCategoriesModifyPage(w, r)
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	wcid, err := strconv.Atoi(r.PostFormValue("wcid"))
+	if err != nil {
+		return fmt.Errorf("wcid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cid, err := strconv.Atoi(r.PostFormValue("cid"))
+	if err != nil {
+		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{
+		Title: sql.NullString{
+			Valid:  true,
+			String: name,
+		},
+		Description: sql.NullString{
+			Valid:  true,
+			String: desc,
+		},
+		Idwritingcategory: int32(cid),
+		WritingCategoryID: int32(wcid),
+	}); err != nil {
+		return fmt.Errorf("update writing category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
 	return nil
 }
 
@@ -277,6 +347,26 @@ var writingCategoryCreateTask = &WritingCategoryCreateTask{TaskString: TaskWriti
 var _ tasks.Task = (*WritingCategoryCreateTask)(nil)
 
 func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	AdminCategoriesCreatePage(w, r)
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
+	if err != nil {
+		return fmt.Errorf("pcid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	if err := queries.InsertWritingCategory(r.Context(), db.InsertWritingCategoryParams{
+		WritingCategoryID: int32(pcid),
+		Title: sql.NullString{
+			Valid:  true,
+			String: name,
+		},
+		Description: sql.NullString{
+			Valid:  true,
+			String: desc,
+		},
+	}); err != nil {
+		return fmt.Errorf("create writing category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	return nil
 }

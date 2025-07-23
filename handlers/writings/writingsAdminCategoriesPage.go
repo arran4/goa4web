@@ -6,7 +6,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -43,65 +42,4 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	data.Categories = categoryRows
 
 	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
-}
-
-func AdminCategoriesModifyPage(w http.ResponseWriter, r *http.Request) {
-	name := r.PostFormValue("name")
-	desc := r.PostFormValue("desc")
-	wcid, err := strconv.Atoi(r.PostFormValue("wcid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	categoryId, err := strconv.Atoi(r.PostFormValue("cid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{
-		Title: sql.NullString{
-			Valid:  true,
-			String: name,
-		},
-		Description: sql.NullString{
-			Valid:  true,
-			String: desc,
-		},
-		Idwritingcategory: int32(categoryId),
-		WritingCategoryID: int32(wcid),
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	handlers.TaskDoneAutoRefreshPage(w, r)
-}
-
-func AdminCategoriesCreatePage(w http.ResponseWriter, r *http.Request) {
-	name := r.PostFormValue("name")
-	desc := r.PostFormValue("desc")
-	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := queries.InsertWritingCategory(r.Context(), db.InsertWritingCategoryParams{
-		WritingCategoryID: int32(pcid),
-		Title: sql.NullString{
-			Valid:  true,
-			String: name,
-		},
-		Description: sql.NullString{
-			Valid:  true,
-			String: desc,
-		},
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 }

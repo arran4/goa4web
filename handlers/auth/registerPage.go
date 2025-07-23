@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -38,26 +39,14 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}
-	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm Error: %s", err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return nil
+	if err := handlers.ValidateForm(r, []string{"username", "password", "email"}, []string{"username", "password", "email"}); err != nil {
+		return fmt.Errorf("validation fail %w", err)
 	}
-	uVals, uOK := r.PostForm["username"]
-	pVals, pOK := r.PostForm["password"]
-	eVals, eOK := r.PostForm["email"]
-	if !uOK || len(uVals) == 0 || uVals[0] == "" ||
-		!pOK || len(pVals) == 0 || pVals[0] == "" ||
-		!eOK || len(eVals) == 0 || eVals[0] == "" {
-		http.Error(w, "missing required fields", http.StatusBadRequest)
-		return nil
-	}
-	username := uVals[0]
-	password := pVals[0]
-	email := eVals[0]
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password")
+	email := r.PostFormValue("email")
 	if !strings.Contains(email, "@") {
-		http.Error(w, "invalid email", http.StatusBadRequest)
-		return nil
+		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid email"))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -67,28 +56,23 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}); errors.Is(err, sql.ErrNoRows) {
 	} else if err != nil {
 		log.Printf("UserByUsername Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("user by username %w", err)
 	} else {
-		http.Error(w, "User already exists", http.StatusForbidden)
-		return nil
+		return handlers.ErrRedirectOnSamePageHandler(errors.New("user exists"))
 	}
 
 	if _, err := queries.UserByEmail(r.Context(), email); errors.Is(err, sql.ErrNoRows) {
 	} else if err != nil {
 		log.Printf("UserByUsername Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("user by email %w", err)
 	} else {
-		http.Error(w, "User already exists", http.StatusForbidden)
-		return nil
+		return handlers.ErrRedirectOnSamePageHandler(errors.New("user exists"))
 	}
 
 	hash, alg, err := HashPassword(password)
 	if err != nil {
 		log.Printf("hashPassword Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("hash password %w", err)
 	}
 	result, err := queries.DB().ExecContext(r.Context(),
 		"INSERT INTO users (username) VALUES (?)",
@@ -96,29 +80,24 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			http.Error(w, "User already exists", http.StatusForbidden)
-			return nil
+			return handlers.ErrRedirectOnSamePageHandler(err)
 		}
 		log.Printf("InsertUser Error: %s", err)
-		http.Error(w, "Can't create user", http.StatusForbidden)
-		return nil
+		return fmt.Errorf("insert user %w", err)
 	}
 
 	lastInsertID, err := result.LastInsertId()
 	if err != nil {
 		log.Printf("LastInsertId Error: %s", err)
-		http.Error(w, "Session error", http.StatusForbidden)
-		return nil
+		return fmt.Errorf("last insert id %w", err)
 	}
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: int32(lastInsertID), Email: email, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
 		log.Printf("InsertUserEmail Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("insert user email %w", err)
 	}
 	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(lastInsertID), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
 		log.Printf("InsertPassword Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("insert password %w", err)
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -134,7 +113,5 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("registration success uid=%d", lastInsertID)
 	}
 
-	renderLoginForm(w, r, "approval is pending")
-
-	return nil
+	return loginFormHandler{msg: "approval is pending"}
 }

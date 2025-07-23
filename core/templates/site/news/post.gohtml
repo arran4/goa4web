@@ -14,7 +14,7 @@
             {{ if .ShowEdit }}
                 [<a href="/news/news/{{ .Idsitenews }}/edit">EDIT</a>]
             {{ end }}
-            {{ if .IsAdmin }}
+            {{ if cd.IsAdmin }}
                 [<a href="/admin/announcements?news_id={{ .Idsitenews }}">
                     {{ if and .Announcement (eq .Announcement.Active true) }}
                         MANAGE ANNOUNCEMENT

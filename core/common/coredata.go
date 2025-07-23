@@ -887,3 +887,11 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 		return rows, nil
 	})
 }
+
+func (cd *CoreData) IsAdmin() bool {
+	return cd.HasRole("administrator") && cd.AdminMode
+}
+
+func (cd *CoreData) IsWriter() bool {
+	return cd.HasRole("content writer") || cd.IsAdmin()
+}

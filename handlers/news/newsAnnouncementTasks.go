@@ -3,8 +3,8 @@ package news
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -58,19 +58,18 @@ func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ann, err := cd.NewsAnnouncement(int32(pid))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("getLatestAnnouncementByNewsID: %v", err)
+			return fmt.Errorf("get announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 	if ann == nil {
 		if err := queries.CreateAnnouncement(r.Context(), int32(pid)); err != nil {
-			log.Printf("create announcement: %v", err)
+			return fmt.Errorf("create announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	} else if !ann.Active {
 		if err := queries.SetAnnouncementActive(r.Context(), db.SetAnnouncementActiveParams{Active: true, ID: ann.ID}); err != nil {
-			log.Printf("activate announcement: %v", err)
+			return fmt.Errorf("activate announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }
 
@@ -83,16 +82,14 @@ func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) any
 	ann, err := cd.NewsAnnouncement(int32(pid))
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("announcementForNews: %v", err)
+			return fmt.Errorf("announcement for news fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		handlers.TaskDoneAutoRefreshPage(w, r)
 		return nil
 	}
 	if ann != nil && ann.Active {
 		if err := queries.SetAnnouncementActive(r.Context(), db.SetAnnouncementActiveParams{Active: false, ID: ann.ID}); err != nil {
-			log.Printf("deactivate announcement: %v", err)
+			return fmt.Errorf("deactivate announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers"
 )
 
 func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
@@ -49,7 +50,7 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		newPostTask.Action(rr, req)
+		handlers.TaskHandler(newPostTask)(rr, req)
 		if rr.Code != http.StatusOK {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
@@ -94,7 +95,7 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		editTask.Action(rr, req)
+		handlers.TaskHandler(editTask)(rr, req)
 		if rr.Code != http.StatusOK {
 			t.Errorf("form=%v status=%d", form, rr.Code)
 		}

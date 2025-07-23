@@ -2,11 +2,13 @@ package bookmarks
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -24,7 +26,7 @@ func (CreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
@@ -35,11 +37,7 @@ func (CreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		},
 		UsersIdusers: uid,
 	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("create bookmarks fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
-	http.Redirect(w, r, "/bookmarks/mine", http.StatusTemporaryRedirect)
-
-	return nil
+	return handlers.RedirectHandler("/bookmarks/mine")
 }

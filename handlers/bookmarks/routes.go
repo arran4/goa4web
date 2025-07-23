@@ -1,8 +1,6 @@
 package bookmarks
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
-
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/handlers"
@@ -19,9 +17,8 @@ func RegisterRoutes(r *mux.Router) {
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
 	br.HandleFunc("/edit", saveTask.Page).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
-	br.HandleFunc("/edit", tasks.Action(saveTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Matcher())
-	br.HandleFunc("/edit", tasks.Action(createTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Matcher())
-	br.HandleFunc("/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(handlers.RequiresAnAccount())
+	br.HandleFunc("/edit", handlers.TaskHandler(saveTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Matcher())
+	br.HandleFunc("/edit", handlers.TaskHandler(createTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Matcher())
 }
 
 // Register registers the bookmarks router module.

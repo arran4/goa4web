@@ -57,5 +57,11 @@ func (c *userPasswordCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *userPasswordCmd) Usage() {
-	executeUsage(c.fs.Output(), userPasswordUsageTemplate, c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), userPasswordUsageTemplate, c)
 }
+
+func (c *userPasswordCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*userPasswordCmd)(nil)

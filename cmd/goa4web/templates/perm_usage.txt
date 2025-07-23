@@ -10,4 +10,4 @@ Examples:
   {{.Prog}} perm grant -user bob -section forum -role read
   {{.Prog}} perm list
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

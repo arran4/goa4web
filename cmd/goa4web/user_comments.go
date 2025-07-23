@@ -51,5 +51,11 @@ func (c *userCommentsCmd) Run() error {
 }
 
 func (c *userCommentsCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_comments_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "user_comments_usage.txt", c)
 }
+
+func (c *userCommentsCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*userCommentsCmd)(nil)

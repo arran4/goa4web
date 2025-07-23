@@ -309,5 +309,13 @@ func (r *rootCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (r *rootCmd) Usage() {
-	executeUsage(r.fs.Output(), "root_usage.txt", r.fs, r.fs.Name())
+	executeUsage(r.fs.Output(), "root_usage.txt", r)
 }
+
+func (r *rootCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: "Global Flags", Flags: flagInfos(r.fs)}}
+}
+
+func (r *rootCmd) Prog() string { return r.fs.Name() }
+
+var _ usageData = (*rootCmd)(nil)

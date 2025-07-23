@@ -129,5 +129,11 @@ func (c *userCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *userCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "user_usage.txt", c)
 }
+
+func (c *userCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*userCmd)(nil)

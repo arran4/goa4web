@@ -104,5 +104,11 @@ func listCache(dir string) error {
 }
 
 func (c *imagesCmd) Usage() {
-	executeUsage(c.fs.Output(), "images_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "images_usage.txt", c)
 }
+
+func (c *imagesCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*imagesCmd)(nil)

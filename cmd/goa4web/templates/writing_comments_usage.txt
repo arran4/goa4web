@@ -10,4 +10,4 @@ Examples:
   {{.Prog}} writing comments read 3 1
   {{.Prog}} writing comments read 3 all
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

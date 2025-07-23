@@ -15,8 +15,14 @@ type notificationsTasksCmd struct {
 
 // Usage prints command usage information with examples.
 func (c *notificationsTasksCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_tasks_usage.txt", c.fs, c.notificationsCmd.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "notifications_tasks_usage.txt", c)
 }
+
+func (c *notificationsTasksCmd) FlagGroups() []flagGroup {
+	return append(c.notificationsCmd.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*notificationsTasksCmd)(nil)
 
 func parseNotificationsTasksCmd(parent *notificationsCmd, args []string) (*notificationsTasksCmd, error) {
 	c := &notificationsTasksCmd{notificationsCmd: parent}

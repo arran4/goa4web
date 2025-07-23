@@ -206,5 +206,11 @@ func (c *helpCmd) showHelp(args []string) error {
 }
 
 func (c *helpCmd) Usage() {
-	executeUsage(c.fs.Output(), "help_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "help_usage.txt", c)
 }
+
+func (c *helpCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*helpCmd)(nil)

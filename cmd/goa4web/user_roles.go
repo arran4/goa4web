@@ -47,5 +47,11 @@ func (c *userRolesCmd) Run() error {
 }
 
 func (c *userRolesCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_roles_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "user_roles_usage.txt", c)
 }
+
+func (c *userRolesCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*userRolesCmd)(nil)

@@ -6,4 +6,4 @@ Commands:
   delete   delete a grant rule
   list     list grant rules
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

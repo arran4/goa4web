@@ -5,4 +5,4 @@ Examples:
   {{.Prog}} help serve
   {{.Prog}} help config set
 
-{{template "flags_section" .Flags}}
+{{template "flag_groups_section" .FlagGroups}}

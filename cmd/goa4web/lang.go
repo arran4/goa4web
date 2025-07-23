@@ -56,5 +56,11 @@ func (c *langCmd) Run() error {
 }
 
 func (c *langCmd) Usage() {
-	executeUsage(c.fs.Output(), "lang_usage.txt", c.fs, c.rootCmd.fs.Name())
+	executeUsage(c.fs.Output(), "lang_usage.txt", c)
 }
+
+func (c *langCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*langCmd)(nil)

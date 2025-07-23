@@ -39,4 +39,7 @@ Examples:
   {{.Prog}} lang list
   {{.Prog}} config show
 
-{{template "flags_section" .Flags}}
+Flags apply to the subcommand they follow.
+For example: {{.Prog}} board list -verbosity 1
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -21,13 +22,12 @@ var _ tasks.Task = (*SaveAllTask)(nil)
 func (SaveAllTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("ParseForm Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return nil
+		return handlers.SessionFetchFail{}
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	uid, _ := session.Values["UID"].(int32)
@@ -35,16 +35,13 @@ func (SaveAllTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if err := updateLanguageSelections(r, cd, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("save languages fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if err := updateDefaultLanguage(r, queries, uid); err != nil {
 		log.Printf("Save language Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return nil
+		return fmt.Errorf("save language fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

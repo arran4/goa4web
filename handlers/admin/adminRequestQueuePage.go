@@ -10,31 +10,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
-
-// AcceptRequestTask accepts a queued request.
-type AcceptRequestTask struct{ tasks.TaskString }
-
-var acceptRequestTask = &AcceptRequestTask{TaskString: TaskAccept}
-
-// RejectRequestTask rejects a queued request.
-type RejectRequestTask struct{ tasks.TaskString }
-
-var rejectRequestTask = &RejectRequestTask{TaskString: TaskReject}
-
-// QueryRequestTask asks for more information about a request.
-type QueryRequestTask struct{ tasks.TaskString }
-
-var queryRequestTask = &QueryRequestTask{TaskString: TaskQuery}
-
-var _ tasks.Task = (*AcceptRequestTask)(nil)
-var _ tasks.AuditableTask = (*AcceptRequestTask)(nil)
-var _ tasks.Task = (*RejectRequestTask)(nil)
-var _ tasks.AuditableTask = (*RejectRequestTask)(nil)
-var _ tasks.Task = (*QueryRequestTask)(nil)
-var _ tasks.AuditableTask = (*QueryRequestTask)(nil)
 
 func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -164,32 +141,6 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 		Back:     "/admin/requests",
 	}
 	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
-}
-
-func (AcceptRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
-	handleRequestAction(w, r, "accepted")
-	return nil
-}
-func (RejectRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
-	handleRequestAction(w, r, "rejected")
-	return nil
-}
-func (QueryRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
-	handleRequestAction(w, r, "query")
-	return nil
-}
-
-// AuditRecord summarises a request queue action.
-func (AcceptRequestTask) AuditRecord(data map[string]any) string {
-	return requestAuditSummary("accepted", data)
-}
-
-func (RejectRequestTask) AuditRecord(data map[string]any) string {
-	return requestAuditSummary("rejected", data)
-}
-
-func (QueryRequestTask) AuditRecord(data map[string]any) string {
-	return requestAuditSummary("query", data)
 }
 
 func requestAuditSummary(action string, data map[string]any) string {

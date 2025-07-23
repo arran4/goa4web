@@ -12,13 +12,19 @@ import (
 )
 
 func AdminShutdownPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	data := struct {
 		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin",
 	}
 

@@ -262,23 +262,21 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "articlePage.gohtml", data)
 }
 
-func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
+func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) error {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
-		return
+		return nil
 	}
 
 	vars := mux.Vars(r)
 	aid, err := strconv.Atoi(vars["article"])
 
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("article id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if aid == 0 {
 		log.Printf("Error: no bid")
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("no bid")))
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -293,14 +291,10 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd); err != nil {
-				log.Printf("render no access page: %v", err)
-			}
-			return
+			return templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
 		default:
 			log.Printf("getArticlePost Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return err
 		}
 	}
 
@@ -324,14 +318,12 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return fmt.Errorf("create forum topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
 		log.Printf("Error: findForumTopicByTitle: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("find forum topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else {
 		ptid = pt.Idforumtopic
 	}
@@ -339,8 +331,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		pthidi, err := queries.MakeThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return fmt.Errorf("make thread %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
 		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
@@ -348,8 +339,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			Idwriting:     int32(aid),
 		}); err != nil {
 			log.Printf("Error: assign_article_to_thread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
+			return fmt.Errorf("assign article thread %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -375,8 +365,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		},
 	}); err != nil {
 		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
+		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -396,5 +385,5 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TaskDoneAutoRefreshPage(w, r)
+	return nil
 }

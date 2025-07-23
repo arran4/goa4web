@@ -2,17 +2,18 @@ package forum
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	"log"
-	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 // subscribeTopicTask subscribes a user to new threads within a topic.
@@ -35,30 +36,6 @@ func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: "internal"}); err != nil {
 		log.Printf("insert subscription: %v", err)
 		return fmt.Errorf("insert subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
-}
-
-// unsubscribeTopicTask removes a topic subscription.
-type unsubscribeTopicTask struct{ tasks.TaskString }
-
-var unsubscribeTopicTaskAction = &unsubscribeTopicTask{TaskString: TaskUnsubscribeFromTopic}
-
-var _ tasks.Task = (*unsubscribeTopicTask)(nil)
-
-func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
-	uid, _ := session.Values["UID"].(int32)
-	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	pattern := topicSubscriptionPattern(int32(topicID))
-	if err := queries.DeleteSubscription(r.Context(), db.DeleteSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: "internal"}); err != nil {
-		log.Printf("delete subscription: %v", err)
-		return fmt.Errorf("delete subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
 }

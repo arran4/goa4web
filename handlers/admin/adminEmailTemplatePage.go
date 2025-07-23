@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 	"net/mail"
-	"net/url"
 	"strings"
 	"text/template"
 	"time"
@@ -91,37 +90,29 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 
 func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	body := r.PostFormValue("body")
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail", Body: body}); err != nil {
-		log.Printf("db save template: %v", err)
+		return fmt.Errorf("db save template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/admin/email/template")
 }
 
 func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
-		q := url.QueryEscape(userhandlers.ErrMailNotConfigured.Error())
-		r.URL.RawQuery = "error=" + q
-		handlers.TaskErrorAcknowledgementPage(w, r)
-		return nil
+		return fmt.Errorf("mail not configured %w", handlers.ErrRedirectOnSamePageHandler(userhandlers.ErrMailNotConfigured))
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	urow, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {
-		log.Printf("get user: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("get user fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if !urow.Email.Valid || urow.Email.String == "" {
-		http.Error(w, "email unknown", http.StatusBadRequest)
-		return nil
+		return fmt.Errorf("email unknown %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("email unknown")))
 	}
 
 	base := "http://" + r.Host
@@ -133,9 +124,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var buf bytes.Buffer
 	tmpl, err := template.New("email").Parse(getUpdateEmailText(r.Context()))
 	if err != nil {
-		log.Printf("parse template: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("parse template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	unsub := "/usr/subscriptions"
 	if config.AppRuntimeConfig.HTTPHostname != "" {
@@ -152,9 +141,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		UnsubscribeUrl: unsub,
 	}
 	if err := tmpl.Execute(&buf, content); err != nil {
-		log.Printf("execute template: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("execute template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	toAddr := mail.Address{Name: urow.Username.String, Address: urow.Email.String}
 	var fromAddr mail.Address
@@ -166,13 +153,10 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	msg, err := email.BuildMessage(fromAddr, toAddr, content.Subject, buf.String(), "")
 	if err != nil {
-		log.Printf("build message: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil
+		return fmt.Errorf("build message fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := queries.InsertPendingEmail(r.Context(), db.InsertPendingEmailParams{ToUserID: sql.NullInt32{Int32: urow.Idusers, Valid: true}, Body: string(msg), DirectEmail: false}); err != nil {
-		log.Printf("queue email: %v", err)
+		return fmt.Errorf("queue email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	http.Redirect(w, r, "/admin/email/template", http.StatusSeeOther)
-	return nil
+	return handlers.RedirectHandler("/admin/email/template")
 }

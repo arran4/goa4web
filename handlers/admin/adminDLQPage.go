@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -43,7 +44,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm: %v", err)
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	switch r.PostFormValue("task") {
 	case string(TaskDelete):
@@ -53,7 +54,7 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 			id, _ := strconv.Atoi(idStr)
 			if err := queries.DeleteDeadLetter(r.Context(), int32(id)); err != nil {
-				log.Printf("delete error: %v", err)
+				return fmt.Errorf("delete error %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}
 	case string(TaskPurge):
@@ -65,9 +66,8 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 		if err := queries.PurgeDeadLettersBefore(r.Context(), t); err != nil {
-			log.Printf("purge errors: %v", err)
+			return fmt.Errorf("purge errors %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	handlers.TaskDoneAutoRefreshPage(w, r)
 	return nil
 }

@@ -13,8 +13,6 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	htemplate "html/template"
-
-	"github.com/arran4/goa4web/internal/app/dbstart"
 )
 
 // Notifier dispatches updates via email and internal notifications.
@@ -44,12 +42,6 @@ func WithConfig(cfg config.RuntimeConfig) Option {
 	return func(n *Notifier) {
 		if n.EmailProvider == nil {
 			n.EmailProvider = email.ProviderFromConfig(cfg)
-		}
-		if n.Queries == nil {
-			// TODO evaluate if this is the best way
-			if db := dbstart.GetDBPool(); db != nil {
-				n.Queries = dbpkg.New(db)
-			}
 		}
 	}
 }

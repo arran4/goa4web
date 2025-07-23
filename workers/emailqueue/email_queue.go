@@ -28,16 +28,7 @@ func EmailQueueWorker(ctx context.Context, q *db.Queries, provider email.Provide
 		ch = bus.Subscribe(eventbus.EmailQueueMessageType)
 	}
 	for {
-		sent := ProcessPendingEmail(ctx, q, provider, dlqProvider)
-		if sent {
-			select {
-			case <-time.After(delay):
-			case <-ctx.Done():
-				return
-			}
-			continue
-		}
-
+		ProcessPendingEmail(ctx, q, provider, dlqProvider)
 		if ch == nil {
 			select {
 			case <-time.After(delay):
@@ -123,16 +114,16 @@ func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, e *db.FetchPe
 		return mail.Address{}, fmt.Errorf("parse address: %v", err)
 	}
 
+	if isAdminEmail(ctx, q, addr.Address) {
+		addr.Name = "Admin"
+		return *addr, nil
+	}
+
 	if e.DirectEmail {
 		if hasVerificationRecord(ctx, q, addr.Address) {
 			return *addr, nil
 		}
 		return mail.Address{}, fmt.Errorf("no verification record for %s", addr.Address)
-	}
-
-	if isAdminEmail(ctx, q, addr.Address) {
-		addr.Name = "Admin"
-		return *addr, nil
 	}
 
 	if e.ToUserID.Valid {
@@ -164,7 +155,10 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 	e := emails[0]
 	addr, err := ResolveQueuedEmailAddress(ctx, q, e)
 	if err != nil {
-		log.Printf("%v", err)
+		log.Printf("ResolveQueuedEmailAddress: %v", err)
+		if err := q.IncrementEmailError(ctx, e.ID); err != nil {
+			log.Printf("increment email error: %v", err)
+		}
 		return false
 	}
 	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {

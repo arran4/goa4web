@@ -79,57 +79,64 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	}
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		data := NotificationData{TaskEvent: evt, Item: evt.Data}
-		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(), tp.AdminInternalNotificationTemplate(), data, evt.Path); err != nil {
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", err)); dlqErr != nil {
+		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(), tp.AdminInternalNotificationTemplate(), evt.Data, evt.Path); err != nil {
+			errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
-			return err
+			return errW
 		}
 	}
 
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
 		if err := n.notifySelf(ctx, evt, tp); err != nil {
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, err)); dlqErr != nil {
+			errW := fmt.Errorf("SelfNotificationTemplateProvider: %w", err)
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, errW)); dlqErr != nil {
 				return dlqErr
 			}
-			return err
+			return errW
 		}
 
 	}
 
 	if tp, ok := evt.Task.(DirectEmailNotificationTemplateProvider); ok {
 		if err := n.notifyDirectEmail(ctx, evt, tp); err != nil {
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("direct email notify: %v", err)); dlqErr != nil {
+			errW := fmt.Errorf("DirectEmailNotificationTemplateProvider: %w", err)
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("direct email notify: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
-			return err
+			return errW
 		}
 
 	}
 
 	if tp, ok := evt.Task.(TargetUsersNotificationProvider); ok {
 		if err := n.notifyTargetUsers(ctx, evt, tp); err != nil {
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify target users: %v", err)); dlqErr != nil {
+			errW := fmt.Errorf("TargetUsersNotificationProvider: %w", err)
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify target users: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
-			return err
+			return errW
 		}
 
 	}
 
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
 		if err := n.notifySubscribers(ctx, evt, tp); err != nil {
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", err)); dlqErr != nil {
+			errW := fmt.Errorf("SubscribersNotificationTemplateProvider: %w", err)
+			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
-			return err
+			return errW
 		}
 
 	}
 
 	if tp, ok := evt.Task.(AutoSubscribeProvider); ok {
-		n.handleAutoSubscribe(ctx, evt, tp)
+		if err := n.handleAutoSubscribe(ctx, evt, tp); err != nil {
+			errW := fmt.Errorf("AutoSubscribeProvider: %w", err)
+			return errW
+		}
 
 	}
 
@@ -314,7 +321,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	return nil
 }
 
-func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, tp AutoSubscribeProvider) {
+func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, tp AutoSubscribeProvider) error {
 	auto := true
 	email := false
 	if pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID); err == nil {
@@ -322,12 +329,14 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 		if pref.Emailforumupdates.Valid {
 			email = pref.Emailforumupdates.Bool
 		}
+	} else {
+		return fmt.Errorf("get preference by user_id: %w", err)
 	}
 	if auto {
 		task, path, err := tp.AutoSubscribePath(evt)
 		if err != nil {
 			log.Printf("auto subscribe path: %v", err)
-			return
+			return fmt.Errorf("auto subscribe path: %w", err)
 		}
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
 		if config.AppRuntimeConfig.NotificationsEnabled {
@@ -337,6 +346,7 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
 		}
 	}
+	return nil
 }
 
 func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pattern, method string) {

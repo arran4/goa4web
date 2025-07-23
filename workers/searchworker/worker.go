@@ -40,12 +40,17 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 			if !ok {
 				continue
 			}
+			// Use a context that isn't canceled while processing
+			// the current event so database operations aren't
+			// interrupted mid-flight when the worker context is
+			// cancelled.
+			evtCtx := context.WithoutCancel(ctx)
 			if data, ok := evt.Data[EventKey].(IndexEventData); ok {
-				if err := index(ctx, q, data); err != nil {
+				if err := index(evtCtx, q, data); err != nil {
 					log.Printf("index error: %v", err)
 				}
 			} else {
-				processEvent(ctx, evt, q)
+				processEvent(evtCtx, evt, q)
 			}
 		case <-ctx.Done():
 			return

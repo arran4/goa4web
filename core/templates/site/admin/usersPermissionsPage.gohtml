@@ -41,7 +41,11 @@
 <script>
 (function(){
     function post(data){
-        return fetch('/admin/users/permissions', {method:'POST', body:data});
+        return fetch('/admin/users/permissions', {
+            method:'POST',
+            body:data,
+            headers:{'X-CSRF-Token': '{{ csrfToken }}'}
+        });
     }
     document.querySelectorAll('.delete-btn').forEach(function(btn){
         btn.addEventListener('click', function(e){

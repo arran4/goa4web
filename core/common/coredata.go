@@ -77,9 +77,11 @@ type CoreData struct {
 	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
 	forumThreadRows          map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow]
 	forumComments            map[int32]*lazyValue[*db.GetCommentByIdForUserRow]
+	newsPosts                map[int32]*lazyValue[*db.GetForumThreadIdByNewsPostIdRow]
 	currentThreadID          int32
 	currentTopicID           int32
 	currentCommentID         int32
+	currentNewsPostID        int32
 	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
 	imageBoards              lazyValue[[]*db.Imageboard]
 	languagesAll             lazyValue[[]*db.Language]
@@ -1003,6 +1005,64 @@ func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
 		return nil
 	}
 	lv, ok := cd.forumComments[cd.currentCommentID]
+	if !ok {
+		return nil
+	}
+	v, ok := lv.peek()
+	if !ok {
+		return nil
+	}
+	return v
+}
+
+// CacheNewsPost stores a news post in the request cache without loading.
+func (cd *CoreData) CacheNewsPost(id int32, row *db.GetForumThreadIdByNewsPostIdRow) {
+	if cd.newsPosts == nil {
+		cd.newsPosts = make(map[int32]*lazyValue[*db.GetForumThreadIdByNewsPostIdRow])
+	}
+	lv, ok := cd.newsPosts[id]
+	if !ok {
+		lv = &lazyValue[*db.GetForumThreadIdByNewsPostIdRow]{}
+		cd.newsPosts[id] = lv
+	}
+	lv.set(row)
+}
+
+// NewsPostByID returns the news post lazily loading it once per ID.
+func (cd *CoreData) NewsPostByID(id int32) (*db.GetForumThreadIdByNewsPostIdRow, error) {
+	if cd.newsPosts == nil {
+		cd.newsPosts = make(map[int32]*lazyValue[*db.GetForumThreadIdByNewsPostIdRow])
+	}
+	lv, ok := cd.newsPosts[id]
+	if !ok {
+		lv = &lazyValue[*db.GetForumThreadIdByNewsPostIdRow]{}
+		cd.newsPosts[id] = lv
+	}
+	return lv.load(func() (*db.GetForumThreadIdByNewsPostIdRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetForumThreadIdByNewsPostId(cd.ctx, id)
+	})
+}
+
+// SetCurrentNewsPost stores the current news post ID.
+func (cd *CoreData) SetCurrentNewsPost(id int32) { cd.currentNewsPostID = id }
+
+// CurrentNewsPost returns the current news post lazily loaded.
+func (cd *CoreData) CurrentNewsPost() (*db.GetForumThreadIdByNewsPostIdRow, error) {
+	if cd.currentNewsPostID == 0 {
+		return nil, nil
+	}
+	return cd.NewsPostByID(cd.currentNewsPostID)
+}
+
+// CurrentNewsPostLoaded returns the cached current news post if available.
+func (cd *CoreData) CurrentNewsPostLoaded() *db.GetForumThreadIdByNewsPostIdRow {
+	if cd.newsPosts == nil {
+		return nil
+	}
+	lv, ok := cd.newsPosts[cd.currentNewsPostID]
 	if !ok {
 		return nil
 	}

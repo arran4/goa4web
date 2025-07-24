@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"os"
+	"strings"
 	"sync"
 	ttemplate "text/template"
 	"time"
@@ -22,6 +24,7 @@ type Notifier struct {
 	Bus            *eventbus.Bus
 	EmailProvider  email.Provider
 	Queries        *dbpkg.Queries
+	cfg            config.RuntimeConfig
 	noteOnce       sync.Once
 	noteTmpls      *ttemplate.Template
 	emailTextOnce  sync.Once
@@ -45,6 +48,7 @@ func WithBus(b *eventbus.Bus) Option { return func(n *Notifier) { n.Bus = b } }
 // WithConfig derives dependencies from cfg when they are not supplied.
 func WithConfig(cfg config.RuntimeConfig) Option {
 	return func(n *Notifier) {
+		n.cfg = cfg
 		if n.EmailProvider == nil {
 			n.EmailProvider = email.ProviderFromConfig(cfg)
 		}
@@ -57,7 +61,6 @@ func New(opts ...Option) *Notifier {
 	for _, o := range opts {
 		o(n)
 	}
-	WithConfig(config.AppRuntimeConfig)(n)
 	return n
 }
 
@@ -82,6 +85,35 @@ func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 	return n.emailHTMLTmpls
 }
 
+func (n *Notifier) adminEmails(ctx context.Context) []string {
+	env := n.cfg.AdminEmails
+	if env == "" {
+		env = os.Getenv(config.EnvAdminEmails)
+	}
+	var emails []string
+	if env != "" {
+		for _, e := range strings.Split(env, ",") {
+			if addr := strings.TrimSpace(e); addr != "" {
+				emails = append(emails, addr)
+			}
+		}
+		return emails
+	}
+	if n.Queries != nil {
+		rows, err := n.Queries.ListAdministratorEmails(ctx)
+		if err != nil {
+			log.Printf("list admin emails: %v", err)
+			return emails
+		}
+		for _, e := range rows {
+			if e != "" {
+				emails = append(emails, e)
+			}
+		}
+	}
+	return emails
+}
+
 // NotifyAdmins sends a generic update notice to administrator accounts.
 func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data EmailData) error {
 	return n.notifyAdmins(ctx, et, nil, data, "")
@@ -91,10 +123,10 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 	if n.Queries == nil {
 		return nil
 	}
-	if !config.AdminNotificationsEnabled() {
+	if !n.cfg.AdminNotify {
 		return nil
 	}
-	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
+	for _, addr := range n.adminEmails(ctx) {
 		var uid *int32
 		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
 			id := u.Idusers

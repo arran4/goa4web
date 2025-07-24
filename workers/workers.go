@@ -46,6 +46,7 @@ func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider
 			notifications.WithQueries(dbpkg.New(db)),
 			notifications.WithEmailProvider(provider),
 			notifications.WithBus(bus),
+			notifications.WithConfig(cfg),
 		)
 		n.NotificationPurgeWorker(ctx, time.Hour)
 	})
@@ -59,6 +60,7 @@ func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider
 			notifications.WithQueries(dbpkg.New(db)),
 			notifications.WithEmailProvider(provider),
 			notifications.WithBus(bus),
+			notifications.WithConfig(cfg),
 		)
 		n.BusWorker(ctx, bus, dlqProvider)
 	})

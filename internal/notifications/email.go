@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -59,20 +58,20 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 	if emailAddr == "" {
 		return nil, fmt.Errorf("no email specified")
 	}
-	from := email.ParseAddress(config.AppRuntimeConfig.EmailFrom)
+	from := email.ParseAddress(n.cfg.EmailFrom)
 	to := email.ParseAddress(emailAddr)
 
-	subjectPrefix := config.AppRuntimeConfig.EmailSubjectPrefix
+	subjectPrefix := n.cfg.EmailSubjectPrefix
 	if subjectPrefix == "" {
 		subjectPrefix = "goa4web"
 	}
 
 	unsub := "/usr/subscriptions"
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		unsub = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	if n.cfg.HTTPHostname != "" {
+		unsub = strings.TrimRight(n.cfg.HTTPHostname, "/") + unsub
 	}
 
-	signOff := config.AppRuntimeConfig.EmailSignOff
+	signOff := n.cfg.EmailSignOff
 	htmlSignOff := html.EscapeString(signOff)
 	htmlSignOff = strings.ReplaceAll(htmlSignOff, "\n", "<br />")
 

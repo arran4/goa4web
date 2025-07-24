@@ -105,7 +105,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	handler := middleware.TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(handlers.TaskHandler(askTask)))
+	mw := middleware.NewTaskEventMiddleware(bus)
+	handler := mw.Middleware(http.HandlerFunc(handlers.TaskHandler(askTask)))
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 

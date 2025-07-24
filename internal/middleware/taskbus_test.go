@@ -15,8 +15,8 @@ import (
 
 func TestTaskEventMiddleware(t *testing.T) {
 	bus := eventbus.NewBus()
-
-	successHandler := TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mw := NewTaskEventMiddleware(bus)
+	successHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	req := httptest.NewRequest("POST", "/admin/p", strings.NewReader("task=Add"))
@@ -59,7 +59,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 		t.Fatalf("expected event for non-admin path")
 	}
 
-	failureHandler := TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	failureHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "fail", http.StatusInternalServerError)
 	}))
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
@@ -76,7 +76,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	}
 
 	// ensure handlers can attach event data
-	itemHandler := TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	itemHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
@@ -110,14 +110,13 @@ func TestTaskEventMiddleware(t *testing.T) {
 
 func TestTaskEventQueue(t *testing.T) {
 	bus := eventbus.NewBus()
-
-	taskQueue = newEventQueue(maxQueuedTaskEvents, bus)
+	mw := NewTaskEventMiddleware(bus)
 
 	if err := bus.Shutdown(context.Background()); err != nil {
 		t.Fatalf("shutdown bus: %v", err)
 	}
 
-	handler := TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -127,14 +126,14 @@ func TestTaskEventQueue(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	handler.ServeHTTP(rec, req.WithContext(ctx))
 
-	if len(taskQueue.events) != 1 {
+	if len(mw.Events()) != 1 {
 		t.Fatalf("expected queued event")
 	}
 
 	bus = eventbus.NewBus()
-	taskQueue.bus = bus
+	mw.SetBus(bus)
 	ch := bus.Subscribe(eventbus.TaskMessageType)
-	taskQueue.flush(context.Background())
+	mw.Flush(context.Background())
 
 	select {
 	case <-ch:
@@ -144,7 +143,7 @@ func TestTaskEventQueue(t *testing.T) {
 }
 
 func TestTaskEventMiddleware_EventProvided(t *testing.T) {
-	handler := TaskEventMiddlewareWithBus(eventbus.NewBus())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := NewTaskEventMiddleware(eventbus.NewBus()).Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd == nil || cd.Event() == nil {
 			t.Fatalf("missing event")
@@ -163,7 +162,7 @@ func TestTaskEventMiddleware_EventProvided(t *testing.T) {
 }
 
 func TestTaskEventMiddleware_NoCoreDataPanic(t *testing.T) {
-	handler := TaskEventMiddlewareWithBus(eventbus.NewBus())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := NewTaskEventMiddleware(eventbus.NewBus()).Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("inner handler should not run")
 	}))
 

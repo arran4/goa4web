@@ -97,10 +97,25 @@ type CoreData struct {
 	writingCategories        lazyValue[[]*db.WritingCategory]
 
 	absoluteURLBase lazyValue[string]
+	// marks records which template sections have been rendered to avoid
+	// duplicate output when re-rendering after an error.
+	marks map[string]struct{}
 }
 
 // SetRoles preloads the current user roles.
 func (cd *CoreData) SetRoles(r []string) { cd.userRoles.set(r) }
+
+// Marked returns true the first time it is called with key. Subsequent
+// calls return false. It is used to avoid re-rendering template sections
+// when streaming pages after an error.
+func (cd *CoreData) Marked(key string) bool {
+	if cd.marks == nil {
+		cd.marks = map[string]struct{}{}
+	}
+	_, marked := cd.marks[key]
+	cd.marks[key] = struct{}{}
+	return !marked
+}
 
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)

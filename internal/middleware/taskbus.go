@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-// TaskEventMiddleware records form tasks on the event bus after processing.
+// TaskBus middleware records form tasks on the event bus after processing.
 
 // statusRecorder captures the response status for later inspection.
 type statusRecorder struct {
@@ -75,19 +75,40 @@ func (q *eventQueue) flush(ctx context.Context) {
 	}
 }
 
-var taskQueue = newEventQueue(maxQueuedTaskEvents)
+func (q *eventQueue) queued() []eventbus.TaskEvent {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return append([]eventbus.TaskEvent(nil), q.events...)
+}
+
+// TaskBus provides the task event middleware and exposes queued events.
+type TaskBus struct {
+	queue *eventQueue
+}
+
+// NewTaskBus returns a TaskBus with an empty queue.
+func NewTaskBus() *TaskBus {
+	return &TaskBus{queue: newEventQueue(maxQueuedTaskEvents)}
+}
+
+// QueuedEvents returns a snapshot of currently buffered events.
+func (tb *TaskBus) QueuedEvents() []eventbus.TaskEvent { return tb.queue.queued() }
+
+// Flush publishes all buffered events.
+func (tb *TaskBus) Flush(ctx context.Context) { tb.queue.flush(ctx) }
 
 func (r *statusRecorder) WriteHeader(code int) {
 	r.status = code
 	r.ResponseWriter.WriteHeader(code)
 }
 
-func TaskEventMiddleware(next http.Handler) http.Handler {
+// Middleware records form tasks on the event bus after processing.
+func (tb *TaskBus) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		task := r.PostFormValue("task")
 		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*common.CoreData)
 		if !ok || cd == nil {
-			log.Panicf("TaskEventMiddleware: missing CoreData for %s", r.URL.Path)
+			log.Panicf("TaskBus middleware: missing CoreData for %s", r.URL.Path)
 		}
 		uid := cd.UserID
 		admin := strings.Contains(r.URL.Path, "/admin")
@@ -105,12 +126,12 @@ func TaskEventMiddleware(next http.Handler) http.Handler {
 		if task != "" && sr.status < http.StatusBadRequest {
 			if err := eventbus.DefaultBus.Publish(*evt); err != nil {
 				if err == eventbus.ErrBusClosed {
-					taskQueue.enqueue(*evt)
+					tb.queue.enqueue(*evt)
 				} else {
 					log.Printf("publish task event: %v", err)
 				}
 			}
 		}
-		taskQueue.flush(r.Context())
+		tb.queue.flush(r.Context())
 	})
 }

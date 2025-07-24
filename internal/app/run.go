@@ -84,11 +84,12 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r)
 
+	tb := middleware.NewTaskBus()
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
 		middleware.CoreAdderMiddleware,
 		middleware.RequestLoggerMiddleware,
-		middleware.TaskEventMiddleware,
+		tb.Middleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if csrfmw.CSRFEnabled() {

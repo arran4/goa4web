@@ -18,6 +18,11 @@ UPDATE notifications SET read_at = NOW() WHERE id = ?;
 -- name: MarkNotificationUnread :exec
 UPDATE notifications SET read_at = NULL WHERE id = ?;
 
+-- name: GetNotification :one
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+WHERE id = ?;
+
 -- name: DeleteNotification :exec
 DELETE FROM notifications WHERE id = ?;
 

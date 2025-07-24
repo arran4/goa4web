@@ -262,4 +262,13 @@ const (
 
 	// TaskPurge removes old records.
 	TaskPurge tasks.TaskString = "Purge"
+
+	// TaskPurgeRead purges read notifications.
+	TaskPurgeRead tasks.TaskString = "Purge read"
+
+	// TaskPurgeSelected purges selected notifications.
+	TaskPurgeSelected tasks.TaskString = "Purge selected"
+
+	// TaskToggleRead toggles notification read state.
+	TaskToggleRead tasks.TaskString = "Toggle read"
 )

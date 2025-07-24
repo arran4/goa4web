@@ -10,6 +10,6 @@ func TaskDoneAutoRefreshPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct{}
 	data := Data{}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.AutoRefresh = "5"
+	cd.AutoRefresh = "1"
 	TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", data)
 }

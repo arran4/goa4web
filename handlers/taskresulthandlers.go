@@ -21,7 +21,7 @@ type RefreshDirectHandler struct {
 func (rdh RefreshDirectHandler) Content() string {
 	data := []string{}
 	if rdh.Duration == 0 {
-		data = append(data, "0")
+		data = append(data, "1")
 	} else {
 		data = append(data, strconv.Itoa(int(rdh.Duration/time.Second)))
 	}

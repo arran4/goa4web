@@ -27,7 +27,7 @@ func cloneValues(v url.Values) url.Values {
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Rows     []*db.User
+		Rows     []*db.UserFilteredRow
 		Search   string
 		Role     string
 		Status   string
@@ -54,7 +54,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pageSize := data.PageSize
-	var rows []*db.User
+	var rows []*db.UserFilteredRow
 	var err error
 	if data.Search != "" {
 		rows, err = queries.SearchUsersFiltered(r.Context(), db.SearchUsersFilteredParams{

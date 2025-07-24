@@ -101,9 +101,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handlers.TemplateHandler(w, r, "forgotPasswordEmailSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
-	})
+	return handlers.TemplateWithDataHandler("forgotPasswordEmailSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
 }
 
 func (ForgotPasswordTask) AuditRecord(data map[string]any) string {

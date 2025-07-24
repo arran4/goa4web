@@ -27,7 +27,7 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Rows:     rows,
 	}
-	handlers.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {

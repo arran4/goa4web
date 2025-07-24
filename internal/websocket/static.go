@@ -1,5 +1,3 @@
-//go:build websocket
-
 package websocket
 
 import (

@@ -2,6 +2,7 @@ package upload
 
 import (
 	"log"
+	"sort"
 	"strings"
 	"sync"
 
@@ -32,4 +33,16 @@ func providerFactory(name string) ProviderFactory {
 	f := registry[strings.ToLower(name)]
 	regMu.RUnlock()
 	return f
+}
+
+// ProviderNames returns the names of registered upload providers in sorted order.
+func ProviderNames() []string {
+	regMu.RLock()
+	names := make([]string, 0, len(registry))
+	for n := range registry {
+		names = append(names, n)
+	}
+	regMu.RUnlock()
+	sort.Strings(names)
+	return names
 }

@@ -18,6 +18,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Total         int
 		Unread        int
 		Roles         []*db.Role
+		Usernames     map[int32]string
 	}
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
@@ -33,6 +34,22 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("recent notifications: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+	ids := make([]int32, 0, len(items))
+	seen := map[int32]struct{}{}
+	for _, n := range items {
+		if _, ok := seen[n.UsersIdusers]; !ok {
+			seen[n.UsersIdusers] = struct{}{}
+			ids = append(ids, n.UsersIdusers)
+		}
+	}
+	data.Usernames = map[int32]string{}
+	if rows, err := queries.UsersByID(r.Context(), ids); err == nil {
+		for _, r := range rows {
+			if r.Username.Valid {
+				data.Usernames[r.Idusers] = r.Username.String
+			}
+		}
 	}
 	unread := 0
 	for _, n := range items {

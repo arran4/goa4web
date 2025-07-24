@@ -16,6 +16,8 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/tasks"
 
+	notif "github.com/arran4/goa4web/internal/notifications"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
@@ -52,7 +54,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pageURL := base + r.URL.Path
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("email").Parse(getUpdateEmailText(r.Context()))
+	tmpl, err := template.New("email").Parse(notif.GetUpdateEmailText(r.Context(), queries))
 	if err != nil {
 		return fmt.Errorf("parse template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

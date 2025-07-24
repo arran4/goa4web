@@ -35,7 +35,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		Emails:   emails,
 		Comments: comments,
 	}
-	handlers.TemplateHandler(w, r, "admin/userProfile.gohtml", data)
+	handlers.TemplateHandler(w, r, "userProfile.gohtml", data)
 }
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
@@ -60,5 +60,5 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}
-	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

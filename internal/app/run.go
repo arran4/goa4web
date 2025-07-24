@@ -48,6 +48,7 @@ func init() {
 // session secret. The context controls the lifetime of the HTTP server.
 func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string) error {
 	log.Printf("application version %s starting", version)
+	adminhandlers.StartTime = time.Now()
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	core.Store = store
 	core.SessionName = sessionName
@@ -63,7 +64,11 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	}
 
 	dbPool := dbstart.GetDBPool()
-	if err := corelanguage.ValidateDefaultLanguage(context.Background(), dbpkg.New(dbPool), cfg.DefaultLanguage); err != nil {
+	queries := dbpkg.New(dbPool)
+	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
+		return fmt.Errorf("ensure default language: %w", err)
+	}
+	if err := corelanguage.ValidateDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
 		return fmt.Errorf("default language: %w", err)
 	}
 

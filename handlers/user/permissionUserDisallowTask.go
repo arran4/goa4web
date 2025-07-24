@@ -80,8 +80,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 			log.Printf("lookup role: %v", err)
 		}
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
-	return nil
+	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 }
 
 func (PermissionUserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {

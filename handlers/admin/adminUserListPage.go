@@ -23,5 +23,5 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Users:    users,
 	}
-	handlers.TemplateHandler(w, r, "admin/userList.gohtml", data)
+	handlers.TemplateHandler(w, r, "userList.gohtml", data)
 }

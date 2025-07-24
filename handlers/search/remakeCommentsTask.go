@@ -35,6 +35,5 @@ func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data.Errors = append(data.Errors, fmt.Errorf("RemakeCommentsSearchInsert: %w", err).Error())
 	}
 
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
-	return nil
+	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 }

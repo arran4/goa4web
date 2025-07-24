@@ -64,8 +64,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 			evt.Data["Role"] = role
 		}
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
-	return nil
+	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 }
 
 func (PermissionUserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {

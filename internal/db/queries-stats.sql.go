@@ -24,6 +24,15 @@ func (q *Queries) CountThreadsByBoard(ctx context.Context, imageboardIdimageboar
 	return count, err
 }
 
+const deleteTemplateOverride = `-- name: DeleteTemplateOverride :exec
+DELETE FROM template_overrides WHERE name = ?
+`
+
+func (q *Queries) DeleteTemplateOverride(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteTemplateOverride, name)
+	return err
+}
+
 const forumCategoryThreadCounts = `-- name: ForumCategoryThreadCounts :many
 SELECT c.title, COUNT(th.idforumthread) AS count
 FROM forumcategory c

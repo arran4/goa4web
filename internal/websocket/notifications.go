@@ -1,12 +1,9 @@
-//go:build websocket
-
 package websocket
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/arran4/goa4web/core/common"
-	hcommon "github.com/arran4/goa4web/internal/tasks"
+	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"strings"
@@ -19,6 +16,7 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 var wsBus *eventbus.Bus
@@ -71,8 +69,8 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queries, ok := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData).Queries()
-	if !ok || queries == nil {
+	queries := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData).Queries()
+	if queries == nil {
 		http.Error(w, "db unavailable", http.StatusInternalServerError)
 		return
 	}
@@ -116,22 +114,29 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			if !ok {
 				continue
 			}
-			if evt.UserID == uid && strings.HasPrefix(evt.Path, "/usr/subscriptions") &&
-				(evt.Task == hcommon.TaskUpdate || evt.Task == hcommon.TaskDelete) {
-				var err error
-				subsRows, patterns, err = loadSubs()
-				if err != nil {
-					log.Printf("refresh subscriptions: %v", err)
-				} else {
-					log.Printf("subscriptions updated: %d entries", len(subsRows))
+			if evt.UserID == uid && strings.HasPrefix(evt.Path, "/usr/subscriptions") {
+				if n, ok := evt.Task.(tasks.Name); ok {
+					if name := n.Name(); name == "Update" || name == "Delete" {
+						var err error
+						subsRows, patterns, err = loadSubs()
+						if err != nil {
+							log.Printf("refresh subscriptions: %v", err)
+						} else {
+							log.Printf("subscriptions updated: %d entries", len(subsRows))
+						}
+						continue
+					}
 				}
-				continue
 			}
 			if evt.UserID == uid {
 				continue
 			}
 			allowed := false
-			for _, p := range buildPatterns(evt.Task, evt.Path) {
+			name := ""
+			if n, ok := evt.Task.(tasks.Name); ok {
+				name = n.Name()
+			}
+			for _, p := range buildPatterns(name, evt.Path) {
 				if patterns[p] {
 					allowed = true
 					break

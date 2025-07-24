@@ -2,6 +2,8 @@ package admin
 
 import (
 	"database/sql"
+	"time"
+
 	"github.com/arran4/goa4web/internal/app/server"
 
 	"github.com/arran4/goa4web/core"
@@ -19,3 +21,6 @@ var DBPool *sql.DB
 // UpdateConfigKeyFunc is used to persist configuration changes. It should be
 // set by the main application on startup.
 var UpdateConfigKeyFunc func(fs core.FileSystem, path, key, value string) error
+
+// StartTime marks when the server began running.
+var StartTime time.Time

@@ -130,7 +130,14 @@ type ListUsersFilteredParams struct {
 	Offset int32
 }
 
-func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]*User, error) {
+// UserFilteredRow represents a user with their primary email address.
+type UserFilteredRow struct {
+	Idusers  int32
+	Email    sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]*UserFilteredRow, error) {
 	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
 	var args []interface{}
 	var cond []string
@@ -159,11 +166,10 @@ func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredPa
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*User
+	var items []*UserFilteredRow
 	for rows.Next() {
-		var u User
-		var email sql.NullString
-		if err := rows.Scan(&u.Idusers, &email, &u.Username); err != nil {
+		var u UserFilteredRow
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -180,7 +186,7 @@ type SearchUsersFilteredParams struct {
 	Offset int32
 }
 
-func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilteredParams) ([]*User, error) {
+func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilteredParams) ([]*UserFilteredRow, error) {
 	like := "%" + arg.Query + "%"
 	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
 	var args []interface{}
@@ -210,11 +216,10 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*User
+	var items []*UserFilteredRow
 	for rows.Next() {
-		var u User
-		var email sql.NullString
-		if err := rows.Scan(&u.Idusers, &email, &u.Username); err != nil {
+		var u UserFilteredRow
+		if err := rows.Scan(&u.Idusers, &u.Email, &u.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &u)
@@ -297,7 +302,7 @@ func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*M
 		set    func(*MonthlyUsageRow, int64)
 	}{
 		{"blogs", "written", func(r *MonthlyUsageRow, n int64) { r.Blogs = n }},
-		{"siteNews", "occurred", func(r *MonthlyUsageRow, n int64) { r.News = n }},
+		{"site_news", "occurred", func(r *MonthlyUsageRow, n int64) { r.News = n }},
 		{"comments", "written", func(r *MonthlyUsageRow, n int64) { r.Comments = n }},
 		{"imagepost", "posted", func(r *MonthlyUsageRow, n int64) { r.Images = n }},
 		{"linker", "listed", func(r *MonthlyUsageRow, n int64) { r.Links = n }},
@@ -344,7 +349,7 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 		set    func(*UserMonthlyUsageRow, int64)
 	}{
 		{"blogs", "written", func(r *UserMonthlyUsageRow, n int64) { r.Blogs = n }},
-		{"siteNews", "occurred", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
+		{"site_news", "occurred", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
 		{"comments", "written", func(r *UserMonthlyUsageRow, n int64) { r.Comments = n }},
 		{"imagepost", "posted", func(r *UserMonthlyUsageRow, n int64) { r.Images = n }},
 		{"linker", "listed", func(r *UserMonthlyUsageRow, n int64) { r.Links = n }},

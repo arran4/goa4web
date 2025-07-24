@@ -1,57 +1,91 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
-	"strconv"
+	"os"
+	"sort"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 )
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
 
-	if r.Method == http.MethodPost {
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-			return
+	values := config.ValuesMap(config.AppRuntimeConfig)
+	defaults := config.DefaultMap()
+	usages := config.UsageMap()
+	examples := config.ExamplesMap()
+	flags := config.NameMap()
+
+	fileVals, _ := config.LoadAppConfigFile(core.OSFS{}, ConfigFile)
+	hide := map[string]struct{}{
+		config.EnvDBConn:              {},
+		config.EnvSMTPPass:            {},
+		config.EnvJMAPPass:            {},
+		config.EnvSendGridKey:         {},
+		config.EnvSessionSecret:       {},
+		config.EnvSessionSecretFile:   {},
+		config.EnvImageSignSecret:     {},
+		config.EnvImageSignSecretFile: {},
+	}
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		if _, ok := hide[k]; ok {
+			delete(values, k)
+			continue
 		}
-		config.AppRuntimeConfig.FeedsEnabled = r.PostFormValue("feeds_enabled") != ""
-		langID, _ := strconv.Atoi(r.PostFormValue("default_language"))
-		langs, _ := cd.Languages()
-		name := ""
-		for _, l := range langs {
-			if int(l.Idlanguage) == langID {
-				name = l.Nameof.String
-				break
-			}
+		if values[k] == "" {
+			delete(values, k)
+			continue
 		}
-		config.AppRuntimeConfig.DefaultLanguage = name
-		if err := updateConfigKey(ConfigFile, config.EnvDefaultLanguage, name); err != nil {
-			log.Printf("config write error: %v", err)
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	type detail struct {
+		Env     string
+		Flag    string
+		Value   string
+		Default string
+		Usage   string
+		Example []string
+		Source  string
+	}
+	cfg := make([]detail, 0, len(keys))
+	for _, k := range keys {
+		src := "default"
+		if v := fileVals[k]; v != "" && v == values[k] {
+			src = "file"
+		} else if v := os.Getenv(k); v != "" && v == values[k] {
+			src = "env"
+		} else if values[k] != defaults[k] {
+			src = "flag"
 		}
-		http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
-		return
+		cfg = append(cfg, detail{
+			Env:     k,
+			Flag:    flags[k],
+			Value:   values[k],
+			Default: defaults[k],
+			Usage:   usages[k],
+			Example: examples[k],
+			Source:  src,
+		})
 	}
 
-	type Data struct {
+	data := struct {
 		*common.CoreData
-		Languages          []*db.Language
-		SelectedLanguageId int32
-	}
-
-	data := Data{
-		CoreData:           cd,
-		SelectedLanguageId: cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage),
-	}
-	data.CoreData.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
-	if langs, err := cd.Languages(); err == nil {
-		data.Languages = langs
+		ConfigFile string
+		Config     []detail
+	}{
+		CoreData:   cd,
+		ConfigFile: ConfigFile,
+		Config:     cfg,
 	}
 
 	handlers.TemplateHandler(w, r, "siteSettingsPage.gohtml", data)

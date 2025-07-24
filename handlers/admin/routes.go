@@ -7,6 +7,7 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	faq "github.com/arran4/goa4web/handlers/faq"
 	forum "github.com/arran4/goa4web/handlers/forum"
+	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
 	languages "github.com/arran4/goa4web/handlers/languages"
 	linker "github.com/arran4/goa4web/handlers/linker"
 	news "github.com/arran4/goa4web/handlers/news"
@@ -23,11 +24,11 @@ func RegisterRoutes(ar *mux.Router) {
 	nav.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
 	nav.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
 	nav.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
+	nav.RegisterAdminControlCenter("Sent Emails", "/admin/email/sent", 115)
 	nav.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
 	nav.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
 	nav.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
 	nav.RegisterAdminControlCenter("Requests", "/admin/requests", 145)
-	nav.RegisterAdminControlCenter("Information", "/admin/information", InformationSectionWeight)
 	nav.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
 	nav.RegisterAdminControlCenter("Pagination", "/admin/page-size", 152)
 	nav.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
@@ -36,6 +37,7 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
+	ar.HandleFunc("/email/sent", AdminSentEmailsPage).Methods("GET")
 	ar.HandleFunc("/email/queue", handlers.TaskHandler(resendQueueTask)).Methods("POST").MatcherFunc(resendQueueTask.Matcher())
 	ar.HandleFunc("/email/queue", handlers.TaskHandler(deleteQueueTask)).Methods("POST").MatcherFunc(deleteQueueTask.Matcher())
 	ar.HandleFunc("/email/template", AdminEmailTemplatePage).Methods("GET")
@@ -67,11 +69,13 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/page-size", AdminPageSizePage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", AdminServerStatsPage).Methods("GET")
-	ar.HandleFunc("/information", AdminInformationPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")
 
 	// forum admin routes
 	forum.RegisterAdminRoutes(ar)
+
+	// imagebbs admin
+	imagebbs.RegisterAdminRoutes(ar)
 
 	// linker admin
 	linker.RegisterAdminRoutes(ar)
@@ -99,7 +103,7 @@ func RegisterRoutes(ar *mux.Router) {
 
 // Register registers the admin router module.
 func Register() {
-	router.RegisterModule("admin", []string{"faq", "forum", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router) {
+	router.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		ar.Use(handlers.IndexMiddleware(CustomIndex))

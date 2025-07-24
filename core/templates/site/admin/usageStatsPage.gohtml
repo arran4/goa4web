@@ -1,11 +1,19 @@
 {{ template "head" $ }}
+{{- if $.Errors }}
+    Errors occurred:
+    <ul>
+    {{- range $.Errors }}
+        <li>{{ . }}</li>
+    {{- end }}
+    </ul>
+{{- end }}
 <h2>Usage Statistics</h2>
 
 <h3>Threads per Forum Topic</h3>
 <table border="1">
     <tr><th>Topic</th><th>Threads</th></tr>
     {{- range .ForumTopics }}
-    <tr><td>{{ .Name.String }}</td><td>{{ .Count }}</td></tr>
+    <tr><td>{{ .Title.String }}</td><td>{{ .Count }}</td></tr>
     {{- end }}
 </table>
 
@@ -13,7 +21,7 @@
 <table border="1">
     <tr><th>Category</th><th>Threads</th></tr>
     {{- range .ForumCategories }}
-    <tr><td>{{ .Name.String }}</td><td>{{ .Count }}</td></tr>
+    <tr><td>{{ .Title.String }}</td><td>{{ .Count }}</td></tr>
     {{- end }}
 </table>
 
@@ -21,7 +29,7 @@
 <table border="1">
     <tr><th>Category</th><th>Writings</th></tr>
     {{- range .WritingCategories }}
-    <tr><td>{{ .Name.String }}</td><td>{{ .Count }}</td></tr>
+    <tr><td>{{ .Title.String }}</td><td>{{ .Count }}</td></tr>
     {{- end }}
 </table>
 
@@ -37,7 +45,7 @@
 <table border="1">
     <tr><th>Board</th><th>Posts</th></tr>
     {{- range .Imageboards }}
-    <tr><td>{{ .Name.String }}</td><td>{{ .Count }}</td></tr>
+    <tr><td>{{ .Title.String }}</td><td>{{ .Count }}</td></tr>
     {{- end }}
 </table>
 

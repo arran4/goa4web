@@ -19,7 +19,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
 )
@@ -47,7 +46,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		Thread              *db.GetThreadLastPosterAndPermsRow
 		Comments            []*CommentPlus
 		IsReplyable         bool
-		IsAdmin             bool
 		Categories          []*db.WritingCategory
 		CategoryId          int32
 		Offset              int32
@@ -84,7 +82,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -96,7 +95,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
-		if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
 		return
@@ -293,7 +292,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return

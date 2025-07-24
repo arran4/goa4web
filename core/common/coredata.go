@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/mail"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -930,4 +932,10 @@ func (cd *CoreData) IsAdmin() bool {
 
 func (cd *CoreData) IsWriter() bool {
 	return cd.HasRole("content writer") || cd.IsAdmin()
+}
+
+// ExecuteSiteTemplate renders the named site template using cd's helper
+// functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
+func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name string, data any) error {
+	return templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, name, data)
 }

@@ -18,23 +18,17 @@ import (
 
 func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Categories          []*db.WritingCategory
 		CategoryBreadcrumbs []*db.WritingCategory
 		EditingCategoryId   int32
 		CategoryId          int32
 		WritingCategoryID   int32
-		IsAdmin             bool
-		IsWriter            bool
 		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	data := Data{}
 
-	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
-	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
 
@@ -43,13 +37,13 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	data.CategoryId = int32(categoryId)
 	data.WritingCategoryID = data.CategoryId
 
-	categoryRows, err := data.CoreData.VisibleWritingCategories(data.CoreData.UserID)
+	categoryRows, err := cd.VisibleWritingCategories(cd.UserID)
 	if err != nil {
 		log.Printf("writingCategories: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	writingsRows, err := data.CoreData.PublicWritings(data.CategoryId, r)
+	writingsRows, err := cd.PublicWritings(data.CategoryId, r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -63,7 +57,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryMap := map[int32]*db.WritingCategory{}
 	for _, cat := range categoryRows {
-		if !data.CoreData.HasGrant("writing", "category", "see", cat.Idwritingcategory) {
+		if !cd.HasGrant("writing", "category", "see", cat.Idwritingcategory) {
 			continue
 		}
 		categoryMap[cat.Idwritingcategory] = cat
@@ -82,7 +76,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 	slices.Reverse(data.CategoryBreadcrumbs)
 	for _, wrow := range writingsRows {
-		if !data.CoreData.HasGrant("writing", "article", "see", wrow.Idwriting) {
+		if !cd.HasGrant("writing", "article", "see", wrow.Idwriting) {
 			continue
 		}
 		data.Abstracts = append(data.Abstracts, wrow)

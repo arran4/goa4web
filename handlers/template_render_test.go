@@ -75,8 +75,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			Categories        []*db.WritingCategory
 			WritingCategoryID int32
 			CategoryId        int32
-			IsAdmin           bool
-		}{&common.CoreData{}, nil, 0, 0, false}},
+		}{&common.CoreData{}, nil, 0, 0}},
 		{"linkerCategoryPage", struct {
 			*common.CoreData
 			Offset      int
@@ -93,10 +92,8 @@ func TestPageTemplatesRender(t *testing.T) {
 			EditingCategoryId   int32
 			CategoryId          int32
 			WritingCategoryID   int32
-			IsAdmin             bool
-			IsWriter            bool
 			Abstracts           []*db.GetPublicWritingsInCategoryRow
-		}{&common.CoreData{}, nil, nil, 0, 0, 0, false, false, nil}},
+		}{&common.CoreData{}, nil, nil, 0, 0, 0, nil}},
 		{"searchPage", struct {
 			*common.CoreData
 			SearchWords string

@@ -16,25 +16,20 @@ var writingsPermissionsPageEnabled = true
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Categories        []*db.WritingCategory
 		EditingCategoryId int32
 		CategoryId        int32
 		WritingCategoryID int32
-		IsAdmin           bool
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-
-	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	data := Data{}
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
 	data.CategoryId = 0
 	data.WritingCategoryID = data.CategoryId
 
-	categoryRows, err := data.CoreData.VisibleWritingCategories(data.CoreData.UserID)
+	categoryRows, err := cd.VisibleWritingCategories(cd.UserID)
 	if err != nil {
 		log.Printf("writingCategories: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

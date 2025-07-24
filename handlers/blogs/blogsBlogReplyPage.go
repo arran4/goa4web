@@ -10,7 +10,6 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -109,7 +108,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 			return nil
 		default:
 			return fmt.Errorf("getBlogEntryForUserById fail %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -35,3 +35,6 @@ SELECT * FROM language;
 -- name: GetLanguageIDByName :one
 SELECT idlanguage FROM language WHERE nameof = ?;
 
+
+-- name: CountLanguages :one
+SELECT COUNT(*) FROM language;

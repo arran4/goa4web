@@ -37,6 +37,17 @@ func (q *Queries) AllLanguages(ctx context.Context) ([]*Language, error) {
 	return items, nil
 }
 
+const countLanguages = `-- name: CountLanguages :one
+SELECT COUNT(*) FROM language
+`
+
+func (q *Queries) CountLanguages(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLanguages)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLanguage = `-- name: CreateLanguage :exec
 INSERT INTO language (nameof)
 VALUES (?)

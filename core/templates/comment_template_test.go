@@ -1,4 +1,4 @@
-package templates
+package templates_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/core/common"
+	templates "github.com/arran4/goa4web/core/templates"
 )
 
 type commentForTest struct {
@@ -29,7 +30,7 @@ type commentForTest struct {
 func TestCommentTemplateEditing(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	cd := &common.CoreData{}
-	tmpl := GetCompiledSiteTemplates(cd.Funcs(r))
+	tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(r))
 
 	c := commentForTest{}
 	c.Written.Time = time.Now()

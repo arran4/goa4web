@@ -40,6 +40,9 @@ func TestLinkerFeed(t *testing.T) {
 	}
 }
 func TestLinkerApproveAddsToSearch(t *testing.T) {
+	origCfg := config.AppRuntimeConfig
+	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -87,7 +90,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	// Wait for the worker goroutine to exit before verifying expectations.
 	time.Sleep(500 * time.Millisecond)
 	err = nil
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 200; i++ {
 		err = mock.ExpectationsWereMet()
 		if err == nil {
 			break

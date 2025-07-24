@@ -1,4 +1,4 @@
-package templates
+package templates_test
 
 import (
 	"embed"
@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+
+	templates "github.com/arran4/goa4web/core/templates"
 )
 
 //go:embed notifications/*.gotxt email/*.gotxt
@@ -33,23 +35,23 @@ func TestParseGoTxtTemplates(t *testing.T) {
 }
 
 func TestAnnouncementTemplatesExist(t *testing.T) {
-	nt := GetCompiledNotificationTemplates(nil)
+	nt := templates.GetCompiledNotificationTemplates(nil)
 	if nt.Lookup("announcement.gotxt") == nil {
 		t.Fatalf("missing announcement notification template")
 	}
-	et := GetCompiledEmailHtmlTemplates(nil)
+	et := templates.GetCompiledEmailHtmlTemplates(nil)
 	if et.Lookup("announcementEmail.gohtml") == nil {
 		t.Fatalf("missing announcement email html template")
 	}
-	tt := GetCompiledEmailTextTemplates(nil)
+	tt := templates.GetCompiledEmailTextTemplates(nil)
 	if tt.Lookup("announcementEmail.gotxt") == nil {
 		t.Fatalf("missing announcement email text template")
 	}
 }
 
 func TestAllEmailTemplatesComplete(t *testing.T) {
-	htmlT := GetCompiledEmailHtmlTemplates(nil)
-	textT := GetCompiledEmailTextTemplates(nil)
+	htmlT := templates.GetCompiledEmailHtmlTemplates(nil)
+	textT := templates.GetCompiledEmailTextTemplates(nil)
 
 	type trio struct{ html, text, subj bool }
 	m := map[string]*trio{}

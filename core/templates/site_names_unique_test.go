@@ -1,4 +1,4 @@
-package templates
+package templates_test
 
 import (
 	"embed"

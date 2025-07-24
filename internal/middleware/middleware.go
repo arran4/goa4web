@@ -31,7 +31,7 @@ func handleDie(w http.ResponseWriter, message string) {
 // CoreAdderMiddlewareWithDB populates request context with CoreData for
 // templates using the supplied database handle. The verbosity controls optional
 // logging of database pool statistics.
-func CoreAdderMiddlewareWithDB(db *sql.DB, verbosity int) func(http.Handler) http.Handler {
+func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity int) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := core.GetSession(r)
@@ -86,22 +86,22 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, verbosity int) func(http.Handler) htt
 			}
 
 			base := "http://" + r.Host
-			if config.AppRuntimeConfig.HTTPHostname != "" {
-				base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
+			if cfg.HTTPHostname != "" {
+				base = strings.TrimRight(cfg.HTTPHostname, "/")
 			}
 			cd := common.NewCoreData(r.Context(), queries,
 				common.WithImageURLMapper(imagesign.MapURL),
 				common.WithSession(session),
-				common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)),
+				common.WithEmailProvider(email.ProviderFromConfig(cfg)),
 				common.WithAbsoluteURLBase(base),
-				common.WithConfig(config.AppRuntimeConfig))
+				common.WithConfig(cfg))
 			cd.UserID = uid
 			_ = cd.UserRoles()
 
 			idx := nav.IndexItems()
 			cd.IndexItems = idx
 			cd.Title = "Arran's Site"
-			cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
+			cd.FeedsEnabled = cfg.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 			if uid != 0 && handlers.NotificationsEnabled() {
 				cd.NotificationCount = int32(cd.UnreadNotificationCount())

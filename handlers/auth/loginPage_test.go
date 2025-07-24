@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
@@ -115,5 +116,45 @@ func TestLoginPageHiddenFields(t *testing.T) {
 	}
 	if !strings.Contains(body, "name=\"data\" value=\"x\"") {
 		t.Fatalf("missing data field: %q", body)
+	}
+}
+
+func TestLoginAction_PendingResetPrompt(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	q := dbpkg.New(db)
+	pwHash, alg, _ := HashPassword("newpw")
+	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "e", "oldhash", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
+	resetRows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
+		AddRow(2, 1, pwHash, alg, "code", time.Now(), nil)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnRows(resetRows)
+
+	form := url.Values{"username": {"bob"}, "password": {"newpw"}}
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.RemoteAddr = "1.2.3.4:1111"
+
+	cd := common.NewCoreData(req.Context(), q)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(loginTask)(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "name=\"id\" value=\"2\"") {
+		t.Fatalf("missing id field: %q", body)
 	}
 }

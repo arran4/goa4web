@@ -1,6 +1,13 @@
 {{define "header"}}
-<strong>{{cd.Title}}</strong>
-{{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<br>
-Logged in as {{ $u.Username.String }}
-{{ end }}{{ end }}
+<header class="navbar">
+    <div class="title"><strong>{{cd.Title}}</strong></div>
+    <div class="user-links">
+        {{ if cd.UserID }}
+            {{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<span class="username">{{ $u.Username.String }}</span>{{ end }}{{ end }}
+            <a href="/usr/logout">Logout</a>
+        {{ else }}
+            <a href="/login">Login</a>
+        {{ end }}
+    </div>
+</header>
 {{end}}

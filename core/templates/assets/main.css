@@ -10,6 +10,28 @@ body {
         flex: 1 1 auto;
 }
 
+.navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5em 1em;
+        background-color: #FFF6E0;
+}
+
+.layout {
+        display: flex;
+        flex: 1;
+}
+
+.sidebar {
+        width: 200px;
+        padding-right: 1em;
+}
+
+.content {
+        flex: 1;
+}
+
 .site-footer {
         font-size: 0.7em;
         color: #666;

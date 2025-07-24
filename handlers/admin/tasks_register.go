@@ -10,6 +10,7 @@ func RegisterTasks() []tasks.NamedTask {
 		resendQueueTask,
 		deleteQueueTask,
 		saveTemplateTask,
+		deleteTemplateTask,
 		testTemplateTask,
 		deleteDLQTask,
 		markReadTask,

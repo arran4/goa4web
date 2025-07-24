@@ -25,9 +25,10 @@ func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	name := r.PostFormValue("name")
 	body := r.PostFormValue("body")
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: "updateEmail", Body: body}); err != nil {
+	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: name, Body: body}); err != nil {
 		return fmt.Errorf("db save template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -35,10 +36,10 @@ func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["Template"] = "updateEmail"
+			evt.Data["Template"] = name
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: "/admin/email/template"}
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/email/template?name=" + name}
 }
 
 // AuditRecord summarises saving the update email template.

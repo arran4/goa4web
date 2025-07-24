@@ -30,6 +30,11 @@ func TestTemplateOverride(t *testing.T) {
 		t.Fatalf("got %q", body)
 	}
 
+	mock.ExpectExec("DELETE FROM template_overrides").WithArgs("t").WillReturnResult(sqlmock.NewResult(1, 1))
+	if err := q.DeleteTemplateOverride(context.Background(), "t"); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)
 	}

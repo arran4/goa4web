@@ -58,6 +58,9 @@ INSERT INTO template_overrides (name, body)
 VALUES (?, ?)
 ON DUPLICATE KEY UPDATE body = VALUES(body);
 
+-- name: DeleteTemplateOverride :exec
+DELETE FROM template_overrides WHERE name = ?;
+
 -- name: ListUserInfo :many
 SELECT u.idusers, u.username,
        (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,

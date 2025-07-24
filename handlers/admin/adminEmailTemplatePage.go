@@ -2,63 +2,120 @@ package admin
 
 import (
 	"bytes"
-	"context"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
-	"text/template"
-
-	"github.com/arran4/goa4web/core/common"
-
-	"github.com/arran4/goa4web/handlers"
+	"sort"
+	"strings"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers"
+	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func getUpdateEmailText(ctx context.Context) string {
-	if cd, ok := ctx.Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
-		if q := cd.Queries(); q != nil {
-			if body, err := q.GetTemplateOverride(ctx, "updateEmail.gotxt"); err == nil && body != "" {
-				return body
-			}
-		}
-	}
-	tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "updateEmail.gotxt", nil); err != nil {
-		return ""
-	}
-	return buf.String()
+type taskTemplateInfo struct {
+	Task          string
+	SelfEmail     []string
+	SelfInternal  string
+	SubEmail      []string
+	SubInternal   string
+	AdminEmail    []string
+	AdminInternal string
 }
 
-// AdminEmailTemplatePage allows administrators to edit the update email template.
-func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
-	b := getUpdateEmailText(r.Context())
-
-	var preview string
-	tmpl, err := template.New("email").Parse(b)
-	if err == nil {
-		var buf bytes.Buffer
-		tmpl.Execute(&buf, struct{ To, From, Subject, URL string }{
-			To:      "test@example.com",
-			From:    config.AppRuntimeConfig.EmailFrom,
-			Subject: "Website Update Notification",
-			URL:     "http://example.com/page",
-		})
-		preview = buf.String()
+func gatherTaskTemplateInfos() []taskTemplateInfo {
+	reg := tasks.Registered()
+	infos := make([]taskTemplateInfo, 0, len(reg))
+	for _, t := range reg {
+		info := taskTemplateInfo{Task: t.Name()}
+		if tp, ok := t.(notif.SelfNotificationTemplateProvider); ok {
+			if et := tp.SelfEmailTemplate(); et != nil {
+				info.SelfEmail = []string{et.Text, et.HTML, et.Subject}
+			}
+			if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
+				info.SelfInternal = *nt
+			}
+		}
+		if tp, ok := t.(notif.SubscribersNotificationTemplateProvider); ok {
+			if et := tp.SubscribedEmailTemplate(); et != nil {
+				info.SubEmail = []string{et.Text, et.HTML, et.Subject}
+			}
+			if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
+				info.SubInternal = *nt
+			}
+		}
+		if tp, ok := t.(notif.AdminEmailTemplateProvider); ok {
+			if et := tp.AdminEmailTemplate(); et != nil {
+				info.AdminEmail = []string{et.Text, et.HTML, et.Subject}
+			}
+			if nt := tp.AdminInternalNotificationTemplate(); nt != nil {
+				info.AdminInternal = *nt
+			}
+		}
+		infos = append(infos, info)
 	}
+	sort.Slice(infos, func(i, j int) bool { return infos[i].Task < infos[j].Task })
+	return infos
+}
 
+func defaultTemplate(name string) string {
+	var buf bytes.Buffer
+	if strings.HasSuffix(name, ".gohtml") {
+		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData()); err == nil {
+			return buf.String()
+		}
+	} else {
+		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData()); err == nil {
+			return buf.String()
+		}
+		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{})
+		buf.Reset()
+		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData()); err == nil {
+			return buf.String()
+		}
+	}
+	return ""
+}
+
+// AdminEmailTemplatePage provides template listing and editing.
+func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if name == "" {
+		data := struct {
+			*common.CoreData
+			Infos []taskTemplateInfo
+		}{cd, gatherTaskTemplateInfos()}
+		handlers.TemplateHandler(w, r, "emailTemplateListPage.gohtml", data)
+		return
+	}
+	q := cd.Queries()
+	body, _ := q.GetTemplateOverride(r.Context(), name)
 	data := struct {
 		*common.CoreData
+		Name    string
 		Body    string
-		Preview string
+		Default string
 		Error   string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Body:     b,
-		Preview:  preview,
+		CoreData: cd,
+		Name:     name,
+		Body:     body,
+		Default:  defaultTemplate(name),
 		Error:    r.URL.Query().Get("error"),
 	}
+	handlers.TemplateHandler(w, r, "emailTemplateEditPage.gohtml", data)
+}
 
-	handlers.TemplateHandler(w, r, "emailTemplatePage.gohtml", data)
+func sampleEmailData() map[string]interface{} {
+	return map[string]interface{}{
+		"URL":            "http://example.com",
+		"UnsubscribeUrl": "http://example.com/unsub",
+		"From":           config.AppRuntimeConfig.EmailFrom,
+		"To":             "user@example.com",
+	}
 }

@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin</a>]<br />
+<table border="1">
+<tr><th>Task</th><th>Self Email</th><th>Self Internal</th><th>Subscribed Email</th><th>Subscribed Internal</th><th>Admin Email</th><th>Admin Internal</th></tr>
+{{- range .Infos }}
+<tr>
+    <td>{{ .Task }}</td>
+    <td>{{ range $i, $t := .SelfEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
+    <td>{{ if .SelfInternal }}<a href="/admin/email/template?name={{ .SelfInternal }}">{{ .SelfInternal }}</a>{{ end }}</td>
+    <td>{{ range $i, $t := .SubEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
+    <td>{{ if .SubInternal }}<a href="/admin/email/template?name={{ .SubInternal }}">{{ .SubInternal }}</a>{{ end }}</td>
+    <td>{{ range $i, $t := .AdminEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
+    <td>{{ if .AdminInternal }}<a href="/admin/email/template?name={{ .AdminInternal }}">{{ .AdminInternal }}</a>{{ end }}</td>
+</tr>
+{{- end }}
+</table>
+{{ template "tail" $ }}

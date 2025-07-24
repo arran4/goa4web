@@ -1,13 +1,14 @@
 {{ template "head" $ }}
 {{- if $.Error }}
-    <p style="color:red;">{{ $.Error }}</p>
+<p style="color:red;">{{ $.Error }}</p>
 {{- end }}
 <form method="post">
     {{ csrfField }}
+    <input type="hidden" name="name" value="{{ $.Name }}">
     <textarea name="body" cols="60" rows="15">{{ $.Body }}</textarea><br>
     <input type="submit" name="task" value="Update">
-    <input type="submit" name="task" value="Test mail">
+    <input type="submit" name="task" value="Delete">
 </form>
-<h3>Preview</h3>
-<pre>{{ $.Preview }}</pre>
+<h3>Default</h3>
+<pre>{{ $.Default }}</pre>
 {{ template "tail" $ }}

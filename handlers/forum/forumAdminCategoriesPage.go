@@ -39,7 +39,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	handlers.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forumAdminCategoriesPage.gohtml", data)
 }
 
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {

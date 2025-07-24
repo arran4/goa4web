@@ -55,5 +55,5 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		data.LinkerCategories = rows
 	}
 
-	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "siteAdminCategoriesPage.gohtml", data)
 }

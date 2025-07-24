@@ -20,4 +20,4 @@ func (Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byt
 func providerFromConfig(config.RuntimeConfig) email.Provider { return Provider{} }
 
 // Register registers the log provider factory.
-func Register() { email.RegisterProvider("log", providerFromConfig) }
+func Register(r *email.Registry) { r.RegisterProvider("log", providerFromConfig) }

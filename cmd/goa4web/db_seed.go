@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/arran4/goa4web/internal/dbdrivers"
 )
 
 // dbSeedCmd implements "db seed".
@@ -36,7 +34,7 @@ func (c *dbSeedCmd) Run() error {
 	if conn == "" {
 		return fmt.Errorf("connection string required")
 	}
-	connector, err := dbdrivers.Connector(cfg.DBDriver, conn)
+	connector, err := c.rootCmd.dbReg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return err
 	}

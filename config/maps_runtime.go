@@ -2,6 +2,8 @@ package config
 
 import (
 	"strconv"
+
+	"github.com/arran4/goa4web/internal/dbdrivers"
 )
 
 // DefaultMap returns a map of environment variable names to their
@@ -108,25 +110,25 @@ func NameMapWithOptions(sopts []StringOption, iopts []IntOption, bopts []BoolOpt
 
 // ExtendedUsageMap returns extended usage text indexed by environment variable name.
 // Errors while rendering the usage templates are ignored.
-func ExtendedUsageMap() map[string]string {
+func ExtendedUsageMap(reg *dbdrivers.Registry) map[string]string {
 	m := make(map[string]string)
 	for _, o := range StringOptions {
 		if o.ExtendedUsage != "" {
-			if txt, err := ExtendedUsage(o.ExtendedUsage); err == nil {
+			if txt, err := ExtendedUsage(o.ExtendedUsage, reg); err == nil {
 				m[o.Env] = txt
 			}
 		}
 	}
 	for _, o := range IntOptions {
 		if o.ExtendedUsage != "" {
-			if txt, err := ExtendedUsage(o.ExtendedUsage); err == nil {
+			if txt, err := ExtendedUsage(o.ExtendedUsage, reg); err == nil {
 				m[o.Env] = txt
 			}
 		}
 	}
 	for _, o := range BoolOptions {
 		if o.ExtendedUsage != "" {
-			if txt, err := ExtendedUsage(o.ExtendedUsage); err == nil {
+			if txt, err := ExtendedUsage(o.ExtendedUsage, reg); err == nil {
 				m[o.Env] = txt
 			}
 		}

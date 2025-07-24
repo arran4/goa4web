@@ -16,6 +16,7 @@ import (
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
 	email "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -46,7 +47,7 @@ func init() {
 
 // RunWithConfig starts the application using the provided configuration and
 // session secret. The context controls the lifetime of the HTTP server.
-func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string) error {
+func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string, dbReg *dbdrivers.Registry, emailReg *email.Registry, dlqReg *dlq.Registry) error {
 	log.Printf("application version %s starting", version)
 	adminhandlers.StartTime = time.Now()
 	store = sessions.NewCookieStore([]byte(sessionSecret))
@@ -59,7 +60,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	if err := PerformChecks(cfg); err != nil {
+	if err := PerformChecks(cfg, dbReg); err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
 
@@ -111,12 +112,12 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	adminhandlers.DBPool = dbPool
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
-	emailProvider := email.ProviderFromConfig(cfg)
+	emailProvider := emailReg.ProviderFromConfig(cfg)
 	if config.EmailSendingEnabled() && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
 	}
 
-	dlqProvider := dlq.ProviderFromConfig(cfg, dbpkg.New(dbPool))
+	dlqProvider := dlqReg.ProviderFromConfig(cfg, dbpkg.New(dbPool))
 
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()

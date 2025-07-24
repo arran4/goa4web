@@ -51,7 +51,7 @@ func (c *serveCmd) Run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := app.RunWithConfig(ctx, cfg, secret, signKey); err != nil {
+       if err := app.RunWithConfig(ctx, cfg, secret, signKey, c.rootCmd.dbReg, c.rootCmd.emailReg, c.rootCmd.dlqReg); err != nil {
 		return err
 	}
 	return nil

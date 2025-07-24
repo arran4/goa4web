@@ -155,4 +155,4 @@ func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
 }
 
 // Register registers the SMTP provider factory.
-func Register() { email.RegisterProvider("smtp", providerFromConfig) }
+func Register(r *email.Registry) { r.RegisterProvider("smtp", providerFromConfig) }

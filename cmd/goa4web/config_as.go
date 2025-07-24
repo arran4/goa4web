@@ -46,7 +46,7 @@ func (c *configAsCmd) asEnvFile() error {
 	}
 	sort.Strings(keys)
 	usage := config.UsageMap()
-	ext := config.ExtendedUsageMap()
+	ext := config.ExtendedUsageMap(c.rootCmd.dbReg)
 	ex := config.ExamplesMap()
 	for _, k := range keys {
 		u := usage[k]
@@ -85,7 +85,7 @@ func (c *configAsCmd) asEnv() error {
 	}
 	sort.Strings(keys)
 	usage := config.UsageMap()
-	ext := config.ExtendedUsageMap()
+	ext := config.ExtendedUsageMap(c.rootCmd.dbReg)
 	ex := config.ExamplesMap()
 	for _, k := range keys {
 		u := usage[k]

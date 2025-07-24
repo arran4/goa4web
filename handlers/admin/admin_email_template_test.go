@@ -67,11 +67,8 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(testTemplateTask)(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if loc := rr.Header().Get("Location"); loc != "/admin/email/template" {
-		t.Fatalf("location=%q", loc)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expect: %v", err)

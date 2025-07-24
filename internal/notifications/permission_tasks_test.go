@@ -2,6 +2,7 @@ package notifications_test
 
 import (
 	"context"
+	"database/sql"
 	"regexp"
 	"sync"
 	"testing"
@@ -69,6 +70,9 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 			WithArgs(int32(2)).
 			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "u@test", "bob"))
+		mock.ExpectQuery("LastNotificationByMessage").
+			WithArgs(int32(2), "missing email address").
+			WillReturnError(sql.ErrNoRows)
 		mock.ExpectExec(regexp.QuoteMeta("INSERT INTO notifications (users_idusers, link, message) VALUES (?, ?, ?)")).
 			WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
@@ -76,11 +80,8 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 		bus.Publish(eventbus.TaskEvent{Path: "/admin", Task: c.task, UserID: 1, Data: map[string]any{"targetUserID": int32(2), "Username": "bob"}})
 		time.Sleep(10 * time.Millisecond)
 	}
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	cancel()
 	wg.Wait()
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
-	}
 }

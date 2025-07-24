@@ -19,18 +19,18 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 		Categories          []*db.WritingCategory
 		CategoryBreadcrumbs []*db.WritingCategory
 		EditingCategoryId   int32
-		IsAdmin             bool
-		IsWriter            bool
-		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
-		WritingCategoryID   int32
+		// HasContentWriterRole shows if the viewer can write content.
+		HasContentWriterRole bool
+		Abstracts            []*db.GetPublicWritingsInCategoryForUserRow
+		WritingCategoryID    int32
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
-	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
+	data.HasContentWriterRole = data.CoreData.HasContentWriterRole()
+
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
 	data.WritingCategoryID = 0

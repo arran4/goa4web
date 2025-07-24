@@ -24,7 +24,6 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		NextLink            string
 		PrevLink            string
 		PageSize            int
-		IsAdmin             bool
 		CategoryBreadcrumbs []*db.WritingCategory
 		CategoryId          int32
 	}
@@ -33,7 +32,6 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:     r.URL.Query().Get("search"),
 		PageSize:   handlers.GetPageSize(r),
-		IsAdmin:    false,
 		CategoryId: 0,
 	}
 

@@ -44,7 +44,6 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ShowEdit     bool
 		Editing      bool
 		Announcement *db.SiteAnnouncement
-		IsAdmin      bool
 	}
 	type Data struct {
 		*common.CoreData
@@ -192,7 +191,6 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ShowEdit:     canEditNewsPost(data.CoreData, post.Idsitenews),
 		Editing:      editingId == int(post.Idsitenews),
 		Announcement: ann,
-		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,
 	}
 
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)

@@ -24,17 +24,17 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		EditingCategoryId   int32
 		CategoryId          int32
 		WritingCategoryID   int32
-		IsAdmin             bool
-		IsWriter            bool
-		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
+		// HasContentWriterRole shows if the viewer can write content.
+		HasContentWriterRole bool
+		Abstracts            []*db.GetPublicWritingsInCategoryForUserRow
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 
-	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
-	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
+	data.HasContentWriterRole = data.CoreData.HasContentWriterRole()
+
 	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	data.EditingCategoryId = int32(editID)
 

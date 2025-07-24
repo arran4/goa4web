@@ -47,7 +47,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		Thread              *db.GetThreadLastPosterAndPermsRow
 		Comments            []*CommentPlus
 		IsReplyable         bool
-		IsAdmin             bool
 		Categories          []*db.WritingCategory
 		CategoryId          int32
 		Offset              int32

@@ -13,6 +13,8 @@ func RegisterTasks() []tasks.NamedTask {
 		testTemplateTask,
 		deleteDLQTask,
 		markReadTask,
+		markUnreadTask,
+		deleteNotificationTask,
 		purgeNotificationsTask,
 		sendNotificationTask,
 		addIPBanTask,

@@ -44,6 +44,8 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/dlq", handlers.TaskHandler(deleteDLQTask)).Methods("POST").MatcherFunc(deleteDLQTask.Matcher())
 	ar.HandleFunc("/notifications", AdminNotificationsPage).Methods("GET")
 	ar.HandleFunc("/notifications", handlers.TaskHandler(markReadTask)).Methods("POST").MatcherFunc(markReadTask.Matcher())
+	ar.HandleFunc("/notifications", handlers.TaskHandler(markUnreadTask)).Methods("POST").MatcherFunc(markUnreadTask.Matcher())
+	ar.HandleFunc("/notifications", handlers.TaskHandler(deleteNotificationTask)).Methods("POST").MatcherFunc(deleteNotificationTask.Matcher())
 	ar.HandleFunc("/notifications", handlers.TaskHandler(purgeNotificationsTask)).Methods("POST").MatcherFunc(purgeNotificationsTask.Matcher())
 	ar.HandleFunc("/notifications", handlers.TaskHandler(sendNotificationTask)).Methods("POST").MatcherFunc(sendNotificationTask.Matcher())
 	ar.HandleFunc("/requests", AdminRequestQueuePage).Methods("GET")

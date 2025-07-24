@@ -200,6 +200,12 @@ const (
 	// TaskDismiss marks a notification as read.
 	TaskDismiss tasks.TaskString = "Dismiss"
 
+	// TaskMarkUnread marks a notification as unread.
+	TaskMarkUnread tasks.TaskString = "Mark unread"
+
+	// TaskDeleteNotification deletes selected notifications.
+	TaskDeleteNotification tasks.TaskString = "Delete notification"
+
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
 

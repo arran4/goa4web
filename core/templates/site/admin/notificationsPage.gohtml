@@ -17,7 +17,9 @@
 <form method="post">
     {{ csrfField }}
 <table border="1">
-    <tr><th>Select</th><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
+    <tr><th><label><input type="checkbox" id="select-all"> All</label>
+        <button type="button" id="select-none">None</button>
+        <button type="button" id="select-invert">Invert</button></th><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
     {{- range .Notifications }}
     <tr>
         <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
@@ -30,6 +32,52 @@
     {{- end }}
 </table>
 <input type="submit" name="task" value="Dismiss">
-<input type="submit" name="task" value="Purge">
+<input type="submit" name="task" value="Mark unread">
+<input type="submit" name="task" value="Delete notification">
+<button type="submit" name="task" value="Purge">Purge read notifications</button>
 </form>
+<script>
+(() => {
+    const selectAll = document.getElementById('select-all');
+    const selectNone = document.getElementById('select-none');
+    const selectInvert = document.getElementById('select-invert');
+    const boxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="id"]'));
+    let last;
+
+    function updateAll() {
+        selectAll.checked = boxes.every(cb => cb.checked);
+    }
+
+    selectAll.addEventListener('change', () => {
+        boxes.forEach(cb => { cb.checked = selectAll.checked; });
+        updateAll();
+    });
+
+    selectNone.addEventListener('click', () => {
+        boxes.forEach(cb => { cb.checked = false; });
+        updateAll();
+    });
+
+    selectInvert.addEventListener('click', () => {
+        boxes.forEach(cb => { cb.checked = !cb.checked; });
+        updateAll();
+    });
+
+    boxes.forEach(cb => {
+        cb.addEventListener('click', e => {
+            if (last && e.shiftKey) {
+                const start = boxes.indexOf(last);
+                const end = boxes.indexOf(cb);
+                const [s, eIdx] = start < end ? [start, end] : [end, start];
+                for (let i = s; i <= eIdx; i++) {
+                    boxes[i].checked = cb.checked;
+                }
+            }
+            last = cb;
+            updateAll();
+        });
+        cb.addEventListener('change', updateAll);
+    });
+})();
+</script>
 {{ template "tail" $ }}

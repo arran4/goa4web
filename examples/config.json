@@ -42,6 +42,7 @@
   "PAGE_SIZE_MIN": "5",
   "PASSWORD_RESET_EXPIRY_HOURS": "24",
   "SENDGRID_KEY": "",
+  "SESSION_NAME": "my-session",
   "SESSION_SECRET": "",
   "SESSION_SECRET_FILE": ".session_secret",
   "SMTP_AUTH": "plain",

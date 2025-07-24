@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"github.com/arran4/goa4web/core/common"
-
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -41,4 +41,6 @@ func adminUsersPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		return rows[i].Username.String < rows[j].Username.String
 	})
 	data.Rows = rows
+
+	handlers.TemplateHandler(w, r, "usersPermissionsPage.gohtml", data)
 }

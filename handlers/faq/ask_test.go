@@ -69,13 +69,12 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	}
 	defer dbconn.Close()
 
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.AdminEmails = "a@test"
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.AppRuntimeConfig
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.AdminEmails = "a@test"
+	cfg.EmailFrom = "from@example.com"
+	cfg.NotificationsEnabled = true
 
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO faq (question, users_idusers, language_idlanguage) VALUES (?, ?, ?)")).
 		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1)).
@@ -98,7 +97,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	bus := eventbus.NewBus()
 	q := db.New(dbconn)
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg))
 	cd.UserID = 1
 	cd.SetEvent(evt)
 

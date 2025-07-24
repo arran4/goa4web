@@ -16,7 +16,6 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
 
@@ -32,7 +31,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
 	categoryRows, err := queries.GetAllLinkerCategories(r.Context())

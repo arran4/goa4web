@@ -15,7 +15,6 @@ import (
 	blogs "github.com/arran4/goa4web/handlers/blogs"
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
 
@@ -52,7 +51,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           cd,
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
 	languageRows, err := cd.Languages()

@@ -31,3 +31,10 @@ UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?;
 
 -- name: GetPendingEmailErrorCount :one
 SELECT error_count FROM pending_emails WHERE id = ?;
+
+-- name: ListSentEmails :many
+SELECT id, to_user_id, body, error_count, created_at, sent_at, direct_email
+FROM pending_emails
+WHERE sent_at IS NOT NULL
+ORDER BY sent_at DESC
+LIMIT ? OFFSET ?;

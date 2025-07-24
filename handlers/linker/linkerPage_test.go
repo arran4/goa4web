@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -69,7 +70,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	cd := common.NewCoreData(req.Context(), queries)
+	cd := common.NewCoreData(req.Context(), queries, common.WithConfig(config.AppRuntimeConfig))
 	cd.SetEvent(evt)
 	cd.SetEventTask(ApproveTask)
 	ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -84,7 +85,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	bus.Shutdown(context.Background())
 	cancel()
 	// Wait for the worker goroutine to exit before verifying expectations.
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	err = nil
 	for i := 0; i < 20; i++ {
 		err = mock.ExpectationsWereMet()

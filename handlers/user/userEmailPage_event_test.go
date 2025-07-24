@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -44,7 +45,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt), common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -87,7 +88,7 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt), common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = 1
 
 	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
@@ -150,7 +151,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt))
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt), common.WithConfig(config.AppRuntimeConfig))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	req = req.WithContext(ctx)

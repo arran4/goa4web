@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -25,7 +26,7 @@ func TestWriterListPage_List(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/writings/writers", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -55,7 +56,7 @@ func TestWriterListPage_Search(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/writings/writers?search=bob", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

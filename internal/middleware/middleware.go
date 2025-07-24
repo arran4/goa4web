@@ -93,7 +93,8 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, verbosity int) func(http.Handler) htt
 				common.WithImageURLMapper(imagesign.MapURL),
 				common.WithSession(session),
 				common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)),
-				common.WithAbsoluteURLBase(base))
+				common.WithAbsoluteURLBase(base),
+				common.WithConfig(config.AppRuntimeConfig))
 			cd.UserID = uid
 			_ = cd.UserRoles()
 

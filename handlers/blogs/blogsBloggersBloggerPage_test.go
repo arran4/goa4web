@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -27,7 +28,7 @@ func TestBloggersBloggerPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/blogs/bloggers/blogger", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

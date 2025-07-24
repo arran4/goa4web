@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -30,7 +31,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := common.NewCoreData(r.Context(), queries)
+	cd := common.NewCoreData(r.Context(), queries, common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = int32(uid)
 
 	user, err := cd.CurrentUser()

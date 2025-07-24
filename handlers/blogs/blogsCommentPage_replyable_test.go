@@ -14,6 +14,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -30,7 +32,7 @@ func setupCommentRequest(t *testing.T, queries *db.Queries, store *sessions.Cook
 		req.AddCookie(c)
 	}
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), common.WithConfig(config.AppRuntimeConfig))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess

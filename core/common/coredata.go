@@ -56,6 +56,7 @@ type CoreData struct {
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode         bool
 	NotificationCount int32
+	Config            config.RuntimeConfig
 	a4codeMapper      func(tag, val string) string
 
 	session *sessions.Session
@@ -143,9 +144,19 @@ func WithPreference(p *db.Preference) CoreOption {
 	return func(cd *CoreData) { cd.pref.set(p) }
 }
 
+// WithConfig sets the runtime config for this CoreData.
+func WithConfig(cfg config.RuntimeConfig) CoreOption {
+	return func(cd *CoreData) { cd.Config = cfg }
+}
+
 // NewCoreData creates a CoreData with context and queries applied.
 func NewCoreData(ctx context.Context, q *db.Queries, opts ...CoreOption) *CoreData {
-	cd := &CoreData{ctx: ctx, queries: q, newsAnnouncements: map[int32]*lazyValue[*db.SiteAnnouncement]{}}
+	cd := &CoreData{
+		ctx:               ctx,
+		queries:           q,
+		newsAnnouncements: map[int32]*lazyValue[*db.SiteAnnouncement]{},
+		Config:            config.AppRuntimeConfig,
+	}
 	for _, o := range opts {
 		o(cd)
 	}
@@ -224,17 +235,23 @@ func ContainsItem(items []IndexItem, name string) bool {
 
 func pageSize(r *http.Request) int {
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
-	if cd == nil {
-		size := config.AppRuntimeConfig.PageSizeDefault
-		if size < config.AppRuntimeConfig.PageSizeMin {
-			size = config.AppRuntimeConfig.PageSizeMin
-		}
-		if size > config.AppRuntimeConfig.PageSizeMax {
-			size = config.AppRuntimeConfig.PageSizeMax
-		}
-		return size
+	cfg := config.AppRuntimeConfig
+	if cd != nil {
+		cfg = cd.Config
 	}
-	return cd.PageSize()
+	size := cfg.PageSizeDefault
+	if cd != nil {
+		if pref, err := cd.Preference(); err == nil && pref != nil && pref.PageSize != 0 {
+			size = int(pref.PageSize)
+		}
+	}
+	if size < cfg.PageSizeMin {
+		size = cfg.PageSizeMin
+	}
+	if size > cfg.PageSizeMax {
+		size = cfg.PageSizeMax
+	}
+	return size
 }
 
 // UserRoles returns the user roles loaded lazily.
@@ -348,15 +365,15 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 
 // PageSize returns the preferred page size within configured limits.
 func (cd *CoreData) PageSize() int {
-	size := config.AppRuntimeConfig.PageSizeDefault
+	size := cd.Config.PageSizeDefault
 	if pref, err := cd.Preference(); err == nil && pref != nil && pref.PageSize != 0 {
 		size = int(pref.PageSize)
 	}
-	if size < config.AppRuntimeConfig.PageSizeMin {
-		size = config.AppRuntimeConfig.PageSizeMin
+	if size < cd.Config.PageSizeMin {
+		size = cd.Config.PageSizeMin
 	}
-	if size > config.AppRuntimeConfig.PageSizeMax {
-		size = config.AppRuntimeConfig.PageSizeMax
+	if size > cd.Config.PageSizeMax {
+		size = cd.Config.PageSizeMax
 	}
 	return size
 }

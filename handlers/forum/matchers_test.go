@@ -11,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -37,7 +38,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -85,7 +86,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -122,7 +123,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

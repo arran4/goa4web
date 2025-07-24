@@ -98,7 +98,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	bus := eventbus.NewBus()
 	q := db.New(dbconn)
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = 1
 	cd.SetEvent(evt)
 

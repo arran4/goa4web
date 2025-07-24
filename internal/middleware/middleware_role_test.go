@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/google/go-cmp/cmp"
@@ -34,7 +35,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -71,7 +72,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

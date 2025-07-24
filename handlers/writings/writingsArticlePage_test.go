@@ -16,6 +16,8 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 
+	"github.com/arran4/goa4web/config"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -50,7 +52,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	}
 
 	q := db.New(dbconn)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

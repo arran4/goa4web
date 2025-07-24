@@ -4,13 +4,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 )
 
 func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
-	cd := common.NewCoreData(req.Context(), nil)
+	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
 	cd.SetRoles([]string{"administrator"})
 	cd.AdminMode = true
 	CustomBlogIndex(cd, req)
@@ -21,7 +22,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("admin should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), nil)
+	cd = common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
 	cd.SetRoles([]string{"content writer"})
 	CustomBlogIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") {
@@ -31,7 +32,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("content writer should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), nil)
+	cd = common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
 	cd.SetRoles([]string{"anonymous"})
 	CustomBlogIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") || common.ContainsItem(cd.CustomIndexItems, "Write blog") {

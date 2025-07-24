@@ -39,10 +39,11 @@ import (
 
 var version = "dev"
 
-func init() {
+func registerTasks(reg *tasks.Registry) {
 	register := func(ts []tasks.NamedTask) {
 		for _, t := range ts {
 			tasks.Register(t)
+			reg.Register(t)
 		}
 	}
 	register(adminhandlers.RegisterTasks())
@@ -86,6 +87,7 @@ type rootCmd struct {
 	ConfigFile string
 	db         *sql.DB
 	Verbosity  int
+	tasksReg   *tasks.Registry
 	dbReg      *dbdrivers.Registry
 	emailReg   *email.Registry
 	dlqReg     *dlq.Registry
@@ -128,10 +130,12 @@ func (r *rootCmd) Verbosef(format string, args ...any) {
 
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{
+		tasksReg: tasks.NewRegistry(),
 		dbReg:    dbdrivers.NewRegistry(),
 		emailReg: email.NewRegistry(),
 		dlqReg:   dlq.NewRegistry(),
 	}
+	registerTasks(r.tasksReg)
 	emaildefaults.Register(r.emailReg)
 	dlqreg.Register(r.dlqReg)
 	dbdefaults.Register(r.dbReg)

@@ -94,7 +94,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		if ue.VerifiedAt.Valid {
-			handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
+			handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{}{})
 			return
 		}
 		if err := queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID}); err != nil {

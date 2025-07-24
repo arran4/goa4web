@@ -76,9 +76,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 				if err := session.Save(r, w); err != nil {
 					log.Printf("save session: %v", err)
 				}
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					handlers.TemplateHandler(w, r, "passwordVerifyPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
-				})
+				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", struct{}{})
 			}
 		} else {
 			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {

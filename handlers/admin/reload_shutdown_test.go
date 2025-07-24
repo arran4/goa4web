@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 )
@@ -37,5 +39,43 @@ func TestAdminShutdownPage_Unauthorized(t *testing.T) {
 
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
+	}
+}
+
+func TestAdminReloadRoute_Unauthorized(t *testing.T) {
+	r := mux.NewRouter()
+	ar := r.PathPrefix("/admin").Subrouter()
+	RegisterRoutes(ar)
+
+	req := httptest.NewRequest("POST", "/admin/reload", nil)
+	cd := common.NewCoreData(req.Context(), nil)
+	cd.SetRoles([]string{"anonymous"})
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected %d got %d", http.StatusNotFound, rr.Code)
+	}
+}
+
+func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
+	r := mux.NewRouter()
+	ar := r.PathPrefix("/admin").Subrouter()
+	RegisterRoutes(ar)
+
+	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
+	cd := common.NewCoreData(req.Context(), nil)
+	cd.SetRoles([]string{"anonymous"})
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected %d got %d", http.StatusNotFound, rr.Code)
 	}
 }

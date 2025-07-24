@@ -15,9 +15,9 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-// RequireThreadAndTopic loads the thread and topic specified in the URL and
-// verifies that they belong together before passing control to the next
-// handler. The loaded rows are stored on the request context.
+// RequireThreadAndTopic loads the thread specified in the URL and caches the
+// associated topic on CoreData. Both records are accessible through CoreData
+// for subsequent handlers.
 func RequireThreadAndTopic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -54,11 +54,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		topicRow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-			ViewerID:      uid,
-			Idforumtopic:  threadRow.ForumtopicIdforumtopic,
-			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
+		topicRow, err := cd.ForumTopicByID(threadRow.ForumtopicIdforumtopic)
 		if err != nil {
 			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic topic uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
@@ -74,9 +70,6 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		cd.CacheForumThread(int32(threadID), threadRow)
-		cd.CacheForumTopic(threadRow.ForumtopicIdforumtopic, topicRow)
-
 		cd.SetCurrentThreadAndTopic(int32(threadID), threadRow.ForumtopicIdforumtopic)
 		next.ServeHTTP(w, r)
 	})

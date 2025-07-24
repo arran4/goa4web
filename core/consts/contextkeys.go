@@ -9,6 +9,4 @@ const (
 	KeyCoreData ContextKey = "coreData"
 	// KeyBlogEntry holds a fetched blog entry row.
 	KeyBlogEntry ContextKey = "blogEntry"
-	// KeyNewsPost holds the news post row.
-	KeyNewsPost ContextKey = "newsPost"
 )

@@ -136,8 +136,10 @@ func (n *Notifier) queueEmail(ctx context.Context, userID *int32, direct bool, m
 		return err
 	}
 	evt := eventbus.EmailQueueEvent{Time: time.Now()}
-	if err := eventbus.DefaultBus.Publish(evt); err != nil && err != eventbus.ErrBusClosed {
-		log.Printf("publish email queue event: %v", err)
+	if n.Bus != nil {
+		if err := n.Bus.Publish(evt); err != nil && err != eventbus.ErrBusClosed {
+			log.Printf("publish email queue event: %v", err)
+		}
 	}
 	return nil
 }

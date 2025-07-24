@@ -21,11 +21,16 @@ import (
 	routerpkg "github.com/arran4/goa4web/internal/router"
 )
 
+var wsBus *eventbus.Bus
+
 // NotificationsHandler provides a websocket endpoint streaming bus events.
 type NotificationsHandler struct {
 	Bus      *eventbus.Bus      // event source
 	Upgrader websocket.Upgrader // websocket upgrader
 }
+
+// SetBus sets the event bus used by websocket handlers.
+func SetBus(b *eventbus.Bus) { wsBus = b }
 
 func buildPatterns(task, path string) []string {
 	name := strings.ToLower(task)
@@ -147,7 +152,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 // RegisterRoutes attaches the websocket handler to r.
 func RegisterRoutes(r *mux.Router) {
-	h := NewNotificationsHandler(eventbus.DefaultBus)
+	h := NewNotificationsHandler(wsBus)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/notifications.js", NotificationsJS).Methods(http.MethodGet)
 }

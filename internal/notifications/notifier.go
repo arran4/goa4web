@@ -12,12 +12,14 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/eventbus"
 	htemplate "html/template"
 )
 
 // Notifier dispatches updates via email and internal notifications.
 // Notifier dispatches updates via email and internal notifications.
 type Notifier struct {
+	Bus            *eventbus.Bus
 	EmailProvider  email.Provider
 	Queries        *dbpkg.Queries
 	noteOnce       sync.Once
@@ -36,6 +38,9 @@ func WithQueries(q *dbpkg.Queries) Option { return func(n *Notifier) { n.Queries
 
 // WithEmailProvider sets the email provider dependency.
 func WithEmailProvider(p email.Provider) Option { return func(n *Notifier) { n.EmailProvider = p } }
+
+// WithBus sets the event bus dependency used to publish email queue events.
+func WithBus(b *eventbus.Bus) Option { return func(n *Notifier) { n.Bus = b } }
 
 // WithConfig derives dependencies from cfg when they are not supplied.
 func WithConfig(cfg config.RuntimeConfig) Option {

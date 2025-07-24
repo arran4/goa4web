@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-// TaskEventMiddleware records form tasks on the event bus after processing.
+// TaskEventMiddlewareWithBus records form tasks on the provided event bus after processing.
 
 // statusRecorder captures the response status for later inspection.
 type statusRecorder struct {
@@ -31,10 +31,11 @@ type eventQueue struct {
 	mu       sync.Mutex
 	capacity int
 	events   []eventbus.TaskEvent
+	bus      *eventbus.Bus
 }
 
-func newEventQueue(capacity int) *eventQueue {
-	return &eventQueue{capacity: capacity}
+func newEventQueue(capacity int, bus *eventbus.Bus) *eventQueue {
+	return &eventQueue{capacity: capacity, bus: bus}
 }
 
 func (q *eventQueue) enqueue(evt eventbus.TaskEvent) {
@@ -63,7 +64,14 @@ func (q *eventQueue) flush(ctx context.Context) {
 			q.mu.Unlock()
 			return
 		}
-		if err := eventbus.DefaultBus.Publish(e); err != nil {
+		bus := q.bus
+		if bus == nil {
+			q.mu.Lock()
+			q.events = append(events[i:], q.events...)
+			q.mu.Unlock()
+			return
+		}
+		if err := bus.Publish(e); err != nil {
 			if err == eventbus.ErrBusClosed {
 				q.mu.Lock()
 				q.events = append(events[i:], q.events...)
@@ -75,42 +83,48 @@ func (q *eventQueue) flush(ctx context.Context) {
 	}
 }
 
-var taskQueue = newEventQueue(maxQueuedTaskEvents)
+var taskQueue = newEventQueue(maxQueuedTaskEvents, nil)
 
 func (r *statusRecorder) WriteHeader(code int) {
 	r.status = code
 	r.ResponseWriter.WriteHeader(code)
 }
 
-func TaskEventMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		task := r.PostFormValue("task")
-		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*common.CoreData)
-		if !ok || cd == nil {
-			log.Panicf("TaskEventMiddleware: missing CoreData for %s", r.URL.Path)
-		}
-		uid := cd.UserID
-		admin := strings.Contains(r.URL.Path, "/admin")
-		_ = admin
-		evt := &eventbus.TaskEvent{
-			Path:   r.URL.Path,
-			Task:   tasks.TaskString("MISSING"),
-			UserID: uid,
-			Time:   time.Now(),
-			Data:   map[string]any{},
-		}
-		cd.SetEvent(evt)
-		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
-		next.ServeHTTP(sr, r)
-		if task != "" && sr.status < http.StatusBadRequest {
-			if err := eventbus.DefaultBus.Publish(*evt); err != nil {
-				if err == eventbus.ErrBusClosed {
-					taskQueue.enqueue(*evt)
-				} else {
-					log.Printf("publish task event: %v", err)
+func TaskEventMiddlewareWithBus(bus *eventbus.Bus) func(http.Handler) http.Handler {
+	if bus == nil {
+		panic("TaskEventMiddleware requires a bus")
+	}
+	taskQueue.bus = bus
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			task := r.PostFormValue("task")
+			cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*common.CoreData)
+			if !ok || cd == nil {
+				log.Panicf("TaskEventMiddleware: missing CoreData for %s", r.URL.Path)
+			}
+			uid := cd.UserID
+			admin := strings.Contains(r.URL.Path, "/admin")
+			_ = admin
+			evt := &eventbus.TaskEvent{
+				Path:   r.URL.Path,
+				Task:   tasks.TaskString("MISSING"),
+				UserID: uid,
+				Time:   time.Now(),
+				Data:   map[string]any{},
+			}
+			cd.SetEvent(evt)
+			sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+			next.ServeHTTP(sr, r)
+			if task != "" && sr.status < http.StatusBadRequest {
+				if err := bus.Publish(*evt); err != nil {
+					if err == eventbus.ErrBusClosed {
+						taskQueue.enqueue(*evt)
+					} else {
+						log.Printf("publish task event: %v", err)
+					}
 				}
 			}
-		}
-		taskQueue.flush(r.Context())
-	})
+			taskQueue.flush(r.Context())
+		})
+	}
 }

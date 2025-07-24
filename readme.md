@@ -112,7 +112,7 @@ Bookmarks   60
 ImageBBS    70
 Search      80
 Writings    90
-Information 100
+Server Stats 140
 ```
 
 ## Testing

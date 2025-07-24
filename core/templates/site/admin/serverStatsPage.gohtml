@@ -10,4 +10,15 @@
     <tr><td>Heap Sys</td><td>{{ .Stats.HeapSys }}</td></tr>
     <tr><td>GC Count</td><td>{{ .Stats.NumGC }}</td></tr>
 </table>
+<p>Uptime: {{ .Uptime }}</p>
+<h3>Registered Components</h3>
+<ul>
+    <li>Tasks: {{ range $i, $t := .Registries.Tasks }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}</li>
+    <li>Database Drivers: {{ range $i, $d := .Registries.DBDrivers }}{{ if $i }}, {{ end }}{{ $d }}{{ end }}</li>
+    <li>DLQ Providers: {{ range $i, $d := .Registries.DLQProviders }}{{ if $i }}, {{ end }}{{ $d }}{{ end }}</li>
+    <li>Email Providers: {{ range $i, $e := .Registries.EmailProviders }}{{ if $i }}, {{ end }}{{ $e }}{{ end }}</li>
+    <li>Upload Providers: {{ range $i, $u := .Registries.UploadProviders }}{{ if $i }}, {{ end }}{{ $u }}{{ end }}</li>
+</ul>
+<h3>Current Configuration</h3>
+<pre>{{ printf "%+v" .Config }}</pre>
 {{ template "tail" $ }}

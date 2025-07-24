@@ -2,6 +2,7 @@ package email
 
 import (
 	"log"
+	"sort"
 	"strings"
 	"sync"
 
@@ -30,4 +31,16 @@ func providerFactory(name string) func(config.RuntimeConfig) Provider {
 	f := providerRegistry[strings.ToLower(name)]
 	regMu.RUnlock()
 	return f
+}
+
+// ProviderNames returns the names of registered email providers in sorted order.
+func ProviderNames() []string {
+	regMu.RLock()
+	names := make([]string, 0, len(providerRegistry))
+	for n := range providerRegistry {
+		names = append(names, n)
+	}
+	regMu.RUnlock()
+	sort.Strings(names)
+	return names
 }

@@ -34,5 +34,5 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "faqAdminCategoriesPage.gohtml", data)
 }

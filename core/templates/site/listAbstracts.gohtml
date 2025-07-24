@@ -1,5 +1,5 @@
 {{ define "listAbstracts" }}
-    {{ if cd.IsWriter }}
+    {{ if cd.HasContentWriterRole }}
         [<a href="/writings/category/{{ .CategoryId }}/add">Write writing here.</a>]<br>
     {{ end }}
     {{ if .Abstracts }}

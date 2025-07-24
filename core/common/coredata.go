@@ -43,7 +43,6 @@ type NewsPost struct {
 	ShowEdit     bool
 	Editing      bool
 	Announcement *db.SiteAnnouncement
-	IsAdmin      bool
 }
 
 type CoreData struct {
@@ -675,7 +674,6 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 			ShowEdit:     cd.HasGrant("news", "post", "edit", row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
 			Editing:      replyID == int(row.Idsitenews),
 			Announcement: ann,
-			IsAdmin:      cd.HasRole("administrator") && cd.AdminMode,
 		})
 	}
 	return posts, nil
@@ -1048,12 +1046,14 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 	})
 }
 
-func (cd *CoreData) IsAdmin() bool {
-	return cd.HasRole("administrator") && cd.AdminMode
+// HasAdminRole reports whether the current user has the administrator role.
+func (cd *CoreData) HasAdminRole() bool {
+	return cd.HasRole("administrator")
 }
 
-func (cd *CoreData) IsWriter() bool {
-	return cd.HasRole("content writer") || cd.IsAdmin()
+// HasContentWriterRole reports whether the current user has the content writer role.
+func (cd *CoreData) HasContentWriterRole() bool {
+	return cd.HasRole("content writer")
 }
 
 // ExecuteSiteTemplate renders the named site template using cd's helper

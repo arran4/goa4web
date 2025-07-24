@@ -76,8 +76,10 @@ type CoreData struct {
 	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
 	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
 	forumThreadRows          map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow]
+	forumComments            map[int32]*lazyValue[*db.GetCommentByIdForUserRow]
 	currentThreadID          int32
 	currentTopicID           int32
+	currentCommentID         int32
 	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
 	imageBoards              lazyValue[[]*db.Imageboard]
 	languagesAll             lazyValue[[]*db.Language]
@@ -883,6 +885,68 @@ func (cd *CoreData) ForumThreadByID(id int32) (*db.GetThreadLastPosterAndPermsRo
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	})
+}
+
+// CacheComment stores a comment in the request cache without loading.
+func (cd *CoreData) CacheComment(id int32, row *db.GetCommentByIdForUserRow) {
+	if cd.forumComments == nil {
+		cd.forumComments = make(map[int32]*lazyValue[*db.GetCommentByIdForUserRow])
+	}
+	lv, ok := cd.forumComments[id]
+	if !ok {
+		lv = &lazyValue[*db.GetCommentByIdForUserRow]{}
+		cd.forumComments[id] = lv
+	}
+	lv.set(row)
+}
+
+// CommentByID returns a forum comment lazily loading it once per ID.
+func (cd *CoreData) CommentByID(id int32) (*db.GetCommentByIdForUserRow, error) {
+	if cd.forumComments == nil {
+		cd.forumComments = make(map[int32]*lazyValue[*db.GetCommentByIdForUserRow])
+	}
+	lv, ok := cd.forumComments[id]
+	if !ok {
+		lv = &lazyValue[*db.GetCommentByIdForUserRow]{}
+		cd.forumComments[id] = lv
+	}
+	return lv.load(func() (*db.GetCommentByIdForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetCommentByIdForUser(cd.ctx, db.GetCommentByIdForUserParams{
+			ViewerID: cd.UserID,
+			ID:       id,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	})
+}
+
+// SetCurrentComment stores the current comment ID.
+func (cd *CoreData) SetCurrentComment(id int32) { cd.currentCommentID = id }
+
+// CurrentComment returns the current comment lazily loaded.
+func (cd *CoreData) CurrentComment() (*db.GetCommentByIdForUserRow, error) {
+	if cd.currentCommentID == 0 {
+		return nil, nil
+	}
+	return cd.CommentByID(cd.currentCommentID)
+}
+
+// CurrentCommentLoaded returns the cached current comment if available.
+func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
+	if cd.forumComments == nil {
+		return nil
+	}
+	lv, ok := cd.forumComments[cd.currentCommentID]
+	if !ok {
+		return nil
+	}
+	v, ok := lv.peek()
+	if !ok {
+		return nil
+	}
+	return v
 }
 
 // WriterWritings returns public writings for the specified author respecting cd's permissions.

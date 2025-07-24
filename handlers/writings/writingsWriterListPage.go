@@ -18,29 +18,26 @@ import (
 // WriterListPage shows all writers with their article counts.
 func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Rows                []*db.WriterCountRow
 		Search              string
 		NextLink            string
 		PrevLink            string
 		PageSize            int
-		IsAdmin             bool
 		CategoryBreadcrumbs []*db.WritingCategory
 		CategoryId          int32
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:     r.URL.Query().Get("search"),
 		PageSize:   handlers.GetPageSize(r),
-		IsAdmin:    false,
 		CategoryId: 0,
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	pageSize := handlers.GetPageSize(r)
-	rows, err := data.CoreData.Writers(r)
+	rows, err := cd.Writers(r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -66,7 +63,7 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
+		cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Next %d", pageSize),
 			Link: data.NextLink,
 		})
@@ -77,7 +74,7 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
+		cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
 			Name: fmt.Sprintf("Previous %d", pageSize),
 			Link: data.PrevLink,
 		})

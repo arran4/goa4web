@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -44,10 +43,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ShowEdit     bool
 		Editing      bool
 		Announcement *db.SiteAnnouncement
-		IsAdmin      bool
 	}
 	type Data struct {
-		*common.CoreData
 		Post               *Post
 		Languages          []*db.Language
 		SelectedLanguageId int32
@@ -63,7 +60,6 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData:           cd,
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
 		SelectedLanguageId: cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage),
@@ -84,7 +80,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -94,8 +90,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !data.CoreData.HasGrant("news", "post", "view", post.Idsitenews) {
-		if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+	if !cd.HasGrant("news", "post", "view", post.Idsitenews) {
+		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
 		return
@@ -152,7 +148,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	for i, row := range commentRows {
 		editUrl := ""
 		editSaveUrl := ""
-		if data.CoreData.CanEditAny() || row.IsOwner {
+		if cd.CanEditAny() || row.IsOwner {
 			editUrl = fmt.Sprintf("?editComment=%d#edit", row.Idcomments)
 			editSaveUrl = fmt.Sprintf("/news/news/%d/comment/%d", pid, row.Idcomments)
 			if commentId != 0 && int32(commentId) == row.Idcomments {
@@ -171,7 +167,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 		data.Comments = append(data.Comments, &CommentPlus{
 			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       data.CoreData.UserID != 0,
+			ShowReply:                       cd.UserID != 0,
 			EditUrl:                         editUrl,
 			EditSaveUrl:                     editSaveUrl,
 			Editing:                         editCommentId != 0 && int32(editCommentId) == row.Idcomments,
@@ -182,17 +178,16 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	ann, err := data.CoreData.NewsAnnouncement(post.Idsitenews)
+	ann, err := cd.NewsAnnouncement(post.Idsitenews)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("announcementForNews: %v", err)
 	}
 	data.Post = &Post{
 		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
-		ShowReply:    data.CoreData.UserID != 0,
-		ShowEdit:     canEditNewsPost(data.CoreData, post.Idsitenews),
+		ShowReply:    cd.UserID != 0,
+		ShowEdit:     canEditNewsPost(cd, post.Idsitenews),
 		Editing:      editingId == int(post.Idsitenews),
 		Announcement: ann,
-		IsAdmin:      data.CoreData.HasRole("administrator") && data.CoreData.AdminMode,
 	}
 
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)

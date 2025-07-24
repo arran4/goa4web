@@ -20,7 +20,6 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
 
@@ -104,7 +103,8 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
 	}
 
@@ -180,7 +180,8 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
@@ -227,7 +228,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 			return nil
 		default:
 			return fmt.Errorf("get image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))

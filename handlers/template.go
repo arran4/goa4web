@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 // TemplateHandler renders the template and handles any template error.
@@ -18,7 +17,7 @@ import (
 // Template helpers are provided via data.CoreData.Funcs(r).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data any) {
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, tmpl, data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, tmpl, data); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {
 			Error   string
@@ -27,7 +26,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data a
 			Error:   err.Error(),
 			BackURL: r.Referer(),
 		}
-		if err2 := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "taskErrorAcknowledgementPage.gohtml", errData); err2 != nil {
+		if err2 := cd.ExecuteSiteTemplate(w, r, "taskErrorAcknowledgementPage.gohtml", errData); err2 != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}

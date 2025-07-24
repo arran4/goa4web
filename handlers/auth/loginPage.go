@@ -7,7 +7,6 @@ import (
 	"net/url"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 )
 
@@ -40,7 +39,7 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	// TODO consider using RefreshDirect if the target method is "GET" or ""
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "redirectBackPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}

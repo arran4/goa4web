@@ -14,7 +14,6 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
@@ -140,7 +139,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
 	}
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
@@ -182,7 +181,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", cd)
+		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
 	}
 	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{

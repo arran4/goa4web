@@ -33,7 +33,7 @@ func TestProviderFromConfigRegistry(t *testing.T) {
 
 	cfg = config.RuntimeConfig{DLQProvider: "email"}
 	p := dlq.ProviderFromConfig(cfg, nil)
-	if _, ok := p.(emaildlq.DLQ); !ok {
+	if _, ok := p.(*emaildlq.DLQ); !ok {
 		if _, ok := p.(dlq.LogDLQ); !ok {
 			t.Fatalf("unexpected type %T", p)
 		}

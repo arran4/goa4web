@@ -71,7 +71,11 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
-	n := New(WithQueries(q), WithEmailProvider(rec))
+	n := New(
+		WithQueries(q),
+		WithEmailProvider(rec),
+		WithConfig(config.AppRuntimeConfig),
+	)
 	n.NotifyAdmins(context.Background(), &EmailTemplates{}, EmailData{})
 	if rec.to != "" {
 		t.Fatalf("expected no direct mail got %s", rec.to)

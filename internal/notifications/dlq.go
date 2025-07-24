@@ -10,7 +10,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq/db"
 )
 
-func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string) error {
+func (n *Notifier) dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, msg string) error {
 	if q == nil {
 		return fmt.Errorf("no dlq provider")
 	}

@@ -159,7 +159,11 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 2, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithQueries(q), notif.WithEmailProvider(rec))
+	n := notif.New(
+		notif.WithQueries(q),
+		notif.WithEmailProvider(rec),
+		notif.WithConfig(config.AppRuntimeConfig),
+	)
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 direct mails, got %d", len(rec.to))
@@ -186,7 +190,10 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 	config.AppRuntimeConfig.AdminEmails = "a@test.com"
 	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithEmailProvider(rec))
+	n := notif.New(
+		notif.WithEmailProvider(rec),
+		notif.WithConfig(config.AppRuntimeConfig),
+	)
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))

@@ -20,7 +20,7 @@ type DLQ struct {
 }
 
 // Record emails the message to the configured recipients.
-func (e DLQ) Record(ctx context.Context, message string) error {
+func (e *DLQ) Record(ctx context.Context, message string) error {
 	if e.Provider == nil {
 		return fmt.Errorf("no email provider")
 	}
@@ -49,6 +49,6 @@ func Register() {
 		if p == nil {
 			return dlq.LogDLQ{}
 		}
-		return DLQ{Provider: p, Queries: q, Config: cfg}
+		return &DLQ{Provider: p, Queries: q, Config: cfg}
 	})
 }

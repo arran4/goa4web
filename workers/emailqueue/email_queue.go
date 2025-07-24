@@ -59,7 +59,7 @@ func adminBypassAddr(ctx context.Context, q *db.Queries, body string) (mail.Addr
 	if err != nil {
 		return mail.Address{}, false
 	}
-	for _, a := range config.GetAdminEmails(ctx, q) {
+	for _, a := range config.GetAdminEmails(ctx, q, config.AppRuntimeConfig) {
 		if strings.EqualFold(a, addr.Address) {
 			return *addr, true
 		}
@@ -68,7 +68,7 @@ func adminBypassAddr(ctx context.Context, q *db.Queries, body string) (mail.Addr
 }
 
 func isAdminEmail(ctx context.Context, q *db.Queries, addr string) bool {
-	for _, a := range config.GetAdminEmails(ctx, q) {
+	for _, a := range config.GetAdminEmails(ctx, q, config.AppRuntimeConfig) {
 		if strings.EqualFold(a, addr) {
 			return true
 		}
@@ -139,7 +139,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 	if q == nil || provider == nil {
 		return false
 	}
-	if !config.EmailSendingEnabled() {
+	if !config.EmailSendingEnabled(config.AppRuntimeConfig) {
 		return false
 	}
 	if provider == nil {

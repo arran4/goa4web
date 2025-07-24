@@ -19,8 +19,8 @@ import (
 // empty and a Queries value is supplied, the database is queried for
 // administrator accounts. GetAdminEmails returns a slice of administrator
 // addresses using this logic.
-func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
-	env := AppRuntimeConfig.AdminEmails
+func GetAdminEmails(ctx context.Context, q *db.Queries, cfg RuntimeConfig) []string {
+	env := cfg.AdminEmails
 	if env == "" {
 		env = os.Getenv(EnvAdminEmails)
 	}
@@ -50,12 +50,12 @@ func GetAdminEmails(ctx context.Context, q *db.Queries) []string {
 
 // AdminNotificationsEnabled reports whether administrator notification emails
 // should be sent based on the runtime configuration.
-func AdminNotificationsEnabled() bool {
-	return AppRuntimeConfig.AdminNotify
+func AdminNotificationsEnabled(cfg RuntimeConfig) bool {
+	return cfg.AdminNotify
 }
 
 // EmailSendingEnabled reports if queued emails should be dispatched according
 // to the runtime configuration.
-func EmailSendingEnabled() bool {
-	return AppRuntimeConfig.EmailEnabled
+func EmailSendingEnabled(cfg RuntimeConfig) bool {
+	return cfg.EmailEnabled
 }

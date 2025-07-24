@@ -26,16 +26,16 @@ func sign(data string) (int64, string) {
 }
 
 // SignedURL maps an image identifier to a signed URL.
-func SignedURL(id string) string {
+func SignedURL(id string, cfg config.RuntimeConfig) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
-	host := strings.TrimSuffix(config.AppRuntimeConfig.HTTPHostname, "/")
+	host := strings.TrimSuffix(cfg.HTTPHostname, "/")
 	ts, sig := sign("image:" + id)
 	return fmt.Sprintf("%s/images/image/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 
 // SignedCacheURL maps a cache identifier to a signed URL.
-func SignedCacheURL(id string) string {
-	host := strings.TrimSuffix(config.AppRuntimeConfig.HTTPHostname, "/")
+func SignedCacheURL(id string, cfg config.RuntimeConfig) string {
+	host := strings.TrimSuffix(cfg.HTTPHostname, "/")
 	ts, sig := sign("cache:" + id)
 	return fmt.Sprintf("%s/images/cache/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
@@ -81,9 +81,9 @@ func MapURL(tag, val string) string {
 	case strings.HasPrefix(val, "uploading:"):
 		return val
 	case strings.HasPrefix(val, "image:") || strings.HasPrefix(val, "img:"):
-		return SignedURL(val)
+		return SignedURL(val, config.AppRuntimeConfig)
 	case strings.HasPrefix(val, "cache:"):
-		return SignedCacheURL(strings.TrimPrefix(val, "cache:"))
+		return SignedCacheURL(strings.TrimPrefix(val, "cache:"), config.AppRuntimeConfig)
 	default:
 		return val
 	}

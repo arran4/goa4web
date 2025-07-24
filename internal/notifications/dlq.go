@@ -17,7 +17,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string)
 	if err := q.Record(ctx, msg); err != nil {
 		return err
 	}
-	if n.Queries == nil || !config.AdminNotificationsEnabled() {
+	if n.Queries == nil || !config.AdminNotificationsEnabled(config.AppRuntimeConfig) {
 		return nil
 	}
 	if dbq, ok := q.(db.DLQ); ok {
@@ -38,7 +38,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string)
 				}
 				nt, err := n.renderNotification(ctx, NotificationTemplateFilenameGenerator("dlqMultiFailure"), data)
 				if err == nil {
-					for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
+					for _, addr := range config.GetAdminEmails(ctx, n.Queries, config.AppRuntimeConfig) {
 						u, err := n.Queries.UserByEmail(ctx, addr)
 						if err != nil {
 							continue

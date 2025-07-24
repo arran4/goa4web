@@ -27,7 +27,7 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 	if f, err := mail.ParseAddress(config.AppRuntimeConfig.EmailFrom); err == nil {
 		fromAddr = *f
 	}
-	for _, addrStr := range config.GetAdminEmails(ctx, e.Queries) {
+	for _, addrStr := range config.GetAdminEmails(ctx, e.Queries, config.AppRuntimeConfig) {
 		toAddr := mail.Address{Address: addrStr}
 		msg, err := email.BuildMessage(fromAddr, toAddr, "DLQ message", message, "")
 		if err != nil {

@@ -91,10 +91,10 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 	if n.Queries == nil {
 		return nil
 	}
-	if !config.AdminNotificationsEnabled() {
+	if !config.AdminNotificationsEnabled(config.AppRuntimeConfig) {
 		return nil
 	}
-	for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
+	for _, addr := range config.GetAdminEmails(ctx, n.Queries, config.AppRuntimeConfig) {
 		var uid *int32
 		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
 			id := u.Idusers

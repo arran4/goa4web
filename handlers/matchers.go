@@ -5,8 +5,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // RequiredAccess ensures the requestor has one of the provided roles.
@@ -19,7 +19,8 @@ func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 // RequiresAnAccount checks that the requester has a valid user session.
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
-		session, err := core.GetSession(request)
+		cd := request.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		session, err := cd.GetSession(request)
 		if err != nil {
 			return false
 		}

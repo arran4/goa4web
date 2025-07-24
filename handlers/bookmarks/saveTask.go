@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -34,12 +33,12 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 		CoreData:        r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
 	}
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil {
 		switch {
@@ -59,8 +58,9 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

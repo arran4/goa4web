@@ -32,10 +32,14 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 		WillReturnRows(rows)
 
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
+	sm := &core.SessionManager{Name: "test", Store: sessions.NewCookieStore([]byte("test"))}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q,
+		common.WithSession(session),
+		common.WithSessionManager(sm))
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -44,7 +48,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, sm)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -69,10 +73,14 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	session := &sessions.Session{ID: "sessid"}
+	sm := &core.SessionManager{Name: "test", Store: sessions.NewCookieStore([]byte("test"))}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q,
+		common.WithSession(session),
+		common.WithSessionManager(sm))
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -81,7 +89,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, sm)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

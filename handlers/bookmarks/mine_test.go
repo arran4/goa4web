@@ -81,11 +81,10 @@ func TestMinePage_NoBookmarks(t *testing.T) {
 		WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 
 	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
 	req := httptest.NewRequest("GET", "/bookmarks/mine", nil)
-	sess, _ := store.Get(req, core.SessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)
@@ -93,8 +92,11 @@ func TestMinePage_NoBookmarks(t *testing.T) {
 		req.AddCookie(c)
 	}
 
+	cd := common.NewCoreData(req.Context(), queries,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

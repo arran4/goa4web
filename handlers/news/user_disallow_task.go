@@ -30,7 +30,8 @@ func (UserDisallowTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	permid := r.PostFormValue("permid")
 	data := struct {
 		*common.CoreData
@@ -38,7 +39,7 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/news",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {

@@ -25,7 +25,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/mux"
@@ -104,7 +103,8 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

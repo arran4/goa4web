@@ -9,7 +9,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/workers/searchworker"
@@ -26,11 +25,10 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		EmptyWords         bool
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	data := Data{CoreData: cd}
+	queries := cd.Queries()
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

@@ -4,7 +4,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 )
@@ -14,15 +13,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
+	data := Data{CoreData: cd}
 
 	if uid == 0 {
 		handlers.TemplateHandler(w, r, "infoPage.gohtml", data)

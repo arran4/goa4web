@@ -32,8 +32,7 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 	defer dbconn.Close()
 
 	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
 	cases := []url.Values{
 		{"text": {"hi"}},
@@ -43,15 +42,16 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 	for _, form := range cases {
 		req := httptest.NewRequest("POST", "/faq/ask", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		sess, _ := store.Get(req, core.SessionName)
+		sess, _ := store.Get(req, sm.Name)
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
 		sess.Save(req, w)
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := req.Context()
-		ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
+		cd := &common.CoreData{}
+		ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
+		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
@@ -82,13 +82,12 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
 	form := url.Values{"language": {"1"}, "text": {"hi"}}
 	req := httptest.NewRequest("POST", "/faq/ask", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	sess, _ := store.Get(req, core.SessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)
@@ -97,11 +96,12 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	}
 	q := db.New(dbconn)
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithSessionManager(sm))
 	cd.UserID = 1
 	cd.SetEvent(evt)
 
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	handler := middleware.TaskEventMiddleware(http.HandlerFunc(handlers.TaskHandler(askTask)))

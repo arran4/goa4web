@@ -19,7 +19,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/core"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )
@@ -39,13 +38,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	buid := r.URL.Query().Get("uid")
 	userId, _ := strconv.Atoi(buid)
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), db.GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  int32(userId),
 		ViewerIdusers: uid,

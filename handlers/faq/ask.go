@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -69,8 +68,9 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -87,7 +87,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("faq fetch fail: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
 	evt.Path = "/admin/faq"
 	if evt.Data == nil {

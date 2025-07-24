@@ -26,18 +26,20 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 
 	q := db.New(sqldb)
 	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
 	req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
 	req = mux.SetURLVars(req, map[string]string{"article": "2"})
 
-	sess, _ := store.Get(req, core.SessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 
-	cd := common.NewCoreData(req.Context(), q, common.WithSession(sess))
+	cd := common.NewCoreData(req.Context(), q,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
 	cd.SetRoles([]string{"content writer"})
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rows := sqlmock.NewRows([]string{

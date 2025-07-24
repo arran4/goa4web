@@ -31,8 +31,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	defer dbconn.Close()
 
 	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
 	form := url.Values{}
 	form.Set("replytext", "hi")
@@ -42,7 +41,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"article": "1"})
 
 	w := httptest.NewRecorder()
-	sess, _ := store.Get(req, core.SessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 	sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {
@@ -50,8 +49,10 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	}
 
 	q := db.New(dbconn)
-	cd := common.NewCoreData(req.Context(), q)
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	cd := common.NewCoreData(req.Context(), q,
+		common.WithSessionManager(sm))
+	ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting")).

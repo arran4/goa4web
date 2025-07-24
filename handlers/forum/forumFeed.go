@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -60,7 +59,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 }
 
 func TopicRssPage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
+	if _, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r); !ok {
 		return
 	}
 	vars := mux.Vars(r)
@@ -91,7 +90,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
+	if _, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r); !ok {
 		return
 	}
 	vars := mux.Vars(r)

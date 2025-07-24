@@ -185,10 +185,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 
 	queries := dbpkg.New(db)
 	store = sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = sessionName
-	core.Store = store
-	core.SessionName = sessionName
+	sm := &core.SessionManager{Name: sessionName, Store: store}
 
 	form := url.Values{}
 	form.Set("dothis", "Save all")
@@ -198,7 +195,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	sess, _ := store.Get(req, sessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)
@@ -207,8 +204,11 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
+	cd := common.NewCoreData(req.Context(), queries,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -239,6 +239,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 
 	queries := dbpkg.New(db)
 	store = sessions.NewCookieStore([]byte("test"))
+	sm := &core.SessionManager{Name: sessionName, Store: store}
 
 	form := url.Values{}
 	form.Set("dothis", "Save languages")
@@ -247,7 +248,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	sess, _ := store.Get(req, sessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)
@@ -256,8 +257,11 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
+	cd := common.NewCoreData(req.Context(), queries,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -287,8 +291,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	queries := dbpkg.New(db)
 	config.AppRuntimeConfig.PageSizeDefault = 15
 	store = sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = sessionName
+	sm := &core.SessionManager{Name: sessionName, Store: store}
 
 	form := url.Values{}
 	form.Set("dothis", "Save language")
@@ -297,7 +300,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	req := httptest.NewRequest("POST", "/usr/lang", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	sess, _ := store.Get(req, sessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)
@@ -306,8 +309,11 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 
+	cd := common.NewCoreData(req.Context(), queries,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

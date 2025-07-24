@@ -13,7 +13,6 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
@@ -50,7 +49,8 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -62,8 +62,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if size > config.AppRuntimeConfig.PageSizeMax {
 		size = config.AppRuntimeConfig.PageSizeMax
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

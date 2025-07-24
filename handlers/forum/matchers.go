@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -33,9 +32,10 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		queries := cd.Queries()
 
-		session, _ := core.GetSession(r)
+		session, _ := cd.GetSession(r)
 		var uid int32
 		if session != nil {
 			uid, _ = session.Values["UID"].(int32)

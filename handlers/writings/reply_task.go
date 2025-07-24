@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
@@ -67,7 +66,8 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -78,7 +78,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("article id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{

@@ -11,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -30,7 +29,8 @@ var _ tasks.Task = (*VerifyPasswordTask)(nil)
 
 // Action verifies a password reset code and logs the user in.
 func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 )
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +64,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
 	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

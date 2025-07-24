@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	goa4web "github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -29,12 +29,12 @@ func handleDie(w http.ResponseWriter, message string) {
 }
 
 // CoreAdderMiddleware populates request context with CoreData for templates.
-func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
+func CoreAdderMiddlewareWithDB(db *sql.DB, sm *core.SessionManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session, err := core.GetSession(r)
+			session, err := sm.GetSession(r)
 			if err != nil {
-				core.SessionErrorRedirect(w, r, err)
+				sm.SessionErrorRedirect(w, r, err)
 				return
 			}
 			var uid int32
@@ -90,6 +90,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
 			cd := common.NewCoreData(r.Context(), queries,
 				common.WithImageURLMapper(imagesign.MapURL),
 				common.WithSession(session),
+				common.WithSessionManager(sm),
 				common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)),
 				common.WithAbsoluteURLBase(base))
 			cd.UserID = uid
@@ -103,15 +104,16 @@ func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
 			if uid != 0 && handlers.NotificationsEnabled() {
 				cd.NotificationCount = int32(cd.UnreadNotificationCount())
 			}
-			ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
+			ctx := context.WithValue(r.Context(), core.ContextValues("sessionManager"), sm)
+			ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
 // CoreAdderMiddleware populates request context with CoreData for templates using the global DBPool.
-func CoreAdderMiddleware(next http.Handler) http.Handler {
-	return CoreAdderMiddlewareWithDB(DBPool)(next)
+func CoreAdderMiddleware(sm *core.SessionManager) func(http.Handler) http.Handler {
+	return CoreAdderMiddlewareWithDB(DBPool, sm)
 }
 
 // DBPool should be assigned by the parent package to supply the database.

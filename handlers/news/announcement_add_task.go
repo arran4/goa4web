@@ -24,8 +24,8 @@ var announcementAddTask = &AnnouncementAddTask{TaskString: TaskAdd}
 var _ tasks.Task = (*AnnouncementAddTask)(nil)
 
 func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 

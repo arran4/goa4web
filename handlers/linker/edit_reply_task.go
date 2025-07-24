@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -39,7 +38,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	linkId, _ := strconv.Atoi(vars["link"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

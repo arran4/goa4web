@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
@@ -68,7 +67,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

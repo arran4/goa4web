@@ -27,8 +27,7 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 	defer dbconn.Close()
 
 	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
 	cases := []url.Values{
 		{"text": {"hi"}},
@@ -38,14 +37,14 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 	for _, form := range cases {
 		req := httptest.NewRequest("POST", "/news", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		sess, _ := store.Get(req, core.SessionName)
+		sess, _ := store.Get(req, sm.Name)
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
 		sess.Save(req, w)
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := req.Context()
+		ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
 		req = req.WithContext(ctx)
 
@@ -71,8 +70,7 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 	defer dbconn.Close()
 
 	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
 	cases := []url.Values{
 		{"text": {"hi"}},
@@ -83,14 +81,14 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 		req := httptest.NewRequest("POST", "/news/1", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = mux.SetURLVars(req, map[string]string{"post": "1"})
-		sess, _ := store.Get(req, core.SessionName)
+		sess, _ := store.Get(req, sm.Name)
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
 		sess.Save(req, w)
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
-		ctx := req.Context()
+		ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
 		req = req.WithContext(ctx)
 

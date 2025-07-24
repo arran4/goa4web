@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
@@ -66,8 +65,9 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

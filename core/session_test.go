@@ -18,19 +18,16 @@ var (
 
 func TestSessionMiddlewareBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = sessionName
+	sm := &core.SessionManager{Name: sessionName, Store: store}
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := core.GetSession(r); err != nil {
-			core.SessionErrorRedirect(w, r, err)
+		if _, err := sm.GetSession(r); err != nil {
+			sm.SessionErrorRedirect(w, r, err)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
 	})
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
-	ctx := req.Context()
-	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
 	if rr.Code != http.StatusFound {
@@ -44,12 +41,11 @@ func TestSessionMiddlewareBadSession(t *testing.T) {
 
 func TestGetSessionOrFailBadSession(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = sessionName
+	sm := &core.SessionManager{Name: sessionName, Store: store}
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
 	rr := httptest.NewRecorder()
-	sess, ok := core.GetSessionOrFail(rr, req)
+	sess, ok := sm.GetSessionOrFail(rr, req)
 	if ok {
 		t.Fatalf("expected failure, got session %v", sess)
 	}

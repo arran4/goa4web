@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 )
 
 func SuggestPage(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +70,7 @@ func (SuggestTask) Page(w http.ResponseWriter, r *http.Request) { SuggestPage(w,
 func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r)
 	if !ok {
 		return nil
 	}

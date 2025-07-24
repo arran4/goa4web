@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -32,7 +31,8 @@ var _ tasks.Task = (*AddEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*AddEmailTask)(nil)
 
 func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -63,7 +63,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.HTTPHostname != "" {
 		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
 	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
 	evt.Data["page"] = page
 	evt.Data["email"] = emailAddr
@@ -75,7 +75,8 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -84,7 +85,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
@@ -103,7 +104,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.HTTPHostname != "" {
 		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
 	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
 	evt.Data["page"] = page
 	evt.Data["email"] = ue.Email
@@ -115,7 +116,8 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -125,7 +127,7 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	val, _ := queries.GetMaxNotificationPriority(r.Context(), uid)
 	var maxPr int32
 	switch v := val.(type) {

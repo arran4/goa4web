@@ -31,7 +31,8 @@ func (UserAllowTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	data := struct {
@@ -40,7 +41,7 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/news",
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {

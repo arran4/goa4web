@@ -18,7 +18,6 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
@@ -56,7 +55,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -68,13 +67,13 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
-	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries = cd.Queries()
 
 	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
 		ViewerID:      uid,
@@ -263,7 +262,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -281,7 +281,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	uid, _ := session.Values["UID"].(int32)
 
 	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{

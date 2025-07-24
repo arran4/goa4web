@@ -24,8 +24,7 @@ var (
 
 func TestCSRFLoginFlow(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("testsecret"))
-	core.Store = store
-	core.SessionName = sessionName
+	_ = &core.SessionManager{Name: sessionName, Store: store}
 	key := sha256.Sum256([]byte("testsecret"))
 
 	r := mux.NewRouter()
@@ -68,8 +67,7 @@ func TestCSRFLoginFlow(t *testing.T) {
 
 func TestCSRFMismatchedReferer(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("testsecret"))
-	core.Store = store
-	core.SessionName = sessionName
+	_ = &core.SessionManager{Name: sessionName, Store: store}
 	key := sha256.Sum256([]byte("testsecret"))
 
 	r := mux.NewRouter()
@@ -112,8 +110,7 @@ func TestCSRFMismatchedReferer(t *testing.T) {
 
 func TestCSRFDisabled(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("testsecret"))
-	core.Store = store
-	core.SessionName = sessionName
+	_ = &core.SessionManager{Name: sessionName, Store: store}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {

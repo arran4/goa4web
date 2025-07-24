@@ -24,11 +24,9 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		Roles []*db.Role
 	}
 
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{CoreData: cd}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}

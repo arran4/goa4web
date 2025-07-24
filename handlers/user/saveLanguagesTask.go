@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -25,13 +24,13 @@ func (SaveLanguagesTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	if err := updateLanguageSelections(r, cd, queries, uid); err != nil {
 		log.Printf("Save languages Error: %s", err)

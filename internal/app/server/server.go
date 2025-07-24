@@ -12,14 +12,16 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
-	Config config.RuntimeConfig
-	Router http.Handler
-	Store  *sessions.CookieStore
-	DB     *sql.DB
+	Config         config.RuntimeConfig
+	Router         http.Handler
+	Store          *sessions.CookieStore
+	DB             *sql.DB
+	SessionManager *core.SessionManager
 
 	addr       string
 	httpServer *http.Server
@@ -56,12 +58,13 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 // New returns a Server with the supplied dependencies.
-func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig) *Server {
+func New(handler http.Handler, store *sessions.CookieStore, sm *core.SessionManager, db *sql.DB, cfg config.RuntimeConfig) *Server {
 	return &Server{
-		Config: cfg,
-		Router: handler,
-		Store:  store,
-		DB:     db,
+		Config:         cfg,
+		Router:         handler,
+		Store:          store,
+		SessionManager: sm,
+		DB:             db,
 	}
 }
 

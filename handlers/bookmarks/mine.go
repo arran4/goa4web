@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 )
@@ -77,12 +76,12 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		HasBookmarks bool
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	_ = session
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	bookmarks, err := cd.Bookmarks()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("error getBookmarksForUser: %s", err)

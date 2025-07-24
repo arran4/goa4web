@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/middleware"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -64,7 +63,8 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
-	session, err := core.GetSession(r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, err := cd.GetSession(r)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

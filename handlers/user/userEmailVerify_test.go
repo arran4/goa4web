@@ -31,14 +31,16 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(sql.NullString{String: code, Valid: true}).WillReturnRows(rows)
 
 	store := sessions.NewCookieStore([]byte("test"))
-	sess := sessions.NewSession(store, "test")
+	sm := &core.SessionManager{Name: "test", Store: store}
+	sess := sessions.NewSession(store, sm.Name)
 	sess.Values = map[interface{}]interface{}{"UID": int32(2)}
-	core.Store = store
-	core.SessionName = "test"
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
+	cd := common.NewCoreData(ctx, q,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code="+code, nil).WithContext(ctx)
@@ -67,14 +69,16 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 	mock.ExpectExec("UPDATE user_emails").WithArgs(sqlmock.AnyArg(), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
-	sess := sessions.NewSession(store, "test")
+	sm := &core.SessionManager{Name: "test", Store: store}
+	sess := sessions.NewSession(store, sm.Name)
 	sess.Values = map[interface{}]interface{}{"UID": int32(1)}
-	core.Store = store
-	core.SessionName = "test"
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	ctx = context.WithValue(ctx, core.ContextValues("sessionManager"), sm)
+	cd := common.NewCoreData(ctx, q,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	form := url.Values{"code": {code}}

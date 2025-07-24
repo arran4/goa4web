@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -75,7 +74,8 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -93,8 +93,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return nil

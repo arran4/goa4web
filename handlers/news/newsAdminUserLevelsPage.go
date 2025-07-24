@@ -19,11 +19,10 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 		Roles      []*db.Role
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	data := Data{CoreData: cd}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}

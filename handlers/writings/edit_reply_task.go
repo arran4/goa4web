@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -34,7 +33,8 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	articleID, err := strconv.Atoi(vars["article"])
 	if err != nil {
@@ -45,7 +45,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("comment id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

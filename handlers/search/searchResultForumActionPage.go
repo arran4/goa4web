@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -34,7 +33,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

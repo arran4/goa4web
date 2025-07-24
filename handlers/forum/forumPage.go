@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -30,7 +29,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

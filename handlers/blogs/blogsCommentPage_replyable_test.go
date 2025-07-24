@@ -3,7 +3,6 @@ package blogs
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -16,21 +15,24 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func setupCommentRequest(t *testing.T, queries *db.Queries, store *sessions.CookieStore, blogID int) (*http.Request, *sessions.Session) {
+func setupCommentRequest(t *testing.T, queries *db.Queries, sm *core.SessionManager, blogID int) (*http.Request, *sessions.Session) {
 	req := httptest.NewRequest("GET", "/blogs/blog/1/comments", nil)
 	req = mux.SetURLVars(req, map[string]string{"blog": "1"})
 	w := httptest.NewRecorder()
-	sess, _ := store.Get(req, core.SessionName)
+	sess, _ := sm.Store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(2)
 	sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
-	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess))
+	cd := common.NewCoreData(req.Context(), queries,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
+	ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess
@@ -45,10 +47,9 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 
 	queries := db.New(dbconn)
 	store := sessions.NewCookieStore([]byte("t"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
-	req, _ := setupCommentRequest(t, queries, store, 1)
+	req, _ := setupCommentRequest(t, queries, sm, 1)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof FROM language")).
 		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en"))
@@ -85,10 +86,9 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 
 	queries := db.New(dbconn)
 	store := sessions.NewCookieStore([]byte("t"))
-	core.Store = store
-	core.SessionName = "test-session"
+	sm := &core.SessionManager{Name: "test-session", Store: store}
 
-	req, _ := setupCommentRequest(t, queries, store, 1)
+	req, _ := setupCommentRequest(t, queries, sm, 1)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof FROM language")).
 		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en"))

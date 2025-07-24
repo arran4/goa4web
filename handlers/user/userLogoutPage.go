@@ -8,14 +8,13 @@ import (
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
-
-	"github.com/arran4/goa4web/core"
 )
 
 func userLogoutPage(w http.ResponseWriter, r *http.Request) {
-	session, err := core.GetSession(r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, err := cd.GetSession(r)
 	if err != nil {
-		core.SessionError(w, r, err)
+		cd.SessionError(w, r, err)
 	}
 	uid, _ := session.Values["UID"].(int32)
 	log.Printf("logout request session=%s uid=%d", session.ID, uid)

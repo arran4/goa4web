@@ -33,8 +33,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	q := db.New(sqldb)
 	store = sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = sessionName
+	sm := &core.SessionManager{Name: sessionName, Store: store}
 
 	r := mux.NewRouter()
 	br := r.PathPrefix("/blogs").Subrouter()
@@ -43,7 +42,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/blogs/blogger/bob", nil)
 
-	sess, _ := store.Get(req, sessionName)
+	sess, _ := store.Get(req, sm.Name)
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)
@@ -51,8 +50,10 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	cd := common.NewCoreData(req.Context(), q,
+		common.WithSession(sess),
+		common.WithSessionManager(sm))
+	ctx := context.WithValue(req.Context(), core.ContextValues("sessionManager"), sm)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

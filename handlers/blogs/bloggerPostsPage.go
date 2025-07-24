@@ -15,7 +15,6 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -35,13 +34,14 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
 	username := vars["username"]
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,

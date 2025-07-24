@@ -54,9 +54,10 @@ func NewNotificationsHandler(bus *eventbus.Bus) *NotificationsHandler {
 // ServeHTTP upgrades the connection and streams events as JSON.
 
 func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	sess, err := core.GetSession(r)
+	cd := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData)
+	sess, err := cd.GetSession(r)
 	if err != nil {
-		core.SessionError(w, r, err)
+		cd.SessionError(w, r, err)
 		http.Error(w, "invalid session", http.StatusUnauthorized)
 		return
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -30,7 +29,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 	}
 
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
+	if _, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r); !ok {
 		return
 	}
 	vars := mux.Vars(r)

@@ -48,8 +48,7 @@ func init() {
 func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string) error {
 	log.Printf("application version %s starting", version)
 	store = sessions.NewCookieStore([]byte(sessionSecret))
-	core.Store = store
-	core.SessionName = sessionName
+	sm := &core.SessionManager{Name: sessionName, Store: store}
 	store.Options = &sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
@@ -86,7 +85,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddleware,
+		middleware.CoreAdderMiddleware(sm),
 		middleware.RequestLoggerMiddleware,
 		middleware.TaskEventMiddleware,
 		middleware.SecurityHeadersMiddleware,
@@ -95,7 +94,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		handler = csrfmw.NewCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv = server.New(handler, store, dbPool, cfg)
+	srv = server.New(handler, store, sm, dbPool, cfg)
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv
 	adminhandlers.DBPool = dbPool

@@ -17,7 +17,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -69,7 +68,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

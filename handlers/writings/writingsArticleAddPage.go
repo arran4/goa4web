@@ -14,7 +14,6 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 	"strings"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -40,7 +39,8 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -52,7 +52,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	articleId, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
 		WritingCategoryID:  int32(categoryId),

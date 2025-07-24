@@ -19,7 +19,6 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
 )
@@ -88,7 +87,8 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 	thid, _ := strconv.Atoi(vars["thread"])
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
@@ -197,7 +197,8 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

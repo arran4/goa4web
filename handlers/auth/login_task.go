@@ -14,7 +14,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -39,7 +38,8 @@ func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 // Action processes the submitted login form.
 func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		sess, _ := core.GetSession(r)
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		sess, _ := cd.GetSession(r)
 		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
 	}
 
@@ -68,7 +68,8 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 				_ = queries.MarkPasswordResetVerified(r.Context(), reset.ID)
 				_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
 			} else {
-				session, ok := core.GetSessionOrFail(w, r)
+				cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+				session, ok := cd.GetSessionOrFail(w, r)
 				if !ok {
 					return handlers.SessionFetchFail{}
 				}
@@ -104,7 +105,8 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}

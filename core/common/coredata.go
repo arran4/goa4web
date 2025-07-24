@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -58,7 +59,8 @@ type CoreData struct {
 	NotificationCount int32
 	a4codeMapper      func(tag, val string) string
 
-	session *sessions.Session
+	session        *sessions.Session
+	sessionManager *core.SessionManager
 
 	ctx           context.Context
 	queries       *db.Queries
@@ -113,6 +115,11 @@ func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 // WithSession stores the gorilla session on the CoreData object.
 func WithSession(s *sessions.Session) CoreOption {
 	return func(cd *CoreData) { cd.session = s }
+}
+
+// WithSessionManager stores the session manager on the CoreData object.
+func WithSessionManager(sm *core.SessionManager) CoreOption {
+	return func(cd *CoreData) { cd.sessionManager = sm }
 }
 
 // WithEvent links an event to the CoreData object.
@@ -259,8 +266,50 @@ func (cd *CoreData) Role() string {
 // SetSession stores s on cd for later retrieval.
 func (cd *CoreData) SetSession(s *sessions.Session) { cd.session = s }
 
+// SetSessionManager stores sm on cd for later retrieval.
+func (cd *CoreData) SetSessionManager(sm *core.SessionManager) { cd.sessionManager = sm }
+
+// SessionManager returns the configured session manager.
+func (cd *CoreData) SessionManager() *core.SessionManager { return cd.sessionManager }
+
 // Session returns the request session if available.
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
+
+// GetSession returns the current session using the configured session manager.
+func (cd *CoreData) GetSession(r *http.Request) (*sessions.Session, error) {
+	if cd.sessionManager == nil {
+		return nil, fmt.Errorf("session manager missing")
+	}
+	return cd.sessionManager.GetSession(r)
+}
+
+// GetSessionOrFail wraps GetSession and redirects to /login on failure.
+func (cd *CoreData) GetSessionOrFail(w http.ResponseWriter, r *http.Request) (*sessions.Session, bool) {
+	if cd.sessionManager == nil {
+		http.Error(w, "session manager missing", http.StatusInternalServerError)
+		return nil, false
+	}
+	return cd.sessionManager.GetSessionOrFail(w, r)
+}
+
+// SessionError logs an error and clears the session cookie.
+func (cd *CoreData) SessionError(w http.ResponseWriter, r *http.Request, err error) {
+	if cd.sessionManager != nil {
+		cd.sessionManager.SessionError(w, r, err)
+		return
+	}
+	log.Printf("session error: %v", err)
+}
+
+// SessionErrorRedirect clears the session and redirects to login on error.
+func (cd *CoreData) SessionErrorRedirect(w http.ResponseWriter, r *http.Request, err error) {
+	if cd.sessionManager != nil {
+		cd.sessionManager.SessionErrorRedirect(w, r, err)
+		return
+	}
+	log.Printf("session error: %v", err)
+	http.Redirect(w, r, "/login", http.StatusFound)
+}
 
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.TaskEvent) { cd.event = evt }

@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 )
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +36,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	// article ID is validated by the RequireWritingAuthor middleware, so we
 	// no longer need to parse it here.
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -26,12 +25,13 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	articleId, _ := strconv.Atoi(vars["article"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

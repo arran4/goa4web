@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -22,7 +21,8 @@ var deleteTask = &DeleteTask{TaskString: tasks.TaskString(TaskDelete)}
 var _ tasks.Task = (*DeleteTask)(nil)
 
 func (DeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -31,7 +31,7 @@ func (DeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	idStr := r.PostFormValue("id")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	if idStr == "" {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/subscriptions?error=missing id"}
 	}

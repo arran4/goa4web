@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -25,12 +24,13 @@ type galleryImage struct {
 }
 
 func userGalleryPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	pageStr := r.URL.Query().Get("p")
 	page, _ := strconv.Atoi(pageStr)
@@ -38,7 +38,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	size := config.AppRuntimeConfig.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {
 		size = int(pref.PageSize)

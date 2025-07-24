@@ -17,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 )
 
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +71,7 @@ var _ notif.AdminEmailTemplateProvider = (*addTask)(nil)
 func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).GetSessionOrFail(w, r)
 	if !ok {
 		return nil
 	}

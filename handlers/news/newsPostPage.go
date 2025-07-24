@@ -13,7 +13,6 @@ import (
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
@@ -60,8 +59,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ReplyText          string
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	data := Data{
 		CoreData:           cd,
 		IsReplying:         r.URL.Query().Has("comment"),
@@ -70,7 +69,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
-	session, ok := core.GetSessionOrFail(w, r)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}

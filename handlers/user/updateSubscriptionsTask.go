@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -21,7 +20,8 @@ var updateSubscriptionsTask = &UpdateSubscriptionsTask{TaskString: tasks.TaskStr
 var _ tasks.Task = (*UpdateSubscriptionsTask)(nil)
 
 func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := cd.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
@@ -29,7 +29,7 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	existing, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)

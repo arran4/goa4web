@@ -1,6 +1,9 @@
 {{define "head"}}
+{{ if cd.Marked "html-begin" }}
 <!DOCTYPE html>
 <html>
+{{ end }}
+    {{ if cd.Marked "head" }}
         <head>
                 <title>{{cd.Title}}</title>
                 {{template "headdata"}}
@@ -12,15 +15,24 @@
             <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">
         {{ end }}
     </head>
+    {{ end }}
+    {{ if cd.Marked "bodyBegin" }}
     <body>
+    {{ end }}
+        {{ if cd.Marked "header" }}
             {{template "header"}}
             <br>
+        {{ end }}
+    {{ if cd.Marked "body-table-begin" }}
         <table border=0>
             <tr valign=top>
                 <td width=200px>{{template "index" $}}
                 <td>
+    {{ end }}
+        {{ if cd.Marked "announcements" }}
                     {{- with $a := cd.AnnouncementLoaded }}{{ if $a }}
                     <a href="/news/news/{{ $a.Idsitenews }}"><strong>{{ $a.News.String }}</strong></a><br />
                     {{- end }}{{ end }}
+        {{ end }}
 
                     {{- end}}

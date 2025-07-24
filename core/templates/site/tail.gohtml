@@ -1,4 +1,5 @@
 {{define "tail"}}
+    {{ if cd.Marked "body-table-end" }}
         </table>
         <div id="bottom"></div>
                 <hr>
@@ -7,6 +8,11 @@
                                 {{template "footer"}}
                         </center>
                 </footer>
+    {{ end }}
+    {{ if cd.Marked "bodyEnd" }}
         </body>
+    {{ end }}
+{{ if cd.Marked "html-end" }}
 </html>
+{{ end }}
 {{end}}

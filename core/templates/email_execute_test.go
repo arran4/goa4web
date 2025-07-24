@@ -1,10 +1,12 @@
-package templates
+package templates_test
 
 import (
 	htemplate "html/template"
 	"io"
 	"strings"
 	"testing"
+
+	templates "github.com/arran4/goa4web/core/templates"
 )
 
 type emailData struct {
@@ -63,8 +65,8 @@ func sampleEmailData() emailData {
 }
 
 func TestEmailTemplatesExecute(t *testing.T) {
-	htmlT := GetCompiledEmailHtmlTemplates(nil)
-	textT := GetCompiledEmailTextTemplates(nil)
+	htmlT := templates.GetCompiledEmailHtmlTemplates(nil)
+	textT := templates.GetCompiledEmailTextTemplates(nil)
 	data := sampleEmailData()
 
 	for _, tmpl := range htmlT.Templates() {

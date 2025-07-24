@@ -36,7 +36,7 @@ func TestLinkerQueueNotifierMessages(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
 
 	q := dbpkg.New(db)
-	n := New(WithQueries(q))
+	n := New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
 	data := map[string]any{
 		"Title":     "Example",
 		"Username":  "bob",

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -339,7 +338,7 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 			return fmt.Errorf("auto subscribe path: %w", err)
 		}
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
-		if config.AppRuntimeConfig.NotificationsEnabled {
+		if n.cfg.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
 		}
 		if email {

@@ -3,11 +3,9 @@ package notifications
 import (
 	"context"
 	"fmt"
-	"log"
-
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/dlq/db"
+	"log"
 )
 
 func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string) error {
@@ -17,7 +15,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string)
 	if err := q.Record(ctx, msg); err != nil {
 		return err
 	}
-	if n.Queries == nil || !config.AdminNotificationsEnabled() {
+	if n.Queries == nil || !n.cfg.AdminNotify {
 		return nil
 	}
 	if dbq, ok := q.(db.DLQ); ok {
@@ -38,7 +36,7 @@ func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string)
 				}
 				nt, err := n.renderNotification(ctx, NotificationTemplateFilenameGenerator("dlqMultiFailure"), data)
 				if err == nil {
-					for _, addr := range config.GetAdminEmails(ctx, n.Queries) {
+					for _, addr := range n.adminEmails(ctx) {
 						u, err := n.Queries.UserByEmail(ctx, addr)
 						if err != nil {
 							continue

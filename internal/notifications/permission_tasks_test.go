@@ -46,7 +46,7 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := notif.New(notif.WithQueries(q))
+	n := notif.New(notif.WithQueries(q), notif.WithConfig(config.AppRuntimeConfig))
 
 	var wg sync.WaitGroup
 	wg.Add(1)

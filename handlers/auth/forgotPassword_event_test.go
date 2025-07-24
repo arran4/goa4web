@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -30,7 +31,7 @@ func TestForgotPasswordEventData(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_passwords").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	cd := common.NewCoreData(context.Background(), q, common.WithEvent(evt))
+	cd := common.NewCoreData(context.Background(), q, common.WithEvent(evt), common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
 	form := url.Values{"username": {"u"}, "password": {"pw"}}

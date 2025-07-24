@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -33,7 +34,7 @@ func TestForgotPasswordRateLimit(t *testing.T) {
 	form := url.Values{"username": {"u"}, "password": {"pw"}}
 	req := httptest.NewRequest(http.MethodPost, "/forgot", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(context.Background(), q)
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -66,7 +67,7 @@ func TestForgotPasswordReplaceOld(t *testing.T) {
 	form := url.Values{"username": {"u"}, "password": {"pw"}}
 	req := httptest.NewRequest(http.MethodPost, "/forgot", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(context.Background(), q)
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

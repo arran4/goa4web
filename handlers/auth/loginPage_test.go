@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
@@ -34,7 +35,7 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -72,7 +73,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries)
+	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -97,7 +98,7 @@ func TestLoginPageHiddenFields(t *testing.T) {
 	q := dbpkg.New(db)
 
 	req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
-	cd := common.NewCoreData(context.Background(), q)
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -140,7 +141,7 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 
-	cd := common.NewCoreData(req.Context(), q)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

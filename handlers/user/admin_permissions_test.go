@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -61,7 +62,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	form.Set("task", string(TaskUserAllow))
 	req := httptest.NewRequest("POST", "/admin/users/permissions", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(req.Context(), queries)
+	cd := common.NewCoreData(req.Context(), queries, common.WithConfig(config.AppRuntimeConfig))
 	evt := &eventbus.TaskEvent{}
 	cd.SetEvent(evt)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

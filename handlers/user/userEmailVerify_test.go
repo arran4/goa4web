@@ -12,6 +12,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -38,7 +39,7 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithConfig(config.AppRuntimeConfig))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code="+code, nil).WithContext(ctx)
@@ -74,7 +75,7 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess))
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithConfig(config.AppRuntimeConfig))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	form := url.Values{"code": {code}}

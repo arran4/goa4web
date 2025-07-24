@@ -32,7 +32,7 @@ func TestGetPageSize(t *testing.T) {
 			config.AppRuntimeConfig.PageSizeMax = 50
 			config.AppRuntimeConfig.PageSizeDefault = 15
 
-			cd := common.NewCoreData(context.Background(), nil)
+			cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.AppRuntimeConfig))
 			if tt.pref != nil {
 				common.WithPreference(tt.pref)(cd)
 			}

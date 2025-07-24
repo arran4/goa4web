@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
@@ -22,7 +23,7 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -48,7 +49,7 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -74,7 +75,7 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -100,7 +101,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -126,7 +127,7 @@ func TestCustomForumIndexSubscribeLink(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = 1
 
 	mock.ExpectQuery("SELECT id, pattern, method FROM subscriptions").
@@ -153,7 +154,7 @@ func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q)
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
 	cd.UserID = 1
 
 	pattern := topicSubscriptionPattern(2)

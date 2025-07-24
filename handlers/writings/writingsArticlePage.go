@@ -147,7 +147,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	data.Writing = writing
 	data.IsAuthor = writing.UsersIdusers == uid
-	data.CanEdit = (cd.HasRole("administrator") && cd.AdminMode) || (cd.HasRole("content writer") && data.IsAuthor)
+	data.CanEdit = (cd.HasAdminRole() && cd.AdminMode) || (cd.HasContentWriterRole() && data.IsAuthor)
 	data.CategoryId = writing.WritingCategoryID
 
 	languageRows, err := cd.Languages()

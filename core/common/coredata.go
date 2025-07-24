@@ -1046,12 +1046,14 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 	})
 }
 
+// HasAdminRole reports whether the current user has the administrator role.
 func (cd *CoreData) HasAdminRole() bool {
-	return cd.HasRole("administrator") && cd.AdminMode
+	return cd.HasRole("administrator")
 }
 
+// HasContentWriterRole reports whether the current user has the content writer role.
 func (cd *CoreData) HasContentWriterRole() bool {
-	return cd.HasRole("content writer") || cd.HasAdminRole()
+	return cd.HasRole("content writer")
 }
 
 // ExecuteSiteTemplate renders the named site template using cd's helper

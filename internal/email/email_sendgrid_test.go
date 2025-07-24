@@ -11,7 +11,8 @@ import (
 )
 
 func init() {
-	sendgridProv.Register()
+	email.DefaultRegistry = email.NewRegistry()
+	sendgridProv.Register(email.DefaultRegistry)
 }
 
 func TestSendGridProviderFromConfig(t *testing.T) {

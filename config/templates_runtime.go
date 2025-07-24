@@ -12,7 +12,7 @@ import (
 var tmplFS embed.FS
 
 // ExtendedUsage renders the named template with data from dbdrivers.Registry.
-func ExtendedUsage(name string) (string, error) {
+func ExtendedUsage(name string, reg *dbdrivers.Registry) (string, error) {
 	b, err := tmplFS.ReadFile("templates/" + name)
 	if err != nil {
 		return "", err
@@ -22,7 +22,7 @@ func ExtendedUsage(name string) (string, error) {
 		return "", err
 	}
 	var buf bytes.Buffer
-	if err := t.Execute(&buf, dbdrivers.Registry); err != nil {
+	if err := t.Execute(&buf, reg.Drivers()); err != nil {
 		return "", err
 	}
 	return buf.String(), nil

@@ -25,7 +25,10 @@ import (
 	"time"
 )
 
-func init() { logProv.Register() }
+func init() {
+	email.DefaultRegistry = email.NewRegistry()
+	logProv.Register(email.DefaultRegistry)
+}
 
 var (
 	store       *sessions.CookieStore

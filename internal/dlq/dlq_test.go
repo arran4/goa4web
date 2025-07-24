@@ -14,7 +14,8 @@ import (
 )
 
 func TestProviderFromConfigRegistry(t *testing.T) {
-	dlqdefaults.Register()
+	dlq.DefaultRegistry = dlq.NewRegistry()
+	dlqdefaults.Register(dlq.DefaultRegistry)
 
 	cfg := config.RuntimeConfig{DLQProvider: "file", DLQFile: "p"}
 	if _, ok := dlq.ProviderFromConfig(cfg, nil).(*filedlq.DLQ); !ok {
@@ -46,6 +47,7 @@ func TestProviderFromConfigRegistry(t *testing.T) {
 }
 
 func TestRegisterProviderCustom(t *testing.T) {
+	dlq.DefaultRegistry = dlq.NewRegistry()
 	called := false
 	dlq.RegisterProvider("custom", func(cfg config.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
 		called = true

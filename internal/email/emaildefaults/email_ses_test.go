@@ -12,7 +12,8 @@ import (
 )
 
 func init() {
-	sesProv.Register()
+	email.DefaultRegistry = email.NewRegistry()
+	sesProv.Register(email.DefaultRegistry)
 }
 
 func TestGetEmailProviderSESNoCreds(t *testing.T) {

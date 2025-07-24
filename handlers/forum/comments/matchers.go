@@ -1,7 +1,6 @@
 package comments
 
 import (
-	"context"
 	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
@@ -47,7 +46,10 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		ctx := context.WithValue(r.Context(), consts.KeyComment, row)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		if cd != nil {
+			cd.CacheComment(row.Idcomments, row)
+			cd.SetCurrentComment(row.Idcomments)
+		}
+		next.ServeHTTP(w, r)
 	})
 }

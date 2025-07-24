@@ -35,7 +35,19 @@ type Provider struct {
 	Prefix string
 }
 
+type ClientFactory interface {
+	New(region string) (api, error)
+}
+
+type sessionFactory struct{}
+
+func (sessionFactory) New(region string) (api, error) { return newSessionClient(region) }
+
 func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
+	return providerFromConfigWithFactory(cfg, sessionFactory{})
+}
+
+func providerFromConfigWithFactory(cfg config.RuntimeConfig, f ClientFactory) upload.Provider {
 	raw := cfg.ImageUploadS3URL
 	if raw == "" {
 		raw = cfg.ImageUploadDir
@@ -44,7 +56,7 @@ func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
 	if err != nil {
 		return nil
 	}
-	c, err := newClient(cfg.EmailAWSRegion)
+	c, err := f.New(cfg.EmailAWSRegion)
 	if err != nil {
 		return nil
 	}
@@ -53,7 +65,7 @@ func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
 
 func Register() { upload.RegisterProvider("s3", providerFromConfig) }
 
-var newClient = func(region string) (api, error) {
+func newSessionClient(region string) (api, error) {
 	cfg := aws.NewConfig()
 	if region != "" {
 		cfg = cfg.WithRegion(region)

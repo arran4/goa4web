@@ -14,14 +14,21 @@ import (
 
 // DLQ appends messages to a file.
 type DLQ struct {
-	Path string
-	mu   sync.Mutex
+	Path     string
+	mu       sync.Mutex
+	Appender appender
 }
 
 // fileSeparator marks the boundary around each recorded message.
 const fileSeparator = "-----"
 
-var appendFile = func(name string, data []byte) error {
+type appender interface {
+	Append(name string, data []byte) error
+}
+
+type osAppender struct{}
+
+func (osAppender) Append(name string, data []byte) error {
 	fh, err := os.OpenFile(name, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -39,12 +46,16 @@ func (f *DLQ) Record(_ context.Context, message string) error {
 		f.Path = "dlq.log"
 	}
 	entry := fmt.Sprintf("%s\n%s\n%s\n%s\n", fileSeparator, time.Now().Format(time.RFC3339), message, fileSeparator)
-	return appendFile(f.Path, []byte(entry))
+	app := f.Appender
+	if app == nil {
+		app = osAppender{}
+	}
+	return app.Append(f.Path, []byte(entry))
 }
 
 // Register registers the file provider.
 func Register() {
 	dlq.RegisterProvider("file", func(cfg config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
-		return &DLQ{Path: cfg.DLQFile}
+		return &DLQ{Path: cfg.DLQFile, Appender: osAppender{}}
 	})
 }

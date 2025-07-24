@@ -7,18 +7,19 @@ import (
 	"time"
 )
 
+type mockAppender struct{ fn func(string, []byte) error }
+
+func (m mockAppender) Append(n string, d []byte) error { return m.fn(n, d) }
+
 func TestDLQRecord(t *testing.T) {
-	orig := appendFile
 	var name string
 	var data []byte
-	appendFile = func(p string, d []byte) error {
+	mock := mockAppender{func(p string, d []byte) error {
 		name = p
 		data = append([]byte(nil), d...)
 		return nil
-	}
-	defer func() { appendFile = orig }()
-
-	dlq := &DLQ{Path: "test.log"}
+	}}
+	dlq := &DLQ{Path: "test.log", Appender: mock}
 	if err := dlq.Record(context.Background(), "hello"); err != nil {
 		t.Fatalf("record: %v", err)
 	}

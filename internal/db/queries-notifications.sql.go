@@ -22,6 +22,15 @@ func (q *Queries) CountUnreadNotifications(ctx context.Context, usersIdusers int
 	return count, err
 }
 
+const deleteNotification = `-- name: DeleteNotification :exec
+DELETE FROM notifications WHERE id = ?
+`
+
+func (q *Queries) DeleteNotification(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteNotification, id)
+	return err
+}
+
 const getUnreadNotifications = `-- name: GetUnreadNotifications :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
@@ -107,6 +116,15 @@ UPDATE notifications SET read_at = NOW() WHERE id = ?
 
 func (q *Queries) MarkNotificationRead(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, markNotificationRead, id)
+	return err
+}
+
+const markNotificationUnread = `-- name: MarkNotificationUnread :exec
+UPDATE notifications SET read_at = NULL WHERE id = ?
+`
+
+func (q *Queries) MarkNotificationUnread(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, markNotificationUnread, id)
 	return err
 }
 

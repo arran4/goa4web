@@ -100,6 +100,8 @@ type CoreData struct {
 	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
 	writers                  lazyValue[[]*db.WriterCountRow]
 	writingCategories        lazyValue[[]*db.WritingCategory]
+	currentWritingID         int32
+	writingRows              map[int32]*lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow]
 
 	absoluteURLBase lazyValue[string]
 	// marks records which template sections have been rendered to avoid
@@ -379,6 +381,19 @@ func (cd *CoreData) CacheForumTopic(id int32, row *db.GetForumTopicByIdForUserRo
 	lv.set(row)
 }
 
+// CacheWriting stores writing in the request cache without loading.
+func (cd *CoreData) CacheWriting(id int32, row *db.GetWritingByIdForUserDescendingByPublishedDateRow) {
+	if cd.writingRows == nil {
+		cd.writingRows = make(map[int32]*lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow])
+	}
+	lv, ok := cd.writingRows[id]
+	if !ok {
+		lv = &lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow]{}
+		cd.writingRows[id] = lv
+	}
+	lv.set(row)
+}
+
 // CurrentThread returns the currently requested thread lazily loaded.
 func (cd *CoreData) CurrentThread() (*db.GetThreadLastPosterAndPermsRow, error) {
 	if cd.currentThreadID == 0 {
@@ -417,6 +432,33 @@ func (cd *CoreData) CurrentTopicLoaded() *db.GetForumTopicByIdForUserRow {
 		return nil
 	}
 	lv, ok := cd.forumTopics[cd.currentTopicID]
+	if !ok {
+		return nil
+	}
+	v, ok := lv.peek()
+	if !ok {
+		return nil
+	}
+	return v
+}
+
+// SetCurrentWriting stores the requested writing ID.
+func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
+
+// CurrentWriting returns the currently requested writing lazily loaded.
+func (cd *CoreData) CurrentWriting() (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+	if cd.currentWritingID == 0 {
+		return nil, nil
+	}
+	return cd.WritingByID(cd.currentWritingID)
+}
+
+// CurrentWritingLoaded returns the cached current writing without database access.
+func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingByPublishedDateRow {
+	if cd.writingRows == nil {
+		return nil
+	}
+	lv, ok := cd.writingRows[cd.currentWritingID]
 	if !ok {
 		return nil
 	}
@@ -880,6 +922,28 @@ func (cd *CoreData) ForumThreadByID(id int32) (*db.GetThreadLastPosterAndPermsRo
 		return cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
 			ViewerID:      cd.UserID,
 			ThreadID:      id,
+			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	})
+}
+
+// WritingByID returns a single writing lazily loading it once per ID.
+func (cd *CoreData) WritingByID(id int32) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+	if cd.writingRows == nil {
+		cd.writingRows = make(map[int32]*lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow])
+	}
+	lv, ok := cd.writingRows[id]
+	if !ok {
+		lv = &lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow]{}
+		cd.writingRows[id] = lv
+	}
+	return lv.load(func() (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetWritingByIdForUserDescendingByPublishedDate(cd.ctx, db.GetWritingByIdForUserDescendingByPublishedDateParams{
+			ViewerID:      cd.UserID,
+			Idwriting:     id,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	})

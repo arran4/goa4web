@@ -52,6 +52,9 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 	called := false
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
+		if cd.CurrentWritingLoaded() == nil {
+			t.Errorf("writing not cached")
+		}
 		w.WriteHeader(http.StatusOK)
 	})
 

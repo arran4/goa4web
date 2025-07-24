@@ -48,6 +48,7 @@ func init() {
 // session secret. The context controls the lifetime of the HTTP server.
 func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string) error {
 	log.Printf("application version %s starting", version)
+	adminhandlers.StartTime = time.Now()
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	core.Store = store
 	core.SessionName = sessionName

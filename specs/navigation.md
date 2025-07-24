@@ -27,7 +27,7 @@ type link struct {
 
 The `IndexItems()` and `AdminLinks()` functions return a slice of `corecommon.IndexItem` values sorted by the weight field. They copy the internal slice, sort it in ascending weight order and convert the results to the exported struct used by templates.
 
-Handlers declare a `SectionWeight` constant which determines the relative order of their menu entries. Lower numbers sort earlier. The README lists example weights ranging from `10` for News up to `100` for Information. Weights need not be contiguous; packages sometimes subtract or add from the base weight when registering multiple links so related links group together.
+Handlers declare a `SectionWeight` constant which determines the relative order of their menu entries. Lower numbers sort earlier. The README lists example weights ranging from `10` for News up to `160` for Usage Stats. Weights need not be contiguous; packages sometimes subtract or add from the base weight when registering multiple links so related links group together.
 
 ## Usage
 

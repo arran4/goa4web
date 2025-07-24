@@ -2,6 +2,7 @@ package dlq
 
 import (
 	"log"
+	"sort"
 	"strings"
 	"sync"
 
@@ -34,4 +35,16 @@ func lookupProvider(name string) ProviderFactory {
 	f := providers[strings.ToLower(name)]
 	regMu.RUnlock()
 	return f
+}
+
+// ProviderNames returns the names of registered DLQ providers in sorted order.
+func ProviderNames() []string {
+	regMu.RLock()
+	names := make([]string, 0, len(providers))
+	for n := range providers {
+		names = append(names, n)
+	}
+	regMu.RUnlock()
+	sort.Strings(names)
+	return names
 }

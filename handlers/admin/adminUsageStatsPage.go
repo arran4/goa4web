@@ -1,9 +1,11 @@
 package admin
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -15,6 +17,7 @@ import (
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
+		Errors            []string
 		ForumTopics       []*db.ForumTopicThreadCountsRow
 		ForumCategories   []*db.ForumCategoryThreadCountsRow
 		WritingCategories []*db.WritingCategoryCountsRow
@@ -26,32 +29,96 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		StartYear         int
 	}
 	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := data.Queries()
 
-	var err error
-	if data.ForumTopics, err = queries.ForumTopicThreadCounts(r.Context()); err != nil {
-		log.Printf("forum topic counts: %v", err)
-	}
-	if data.ForumCategories, err = queries.ForumCategoryThreadCounts(r.Context()); err != nil {
-		log.Printf("forum category counts: %v", err)
-	}
-	if data.Imageboards, err = queries.ImageboardPostCounts(r.Context()); err != nil {
-		log.Printf("imageboard post counts: %v", err)
-	}
-	if data.Users, err = queries.UserPostCounts(r.Context()); err != nil {
-		log.Printf("user post counts: %v", err)
-	}
-	if data.WritingCategories, err = queries.WritingCategoryCounts(r.Context()); err != nil {
-		log.Printf("writing category counts: %v", err)
-	}
-	if data.LinkerCategories, err = data.LinkerCategoryCounts(); err != nil {
-		log.Printf("linker category counts: %v", err)
-	}
-	if data.Monthly, err = queries.MonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err != nil {
-		log.Printf("monthly usage counts: %v", err)
-	}
-	if data.UserMonthly, err = queries.UserMonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err != nil {
-		log.Printf("user monthly usage counts: %v", err)
+	var wg sync.WaitGroup
+	wg.Add(8)
+	errCh := make(chan string, 8)
+
+	go func() {
+		defer wg.Done()
+		if rows, err := queries.ForumTopicThreadCounts(r.Context()); err == nil {
+			data.ForumTopics = rows
+		} else {
+			log.Printf("forum topic counts: %v", err)
+			errCh <- fmt.Errorf("forum topic counts: %w", err).Error()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if rows, err := queries.ForumCategoryThreadCounts(r.Context()); err == nil {
+			data.ForumCategories = rows
+		} else {
+			log.Printf("forum category counts: %v", err)
+			errCh <- fmt.Errorf("forum category counts: %w", err).Error()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if rows, err := queries.ImageboardPostCounts(r.Context()); err == nil {
+			data.Imageboards = rows
+		} else {
+			log.Printf("imageboard post counts: %v", err)
+			errCh <- fmt.Errorf("imageboard post counts: %w", err).Error()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if rows, err := queries.UserPostCounts(r.Context()); err == nil {
+			data.Users = rows
+		} else {
+			log.Printf("user post counts: %v", err)
+			errCh <- fmt.Errorf("user post counts: %w", err).Error()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if rows, err := queries.WritingCategoryCounts(r.Context()); err == nil {
+			data.WritingCategories = rows
+		} else {
+			log.Printf("writing category counts: %v", err)
+			errCh <- fmt.Errorf("writing category counts: %w", err).Error()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if rows, err := data.LinkerCategoryCounts(); err == nil {
+			data.LinkerCategories = rows
+		} else {
+			log.Printf("linker category counts: %v", err)
+			errCh <- fmt.Errorf("linker category counts: %w", err).Error()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if rows, err := queries.MonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err == nil {
+			data.Monthly = rows
+		} else {
+			log.Printf("monthly usage counts: %v", err)
+			errCh <- fmt.Errorf("monthly usage counts: %w", err).Error()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if rows, err := queries.UserMonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err == nil {
+			data.UserMonthly = rows
+		} else {
+			log.Printf("user monthly usage counts: %v", err)
+			errCh <- fmt.Errorf("user monthly usage counts: %w", err).Error()
+		}
+	}()
+
+	wg.Wait()
+	close(errCh)
+	for e := range errCh {
+		data.Errors = append(data.Errors, e)
 	}
 	data.StartYear = config.AppRuntimeConfig.StatsStartYear
 

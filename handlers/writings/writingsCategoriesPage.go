@@ -71,5 +71,5 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 		data.Abstracts = append(data.Abstracts, wrow)
 	}
 
-	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "writingsCategoriesPage.gohtml", data)
 }

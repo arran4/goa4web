@@ -41,5 +41,5 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categories
 
-	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "linkerCategoriesPage.gohtml", data)
 }

@@ -15,6 +15,9 @@ ORDER BY id DESC;
 -- name: MarkNotificationRead :exec
 UPDATE notifications SET read_at = NOW() WHERE id = ?;
 
+-- name: MarkNotificationUnread :exec
+UPDATE notifications SET read_at = NULL WHERE id = ?;
+
 -- name: PurgeReadNotifications :exec
 DELETE FROM notifications
 WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR);
@@ -29,3 +32,11 @@ ORDER BY id DESC LIMIT 1;
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
 ORDER BY id DESC LIMIT ?;
+
+-- name: GetNotification :one
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+WHERE id = ?;
+
+-- name: DeleteNotification :exec
+DELETE FROM notifications WHERE id = ?;

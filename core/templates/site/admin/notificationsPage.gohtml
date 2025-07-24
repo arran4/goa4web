@@ -16,6 +16,11 @@
 </form>
 <form method="post">
     {{ csrfField }}
+<div>
+    <button type="button" id="selAll">Select all</button>
+    <button type="button" id="selNone">Select none</button>
+    <button type="button" id="selInvert">Invert</button>
+</div>
 <table border="1">
     <tr><th>Select</th><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
     {{- range .Notifications }}
@@ -25,11 +30,48 @@
         <td>{{ .UsersIdusers }}</td>
         <td>{{ .Message.String }}</td>
         <td>{{ .Link.String }}</td>
-        <td>{{ if .ReadAt.Valid }}yes{{ else }}no{{ end }}</td>
+        <td>
+            {{ if .ReadAt.Valid }}
+            <a href="#" class="toggle-read" data-id="{{ .ID }}">yes</a>
+            {{ else }}
+            <a href="#" class="toggle-read" data-id="{{ .ID }}">no</a>
+            {{ end }}
+        </td>
     </tr>
     {{- end }}
 </table>
 <input type="submit" name="task" value="Dismiss">
-<input type="submit" name="task" value="Purge">
+<input type="submit" name="task" value="Purge selected">
+<input type="submit" name="task" value="Purge read">
 </form>
+<script>
+(function(){
+    var boxes = Array.from(document.querySelectorAll('input[name="id"]'));
+    var last;
+    function setAll(val){ boxes.forEach(function(b){ b.checked = val; }); }
+    document.getElementById('selAll').addEventListener('click', function(e){e.preventDefault(); setAll(true);});
+    document.getElementById('selNone').addEventListener('click', function(e){e.preventDefault(); setAll(false);});
+    document.getElementById('selInvert').addEventListener('click', function(e){e.preventDefault(); boxes.forEach(function(b){ b.checked = !b.checked; });});
+    boxes.forEach(function(b){
+        b.addEventListener('click', function(e){
+            if(e.shiftKey && last){
+                var idx1 = boxes.indexOf(last);
+                var idx2 = boxes.indexOf(b);
+                var start = Math.min(idx1, idx2); var end = Math.max(idx1, idx2);
+                for(var i=start; i<=end; i++){ boxes[i].checked = b.checked; }
+            }
+            last = b;
+        });
+    });
+    document.querySelectorAll('.toggle-read').forEach(function(a){
+        a.addEventListener('click', function(e){
+            e.preventDefault();
+            var data = new URLSearchParams();
+            data.set('task','Toggle read');
+            data.set('id', a.dataset.id);
+            fetch('/admin/notifications', {method:'POST', body:data}).then(function(){ location.reload(); });
+        });
+    });
+})();
+</script>
 {{ template "tail" $ }}

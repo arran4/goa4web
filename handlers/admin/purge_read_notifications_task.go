@@ -10,16 +10,16 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// PurgeNotificationsTask removes old read notifications.
-type PurgeNotificationsTask struct{ tasks.TaskString }
+// PurgeReadNotificationsTask removes old read notifications.
+type PurgeReadNotificationsTask struct{ tasks.TaskString }
 
-var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
+var purgeReadNotificationsTask = &PurgeReadNotificationsTask{TaskString: TaskPurgeRead}
 
-// ensures PurgeNotificationsTask implements the tasks.Task interface
-var _ tasks.Task = (*PurgeNotificationsTask)(nil)
-var _ tasks.AuditableTask = (*PurgeNotificationsTask)(nil)
+// ensures PurgeReadNotificationsTask implements the tasks.Task interface
+var _ tasks.Task = (*PurgeReadNotificationsTask)(nil)
+var _ tasks.AuditableTask = (*PurgeReadNotificationsTask)(nil)
 
-func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any {
+func (PurgeReadNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
 		return fmt.Errorf("purge notifications fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -35,7 +35,7 @@ func (PurgeNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any
 	return nil
 }
 
-// AuditRecord summarises purging notifications.
-func (PurgeNotificationsTask) AuditRecord(map[string]any) string {
+// AuditRecord summarises purging read notifications.
+func (PurgeReadNotificationsTask) AuditRecord(map[string]any) string {
 	return "purged read notifications"
 }

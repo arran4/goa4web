@@ -7,27 +7,42 @@ type NamedTask interface {
 	Name() string
 }
 
-var (
-	regMu    sync.Mutex
-	registry []NamedTask
-)
-
-// Register adds t to the registry. Duplicate names are ignored.
-func Register(t NamedTask) {
-	regMu.Lock()
-	defer regMu.Unlock()
-	for _, r := range registry {
-		if r.Name() == t.Name() {
-			return
-		}
-	}
-	registry = append(registry, t)
+// Registry stores registered tasks.
+type Registry struct {
+	mu    sync.Mutex
+	tasks []NamedTask
 }
+
+// NewRegistry returns an empty Registry.
+func NewRegistry() *Registry { return &Registry{} }
+
+// Register adds t to the DefaultRegistry. Duplicate names are ignored.
+func Register(t NamedTask) { DefaultRegistry.Register(t) }
 
 // Registered returns a copy of the registered tasks slice.
 func Registered() []NamedTask {
-	regMu.Lock()
-	tasks := append([]NamedTask(nil), registry...)
-	regMu.Unlock()
+	return DefaultRegistry.Registered()
+}
+
+// Register adds t to the Registry. Duplicate names are ignored.
+func (r *Registry) Register(t NamedTask) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, rt := range r.tasks {
+		if rt.Name() == t.Name() {
+			return
+		}
+	}
+	r.tasks = append(r.tasks, t)
+}
+
+// Registered returns a copy of the registered tasks slice.
+func (r *Registry) Registered() []NamedTask {
+	r.mu.Lock()
+	tasks := append([]NamedTask(nil), r.tasks...)
+	r.mu.Unlock()
 	return tasks
 }
+
+// DefaultRegistry holds the package default tasks.
+var DefaultRegistry = NewRegistry()

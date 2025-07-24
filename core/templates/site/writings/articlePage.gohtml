@@ -1,5 +1,4 @@
 {{ template "head" $ }}
-    {{ template "writingCategoryBreadcrumbs" $ }}
     {{ if .Writing }}
         <font size="4">At {{ .Writing.Published.Time }}, By {{ .Writing.Writerusername.String }}; {{ .Writing.Title.String | a4code2html }}</font>:
         {{ if .Writing.Private.Bool }} (Restricted access) {{ end }}

@@ -6,6 +6,7 @@ import (
 
 	faq "github.com/arran4/goa4web/handlers/faq"
 	forum "github.com/arran4/goa4web/handlers/forum"
+	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
 	languages "github.com/arran4/goa4web/handlers/languages"
 	linker "github.com/arran4/goa4web/handlers/linker"
 	news "github.com/arran4/goa4web/handlers/news"
@@ -72,6 +73,9 @@ func RegisterRoutes(ar *mux.Router) {
 	// forum admin routes
 	forum.RegisterAdminRoutes(ar)
 
+	// imagebbs admin
+	imagebbs.RegisterAdminRoutes(ar)
+
 	// linker admin
 	linker.RegisterAdminRoutes(ar)
 
@@ -97,7 +101,7 @@ func RegisterRoutes(ar *mux.Router) {
 
 // Register registers the admin router module.
 func Register() {
-	router.RegisterModule("admin", []string{"faq", "forum", "languages", "linker", "news", "search", "user", "writings"}, func(r *mux.Router) {
+	router.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings"}, func(r *mux.Router) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		ar.Use(handlers.IndexMiddleware(CustomIndex))

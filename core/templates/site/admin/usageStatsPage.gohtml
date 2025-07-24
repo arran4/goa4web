@@ -1,4 +1,12 @@
 {{ template "head" $ }}
+{{- if $.Errors }}
+    Errors occurred:
+    <ul>
+    {{- range $.Errors }}
+        <li>{{ . }}</li>
+    {{- end }}
+    </ul>
+{{- end }}
 <h2>Usage Statistics</h2>
 
 <h3>Threads per Forum Topic</h3>

@@ -20,3 +20,9 @@ Subcommands may themselves dispatch to further nested commands (for
 example `user` and `config`). All of them share the same configuration
 mechanism via the embedded `rootCmd`. Running `goa4web help` or
 `goa4web help <command>` displays the relevant usage information.
+
+A special `repl` command starts an interactive shell. The REPL accepts the
+same commands as the normal CLI and supports background execution by
+appending `&`, external commands prefixed with `!` and simple environment
+variables using `set KEY=VALUE`. Type `jobs` to list running background
+commands and `wait <id>` to wait for completion.

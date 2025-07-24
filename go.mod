@@ -23,6 +23,7 @@ require (
 )
 
 require (
+	github.com/chzyer/readline v1.5.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	golang.org/x/image v0.28.0

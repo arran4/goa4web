@@ -155,3 +155,7 @@ LIMIT ? OFFSET ?;
 -- name: SetBlogLastIndex :exec
 UPDATE blogs SET last_index = NOW() WHERE idblogs = ?;
 
+
+-- name: GetAllBlogsForIndex :many
+SELECT idblogs, blog FROM blogs WHERE deleted_at IS NULL;
+

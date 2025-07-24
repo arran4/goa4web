@@ -545,6 +545,38 @@ func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountFor
 	return &i, err
 }
 
+const getAllImagePostsForIndex = `-- name: GetAllImagePostsForIndex :many
+SELECT idimagepost, description FROM imagepost WHERE deleted_at IS NULL
+`
+
+type GetAllImagePostsForIndexRow struct {
+	Idimagepost int32
+	Description sql.NullString
+}
+
+func (q *Queries) GetAllImagePostsForIndex(ctx context.Context) ([]*GetAllImagePostsForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllImagePostsForIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllImagePostsForIndexRow
+	for rows.Next() {
+		var i GetAllImagePostsForIndexRow
+		if err := rows.Scan(&i.Idimagepost, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getImageBoardById = `-- name: GetImageBoardById :one
 SELECT idimageboard, imageboard_idimageboard, title, description, approval_required FROM imageboard WHERE idimageboard = ?
 `

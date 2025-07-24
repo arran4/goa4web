@@ -53,6 +53,38 @@ func (q *Queries) DeactivateNewsPost(ctx context.Context, idsitenews int32) erro
 	return err
 }
 
+const getAllSiteNewsForIndex = `-- name: GetAllSiteNewsForIndex :many
+SELECT idsiteNews, news FROM site_news WHERE deleted_at IS NULL
+`
+
+type GetAllSiteNewsForIndexRow struct {
+	Idsitenews int32
+	News       sql.NullString
+}
+
+func (q *Queries) GetAllSiteNewsForIndex(ctx context.Context) ([]*GetAllSiteNewsForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllSiteNewsForIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllSiteNewsForIndexRow
+	for rows.Next() {
+		var i GetAllSiteNewsForIndexRow
+		if err := rows.Scan(&i.Idsitenews, &i.News); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getForumThreadIdByNewsPostId = `-- name: GetForumThreadIdByNewsPostId :one
 SELECT s.forumthread_id, u.idusers
 FROM site_news s

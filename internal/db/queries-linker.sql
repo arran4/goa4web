@@ -317,3 +317,7 @@ WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercate
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
+
+-- name: GetAllLinkersForIndex :many
+SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL;
+

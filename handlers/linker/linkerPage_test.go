@@ -57,9 +57,9 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	mock.ExpectQuery("SELECT l.idlinker").WithArgs(int32(0), int32(1), sqlmock.AnyArg()).WillReturnRows(rows)
 
 	mock.ExpectExec("INSERT IGNORE INTO searchwordlist").WithArgs("foo").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("INSERT IGNORE INTO linker_search").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("INSERT INTO linker_search").WithArgs(int32(1), int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT IGNORE INTO searchwordlist").WithArgs("bar").WillReturnResult(sqlmock.NewResult(2, 1))
-	mock.ExpectExec("INSERT IGNORE INTO linker_search").WithArgs(int32(1), int32(2)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("INSERT INTO linker_search").WithArgs(int32(1), int32(2), int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("UPDATE linker SET last_index").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	bus := eventbus.NewBus()

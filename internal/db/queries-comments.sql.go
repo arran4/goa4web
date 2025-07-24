@@ -89,6 +89,38 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 	return items, nil
 }
 
+const getAllCommentsForIndex = `-- name: GetAllCommentsForIndex :many
+SELECT idcomments, text FROM comments WHERE deleted_at IS NULL
+`
+
+type GetAllCommentsForIndexRow struct {
+	Idcomments int32
+	Text       sql.NullString
+}
+
+func (q *Queries) GetAllCommentsForIndex(ctx context.Context) ([]*GetAllCommentsForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllCommentsForIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllCommentsForIndexRow
+	for rows.Next() {
+		var i GetAllCommentsForIndexRow
+		if err := rows.Scan(&i.Idcomments, &i.Text); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCommentById = `-- name: GetCommentById :one
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index
 FROM comments c

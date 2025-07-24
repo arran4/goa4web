@@ -236,6 +236,45 @@ func (q *Queries) GetAllWritingsByUser(ctx context.Context, arg GetAllWritingsBy
 	return items, nil
 }
 
+const getAllWritingsForIndex = `-- name: GetAllWritingsForIndex :many
+SELECT idwriting, title, abstract, writing FROM writing WHERE deleted_at IS NULL
+`
+
+type GetAllWritingsForIndexRow struct {
+	Idwriting int32
+	Title     sql.NullString
+	Abstract  sql.NullString
+	Writing   sql.NullString
+}
+
+func (q *Queries) GetAllWritingsForIndex(ctx context.Context) ([]*GetAllWritingsForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllWritingsForIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllWritingsForIndexRow
+	for rows.Next() {
+		var i GetAllWritingsForIndexRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.Title,
+			&i.Abstract,
+			&i.Writing,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPublicWritings = `-- name: GetPublicWritings :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index
 FROM writing w

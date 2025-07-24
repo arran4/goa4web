@@ -42,60 +42,69 @@ func BreakupTextToWords(input string) []string {
 
 // SearchWordIdsFromText inserts new search words and returns their ids.
 // It redirects on error and returns true when a redirect has been issued.
-func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, queries *db.Queries) ([]int64, bool) {
-	words := map[string]int32{}
+type WordCount struct {
+	ID    int64
+	Count int32
+}
+
+func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, queries *db.Queries) ([]WordCount, bool) {
+	counts := map[string]int32{}
 	for _, word := range BreakupTextToWords(text) {
-		words[strings.ToLower(word)] = 0
+		counts[strings.ToLower(word)]++
 	}
-	wordIds := make([]int64, 0, len(words))
-	for word := range words {
+	results := make([]WordCount, 0, len(counts))
+	for word, c := range counts {
 		id, err := queries.CreateSearchWord(r.Context(), strings.ToLower(word))
 		if err != nil {
 			log.Printf("Error: createSearchWord: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return nil, true
 		}
-		wordIds = append(wordIds, id)
+		results = append(results, WordCount{ID: id, Count: c})
 	}
-	return wordIds, false
+	return results, false
 }
 
 // InsertWordsToLinkerSearch associates search words with a linker post.
-func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, lid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
+func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, lid int64) bool {
+	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
 		return queries.AddToLinkerSearch(ctx, db.AddToLinkerSearchParams{
 			LinkerID:                       int32(lid),
 			SearchwordlistIdsearchwordlist: int32(wid),
+			WordCount:                      count,
 		})
 	})
 }
 
 // InsertWordsToImageSearch associates search words with an image post.
-func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, pid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
+func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, pid int64) bool {
+	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
 		return queries.AddToImagePostSearch(ctx, db.AddToImagePostSearchParams{
 			ImagePostID:                    int32(pid),
 			SearchwordlistIdsearchwordlist: int32(wid),
+			WordCount:                      count,
 		})
 	})
 }
 
 // InsertWordsToWritingSearch associates search words with a writing post.
-func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, wacid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
+func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, wacid int64) bool {
+	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
 		return queries.AddToForumWritingSearch(ctx, db.AddToForumWritingSearchParams{
 			WritingID:                      int32(wacid),
 			SearchwordlistIdsearchwordlist: int32(wid),
+			WordCount:                      count,
 		})
 	})
 }
 
 // InsertWordsToForumSearch associates search words with a forum comment.
-func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, wordIds []int64, queries *db.Queries, cid int64) bool {
-	return InsertWords(w, r, wordIds, func(ctx context.Context, wid int64) error {
+func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, cid int64) bool {
+	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
 		return queries.AddToForumCommentSearch(ctx, db.AddToForumCommentSearchParams{
 			CommentID:                      int32(cid),
 			SearchwordlistIdsearchwordlist: int32(wid),
+			WordCount:                      count,
 		})
 	})
 }

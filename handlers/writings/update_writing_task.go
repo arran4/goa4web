@@ -29,7 +29,11 @@ var _ notif.GrantsRequiredProvider = (*UpdateWritingTask)(nil)
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
 func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
-	writing := r.Context().Value(consts.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	writing, err := cd.CurrentWriting()
+	if err != nil || writing == nil {
+		return fmt.Errorf("current writing fail %w", err)
+	}
 
 	languageID, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
@@ -43,7 +47,6 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{

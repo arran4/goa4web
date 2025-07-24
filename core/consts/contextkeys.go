@@ -13,6 +13,4 @@ const (
 	KeyBlogEntry ContextKey = "blogEntry"
 	// KeyNewsPost holds the news post row.
 	KeyNewsPost ContextKey = "newsPost"
-	// KeyWriting contains the writing row.
-	KeyWriting ContextKey = "writing"
 )

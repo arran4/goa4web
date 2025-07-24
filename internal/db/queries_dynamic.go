@@ -302,7 +302,7 @@ func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*M
 		set    func(*MonthlyUsageRow, int64)
 	}{
 		{"blogs", "written", func(r *MonthlyUsageRow, n int64) { r.Blogs = n }},
-		{"siteNews", "occurred", func(r *MonthlyUsageRow, n int64) { r.News = n }},
+		{"site_news", "occurred", func(r *MonthlyUsageRow, n int64) { r.News = n }},
 		{"comments", "written", func(r *MonthlyUsageRow, n int64) { r.Comments = n }},
 		{"imagepost", "posted", func(r *MonthlyUsageRow, n int64) { r.Images = n }},
 		{"linker", "listed", func(r *MonthlyUsageRow, n int64) { r.Links = n }},
@@ -349,7 +349,7 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 		set    func(*UserMonthlyUsageRow, int64)
 	}{
 		{"blogs", "written", func(r *UserMonthlyUsageRow, n int64) { r.Blogs = n }},
-		{"siteNews", "occurred", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
+		{"site_news", "occurred", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
 		{"comments", "written", func(r *UserMonthlyUsageRow, n int64) { r.Comments = n }},
 		{"imagepost", "posted", func(r *UserMonthlyUsageRow, n int64) { r.Images = n }},
 		{"linker", "listed", func(r *UserMonthlyUsageRow, n int64) { r.Links = n }},

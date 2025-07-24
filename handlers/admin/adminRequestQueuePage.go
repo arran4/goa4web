@@ -35,7 +35,7 @@ func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Rows = append(data.Rows, Row{row, user.Username.String})
 	}
-	handlers.TemplateHandler(w, r, "admin/requestQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "requestQueuePage.gohtml", data)
 }
 
 func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,7 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Rows = append(data.Rows, Row{row, user.Username.String})
 	}
-	handlers.TemplateHandler(w, r, "admin/requestArchivePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "requestArchivePage.gohtml", data)
 }
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +84,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		User:     user,
 		Comments: comments,
 	}
-	handlers.TemplateHandler(w, r, "admin/requestPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "requestPage.gohtml", data)
 }
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +104,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		_ = queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: comment})
 	}
-	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) {
@@ -140,7 +140,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/requests",
 	}
-	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func requestAuditSummary(action string, data map[string]any) string {

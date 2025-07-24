@@ -54,4 +54,4 @@ func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
 }
 
 // Register registers the SES provider factory.
-func Register() { email.RegisterProvider("ses", providerFromConfig) }
+func Register(r *email.Registry) { r.RegisterProvider("ses", providerFromConfig) }

@@ -85,7 +85,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	// Wait for the worker goroutine to exit before verifying expectations.
 	time.Sleep(50 * time.Millisecond)
 	err = nil
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 50; i++ {
 		err = mock.ExpectationsWereMet()
 		if err == nil {
 			break

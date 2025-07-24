@@ -126,4 +126,4 @@ func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
 }
 
 // Register registers the JMAP provider.
-func Register() { email.RegisterProvider("jmap", providerFromConfig) }
+func Register(r *email.Registry) { r.RegisterProvider("jmap", providerFromConfig) }

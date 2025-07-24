@@ -12,26 +12,32 @@ import (
 // ProviderFactory creates a DLQ provider using runtime configuration.
 type ProviderFactory func(config.RuntimeConfig, *dbpkg.Queries) DLQ
 
-var (
-	regMu     sync.RWMutex
-	providers = make(map[string]ProviderFactory)
-)
+// Registry holds registered DLQ providers.
+type Registry struct {
+	mu        sync.RWMutex
+	providers map[string]ProviderFactory
+}
+
+// NewRegistry returns an initialised DLQ provider registry.
+func NewRegistry() *Registry {
+	return &Registry{providers: make(map[string]ProviderFactory)}
+}
 
 // RegisterProvider adds factory to the provider registry under name.
-func RegisterProvider(name string, factory ProviderFactory) {
-	regMu.Lock()
-	defer regMu.Unlock()
+func (r *Registry) RegisterProvider(name string, factory ProviderFactory) {
 	n := strings.ToLower(name)
-	if _, ok := providers[n]; ok {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.providers[n]; ok {
 		log.Printf("dlq: provider %s already registered", n)
 	}
-	providers[n] = factory
+	r.providers[n] = factory
 }
 
 // lookupProvider retrieves a factory by name.
-func lookupProvider(name string) ProviderFactory {
-	regMu.RLock()
-	f := providers[strings.ToLower(name)]
-	regMu.RUnlock()
+func (r *Registry) lookupProvider(name string) ProviderFactory {
+	r.mu.RLock()
+	f := r.providers[strings.ToLower(name)]
+	r.mu.RUnlock()
 	return f
 }

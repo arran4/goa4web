@@ -9,7 +9,7 @@ import (
 )
 
 // ProviderFromConfig returns a DLQ implementation configured from cfg.
-func ProviderFromConfig(cfg config.RuntimeConfig, q *dbpkg.Queries) DLQ {
+func (r *Registry) ProviderFromConfig(cfg config.RuntimeConfig, q *dbpkg.Queries) DLQ {
 	names := strings.Split(cfg.DLQProvider, ",")
 	var qs []DLQ
 	for _, name := range names {
@@ -17,7 +17,7 @@ func ProviderFromConfig(cfg config.RuntimeConfig, q *dbpkg.Queries) DLQ {
 		if n == "" {
 			continue
 		}
-		if f := lookupProvider(n); f != nil {
+		if f := r.lookupProvider(n); f != nil {
 			qs = append(qs, f(cfg, q))
 		} else {
 			if n != "log" {

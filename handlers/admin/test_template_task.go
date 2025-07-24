@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
@@ -31,7 +32,9 @@ var _ tasks.Task = (*TestTemplateTask)(nil)
 var _ tasks.AuditableTask = (*TestTemplateTask)(nil)
 
 func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
+	reg := email.NewRegistry()
+	emaildefaults.Register(reg)
+	if reg.ProviderFromConfig(config.AppRuntimeConfig) == nil {
 		return fmt.Errorf("mail not configured %w", handlers.ErrRedirectOnSamePageHandler(userhandlers.ErrMailNotConfigured))
 	}
 

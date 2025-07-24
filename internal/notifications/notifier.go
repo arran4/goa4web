@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 	htemplate "html/template"
 )
 
@@ -41,7 +42,9 @@ func WithEmailProvider(p email.Provider) Option { return func(n *Notifier) { n.E
 func WithConfig(cfg config.RuntimeConfig) Option {
 	return func(n *Notifier) {
 		if n.EmailProvider == nil {
-			n.EmailProvider = email.ProviderFromConfig(cfg)
+			reg := email.NewRegistry()
+			emaildefaults.Register(reg)
+			n.EmailProvider = reg.ProviderFromConfig(cfg)
 		}
 	}
 }

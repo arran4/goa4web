@@ -18,10 +18,10 @@ type taskTemplateInfo struct {
 	AdminInternal string
 }
 
-func taskTemplateInfos() []taskTemplateInfo {
-	reg := tasks.Registered()
-	infos := make([]taskTemplateInfo, 0, len(reg))
-	for _, t := range reg {
+func taskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
+	tasks := reg.Registered()
+	infos := make([]taskTemplateInfo, 0, len(tasks))
+	for _, t := range tasks {
 		info := taskTemplateInfo{Task: t.Name()}
 		if tp, ok := t.(notif.SelfNotificationTemplateProvider); ok {
 			if et := tp.SelfEmailTemplate(); et != nil {

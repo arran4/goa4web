@@ -8,15 +8,19 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/dbdrivers"
+	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
 // PerformChecks checks DB connectivity and the upload provider.
 func PerformChecks(cfg config.RuntimeConfig) error {
-	if err := dbstart2.MaybeAutoMigrate(cfg); err != nil {
+	reg := dbdrivers.NewRegistry()
+	dbdefaults.Register(reg)
+	if err := dbstart2.MaybeAutoMigrate(cfg, reg); err != nil {
 		return err
 	}
-	if ue := dbstart2.InitDB(cfg); ue != nil {
+	if ue := dbstart2.InitDB(cfg, reg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckUploadTarget(cfg); ue != nil {

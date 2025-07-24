@@ -21,11 +21,18 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 	logProv "github.com/arran4/goa4web/internal/email/log"
 	"time"
 )
 
-func init() { logProv.Register() }
+var emailReg *email.Registry
+
+func init() {
+	emailReg = email.NewRegistry()
+	logProv.Register(emailReg)
+	emaildefaults.Register(emailReg)
+}
 
 var (
 	store       *sessions.CookieStore
@@ -56,7 +63,9 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
+	reg := email.NewRegistry()
+	emaildefaults.Register(reg)
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -87,7 +96,9 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
+	reg2 := email.NewRegistry()
+	emaildefaults.Register(reg2)
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg2.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

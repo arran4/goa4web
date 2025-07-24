@@ -8,10 +8,10 @@ import (
 )
 
 // ProviderFromConfig returns an email provider configured from cfg.
-func ProviderFromConfig(cfg config.RuntimeConfig) Provider {
+func (r *Registry) ProviderFromConfig(cfg config.RuntimeConfig) Provider {
 	mode := strings.ToLower(cfg.EmailProvider)
 
-	if f := providerFactory(mode); f != nil {
+	if f := r.providerFactory(mode); f != nil {
 		return f(cfg)
 	}
 

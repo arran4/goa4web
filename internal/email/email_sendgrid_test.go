@@ -7,15 +7,19 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/email"
 	sendgridProv "github.com/arran4/goa4web/internal/email/sendgrid"
 )
 
+var reg *email.Registry
+
 func init() {
-	sendgridProv.Register()
+	reg = email.NewRegistry()
+	sendgridProv.Register(reg)
 }
 
 func TestSendGridProviderFromConfig(t *testing.T) {
-	p := ProviderFromConfig(config.RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k", EmailFrom: "from@example.com"})
+	p := reg.ProviderFromConfig(config.RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k", EmailFrom: "from@example.com"})
 	if _, ok := p.(sendgridProv.Provider); !ok {
 		t.Fatalf("expected SendGridProvider, got %#v", p)
 	}

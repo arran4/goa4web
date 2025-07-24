@@ -17,7 +17,9 @@ import (
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
+	dlqdefaults "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 	email "github.com/arran4/goa4web/internal/email"
+	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	middleware "github.com/arran4/goa4web/internal/middleware"
@@ -101,12 +103,17 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	adminhandlers.DBPool = dbPool
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
-	emailProvider := email.ProviderFromConfig(cfg)
+	emailReg := email.NewRegistry()
+	emaildefaults.Register(emailReg)
+	emailProvider := emailReg.ProviderFromConfig(cfg)
 	if config.EmailSendingEnabled() && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
 	}
 
-	dlqProvider := dlq.ProviderFromConfig(cfg, dbpkg.New(dbPool))
+	dlqReg := dlq.NewRegistry()
+	dlq.RegisterLogDLQ(dlqReg)
+	dlqdefaults.Register(dlqReg, emailReg)
+	dlqProvider := dlqReg.ProviderFromConfig(cfg, dbpkg.New(dbPool))
 
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()

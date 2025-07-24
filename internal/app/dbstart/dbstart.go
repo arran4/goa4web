@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 	"github.com/arran4/goa4web/internal/middleware"
 )
 
@@ -46,14 +47,14 @@ func GetDBPool() *sql.DB { return dbPool }
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg config.RuntimeConfig) *common.UserError {
+func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) *common.UserError {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
 	conn := cfg.DBConn
 	if conn == "" {
 		return &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
 	}
-	c, err := dbdrivers.Connector(cfg.DBDriver, conn)
+	c, err := reg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
@@ -74,10 +75,12 @@ func InitDB(cfg config.RuntimeConfig) *common.UserError {
 
 // PerformStartupChecks checks the database and upload directory configuration.
 func PerformStartupChecks(cfg config.RuntimeConfig) error {
-	if err := MaybeAutoMigrate(cfg); err != nil {
+	reg := dbdrivers.NewRegistry()
+	dbdefaults.Register(reg)
+	if err := MaybeAutoMigrate(cfg, reg); err != nil {
 		return err
 	}
-	if ue := InitDB(cfg); ue != nil {
+	if ue := InitDB(cfg, reg); ue != nil {
 		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckUploadDir(cfg); ue != nil {

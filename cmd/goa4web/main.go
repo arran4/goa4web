@@ -24,36 +24,15 @@ import (
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	writinghandlers "github.com/arran4/goa4web/handlers/writings"
 	"github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/internal/dbdrivers"
+	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 )
 
 var version = "dev"
-
-func init() {
-	dlqreg.Register()
-	register := func(ts []tasks.NamedTask) {
-		for _, t := range ts {
-			tasks.Register(t)
-		}
-	}
-	register(adminhandlers.RegisterTasks())
-	register(authhandlers.RegisterTasks())
-	register(bloghandlers.RegisterTasks())
-	register(bookmarkhandlers.RegisterTasks())
-	register(faqhandlers.RegisterTasks())
-	register(forumhandlers.RegisterTasks())
-	register(imagehandlers.RegisterTasks())
-	register(imagebbshandlers.RegisterTasks())
-	register(linkerhandlers.RegisterTasks())
-	register(newshandlers.RegisterTasks())
-	register(searchhandlers.RegisterTasks())
-	register(userhandlers.RegisterTasks())
-	register(writinghandlers.RegisterTasks())
-}
 
 func main() {
 	root, err := parseRoot(os.Args)
@@ -81,13 +60,15 @@ type rootCmd struct {
 	ConfigFile string
 	db         *sql.DB
 	Verbosity  int
+	tasksReg   *tasks.Registry
+	dbReg      *dbdrivers.Registry
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
 	if r.db != nil {
 		return r.db, nil
 	}
-	if ue := dbstart.InitDB(r.cfg); ue != nil {
+	if ue := dbstart.InitDB(r.cfg, r.dbReg); ue != nil {
 		return nil, fmt.Errorf("init db: %w", ue.Err)
 	}
 	r.db = dbstart.GetDBPool()
@@ -171,6 +152,29 @@ func parseRoot(args []string) (*rootCmd, error) {
 
 	r.ConfigFile = cfgPath
 	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
+
+	r.tasksReg = tasks.NewRegistry()
+	r.dbReg = dbdrivers.NewRegistry()
+	dbdefaults.Register(r.dbReg)
+	register := func(ts []tasks.NamedTask) {
+		for _, t := range ts {
+			r.tasksReg.Register(t)
+		}
+	}
+	register(adminhandlers.RegisterTasks())
+	register(authhandlers.RegisterTasks())
+	register(bloghandlers.RegisterTasks())
+	register(bookmarkhandlers.RegisterTasks())
+	register(faqhandlers.RegisterTasks())
+	register(forumhandlers.RegisterTasks())
+	register(imagehandlers.RegisterTasks())
+	register(imagebbshandlers.RegisterTasks())
+	register(linkerhandlers.RegisterTasks())
+	register(newshandlers.RegisterTasks())
+	register(searchhandlers.RegisterTasks())
+	register(userhandlers.RegisterTasks())
+	register(writinghandlers.RegisterTasks())
+
 	return r, nil
 }
 

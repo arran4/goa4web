@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 	"github.com/arran4/goa4web/workers/emailqueue"
 )
 
@@ -27,7 +28,9 @@ var _ tasks.AuditableTask = (*ResendQueueTask)(nil)
 
 func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
+	reg := email.NewRegistry()
+	emaildefaults.Register(reg)
+	provider := reg.ProviderFromConfig(config.AppRuntimeConfig)
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

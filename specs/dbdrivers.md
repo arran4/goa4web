@@ -21,15 +21,15 @@ type DBDriver interface {
 
 ## Registration
 
-Drivers must be registered before they can be used. The registry is a simple in-memory slice protected by a mutex. Drivers call `dbdrivers.RegisterDriver` from an init or setup function:
+Drivers must be registered before they can be used. Applications create a `dbdrivers.Registry` and register drivers with the `RegisterDriver` method:
 
 ```go
-func Register() { dbdrivers.RegisterDriver(Driver{}) }
+func Register(r *dbdrivers.Registry) { r.RegisterDriver(Driver{}) }
 ```
 
 The `dbdefaults` package registers all stable drivers by calling the `Register` function of each built-in driver. Application code can also register custom drivers.
 
-`dbdrivers.Connector`, `dbdrivers.Backup` and `dbdrivers.Restore` look up the requested driver in the registry.
+The registry provides `Connector`, `Backup` and `Restore` methods that look up the requested driver by name.
 
 ## Built-in drivers
 

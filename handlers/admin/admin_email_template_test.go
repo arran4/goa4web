@@ -18,17 +18,24 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
+	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 	logProv "github.com/arran4/goa4web/internal/email/log"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func init() { logProv.Register() }
+var emailReg *email.Registry
+
+func init() {
+	emailReg = email.NewRegistry()
+	logProv.Register(emailReg)
+	emaildefaults.Register(emailReg)
+}
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	config.AppRuntimeConfig.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
-	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
+	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(emailReg.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -59,7 +66,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q, common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)))
+	cd := common.NewCoreData(req.Context(), q, common.WithEmailProvider(emailReg.ProviderFromConfig(config.AppRuntimeConfig)))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

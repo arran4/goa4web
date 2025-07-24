@@ -15,18 +15,11 @@ import (
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Categories          []*db.WritingCategory
-		CategoryBreadcrumbs []*db.WritingCategory
-		IsAdmin             bool
-		IsWriter            bool
-		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
-		WritingCategoryID   int32
+		Categories []*db.WritingCategory
 	}
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	data.IsAdmin = data.CoreData.HasRole("administrator") && data.CoreData.AdminMode
-	data.IsWriter = data.CoreData.HasRole("content writer") || data.IsAdmin
 
 	categoryRows, err := data.CoreData.WritingCategories()
 	if err != nil {
@@ -41,5 +34,5 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	handlers.TemplateHandler(w, r, "categoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminCategoriesPage.gohtml", data)
 }

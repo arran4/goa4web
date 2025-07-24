@@ -47,3 +47,23 @@ func ResolveDefaultLanguageID(ctx context.Context, q *db.Queries, name string) i
 	}
 	return id
 }
+
+// EnsureDefaultLanguage creates the default language when name is not empty and
+// the languages table currently has no entries.
+func EnsureDefaultLanguage(ctx context.Context, q *db.Queries, name string) error {
+	if name == "" {
+		return nil
+	}
+	count, err := q.CountLanguages(ctx)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	if err := validateLanguageName(name); err != nil {
+		return err
+	}
+	_, err = q.InsertLanguage(ctx, sql.NullString{String: name, Valid: true})
+	return err
+}

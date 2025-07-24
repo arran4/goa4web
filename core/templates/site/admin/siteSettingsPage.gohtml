@@ -1,19 +1,26 @@
 {{ template "head" $ }}
-<form method="post">
-        {{ csrfField }}
-    <label>
-        <input type="checkbox" name="feeds_enabled" value="1"{{ if $.FeedsEnabled }} checked{{ end }}>
-        Enable Feeds
-    </label>
-    <br>
-    Default language:
-    <select name="default_language">
-        <option value="0">Multi-lingual
-        {{ range $.Languages }}
-            <option value="{{ .Idlanguage }}"{{ if eq .Idlanguage $.SelectedLanguageId }} selected{{ end }}>{{ .Nameof.String }}
-        {{ end }}
-    </select>
-    <br>
-    <input type="submit" value="Save">
-</form>
+<p>Configuration values resolved at startup.</p>
+<p>Config file: {{ .ConfigFile }}</p>
+<table border="1">
+    <tr>
+        <th>Env</th>
+        <th>Flag</th>
+        <th>Value</th>
+        <th>Default</th>
+        <th>Source</th>
+        <th>Description</th>
+        <th>Example</th>
+    </tr>
+    {{- range .Config }}
+        <tr>
+            <td>{{ .Env }}</td>
+            <td>{{ .Flag }}</td>
+            <td>{{ .Value }}</td>
+            <td>{{ .Default }}</td>
+            <td>{{ .Source }}</td>
+            <td>{{ .Usage }}</td>
+            <td>{{- if .Example }}{{ index .Example 0 }}{{ end }}</td>
+        </tr>
+    {{- end }}
+</table>
 {{ template "tail" $ }}

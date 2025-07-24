@@ -39,7 +39,7 @@ type option struct {
 func (c *configOptionsCmd) Run() error {
 	def := defaultMap()
 	usage := config.UsageMap()
-	ext := config.ExtendedUsageMap()
+	ext := config.ExtendedUsageMap(c.rootCmd.dbReg)
 	names := config.NameMap()
 	keys := make([]string, 0, len(def))
 	for k := range def {

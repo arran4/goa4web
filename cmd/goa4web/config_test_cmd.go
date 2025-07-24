@@ -10,7 +10,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 
 	coretemplates "github.com/arran4/goa4web/core/templates"
@@ -93,7 +92,7 @@ func parseConfigTestEmailCmd(parent *configTestCmd, args []string) (*configTestE
 }
 
 func (c *configTestEmailCmd) Run() error {
-	provider := email.ProviderFromConfig(c.rootCmd.cfg)
+	provider := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
 	if provider == nil {
 		return fmt.Errorf("email provider not configured")
 	}
@@ -182,7 +181,7 @@ func (c *configTestDLQCmd) Run() error {
 	if db, err := c.rootCmd.DB(); err == nil {
 		q = dbpkg.New(db)
 	}
-	provider := dlq.ProviderFromConfig(c.rootCmd.cfg, q)
+	provider := c.rootCmd.dlqReg.ProviderFromConfig(c.rootCmd.cfg, q)
 	if provider == nil {
 		return fmt.Errorf("dlq provider not configured")
 	}

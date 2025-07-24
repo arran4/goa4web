@@ -24,10 +24,11 @@ import (
 )
 
 func init() {
-	logProv.Register()
-	smtpProv.Register()
-	localProv.Register()
-	jmapProv.Register()
+	email.DefaultRegistry = email.NewRegistry()
+	logProv.Register(email.DefaultRegistry)
+	smtpProv.Register(email.DefaultRegistry)
+	localProv.Register(email.DefaultRegistry)
+	jmapProv.Register(email.DefaultRegistry)
 }
 
 func TestGetEmailProviderLog(t *testing.T) {

@@ -54,8 +54,8 @@ func (f *DLQ) Record(_ context.Context, message string) error {
 }
 
 // Register registers the file provider.
-func Register() {
-	dlq.RegisterProvider("file", func(cfg config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
+func Register(r *dlq.Registry) {
+	r.RegisterProvider("file", func(cfg config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
 		return &DLQ{Path: cfg.DLQFile, Appender: osAppender{}}
 	})
 }

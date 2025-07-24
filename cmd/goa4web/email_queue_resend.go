@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/workers/emailqueue"
 )
 
@@ -42,7 +41,7 @@ func (c *emailQueueResendCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get email: %w", err)
 	}
-	provider := email.ProviderFromConfig(c.rootCmd.cfg)
+	provider := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
 	if provider != nil {
 		addr, err := emailqueue.ResolveQueuedEmailAddress(ctx, queries, &dbpkg.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
 		if err != nil {

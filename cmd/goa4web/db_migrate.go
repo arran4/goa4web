@@ -15,12 +15,12 @@ import (
 )
 
 // openDB establishes a database connection without verifying the schema version.
-func openDB(cfg config.RuntimeConfig) (*sql.DB, error) {
+func openDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
 	conn := cfg.DBConn
 	if conn == "" {
 		return nil, fmt.Errorf("connection string required")
 	}
-	c, err := dbdrivers.Connector(cfg.DBDriver, conn)
+	c, err := reg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 
 func (c *dbMigrateCmd) Run() error {
 	c.rootCmd.Verbosef("connecting to database using %s", c.rootCmd.cfg.DBConn)
-	db, err := openDB(c.rootCmd.cfg)
+	db, err := openDB(c.rootCmd.cfg, c.rootCmd.dbReg)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}

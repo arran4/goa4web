@@ -31,4 +31,4 @@ func providerFromConfig(_ config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
 }
 
 // Register registers the mock provider factory.
-func Register() { dlq.RegisterProvider("mock", providerFromConfig) }
+func Register(r *dlq.Registry) { r.RegisterProvider("mock", providerFromConfig) }

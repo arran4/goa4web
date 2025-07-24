@@ -22,7 +22,10 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
-func init() { logProv.Register() }
+func init() {
+	email.DefaultRegistry = email.NewRegistry()
+	logProv.Register(email.DefaultRegistry)
+}
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	config.AppRuntimeConfig.EmailProvider = ""

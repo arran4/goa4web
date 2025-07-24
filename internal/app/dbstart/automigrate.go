@@ -25,12 +25,12 @@ func autoMigrateEnabled() bool {
 }
 
 // applyMigrations connects to the database and executes SQL migrations.
-func applyMigrations(ctx context.Context, cfg config.RuntimeConfig) error {
+func applyMigrations(ctx context.Context, cfg config.RuntimeConfig, reg *dbdrivers.Registry) error {
 	conn := cfg.DBConn
 	if conn == "" {
 		return fmt.Errorf("connection string required")
 	}
-	c, err := dbdrivers.Connector(cfg.DBDriver, conn)
+	c, err := reg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return err
 	}
@@ -45,12 +45,12 @@ func applyMigrations(ctx context.Context, cfg config.RuntimeConfig) error {
 }
 
 // MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.
-func MaybeAutoMigrate(cfg config.RuntimeConfig) error {
+func MaybeAutoMigrate(cfg config.RuntimeConfig, reg *dbdrivers.Registry) error {
 	if !autoMigrateEnabled() {
 		return nil
 	}
 	ctx := context.Background()
-	if err := applyMigrations(ctx, cfg); err != nil {
+	if err := applyMigrations(ctx, cfg, reg); err != nil {
 		return fmt.Errorf("auto-migrate: %w", err)
 	}
 	return nil

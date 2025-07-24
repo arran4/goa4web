@@ -49,5 +49,5 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max:      config.AppRuntimeConfig.PageSizeMax,
 		Default:  config.AppRuntimeConfig.PageSizeDefault,
 	}
-	handlers.TemplateHandler(w, r, "admin/pageSizePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "pageSizePage.gohtml", data)
 }

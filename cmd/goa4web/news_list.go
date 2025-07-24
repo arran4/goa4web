@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
@@ -37,7 +36,7 @@ func (c *newsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, common.WithConfig(c.rootCmd.cfg))
 	posts, err := cd.LatestNewsList(int32(c.Offset), int32(c.Limit))
 	if err != nil {
 		return fmt.Errorf("list news: %w", err)

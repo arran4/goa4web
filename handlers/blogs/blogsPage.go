@@ -9,6 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	images "github.com/arran4/goa4web/internal/images"
 
 	"log"
 	"net/http"
@@ -20,7 +21,6 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
-	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )
 
@@ -173,7 +173,11 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Username to uid error: %s", err)
 	}
 	uid := u.Idusers
-	feed, err := FeedGen(r, queries, int(uid), username)
+	var signer *images.ImageSigner
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		signer = cd.ImageSigner()
+	}
+	feed, err := FeedGen(r, queries, int(uid), username, signer)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -197,7 +201,11 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Username to uid error: %s", err)
 	}
-	feed, err := FeedGen(r, queries, int(u.Idusers), username)
+	var signer *images.ImageSigner
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		signer = cd.ImageSigner()
+	}
+	feed, err := FeedGen(r, queries, int(u.Idusers), username, signer)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -210,7 +218,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*feeds.Feed, error) {
+func FeedGen(r *http.Request, queries *db.Queries, uid int, username string, signer *images.ImageSigner) (*feeds.Feed, error) {
 
 	title := "Everyone's blog"
 	if uid > 0 {
@@ -241,7 +249,11 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 	for _, row := range rows {
 		u := r.URL
 		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
-		conv := a4code2html.New(imagesign.MapURL)
+		mapper := func(tag, val string) string { return val }
+		if signer != nil {
+			mapper = signer.MapURL
+		}
+		conv := a4code2html.New(mapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)
 		out, _ := io.ReadAll(conv.Process())

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
+	images "github.com/arran4/goa4web/internal/images"
 )
 
 func TestForumTopicFeed(t *testing.T) {
@@ -19,7 +20,7 @@ func TestForumTopicFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)
-	feed := TopicFeed(r, "Test", 1, rows)
+	feed := TopicFeed(r, "Test", 1, rows, images.NewSigner("k"))
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))
 	}

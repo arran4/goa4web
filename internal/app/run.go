@@ -70,7 +70,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		return fmt.Errorf("smtp fallback: %w", err)
 	}
 	config.AppRuntimeConfig = cfg
-	imagesign.SetSigningKey(imageSignSecret)
+	signer := imagesign.NewSigner(imageSignSecret)
 	email.SetDefaultFromName(cfg.EmailFrom)
 
 	if dbPool != nil {
@@ -86,7 +86,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddleware,
+		middleware.CoreAdderMiddleware(signer),
 		middleware.RequestLoggerMiddleware,
 		middleware.TaskEventMiddleware,
 		middleware.SecurityHeadersMiddleware,

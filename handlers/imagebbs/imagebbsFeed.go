@@ -16,12 +16,12 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
+	images "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 )
 
-func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow) *feeds.Feed {
+func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, signer *images.ImageSigner) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -39,7 +39,11 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 			continue
 		}
 		desc := row.Description.String
-		conv := a4code2html.New(imagesign.MapURL)
+		mapper := func(tag, val string) string { return val }
+		if signer != nil {
+			mapper = signer.MapURL
+		}
+		conv := a4code2html.New(mapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())
@@ -92,7 +96,11 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 		}
 		posts = append(posts, rows...)
 	}
-	feed := imagebbsFeed(r, "ImageBBS", 0, posts)
+	var signer *images.ImageSigner
+	if cd != nil {
+		signer = cd.ImageSigner()
+	}
+	feed := imagebbsFeed(r, "ImageBBS", 0, posts, signer)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -126,7 +134,11 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 		}
 		posts = append(posts, rows...)
 	}
-	feed := imagebbsFeed(r, "ImageBBS", 0, posts)
+	var signer *images.ImageSigner
+	if cd != nil {
+		signer = cd.ImageSigner()
+	}
+	feed := imagebbsFeed(r, "ImageBBS", 0, posts, signer)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -168,7 +180,11 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	feed := imagebbsFeed(r, title, bid, rows)
+	var signer *images.ImageSigner
+	if cd != nil {
+		signer = cd.ImageSigner()
+	}
+	feed := imagebbsFeed(r, title, bid, rows, signer)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -210,7 +226,11 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	feed := imagebbsFeed(r, title, bid, rows)
+	var signer *images.ImageSigner
+	if cd != nil {
+		signer = cd.ImageSigner()
+	}
+	feed := imagebbsFeed(r, title, bid, rows, signer)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

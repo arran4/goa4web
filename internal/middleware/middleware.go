@@ -18,7 +18,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	imagesign "github.com/arran4/goa4web/internal/images"
+	images "github.com/arran4/goa4web/internal/images"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/gorilla/sessions"
 )
@@ -29,7 +29,7 @@ func handleDie(w http.ResponseWriter, message string) {
 }
 
 // CoreAdderMiddleware populates request context with CoreData for templates.
-func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
+func CoreAdderMiddlewareWithDB(db *sql.DB, signer *images.ImageSigner) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := core.GetSession(r)
@@ -88,7 +88,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
 				base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
 			}
 			cd := common.NewCoreData(r.Context(), queries,
-				common.WithImageURLMapper(imagesign.MapURL),
+				common.WithImageSigner(signer),
 				common.WithSession(session),
 				common.WithEmailProvider(email.ProviderFromConfig(config.AppRuntimeConfig)),
 				common.WithAbsoluteURLBase(base))
@@ -110,8 +110,8 @@ func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
 }
 
 // CoreAdderMiddleware populates request context with CoreData for templates using the global DBPool.
-func CoreAdderMiddleware(next http.Handler) http.Handler {
-	return CoreAdderMiddlewareWithDB(DBPool)(next)
+func CoreAdderMiddleware(signer *images.ImageSigner) func(http.Handler) http.Handler {
+	return CoreAdderMiddlewareWithDB(DBPool, signer)
 }
 
 // DBPool should be assigned by the parent package to supply the database.

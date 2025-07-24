@@ -12,6 +12,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	images "github.com/arran4/goa4web/internal/images"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
 )
@@ -44,7 +45,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, images.NewSigner("k"))(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -81,7 +82,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, images.NewSigner("k"))(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

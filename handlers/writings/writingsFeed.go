@@ -11,7 +11,6 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/common"
-	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )
 
@@ -34,7 +33,11 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 		if desc == "" {
 			desc = row.Writing.String
 		}
-		conv := a4code2html.New(imagesign.MapURL)
+		mapper := func(tag, val string) string { return val }
+		if cd.ImageSigner() != nil {
+			mapper = cd.ImageSigner().MapURL
+		}
+		conv := a4code2html.New(mapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())

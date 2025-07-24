@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	images "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -57,6 +58,7 @@ type CoreData struct {
 	AdminMode         bool
 	NotificationCount int32
 	a4codeMapper      func(tag, val string) string
+	signer            *images.ImageSigner
 
 	session *sessions.Session
 
@@ -110,6 +112,16 @@ func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
 }
 
+// WithImageSigner attaches an ImageSigner to the CoreData and sets the image URL mapper.
+func WithImageSigner(s *images.ImageSigner) CoreOption {
+	return func(cd *CoreData) {
+		cd.signer = s
+		if s != nil {
+			cd.a4codeMapper = s.MapURL
+		}
+	}
+}
+
 // WithSession stores the gorilla session on the CoreData object.
 func WithSession(s *sessions.Session) CoreOption {
 	return func(cd *CoreData) { cd.session = s }
@@ -147,6 +159,9 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 	}
 	return val
 }
+
+// ImageSigner returns the signer associated with this request, if any.
+func (cd *CoreData) ImageSigner() *images.ImageSigner { return cd.signer }
 
 // EmailProvider lazily returns the configured email provider.
 // WithEmailProvider sets the email provider used by CoreData.

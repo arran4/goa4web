@@ -15,12 +15,12 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
+	images "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 )
 
-func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
+func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, signer *images.ImageSigner) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -32,7 +32,11 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 			continue
 		}
 		text := row.Firstposttext.String
-		conv := a4code2html.New(imagesign.MapURL)
+		mapper := func(tag, val string) string { return val }
+		if signer != nil {
+			mapper = signer.MapURL
+		}
+		conv := a4code2html.New(mapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())
@@ -82,7 +86,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feed := TopicFeed(r, topic.Title.String, topicID, rows)
+	feed := TopicFeed(r, topic.Title.String, topicID, rows, cd.ImageSigner())
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -114,7 +118,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feed := TopicFeed(r, topic.Title.String, topicID, rows)
+	feed := TopicFeed(r, topic.Title.String, topicID, rows, cd.ImageSigner())
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

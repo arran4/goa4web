@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	images "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
 
@@ -27,7 +28,7 @@ func TestLinkerFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/linker/rss", nil)
-	feed := linkerFeed(r, rows)
+	feed := linkerFeed(r, rows, images.NewSigner("k"))
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))
 	}

@@ -13,11 +13,11 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
+	images "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )
 
-func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow) *feeds.Feed {
+func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, signer *images.ImageSigner) *feeds.Feed {
 	feed := &feeds.Feed{
 		Title:       "Latest links",
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -30,7 +30,11 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 		}
 		desc := ""
 		if row.Description.Valid {
-			conv := a4code2html.New(imagesign.MapURL)
+			mapper := func(tag, val string) string { return val }
+			if signer != nil {
+				mapper = signer.MapURL
+			}
+			conv := a4code2html.New(mapper)
 			conv.CodeType = a4code2html.CTTagStrip
 			conv.SetInput(row.Description.String)
 			out, _ := io.ReadAll(conv.Process())
@@ -67,7 +71,11 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	feed := linkerFeed(r, rows)
+	var signer *images.ImageSigner
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		signer = cd.ImageSigner()
+	}
+	feed := linkerFeed(r, rows, signer)
 	if err := feed.WriteRss(w); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -82,7 +90,11 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	feed := linkerFeed(r, rows)
+	var signer *images.ImageSigner
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		signer = cd.ImageSigner()
+	}
+	feed := linkerFeed(r, rows, signer)
 	if err := feed.WriteAtom(w); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

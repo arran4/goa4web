@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 type galleryImage struct {
@@ -71,11 +70,13 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		ext := filepath.Ext(fname)
 		id := strings.TrimSuffix(fname, ext)
 		thumb := id + "_thumb" + ext
-		imgs = append(imgs, galleryImage{
-			Thumb:  imagesign.SignedCacheURL(thumb),
-			Full:   imagesign.SignedURL("image:" + fname),
-			A4Code: "[img=image:" + fname + "]",
-		})
+		if cd.ImageSigner() != nil {
+			imgs = append(imgs, galleryImage{
+				Thumb:  cd.ImageSigner().SignedCacheURL(thumb),
+				Full:   cd.ImageSigner().SignedURL("image:" + fname),
+				A4Code: "[img=image:" + fname + "]",
+			})
+		}
 	}
 
 	base := "/usr/notifications/gallery"

@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/feeds"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +36,11 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		text := row.News.String
-		conv := a4code2html.New(imagesign.MapURL)
+		mapper := func(tag, val string) string { return val }
+		if cd.ImageSigner() != nil {
+			mapper = cd.ImageSigner().MapURL
+		}
+		conv := a4code2html.New(mapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())

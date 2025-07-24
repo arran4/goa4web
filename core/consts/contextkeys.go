@@ -7,6 +7,4 @@ type ContextKey string
 const (
 	// KeyCoreData provides access to CoreData.
 	KeyCoreData ContextKey = "coreData"
-	// KeyNewsPost holds the news post row.
-	KeyNewsPost ContextKey = "newsPost"
 )

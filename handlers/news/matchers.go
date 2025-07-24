@@ -1,7 +1,6 @@
 package news
 
 import (
-	"context"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
@@ -21,7 +20,8 @@ func RequireNewsPostAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		queries := cd.Queries()
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)
@@ -41,7 +41,8 @@ func RequireNewsPostAuthor(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), consts.KeyNewsPost, row)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		cd.CacheNewsPost(int32(postID), row)
+		cd.SetCurrentNewsPost(int32(postID))
+		next.ServeHTTP(w, r)
 	})
 }

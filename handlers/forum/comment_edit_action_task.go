@@ -29,9 +29,16 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	threadRow, err := cd.CurrentThread()
+	if err != nil || threadRow == nil {
+		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	topicRow, err := cd.CurrentTopic()
+	if err != nil || topicRow == nil {
+		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	commentID, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
 	if err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{

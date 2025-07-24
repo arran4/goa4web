@@ -45,7 +45,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
-		if r.Context().Value(consts.KeyThread) == nil || r.Context().Value(consts.KeyTopic) == nil {
+		if cd.CurrentThreadLoaded() == nil || cd.CurrentTopicLoaded() == nil {
 			t.Errorf("context values missing")
 		}
 		w.WriteHeader(http.StatusOK)

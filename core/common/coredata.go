@@ -73,6 +73,9 @@ type CoreData struct {
 	forumCategories          lazyValue[[]*db.Forumcategory]
 	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
 	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
+	forumThreadRows          map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow]
+	currentThreadID          int32
+	currentTopicID           int32
 	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
 	imageBoards              lazyValue[[]*db.Imageboard]
 	languagesAll             lazyValue[[]*db.Language]
@@ -324,6 +327,86 @@ func (cd *CoreData) CurrentUserLoaded() *db.User {
 		return nil
 	}
 	return u
+}
+
+// SetCurrentThreadAndTopic stores the requested thread and topic IDs.
+func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
+	cd.currentThreadID = threadID
+	cd.currentTopicID = topicID
+}
+
+// CacheForumThread stores thread in the request cache without loading.
+func (cd *CoreData) CacheForumThread(id int32, row *db.GetThreadLastPosterAndPermsRow) {
+	if cd.forumThreadRows == nil {
+		cd.forumThreadRows = make(map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow])
+	}
+	lv, ok := cd.forumThreadRows[id]
+	if !ok {
+		lv = &lazyValue[*db.GetThreadLastPosterAndPermsRow]{}
+		cd.forumThreadRows[id] = lv
+	}
+	lv.set(row)
+}
+
+// CacheForumTopic stores topic in the request cache without loading.
+func (cd *CoreData) CacheForumTopic(id int32, row *db.GetForumTopicByIdForUserRow) {
+	if cd.forumTopics == nil {
+		cd.forumTopics = make(map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow])
+	}
+	lv, ok := cd.forumTopics[id]
+	if !ok {
+		lv = &lazyValue[*db.GetForumTopicByIdForUserRow]{}
+		cd.forumTopics[id] = lv
+	}
+	lv.set(row)
+}
+
+// CurrentThread returns the currently requested thread lazily loaded.
+func (cd *CoreData) CurrentThread() (*db.GetThreadLastPosterAndPermsRow, error) {
+	if cd.currentThreadID == 0 {
+		return nil, nil
+	}
+	return cd.ForumThreadByID(cd.currentThreadID)
+}
+
+// CurrentThreadLoaded returns the cached current thread without database access.
+func (cd *CoreData) CurrentThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
+	if cd.forumThreadRows == nil {
+		return nil
+	}
+	lv, ok := cd.forumThreadRows[cd.currentThreadID]
+	if !ok {
+		return nil
+	}
+	v, ok := lv.peek()
+	if !ok {
+		return nil
+	}
+	return v
+}
+
+// CurrentTopic returns the currently requested topic lazily loaded.
+func (cd *CoreData) CurrentTopic() (*db.GetForumTopicByIdForUserRow, error) {
+	if cd.currentTopicID == 0 {
+		return nil, nil
+	}
+	return cd.ForumTopicByID(cd.currentTopicID)
+}
+
+// CurrentTopicLoaded returns the cached current topic without database access.
+func (cd *CoreData) CurrentTopicLoaded() *db.GetForumTopicByIdForUserRow {
+	if cd.forumTopics == nil {
+		return nil
+	}
+	lv, ok := cd.forumTopics[cd.currentTopicID]
+	if !ok {
+		return nil
+	}
+	v, ok := lv.peek()
+	if !ok {
+		return nil
+	}
+	return v
 }
 
 // Permissions returns the user's permissions loaded on demand.
@@ -758,6 +841,28 @@ func (cd *CoreData) ForumTopicByID(id int32) (*db.GetForumTopicByIdForUserRow, e
 		return cd.queries.GetForumTopicByIdForUser(cd.ctx, db.GetForumTopicByIdForUserParams{
 			ViewerID:      cd.UserID,
 			Idforumtopic:  id,
+			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	})
+}
+
+// ForumThreadByID returns a single forum thread lazily loading it once per ID.
+func (cd *CoreData) ForumThreadByID(id int32) (*db.GetThreadLastPosterAndPermsRow, error) {
+	if cd.forumThreadRows == nil {
+		cd.forumThreadRows = make(map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow])
+	}
+	lv, ok := cd.forumThreadRows[id]
+	if !ok {
+		lv = &lazyValue[*db.GetThreadLastPosterAndPermsRow]{}
+		cd.forumThreadRows[id] = lv
+	}
+	return lv.load(func() (*db.GetThreadLastPosterAndPermsRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
+			ViewerID:      cd.UserID,
+			ThreadID:      id,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	})

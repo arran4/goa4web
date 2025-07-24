@@ -27,14 +27,14 @@
         <td>{{ with $name := index $.Usernames .UsersIdusers }}<a href="/admin/user/{{ .UsersIdusers }}">{{ $name }}</a>{{ else }}{{ .UsersIdusers }}{{ end }}</td>
         <td>{{ .Message.String }}</td>
         <td>{{ .Link.String }}</td>
-        <td>{{ if .ReadAt.Valid }}yes{{ else }}no{{ end }}</td>
+        <td><a href="#" class="toggle-read" data-id="{{ .ID }}">{{ if .ReadAt.Valid }}yes{{ else }}no{{ end }}</a></td>
     </tr>
     {{- end }}
 </table>
 <input type="submit" name="task" value="Dismiss">
 <input type="submit" name="task" value="Mark unread">
-<input type="submit" name="task" value="Delete notification">
-<button type="submit" name="task" value="Purge">Purge read notifications</button>
+<input type="submit" name="task" value="Purge selected">
+<button type="submit" name="task" value="Purge read">Purge read notifications</button>
 </form>
 <script>
 (() => {
@@ -77,6 +77,17 @@
             updateAll();
         });
         cb.addEventListener('change', updateAll);
+    });
+
+    document.querySelectorAll('.toggle-read').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const data = new URLSearchParams();
+            data.set('gorilla.csrf.Token', '{{ csrf }}');
+            data.set('task', 'Toggle read');
+            data.set('id', link.dataset.id);
+            fetch('/admin/notifications', {method: 'POST', body: data}).then(() => { location.reload(); });
+        });
     });
 })();
 </script>

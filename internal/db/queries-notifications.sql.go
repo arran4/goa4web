@@ -31,6 +31,26 @@ func (q *Queries) DeleteNotification(ctx context.Context, id int32) error {
 	return err
 }
 
+const getNotification = `-- name: GetNotification :one
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+WHERE id = ?
+`
+
+func (q *Queries) GetNotification(ctx context.Context, id int32) (*Notification, error) {
+	row := q.db.QueryRowContext(ctx, getNotification, id)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.UsersIdusers,
+		&i.Link,
+		&i.Message,
+		&i.CreatedAt,
+		&i.ReadAt,
+	)
+	return &i, err
+}
+
 const getUnreadNotifications = `-- name: GetUnreadNotifications :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications

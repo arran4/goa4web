@@ -203,8 +203,17 @@ const (
 	// TaskMarkUnread marks a notification as unread.
 	TaskMarkUnread tasks.TaskString = "Mark unread"
 
+	// TaskToggleRead toggles a notification's read state.
+	TaskToggleRead tasks.TaskString = "Toggle read"
+
 	// TaskDeleteNotification deletes selected notifications.
 	TaskDeleteNotification tasks.TaskString = "Delete notification"
+
+	// TaskPurgeSelected removes the selected notifications.
+	TaskPurgeSelected tasks.TaskString = "Purge selected"
+
+	// TaskPurgeRead removes old read notifications.
+	TaskPurgeRead tasks.TaskString = "Purge read"
 
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"

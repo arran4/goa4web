@@ -21,6 +21,11 @@ UPDATE notifications SET read_at = NULL WHERE id = ?;
 -- name: DeleteNotification :exec
 DELETE FROM notifications WHERE id = ?;
 
+-- name: GetNotification :one
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+WHERE id = ?;
+
 -- name: PurgeReadNotifications :exec
 DELETE FROM notifications
 WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR);

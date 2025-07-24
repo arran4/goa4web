@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/mux"
@@ -57,7 +56,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           cd,
 		Offset:             offset,
 		IsReplyable:        true,
-		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		EditUrl:            fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 	}
 

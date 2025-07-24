@@ -215,7 +215,9 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), common.WithConfig(config.AppRuntimeConfig))
+	cfg := config.AppRuntimeConfig
+	cfg.PageSizeDefault = 15
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), common.WithConfig(cfg))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -224,8 +226,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
-	config.AppRuntimeConfig.PageSizeDefault = 15
-	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(config.AppRuntimeConfig.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(cfg.PageSizeDefault)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	saveAllTask.Action(rr, req)
 

@@ -13,12 +13,13 @@ func GetPageSize(r *http.Request) int {
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
 		return cd.PageSize()
 	}
-	size := config.AppRuntimeConfig.PageSizeDefault
-	if size < config.AppRuntimeConfig.PageSizeMin {
-		size = config.AppRuntimeConfig.PageSizeMin
+	cfg := config.AppRuntimeConfig
+	size := cfg.PageSizeDefault
+	if size < cfg.PageSizeMin {
+		size = cfg.PageSizeMin
 	}
-	if size > config.AppRuntimeConfig.PageSizeMax {
-		size = config.AppRuntimeConfig.PageSizeMax
+	if size > cfg.PageSizeMax {
+		size = cfg.PageSizeMax
 	}
 	return size
 }

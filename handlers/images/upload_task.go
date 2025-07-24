@@ -17,7 +17,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -36,8 +35,11 @@ var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 var _ tasks.Task = (*UploadImageTask)(nil)
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
-	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
-	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cfg := cd.Config
+
+	r.Body = http.MaxBytesReader(w, r.Body, int64(cfg.ImageMaxBytes))
+	if err := r.ParseMultipartForm(int64(cfg.ImageMaxBytes)); err != nil {
 		return fmt.Errorf("bad upload %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	file, header, err := r.FormFile("image")
@@ -64,7 +66,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := id[:2], id[2:4]
 	fname := id + ext
-	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
+	if p := upload.ProviderFromConfig(cfg); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			log.Printf("upload write: %v", err)
 			return fmt.Errorf("upload write %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -95,13 +97,13 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := enc(&tbuf, thumb); err != nil {
 		return fmt.Errorf("thumb encode %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if cp := upload.CacheProviderFromConfig(config.AppRuntimeConfig); cp != nil {
+	if cp := upload.CacheProviderFromConfig(cfg); cp != nil {
 		if err := cp.Write(r.Context(), path.Join(sub1, sub2, thumbName), tbuf.Bytes()); err != nil {
 			log.Printf("cache write: %v", err)
 			return fmt.Errorf("cache write %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if ccp, ok := cp.(upload.CacheProvider); ok {
-			if err := ccp.Cleanup(r.Context(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes)); err != nil {
+			if err := ccp.Cleanup(r.Context(), int64(cfg.ImageCacheMaxBytes)); err != nil {
 				log.Printf("cache cleanup: %v", err)
 			}
 		}

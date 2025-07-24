@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/a4code"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -62,7 +61,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,
-		SelectedLanguageId: cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage),
+		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])

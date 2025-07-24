@@ -37,7 +37,16 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(consts.KeyComment).(*db.GetCommentByIdForUserRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	comment := cd.CurrentCommentLoaded()
+	if comment == nil {
+		var err error
+		comment, err = cd.CommentByID(int32(commentId))
+		if err != nil {
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			return
+		}
+	}
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,

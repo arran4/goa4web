@@ -24,10 +24,9 @@
             <br>
         {{ end }}
     {{ if cd.Marked "body-table-begin" }}
-        <table border=0>
-            <tr valign=top>
-                <td width=200px>{{template "index" $}}
-                <td>
+        <div class="layout">
+            <aside class="sidebar">{{template "index" $}}</aside>
+            <main class="content">
     {{ end }}
         {{ if cd.Marked "announcements" }}
                     {{- with $a := cd.AnnouncementLoaded }}{{ if $a }}

@@ -1,13 +1,14 @@
 {{define "tail"}}
     {{ if cd.Marked "body-table-end" }}
-        </table>
+            </main>
+        </div>
         <div id="bottom"></div>
-                <hr>
-                <footer class="site-footer">
-                        <center>
-                                {{template "footer"}}
-                        </center>
-                </footer>
+        <hr>
+        <footer class="site-footer">
+            <center>
+                {{template "footer"}}
+            </center>
+        </footer>
     {{ end }}
     {{ if cd.Marked "bodyEnd" }}
         </body>

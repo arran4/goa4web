@@ -166,6 +166,12 @@ func (c *helpCmd) showHelp(args []string) error {
 			}
 		}
 		return nil
+	case "repl":
+		_, err := parseReplCmd(c.rootCmd, append(args[1:], "-h"))
+		if err != nil && err != flag.ErrHelp {
+			return fmt.Errorf("repl: %w", err)
+		}
+		return nil
 	case "lang":
 		cmd, err := parseLangCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {

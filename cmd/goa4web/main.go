@@ -298,6 +298,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("notifications: %w", err)
 		}
 		return c.Run()
+	case "repl":
+		c, err := parseReplCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("repl: %w", err)
+		}
+		return c.Run()
 	case "lang":
 		c, err := parseLangCmd(r, args[1:])
 		if err != nil {

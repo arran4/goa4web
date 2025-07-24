@@ -176,6 +176,38 @@ func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int3
 	return items, nil
 }
 
+const getAllBlogsForIndex = `-- name: GetAllBlogsForIndex :many
+SELECT idblogs, blog FROM blogs WHERE deleted_at IS NULL
+`
+
+type GetAllBlogsForIndexRow struct {
+	Idblogs int32
+	Blog    sql.NullString
+}
+
+func (q *Queries) GetAllBlogsForIndex(ctx context.Context) ([]*GetAllBlogsForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBlogsForIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllBlogsForIndexRow
+	for rows.Next() {
+		var i GetAllBlogsForIndexRow
+		if err := rows.Scan(&i.Idblogs, &i.Blog); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getBlogEntriesByIdsDescending = `-- name: GetBlogEntriesByIdsDescending :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b

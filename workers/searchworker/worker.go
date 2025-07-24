@@ -59,34 +59,30 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 }
 
 func index(ctx context.Context, q *dbpkg.Queries, data IndexEventData) error {
-	words := map[string]struct{}{}
+	counts := map[string]int32{}
 	for _, w := range BreakupTextToWords(data.Text) {
-		words[strings.ToLower(w)] = struct{}{}
+		counts[strings.ToLower(w)]++
 	}
-	wordIDs := make([]int64, 0, len(words))
-	for w := range words {
-		id, err := q.CreateSearchWord(ctx, strings.ToLower(w))
+	for word, count := range counts {
+		id, err := q.CreateSearchWord(ctx, strings.ToLower(word))
 		if err != nil {
 			return err
 		}
-		wordIDs = append(wordIDs, id)
-	}
-	for _, wid := range wordIDs {
 		switch data.Type {
 		case TypeComment:
-			if err := q.AddToForumCommentSearch(ctx, dbpkg.AddToForumCommentSearchParams{CommentID: data.ID, SearchwordlistIdsearchwordlist: int32(wid)}); err != nil {
+			if err := q.AddToForumCommentSearch(ctx, dbpkg.AddToForumCommentSearchParams{CommentID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeWriting:
-			if err := q.AddToForumWritingSearch(ctx, dbpkg.AddToForumWritingSearchParams{WritingID: data.ID, SearchwordlistIdsearchwordlist: int32(wid)}); err != nil {
+			if err := q.AddToForumWritingSearch(ctx, dbpkg.AddToForumWritingSearchParams{WritingID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeLinker:
-			if err := q.AddToLinkerSearch(ctx, dbpkg.AddToLinkerSearchParams{LinkerID: data.ID, SearchwordlistIdsearchwordlist: int32(wid)}); err != nil {
+			if err := q.AddToLinkerSearch(ctx, dbpkg.AddToLinkerSearchParams{LinkerID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeImage:
-			if err := q.AddToImagePostSearch(ctx, dbpkg.AddToImagePostSearchParams{ImagePostID: data.ID, SearchwordlistIdsearchwordlist: int32(wid)}); err != nil {
+			if err := q.AddToImagePostSearch(ctx, dbpkg.AddToImagePostSearchParams{ImagePostID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		}

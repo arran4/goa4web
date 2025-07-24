@@ -280,3 +280,7 @@ LIMIT ? OFFSET ?;
 -- name: SetWritingLastIndex :exec
 UPDATE writing SET last_index = NOW() WHERE idwriting = ?;
 
+
+-- name: GetAllWritingsForIndex :many
+SELECT idwriting, title, abstract, writing FROM writing WHERE deleted_at IS NULL;
+

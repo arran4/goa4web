@@ -130,6 +130,9 @@ func TestSearchWordIdsFromText(t *testing.T) {
 	if db.word != "hello" && db.word != "world" {
 		t.Fatalf("word %s", db.word)
 	}
+	if ids[0].Count == 0 || ids[1].Count == 0 {
+		t.Fatalf("counts=%v", ids)
+	}
 }
 
 func TestSearchWordIdsFromTextError(t *testing.T) {

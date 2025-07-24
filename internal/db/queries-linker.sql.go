@@ -724,6 +724,39 @@ func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx co
 	return items, nil
 }
 
+const getAllLinkersForIndex = `-- name: GetAllLinkersForIndex :many
+SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL
+`
+
+type GetAllLinkersForIndexRow struct {
+	Idlinker    int32
+	Title       sql.NullString
+	Description sql.NullString
+}
+
+func (q *Queries) GetAllLinkersForIndex(ctx context.Context) ([]*GetAllLinkersForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLinkersForIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllLinkersForIndexRow
+	for rows.Next() {
+		var i GetAllLinkersForIndexRow
+		if err := rows.Scan(&i.Idlinker, &i.Title, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLinkerCategoriesWithCount = `-- name: GetLinkerCategoriesWithCount :many
 SELECT c.idlinkerCategory, c.title, c.sortorder, COUNT(l.idlinker) AS linkcount
 FROM linker_category c

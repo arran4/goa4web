@@ -114,3 +114,7 @@ ORDER BY c.written;
 -- name: SetCommentLastIndex :exec
 UPDATE comments SET last_index = NOW() WHERE idcomments = ?;
 
+
+-- name: GetAllCommentsForIndex :many
+SELECT idcomments, text FROM comments WHERE deleted_at IS NULL;
+

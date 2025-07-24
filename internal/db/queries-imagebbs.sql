@@ -192,3 +192,7 @@ LIMIT 1;
 -- name: SetImagePostLastIndex :exec
 UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?;
 
+
+-- name: GetAllImagePostsForIndex :many
+SELECT idimagepost, description FROM imagepost WHERE deleted_at IS NULL;
+

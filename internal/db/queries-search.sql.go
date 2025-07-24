@@ -11,67 +11,111 @@ import (
 	"strings"
 )
 
+const addToBlogsSearch = `-- name: AddToBlogsSearch :exec
+INSERT INTO blogs_search
+(blog_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+`
+
+type AddToBlogsSearchParams struct {
+	BlogID                         int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
+}
+
+func (q *Queries) AddToBlogsSearch(ctx context.Context, arg AddToBlogsSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToBlogsSearch, arg.BlogID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
+}
+
 const addToForumCommentSearch = `-- name: AddToForumCommentSearch :exec
-INSERT IGNORE INTO comments_search
-(comment_id, searchwordlist_idsearchwordlist)
-VALUES (?, ?)
+INSERT INTO comments_search
+(comment_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
 `
 
 type AddToForumCommentSearchParams struct {
 	CommentID                      int32
 	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
 func (q *Queries) AddToForumCommentSearch(ctx context.Context, arg AddToForumCommentSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentID, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
 	return err
 }
 
 const addToForumWritingSearch = `-- name: AddToForumWritingSearch :exec
-INSERT IGNORE INTO writing_search
-(writing_id, searchwordlist_idsearchwordlist)
-VALUES (?, ?)
+INSERT INTO writing_search
+(writing_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
 `
 
 type AddToForumWritingSearchParams struct {
 	WritingID                      int32
 	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
 func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWritingSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingID, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
 	return err
 }
 
 const addToImagePostSearch = `-- name: AddToImagePostSearch :exec
-INSERT IGNORE INTO imagepost_search
-(image_post_id, searchwordlist_idsearchwordlist)
-VALUES (?, ?)
+INSERT INTO imagepost_search
+(image_post_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
 `
 
 type AddToImagePostSearchParams struct {
 	ImagePostID                    int32
 	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
 func (q *Queries) AddToImagePostSearch(ctx context.Context, arg AddToImagePostSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagePostID, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagePostID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
 	return err
 }
 
 const addToLinkerSearch = `-- name: AddToLinkerSearch :exec
-INSERT IGNORE INTO linker_search
-(linker_id, searchwordlist_idsearchwordlist)
-VALUES (?, ?)
+INSERT INTO linker_search
+(linker_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
 `
 
 type AddToLinkerSearchParams struct {
 	LinkerID                       int32
 	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
 func (q *Queries) AddToLinkerSearch(ctx context.Context, arg AddToLinkerSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerID, arg.SearchwordlistIdsearchwordlist)
+	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
+}
+
+const addToSiteNewsSearch = `-- name: AddToSiteNewsSearch :exec
+INSERT INTO site_news_search
+(site_news_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+`
+
+type AddToSiteNewsSearchParams struct {
+	SiteNewsID                     int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
+}
+
+func (q *Queries) AddToSiteNewsSearch(ctx context.Context, arg AddToSiteNewsSearchParams) error {
+	_, err := q.db.ExecContext(ctx, addToSiteNewsSearch, arg.SiteNewsID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
 	return err
 }
 
@@ -561,147 +605,6 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 	return items, nil
 }
 
-const remakeBlogSearch = `-- name: RemakeBlogSearch :exec
-INSERT INTO blogs_search (text, blog_id)
-SELECT blog, idblogs
-FROM blogs
-`
-
-// This query selects data from the "blogs" table and populates the "blogs_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogs_search" using the "blog_id".
-func (q *Queries) RemakeBlogSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeBlogSearch)
-	return err
-}
-
-const remakeBlogsSearchInsert = `-- name: RemakeBlogsSearchInsert :exec
-INSERT INTO blogs_search (text, blog_id)
-SELECT blog, idblogs
-FROM blogs
-`
-
-// This query selects data from the "blogs" table and populates the "blogs_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "blogs_search" using the "blog_id".
-func (q *Queries) RemakeBlogsSearchInsert(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeBlogsSearchInsert)
-	return err
-}
-
-const remakeCommentsSearch = `-- name: RemakeCommentsSearch :exec
-INSERT INTO comments_search (text, comment_id)
-SELECT text, idcomments
-FROM comments
-`
-
-// This query selects data from the "comments" table and populates the "comments_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "comments_search" using the "comment_id".
-func (q *Queries) RemakeCommentsSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeCommentsSearch)
-	return err
-}
-
-const remakeCommentsSearchInsert = `-- name: RemakeCommentsSearchInsert :exec
-INSERT INTO comments_search (text, comment_id)
-SELECT text, idcomments
-FROM comments
-`
-
-// This query selects data from the "comments" table and populates the "comments_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "comments_search" using the "comment_id".
-func (q *Queries) RemakeCommentsSearchInsert(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeCommentsSearchInsert)
-	return err
-}
-
-const remakeImagePostSearchInsert = `-- name: RemakeImagePostSearchInsert :exec
-INSERT INTO imagepost_search (text, image_post_id)
-SELECT description, idimagepost
-FROM imagepost
-`
-
-func (q *Queries) RemakeImagePostSearchInsert(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeImagePostSearchInsert)
-	return err
-}
-
-const remakeLinkerSearch = `-- name: RemakeLinkerSearch :exec
-INSERT INTO linker_search (text, linker_id)
-SELECT CONCAT(title, ' ', description), idlinker
-FROM linker
-`
-
-// This query selects data from the "linker" table and populates the "linker_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linker_search" using the "linker_id".
-func (q *Queries) RemakeLinkerSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeLinkerSearch)
-	return err
-}
-
-const remakeLinkerSearchInsert = `-- name: RemakeLinkerSearchInsert :exec
-INSERT INTO linker_search (text, linker_id)
-SELECT CONCAT(title, ' ', description), idlinker
-FROM linker
-`
-
-// This query selects data from the "linker" table and populates the "linker_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "linker_search" using the "linker_id".
-func (q *Queries) RemakeLinkerSearchInsert(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeLinkerSearchInsert)
-	return err
-}
-
-const remakeNewsSearch = `-- name: RemakeNewsSearch :exec
-INSERT INTO site_news_search (text, site_news_id)
-SELECT news, idsiteNews
-FROM site_news
-`
-
-// This query selects data from the "site_news" table and populates the "site_news_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "site_news_search" using the "site_news_id".
-func (q *Queries) RemakeNewsSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeNewsSearch)
-	return err
-}
-
-const remakeNewsSearchInsert = `-- name: RemakeNewsSearchInsert :exec
-INSERT INTO site_news_search (text, site_news_id)
-SELECT news, idsiteNews
-FROM site_news
-`
-
-// This query selects data from the "site_news" table and populates the "site_news_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "site_news_search" using the "site_news_id".
-func (q *Queries) RemakeNewsSearchInsert(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeNewsSearchInsert)
-	return err
-}
-
-const remakeWritingSearch = `-- name: RemakeWritingSearch :exec
-INSERT INTO writing_search (text, writing_id)
-SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
-FROM writing
-`
-
-// This query selects data from the "writing" table and populates the "writing_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writing_search" using the "writing_id".
-func (q *Queries) RemakeWritingSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeWritingSearch)
-	return err
-}
-
-const remakeWritingSearchInsert = `-- name: RemakeWritingSearchInsert :exec
-INSERT INTO writing_search (text, writing_id)
-SELECT CONCAT(title, ' ', abstract, ' ', writing), idwriting
-FROM writing
-`
-
-// This query selects data from the "writing" table and populates the "writing_search" table with the specified columns.
-// Then, it iterates over the "queue" linked list to add each text and ID pair to the "writing_search" using the "writing_id".
-func (q *Queries) RemakeWritingSearchInsert(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, remakeWritingSearchInsert)
-	return err
-}
-
 const siteNewsSearchFirst = `-- name: SiteNewsSearchFirst :many
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
@@ -781,12 +684,12 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 
 const wordListWithCounts = `-- name: WordListWithCounts :many
 SELECT swl.word,
-       (SELECT COUNT(*) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+       (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ns.word_count),0) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(bs.word_count),0) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ls.word_count),0) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ws.word_count),0) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 ORDER BY swl.word
 LIMIT ? OFFSET ?
@@ -828,12 +731,12 @@ func (q *Queries) WordListWithCounts(ctx context.Context, arg WordListWithCounts
 
 const wordListWithCountsByPrefix = `-- name: WordListWithCountsByPrefix :many
 SELECT swl.word,
-       (SELECT COUNT(*) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT COUNT(*) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+       (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ns.word_count),0) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(bs.word_count),0) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ls.word_count),0) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ws.word_count),0) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 WHERE swl.word LIKE CONCAT(?, '%')
 ORDER BY swl.word

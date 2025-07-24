@@ -16,6 +16,7 @@ CREATE TABLE `blogs` (
 CREATE TABLE `blogs_search` (
   `blog_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
+  `word_count` int(10) NOT NULL DEFAULT 1,
   PRIMARY KEY (`blog_id`,`searchwordlist_idsearchwordlist`),
   KEY `blogs_has_searchwordlist_FKIndex1` (`blog_id`),
   KEY `blogs_has_searchwordlist_FKIndex2` (`searchwordlist_idsearchwordlist`)
@@ -47,6 +48,7 @@ CREATE TABLE `comments` (
 CREATE TABLE `comments_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `comment_id` int(10) NOT NULL DEFAULT 0,
+  `word_count` int(10) NOT NULL DEFAULT 1,
   PRIMARY KEY (`searchwordlist_idsearchwordlist`,`comment_id`),
   KEY `searchwordlist_has_comments_FKIndex1` (`searchwordlist_idsearchwordlist`),
   KEY `searchwordlist_has_comments_FKIndex2` (`comment_id`)
@@ -140,6 +142,7 @@ CREATE TABLE `imagepost` (
 CREATE TABLE `imagepost_search` (
   `image_post_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
+  `word_count` int(10) NOT NULL DEFAULT 1,
   PRIMARY KEY (`image_post_id`,`searchwordlist_idsearchwordlist`),
   KEY `imagepostSearch_FKIndex1` (`image_post_id`),
   KEY `imagepostSearch_FKIndex2` (`searchwordlist_idsearchwordlist`)
@@ -195,6 +198,7 @@ CREATE TABLE `linker_queue` (
 CREATE TABLE `linker_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `linker_id` int(10) NOT NULL DEFAULT 0,
+  `word_count` int(10) NOT NULL DEFAULT 1,
   PRIMARY KEY (`searchwordlist_idsearchwordlist`,`linker_id`),
   KEY `searchwordlist_has_linker_FKIndex1` (`searchwordlist_idsearchwordlist`),
   KEY `searchwordlist_has_linker_FKIndex2` (`linker_id`)
@@ -278,6 +282,7 @@ CREATE TABLE `site_news` (
 CREATE TABLE `site_news_search` (
   `site_news_id` int(10) NOT NULL DEFAULT 0,
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
+  `word_count` int(10) NOT NULL DEFAULT 1,
   PRIMARY KEY (`site_news_id`,`searchwordlist_idsearchwordlist`),
   KEY `siteNews_has_searchwordlist_FKIndex1` (`site_news_id`),
   KEY `siteNews_has_searchwordlist_FKIndex2` (`searchwordlist_idsearchwordlist`)
@@ -357,6 +362,7 @@ CREATE TABLE `writing_category` (
 CREATE TABLE `writing_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `writing_id` int(10) NOT NULL DEFAULT 0,
+  `word_count` int(10) NOT NULL DEFAULT 1,
   PRIMARY KEY (`searchwordlist_idsearchwordlist`,`writing_id`),
   KEY `searchwordlist_has_writing_FKIndex1` (`searchwordlist_idsearchwordlist`),
   KEY `searchwordlist_has_writing_FKIndex2` (`writing_id`)

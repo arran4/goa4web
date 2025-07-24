@@ -69,6 +69,7 @@ type Blog struct {
 type BlogsSearch struct {
 	BlogID                         int32
 	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
 type Bookmark struct {
@@ -91,6 +92,7 @@ type Comment struct {
 type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	CommentID                      int32
+	WordCount                      int32
 }
 
 type DeactivatedBlog struct {
@@ -259,6 +261,7 @@ type Imagepost struct {
 type ImagepostSearch struct {
 	ImagePostID                    int32
 	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
 type Language struct {
@@ -300,6 +303,7 @@ type LinkerQueue struct {
 type LinkerSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	LinkerID                       int32
+	WordCount                      int32
 }
 
 type LoginAttempt struct {
@@ -402,6 +406,7 @@ type SiteNews struct {
 type SiteNewsSearch struct {
 	SiteNewsID                     int32
 	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
 type Subscription struct {
@@ -481,4 +486,5 @@ type WritingCategory struct {
 type WritingSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	WritingID                      int32
+	WordCount                      int32
 }

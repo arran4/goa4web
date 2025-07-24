@@ -21,9 +21,18 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	threadRow, err := cd.CurrentThread()
+	if err != nil || threadRow == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	topicRow, err := cd.CurrentTopic()
+	if err != nil || topicRow == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
 	err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{
@@ -53,8 +62,17 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	threadRow, err := cd.CurrentThread()
+	if err != nil || threadRow == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	topicRow, err := cd.CurrentTopic()
+	if err != nil || topicRow == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

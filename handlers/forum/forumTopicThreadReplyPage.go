@@ -80,8 +80,15 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	threadRow, err := cd.CurrentThread()
+	if err != nil || threadRow == nil {
+		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	topicRow, err := cd.CurrentTopic()
+	if err != nil || topicRow == nil {
+		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
@@ -138,8 +145,17 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	threadRow, err := cd.CurrentThread()
+	if err != nil || threadRow == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	topicRow, err := cd.CurrentTopic()
+	if err != nil || topicRow == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 

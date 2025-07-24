@@ -1,7 +1,6 @@
 package forum
 
 import (
-	"context"
 	"database/sql"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -33,7 +32,8 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		queries := cd.Queries()
 
 		session, _ := core.GetSession(r)
 		var uid int32
@@ -74,9 +74,10 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
+		cd.CacheForumThread(int32(threadID), threadRow)
+		cd.CacheForumTopic(threadRow.ForumtopicIdforumtopic, topicRow)
 
-		ctx := context.WithValue(r.Context(), consts.KeyThread, threadRow)
-		ctx = context.WithValue(ctx, consts.KeyTopic, topicRow)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		cd.SetCurrentThreadAndTopic(int32(threadID), threadRow.ForumtopicIdforumtopic)
+		next.ServeHTTP(w, r)
 	})
 }

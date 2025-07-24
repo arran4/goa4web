@@ -61,9 +61,18 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Languages = languageRows
-
-	threadRow := r.Context().Value(consts.KeyThread).(*db.GetThreadLastPosterAndPermsRow)
-	topicRow := r.Context().Value(consts.KeyTopic).(*db.GetForumTopicByIdForUserRow)
+	threadRow, err := cd.CurrentThread()
+	if err != nil || threadRow == nil {
+		log.Printf("current thread: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	topicRow, err := cd.CurrentTopic()
+	if err != nil || topicRow == nil {
+		log.Printf("current topic: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

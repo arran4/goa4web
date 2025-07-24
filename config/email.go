@@ -47,15 +47,3 @@ func GetAdminEmails(ctx context.Context, q *db.Queries, cfg RuntimeConfig) []str
 	}
 	return emails
 }
-
-// AdminNotificationsEnabled reports whether administrator notification emails
-// should be sent based on the runtime configuration.
-func AdminNotificationsEnabled(cfg RuntimeConfig) bool {
-	return cfg.AdminNotify
-}
-
-// EmailSendingEnabled reports if queued emails should be dispatched according
-// to the runtime configuration.
-func EmailSendingEnabled(cfg RuntimeConfig) bool {
-	return cfg.EmailEnabled
-}

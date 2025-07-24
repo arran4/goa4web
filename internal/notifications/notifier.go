@@ -22,6 +22,7 @@ type Notifier struct {
 	Bus            *eventbus.Bus
 	EmailProvider  email.Provider
 	Queries        *dbpkg.Queries
+	Config         config.RuntimeConfig
 	noteOnce       sync.Once
 	noteTmpls      *ttemplate.Template
 	emailTextOnce  sync.Once
@@ -45,6 +46,7 @@ func WithBus(b *eventbus.Bus) Option { return func(n *Notifier) { n.Bus = b } }
 // WithConfig derives dependencies from cfg when they are not supplied.
 func WithConfig(cfg config.RuntimeConfig) Option {
 	return func(n *Notifier) {
+		n.Config = cfg
 		if n.EmailProvider == nil {
 			n.EmailProvider = email.ProviderFromConfig(cfg)
 		}
@@ -54,10 +56,11 @@ func WithConfig(cfg config.RuntimeConfig) Option {
 // New constructs a Notifier with the provided dependencies.
 func New(opts ...Option) *Notifier {
 	n := &Notifier{}
+	WithConfig(config.AppRuntimeConfig)(n)
 	for _, o := range opts {
 		o(n)
 	}
-	WithConfig(config.AppRuntimeConfig)(n)
+	WithConfig(n.Config)(n)
 	return n
 }
 
@@ -91,10 +94,10 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 	if n.Queries == nil {
 		return nil
 	}
-	if !config.AdminNotificationsEnabled(config.AppRuntimeConfig) {
+	if !n.Config.AdminNotify {
 		return nil
 	}
-	for _, addr := range config.GetAdminEmails(ctx, n.Queries, config.AppRuntimeConfig) {
+	for _, addr := range config.GetAdminEmails(ctx, n.Queries, n.Config) {
 		var uid *int32
 		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
 			id := u.Idusers

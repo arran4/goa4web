@@ -112,7 +112,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
 	emailProvider := email.ProviderFromConfig(cfg)
-	if config.EmailSendingEnabled(cfg) && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
+	if cfg.EmailEnabled && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
 	}
 

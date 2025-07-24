@@ -72,6 +72,8 @@ const (
 	EnvListen = "LISTEN"
 	// EnvHostname is the base URL advertised by the HTTP server.
 	EnvHostname = "HOSTNAME"
+	// EnvSessionName sets the cookie name used for session data.
+	EnvSessionName = "SESSION_NAME"
 
 	// EnvSessionSecret is the secret used to encrypt session cookies.
 	EnvSessionSecret = "SESSION_SECRET"

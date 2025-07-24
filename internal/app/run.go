@@ -34,9 +34,8 @@ import (
 var ConfigFile string
 
 var (
-	sessionName = "my-session"
-	store       *sessions.CookieStore
-	srv         *server.Server
+	store *sessions.CookieStore
+	srv   *server.Server
 
 	version = "dev"
 )
@@ -52,7 +51,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	adminhandlers.StartTime = time.Now()
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	core.Store = store
-	core.SessionName = sessionName
+	core.SessionName = cfg.SessionName
 	store.Options = &sessions.Options{
 		Path:     "/",
 		HttpOnly: true,

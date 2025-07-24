@@ -1,7 +1,6 @@
 package blogs
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"github.com/arran4/goa4web/core/consts"
@@ -48,16 +47,18 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			return
 		}
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd != nil {
+			cd.CacheBlogEntry(int32(blogID), row)
+			cd.SetCurrentBlog(int32(blogID))
+		}
 		if cd != nil && cd.HasRole("administrator") {
-			ctx := context.WithValue(r.Context(), consts.KeyBlogEntry, row)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r)
 			return
 		}
 		if cd == nil || !cd.HasRole("writer") || row.UsersIdusers != uid {
 			http.NotFound(w, r)
 			return
 		}
-		ctx := context.WithValue(r.Context(), consts.KeyBlogEntry, row)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
 }

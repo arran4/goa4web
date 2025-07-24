@@ -106,6 +106,8 @@ type CoreData struct {
 	writingCategories        lazyValue[[]*db.WritingCategory]
 	currentWritingID         int32
 	writingRows              map[int32]*lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow]
+	currentBlogID            int32
+	blogEntries              map[int32]*lazyValue[*db.GetBlogEntryForUserByIdRow]
 
 	absoluteURLBase lazyValue[string]
 	// marks records which template sections have been rendered to avoid
@@ -463,6 +465,33 @@ func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingBy
 		return nil
 	}
 	lv, ok := cd.writingRows[cd.currentWritingID]
+	if !ok {
+		return nil
+	}
+	v, ok := lv.peek()
+	if !ok {
+		return nil
+	}
+	return v
+}
+
+// SetCurrentBlog stores the requested blog entry ID.
+func (cd *CoreData) SetCurrentBlog(id int32) { cd.currentBlogID = id }
+
+// CurrentBlog returns the currently requested blog entry lazily loaded.
+func (cd *CoreData) CurrentBlog() (*db.GetBlogEntryForUserByIdRow, error) {
+	if cd.currentBlogID == 0 {
+		return nil, nil
+	}
+	return cd.BlogEntryByID(cd.currentBlogID)
+}
+
+// CurrentBlogLoaded returns the cached current blog entry without database access.
+func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForUserByIdRow {
+	if cd.blogEntries == nil {
+		return nil
+	}
+	lv, ok := cd.blogEntries[cd.currentBlogID]
 	if !ok {
 		return nil
 	}
@@ -949,6 +978,40 @@ func (cd *CoreData) WritingByID(id int32) (*db.GetWritingByIdForUserDescendingBy
 			ViewerID:      cd.UserID,
 			Idwriting:     id,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	})
+}
+
+// CacheBlogEntry stores a blog entry in the request cache without loading.
+func (cd *CoreData) CacheBlogEntry(id int32, row *db.GetBlogEntryForUserByIdRow) {
+	if cd.blogEntries == nil {
+		cd.blogEntries = make(map[int32]*lazyValue[*db.GetBlogEntryForUserByIdRow])
+	}
+	lv, ok := cd.blogEntries[id]
+	if !ok {
+		lv = &lazyValue[*db.GetBlogEntryForUserByIdRow]{}
+		cd.blogEntries[id] = lv
+	}
+	lv.set(row)
+}
+
+// BlogEntryByID returns a blog entry lazily loading it once per ID.
+func (cd *CoreData) BlogEntryByID(id int32) (*db.GetBlogEntryForUserByIdRow, error) {
+	if cd.blogEntries == nil {
+		cd.blogEntries = make(map[int32]*lazyValue[*db.GetBlogEntryForUserByIdRow])
+	}
+	lv, ok := cd.blogEntries[id]
+	if !ok {
+		lv = &lazyValue[*db.GetBlogEntryForUserByIdRow]{}
+		cd.blogEntries[id] = lv
+	}
+	return lv.load(func() (*db.GetBlogEntryForUserByIdRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetBlogEntryForUserById(cd.ctx, db.GetBlogEntryForUserByIdParams{
+			ViewerIdusers: cd.UserID,
+			ID:            id,
 		})
 	})
 }

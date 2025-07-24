@@ -42,8 +42,9 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	row := r.Context().Value(consts.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	row := cd.CurrentBlogLoaded()
 
 	if err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
 		Idblogs:            row.Idblogs,
@@ -95,8 +96,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	row := r.Context().Value(consts.KeyBlogEntry).(*db.GetBlogEntryForUserByIdRow)
-	data.Blog = row
+	data.Blog = cd.CurrentBlogLoaded()
 
 	handlers.TemplateHandler(w, r, "blogEditPage.gohtml", data)
 }

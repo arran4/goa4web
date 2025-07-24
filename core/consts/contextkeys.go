@@ -7,6 +7,4 @@ type ContextKey string
 const (
 	// KeyCoreData provides access to CoreData.
 	KeyCoreData ContextKey = "coreData"
-	// KeyBlogEntry holds a fetched blog entry row.
-	KeyBlogEntry ContextKey = "blogEntry"
 )

@@ -26,6 +26,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 		"cd":        func() *CoreData { return cd },
 		"now":       func() time.Time { return time.Now() },
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
+		"csrfToken": func() string { return csrf.Token(r) },
 		"version":   func() string { return goa4web.Version },
 		"a4code2html": func(s string) template.HTML {
 			c := a4code2html.New(mapper)

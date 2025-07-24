@@ -99,8 +99,12 @@ func RegisterRoutes(ar *mux.Router) {
 	writings.RegisterAdminRoutes(ar)
 
 	// TODO ensure requires administrator to run. Even from CLI.
-	ar.HandleFunc("/reload", AdminReloadConfigPage).Methods("POST")
-	ar.HandleFunc("/shutdown", AdminShutdownPage).Methods("POST")
+	ar.HandleFunc("/reload", AdminReloadConfigPage).
+		Methods("POST").
+		MatcherFunc(handlers.RequiredAccess("administrator"))
+	ar.HandleFunc("/shutdown", AdminShutdownPage).
+		Methods("POST").
+		MatcherFunc(handlers.RequiredAccess("administrator"))
 }
 
 // Register registers the admin router module.

@@ -276,8 +276,11 @@ func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, 
 }
 
 const getUserRoles = `-- name: GetUserRoles :many
-SELECT ur.iduser_roles, ur.users_idusers, r.name AS role
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
+       u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM user_roles ur
+JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id
 `
 
@@ -285,6 +288,8 @@ type GetUserRolesRow struct {
 	IduserRoles  int32
 	UsersIdusers int32
 	Role         string
+	Username     sql.NullString
+	Email        string
 }
 
 // This query selects permissions information for admin users.
@@ -302,7 +307,13 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 	var items []*GetUserRolesRow
 	for rows.Next() {
 		var i GetUserRolesRow
-		if err := rows.Scan(&i.IduserRoles, &i.UsersIdusers, &i.Role); err != nil {
+		if err := rows.Scan(
+			&i.IduserRoles,
+			&i.UsersIdusers,
+			&i.Role,
+			&i.Username,
+			&i.Email,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

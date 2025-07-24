@@ -14,8 +14,11 @@ LIMIT 1;
 --   role (string)
 --   username (string)
 --   email (string)
-SELECT ur.iduser_roles, ur.users_idusers, r.name AS role
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
+       u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM user_roles ur
+JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id
 ;
 

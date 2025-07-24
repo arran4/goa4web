@@ -95,13 +95,7 @@ func (m *memFS) WalkDir(root string, fn fs.WalkDirFunc) error {
 
 func TestCleanup(t *testing.T) {
 	mfs := newMemFS()
-	orig := []any{mkdirAll, stat, writeFile, readFile, remove, walkDir}
-	mkdirAll, stat, writeFile, readFile, remove, walkDir = mfs.MkdirAll, mfs.Stat, mfs.WriteFile, mfs.ReadFile, mfs.Remove, mfs.WalkDir
-	defer func() {
-		mkdirAll, stat, writeFile, readFile, remove, walkDir = orig[0].(func(string, fs.FileMode) error), orig[1].(func(string) (fs.FileInfo, error)), orig[2].(func(string, []byte, fs.FileMode) error), orig[3].(func(string) ([]byte, error)), orig[4].(func(string) error), orig[5].(func(string, fs.WalkDirFunc) error)
-	}()
-
-	p := Provider{Dir: "/cache"}
+	p := Provider{Dir: "/cache", FS: mfs}
 	if err := p.Write(context.Background(), "a", []byte("1")); err != nil {
 		t.Fatal(err)
 	}

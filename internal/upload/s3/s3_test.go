@@ -24,6 +24,10 @@ type mockClient struct {
 	getData    []byte
 }
 
+type mockFactory struct{ c *mockClient }
+
+func (m mockFactory) New(string) (api, error) { return m.c, nil }
+
 func (m *mockClient) HeadBucket(*awsS3.HeadBucketInput) (*awsS3.HeadBucketOutput, error) {
 	m.headCalled = true
 	return &awsS3.HeadBucketOutput{}, m.headErr
@@ -48,12 +52,8 @@ func (m *mockClient) GetObject(*awsS3.GetObjectInput) (*awsS3.GetObjectOutput, e
 }
 
 func TestProviderCheckSuccess(t *testing.T) {
-	orig := newClient
 	mock := &mockClient{}
-	newClient = func(string) (api, error) { return mock, nil }
-	defer func() { newClient = orig }()
-
-	p := providerFromConfig(config.RuntimeConfig{EmailAWSRegion: "us-east-1", ImageUploadS3URL: "s3://bucket/path"})
+	p := providerFromConfigWithFactory(config.RuntimeConfig{EmailAWSRegion: "us-east-1", ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
 	if p == nil {
 		t.Fatal("nil provider")
 	}
@@ -66,24 +66,16 @@ func TestProviderCheckSuccess(t *testing.T) {
 }
 
 func TestProviderCheckWriteError(t *testing.T) {
-	orig := newClient
 	mock := &mockClient{putErr: fmt.Errorf("fail")}
-	newClient = func(string) (api, error) { return mock, nil }
-	defer func() { newClient = orig }()
-
-	p := providerFromConfig(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"})
+	p := providerFromConfigWithFactory(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
 	if err := p.Check(nil); err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestProviderRead(t *testing.T) {
-	orig := newClient
 	mock := &mockClient{getData: []byte("hello")}
-	newClient = func(string) (api, error) { return mock, nil }
-	defer func() { newClient = orig }()
-
-	p := providerFromConfig(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"})
+	p := providerFromConfigWithFactory(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
 	if p == nil {
 		t.Fatal("nil provider")
 	}

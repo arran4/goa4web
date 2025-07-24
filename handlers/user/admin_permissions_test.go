@@ -67,7 +67,8 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	handler := middleware.TaskEventMiddlewareWithBus(bus)(http.HandlerFunc(handlers.TaskHandler(permissionUserAllowTask)))
+	mw := middleware.NewTaskEventMiddleware(bus)
+	handler := mw.Middleware(http.HandlerFunc(handlers.TaskHandler(permissionUserAllowTask)))
 	handler.ServeHTTP(rr, req)
 
 	select {

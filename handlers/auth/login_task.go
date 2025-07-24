@@ -68,15 +68,15 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 				_ = queries.MarkPasswordResetVerified(r.Context(), reset.ID)
 				_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
 			} else {
-				session, ok := core.GetSessionOrFail(w, r)
-				if !ok {
-					return handlers.SessionFetchFail{}
+				type Data struct {
+					*common.CoreData
+					ID int32
 				}
-				session.Values["PendingResetID"] = reset.ID
-				if err := session.Save(r, w); err != nil {
-					log.Printf("save session: %v", err)
+				data := Data{
+					CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+					ID:       reset.ID,
 				}
-				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", struct{}{})
+				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", data)
 			}
 		} else {
 			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {

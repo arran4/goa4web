@@ -44,7 +44,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, 0)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -81,7 +81,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 		cdOut, _ = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	})
 
-	CoreAdderMiddlewareWithDB(db)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, 0)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

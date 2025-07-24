@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
-	"github.com/arran4/goa4web/internal/middleware"
 )
 
 var (
@@ -65,7 +64,6 @@ func InitDB(cfg config.RuntimeConfig) *common.UserError {
 	if err := EnsureSchema(context.Background(), dbPool); err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
-	middleware.SetDBPool(dbPool, dbLogVerbosity)
 	if dbLogVerbosity > 0 {
 		log.Printf("db pool stats after init: %+v", dbPool.Stats())
 	}

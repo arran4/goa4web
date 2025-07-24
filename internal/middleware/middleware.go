@@ -28,8 +28,10 @@ func handleDie(w http.ResponseWriter, message string) {
 	http.Error(w, message, http.StatusInternalServerError)
 }
 
-// CoreAdderMiddleware populates request context with CoreData for templates.
-func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
+// CoreAdderMiddlewareWithDB populates request context with CoreData for
+// templates using the supplied database handle. The verbosity controls optional
+// logging of database pool statistics.
+func CoreAdderMiddlewareWithDB(db *sql.DB, verbosity int) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := core.GetSession(r)
@@ -67,7 +69,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
 			}
 
 			queries := dbpkg.New(db)
-			if dbLogVerbosity > 0 {
+			if verbosity > 0 {
 				log.Printf("db pool stats: %+v", db.Stats())
 			}
 
@@ -108,24 +110,6 @@ func CoreAdderMiddlewareWithDB(db *sql.DB) func(http.Handler) http.Handler {
 		})
 	}
 }
-
-// CoreAdderMiddleware populates request context with CoreData for templates using the global DBPool.
-func CoreAdderMiddleware(next http.Handler) http.Handler {
-	return CoreAdderMiddlewareWithDB(DBPool)(next)
-}
-
-// DBPool should be assigned by the parent package to supply the database.
-var DBPool *sql.DB
-
-// SetDBPool configures the database handle and logging verbosity used by
-// DBAdderMiddleware.
-func SetDBPool(db *sql.DB, verbosity int) {
-	DBPool = db
-	dbLogVerbosity = verbosity
-}
-
-// dbLogVerbosity controls optional logging of database pool stats.
-var dbLogVerbosity int
 
 // RequestLoggerMiddleware logs incoming requests along with the user and session IDs.
 func RequestLoggerMiddleware(next http.Handler) http.Handler {

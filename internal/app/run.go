@@ -96,7 +96,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddleware,
+		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg.DBLogVerbosity),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,

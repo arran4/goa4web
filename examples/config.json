@@ -1,4 +1,6 @@
 {
+  "ADMIN_API_SECRET": "",
+  "ADMIN_API_SECRET_FILE": ".admin_api_secret",
   "ADMIN_EMAILS": "",
   "ADMIN_NOTIFY": "true",
   "AWS_REGION": "",
@@ -13,6 +15,7 @@
   "DLQ_PROVIDER": "",
   "EMAIL_ENABLED": "true",
   "EMAIL_FROM": "",
+  "EMAIL_LOG_VERBOSITY": "0",
   "EMAIL_PROVIDER": "",
   "EMAIL_SIGNOFF": "",
   "EMAIL_SUBJECT_PREFIX": "goa4web",
@@ -45,8 +48,6 @@
   "SESSION_NAME": "my-session",
   "SESSION_SECRET": "",
   "SESSION_SECRET_FILE": ".session_secret",
-  "ADMIN_API_SECRET": "",
-  "ADMIN_API_SECRET_FILE": ".admin_api_secret",
   "SMTP_AUTH": "plain",
   "SMTP_HOST": "",
   "SMTP_PASS": "",

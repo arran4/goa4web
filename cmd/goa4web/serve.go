@@ -61,6 +61,7 @@ func (c *serveCmd) Run() error {
 		app.WithDBRegistry(c.rootCmd.dbReg),
 		app.WithEmailRegistry(c.rootCmd.emailReg),
 		app.WithDLQRegistry(c.rootCmd.dlqReg),
+		app.WithTasksRegistry(c.rootCmd.tasksReg),
 		app.WithAPISecret(apiKey),
 	)
 	if err != nil {

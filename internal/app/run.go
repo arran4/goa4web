@@ -24,6 +24,7 @@ import (
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/tasks"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -51,6 +52,7 @@ type serverOptions struct {
 	DBReg           *dbdrivers.Registry
 	EmailReg        *email.Registry
 	DLQReg          *dlq.Registry
+	TasksReg        *tasks.Registry
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
 	DB              *sql.DB
@@ -84,6 +86,11 @@ func WithEmailRegistry(r *email.Registry) ServerOption {
 // WithDLQRegistry sets the dead letter queue provider registry.
 func WithDLQRegistry(r *dlq.Registry) ServerOption {
 	return func(o *serverOptions) { o.DLQReg = r }
+}
+
+// WithTasksRegistry sets the task registry.
+func WithTasksRegistry(r *tasks.Registry) ServerOption {
+	return func(o *serverOptions) { o.TasksReg = r }
 }
 
 // WithBus uses the provided event bus instead of creating a new one.
@@ -173,6 +180,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	adminhandlers.Srv = srv
 	adminhandlers.DBPool = dbPool
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
+	srv.TasksReg = o.TasksReg
 
 	emailProvider := o.EmailReg.ProviderFromConfig(cfg)
 	if cfg.EmailEnabled && cfg.EmailProvider != "" && cfg.EmailFrom == "" {

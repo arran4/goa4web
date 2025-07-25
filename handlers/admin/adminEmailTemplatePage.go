@@ -25,10 +25,10 @@ type taskTemplateInfo struct {
 	AdminInternal string
 }
 
-func gatherTaskTemplateInfos() []taskTemplateInfo {
-	reg := tasks.Registered()
-	infos := make([]taskTemplateInfo, 0, len(reg))
-	for _, t := range reg {
+func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
+	tasksSlice := reg.Registered()
+	infos := make([]taskTemplateInfo, 0, len(tasksSlice))
+	for _, t := range tasksSlice {
 		info := taskTemplateInfo{Task: t.Name()}
 		if tp, ok := t.(notif.SelfNotificationTemplateProvider); ok {
 			if et := tp.SelfEmailTemplate(); et != nil {
@@ -89,7 +89,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			*common.CoreData
 			Infos []taskTemplateInfo
-		}{cd, gatherTaskTemplateInfos()}
+		}{cd, gatherTaskTemplateInfos(cd.TasksReg)}
 		handlers.TemplateHandler(w, r, "emailTemplateListPage.gohtml", data)
 		return
 	}

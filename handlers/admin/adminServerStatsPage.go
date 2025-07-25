@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
@@ -44,8 +43,9 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,
@@ -59,7 +59,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 		Config: config.AppRuntimeConfig,
 	}
 
-	for _, t := range tasks.Registered() {
+	for _, t := range cd.TasksReg.Registered() {
 		data.Registries.Tasks = append(data.Registries.Tasks, t.Name())
 	}
 	data.Registries.DBDrivers = dbdrivers.Names()

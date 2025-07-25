@@ -72,6 +72,7 @@ type CoreData struct {
 	NotificationCount int32
 	Config            config.RuntimeConfig
 	ImageSigner       *imagesign.Signer
+	TasksReg          *tasks.Registry
 	a4codeMapper      func(tag, val string) string
 
 	session        *sessions.Session
@@ -189,6 +190,11 @@ func WithImageSigner(s *imagesign.Signer) CoreOption {
 			cd.a4codeMapper = s.MapURL
 		}
 	}
+}
+
+// WithTasksRegistry registers the task registry on CoreData.
+func WithTasksRegistry(r *tasks.Registry) CoreOption {
+	return func(cd *CoreData) { cd.TasksReg = r }
 }
 
 // NewCoreData creates a CoreData with context and queries applied.

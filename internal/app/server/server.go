@@ -23,6 +23,7 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
@@ -34,6 +35,7 @@ type Server struct {
 	Bus         *eventbus.Bus
 	EmailReg    *email.Registry
 	ImageSigner *imagesign.Signer
+	TasksReg    *tasks.Registry
 
 	WorkerCancel context.CancelFunc
 
@@ -169,7 +171,8 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
 				common.WithConfig(s.Config),
-				common.WithSessionManager(sm))
+				common.WithSessionManager(sm),
+				common.WithTasksRegistry(s.TasksReg))
 			cd.UserID = uid
 			_ = cd.UserRoles()
 

@@ -42,7 +42,6 @@ var version = "dev"
 func registerTasks(reg *tasks.Registry) {
 	register := func(ts []tasks.NamedTask) {
 		for _, t := range ts {
-			tasks.Register(t)
 			reg.Register(t)
 		}
 	}

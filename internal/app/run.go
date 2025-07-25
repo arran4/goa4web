@@ -23,6 +23,7 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -160,10 +161,16 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r, reg)
 
+	srv := server.New(nil, store, dbPool, cfg, reg, navReg)
+	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
+	srv.Bus = bus
+	srv.EmailReg = o.EmailReg
+	srv.ImageSigner = imgSigner
+
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, o.EmailReg, imgSigner),
+		srv.CoreDataMiddleware(),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
@@ -172,8 +179,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv := server.New(handler, store, dbPool, cfg, reg)
-	srv.Bus = bus
+	srv.Router = handler
 
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv

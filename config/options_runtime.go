@@ -75,6 +75,7 @@ var StringOptions = []StringOption{
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.
 var IntOptions = []IntOption{
 	{"db-log-verbosity", EnvDBLogVerbosity, "database logging verbosity", 0, "", func(c *RuntimeConfig) *int { return &c.DBLogVerbosity }},
+	{"email-log-verbosity", EnvEmailLogVerbosity, "email logging verbosity", 0, "", func(c *RuntimeConfig) *int { return &c.EmailLogVerbosity }},
 	{"log-flags", EnvLogFlags, "request logging flags", 0, "", func(c *RuntimeConfig) *int { return &c.LogFlags }},
 	{"page-size-min", EnvPageSizeMin, "minimum allowed page size", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},
 	{"page-size-max", EnvPageSizeMax, "maximum allowed page size", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},
@@ -83,6 +84,8 @@ var IntOptions = []IntOption{
 	{"image-cache-max-bytes", EnvImageCacheMaxBytes, "maximum image cache size in bytes", -1, "", func(c *RuntimeConfig) *int { return &c.ImageCacheMaxBytes }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "interval in seconds between email worker runs", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
 	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "password reset expiry in hours", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},
+	{"login-attempt-window", EnvLoginAttemptWindow, "minutes to track failed login attempts", 15, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptWindow }},
+	{"login-attempt-threshold", EnvLoginAttemptThreshold, "failed login attempts allowed within the window", 5, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptThreshold }},
 	{"stats-start-year", EnvStatsStartYear, "start year for usage stats", 0, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
 }
 

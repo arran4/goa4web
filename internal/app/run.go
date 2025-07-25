@@ -162,7 +162,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv := server.New(handler, store, dbPool, cfg)
+	srv := server.New(handler, store, dbPool, cfg, o.DLQReg)
 	srv.Bus = bus
 
 	adminhandlers.ConfigFile = ConfigFile

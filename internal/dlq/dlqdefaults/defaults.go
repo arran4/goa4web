@@ -14,4 +14,5 @@ func Register(r *dlqpkg.Registry) {
 	dir.Register(r)
 	db.Register(r)
 	email.Register(r)
+	dlqpkg.RegisterLogDLQ(r)
 }

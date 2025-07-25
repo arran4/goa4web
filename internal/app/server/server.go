@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -22,6 +23,7 @@ type Server struct {
 	Store  *sessions.CookieStore
 	DB     *sql.DB
 	Bus    *eventbus.Bus
+	DLQReg *dlq.Registry
 
 	WorkerCancel context.CancelFunc
 
@@ -80,12 +82,13 @@ func (s *Server) Close() {
 }
 
 // New returns a Server with the supplied dependencies.
-func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig) *Server {
+func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig, dlqReg *dlq.Registry) *Server {
 	return &Server{
 		Config: cfg,
 		Router: handler,
 		Store:  store,
 		DB:     db,
+		DLQReg: dlqReg,
 	}
 }
 

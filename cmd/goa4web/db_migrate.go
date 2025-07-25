@@ -24,7 +24,7 @@ func openDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) 
 	if err != nil {
 		return nil, err
 	}
-	var connector driver.Connector = dbpkg.NewLoggingConnector(c)
+	var connector driver.Connector = dbpkg.NewLoggingConnector(c, cfg.DBLogVerbosity)
 	db := sql.OpenDB(connector)
 	if err := db.Ping(); err != nil {
 		db.Close()

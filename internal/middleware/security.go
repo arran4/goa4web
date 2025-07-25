@@ -83,6 +83,8 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 				w.Header().Set("Strict-Transport-Security", hsts)
 			}
 		}
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
 		next.ServeHTTP(w, r)
 	})
 }

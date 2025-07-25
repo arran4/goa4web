@@ -27,5 +27,3 @@ func RegisterLogDLQ(r *Registry) {
 		return LogDLQ{}
 	})
 }
-
-func init() { RegisterLogDLQ(DefaultRegistry) }

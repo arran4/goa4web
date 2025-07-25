@@ -23,6 +23,7 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -54,6 +55,7 @@ type serverOptions struct {
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
 	DB              *sql.DB
+	RouterReg       *routerpkg.Registry
 }
 
 // WithSessionSecret supplies the session cookie encryption secret.
@@ -94,6 +96,11 @@ func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOpti
 
 // WithDB uses the supplied database pool instead of performing startup checks.
 func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db } }
+
+// WithRouterRegistry sets the router module registry.
+func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
+	return func(o *serverOptions) { o.RouterReg = r }
+}
 
 // NewServer constructs the server and supporting services using the provided
 // configuration and optional parameters.
@@ -145,15 +152,27 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	if bus == nil {
 		bus = eventbus.NewBus()
 	}
-	websocket.SetBus(bus)
+	wsMod := websocket.NewModule(bus)
+	wsMod.Register()
 
+	reg := o.RouterReg
+	if reg == nil {
+		reg = routerpkg.NewRegistry()
+	}
 	r := mux.NewRouter()
-	routerpkg.RegisterRoutes(r)
+	routerpkg.RegisterRoutes(r, reg)
+
+	srv := server.New(nil, store, dbPool, cfg, reg, navReg, o.DLQReg)
+	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
+	srv.Bus = bus
+	srv.EmailReg = o.EmailReg
+	srv.ImageSigner = imgSigner
+	srv.Websocket = wsMod
 
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, o.EmailReg, imgSigner),
+		srv.CoreDataMiddleware(),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
@@ -162,8 +181,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv := server.New(handler, store, dbPool, cfg)
-	srv.Bus = bus
+	srv.Router = handler
 
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv

@@ -43,6 +43,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the user router module.
-func Register() {
-	router.RegisterModule("user", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("user", nil, RegisterRoutes)
 }

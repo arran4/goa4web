@@ -86,6 +86,6 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 }
 
 // Register registers the images router module.
-func Register() {
-	router.RegisterModule("images", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("images", nil, RegisterRoutes)
 }

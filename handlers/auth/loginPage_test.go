@@ -2,8 +2,13 @@ package auth
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,10 +19,19 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/gorilla/sessions"
 )
+
+func signBackURL(key, u string, ts int64) string {
+	mac := hmac.New(sha256.New, []byte(key))
+	io.WriteString(mac, fmt.Sprintf("back:%s:%d", u, ts))
+	return hex.EncodeToString(mac.Sum(nil))
+}
 
 func TestLoginAction_NoSuchUser(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -118,6 +132,9 @@ func TestLoginPageHiddenFields(t *testing.T) {
 	if !strings.Contains(body, "name=\"data\" value=\"x\"") {
 		t.Fatalf("missing data field: %q", body)
 	}
+	if strings.Contains(body, "back_sig") || strings.Contains(body, "back_ts") {
+		t.Fatalf("unexpected signature fields: %q", body)
+	}
 }
 
 func TestLoginAction_PendingResetPrompt(t *testing.T) {
@@ -157,6 +174,184 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	body := rr.Body.String()
 	if !strings.Contains(body, "name=\"id\" value=\"2\"") {
 		t.Fatalf("missing id field: %q", body)
+	}
+}
+
+func TestSanitizeBackURL(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Host = "example.com"
+	cfg := config.AppRuntimeConfig
+	cfg.HTTPHostname = ""
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	if got := cd.SanitizeBackURL(req, "/foo"); got != "/foo" {
+		t.Fatalf("relative got %q", got)
+	}
+	if got := cd.SanitizeBackURL(req, "https://example.com/bar?x=1"); got != "/bar?x=1" {
+		t.Fatalf("host match got %q", got)
+	}
+	if got := cd.SanitizeBackURL(req, "https://evil.com/"); got != "" {
+		t.Fatalf("evil got %q", got)
+	}
+
+	cfg.HTTPHostname = "https://example.com"
+	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
+		t.Fatalf("cfg host got %q", got)
+	}
+}
+
+func TestSanitizeBackURLSigned(t *testing.T) {
+	raw := "https://evil.com/x"
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Host = "example.com"
+	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(config.AppRuntimeConfig), common.WithImageSigner(signer))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	ts := time.Now().Add(time.Hour).Unix()
+	sig := signBackURL("k", raw, ts)
+	q := req.URL.Query()
+	q.Set("back_ts", fmt.Sprint(ts))
+	q.Set("back_sig", sig)
+	req.URL.RawQuery = q.Encode()
+	if got := cd.SanitizeBackURL(req, raw); got != raw {
+		t.Fatalf("signed got %q", got)
+	}
+}
+
+func TestLoginPageInvalidBackURL(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
+	req.Host = "example.com"
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	loginTask.Page(rr, req)
+
+	body := rr.Body.String()
+	if strings.Contains(body, "name=\"back\"") {
+		t.Fatalf("back field present: %q", body)
+	}
+}
+
+func TestLoginPageSignedBackURL(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	raw := "https://evil.com/x"
+	ts := time.Now().Add(time.Hour).Unix()
+	sig := signBackURL("k", raw, ts)
+	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
+	req.Host = "example.com"
+	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig), common.WithImageSigner(signer))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	loginTask.Page(rr, req)
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "name=\"back\" value=\""+raw+"\"") {
+		t.Fatalf("missing back field: %q", body)
+	}
+	if !strings.Contains(body, "name=\"back_sig\" value=") {
+		t.Fatalf("missing back_sig field: %q", body)
+	}
+	if !strings.Contains(body, "name=\"back_ts\" value=") {
+		t.Fatalf("missing back_ts field: %q", body)
+	}
+}
+
+func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+
+	q := dbpkg.New(db)
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
+	pwHash, alg, _ := HashPassword("pw")
+	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "e", pwHash, alg, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {"https://evil.com"}}
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.RemoteAddr = "1.2.3.4:1111"
+	req.Host = "example.com"
+
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(loginTask)(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "url=/") {
+		t.Fatalf("missing refresh to root: %q", body)
+	}
+}
+
+func TestLoginAction_SignedExternalBackURL(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+
+	q := dbpkg.New(db)
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
+	pwHash, alg, _ := HashPassword("pw")
+	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "e", pwHash, alg, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	raw := "https://example.org/ok"
+	ts := time.Now().Add(time.Hour).Unix()
+	sig := signBackURL("k", raw, ts)
+	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
+	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {raw}, "back_ts": {fmt.Sprint(ts)}, "back_sig": {sig}}
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.RemoteAddr = "1.2.3.4:1111"
+	req.Host = "example.com"
+
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig), common.WithImageSigner(signer))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(loginTask)(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "Too many failed attempts") {
+		t.Fatalf("body=%q", rr.Body.String())
 	}
 }
 

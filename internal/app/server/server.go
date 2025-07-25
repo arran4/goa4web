@@ -19,15 +19,20 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
+	router "github.com/arran4/goa4web/internal/router"
+	websocket "github.com/arran4/goa4web/internal/websocket"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
+	RouterReg   *router.Registry
+	Nav         *nav.Registry
 	Config      config.RuntimeConfig
 	Router      http.Handler
 	Store       *sessions.CookieStore
@@ -36,6 +41,8 @@ type Server struct {
 	EmailReg    *email.Registry
 	ImageSigner *imagesign.Signer
 	DBReg       *dbdrivers.Registry
+	DLQReg      *dlq.Registry
+	Websocket   *websocket.Module
 
 	WorkerCancel context.CancelFunc
 
@@ -93,14 +100,37 @@ func (s *Server) Close() {
 	}
 }
 
-// New returns a Server with the supplied dependencies.
-func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig) *Server {
-	return &Server{
-		Config: cfg,
-		Router: handler,
-		Store:  store,
-		DB:     db,
+// Option configures the Server returned by New.
+type Option func(*Server)
+
+// WithHandler sets the HTTP handler used by the server.
+func WithHandler(h http.Handler) Option { return func(s *Server) { s.Router = h } }
+
+// WithStore sets the session store used by the server.
+func WithStore(store *sessions.CookieStore) Option { return func(s *Server) { s.Store = store } }
+
+// WithDB sets the database pool.
+func WithDB(db *sql.DB) Option { return func(s *Server) { s.DB = db } }
+
+// WithConfig supplies the runtime configuration.
+func WithConfig(cfg config.RuntimeConfig) Option { return func(s *Server) { s.Config = cfg } }
+
+// WithRouterRegistry sets the router registry.
+func WithRouterRegistry(r *router.Registry) Option { return func(s *Server) { s.RouterReg = r } }
+
+// WithNavRegistry sets the navigation registry.
+func WithNavRegistry(n *nav.Registry) Option { return func(s *Server) { s.Nav = n } }
+
+// WithDLQRegistry sets the dead letter queue registry.
+func WithDLQRegistry(r *dlq.Registry) Option { return func(s *Server) { s.DLQReg = r } }
+
+// New returns a Server configured using the supplied options.
+func New(opts ...Option) *Server {
+	s := &Server{}
+	for _, o := range opts {
+		o(s)
 	}
+	return s
 }
 
 // CoreDataMiddleware constructs the middleware responsible for populating

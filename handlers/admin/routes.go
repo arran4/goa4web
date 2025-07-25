@@ -114,8 +114,8 @@ func RegisterRoutes(ar *mux.Router) {
 }
 
 // Register registers the admin router module.
-func Register() {
-	router.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router) {
+func Register(reg *router.Registry) {
+	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		ar.Use(handlers.IndexMiddleware(CustomIndex))

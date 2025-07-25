@@ -18,7 +18,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		core.SessionError(w, r, err)
 	}
 	uid, _ := session.Values["UID"].(int32)
-	log.Printf("logout request session=%s uid=%d", session.ID, uid)
+	log.Printf("logout request session=%s uid=%d", handlers.HashSessionID(session.ID), uid)
 	type Data struct {
 		*common.CoreData
 	}
@@ -44,7 +44,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("logout success session=%s", session.ID)
+	log.Printf("logout success session=%s", handlers.HashSessionID(session.ID))
 
 	data.CoreData.UserID = 0
 

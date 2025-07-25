@@ -25,6 +25,9 @@ jobs:
         run: |
           if [[ -n $(git status --porcelain examples/config.env examples/config.json) ]]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            # Use a short hash to keep branch names concise
+            hash=$(sha1sum examples/config.env examples/config.json | sha1sum | cut -d" " -f1 | cut -c1-8)
+            echo "branch_suffix=$hash" >> "$GITHUB_ENV"
           fi
       - name: Create Pull Request
         if: steps.diff.outputs.changed == 'true'
@@ -32,7 +35,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore(config): update generated examples'
-          branch: config-examples-${{ github.run_id }}
+          branch: config-examples-${{ env.branch_suffix }}
           base: ${{ github.ref_name }}
           title: 'Update generated config examples'
           body: |

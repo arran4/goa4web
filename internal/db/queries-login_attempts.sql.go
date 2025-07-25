@@ -7,7 +7,26 @@ package db
 
 import (
 	"context"
+	"time"
 )
+
+const countRecentLoginAttempts = `-- name: CountRecentLoginAttempts :one
+SELECT COUNT(*) FROM login_attempts
+WHERE (username = ? OR ip_address = ?) AND created_at > ?
+`
+
+type CountRecentLoginAttemptsParams struct {
+	Username  string
+	IpAddress string
+	CreatedAt time.Time
+}
+
+func (q *Queries) CountRecentLoginAttempts(ctx context.Context, arg CountRecentLoginAttemptsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRecentLoginAttempts, arg.Username, arg.IpAddress, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const insertLoginAttempt = `-- name: InsertLoginAttempt :exec
 INSERT INTO login_attempts (username, ip_address)

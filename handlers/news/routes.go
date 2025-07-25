@@ -64,6 +64,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the news router module.
-func Register() {
-	router.RegisterModule("news", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("news", nil, RegisterRoutes)
 }

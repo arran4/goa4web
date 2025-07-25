@@ -347,10 +347,49 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if loc := rr.Header().Get("Location"); loc != raw {
-		t.Fatalf("location=%q", loc)
+	if !strings.Contains(rr.Body.String(), "Too many failed attempts") {
+		t.Fatalf("body=%q", rr.Body.String())
+	}
+}
+
+func TestLoginAction_Throttle(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	q := dbpkg.New(db)
+	rows := sqlmock.NewRows([]string{"count"}).AddRow(5)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
+		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(rows)
+
+	orig := config.AppRuntimeConfig
+	config.AppRuntimeConfig.LoginAttemptThreshold = 3
+	config.AppRuntimeConfig.LoginAttemptWindow = 15
+	t.Cleanup(func() { config.AppRuntimeConfig = orig })
+
+	form := url.Values{"username": {"bob"}, "password": {"pw"}}
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.RemoteAddr = "1.2.3.4:1111"
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	handlers.TaskHandler(loginTask)(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "Too many failed attempts") {
+		t.Fatalf("body=%q", rr.Body.String())
 	}
 }

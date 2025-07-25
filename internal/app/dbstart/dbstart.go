@@ -17,10 +17,6 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 )
 
-var (
-	dbLogVerbosity int
-)
-
 // parseS3Dir validates S3 paths in the form s3://bucket/prefix. The bucket
 // component is required while the prefix may be empty.
 func parseS3Dir(raw string) (bucket, prefix string, err error) {
@@ -42,8 +38,6 @@ func parseS3Dir(raw string) (bucket, prefix string, err error) {
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
 func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *common.UserError) {
-	dbLogVerbosity = cfg.DBLogVerbosity
-	db.LogVerbosity = cfg.DBLogVerbosity
 	conn := cfg.DBConn
 	if conn == "" {
 		return nil, &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
@@ -52,7 +46,7 @@ func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *common
 	if err != nil {
 		return nil, &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
-	var connector driver.Connector = db.NewLoggingConnector(c)
+	var connector driver.Connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
 	dbPool := sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
 		dbPool.Close()
@@ -62,7 +56,7 @@ func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *common
 		dbPool.Close()
 		return nil, &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
-	if dbLogVerbosity > 0 {
+	if cfg.DBLogVerbosity > 0 {
 		log.Printf("db pool stats after init: %+v", dbPool.Stats())
 	}
 	return dbPool, nil

@@ -5,23 +5,42 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/gorilla/sessions"
+
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/dlq"
+	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/middleware"
+	nav "github.com/arran4/goa4web/internal/navigation"
+	router "github.com/arran4/goa4web/internal/router"
+	websocket "github.com/arran4/goa4web/internal/websocket"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
-	Config config.RuntimeConfig
-	Router http.Handler
-	Store  *sessions.CookieStore
-	DB     *sql.DB
-	Bus    *eventbus.Bus
+	RouterReg   *router.Registry
+	Nav         *nav.Registry
+	Config      config.RuntimeConfig
+	Router      http.Handler
+	Store       *sessions.CookieStore
+	DB          *sql.DB
+	Bus         *eventbus.Bus
+	EmailReg    *email.Registry
+	ImageSigner *imagesign.Signer
+	DLQReg      *dlq.Registry
+	Websocket   *websocket.Module
 
 	WorkerCancel context.CancelFunc
 
@@ -79,13 +98,122 @@ func (s *Server) Close() {
 	}
 }
 
-// New returns a Server with the supplied dependencies.
-func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig) *Server {
-	return &Server{
-		Config: cfg,
-		Router: handler,
-		Store:  store,
-		DB:     db,
+// Option configures the Server returned by New.
+type Option func(*Server)
+
+// WithHandler sets the HTTP handler used by the server.
+func WithHandler(h http.Handler) Option { return func(s *Server) { s.Router = h } }
+
+// WithStore sets the session store used by the server.
+func WithStore(store *sessions.CookieStore) Option { return func(s *Server) { s.Store = store } }
+
+// WithDB sets the database pool.
+func WithDB(db *sql.DB) Option { return func(s *Server) { s.DB = db } }
+
+// WithConfig supplies the runtime configuration.
+func WithConfig(cfg config.RuntimeConfig) Option { return func(s *Server) { s.Config = cfg } }
+
+// WithRouterRegistry sets the router registry.
+func WithRouterRegistry(r *router.Registry) Option { return func(s *Server) { s.RouterReg = r } }
+
+// WithNavRegistry sets the navigation registry.
+func WithNavRegistry(n *nav.Registry) Option { return func(s *Server) { s.Nav = n } }
+
+// WithDLQRegistry sets the dead letter queue registry.
+func WithDLQRegistry(r *dlq.Registry) Option { return func(s *Server) { s.DLQReg = r } }
+
+// New returns a Server configured using the supplied options.
+func New(opts ...Option) *Server {
+	s := &Server{}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
+}
+
+// CoreDataMiddleware constructs the middleware responsible for populating
+// CoreData in the request context using the server's configured dependencies.
+func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session, err := core.GetSession(r)
+			if err != nil {
+				core.SessionErrorRedirect(w, r, err)
+				return
+			}
+			var uid int32
+			if v, ok := session.Values["UID"].(int32); ok {
+				uid = v
+			}
+			if expi, ok := session.Values["ExpiryTime"]; ok {
+				var exp int64
+				switch t := expi.(type) {
+				case int64:
+					exp = t
+				case int:
+					exp = int64(t)
+				case float64:
+					exp = int64(t)
+				}
+				if exp != 0 && time.Now().Unix() > exp {
+					delete(session.Values, "UID")
+					delete(session.Values, "LoginTime")
+					delete(session.Values, "ExpiryTime")
+					middleware.RedirectToLogin(w, r, session)
+					return
+				}
+			}
+			if s.DB == nil {
+				ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+				log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+				http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
+				return
+			}
+
+			queries := dbpkg.New(s.DB)
+			sm := queries
+			if s.Config.DBLogVerbosity > 0 {
+				log.Printf("db pool stats: %+v", s.DB.Stats())
+			}
+
+			if session.ID != "" {
+				if uid != 0 {
+					if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
+						log.Printf("insert session: %v", err)
+					}
+				} else {
+					if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
+						log.Printf("delete session: %v", err)
+					}
+				}
+			}
+
+			base := "http://" + r.Host
+			if s.Config.HTTPHostname != "" {
+				base = strings.TrimRight(s.Config.HTTPHostname, "/")
+			}
+			provider := s.EmailReg.ProviderFromConfig(s.Config)
+			cd := common.NewCoreData(r.Context(), queries,
+				common.WithImageSigner(s.ImageSigner),
+				common.WithSession(session),
+				common.WithEmailProvider(provider),
+				common.WithAbsoluteURLBase(base),
+				common.WithConfig(s.Config),
+				common.WithSessionManager(sm))
+			cd.UserID = uid
+			_ = cd.UserRoles()
+
+			idx := nav.IndexItems()
+			cd.IndexItems = idx
+			cd.Title = "Arran's Site"
+			cd.FeedsEnabled = s.Config.FeedsEnabled
+			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+			if uid != 0 && s.Config.NotificationsEnabled {
+				cd.NotificationCount = int32(cd.UnreadNotificationCount())
+			}
+			ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }
 

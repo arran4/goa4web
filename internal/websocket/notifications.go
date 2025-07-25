@@ -6,11 +6,13 @@ import (
 	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	coreconsts "github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
@@ -19,16 +21,20 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var wsBus *eventbus.Bus
+// Module bundles the event bus for websocket handlers.
+type Module struct {
+	Bus *eventbus.Bus
+}
 
 // NotificationsHandler provides a websocket endpoint streaming bus events.
 type NotificationsHandler struct {
 	Bus      *eventbus.Bus      // event source
 	Upgrader websocket.Upgrader // websocket upgrader
+	Config   config.RuntimeConfig
 }
 
-// SetBus sets the event bus used by websocket handlers.
-func SetBus(b *eventbus.Bus) { wsBus = b }
+// NewModule returns a websocket module using bus for events.
+func NewModule(bus *eventbus.Bus) *Module { return &Module{Bus: bus} }
 
 func buildPatterns(task, path string) []string {
 	name := strings.ToLower(task)
@@ -47,11 +53,47 @@ func buildPatterns(task, path string) []string {
 }
 
 // NewNotificationsHandler returns a handler using bus for events.
-func NewNotificationsHandler(bus *eventbus.Bus) *NotificationsHandler {
-	return &NotificationsHandler{
-		Bus:      bus,
-		Upgrader: websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
+func parseHosts(s string) []string {
+	var hosts []string
+	for _, part := range strings.Split(s, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if u, err := url.Parse(part); err == nil && u.Host != "" {
+			hosts = append(hosts, u.Host)
+		} else {
+			hosts = append(hosts, part)
+		}
 	}
+	return hosts
+}
+
+func NewNotificationsHandler(bus *eventbus.Bus, cfg config.RuntimeConfig) *NotificationsHandler {
+	h := &NotificationsHandler{Bus: bus, Config: cfg}
+	cfgHosts := parseHosts(cfg.HTTPHostname)
+	upgrader := websocket.Upgrader{}
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+		o, err := url.Parse(origin)
+		if err != nil {
+			return false
+		}
+		for _, allowed := range cfgHosts {
+			if strings.EqualFold(o.Host, allowed) {
+				return true
+			}
+		}
+		if strings.EqualFold(o.Host, r.Host) {
+			return true
+		}
+		return false
+	}
+	h.Upgrader = upgrader
+	return h
 }
 
 // ServeHTTP upgrades the connection and streams events as JSON.
@@ -156,13 +198,13 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // RegisterRoutes attaches the websocket handler to r.
-func RegisterRoutes(r *mux.Router) {
-	h := NewNotificationsHandler(wsBus)
+func (m *Module) registerRoutes(r *mux.Router, cfg config.RuntimeConfig) {
+	h := NewNotificationsHandler(m.Bus, cfg)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/notifications.js", NotificationsJS).Methods(http.MethodGet)
 }
 
 // Register registers the websocket router module.
-func Register() {
-	routerpkg.RegisterModule("websocket", nil, RegisterRoutes)
+func (m *Module) Register(reg *routerpkg.Registry) {
+	reg.RegisterModule("websocket", nil, m.registerRoutes)
 }

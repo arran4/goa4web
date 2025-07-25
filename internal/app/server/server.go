@@ -20,6 +20,7 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	router "github.com/arran4/goa4web/internal/router"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -27,6 +28,7 @@ import (
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
+	RouterReg *router.Registry
 	Nav    *navigation.Registry
 	Config      config.RuntimeConfig
 	Router      http.Handler
@@ -93,14 +95,15 @@ func (s *Server) Close() {
 }
 
 // New returns a Server with the supplied dependencies.
-func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig, nav *navigation.Registry) *Server {
+func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig, reg *router.Registry, nav *navigation.Registry) *Server {
 	return &Server{
-		Config: cfg,
-		Router: handler,
-		Store:  store,
-		DB:     db,
+		Config:    cfg,
+		Router:    handler,
+		Store:     store,
+		DB:        db,
+		RouterReg: reg,
 		Nav:    nav,
-	}
+  }
 }
 
 // CoreDataMiddleware constructs the middleware responsible for populating

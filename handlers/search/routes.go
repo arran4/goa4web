@@ -23,6 +23,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the search router module.
-func Register() {
-	router.RegisterModule("search", []string{"news"}, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("search", []string{"news"}, RegisterRoutes)
 }

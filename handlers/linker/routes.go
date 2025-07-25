@@ -43,6 +43,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the linker router module.
-func Register() {
-	router.RegisterModule("linker", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("linker", nil, RegisterRoutes)
 }

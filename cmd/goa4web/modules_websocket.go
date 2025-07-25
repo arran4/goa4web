@@ -5,5 +5,5 @@ import (
 )
 
 func init() {
-	websocket.Register()
+	extraRegistrations = append(extraRegistrations, websocket.Register)
 }

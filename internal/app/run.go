@@ -55,6 +55,7 @@ type serverOptions struct {
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
 	DB              *sql.DB
+	RouterReg       *routerpkg.Registry
 }
 
 // WithSessionSecret supplies the session cookie encryption secret.
@@ -95,6 +96,11 @@ func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOpti
 
 // WithDB uses the supplied database pool instead of performing startup checks.
 func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db } }
+
+// WithRouterRegistry sets the router module registry.
+func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
+	return func(o *serverOptions) { o.RouterReg = r }
+}
 
 // NewServer constructs the server and supporting services using the provided
 // configuration and optional parameters.
@@ -148,10 +154,14 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	}
 	websocket.SetBus(bus)
 
+	reg := o.RouterReg
+	if reg == nil {
+		reg = routerpkg.NewRegistry()
+	}
 	r := mux.NewRouter()
-	routerpkg.RegisterRoutes(r)
+	routerpkg.RegisterRoutes(r, reg)
 
-	srv := server.New(nil, store, dbPool, cfg, navReg)
+	srv := server.New(nil, store, dbPool, cfg, reg, navReg)
 	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg

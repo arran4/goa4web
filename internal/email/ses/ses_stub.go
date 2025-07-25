@@ -13,4 +13,4 @@ const Built = false
 func providerFromConfig(config.RuntimeConfig) email.Provider { return nil }
 
 // Register is a no-op when the ses build tag is not present.
-func Register() { email.RegisterProvider("ses", providerFromConfig) }
+func Register(r *email.Registry) { r.RegisterProvider("ses", providerFromConfig) }

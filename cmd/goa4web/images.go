@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
@@ -54,12 +53,12 @@ func (c *imagesCmd) runCache(args []string) error {
 	if err := usageIfHelp(c.fs, args); err != nil {
 		return err
 	}
-	dir := config.AppRuntimeConfig.ImageCacheDir
+	dir := c.rootCmd.cfg.ImageCacheDir
 	switch args[0] {
 	case "prune":
-		if cp := upload.CacheProviderFromConfig(config.AppRuntimeConfig); cp != nil {
+		if cp := upload.CacheProviderFromConfig(c.rootCmd.cfg); cp != nil {
 			if ccp, ok := cp.(upload.CacheProvider); ok {
-				return ccp.Cleanup(context.Background(), int64(config.AppRuntimeConfig.ImageCacheMaxBytes))
+				return ccp.Cleanup(context.Background(), int64(c.rootCmd.cfg.ImageCacheMaxBytes))
 			}
 		}
 		return nil

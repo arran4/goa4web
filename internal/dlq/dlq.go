@@ -22,10 +22,10 @@ func (LogDLQ) Record(_ context.Context, message string) error {
 }
 
 // RegisterLogDLQ registers the log provider.
-func RegisterLogDLQ() {
-	RegisterProvider("log", func(config.RuntimeConfig, *dbpkg.Queries) DLQ {
+func RegisterLogDLQ(r *Registry) {
+	r.RegisterProvider("log", func(config.RuntimeConfig, *dbpkg.Queries) DLQ {
 		return LogDLQ{}
 	})
 }
 
-func init() { RegisterLogDLQ() }
+func init() { RegisterLogDLQ(DefaultRegistry) }

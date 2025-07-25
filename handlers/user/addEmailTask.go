@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -59,11 +58,12 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("insert user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	path := "/usr/email/verify?code=" + code
-	page := "http://" + r.Host + path
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
-	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cfg := cd.Config
+	page := "http://" + r.Host + path
+	if cfg.HTTPHostname != "" {
+		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
+	}
 	evt := cd.Event()
 	evt.Data["page"] = page
 	evt.Data["email"] = emailAddr
@@ -99,11 +99,12 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("set verification code: %v", err)
 	}
 	path := "/usr/email/verify?code=" + code
-	page := "http://" + r.Host + path
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		page = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + path
-	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cfg := cd.Config
+	page := "http://" + r.Host + path
+	if cfg.HTTPHostname != "" {
+		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
+	}
 	evt := cd.Event()
 	evt.Data["page"] = page
 	evt.Data["email"] = ue.Email

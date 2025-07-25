@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 	"strings"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 )
 
@@ -31,7 +30,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
-		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
 	// article ID is validated by the RequireWritingAuthor middleware, so we
@@ -44,7 +43,12 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	writing := r.Context().Value(consts.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	writing, err := cd.CurrentWriting()
+	if err != nil || writing == nil {
+		log.Printf("current writing: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	data.Writing = writing
 
 	languageRows, err := cd.Languages()
@@ -59,7 +63,13 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.
-	writing := r.Context().Value(consts.KeyWriting).(*db.GetWritingByIdForUserDescendingByPublishedDateRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	writing, err := cd.CurrentWriting()
+	if err != nil || writing == nil {
+		log.Printf("current writing: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
@@ -67,7 +77,6 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{

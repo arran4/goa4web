@@ -77,6 +77,9 @@ type RuntimeConfig struct {
 	DLQProvider string
 	DLQFile     string
 
+	// SessionName specifies the cookie name used for session data.
+	SessionName string
+
 	// SessionSecret holds the session secret used to encrypt cookies.
 	SessionSecret string
 	// SessionSecretFile specifies the path to the session secret file.
@@ -243,6 +246,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
+	}
+	if cfg.SessionName == "" {
+		cfg.SessionName = "my-session"
 	}
 	if cfg.PageSizeMin == 0 {
 		cfg.PageSizeMin = 5

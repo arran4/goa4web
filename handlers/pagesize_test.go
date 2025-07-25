@@ -12,9 +12,6 @@ import (
 )
 
 func TestGetPageSize(t *testing.T) {
-	orig := config.AppRuntimeConfig
-	defer func() { config.AppRuntimeConfig = orig }()
-
 	tests := []struct {
 		name string
 		pref *db.Preference
@@ -28,11 +25,12 @@ func TestGetPageSize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config.AppRuntimeConfig.PageSizeMin = 5
-			config.AppRuntimeConfig.PageSizeMax = 50
-			config.AppRuntimeConfig.PageSizeDefault = 15
+			cfg := config.AppRuntimeConfig
+			cfg.PageSizeMin = 5
+			cfg.PageSizeMax = 50
+			cfg.PageSizeDefault = 15
 
-			cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.AppRuntimeConfig))
+			cd := common.NewCoreData(context.Background(), nil, common.WithConfig(cfg))
 			if tt.pref != nil {
 				common.WithPreference(tt.pref)(cd)
 			}

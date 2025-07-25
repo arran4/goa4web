@@ -21,8 +21,8 @@ func (d DLQ) Record(ctx context.Context, message string) error {
 }
 
 // Register registers the database provider.
-func Register() {
-	dlq.RegisterProvider("db", func(_ config.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
+func Register(r *dlq.Registry) {
+	r.RegisterProvider("db", func(_ config.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
 		return DLQ{Queries: q}
 	})
 }

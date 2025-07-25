@@ -11,7 +11,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -39,7 +38,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	size := config.AppRuntimeConfig.PageSizeDefault
+	size := cd.Config.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {
 		size = int(pref.PageSize)
 	}

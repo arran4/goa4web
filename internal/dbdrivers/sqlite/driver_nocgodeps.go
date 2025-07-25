@@ -2,9 +2,12 @@
 
 package sqlite
 
-import "log"
+import (
+	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
+	"log"
+)
 
 // Register logs that SQLite is disabled for quick tests.
-func Register() {
+func Register(r *dbdrivers.Registry) {
 	log.Println("sqlite: driver disabled for quick tests")
 }

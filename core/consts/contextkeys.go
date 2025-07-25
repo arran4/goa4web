@@ -7,14 +7,4 @@ type ContextKey string
 const (
 	// KeyCoreData provides access to CoreData.
 	KeyCoreData ContextKey = "coreData"
-	// KeyTopic holds the current topic information.
-	KeyTopic ContextKey = "topic"
-	// KeyBlogEntry holds a fetched blog entry row.
-	KeyBlogEntry ContextKey = "blogEntry"
-	// KeyComment stores the current comment row.
-	KeyComment ContextKey = "comment"
-	// KeyNewsPost holds the news post row.
-	KeyNewsPost ContextKey = "newsPost"
-	// KeyWriting contains the writing row.
-	KeyWriting ContextKey = "writing"
 )

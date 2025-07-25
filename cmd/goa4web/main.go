@@ -26,18 +26,24 @@ import (
 	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/tasks"
 
+	"github.com/arran4/goa4web/internal/dbdrivers"
+	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
+	dlq "github.com/arran4/goa4web/internal/dlq"
+	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
+	email "github.com/arran4/goa4web/internal/email"
+	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 )
 
 var version = "dev"
 
-func init() {
-	dlqreg.Register()
+func registerTasks(reg *tasks.Registry) {
 	register := func(ts []tasks.NamedTask) {
 		for _, t := range ts {
 			tasks.Register(t)
+			reg.Register(t)
 		}
 	}
 	register(adminhandlers.RegisterTasks())
@@ -81,13 +87,17 @@ type rootCmd struct {
 	ConfigFile string
 	db         *sql.DB
 	Verbosity  int
+	tasksReg   *tasks.Registry
+	dbReg      *dbdrivers.Registry
+	emailReg   *email.Registry
+	dlqReg     *dlq.Registry
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
 	if r.db != nil {
 		return r.db, nil
 	}
-	if ue := dbstart.InitDB(r.cfg); ue != nil {
+	if ue := dbstart.InitDB(r.cfg, r.dbReg); ue != nil {
 		return nil, fmt.Errorf("init db: %w", ue.Err)
 	}
 	r.db = dbstart.GetDBPool()
@@ -119,7 +129,16 @@ func (r *rootCmd) Verbosef(format string, args ...any) {
 }
 
 func parseRoot(args []string) (*rootCmd, error) {
-	r := &rootCmd{}
+	r := &rootCmd{
+		tasksReg: tasks.NewRegistry(),
+		dbReg:    dbdrivers.NewRegistry(),
+		emailReg: email.NewRegistry(),
+		dlqReg:   dlq.NewRegistry(),
+	}
+	registerTasks(r.tasksReg)
+	emaildefaults.Register(r.emailReg)
+	dlqreg.Register(r.dlqReg)
+	dbdefaults.Register(r.dbReg)
 
 	early := newFlagSet(args[0])
 	early.Usage = func() {}
@@ -281,6 +300,12 @@ func (r *rootCmd) Run() error {
 		c, err := parseNotificationsCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("notifications: %w", err)
+		}
+		return c.Run()
+	case "repl":
+		c, err := parseReplCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("repl: %w", err)
 		}
 		return c.Run()
 	case "lang":

@@ -12,8 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/config"
 )
 
 func userLangPage(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +123,7 @@ func updateDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) erro
 		return queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
 			LanguageIdlanguage: int32(langID),
 			UsersIdusers:       uid,
-			PageSize:           int32(config.AppRuntimeConfig.PageSizeDefault),
+			PageSize:           int32(cd.Config.PageSizeDefault),
 		})
 	}
 

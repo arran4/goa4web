@@ -17,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
@@ -59,7 +58,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
-		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		IsReplyable:        true,
 	}
 

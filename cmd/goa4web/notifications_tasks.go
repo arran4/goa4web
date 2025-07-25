@@ -39,7 +39,7 @@ func (c *notificationsTasksCmd) Run() error {
 	tw := table.NewWriter()
 	tw.SetOutputMirror(c.fs.Output())
 	tw.AppendHeader(table.Row{"Task", "Self Email", "Self Internal", "Subscribed Email", "Subscribed Internal", "Admin Email", "Admin Internal"})
-	for _, info := range taskTemplateInfos() {
+	for _, info := range taskTemplateInfos(c.notificationsCmd.rootCmd.tasksReg) {
 		tw.AppendRow(table.Row{
 			info.Task,
 			strings.Join(info.SelfEmail, ","),

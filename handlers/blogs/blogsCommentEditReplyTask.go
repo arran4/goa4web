@@ -52,7 +52,15 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	comment := r.Context().Value(consts.KeyComment).(*db.GetCommentByIdForUserRow)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	comment := cd.CurrentCommentLoaded()
+	if comment == nil {
+		var err error
+		comment, err = cd.CommentByID(int32(commentId))
+		if err != nil {
+			return fmt.Errorf("load comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+	}
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,

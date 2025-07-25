@@ -1,6 +1,7 @@
 package emaildefaults
 
 import (
+	emailpkg "github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/email/jmap"
 	"github.com/arran4/goa4web/internal/email/local"
 	"github.com/arran4/goa4web/internal/email/log"
@@ -9,10 +10,10 @@ import (
 )
 
 // Register registers all stable email providers.
-func Register() {
-	smtp.Register()
-	ses.Register()
-	jmap.Register()
-	local.Register()
-	log.Register()
+func Register(r *emailpkg.Registry) {
+	smtp.Register(r)
+	ses.Register(r)
+	jmap.Register(r)
+	local.Register(r)
+	log.Register(r)
 }

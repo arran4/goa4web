@@ -83,4 +83,4 @@ func (Driver) Restore(dsn, file string) error {
 }
 
 // Register registers the MySQL driver.
-func Register() { dbdrivers.RegisterDriver(Driver{}) }
+func Register(r *dbdrivers.Registry) { r.RegisterDriver(Driver{}) }

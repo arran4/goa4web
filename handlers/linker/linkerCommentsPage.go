@@ -16,8 +16,6 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/config"
-
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
@@ -59,7 +57,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		CanReply:           cd.UserID != 0,
 		CanEdit:            false,
 		Offset:             offset,
-		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId := 0

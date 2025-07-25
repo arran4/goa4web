@@ -1,7 +1,6 @@
 package writings
 
 import (
-	"context"
 	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
@@ -50,16 +49,18 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 		}
 
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd != nil {
+			cd.CacheWriting(int32(writingID), row)
+			cd.SetCurrentWriting(int32(writingID))
+		}
 		if cd != nil && cd.HasAdminRole() {
-			ctx := context.WithValue(r.Context(), consts.KeyWriting, row)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r)
 			return
 		}
 		if cd == nil || !cd.HasContentWriterRole() || row.UsersIdusers != uid {
 			http.NotFound(w, r)
 			return
 		}
-		ctx := context.WithValue(r.Context(), consts.KeyWriting, row)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
 }

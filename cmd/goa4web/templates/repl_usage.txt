@@ -1,0 +1,9 @@
+Usage:
+  {{.Prog}} repl
+
+The repl command starts an interactive shell for goa4web. Prefix commands
+with ! to run external programs. Append & to run in the background. Use
+set KEY=VALUE to define environment variables. Type jobs to list background
+commands and wait <id> to wait for one.
+
+{{template "flag_groups_section" .FlagGroups}}

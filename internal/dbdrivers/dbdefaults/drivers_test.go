@@ -15,16 +15,18 @@ func (testConnector) Connect(context.Context) (driver.Conn, error) { return nil,
 func (testConnector) Driver() driver.Driver                        { return nil }
 
 func TestConnectorUnknown(t *testing.T) {
-	dbdefaults.Register()
-	if _, err := dbdrivers.Connector("unknown-driver", ""); err == nil {
+	reg := dbdrivers.NewRegistry()
+	dbdefaults.Register(reg)
+	if _, err := reg.Connector("unknown-driver", ""); err == nil {
 		t.Fatalf("expected error for unknown driver")
 	}
 }
 
 func TestRegistryNames(t *testing.T) {
-	dbdefaults.Register()
+	reg := dbdrivers.NewRegistry()
+	dbdefaults.Register(reg)
 	want := []string{"mysql", "postgres"}
-	names := dbdrivers.Names()
+	names := reg.Names()
 	for _, n := range want {
 		found := false
 		for _, rn := range names {
@@ -48,11 +50,9 @@ func (testDriver) Backup(string, string) error                    { return nil }
 func (testDriver) Restore(string, string) error                   { return nil }
 
 func TestConnectorRegistered(t *testing.T) {
-	orig := dbdrivers.Registry
-	t.Cleanup(func() { dbdrivers.Registry = orig })
-
-	dbdrivers.RegisterDriver(testDriver{})
-	c, err := dbdrivers.Connector("test", "")
+	reg := dbdrivers.NewRegistry()
+	reg.RegisterDriver(testDriver{})
+	c, err := reg.Connector("test", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

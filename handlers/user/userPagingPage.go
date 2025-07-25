@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -28,7 +27,7 @@ var _ tasks.Task = (*PagingSaveTask)(nil)
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	pref, _ := cd.Preference()
-	size := config.AppRuntimeConfig.PageSizeDefault
+	size := cd.Config.PageSizeDefault
 	if pref != nil {
 		size = int(pref.PageSize)
 	}
@@ -40,8 +39,8 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		CoreData: cd,
 		Size:     size,
-		Min:      config.AppRuntimeConfig.PageSizeMin,
-		Max:      config.AppRuntimeConfig.PageSizeMax,
+		Min:      cd.Config.PageSizeMin,
+		Max:      cd.Config.PageSizeMax,
 	}
 	handlers.TemplateHandler(w, r, "pagingPage.gohtml", data)
 }
@@ -55,15 +54,15 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
-	size, _ := strconv.Atoi(r.FormValue("size"))
-	if size < config.AppRuntimeConfig.PageSizeMin {
-		size = config.AppRuntimeConfig.PageSizeMin
-	}
-	if size > config.AppRuntimeConfig.PageSizeMax {
-		size = config.AppRuntimeConfig.PageSizeMax
-	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	size, _ := strconv.Atoi(r.FormValue("size"))
+	if size < cd.Config.PageSizeMin {
+		size = cd.Config.PageSizeMin
+	}
+	if size > cd.Config.PageSizeMax {
+		size = cd.Config.PageSizeMax
+	}
+	queries := cd.Queries()
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

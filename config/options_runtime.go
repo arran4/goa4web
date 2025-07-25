@@ -62,6 +62,7 @@ var StringOptions = []StringOption{
 	{"image-cache-dir", EnvImageCacheDir, "directory for cached thumbnails when using the local provider", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageCacheDir }},
 	{"dlq-provider", EnvDLQProvider, "dead letter queue provider", "", nil, "", func(c *RuntimeConfig) *string { return &c.DLQProvider }},
 	{"dlq-file", EnvDLQFile, "dead letter queue file path", "", nil, "", func(c *RuntimeConfig) *string { return &c.DLQFile }},
+	{"session-name", EnvSessionName, "session cookie name", "my-session", nil, "", func(c *RuntimeConfig) *string { return &c.SessionName }},
 	{"admin-emails", EnvAdminEmails, "administrator email addresses", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminEmails }},
 	{"session-secret", EnvSessionSecret, "session secret key", "", nil, "", func(c *RuntimeConfig) *string { return &c.SessionSecret }},
 	{"session-secret-file", EnvSessionSecretFile, "path to session secret file", "", nil, "", func(c *RuntimeConfig) *string { return &c.SessionSecretFile }},

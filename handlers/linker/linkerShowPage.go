@@ -15,8 +15,6 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/config"
-
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
@@ -35,7 +33,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
-		SelectedLanguageId: int(cd.PreferredLanguageID(config.AppRuntimeConfig.DefaultLanguage)),
+		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])

@@ -12,10 +12,11 @@ const DefaultPageSize = 15
 // RuntimeConfig stores configuration values resolved from environment
 // variables, optional files and command line flags.
 type RuntimeConfig struct {
-	DBConn         string
-	DBDriver       string
-	DBLogVerbosity int
-	LogFlags       int
+	DBConn            string
+	DBDriver          string
+	DBLogVerbosity    int
+	EmailLogVerbosity int
+	LogFlags          int
 
 	HTTPListen   string
 	HTTPHostname string

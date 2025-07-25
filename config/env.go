@@ -66,6 +66,8 @@ const (
 
 	// EnvDBLogVerbosity controls the verbosity level of database logging.
 	EnvDBLogVerbosity = "DB_LOG_VERBOSITY"
+	// EnvEmailLogVerbosity controls the verbosity level of email logging.
+	EnvEmailLogVerbosity = "EMAIL_LOG_VERBOSITY"
 	// EnvLogFlags selects which HTTP request logs are emitted.
 	EnvLogFlags = "LOG_FLAGS"
 	// EnvListen is the network address the HTTP server listens on.

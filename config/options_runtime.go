@@ -75,6 +75,7 @@ var StringOptions = []StringOption{
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.
 var IntOptions = []IntOption{
 	{"db-log-verbosity", EnvDBLogVerbosity, "database logging verbosity", 0, "", func(c *RuntimeConfig) *int { return &c.DBLogVerbosity }},
+	{"email-log-verbosity", EnvEmailLogVerbosity, "email logging verbosity", 0, "", func(c *RuntimeConfig) *int { return &c.EmailLogVerbosity }},
 	{"log-flags", EnvLogFlags, "request logging flags", 0, "", func(c *RuntimeConfig) *int { return &c.LogFlags }},
 	{"page-size-min", EnvPageSizeMin, "minimum allowed page size", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},
 	{"page-size-max", EnvPageSizeMax, "maximum allowed page size", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},

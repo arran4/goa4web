@@ -28,7 +28,6 @@ import (
 func newEmailReg() *email.Registry {
 	r := email.NewRegistry()
 	logProv.Register(r)
-	email.DefaultRegistry = r
 	return r
 }
 

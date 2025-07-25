@@ -11,11 +11,13 @@ import (
 	dlqdefaults "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 	emaildlq "github.com/arran4/goa4web/internal/dlq/email"
 	filedlq "github.com/arran4/goa4web/internal/dlq/file"
+	emailpkg "github.com/arran4/goa4web/internal/email"
 )
 
 func TestProviderFromConfigRegistry(t *testing.T) {
 	reg := dlq.NewRegistry()
-	dlqdefaults.Register(reg)
+	emailReg := emailpkg.NewRegistry()
+	dlqdefaults.Register(reg, emailReg)
 
 	cfg := config.RuntimeConfig{DLQProvider: "file", DLQFile: "p"}
 	if _, ok := reg.ProviderFromConfig(cfg, nil).(*filedlq.DLQ); !ok {

@@ -63,19 +63,3 @@ func (r *Registry) ProviderNames() []string {
 	sort.Strings(names)
 	return names
 }
-
-// DefaultRegistry holds the package default providers.
-var DefaultRegistry = NewRegistry()
-
-// RegisterProvider registers factory in the default registry.
-func RegisterProvider(name string, factory ProviderFactory) {
-	DefaultRegistry.RegisterProvider(name, factory)
-}
-
-// ProviderFromConfig returns a provider from the default registry.
-func ProviderFromConfig(cfg config.RuntimeConfig) Provider {
-	return DefaultRegistry.ProviderFromConfig(cfg)
-}
-
-// ProviderNames lists providers in the default registry.
-func ProviderNames() []string { return DefaultRegistry.ProviderNames() }

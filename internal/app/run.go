@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -33,9 +34,6 @@ import (
 var ConfigFile string
 
 var (
-	store *sessions.CookieStore
-	srv   *server.Server
-
 	version = "dev"
 )
 
@@ -43,50 +41,110 @@ func init() {
 	log.SetFlags(log.Flags() | log.Lshortfile)
 }
 
-// RunWithConfig starts the application using the provided configuration and
-// session secret. The context controls the lifetime of the HTTP server.
-func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string, dbReg *dbdrivers.Registry, emailReg *email.Registry, dlqReg *dlq.Registry, apiSecret string) error {
-	log.Printf("application version %s starting", version)
-	adminhandlers.StartTime = time.Now()
-	store = sessions.NewCookieStore([]byte(sessionSecret))
-	core.Store = store
-	core.SessionName = cfg.SessionName
-	store.Options = &sessions.Options{
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+// ServerOption configures additional parameters when constructing a server.
+type ServerOption func(*serverOptions)
+
+type serverOptions struct {
+	SessionSecret   string
+	ImageSignSecret string
+	APISecret       string
+	DBReg           *dbdrivers.Registry
+	EmailReg        *email.Registry
+	DLQReg          *dlq.Registry
+	Bus             *eventbus.Bus
+	Store           *sessions.CookieStore
+	DB              *sql.DB
+}
+
+// WithSessionSecret supplies the session cookie encryption secret.
+func WithSessionSecret(secret string) ServerOption {
+	return func(o *serverOptions) { o.SessionSecret = secret }
+}
+
+// WithImageSignSecret supplies the image signing secret.
+func WithImageSignSecret(secret string) ServerOption {
+	return func(o *serverOptions) { o.ImageSignSecret = secret }
+}
+
+// WithAPISecret sets the administrator API secret.
+func WithAPISecret(secret string) ServerOption {
+	return func(o *serverOptions) { o.APISecret = secret }
+}
+
+// WithDBRegistry sets the database driver registry used to initialise the pool.
+func WithDBRegistry(r *dbdrivers.Registry) ServerOption {
+	return func(o *serverOptions) { o.DBReg = r }
+}
+
+// WithEmailRegistry sets the email provider registry.
+func WithEmailRegistry(r *email.Registry) ServerOption {
+	return func(o *serverOptions) { o.EmailReg = r }
+}
+
+// WithDLQRegistry sets the dead letter queue provider registry.
+func WithDLQRegistry(r *dlq.Registry) ServerOption {
+	return func(o *serverOptions) { o.DLQReg = r }
+}
+
+// WithBus uses the provided event bus instead of creating a new one.
+func WithBus(b *eventbus.Bus) ServerOption { return func(o *serverOptions) { o.Bus = b } }
+
+// WithStore uses the supplied session store instead of creating one.
+func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOptions) { o.Store = s } }
+
+// WithDB uses the supplied database pool instead of performing startup checks.
+func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db } }
+
+// NewServer constructs the server and supporting services using the provided
+// configuration and optional parameters.
+func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOption) (*server.Server, error) {
+	o := &serverOptions{}
+	for _, op := range opts {
+		op(o)
 	}
 
-	dbPool, err := PerformChecks(cfg, dbReg)
-	if err != nil {
-		return fmt.Errorf("startup checks: %w", err)
+	log.Printf("application version %s starting", version)
+	adminhandlers.StartTime = time.Now()
+
+	store := o.Store
+	if store == nil {
+		if o.SessionSecret == "" {
+			return nil, fmt.Errorf("session secret required")
+		}
+		store = sessions.NewCookieStore([]byte(o.SessionSecret))
+	}
+	core.Store = store
+	core.SessionName = cfg.SessionName
+	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode}
+
+	dbPool := o.DB
+	if dbPool == nil {
+		var err error
+		dbPool, err = PerformChecks(cfg, o.DBReg)
+		if err != nil {
+			return nil, fmt.Errorf("startup checks: %w", err)
+		}
 	}
 	queries := dbpkg.New(dbPool)
 	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
-		return fmt.Errorf("ensure default language: %w", err)
+		return nil, fmt.Errorf("ensure default language: %w", err)
 	}
 	if err := corelanguage.ValidateDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
-		return fmt.Errorf("default language: %w", err)
+		return nil, fmt.Errorf("default language: %w", err)
 	}
 
 	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
-		return fmt.Errorf("smtp fallback: %w", err)
+		return nil, fmt.Errorf("smtp fallback: %w", err)
 	}
 	config.AppRuntimeConfig = cfg
-	imgSigner := imagesign.NewSigner(cfg, imageSignSecret)
-	adminhandlers.AdminAPISecret = apiSecret
+	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
+	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 
-	if dbPool != nil {
-		defer func() {
-			if err := dbPool.Close(); err != nil {
-				log.Printf("DB close error: %v", err)
-			}
-		}()
+	bus := o.Bus
+	if bus == nil {
+		bus = eventbus.NewBus()
 	}
-
-	bus := eventbus.NewBus()
 	websocket.SetBus(bus)
 
 	r := mux.NewRouter()
@@ -95,43 +153,33 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, emailReg, imgSigner),
+		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, o.EmailReg, imgSigner),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if cfg.CSRFEnabled {
-		handler = csrfmw.NewCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version)(handler)
+		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv = server.New(handler, store, dbPool, cfg)
+	srv := server.New(handler, store, dbPool, cfg)
+	srv.Bus = bus
+
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv
 	adminhandlers.DBPool = dbPool
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
-	emailProvider := emailReg.ProviderFromConfig(cfg)
+	emailProvider := o.EmailReg.ProviderFromConfig(cfg)
 	if cfg.EmailEnabled && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
 	}
 
-	dlqProvider := dlqReg.ProviderFromConfig(cfg, dbpkg.New(dbPool))
+	dlqProvider := o.DLQReg.ProviderFromConfig(cfg, dbpkg.New(dbPool))
 
 	workerCtx, workerCancel := context.WithCancel(context.Background())
-	defer workerCancel()
 	workers.Start(workerCtx, dbPool, emailProvider, dlqProvider, cfg, bus)
+	srv.WorkerCancel = workerCancel
 
-	if err := server.Run(ctx, srv, cfg.HTTPListen); err != nil {
-		return fmt.Errorf("run server: %w", err)
-	}
-	log.Printf("application shutdown complete")
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := bus.Shutdown(shutdownCtx); err != nil {
-		log.Printf("eventbus shutdown: %v", err)
-	}
-	workerCancel()
-
-	return nil
+	return srv, nil
 }

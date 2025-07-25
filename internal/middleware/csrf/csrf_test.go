@@ -120,12 +120,10 @@ func TestCSRFDisabled(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}).Methods("POST")
 
-	orig := config.AppRuntimeConfig
-	config.AppRuntimeConfig.CSRFEnabled = false
-	t.Cleanup(func() { config.AppRuntimeConfig = orig })
+	cfg := config.RuntimeConfig{CSRFEnabled: false}
 
 	var handler http.Handler = r
-	if CSRFEnabled() {
+	if cfg.CSRFEnabled {
 		key := sha256.Sum256([]byte("testsecret"))
 		handler = csrf.Protect(key[:], csrf.Secure(false))(handler)
 	}

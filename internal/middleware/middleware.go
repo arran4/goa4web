@@ -31,7 +31,7 @@ func handleDie(w http.ResponseWriter, message string) {
 // CoreAdderMiddlewareWithDB populates request context with CoreData for
 // templates using the supplied database handle. The verbosity controls optional
 // logging of database pool statistics.
-func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity int, emailReg *email.Registry) func(http.Handler) http.Handler {
+func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity int, emailReg *email.Registry, startTime time.Time) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := core.GetSession(r)
@@ -97,6 +97,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity i
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
 				common.WithConfig(cfg),
+				common.WithStartTime(startTime),
 				common.WithSessionManager(sm))
 			cd.UserID = uid
 			_ = cd.UserRoles()

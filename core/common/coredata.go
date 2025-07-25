@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -70,6 +71,7 @@ type CoreData struct {
 	AdminMode         bool
 	NotificationCount int32
 	Config            config.RuntimeConfig
+	StartTime         time.Time // time the application started
 	a4codeMapper      func(tag, val string) string
 
 	session        *sessions.Session
@@ -177,6 +179,11 @@ func WithPreference(p *db.Preference) CoreOption {
 // WithConfig sets the runtime config for this CoreData.
 func WithConfig(cfg config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
+}
+
+// WithStartTime sets the server start time.
+func WithStartTime(t time.Time) CoreOption {
+	return func(cd *CoreData) { cd.StartTime = t }
 }
 
 // NewCoreData creates a CoreData with context and queries applied.

@@ -44,8 +44,9 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,
@@ -55,7 +56,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 			HeapSys:    mem.HeapSys,
 			NumGC:      mem.NumGC,
 		},
-		Uptime: time.Since(StartTime),
+		Uptime: time.Since(cd.StartTime),
 		Config: config.AppRuntimeConfig,
 	}
 

@@ -49,7 +49,7 @@ func init() {
 // session secret. The context controls the lifetime of the HTTP server.
 func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string, dbReg *dbdrivers.Registry, emailReg *email.Registry, dlqReg *dlq.Registry, apiSecret string) error {
 	log.Printf("application version %s starting", version)
-	adminhandlers.StartTime = time.Now()
+	startTime := time.Now()
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	core.Store = store
 	core.SessionName = cfg.SessionName
@@ -99,7 +99,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, emailReg),
+		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, emailReg, startTime),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,

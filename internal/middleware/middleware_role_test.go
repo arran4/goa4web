@@ -16,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
+	"time"
 )
 
 func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
@@ -47,7 +48,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	CoreAdderMiddlewareWithDB(db, config.AppRuntimeConfig, 0, reg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, config.AppRuntimeConfig, 0, reg, time.Now())(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -85,7 +86,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	CoreAdderMiddlewareWithDB(db, config.AppRuntimeConfig, 0, reg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, config.AppRuntimeConfig, 0, reg, time.Now())(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

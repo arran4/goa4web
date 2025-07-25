@@ -23,6 +23,7 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -162,7 +163,9 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv := server.New(handler, store, dbPool, cfg)
+	navReg := nav.NewRegistry()
+	srv := server.New(handler, store, dbPool, cfg, navReg)
+	nav.SetDefaultRegistry(navReg)
 	srv.Bus = bus
 
 	adminhandlers.ConfigFile = ConfigFile

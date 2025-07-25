@@ -68,6 +68,8 @@ var StringOptions = []StringOption{
 	{"session-secret-file", EnvSessionSecretFile, "path to session secret file", "", nil, "", func(c *RuntimeConfig) *string { return &c.SessionSecretFile }},
 	{"image-sign-secret", EnvImageSignSecret, "image signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageSignSecret }},
 	{"image-sign-secret-file", EnvImageSignSecretFile, "path to image signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageSignSecretFile }},
+	{"admin-api-secret", EnvAdminAPISecret, "admin API signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecret }},
+	{"admin-api-secret-file", EnvAdminAPISecretFile, "path to admin API signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecretFile }},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.

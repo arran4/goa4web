@@ -27,5 +27,6 @@ func RegisterTasks() []tasks.NamedTask {
 		queryRequestTask,
 		newsUserAllow,
 		newsUserRemove,
+		serverShutdownTask,
 	}
 }

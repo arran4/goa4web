@@ -28,21 +28,6 @@ func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 	}
 }
 
-func TestAdminShutdownPage_Unauthorized(t *testing.T) {
-	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
-	cd.SetRoles([]string{"anonymous"})
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-	rr := httptest.NewRecorder()
-
-	AdminShutdownPage(rr, req)
-
-	if rr.Result().StatusCode != http.StatusForbidden {
-		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
-	}
-}
-
 func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()

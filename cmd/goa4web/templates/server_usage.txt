@@ -6,5 +6,6 @@ Commands:
 
 Examples:
   {{.Prog}} server shutdown --timeout 5s
+  {{.Prog}} server shutdown --mode rest
 
 {{template "flag_groups_section" .FlagGroups}}

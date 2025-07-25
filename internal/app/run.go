@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
+	adminapi "github.com/arran4/goa4web/internal/adminapi"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -46,7 +47,7 @@ func init() {
 
 // RunWithConfig starts the application using the provided configuration and
 // session secret. The context controls the lifetime of the HTTP server.
-func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string, dbReg *dbdrivers.Registry, emailReg *email.Registry, dlqReg *dlq.Registry) error {
+func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret, imageSignSecret string, dbReg *dbdrivers.Registry, emailReg *email.Registry, dlqReg *dlq.Registry, apiSecret string) error {
 	log.Printf("application version %s starting", version)
 	adminhandlers.StartTime = time.Now()
 	store = sessions.NewCookieStore([]byte(sessionSecret))
@@ -77,6 +78,8 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	}
 	config.AppRuntimeConfig = cfg
 	imagesign.SetSigningKey(imageSignSecret)
+	adminhandlers.AdminAPISecret = apiSecret
+	adminapi.SetSigningKey(apiSecret)
 	email.SetDefaultFromName(cfg.EmailFrom)
 
 	if dbPool != nil {

@@ -40,7 +40,7 @@ func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		sess, _ := core.GetSession(r)
-		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
+		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), handlers.HashSessionID(sess.ID))
 	}
 
 	username := r.PostFormValue("username")
@@ -119,7 +119,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("login success uid=%d session=%s", row.Idusers, session.ID)
+		log.Printf("login success uid=%d session=%s", row.Idusers, handlers.HashSessionID(session.ID))
 	}
 
 	if backURL != "" {

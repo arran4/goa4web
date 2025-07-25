@@ -171,9 +171,11 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		server.WithDLQRegistry(o.DLQReg),
 	)
 	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
+  // TODO the following should be New.WIth* arguments above - merge conflict issue perhaps resolve.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg
 	srv.ImageSigner = imgSigner
+	srv.DBReg = o.DBReg
 	srv.Websocket = wsMod
 
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)

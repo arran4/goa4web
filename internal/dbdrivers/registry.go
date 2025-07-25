@@ -99,25 +99,5 @@ func (r *Registry) Names() []string {
 	return names
 }
 
-// DefaultRegistry holds the package default drivers.
-var DefaultRegistry = NewRegistry()
-
-// RegisterDriver adds d to the DefaultRegistry.
-func RegisterDriver(d DBDriver) { DefaultRegistry.RegisterDriver(d) }
-
-// Connector uses DefaultRegistry to create a connector.
-func Connector(name, dsn string) (driver.Connector, error) {
-	return DefaultRegistry.Connector(name, dsn)
-}
-
-// Driver uses DefaultRegistry to find a driver.
-func Driver(name string) (DBDriver, error) { return DefaultRegistry.Driver(name) }
-
-// Backup uses DefaultRegistry to backup a database.
-func Backup(name, dsn, file string) error { return DefaultRegistry.Backup(name, dsn, file) }
-
-// Restore uses DefaultRegistry to restore a database.
-func Restore(name, dsn, file string) error { return DefaultRegistry.Restore(name, dsn, file) }
-
-// Names lists drivers in the DefaultRegistry.
-func Names() []string { return DefaultRegistry.Names() }
+// Deprecated global registry helpers removed. Create a Registry with
+// NewRegistry and pass it where needed instead of relying on global state.

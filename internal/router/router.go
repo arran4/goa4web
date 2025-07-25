@@ -12,11 +12,11 @@ import (
 )
 
 // RegisterRoutes sets up all application routes on r.
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, reg *Registry) {
 	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
 	r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
 
-	InitModules(r)
+	reg.InitModules(r)
 
 }
 

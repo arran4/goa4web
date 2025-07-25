@@ -54,6 +54,7 @@ type serverOptions struct {
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
 	DB              *sql.DB
+	RouterReg       *routerpkg.Registry
 }
 
 // WithSessionSecret supplies the session cookie encryption secret.
@@ -94,6 +95,11 @@ func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOpti
 
 // WithDB uses the supplied database pool instead of performing startup checks.
 func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db } }
+
+// WithRouterRegistry sets the router module registry.
+func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
+	return func(o *serverOptions) { o.RouterReg = r }
+}
 
 // NewServer constructs the server and supporting services using the provided
 // configuration and optional parameters.
@@ -147,8 +153,12 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	}
 	websocket.SetBus(bus)
 
+	reg := o.RouterReg
+	if reg == nil {
+		reg = routerpkg.NewRegistry()
+	}
 	r := mux.NewRouter()
-	routerpkg.RegisterRoutes(r)
+	routerpkg.RegisterRoutes(r, reg)
 
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
@@ -162,7 +172,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv := server.New(handler, store, dbPool, cfg)
+	srv := server.New(handler, store, dbPool, cfg, reg)
 	srv.Bus = bus
 
 	adminhandlers.ConfigFile = ConfigFile

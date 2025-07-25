@@ -14,27 +14,31 @@ type Module struct {
 	once  sync.Once
 }
 
-var (
-	modules = map[string]*Module{}
+// Registry stores router modules and synchronises access to them.
+type Registry struct {
+	modules map[string]*Module
 	mu      sync.Mutex
-)
+}
+
+// NewRegistry creates an empty Registry.
+func NewRegistry() *Registry { return &Registry{modules: map[string]*Module{}} }
 
 // RegisterModule registers a router module with optional dependencies. A module
 // is stored only on the first call.
-func RegisterModule(name string, deps []string, setup func(*mux.Router)) {
-	mu.Lock()
-	defer mu.Unlock()
-	if _, ok := modules[name]; ok {
+func (reg *Registry) RegisterModule(name string, deps []string, setup func(*mux.Router)) {
+	reg.mu.Lock()
+	defer reg.mu.Unlock()
+	if _, ok := reg.modules[name]; ok {
 		return
 	}
-	modules[name] = &Module{Name: name, Deps: deps, Setup: setup}
+	reg.modules[name] = &Module{Name: name, Deps: deps, Setup: setup}
 }
 
 // InitModules initialises all registered modules by resolving their
 // dependencies and invoking their Setup function once.
-func InitModules(r *mux.Router) {
-	mu.Lock()
-	defer mu.Unlock()
+func (reg *Registry) InitModules(r *mux.Router) {
+	reg.mu.Lock()
+	defer reg.mu.Unlock()
 
 	visited := make(map[string]bool)
 	var order []*Module
@@ -45,7 +49,7 @@ func InitModules(r *mux.Router) {
 			return
 		}
 		visited[name] = true
-		m := modules[name]
+		m := reg.modules[name]
 		if m == nil {
 			return
 		}
@@ -55,7 +59,7 @@ func InitModules(r *mux.Router) {
 		order = append(order, m)
 	}
 
-	for name := range modules {
+	for name := range reg.modules {
 		visit(name)
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
 
@@ -28,6 +29,8 @@ func TestLinkerFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/linker/rss", nil)
+	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(config.RuntimeConfig{}, "k")}
+	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := linkerFeed(r, rows)
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))

@@ -24,7 +24,8 @@ func AdminAPIServerShutdown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ts, sig := parts[0], parts[1]
-	if !adminapi.Verify(r.Method, r.URL.Path, ts, sig) {
+	signer := adminapi.NewSigner(AdminAPISecret)
+	if !signer.Verify(r.Method, r.URL.Path, ts, sig) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

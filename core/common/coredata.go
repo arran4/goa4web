@@ -22,6 +22,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -60,6 +61,7 @@ type CoreData struct {
 	AdminMode         bool
 	NotificationCount int32
 	Config            config.RuntimeConfig
+	ImageSigner       *imagesign.Signer
 	a4codeMapper      func(tag, val string) string
 
 	session *sessions.Session
@@ -161,6 +163,16 @@ func WithPreference(p *db.Preference) CoreOption {
 // WithConfig sets the runtime config for this CoreData.
 func WithConfig(cfg config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
+}
+
+// WithImageSigner registers the image signer and URL mapper on CoreData.
+func WithImageSigner(s *imagesign.Signer) CoreOption {
+	return func(cd *CoreData) {
+		cd.ImageSigner = s
+		if s != nil {
+			cd.a4codeMapper = s.MapURL
+		}
+	}
 }
 
 // NewCoreData creates a CoreData with context and queries applied.

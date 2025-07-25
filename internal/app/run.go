@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	adminapi "github.com/arran4/goa4web/internal/adminapi"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -77,9 +76,8 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		return fmt.Errorf("smtp fallback: %w", err)
 	}
 	config.AppRuntimeConfig = cfg
-	imagesign.SetSigningKey(imageSignSecret)
+	imgSigner := imagesign.NewSigner(cfg, imageSignSecret)
 	adminhandlers.AdminAPISecret = apiSecret
-	adminapi.SetSigningKey(apiSecret)
 	email.SetDefaultFromName(cfg.EmailFrom)
 
 	if dbPool != nil {
@@ -99,7 +97,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, emailReg),
+		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, emailReg, imgSigner),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,

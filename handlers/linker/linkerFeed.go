@@ -13,11 +13,11 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )
 
 func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow) *feeds.Feed {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	feed := &feeds.Feed{
 		Title:       "Latest links",
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -30,7 +30,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 		}
 		desc := ""
 		if row.Description.Valid {
-			conv := a4code2html.New(imagesign.MapURL)
+			conv := a4code2html.New(cd.ImageSigner.MapURL)
 			conv.CodeType = a4code2html.CTTagStrip
 			conv.SetInput(row.Description.String)
 			out, _ := io.ReadAll(conv.Process())

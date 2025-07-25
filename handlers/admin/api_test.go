@@ -20,9 +20,10 @@ func TestAdminAPIServerShutdown_Unauthorized(t *testing.T) {
 }
 
 func TestAdminAPIServerShutdown_Authorized(t *testing.T) {
-	adminapi.SetSigningKey("k")
+	AdminAPISecret = "k"
+	signer := adminapi.NewSigner("k")
 	Srv = &serverpkg.Server{}
-	ts, sig := adminapi.Sign("POST", "/admin/api/shutdown")
+	ts, sig := signer.Sign("POST", "/admin/api/shutdown")
 	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Goa4web %d:%s", ts, sig))
 	rr := httptest.NewRecorder()

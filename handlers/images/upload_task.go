@@ -127,6 +127,9 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	signed := imagesign.SignedRef("image:" + fname)
-	return handlers.TextByteWriter([]byte(signed))
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd.ImageSigner != nil {
+		signed := cd.ImageSigner.SignedRef("image:" + fname)
+		return handlers.TextByteWriter([]byte(signed))
+	}
+	return handlers.TextByteWriter([]byte("image:" + fname))
 }

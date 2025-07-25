@@ -1,12 +1,17 @@
 package forum
 
 import (
+	"context"
 	"database/sql"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 func TestForumTopicFeed(t *testing.T) {
@@ -19,6 +24,8 @@ func TestForumTopicFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)
+	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(config.RuntimeConfig{}, "k")}
+	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := TopicFeed(r, "Test", 1, rows)
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))

@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	imagesign "github.com/arran4/goa4web/internal/images"
 	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/upload"
 )
@@ -27,7 +26,8 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 			if prefix != "" {
 				data = prefix + id
 			}
-			if !imagesign.Verify(data, ts, sig) {
+			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			if cd.ImageSigner == nil || !cd.ImageSigner.Verify(data, ts, sig) {
 				http.Error(w, "forbidden", http.StatusForbidden)
 				return
 			}

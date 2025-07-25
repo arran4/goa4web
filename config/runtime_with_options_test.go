@@ -8,23 +8,26 @@ import (
 
 func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 	env := map[string]string{
-		config.EnvDBConn:         "env",
-		config.EnvDBLogVerbosity: "2",
+		config.EnvDBConn:            "env",
+		config.EnvDBLogVerbosity:    "2",
+		config.EnvEmailLogVerbosity: "1",
 	}
 
 	strOpt := config.StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Usage: "", ExtendedUsage: "", Target: func(c *config.RuntimeConfig) *string { return &c.DBConn }}
 	intOpt := config.IntOption{Name: "db-verb-alt", Env: config.EnvDBLogVerbosity, Usage: "", ExtendedUsage: "", Target: func(c *config.RuntimeConfig) *int { return &c.DBLogVerbosity }}
-	fs := config.NewRuntimeFlagSetWithOptions("test", []config.StringOption{strOpt}, []config.IntOption{intOpt})
-	_ = fs.Parse([]string{"--db-conn-alt=cli", "--db-verb-alt=5"})
+	intOpt2 := config.IntOption{Name: "email-verb-alt", Env: config.EnvEmailLogVerbosity, Usage: "", ExtendedUsage: "", Target: func(c *config.RuntimeConfig) *int { return &c.EmailLogVerbosity }}
+	fs := config.NewRuntimeFlagSetWithOptions("test", []config.StringOption{strOpt}, []config.IntOption{intOpt, intOpt2})
+	_ = fs.Parse([]string{"--db-conn-alt=cli", "--db-verb-alt=5", "--email-verb-alt=4"})
 
 	vals := map[string]string{
-		config.EnvDBConn:         "file",
-		config.EnvDBLogVerbosity: "3",
+		config.EnvDBConn:            "file",
+		config.EnvDBLogVerbosity:    "3",
+		config.EnvEmailLogVerbosity: "2",
 	}
 
-	cfg := config.GenerateRuntimeConfigWithOptions(fs, vals, func(k string) string { return env[k] }, []config.StringOption{strOpt}, []config.IntOption{intOpt})
+	cfg := config.GenerateRuntimeConfigWithOptions(fs, vals, func(k string) string { return env[k] }, []config.StringOption{strOpt}, []config.IntOption{intOpt, intOpt2})
 
-	if cfg.DBConn != "cli" || cfg.DBLogVerbosity != 5 {
+	if cfg.DBConn != "cli" || cfg.DBLogVerbosity != 5 || cfg.EmailLogVerbosity != 4 {
 		t.Fatalf("merged %#v", cfg)
 	}
 }

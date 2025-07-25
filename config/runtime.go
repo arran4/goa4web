@@ -12,13 +12,16 @@ const DefaultPageSize = 15
 // RuntimeConfig stores configuration values resolved from environment
 // variables, optional files and command line flags.
 type RuntimeConfig struct {
-	DBConn         string
-	DBDriver       string
-	DBLogVerbosity int
-	LogFlags       int
+	DBConn            string
+	DBDriver          string
+	DBLogVerbosity    int
+	EmailLogVerbosity int
+	LogFlags          int
 
 	HTTPListen   string
 	HTTPHostname string
+	// HSTSHeaderValue defines the Strict-Transport-Security header value.
+	HSTSHeaderValue string
 
 	EmailProvider      string
 	EmailSMTPHost      string
@@ -56,6 +59,12 @@ type RuntimeConfig struct {
 	EmailWorkerInterval int
 	// PasswordResetExpiryHours sets how long password reset requests remain valid.
 	PasswordResetExpiryHours int
+	// LoginAttemptWindow defines the timeframe in minutes used when counting
+	// failed login attempts for throttling.
+	LoginAttemptWindow int
+	// LoginAttemptThreshold is the maximum number of failed login attempts
+	// allowed within the window.
+	LoginAttemptThreshold int
 
 	PageSizeMin     int
 	PageSizeMax     int
@@ -247,6 +256,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
 	}
+	if cfg.HSTSHeaderValue == "" {
+		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
+	}
 	if cfg.SessionName == "" {
 		cfg.SessionName = "my-session"
 	}
@@ -294,6 +306,12 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.PasswordResetExpiryHours == 0 {
 		cfg.PasswordResetExpiryHours = 24
+	}
+	if cfg.LoginAttemptWindow == 0 {
+		cfg.LoginAttemptWindow = 15
+	}
+	if cfg.LoginAttemptThreshold == 0 {
+		cfg.LoginAttemptThreshold = 5
 	}
 }
 

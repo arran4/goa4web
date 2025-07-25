@@ -40,13 +40,24 @@ func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
 		sess, _ := core.GetSession(r)
-		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), sess.ID)
+		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), handlers.HashSessionID(sess.ID))
 	}
 
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+
+	cfg := cd.Config
+	ip := strings.Split(r.RemoteAddr, ":")[0]
+	since := time.Now().Add(-time.Duration(cfg.LoginAttemptWindow) * time.Minute)
+	cnt, err := queries.CountRecentLoginAttempts(r.Context(), db.CountRecentLoginAttemptsParams{Username: username, IpAddress: ip, CreatedAt: since})
+	if err != nil {
+		log.Printf("count login attempts: %v", err)
+	} else if cnt >= int64(cfg.LoginAttemptThreshold) {
+		return loginFormHandler{msg: "Too many failed attempts"}
+	}
 
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
@@ -119,7 +130,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("login success uid=%d session=%s", row.Idusers, session.ID)
+		log.Printf("login success uid=%d session=%s", row.Idusers, handlers.HashSessionID(session.ID))
 	}
 
 	if backURL != "" {

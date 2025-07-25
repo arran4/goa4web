@@ -34,6 +34,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the imagebbs router module.
-func Register() {
-	router.RegisterModule("imagebbs", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("imagebbs", nil, RegisterRoutes)
 }

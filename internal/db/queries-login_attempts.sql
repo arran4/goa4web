@@ -7,3 +7,7 @@ SELECT *
 FROM login_attempts
 ORDER BY id DESC;
 
+
+-- name: CountRecentLoginAttempts :one
+SELECT COUNT(*) FROM login_attempts
+WHERE (username = ? OR ip_address = ?) AND created_at > ?;

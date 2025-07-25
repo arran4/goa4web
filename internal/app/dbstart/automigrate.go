@@ -34,7 +34,7 @@ func applyMigrations(ctx context.Context, cfg config.RuntimeConfig, reg *dbdrive
 	if err != nil {
 		return err
 	}
-	var connector driver.Connector = dbpkg.NewLoggingConnector(c)
+	var connector driver.Connector = dbpkg.NewLoggingConnector(c, cfg.DBLogVerbosity)
 	db := sql.OpenDB(connector)
 	defer db.Close()
 	if err := db.PingContext(ctx); err != nil {

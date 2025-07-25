@@ -44,6 +44,6 @@ func RegisterAdminRoutes(ar *mux.Router) {
 }
 
 // Register registers the faq router module.
-func Register() {
-	router.RegisterModule("faq", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("faq", nil, RegisterRoutes)
 }

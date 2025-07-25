@@ -8,14 +8,13 @@ import (
 )
 
 func TestInitModulesOnce(t *testing.T) {
-	modules = map[string]*Module{}
-	t.Cleanup(func() { modules = map[string]*Module{} })
+	reg := NewRegistry()
 	r := mux.NewRouter()
 	count := 0
-	RegisterModule("a", nil, func(*mux.Router) { count++ })
+	reg.RegisterModule("a", nil, func(*mux.Router) { count++ })
 
-	InitModules(r)
-	InitModules(r)
+	reg.InitModules(r)
+	reg.InitModules(r)
 
 	if count != 1 {
 		t.Fatalf("expected setup to run once, got %d", count)
@@ -23,16 +22,15 @@ func TestInitModulesOnce(t *testing.T) {
 }
 
 func TestInitModulesDependencyOrder(t *testing.T) {
-	modules = map[string]*Module{}
-	t.Cleanup(func() { modules = map[string]*Module{} })
+	reg := NewRegistry()
 	r := mux.NewRouter()
 	order := []string{}
 
-	RegisterModule("a", nil, func(*mux.Router) { order = append(order, "a") })
-	RegisterModule("b", []string{"a"}, func(*mux.Router) { order = append(order, "b") })
-	RegisterModule("c", []string{"b"}, func(*mux.Router) { order = append(order, "c") })
+	reg.RegisterModule("a", nil, func(*mux.Router) { order = append(order, "a") })
+	reg.RegisterModule("b", []string{"a"}, func(*mux.Router) { order = append(order, "b") })
+	reg.RegisterModule("c", []string{"b"}, func(*mux.Router) { order = append(order, "c") })
 
-	InitModules(r)
+	reg.InitModules(r)
 
 	want := []string{"a", "b", "c"}
 	if diff := cmp.Diff(want, order); diff != "" {

@@ -21,7 +21,10 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var wsBus *eventbus.Bus
+// Module bundles the event bus for websocket handlers.
+type Module struct {
+	Bus *eventbus.Bus
+}
 
 // NotificationsHandler provides a websocket endpoint streaming bus events.
 type NotificationsHandler struct {
@@ -30,8 +33,8 @@ type NotificationsHandler struct {
 	Config   config.RuntimeConfig
 }
 
-// SetBus sets the event bus used by websocket handlers.
-func SetBus(b *eventbus.Bus) { wsBus = b }
+// NewModule returns a websocket module using bus for events.
+func NewModule(bus *eventbus.Bus) *Module { return &Module{Bus: bus} }
 
 func buildPatterns(task, path string) []string {
 	name := strings.ToLower(task)
@@ -195,13 +198,13 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // RegisterRoutes attaches the websocket handler to r.
-func RegisterRoutes(r *mux.Router) {
-	h := NewNotificationsHandler(wsBus, config.AppRuntimeConfig)
+func (m *Module) registerRoutes(r *mux.Router, cfg config.RuntimeConfig) {
+	h := NewNotificationsHandler(m.Bus, cfg)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/notifications.js", NotificationsJS).Methods(http.MethodGet)
 }
 
 // Register registers the websocket router module.
-func Register() {
-	routerpkg.RegisterModule("websocket", nil, RegisterRoutes)
+func (m *Module) Register(reg *routerpkg.Registry) {
+	reg.RegisterModule("websocket", nil, m.registerRoutes)
 }

@@ -66,12 +66,16 @@ const (
 
 	// EnvDBLogVerbosity controls the verbosity level of database logging.
 	EnvDBLogVerbosity = "DB_LOG_VERBOSITY"
+	// EnvEmailLogVerbosity controls the verbosity level of email logging.
+	EnvEmailLogVerbosity = "EMAIL_LOG_VERBOSITY"
 	// EnvLogFlags selects which HTTP request logs are emitted.
 	EnvLogFlags = "LOG_FLAGS"
 	// EnvListen is the network address the HTTP server listens on.
 	EnvListen = "LISTEN"
 	// EnvHostname is the base URL advertised by the HTTP server.
 	EnvHostname = "HOSTNAME"
+	// EnvHSTSHeader sets the Strict-Transport-Security header value.
+	EnvHSTSHeader = "HSTS_HEADER"
 	// EnvSessionName sets the cookie name used for session data.
 	EnvSessionName = "SESSION_NAME"
 
@@ -90,6 +94,12 @@ const (
 	EnvEmailWorkerInterval = "EMAIL_WORKER_INTERVAL"
 	// EnvPasswordResetExpiryHours sets the password reset expiry in hours.
 	EnvPasswordResetExpiryHours = "PASSWORD_RESET_EXPIRY_HOURS"
+	// EnvLoginAttemptWindow defines the time window in minutes used to
+	// track failed login attempts.
+	EnvLoginAttemptWindow = "LOGIN_ATTEMPT_WINDOW"
+	// EnvLoginAttemptThreshold sets how many failed logins are allowed
+	// within the window before further attempts are denied.
+	EnvLoginAttemptThreshold = "LOGIN_ATTEMPT_THRESHOLD"
 	// EnvAdminEmails is a comma-separated list of administrator email addresses.
 	EnvAdminEmails = "ADMIN_EMAILS"
 	// EnvAdminNotify toggles sending administrator notification emails.

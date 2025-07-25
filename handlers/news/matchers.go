@@ -3,6 +3,7 @@ package news
 import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -41,7 +42,7 @@ func RequireNewsPostAuthor(next http.Handler) http.Handler {
 			return
 		}
 
-		cd.CacheNewsPost(int32(postID), row)
+		cd.NewsPostByID(int32(postID), common.LazySet[*db.GetForumThreadIdByNewsPostIdRow](row))
 		cd.SetCurrentNewsPost(int32(postID))
 		next.ServeHTTP(w, r)
 	})

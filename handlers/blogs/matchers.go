@@ -48,7 +48,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 		}
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd != nil {
-			cd.CacheBlogEntry(int32(blogID), row)
+			cd.BlogEntryByID(int32(blogID), common.LazySet[*db.GetBlogEntryForUserByIdRow](row))
 			cd.SetCurrentBlog(int32(blogID))
 		}
 		if cd != nil && cd.HasRole("administrator") {

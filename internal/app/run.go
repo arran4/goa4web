@@ -23,6 +23,7 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -150,7 +151,8 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r)
 
-	srv := server.New(nil, store, dbPool, cfg)
+	srv := server.New(nil, store, dbPool, cfg, navReg)
+	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg
 	srv.ImageSigner = imgSigner

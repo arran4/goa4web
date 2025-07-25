@@ -27,6 +27,7 @@ import (
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
+	Nav    *navigation.Registry
 	Config      config.RuntimeConfig
 	Router      http.Handler
 	Store       *sessions.CookieStore
@@ -92,12 +93,13 @@ func (s *Server) Close() {
 }
 
 // New returns a Server with the supplied dependencies.
-func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig) *Server {
+func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig, nav *navigation.Registry) *Server {
 	return &Server{
 		Config: cfg,
 		Router: handler,
 		Store:  store,
 		DB:     db,
+		Nav:    nav,
 	}
 }
 

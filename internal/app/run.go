@@ -150,10 +150,15 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r)
 
+	srv := server.New(nil, store, dbPool, cfg)
+	srv.Bus = bus
+	srv.EmailReg = o.EmailReg
+	srv.ImageSigner = imgSigner
+
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, o.EmailReg, imgSigner),
+		srv.CoreDataMiddleware(),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
@@ -162,8 +167,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv := server.New(handler, store, dbPool, cfg)
-	srv.Bus = bus
+	srv.Router = handler
 
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv

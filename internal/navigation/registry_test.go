@@ -5,9 +5,8 @@ import (
 )
 
 func TestIndexItemsOrdering(t *testing.T) {
-	indexRegistry = nil
-	adminRegistry = nil
-	t.Cleanup(func() { indexRegistry = nil; adminRegistry = nil })
+	defaultRegistry = NewRegistry()
+	t.Cleanup(func() { defaultRegistry = NewRegistry() })
 
 	RegisterIndexLink("b", "/b", 20)
 	RegisterIndexLink("a", "/a", 10)
@@ -32,9 +31,8 @@ func TestIndexItemsOrdering(t *testing.T) {
 }
 
 func TestIndexItemsSkipEmpty(t *testing.T) {
-	indexRegistry = nil
-	adminRegistry = nil
-	t.Cleanup(func() { indexRegistry = nil; adminRegistry = nil })
+	defaultRegistry = NewRegistry()
+	t.Cleanup(func() { defaultRegistry = NewRegistry() })
 
 	RegisterAdminControlCenter("no", "/admin/no", 5)
 	items := IndexItems()

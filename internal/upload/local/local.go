@@ -45,6 +45,16 @@ func (p Provider) fs() FileSystem {
 	return p.FS
 }
 
+// safePath verifies that name is a relative, non-traversing path and returns
+// the path joined with the provider directory. fs.ValidPath implements the
+// same rules as the standard library for opening files within an fs.FS.
+func (p Provider) safePath(name string) (string, error) {
+	if !fs.ValidPath(name) || filepath.IsAbs(name) {
+		return "", fmt.Errorf("invalid path")
+	}
+	return filepath.Join(p.Dir, filepath.Clean(name)), nil
+}
+
 func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
 	return Provider{Dir: cfg.ImageUploadDir, FS: osFS{}}
 }
@@ -70,15 +80,23 @@ func (p Provider) Check(ctx context.Context) error {
 
 func (p Provider) Write(ctx context.Context, name string, data []byte) error {
 	fs := p.fs()
-	dir := filepath.Dir(filepath.Join(p.Dir, name))
+	path, err := p.safePath(name)
+	if err != nil {
+		return err
+	}
+	dir := filepath.Dir(path)
 	if err := fs.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	return fs.WriteFile(filepath.Join(p.Dir, name), data, 0o644)
+	return fs.WriteFile(path, data, 0o644)
 }
 
 func (p Provider) Read(ctx context.Context, name string) ([]byte, error) {
-	return p.fs().ReadFile(filepath.Join(p.Dir, name))
+	path, err := p.safePath(name)
+	if err != nil {
+		return nil, err
+	}
+	return p.fs().ReadFile(path)
 }
 
 func (p Provider) Cleanup(ctx context.Context, limit int64) error {

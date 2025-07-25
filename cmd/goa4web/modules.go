@@ -15,22 +15,29 @@ import (
 	search "github.com/arran4/goa4web/handlers/search"
 	user "github.com/arran4/goa4web/handlers/user"
 	writings "github.com/arran4/goa4web/handlers/writings"
+
+	"github.com/arran4/goa4web/internal/router"
 )
 
-// init registers all router modules used by the application.
-func init() {
-	admin.Register()
-	auth.Register()
-	blogs.Register()
-	bookmarks.Register()
-	faq.Register()
-	forum.Register()
-	imagebbs.Register()
-	languages.Register()
-	linker.Register()
-	news.Register()
-	search.Register()
-	images.Register()
-	user.Register()
-	writings.Register()
+var extraRegistrations []func(*router.Registry)
+
+// registerModules registers all router modules used by the application.
+func registerModules(reg *router.Registry) {
+	admin.Register(reg)
+	auth.Register(reg)
+	blogs.Register(reg)
+	bookmarks.Register(reg)
+	faq.Register(reg)
+	forum.Register(reg)
+	imagebbs.Register(reg)
+	languages.Register(reg)
+	linker.Register(reg)
+	news.Register(reg)
+	search.Register(reg)
+	images.Register(reg)
+	user.Register(reg)
+	writings.Register(reg)
+	for _, fn := range extraRegistrations {
+		fn(reg)
+	}
 }

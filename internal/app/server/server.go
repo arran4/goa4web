@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -37,6 +38,7 @@ type Server struct {
 	Bus         *eventbus.Bus
 	EmailReg    *email.Registry
 	ImageSigner *imagesign.Signer
+	DLQReg *dlq.Registry
 
 	WorkerCancel context.CancelFunc
 
@@ -95,8 +97,9 @@ func (s *Server) Close() {
 }
 
 // New returns a Server with the supplied dependencies.
-func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig, reg *router.Registry, nav *navigation.Registry) *Server {
+func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig, reg *router.Registry, nav *navigation.Registry, dlqReg *dlq.Registry) *Server {
 	return &Server{
+		DLQReg: dlqReg,
 		Config:    cfg,
 		Router:    handler,
 		Store:     store,

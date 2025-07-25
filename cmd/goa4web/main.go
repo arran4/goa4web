@@ -144,6 +144,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	registerModules(r.routerReg)
 	emaildefaults.Register(r.emailReg)
 	dlqreg.Register(r.dlqReg)
+	dlq.RegisterLogDLQ(r.dlqReg)
 	dbdefaults.Register(r.dbReg)
 
 	early := newFlagSet(args[0])

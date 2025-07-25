@@ -161,7 +161,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r, reg)
 
-	srv := server.New(nil, store, dbPool, cfg, reg, navReg)
+	srv := server.New(nil, store, dbPool, cfg, reg, navReg, o.DLQReg)
 	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg

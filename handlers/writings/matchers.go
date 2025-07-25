@@ -50,7 +50,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd != nil {
-			cd.CacheWriting(int32(writingID), row)
+			cd.WritingByID(int32(writingID), common.LazySet[*db.GetWritingByIdForUserDescendingByPublishedDateRow](row))
 			cd.SetCurrentWriting(int32(writingID))
 		}
 		if cd != nil && cd.HasAdminRole() {

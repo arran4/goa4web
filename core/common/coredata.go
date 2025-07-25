@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gorilla/mux"
+
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -361,51 +363,12 @@ func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 	cd.currentTopicID = topicID
 }
 
-// CacheForumThread stores thread in the request cache without loading.
-func (cd *CoreData) CacheForumThread(id int32, row *db.GetThreadLastPosterAndPermsRow) {
-	if cd.forumThreadRows == nil {
-		cd.forumThreadRows = make(map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow])
-	}
-	lv, ok := cd.forumThreadRows[id]
-	if !ok {
-		lv = &lazyValue[*db.GetThreadLastPosterAndPermsRow]{}
-		cd.forumThreadRows[id] = lv
-	}
-	lv.set(row)
-}
-
-// CacheForumTopic stores topic in the request cache without loading.
-func (cd *CoreData) CacheForumTopic(id int32, row *db.GetForumTopicByIdForUserRow) {
-	if cd.forumTopics == nil {
-		cd.forumTopics = make(map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow])
-	}
-	lv, ok := cd.forumTopics[id]
-	if !ok {
-		lv = &lazyValue[*db.GetForumTopicByIdForUserRow]{}
-		cd.forumTopics[id] = lv
-	}
-	lv.set(row)
-}
-
-// CacheWriting stores writing in the request cache without loading.
-func (cd *CoreData) CacheWriting(id int32, row *db.GetWritingByIdForUserDescendingByPublishedDateRow) {
-	if cd.writingRows == nil {
-		cd.writingRows = make(map[int32]*lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow])
-	}
-	lv, ok := cd.writingRows[id]
-	if !ok {
-		lv = &lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow]{}
-		cd.writingRows[id] = lv
-	}
-	lv.set(row)
-}
-
 // CurrentThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) CurrentThread() (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) CurrentThread(ops ...LazyOption[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	if cd.currentThreadID == 0 {
 		return nil, nil
 	}
-	return cd.ForumThreadByID(cd.currentThreadID)
+	return cd.ForumThreadByID(cd.currentThreadID, ops...)
 }
 
 // CurrentThreadLoaded returns the cached current thread without database access.
@@ -425,11 +388,11 @@ func (cd *CoreData) CurrentThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 }
 
 // CurrentTopic returns the currently requested topic lazily loaded.
-func (cd *CoreData) CurrentTopic() (*db.GetForumTopicByIdForUserRow, error) {
+func (cd *CoreData) CurrentTopic(ops ...LazyOption[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
 	if cd.currentTopicID == 0 {
 		return nil, nil
 	}
-	return cd.ForumTopicByID(cd.currentTopicID)
+	return cd.ForumTopicByID(cd.currentTopicID, ops...)
 }
 
 // CurrentTopicLoaded returns the cached current topic without database access.
@@ -452,11 +415,11 @@ func (cd *CoreData) CurrentTopicLoaded() *db.GetForumTopicByIdForUserRow {
 func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
 
 // CurrentWriting returns the currently requested writing lazily loaded.
-func (cd *CoreData) CurrentWriting() (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+func (cd *CoreData) CurrentWriting(ops ...LazyOption[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
 	if cd.currentWritingID == 0 {
 		return nil, nil
 	}
-	return cd.WritingByID(cd.currentWritingID)
+	return cd.WritingByID(cd.currentWritingID, ops...)
 }
 
 // CurrentWritingLoaded returns the cached current writing without database access.
@@ -479,11 +442,11 @@ func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingBy
 func (cd *CoreData) SetCurrentBlog(id int32) { cd.currentBlogID = id }
 
 // CurrentBlog returns the currently requested blog entry lazily loaded.
-func (cd *CoreData) CurrentBlog() (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) CurrentBlog(ops ...LazyOption[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
 	if cd.currentBlogID == 0 {
 		return nil, nil
 	}
-	return cd.BlogEntryByID(cd.currentBlogID)
+	return cd.BlogEntryByID(cd.currentBlogID, ops...)
 }
 
 // CurrentBlogLoaded returns the cached current blog entry without database access.
@@ -917,149 +880,102 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 }
 
 // ForumTopicByID loads a forum topic once per ID using caching.
-func (cd *CoreData) ForumTopicByID(id int32) (*db.GetForumTopicByIdForUserRow, error) {
-	if cd.queries == nil {
-		return nil, nil
-	}
-	if cd.forumTopics == nil {
-		cd.forumTopics = make(map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow])
-	}
-	lv, ok := cd.forumTopics[id]
-	if !ok {
-		lv = &lazyValue[*db.GetForumTopicByIdForUserRow]{}
-		cd.forumTopics[id] = lv
-	}
-	return lv.load(func() (*db.GetForumTopicByIdForUserRow, error) {
+func (cd *CoreData) ForumTopicByID(id int32, ops ...LazyOption[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
+	fetch := func(i int32) (*db.GetForumTopicByIdForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
 		return cd.queries.GetForumTopicByIdForUser(cd.ctx, db.GetForumTopicByIdForUserParams{
 			ViewerID:      cd.UserID,
-			Idforumtopic:  id,
+			Idforumtopic:  i,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
-	})
+	}
+	return lazyMap(&cd.forumTopics, id, fetch, ops...)
 }
 
 // ForumThreadByID returns a single forum thread lazily loading it once per ID.
-func (cd *CoreData) ForumThreadByID(id int32) (*db.GetThreadLastPosterAndPermsRow, error) {
-	if cd.forumThreadRows == nil {
-		cd.forumThreadRows = make(map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow])
-	}
-	lv, ok := cd.forumThreadRows[id]
-	if !ok {
-		lv = &lazyValue[*db.GetThreadLastPosterAndPermsRow]{}
-		cd.forumThreadRows[id] = lv
-	}
-	return lv.load(func() (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThreadByID(id int32, ops ...LazyOption[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		return cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
 			ViewerID:      cd.UserID,
-			ThreadID:      id,
+			ThreadID:      i,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
-	})
+	}
+	return lazyMap(&cd.forumThreadRows, id, fetch, ops...)
 }
 
 // WritingByID returns a single writing lazily loading it once per ID.
-func (cd *CoreData) WritingByID(id int32) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
-	if cd.writingRows == nil {
-		cd.writingRows = make(map[int32]*lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow])
-	}
-	lv, ok := cd.writingRows[id]
-	if !ok {
-		lv = &lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow]{}
-		cd.writingRows[id] = lv
-	}
-	return lv.load(func() (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+func (cd *CoreData) WritingByID(id int32, ops ...LazyOption[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+	fetch := func(i int32) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		return cd.queries.GetWritingByIdForUserDescendingByPublishedDate(cd.ctx, db.GetWritingByIdForUserDescendingByPublishedDateParams{
 			ViewerID:      cd.UserID,
-			Idwriting:     id,
+			Idwriting:     i,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
-	})
-}
-
-// CacheBlogEntry stores a blog entry in the request cache without loading.
-func (cd *CoreData) CacheBlogEntry(id int32, row *db.GetBlogEntryForUserByIdRow) {
-	if cd.blogEntries == nil {
-		cd.blogEntries = make(map[int32]*lazyValue[*db.GetBlogEntryForUserByIdRow])
 	}
-	lv, ok := cd.blogEntries[id]
-	if !ok {
-		lv = &lazyValue[*db.GetBlogEntryForUserByIdRow]{}
-		cd.blogEntries[id] = lv
-	}
-	lv.set(row)
+	return lazyMap(&cd.writingRows, id, fetch, ops...)
 }
 
 // BlogEntryByID returns a blog entry lazily loading it once per ID.
-func (cd *CoreData) BlogEntryByID(id int32) (*db.GetBlogEntryForUserByIdRow, error) {
-	if cd.blogEntries == nil {
-		cd.blogEntries = make(map[int32]*lazyValue[*db.GetBlogEntryForUserByIdRow])
-	}
-	lv, ok := cd.blogEntries[id]
-	if !ok {
-		lv = &lazyValue[*db.GetBlogEntryForUserByIdRow]{}
-		cd.blogEntries[id] = lv
-	}
-	return lv.load(func() (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) BlogEntryByID(id int32, ops ...LazyOption[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
+	fetch := func(i int32) (*db.GetBlogEntryForUserByIdRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		return cd.queries.GetBlogEntryForUserById(cd.ctx, db.GetBlogEntryForUserByIdParams{
 			ViewerIdusers: cd.UserID,
-			ID:            id,
+			ID:            i,
 		})
-	})
-}
-
-// CacheComment stores a comment in the request cache without loading.
-func (cd *CoreData) CacheComment(id int32, row *db.GetCommentByIdForUserRow) {
-	if cd.forumComments == nil {
-		cd.forumComments = make(map[int32]*lazyValue[*db.GetCommentByIdForUserRow])
 	}
-	lv, ok := cd.forumComments[id]
-	if !ok {
-		lv = &lazyValue[*db.GetCommentByIdForUserRow]{}
-		cd.forumComments[id] = lv
-	}
-	lv.set(row)
+	return lazyMap(&cd.blogEntries, id, fetch, ops...)
 }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
-func (cd *CoreData) CommentByID(id int32) (*db.GetCommentByIdForUserRow, error) {
-	if cd.forumComments == nil {
-		cd.forumComments = make(map[int32]*lazyValue[*db.GetCommentByIdForUserRow])
-	}
-	lv, ok := cd.forumComments[id]
-	if !ok {
-		lv = &lazyValue[*db.GetCommentByIdForUserRow]{}
-		cd.forumComments[id] = lv
-	}
-	return lv.load(func() (*db.GetCommentByIdForUserRow, error) {
+func (cd *CoreData) CommentByID(id int32, ops ...LazyOption[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
+	fetch := func(i int32) (*db.GetCommentByIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		return cd.queries.GetCommentByIdForUser(cd.ctx, db.GetCommentByIdForUserParams{
 			ViewerID: cd.UserID,
-			ID:       id,
+			ID:       i,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
-	})
+	}
+	return lazyMap(&cd.forumComments, id, fetch, ops...)
 }
 
-// SetCurrentComment stores the current comment ID.
-func (cd *CoreData) SetCurrentComment(id int32) { cd.currentCommentID = id }
-
 // CurrentComment returns the current comment lazily loaded.
-func (cd *CoreData) CurrentComment() (*db.GetCommentByIdForUserRow, error) {
+func (cd *CoreData) CurrentComment(r *http.Request, ops ...LazyOption[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
 	if cd.currentCommentID == 0 {
-		return nil, nil
+		if r != nil {
+			idStr := r.URL.Query().Get("comment")
+			if idStr == "" {
+				if vars := mux.Vars(r); vars != nil {
+					idStr = vars["comment"]
+				}
+			}
+			if idStr != "" {
+				id, err := strconv.Atoi(idStr)
+				if err != nil {
+					return nil, fmt.Errorf("invalid comment id: %w", err)
+				}
+				cd.currentCommentID = int32(id)
+			}
+		}
+		if cd.currentCommentID == 0 {
+			return nil, nil
+		}
 	}
-	return cd.CommentByID(cd.currentCommentID)
+	return cd.CommentByID(cd.currentCommentID, ops...)
 }
 
 // CurrentCommentLoaded returns the cached current comment if available.
@@ -1078,46 +994,26 @@ func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
 	return v
 }
 
-// CacheNewsPost stores a news post in the request cache without loading.
-func (cd *CoreData) CacheNewsPost(id int32, row *db.GetForumThreadIdByNewsPostIdRow) {
-	if cd.newsPosts == nil {
-		cd.newsPosts = make(map[int32]*lazyValue[*db.GetForumThreadIdByNewsPostIdRow])
-	}
-	lv, ok := cd.newsPosts[id]
-	if !ok {
-		lv = &lazyValue[*db.GetForumThreadIdByNewsPostIdRow]{}
-		cd.newsPosts[id] = lv
-	}
-	lv.set(row)
-}
-
 // NewsPostByID returns the news post lazily loading it once per ID.
-func (cd *CoreData) NewsPostByID(id int32) (*db.GetForumThreadIdByNewsPostIdRow, error) {
-	if cd.newsPosts == nil {
-		cd.newsPosts = make(map[int32]*lazyValue[*db.GetForumThreadIdByNewsPostIdRow])
-	}
-	lv, ok := cd.newsPosts[id]
-	if !ok {
-		lv = &lazyValue[*db.GetForumThreadIdByNewsPostIdRow]{}
-		cd.newsPosts[id] = lv
-	}
-	return lv.load(func() (*db.GetForumThreadIdByNewsPostIdRow, error) {
+func (cd *CoreData) NewsPostByID(id int32, ops ...LazyOption[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
+	fetch := func(i int32) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetForumThreadIdByNewsPostId(cd.ctx, id)
-	})
+		return cd.queries.GetForumThreadIdByNewsPostId(cd.ctx, i)
+	}
+	return lazyMap(&cd.newsPosts, id, fetch, ops...)
 }
 
 // SetCurrentNewsPost stores the current news post ID.
 func (cd *CoreData) SetCurrentNewsPost(id int32) { cd.currentNewsPostID = id }
 
 // CurrentNewsPost returns the current news post lazily loaded.
-func (cd *CoreData) CurrentNewsPost() (*db.GetForumThreadIdByNewsPostIdRow, error) {
+func (cd *CoreData) CurrentNewsPost(ops ...LazyOption[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 	if cd.currentNewsPostID == 0 {
 		return nil, nil
 	}
-	return cd.NewsPostByID(cd.currentNewsPostID)
+	return cd.NewsPostByID(cd.currentNewsPostID, ops...)
 }
 
 // CurrentNewsPostLoaded returns the cached current news post if available.

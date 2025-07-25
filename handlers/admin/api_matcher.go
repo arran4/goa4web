@@ -22,6 +22,7 @@ func AdminAPISigned() mux.MatcherFunc {
 			return false
 		}
 		ts, sig := parts[0], parts[1]
-		return adminapi.Verify(r.Method, r.URL.Path, ts, sig)
+		signer := adminapi.NewSigner(AdminAPISecret)
+		return signer.Verify(r.Method, r.URL.Path, ts, sig)
 	}
 }

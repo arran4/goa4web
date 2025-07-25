@@ -13,39 +13,45 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
-var signKey string
+// Signer generates and verifies image signatures without relying on globals.
+type Signer struct {
+	cfg config.RuntimeConfig
+	key string
+}
 
-// SetSigningKey stores the key used for signing URLs.
-func SetSigningKey(k string) { signKey = k }
+// NewSigner returns a Signer using cfg for hostname resolution and key for HMAC.
+func NewSigner(cfg config.RuntimeConfig, key string) *Signer {
+	return &Signer{cfg: cfg, key: key}
+}
 
-func sign(data string) (int64, string) {
+func (s *Signer) sign(data string) (int64, string) {
 	expires := time.Now().Add(24 * time.Hour).Unix()
-	mac := hmac.New(sha256.New, []byte(signKey))
+	mac := hmac.New(sha256.New, []byte(s.key))
 	io.WriteString(mac, fmt.Sprintf("%s:%d", data, expires))
 	return expires, hex.EncodeToString(mac.Sum(nil))
 }
 
 // SignedURL maps an image identifier to a signed URL.
-func SignedURL(id string, cfg config.RuntimeConfig) string {
+func (s *Signer) SignedURL(id string) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
-	host := strings.TrimSuffix(cfg.HTTPHostname, "/")
-	ts, sig := sign("image:" + id)
+	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
+	ts, sig := s.sign("image:" + id)
 	return fmt.Sprintf("%s/images/image/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 
 // SignedCacheURL maps a cache identifier to a signed URL.
-func SignedCacheURL(id string, cfg config.RuntimeConfig) string {
-	host := strings.TrimSuffix(cfg.HTTPHostname, "/")
-	ts, sig := sign("cache:" + id)
+func (s *Signer) SignedCacheURL(id string) string {
+	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
+	ts, sig := s.sign("cache:" + id)
 	return fmt.Sprintf("%s/images/cache/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 
-func Verify(data, tsStr, sig string) bool {
+func (s *Signer) Verify(data, tsStr, sig string) bool {
 	exp, err := strconv.ParseInt(tsStr, 10, 64)
 	if err != nil || time.Now().Unix() > exp {
 		return false
 	}
-	mac := hmac.New(sha256.New, []byte(signKey))
+	mac := hmac.New(sha256.New, []byte(s.key))
 	io.WriteString(mac, fmt.Sprintf("%s:%d", data, exp))
 	want := hex.EncodeToString(mac.Sum(nil))
 	return hmac.Equal([]byte(want), []byte(sig))
@@ -53,7 +59,7 @@ func Verify(data, tsStr, sig string) bool {
 
 // SignedRef appends a signature to an image or cache reference.
 // The input should start with "image:", "img:", or "cache:".
-func SignedRef(ref string) string {
+func (s *Signer) SignedRef(ref string) string {
 	var prefix, id string
 	switch {
 	case strings.HasPrefix(ref, "image:"):
@@ -68,12 +74,12 @@ func SignedRef(ref string) string {
 	default:
 		return ref
 	}
-	ts, sig := sign(prefix + id)
+	ts, sig := s.sign(prefix + id)
 	return fmt.Sprintf("%s%s?ts=%d&sig=%s", prefix, id, ts, sig)
 }
 
 // MapURL converts image references to signed HTTP URLs.
-func MapURL(tag, val string) string {
+func (s *Signer) MapURL(tag, val string) string {
 	if tag != "img" {
 		return val
 	}
@@ -81,9 +87,9 @@ func MapURL(tag, val string) string {
 	case strings.HasPrefix(val, "uploading:"):
 		return val
 	case strings.HasPrefix(val, "image:") || strings.HasPrefix(val, "img:"):
-		return SignedURL(val, config.AppRuntimeConfig)
+		return s.SignedURL(val)
 	case strings.HasPrefix(val, "cache:"):
-		return SignedCacheURL(strings.TrimPrefix(val, "cache:"), config.AppRuntimeConfig)
+		return s.SignedCacheURL(strings.TrimPrefix(val, "cache:"))
 	default:
 		return val
 	}

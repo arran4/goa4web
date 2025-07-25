@@ -10,8 +10,9 @@ import (
 )
 
 func TestAdminAPISigned(t *testing.T) {
-	adminapi.SetSigningKey("k")
-	ts, sig := adminapi.Sign("POST", "/admin/api/shutdown")
+	AdminAPISecret = "k"
+	signer := adminapi.NewSigner("k")
+	ts, sig := signer.Sign("POST", "/admin/api/shutdown")
 	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Goa4web %d:%s", ts, sig))
 	if !AdminAPISigned()(req, &mux.RouteMatch{}) {
@@ -20,8 +21,9 @@ func TestAdminAPISigned(t *testing.T) {
 }
 
 func TestAdminAPISignedFail(t *testing.T) {
-	adminapi.SetSigningKey("k")
-	ts, sig := adminapi.Sign("POST", "/admin/api/shutdown")
+	AdminAPISecret = "k"
+	signer := adminapi.NewSigner("k")
+	ts, sig := signer.Sign("POST", "/admin/api/shutdown")
 	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Goa4web %d:%s", ts, sig))
 	req.Method = "GET"

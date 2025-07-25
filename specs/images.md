@@ -4,7 +4,7 @@ Uploaded images and cached thumbnails are served through the `/images` endpoints
 
 ## Signing
 
-The signing key comes from the `IMAGE_SIGN_SECRET` setting (or the file referenced by `IMAGE_SIGN_SECRET_FILE`). It is loaded during startup and passed to `images.SetSigningKey`.
+The signing key comes from the `IMAGE_SIGN_SECRET` setting (or the file referenced by `IMAGE_SIGN_SECRET_FILE`). It is loaded during startup and used to create an `images.Signer` instance.
 
 Functions in `pkg/images/sign.go` produce signed URLs:
 

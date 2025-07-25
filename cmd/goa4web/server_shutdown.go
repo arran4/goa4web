@@ -63,8 +63,8 @@ func (c *serverShutdownCmd) restShutdown() error {
 	if err != nil {
 		return fmt.Errorf("admin api secret: %w", err)
 	}
-	adminapi.SetSigningKey(key)
-	ts, sig := adminapi.Sign(http.MethodPost, "/admin/api/shutdown")
+	signer := adminapi.NewSigner(key)
+	ts, sig := signer.Sign(http.MethodPost, "/admin/api/shutdown")
 	req, err := http.NewRequest(http.MethodPost, cfg.HTTPHostname+"/admin/api/shutdown", nil)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)

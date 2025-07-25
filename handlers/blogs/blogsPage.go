@@ -20,7 +20,6 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
-	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 )
 
@@ -211,6 +210,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*feeds.Feed, error) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	title := "Everyone's blog"
 	if uid > 0 {
@@ -241,7 +241,7 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 	for _, row := range rows {
 		u := r.URL
 		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
-		conv := a4code2html.New(imagesign.MapURL)
+		conv := a4code2html.New(cd.ImageSigner.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)
 		out, _ := io.ReadAll(conv.Process())

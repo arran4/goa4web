@@ -15,12 +15,12 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 )
 
 func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	feed := &feeds.Feed{
 		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
@@ -32,7 +32,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 			continue
 		}
 		text := row.Firstposttext.String
-		conv := a4code2html.New(imagesign.MapURL)
+		conv := a4code2html.New(cd.ImageSigner.MapURL)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())

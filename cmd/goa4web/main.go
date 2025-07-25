@@ -97,10 +97,11 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	if r.db != nil {
 		return r.db, nil
 	}
-	if ue := dbstart.InitDB(r.cfg, r.dbReg); ue != nil {
+	dbPool, ue := dbstart.InitDB(r.cfg, r.dbReg)
+	if ue != nil {
 		return nil, fmt.Errorf("init db: %w", ue.Err)
 	}
-	r.db = dbstart.GetDBPool()
+	r.db = dbPool
 	return r.db, nil
 }
 

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	dbstart2 "github.com/arran4/goa4web/internal/app/dbstart"
 	"os"
@@ -14,17 +15,19 @@ import (
 )
 
 // PerformChecks checks DB connectivity and the upload provider.
-func PerformChecks(cfg config.RuntimeConfig, reg *dbdrivers.Registry) error {
+func PerformChecks(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
 	if err := dbstart2.MaybeAutoMigrate(cfg, reg); err != nil {
-		return err
+		return nil, err
 	}
-	if ue := dbstart2.InitDB(cfg, reg); ue != nil {
-		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+	dbPool, ue := dbstart2.InitDB(cfg, reg)
+	if ue != nil {
+		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckUploadTarget(cfg); ue != nil {
-		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+		dbPool.Close()
+		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
-	return nil
+	return dbPool, nil
 }
 
 // CheckUploadTarget verifies that the configured upload backend is available.

@@ -18,7 +18,6 @@ import (
 )
 
 var (
-	dbPool         *sql.DB
 	dbLogVerbosity int
 )
 
@@ -40,48 +39,49 @@ func parseS3Dir(raw string) (bucket, prefix string, err error) {
 	return bucket, prefix, nil
 }
 
-// GetDBPool returns the active database connection pool.
-func GetDBPool() *sql.DB { return dbPool }
-
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) *common.UserError {
+func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *common.UserError) {
 	dbLogVerbosity = cfg.DBLogVerbosity
 	db.LogVerbosity = cfg.DBLogVerbosity
 	conn := cfg.DBConn
 	if conn == "" {
-		return &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
+		return nil, &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
 	}
 	c, err := reg.Connector(cfg.DBDriver, conn)
 	if err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
+		return nil, &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
 	var connector driver.Connector = db.NewLoggingConnector(c)
-	dbPool = sql.OpenDB(connector)
+	dbPool := sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
+		dbPool.Close()
+		return nil, &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
 	if err := EnsureSchema(context.Background(), dbPool); err != nil {
-		return &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
+		dbPool.Close()
+		return nil, &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
 	if dbLogVerbosity > 0 {
 		log.Printf("db pool stats after init: %+v", dbPool.Stats())
 	}
-	return nil
+	return dbPool, nil
 }
 
 // PerformStartupChecks checks the database and upload directory configuration.
-func PerformStartupChecks(cfg config.RuntimeConfig, reg *dbdrivers.Registry) error {
+func PerformStartupChecks(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
 	if err := MaybeAutoMigrate(cfg, reg); err != nil {
-		return err
+		return nil, err
 	}
-	if ue := InitDB(cfg, reg); ue != nil {
-		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+	dbPool, ue := InitDB(cfg, reg)
+	if ue != nil {
+		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckUploadDir(cfg); ue != nil {
-		return fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+		dbPool.Close()
+		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
-	return nil
+	return dbPool, nil
 }
 
 // CheckUploadDir verifies that the upload directory is accessible.

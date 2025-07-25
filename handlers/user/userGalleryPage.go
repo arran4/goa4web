@@ -71,8 +71,8 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimSuffix(fname, ext)
 		thumb := id + "_thumb" + ext
 		imgs = append(imgs, galleryImage{
-			Thumb:  imagesign.SignedCacheURL(thumb),
-			Full:   imagesign.SignedURL("image:" + fname),
+			Thumb:  imagesign.SignedCacheURL(thumb, cd.Config),
+			Full:   imagesign.SignedURL("image:"+fname, cd.Config),
 			A4Code: "[img=image:" + fname + "]",
 		})
 	}

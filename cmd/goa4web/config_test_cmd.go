@@ -101,7 +101,7 @@ func (c *configTestEmailCmd) Run() error {
 		q = dbpkg.New(db)
 	}
 	ctx := context.Background()
-	emails := config.GetAdminEmails(ctx, q)
+	emails := config.GetAdminEmails(ctx, q, c.rootCmd.cfg)
 	if len(emails) == 0 {
 		return fmt.Errorf("no administrator emails configured")
 	}

@@ -152,7 +152,8 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	if bus == nil {
 		bus = eventbus.NewBus()
 	}
-	websocket.SetBus(bus)
+	wsMod := websocket.NewModule(bus)
+	wsMod.Register()
 
 	reg := o.RouterReg
 	if reg == nil {
@@ -166,6 +167,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg
 	srv.ImageSigner = imgSigner
+	srv.Websocket = wsMod
 
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(

@@ -21,6 +21,7 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	websocket "github.com/arran4/goa4web/internal/websocket"
 	router "github.com/arran4/goa4web/internal/router"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
@@ -39,6 +40,7 @@ type Server struct {
 	EmailReg    *email.Registry
 	ImageSigner *imagesign.Signer
 	DLQReg *dlq.Registry
+	Websocket *websocket.Module
 
 	WorkerCancel context.CancelFunc
 

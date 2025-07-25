@@ -17,6 +17,7 @@ type DLQ struct {
 	Provider email.Provider
 	Queries  *dbpkg.Queries
 	From     mail.Address
+	Config   config.RuntimeConfig
 }
 
 // Record emails the message to the configured recipients.
@@ -28,7 +29,7 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 	if fromAddr.Address == "" {
 		fromAddr = email.ParseAddress("")
 	}
-	for _, addrStr := range config.GetAdminEmails(ctx, e.Queries) {
+	for _, addrStr := range config.GetAdminEmails(ctx, e.Queries, e.Config) {
 		toAddr := mail.Address{Address: addrStr}
 		msg, err := email.BuildMessage(fromAddr, toAddr, "DLQ message", message, "")
 		if err != nil {
@@ -53,6 +54,6 @@ func Register(r *dlq.Registry) {
 		if f, err := mail.ParseAddress(cfg.EmailFrom); err == nil {
 			from = *f
 		}
-		return DLQ{Provider: p, Queries: q, From: from}
+		return DLQ{Provider: p, Queries: q, From: from, Config: cfg}
 	})
 }

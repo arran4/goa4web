@@ -58,20 +58,20 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 	if emailAddr == "" {
 		return nil, fmt.Errorf("no email specified")
 	}
-	from := email.ParseAddress(n.cfg.EmailFrom)
+	from := email.ParseAddress(n.Config.EmailFrom)
 	to := email.ParseAddress(emailAddr)
 
-	subjectPrefix := n.cfg.EmailSubjectPrefix
+	subjectPrefix := n.Config.EmailSubjectPrefix
 	if subjectPrefix == "" {
 		subjectPrefix = "goa4web"
 	}
 
 	unsub := "/usr/subscriptions"
-	if n.cfg.HTTPHostname != "" {
-		unsub = strings.TrimRight(n.cfg.HTTPHostname, "/") + unsub
+	if n.Config.HTTPHostname != "" {
+		unsub = strings.TrimRight(n.Config.HTTPHostname, "/") + unsub
 	}
 
-	signOff := n.cfg.EmailSignOff
+	signOff := n.Config.EmailSignOff
 	htmlSignOff := html.EscapeString(signOff)
 	htmlSignOff = strings.ReplaceAll(htmlSignOff, "\n", "<br />")
 

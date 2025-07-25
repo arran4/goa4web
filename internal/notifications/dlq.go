@@ -8,14 +8,14 @@ import (
 	"log"
 )
 
-func dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, n *Notifier, msg string) error {
+func (n *Notifier) dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, msg string) error {
 	if q == nil {
 		return fmt.Errorf("no dlq provider")
 	}
 	if err := q.Record(ctx, msg); err != nil {
 		return err
 	}
-	if n.Queries == nil || !n.cfg.AdminNotify {
+	if n.Queries == nil || !n.Config.AdminNotify {
 		return nil
 	}
 	if dbq, ok := q.(db.DLQ); ok {

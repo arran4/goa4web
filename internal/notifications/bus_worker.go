@@ -80,7 +80,7 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
 		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(), tp.AdminInternalNotificationTemplate(), evt.Data, evt.Path); err != nil {
 			errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -90,7 +90,7 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
 		if err := n.notifySelf(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("SelfNotificationTemplateProvider: %w", err)
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("deliver self to %d: %v", evt.UserID, errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("deliver self to %d: %v", evt.UserID, errW)); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -101,7 +101,7 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(DirectEmailNotificationTemplateProvider); ok {
 		if err := n.notifyDirectEmail(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("DirectEmailNotificationTemplateProvider: %w", err)
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("direct email notify: %v", errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("direct email notify: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -112,7 +112,7 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(TargetUsersNotificationProvider); ok {
 		if err := n.notifyTargetUsers(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("TargetUsersNotificationProvider: %w", err)
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify target users: %v", errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify target users: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -123,7 +123,7 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
 		if err := n.notifySubscribers(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("SubscribersNotificationTemplateProvider: %w", err)
-			if dlqErr := dlqRecordAndNotify(ctx, q, n, fmt.Sprintf("notify subscribers: %v", errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify subscribers: %v", errW)); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -338,7 +338,7 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 			return fmt.Errorf("auto subscribe path: %w", err)
 		}
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
-		if n.cfg.NotificationsEnabled {
+		if n.Config.NotificationsEnabled {
 			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
 		}
 		if email {

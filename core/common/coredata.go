@@ -24,6 +24,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/internal/upload"
 )
 
 // IndexItem represents a navigation item linking to site sections.
@@ -72,6 +73,7 @@ type CoreData struct {
 	NotificationCount int32
 	Config            config.RuntimeConfig
 	ImageSigner       *imagesign.Signer
+	UploadReg         *upload.Registry
 	a4codeMapper      func(tag, val string) string
 
 	session        *sessions.Session
@@ -189,6 +191,11 @@ func WithImageSigner(s *imagesign.Signer) CoreOption {
 			cd.a4codeMapper = s.MapURL
 		}
 	}
+}
+
+// WithUploadRegistry sets the upload provider registry.
+func WithUploadRegistry(r *upload.Registry) CoreOption {
+	return func(cd *CoreData) { cd.UploadReg = r }
 }
 
 // NewCoreData creates a CoreData with context and queries applied.

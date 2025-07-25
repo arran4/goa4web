@@ -32,6 +32,8 @@ import (
 	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 	email "github.com/arran4/goa4web/internal/email"
 	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
+	upload "github.com/arran4/goa4web/internal/upload"
+	udefaults "github.com/arran4/goa4web/internal/upload/uploaddefaults"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -91,6 +93,7 @@ type rootCmd struct {
 	dbReg      *dbdrivers.Registry
 	emailReg   *email.Registry
 	dlqReg     *dlq.Registry
+	uploadReg  *upload.Registry
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
@@ -131,15 +134,17 @@ func (r *rootCmd) Verbosef(format string, args ...any) {
 
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{
-		tasksReg: tasks.NewRegistry(),
-		dbReg:    dbdrivers.NewRegistry(),
-		emailReg: email.NewRegistry(),
-		dlqReg:   dlq.NewRegistry(),
+		tasksReg:  tasks.NewRegistry(),
+		dbReg:     dbdrivers.NewRegistry(),
+		emailReg:  email.NewRegistry(),
+		dlqReg:    dlq.NewRegistry(),
+		uploadReg: upload.NewRegistry(),
 	}
 	registerTasks(r.tasksReg)
 	emaildefaults.Register(r.emailReg)
 	dlqreg.Register(r.dlqReg)
 	dbdefaults.Register(r.dbReg)
+	udefaults.Register(r.uploadReg)
 
 	early := newFlagSet(args[0])
 	early.Usage = func() {}

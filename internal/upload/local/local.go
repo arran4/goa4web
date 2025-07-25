@@ -49,7 +49,7 @@ func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
 	return Provider{Dir: cfg.ImageUploadDir, FS: osFS{}}
 }
 
-func Register() { upload.RegisterProvider("local", providerFromConfig) }
+func Register(r *upload.Registry) { r.RegisterProvider("local", providerFromConfig) }
 
 func (p Provider) Check(ctx context.Context) error {
 	fs := p.fs()

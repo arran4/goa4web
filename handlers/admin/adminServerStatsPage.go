@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/internal/upload"
 )
 
 func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +64,9 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	data.Registries.DBDrivers = dbdrivers.Names()
 	data.Registries.DLQProviders = dlq.ProviderNames()
 	data.Registries.EmailProviders = email.ProviderNames()
-	data.Registries.UploadProviders = upload.ProviderNames()
+	if Srv != nil && Srv.UploadReg != nil {
+		data.Registries.UploadProviders = Srv.UploadReg.ProviderNames()
+	}
 
 	handlers.TemplateHandler(w, r, "serverStatsPage.gohtml", data)
 }

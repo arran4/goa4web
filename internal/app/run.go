@@ -24,6 +24,8 @@ import (
 	middleware "github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/upload"
+	uploaddefaults "github.com/arran4/goa4web/internal/upload/uploaddefaults"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -51,6 +53,7 @@ type serverOptions struct {
 	DBReg           *dbdrivers.Registry
 	EmailReg        *email.Registry
 	DLQReg          *dlq.Registry
+	UploadReg       *upload.Registry
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
 	DB              *sql.DB
@@ -86,6 +89,11 @@ func WithDLQRegistry(r *dlq.Registry) ServerOption {
 	return func(o *serverOptions) { o.DLQReg = r }
 }
 
+// WithUploadRegistry sets the upload provider registry.
+func WithUploadRegistry(r *upload.Registry) ServerOption {
+	return func(o *serverOptions) { o.UploadReg = r }
+}
+
 // WithBus uses the provided event bus instead of creating a new one.
 func WithBus(b *eventbus.Bus) ServerOption { return func(o *serverOptions) { o.Bus = b } }
 
@@ -117,10 +125,15 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	core.SessionName = cfg.SessionName
 	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode}
 
+	if o.UploadReg == nil {
+		o.UploadReg = upload.NewRegistry()
+		uploaddefaults.Register(o.UploadReg)
+	}
+
 	dbPool := o.DB
 	if dbPool == nil {
 		var err error
-		dbPool, err = PerformChecks(cfg, o.DBReg)
+		dbPool, err = PerformChecks(cfg, o.DBReg, o.UploadReg)
 		if err != nil {
 			return nil, fmt.Errorf("startup checks: %w", err)
 		}
@@ -153,7 +166,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
-		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, o.EmailReg, imgSigner),
+		middleware.CoreAdderMiddlewareWithDB(dbPool, cfg, cfg.DBLogVerbosity, o.EmailReg, imgSigner, o.UploadReg),
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
@@ -162,8 +175,9 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 
-	srv := server.New(handler, store, dbPool, cfg)
+	srv := server.New(handler, store, dbPool, cfg, o.UploadReg)
 	srv.Bus = bus
+	srv.UploadReg = o.UploadReg
 
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv

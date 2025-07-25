@@ -63,7 +63,7 @@ func providerFromConfigWithFactory(cfg config.RuntimeConfig, f ClientFactory) up
 	return Provider{Client: c, Bucket: b, Prefix: p}
 }
 
-func Register() { upload.RegisterProvider("s3", providerFromConfig) }
+func Register(r *upload.Registry) { r.RegisterProvider("s3", providerFromConfig) }
 
 func newSessionClient(region string) (api, error) {
 	cfg := aws.NewConfig()

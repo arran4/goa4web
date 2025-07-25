@@ -32,7 +32,6 @@ import (
 	"golang.org/x/image/draw"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/upload"
 )
 
 // UploadImageTask handles uploading an image to a board.
@@ -66,36 +65,36 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 
-	data := Data{
+	pageData := Data{
 		CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsSubBoard:  bid != 0,
 		BoardNumber: bid,
 	}
 
-	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+	if !pageData.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
+		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", pageData.CoreData)
 		return
 	}
 
-	boards, err := data.CoreData.SubImageBoards(int32(bid))
+	boards, err := pageData.CoreData.SubImageBoards(int32(bid))
 	if err != nil {
 		log.Printf("imageboards: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	data.Boards = boards
+	pageData.Boards = boards
 
-	posts, err := data.CoreData.ImageBoardPosts(int32(bid))
+	posts, err := pageData.CoreData.ImageBoardPosts(int32(bid))
 	if err != nil {
 		log.Printf("imageboard posts: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	data.Posts = posts
+	pageData.Posts = posts
 
-	handlers.TemplateHandler(w, r, "boardPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "boardPage.gohtml", pageData)
 }
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -138,14 +137,15 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	shaHex := fmt.Sprintf("%x", h.Sum(nil))
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
-	data := buf.Bytes()
-	img, _, err := image.Decode(bytes.NewReader(data))
+	imgData := buf.Bytes()
+	img, _, err := image.Decode(bytes.NewReader(imgData))
 	if err != nil {
 		return fmt.Errorf("decode image error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	fname := shaHex + ext
-	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
-		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if p := cd.UploadReg.ProviderFromConfig(cd.Config); p != nil {
+		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), imgData); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		src := img.Bounds()

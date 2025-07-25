@@ -18,24 +18,27 @@ func (t testProvider) Write(ctx context.Context, name string, data []byte) error
 func (t testProvider) Read(ctx context.Context, name string) ([]byte, error)     { return nil, nil }
 
 func TestCheckUploadTargetOK(t *testing.T) {
-	intupload.RegisterProvider("testok", func(config.RuntimeConfig) intupload.Provider { return testProvider{} })
+	reg := intupload.NewRegistry()
+	reg.RegisterProvider("testok", func(config.RuntimeConfig) intupload.Provider { return testProvider{} })
 	cfg := config.RuntimeConfig{ImageUploadProvider: "testok", ImageUploadDir: "ignored", ImageCacheProvider: "testok", ImageCacheDir: "cache"}
-	if err := CheckUploadTarget(cfg); err != nil {
+	if err := CheckUploadTarget(cfg, reg); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 }
 
 func TestCheckUploadTargetFail(t *testing.T) {
-	intupload.RegisterProvider("testfail", func(config.RuntimeConfig) intupload.Provider { return testProvider{checkErr: context.Canceled} })
+	reg := intupload.NewRegistry()
+	reg.RegisterProvider("testfail", func(config.RuntimeConfig) intupload.Provider { return testProvider{checkErr: context.Canceled} })
 	cfg := config.RuntimeConfig{ImageUploadProvider: "testfail", ImageUploadDir: "ignored", ImageCacheProvider: "testfail", ImageCacheDir: "cache"}
-	if err := CheckUploadTarget(cfg); err == nil {
+	if err := CheckUploadTarget(cfg, reg); err == nil {
 		t.Fatalf("expected error")
 	}
 }
 
 func TestCheckUploadTargetNoProvider(t *testing.T) {
+	reg := intupload.NewRegistry()
 	cfg := config.RuntimeConfig{ImageUploadProvider: "missing", ImageUploadDir: "dir", ImageCacheProvider: "missing", ImageCacheDir: "cache"}
-	if err := CheckUploadTarget(cfg); err == nil {
+	if err := CheckUploadTarget(cfg, reg); err == nil {
 		t.Fatalf("expected error")
 	}
 }

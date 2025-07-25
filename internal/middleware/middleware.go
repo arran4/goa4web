@@ -69,6 +69,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity i
 			}
 
 			queries := dbpkg.New(db)
+			sm := queries
 			if verbosity > 0 {
 				log.Printf("db pool stats: %+v", db.Stats())
 			}
@@ -95,7 +96,8 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity i
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
-				common.WithConfig(cfg))
+				common.WithConfig(cfg),
+				common.WithSessionManager(sm))
 			cd.UserID = uid
 			_ = cd.UserRoles()
 

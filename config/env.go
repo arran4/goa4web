@@ -129,4 +129,9 @@ const (
 
 	// EnvCreateDirs creates missing directories when enabled.
 	EnvCreateDirs = "CREATE_DIRS"
+
+	// EnvAdminAPISecret provides the signing key for admin API tokens.
+	EnvAdminAPISecret = "ADMIN_API_SECRET"
+	// EnvAdminAPISecretFile specifies the file containing the admin API signing key.
+	EnvAdminAPISecretFile = "ADMIN_API_SECRET_FILE"
 )

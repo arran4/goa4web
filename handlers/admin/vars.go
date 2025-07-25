@@ -18,6 +18,9 @@ var Srv *server.Server
 // DBPool exposes the database connection pool.
 var DBPool *sql.DB
 
+// AdminAPISecret is used to sign and verify administrator API tokens.
+var AdminAPISecret string
+
 // UpdateConfigKeyFunc is used to persist configuration changes. It should be
 // set by the main application on startup.
 var UpdateConfigKeyFunc func(fs core.FileSystem, path, key, value string) error

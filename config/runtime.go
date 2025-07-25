@@ -86,6 +86,11 @@ type RuntimeConfig struct {
 	// ImageSignSecretFile specifies the path to the image signing key.
 	ImageSignSecretFile string
 
+	// AdminAPISecret is used to sign administrator API tokens.
+	AdminAPISecret string
+	// AdminAPISecretFile specifies the path to the administrator API signing key.
+	AdminAPISecretFile string
+
 	// CreateDirs creates missing directories when enabled.
 	CreateDirs bool
 }
@@ -204,6 +209,9 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 
 	if cfg.SessionSecretFile == "" {
 		cfg.SessionSecretFile = DefaultSessionSecretPath()
+	}
+	if cfg.AdminAPISecretFile == "" {
+		cfg.AdminAPISecretFile = DefaultAdminAPISecretPath()
 	}
 
 	normalizeRuntimeConfig(&cfg)

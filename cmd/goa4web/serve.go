@@ -49,9 +49,13 @@ func (c *serveCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("image sign secret: %w", err)
 	}
+	apiKey, err := config.LoadOrCreateAdminAPISecret(core.OSFS{}, cfg.AdminAPISecret, cfg.AdminAPISecretFile)
+	if err != nil {
+		return fmt.Errorf("admin api secret: %w", err)
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := app.RunWithConfig(ctx, cfg, secret, signKey); err != nil {
+	if err := app.RunWithConfig(ctx, cfg, secret, signKey, apiKey); err != nil {
 		return err
 	}
 	return nil

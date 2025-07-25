@@ -103,9 +103,14 @@ func RegisterRoutes(ar *mux.Router) {
 	ar.HandleFunc("/reload", AdminReloadConfigPage).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator"))
-	ar.HandleFunc("/shutdown", AdminShutdownPage).
+	ar.HandleFunc("/shutdown", handlers.TaskHandler(serverShutdownTask)).
 		Methods("POST").
-		MatcherFunc(handlers.RequiredAccess("administrator"))
+		MatcherFunc(handlers.RequiredAccess("administrator")).
+		MatcherFunc(serverShutdownTask.Matcher())
+
+	api := ar.PathPrefix("/api").Subrouter()
+	api.Use(router.AdminCheckerMiddleware)
+	api.HandleFunc("/shutdown", AdminAPIServerShutdown).MatcherFunc(AdminAPISigned()).Methods("POST")
 }
 
 // Register registers the admin router module.

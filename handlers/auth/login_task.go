@@ -121,7 +121,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 
-	backURL := r.FormValue("back")
+	backURL := r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back"))
 	backMethod := r.FormValue("method")
 	backData := r.FormValue("data")
 

@@ -104,7 +104,7 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
-	if csrfmw.CSRFEnabled() {
+	if cfg.CSRFEnabled {
 		handler = csrfmw.NewCSRFMiddleware(sessionSecret, cfg.HTTPHostname, version)(handler)
 	}
 

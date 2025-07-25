@@ -74,6 +74,8 @@ const (
 	EnvListen = "LISTEN"
 	// EnvHostname is the base URL advertised by the HTTP server.
 	EnvHostname = "HOSTNAME"
+	// EnvHSTSHeader sets the Strict-Transport-Security header value.
+	EnvHSTSHeader = "HSTS_HEADER"
 	// EnvSessionName sets the cookie name used for session data.
 	EnvSessionName = "SESSION_NAME"
 

@@ -27,6 +27,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the auth router module.
-func Register() {
-	router.RegisterModule("auth", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("auth", nil, RegisterRoutes)
 }

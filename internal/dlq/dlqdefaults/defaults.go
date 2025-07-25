@@ -11,8 +11,11 @@ import (
 
 // Register registers all stable DLQ providers.
 func Register(r *dlqpkg.Registry, er *emailpkg.Registry) {
+  // TODO refactor this out it's incorrectly being used 
 	file.Register(r)
 	dir.Register(r)
 	db.Register(r)
 	email.Register(r, er)
+	email.Register(r)
+	dlqpkg.RegisterLogDLQ(r)
 }

@@ -1,4 +1,6 @@
 {
+  "ADMIN_API_SECRET": "",
+  "ADMIN_API_SECRET_FILE": ".admin_api_secret",
   "ADMIN_EMAILS": "",
   "ADMIN_NOTIFY": "true",
   "AWS_REGION": "",
@@ -45,8 +47,6 @@
   "SESSION_NAME": "my-session",
   "SESSION_SECRET": "",
   "SESSION_SECRET_FILE": ".session_secret",
-  "ADMIN_API_SECRET": "",
-  "ADMIN_API_SECRET_FILE": ".admin_api_secret",
   "SMTP_AUTH": "plain",
   "SMTP_HOST": "",
   "SMTP_PASS": "",

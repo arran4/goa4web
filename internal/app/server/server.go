@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
@@ -20,6 +21,9 @@ type Server struct {
 	Router http.Handler
 	Store  *sessions.CookieStore
 	DB     *sql.DB
+	Bus    *eventbus.Bus
+
+	WorkerCancel context.CancelFunc
 
 	addr       string
 	httpServer *http.Server
@@ -55,6 +59,26 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+// Close releases resources associated with the server such as background
+// workers, the event bus and the database connection.
+func (s *Server) Close() {
+	if s.WorkerCancel != nil {
+		s.WorkerCancel()
+	}
+	if s.Bus != nil {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.Bus.Shutdown(shutdownCtx); err != nil {
+			log.Printf("eventbus shutdown: %v", err)
+		}
+	}
+	if s.DB != nil {
+		if err := s.DB.Close(); err != nil {
+			log.Printf("DB close error: %v", err)
+		}
+	}
+}
+
 // New returns a Server with the supplied dependencies.
 func New(handler http.Handler, store *sessions.CookieStore, db *sql.DB, cfg config.RuntimeConfig) *Server {
 	return &Server{
@@ -80,4 +104,9 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 		return fmt.Errorf("shutdown error: %w", err)
 	}
 	return nil
+}
+
+// RunContext starts the server using the configured HTTPListen address.
+func (s *Server) RunContext(ctx context.Context) error {
+	return Run(ctx, s, s.Config.HTTPListen)
 }

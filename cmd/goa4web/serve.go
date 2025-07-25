@@ -55,7 +55,19 @@ func (c *serveCmd) Run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-  if err := app.RunWithConfig(ctx, cfg, secret, signKey, c.rootCmd.dbReg, c.rootCmd.emailReg, c.rootCmd.dlqReg, apiKey); err != nil {
+	srv, err := app.NewServer(ctx, cfg,
+		app.WithSessionSecret(secret),
+		app.WithImageSignSecret(signKey),
+		app.WithDBRegistry(c.rootCmd.dbReg),
+		app.WithEmailRegistry(c.rootCmd.emailReg),
+		app.WithDLQRegistry(c.rootCmd.dlqReg),
+		app.WithAPISecret(apiKey),
+	)
+	if err != nil {
+		return err
+	}
+	defer srv.Close()
+	if err := srv.RunContext(ctx); err != nil {
 		return err
 	}
 	return nil

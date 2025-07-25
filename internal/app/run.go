@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/workers"
 
@@ -59,11 +58,10 @@ func RunWithConfig(ctx context.Context, cfg config.RuntimeConfig, sessionSecret,
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	if err := PerformChecks(cfg, dbReg); err != nil {
+	dbPool, err := PerformChecks(cfg, dbReg)
+	if err != nil {
 		return fmt.Errorf("startup checks: %w", err)
 	}
-
-	dbPool := dbstart.GetDBPool()
 	queries := dbpkg.New(dbPool)
 	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
 		return fmt.Errorf("ensure default language: %w", err)

@@ -30,7 +30,8 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 		}
 		desc := ""
 		if row.Description.Valid {
-			conv := a4code2html.New(imagesign.MapURL)
+			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			conv := a4code2html.New(imagesign.Mapper(cd.Config))
 			conv.CodeType = a4code2html.CTTagStrip
 			conv.SetInput(row.Description.String)
 			out, _ := io.ReadAll(conv.Process())

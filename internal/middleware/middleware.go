@@ -91,7 +91,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity i
 			}
 			provider := emailReg.ProviderFromConfig(cfg)
 			cd := common.NewCoreData(r.Context(), queries,
-				common.WithImageURLMapper(imagesign.MapURL),
+				common.WithImageURLMapper(imagesign.Mapper(cfg)),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),

@@ -28,6 +28,8 @@ func TestLinkerFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/linker/rss", nil)
+	ctx := context.WithValue(r.Context(), consts.KeyCoreData, &common.CoreData{Config: config.RuntimeConfig{}})
+	r = r.WithContext(ctx)
 	feed := linkerFeed(r, rows)
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))

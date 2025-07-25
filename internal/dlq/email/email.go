@@ -20,6 +20,21 @@ type DLQ struct {
 	Config   config.RuntimeConfig
 }
 
+// Option configures a DLQ instance.
+type Option func(*DLQ)
+
+// WithConfig sets the runtime configuration.
+func WithConfig(cfg config.RuntimeConfig) Option { return func(d *DLQ) { d.Config = cfg } }
+
+// New constructs a DLQ with the provided options.
+func New(opts ...Option) DLQ {
+	d := DLQ{}
+	for _, o := range opts {
+		o(&d)
+	}
+	return d
+}
+
 // Record emails the message to the configured recipients.
 func (e DLQ) Record(ctx context.Context, message string) error {
 	if e.Provider == nil {

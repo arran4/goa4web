@@ -34,7 +34,7 @@ func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
 		if desc == "" {
 			desc = row.Writing.String
 		}
-		conv := a4code2html.New(imagesign.MapURL)
+		conv := a4code2html.New(imagesign.Mapper(cd.Config))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())

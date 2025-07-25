@@ -38,7 +38,8 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 			continue
 		}
 		desc := row.Description.String
-		conv := a4code2html.New(imagesign.MapURL)
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		conv := a4code2html.New(imagesign.Mapper(cd.Config))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())

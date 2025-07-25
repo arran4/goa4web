@@ -73,7 +73,7 @@ func SignedRef(ref string) string {
 }
 
 // MapURL converts image references to signed HTTP URLs.
-func MapURL(tag, val string) string {
+func MapURL(tag, val string, cfg config.RuntimeConfig) string {
 	if tag != "img" {
 		return val
 	}
@@ -81,10 +81,15 @@ func MapURL(tag, val string) string {
 	case strings.HasPrefix(val, "uploading:"):
 		return val
 	case strings.HasPrefix(val, "image:") || strings.HasPrefix(val, "img:"):
-		return SignedURL(val, config.AppRuntimeConfig)
+		return SignedURL(val, cfg)
 	case strings.HasPrefix(val, "cache:"):
-		return SignedCacheURL(strings.TrimPrefix(val, "cache:"), config.AppRuntimeConfig)
+		return SignedCacheURL(strings.TrimPrefix(val, "cache:"), cfg)
 	default:
 		return val
 	}
+}
+
+// Mapper returns an image URL mapper closure using cfg.
+func Mapper(cfg config.RuntimeConfig) func(string, string) string {
+	return func(tag, val string) string { return MapURL(tag, val, cfg) }
 }

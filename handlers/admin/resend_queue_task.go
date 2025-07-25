@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
@@ -27,7 +26,8 @@ var _ tasks.AuditableTask = (*ResendQueueTask)(nil)
 
 func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	provider := email.ProviderFromConfig(config.AppRuntimeConfig)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	provider := email.ProviderFromConfig(cd.Config)
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -59,7 +59,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	for _, e := range emails {
-		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, config.AppRuntimeConfig, &db.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
+		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, cd.Config, &db.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
 		if err != nil {
 			return fmt.Errorf("resolve address fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

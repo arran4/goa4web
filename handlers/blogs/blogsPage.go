@@ -238,10 +238,11 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 		}
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	for _, row := range rows {
 		u := r.URL
 		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
-		conv := a4code2html.New(imagesign.MapURL)
+		conv := a4code2html.New(imagesign.Mapper(cd.Config))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)
 		out, _ := io.ReadAll(conv.Process())

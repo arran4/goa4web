@@ -32,7 +32,8 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 			continue
 		}
 		text := row.Firstposttext.String
-		conv := a4code2html.New(imagesign.MapURL)
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		conv := a4code2html.New(imagesign.Mapper(cd.Config))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())

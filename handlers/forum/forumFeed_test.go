@@ -1,11 +1,15 @@
 package forum
 
 import (
+	"context"
 	"database/sql"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -19,6 +23,8 @@ func TestForumTopicFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)
+	ctx := context.WithValue(r.Context(), consts.KeyCoreData, &common.CoreData{Config: config.RuntimeConfig{}})
+	r = r.WithContext(ctx)
 	feed := TopicFeed(r, "Test", 1, rows)
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))

@@ -21,6 +21,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -126,6 +127,7 @@ type CoreData struct {
 	blogEntries              map[int32]*lazyValue[*db.GetBlogEntryForUserByIdRow]
 
 	absoluteURLBase lazyValue[string]
+	dbRegistry      *dbdrivers.Registry
 	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks map[string]struct{}
@@ -195,6 +197,11 @@ func WithImageSigner(s *imagesign.Signer) CoreOption {
 // WithTasksRegistry registers the task registry on CoreData.
 func WithTasksRegistry(r *tasks.Registry) CoreOption {
 	return func(cd *CoreData) { cd.TasksReg = r }
+}
+
+// WithDBRegistry sets the database driver registry for CoreData.
+func WithDBRegistry(r *dbdrivers.Registry) CoreOption {
+	return func(cd *CoreData) { cd.dbRegistry = r }
 }
 
 // NewCoreData creates a CoreData with context and queries applied.
@@ -344,6 +351,9 @@ func (cd *CoreData) Session() *sessions.Session { return cd.session }
 
 // SessionManager returns the configured session manager, if any.
 func (cd *CoreData) SessionManager() SessionManager { return cd.sessionManager }
+
+// DBRegistry returns the database driver registry associated with this request.
+func (cd *CoreData) DBRegistry() *dbdrivers.Registry { return cd.dbRegistry }
 
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.TaskEvent) { cd.event = evt }

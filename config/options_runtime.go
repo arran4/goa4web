@@ -37,6 +37,7 @@ var StringOptions = []StringOption{
 	{"db-driver", EnvDBDriver, "database driver", "mysql", nil, "db_driver.txt", func(c *RuntimeConfig) *string { return &c.DBDriver }},
 	{"listen", EnvListen, "server listen address", ":8080", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPListen }},
 	{"hostname", EnvHostname, "server base URL", "", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPHostname }},
+	{"hsts-header", EnvHSTSHeader, "Strict-Transport-Security header value", "max-age=63072000; includeSubDomains", nil, "", func(c *RuntimeConfig) *string { return &c.HSTSHeaderValue }},
 	{"email-provider", EnvEmailProvider, "email provider", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailProvider }},
 	{"smtp-host", EnvSMTPHost, "SMTP host", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSMTPHost }},
 	{"smtp-port", EnvSMTPPort, "SMTP port", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSMTPPort }},

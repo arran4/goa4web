@@ -33,12 +33,12 @@ var _ tasks.Task = (*TestTemplateTask)(nil)
 var _ tasks.AuditableTask = (*TestTemplateTask)(nil)
 
 func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if email.ProviderFromConfig(config.AppRuntimeConfig) == nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd.EmailProvider() == nil {
 		return fmt.Errorf("mail not configured %w", handlers.ErrRedirectOnSamePageHandler(userhandlers.ErrMailNotConfigured))
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	urow, err := queries.GetUserById(r.Context(), cd.UserID)
 	if err != nil {
 		return fmt.Errorf("get user fail %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -50,17 +50,21 @@ var _ http.Handler = (*redirectBackPageHandler)(nil)
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	type Data struct {
 		*common.CoreData
-		Error  string
-		Code   string
-		Back   string
-		Method string
-		Data   string
+		Error   string
+		Code    string
+		Back    string
+		BackSig string
+		BackTS  string
+		Method  string
+		Data    string
 	}
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Error:    errMsg,
 		Code:     r.FormValue("code"),
-		Back:     r.FormValue("back"),
+		Back:     r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back")),
+		BackSig:  r.FormValue("back_sig"),
+		BackTS:   r.FormValue("back_ts"),
 		Method:   r.FormValue("method"),
 		Data:     r.FormValue("data"),
 	}

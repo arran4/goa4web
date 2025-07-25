@@ -22,7 +22,8 @@ var dismissTask = &DismissTask{TaskString: tasks.TaskString(TaskDismiss)}
 var _ tasks.Task = (*DismissTask)(nil)
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
-	if !handlers.NotificationsEnabled() {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.Config.NotificationsEnabled {
 		http.NotFound(w, r)
 		return
 	}
@@ -60,7 +61,8 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if !handlers.NotificationsEnabled() {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.Config.NotificationsEnabled {
 		http.NotFound(w, r)
 		return nil
 	}
@@ -89,7 +91,8 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
-	if !handlers.NotificationsEnabled() {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.Config.NotificationsEnabled {
 		http.NotFound(w, r)
 		return
 	}

@@ -19,6 +19,8 @@ type RuntimeConfig struct {
 
 	HTTPListen   string
 	HTTPHostname string
+	// HSTSHeaderValue defines the Strict-Transport-Security header value.
+	HSTSHeaderValue string
 
 	EmailProvider      string
 	EmailSMTPHost      string
@@ -246,6 +248,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
+	}
+	if cfg.HSTSHeaderValue == "" {
+		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}
 	if cfg.SessionName == "" {
 		cfg.SessionName = "my-session"

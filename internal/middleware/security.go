@@ -3,12 +3,14 @@ package middleware
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
 	"net"
 	"net/http"
 	"net/netip"
 	"strings"
+
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 )
 
 func normalizeIP(ip string) string {
@@ -67,7 +69,20 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		var cfg config.RuntimeConfig
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			cfg = cd.Config
+		} else {
+			cfg = config.AppRuntimeConfig
+		}
+		hsts := cfg.HSTSHeaderValue
+		if hsts != "" {
+			if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
+				w.Header().Set("Strict-Transport-Security", hsts)
+			} else if strings.HasPrefix(strings.ToLower(cfg.HTTPHostname), "https://") {
+				w.Header().Set("Strict-Transport-Security", hsts)
+			}
+		}
 		next.ServeHTTP(w, r)
 	})
 }

@@ -8,8 +8,7 @@ import (
 	"strings"
 )
 
-// getEmailProvider returns the mail provider configured by environment variables.
-// Production code uses this, while tests can call email.ProviderFromConfig directly.
+// Email providers are selected from a registry using runtime configuration.
 
 // loadEmailConfigFile reads EMAIL_* style configuration values from a simple
 // key=value file. Missing files return an empty configuration.

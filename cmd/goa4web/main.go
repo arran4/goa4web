@@ -143,7 +143,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	registerTasks(r.tasksReg)
 	registerModules(r.routerReg)
 	emaildefaults.Register(r.emailReg)
-	dlqreg.Register(r.dlqReg)
+	dlqreg.Register(r.dlqReg, r.emailReg)
 	dlq.RegisterLogDLQ(r.dlqReg)
 	dbdefaults.Register(r.dbReg)
 

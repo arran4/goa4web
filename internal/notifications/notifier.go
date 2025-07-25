@@ -49,9 +49,6 @@ func WithBus(b *eventbus.Bus) Option { return func(n *Notifier) { n.Bus = b } }
 func WithConfig(cfg config.RuntimeConfig) Option {
 	return func(n *Notifier) {
 		n.Config = cfg
-		if n.EmailProvider == nil {
-			n.EmailProvider = email.ProviderFromConfig(cfg)
-		}
 	}
 }
 

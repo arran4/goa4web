@@ -145,7 +145,8 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	if bus == nil {
 		bus = eventbus.NewBus()
 	}
-	websocket.SetBus(bus)
+	wsMod := websocket.NewModule(bus)
+	wsMod.Register()
 
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r)
@@ -164,6 +165,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 
 	srv := server.New(handler, store, dbPool, cfg)
 	srv.Bus = bus
+	srv.Websocket = wsMod
 
 	adminhandlers.ConfigFile = ConfigFile
 	adminhandlers.Srv = srv

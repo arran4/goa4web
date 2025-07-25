@@ -13,15 +13,17 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/eventbus"
+	websocket "github.com/arran4/goa4web/internal/websocket"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
-	Config config.RuntimeConfig
-	Router http.Handler
-	Store  *sessions.CookieStore
-	DB     *sql.DB
-	Bus    *eventbus.Bus
+	Config    config.RuntimeConfig
+	Router    http.Handler
+	Store     *sessions.CookieStore
+	DB        *sql.DB
+	Bus       *eventbus.Bus
+	Websocket *websocket.Module
 
 	WorkerCancel context.CancelFunc
 

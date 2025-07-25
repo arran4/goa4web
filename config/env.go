@@ -92,6 +92,12 @@ const (
 	EnvEmailWorkerInterval = "EMAIL_WORKER_INTERVAL"
 	// EnvPasswordResetExpiryHours sets the password reset expiry in hours.
 	EnvPasswordResetExpiryHours = "PASSWORD_RESET_EXPIRY_HOURS"
+	// EnvLoginAttemptWindow defines the time window in minutes used to
+	// track failed login attempts.
+	EnvLoginAttemptWindow = "LOGIN_ATTEMPT_WINDOW"
+	// EnvLoginAttemptThreshold sets how many failed logins are allowed
+	// within the window before further attempts are denied.
+	EnvLoginAttemptThreshold = "LOGIN_ATTEMPT_THRESHOLD"
 	// EnvAdminEmails is a comma-separated list of administrator email addresses.
 	EnvAdminEmails = "ADMIN_EMAILS"
 	// EnvAdminNotify toggles sending administrator notification emails.

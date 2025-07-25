@@ -263,6 +263,8 @@ environment variables listed below.
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |
 | `PASSWORD_RESET_EXPIRY_HOURS` | `--password-reset-expiry-hours` | No | `24` | Hours a password reset request remains valid. |
+| `LOGIN_ATTEMPT_WINDOW` | `--login-attempt-window` | No | `15` | Minutes to track failed logins for throttling. |
+| `LOGIN_ATTEMPT_THRESHOLD` | `--login-attempt-threshold` | No | `5` | Failed logins allowed within the window. |
 | `ADMIN_EMAILS` | `--admin-emails` | No | - | Comma-separated list of administrator email addresses. |
 | `ADMIN_NOTIFY` | n/a | No | `true` | Toggles sending administrator notification emails. |
 | `IMAGE_UPLOAD_DIR` | `--image-upload-dir` | No | `uploads/images` | Directory where uploaded images are stored when using the local provider. |

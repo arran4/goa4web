@@ -22,6 +22,7 @@
   "EMAIL_WORKER_INTERVAL": "60",
   "FEEDS_ENABLED": "true",
   "HOSTNAME": "http://localhost:8080",
+  "HSTS_HEADER": "max-age=63072000; includeSubDomains",
   "IMAGE_CACHE_DIR": "uploads/cache",
   "IMAGE_CACHE_MAX_BYTES": "-1",
   "IMAGE_CACHE_PROVIDER": "local",

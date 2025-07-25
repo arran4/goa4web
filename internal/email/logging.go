@@ -9,4 +9,4 @@ const (
 
 // LogVerbosity controls the amount of logging performed by email providers.
 // Set to LogLevelSummary to log basic info or LogLevelBody for verbose output.
-var LogVerbosity = LogLevelSummary
+// The effective level is determined by RuntimeConfig.

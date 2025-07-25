@@ -22,6 +22,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the bookmarks router module.
-func Register() {
-	router.RegisterModule("bookmarks", nil, RegisterRoutes)
+func Register(reg *router.Registry) {
+	reg.RegisterModule("bookmarks", nil, RegisterRoutes)
 }

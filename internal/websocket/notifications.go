@@ -166,6 +166,6 @@ func (m *Module) registerRoutes(r *mux.Router) {
 }
 
 // Register registers the websocket router module.
-func (m *Module) Register() {
-	routerpkg.RegisterModule("websocket", nil, m.registerRoutes)
+func (m *Module) Register(reg *routerpkg.Registry) {
+	reg.RegisterModule("websocket", nil, m.registerRoutes)
 }

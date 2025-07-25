@@ -13,9 +13,6 @@ import (
 // TaskHandler wraps t.Action to record the task on the request event and handle the
 // returned result
 func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
-	if nt, ok := t.(tasks.NamedTask); ok {
-		tasks.Register(nt)
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		if v := r.Context().Value(consts.KeyCoreData).(*common.CoreData); v != nil {
 			v.SetEventTask(t)

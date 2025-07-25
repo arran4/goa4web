@@ -16,14 +16,6 @@ type Registry struct {
 // NewRegistry returns an empty Registry.
 func NewRegistry() *Registry { return &Registry{} }
 
-// Register adds t to the DefaultRegistry. Duplicate names are ignored.
-func Register(t NamedTask) { DefaultRegistry.Register(t) }
-
-// Registered returns a copy of the registered tasks slice.
-func Registered() []NamedTask {
-	return DefaultRegistry.Registered()
-}
-
 // Register adds t to the Registry. Duplicate names are ignored.
 func (r *Registry) Register(t NamedTask) {
 	r.mu.Lock()
@@ -43,6 +35,3 @@ func (r *Registry) Registered() []NamedTask {
 	r.mu.Unlock()
 	return tasks
 }
-
-// DefaultRegistry holds the package default tasks.
-var DefaultRegistry = NewRegistry()

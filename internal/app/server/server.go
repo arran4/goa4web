@@ -25,6 +25,7 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/tasks"
 	router "github.com/arran4/goa4web/internal/router"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 )
@@ -40,6 +41,7 @@ type Server struct {
 	Bus         *eventbus.Bus
 	EmailReg    *email.Registry
 	ImageSigner *imagesign.Signer
+	TasksReg    *tasks.Registry
 	DBReg       *dbdrivers.Registry
 	DLQReg      *dlq.Registry
 	Websocket   *websocket.Module
@@ -202,7 +204,9 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithAbsoluteURLBase(base),
 				common.WithConfig(s.Config),
 				common.WithSessionManager(sm),
-				common.WithDBRegistry(s.DBReg))
+				common.WithTasksRegistry(s.TasksReg),
+				common.WithDBRegistry(s.DBReg),
+      )
 			cd.UserID = uid
 			_ = cd.UserRoles()
 

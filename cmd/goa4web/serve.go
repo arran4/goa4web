@@ -60,10 +60,10 @@ func (c *serveCmd) Run() error {
 		app.WithImageSignSecret(signKey),
 		app.WithDBRegistry(c.rootCmd.dbReg),
 		app.WithEmailRegistry(c.rootCmd.emailReg),
-               app.WithDLQRegistry(c.rootCmd.dlqReg),
-               app.WithRouterRegistry(c.rootCmd.routerReg),
-               app.WithAPISecret(apiKey),
-        )
+		app.WithDLQRegistry(c.rootCmd.dlqReg),
+		app.WithTasksRegistry(c.rootCmd.tasksReg),
+		app.WithAPISecret(apiKey),
+	)
 	if err != nil {
 		return err
 	}

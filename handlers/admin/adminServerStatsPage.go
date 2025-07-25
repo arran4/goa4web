@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
@@ -41,8 +40,9 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,
@@ -56,7 +56,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 		Config: config.AppRuntimeConfig,
 	}
 
-	for _, t := range tasks.Registered() {
+	for _, t := range cd.TasksReg.Registered() {
 		data.Registries.Tasks = append(data.Registries.Tasks, t.Name())
 	}
 	if reg := data.CoreData.DBRegistry(); reg != nil {

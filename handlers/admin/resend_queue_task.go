@@ -59,7 +59,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	for _, e := range emails {
-		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, &db.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
+		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, config.AppRuntimeConfig, &db.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
 		if err != nil {
 			return fmt.Errorf("resolve address fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

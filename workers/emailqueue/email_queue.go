@@ -18,7 +18,7 @@ import (
 // EmailQueueWorker sends pending emails ensuring a minimum delay between sends.
 // When a bus is provided the worker wakes up immediately when a new message is
 // queued by listening for EmailQueueEvent messages.
-func EmailQueueWorker(ctx context.Context, q *db.Queries, provider email.Provider, dlqProvider dlq.DLQ, bus *eventbus.Bus, delay time.Duration) {
+func EmailQueueWorker(ctx context.Context, q *db.Queries, provider email.Provider, dlqProvider dlq.DLQ, bus *eventbus.Bus, delay time.Duration, cfg config.RuntimeConfig) {
 	if q == nil || provider == nil {
 		log.Printf("email queue worker disabled: missing queue or provider")
 		return
@@ -28,7 +28,7 @@ func EmailQueueWorker(ctx context.Context, q *db.Queries, provider email.Provide
 		ch = bus.Subscribe(eventbus.EmailQueueMessageType)
 	}
 	for {
-		if ProcessPendingEmail(ctx, q, provider, dlqProvider) {
+		if ProcessPendingEmail(ctx, q, provider, dlqProvider, cfg) {
 			log.Printf("email queue worker: waiting %s", delay)
 		}
 		if ch == nil {
@@ -50,7 +50,7 @@ func EmailQueueWorker(ctx context.Context, q *db.Queries, provider email.Provide
 
 // adminBypassAddr extracts the recipient address from the email body and
 // returns it when it matches one of the configured administrator emails.
-func adminBypassAddr(ctx context.Context, q *db.Queries, body string) (mail.Address, bool) {
+func adminBypassAddr(ctx context.Context, q *db.Queries, cfg config.RuntimeConfig, body string) (mail.Address, bool) {
 	m, err := mail.ReadMessage(strings.NewReader(body))
 	if err != nil {
 		return mail.Address{}, false
@@ -59,7 +59,7 @@ func adminBypassAddr(ctx context.Context, q *db.Queries, body string) (mail.Addr
 	if err != nil {
 		return mail.Address{}, false
 	}
-	for _, a := range config.GetAdminEmails(ctx, q) {
+	for _, a := range config.GetAdminEmails(ctx, q, cfg) {
 		if strings.EqualFold(a, addr.Address) {
 			return *addr, true
 		}
@@ -67,8 +67,8 @@ func adminBypassAddr(ctx context.Context, q *db.Queries, body string) (mail.Addr
 	return mail.Address{}, false
 }
 
-func isAdminEmail(ctx context.Context, q *db.Queries, addr string) bool {
-	for _, a := range config.GetAdminEmails(ctx, q) {
+func isAdminEmail(ctx context.Context, q *db.Queries, cfg config.RuntimeConfig, addr string) bool {
+	for _, a := range config.GetAdminEmails(ctx, q, cfg) {
 		if strings.EqualFold(a, addr) {
 			return true
 		}
@@ -96,7 +96,7 @@ func hasVerificationRecord(ctx context.Context, q *db.Queries, addr string) bool
 // ResolveQueuedEmailAddress resolves the recipient for a queued email.
 // When the user record is missing or lacks a valid address the admin or direct
 // email logic is applied.
-func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, e *db.FetchPendingEmailsRow) (mail.Address, error) {
+func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, cfg config.RuntimeConfig, e *db.FetchPendingEmailsRow) (mail.Address, error) {
 	if e.ToUserID.Valid && e.ToUserID.Int32 != 0 {
 		user, err := q.GetUserById(ctx, e.ToUserID.Int32)
 		if err == nil && user.Email.Valid && user.Email.String != "" {
@@ -116,7 +116,7 @@ func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, e *db.FetchPe
 		return mail.Address{}, fmt.Errorf("parse address: %v", err)
 	}
 
-	if isAdminEmail(ctx, q, addr.Address) {
+	if isAdminEmail(ctx, q, cfg, addr.Address) {
 		addr.Name = "Admin"
 		return *addr, nil
 	}
@@ -135,11 +135,11 @@ func ResolveQueuedEmailAddress(ctx context.Context, q *db.Queries, e *db.FetchPe
 }
 
 // ProcessPendingEmail sends a single queued email if available.
-func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Provider, dlqProvider dlq.DLQ) bool {
+func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Provider, dlqProvider dlq.DLQ, cfg config.RuntimeConfig) bool {
 	if q == nil || provider == nil {
 		return false
 	}
-	if !config.EmailSendingEnabled() {
+	if !cfg.EmailEnabled {
 		return false
 	}
 	if provider == nil {
@@ -155,7 +155,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 		return false
 	}
 	e := emails[0]
-	addr, err := ResolveQueuedEmailAddress(ctx, q, e)
+	addr, err := ResolveQueuedEmailAddress(ctx, q, cfg, e)
 	if err != nil {
 		log.Printf("ResolveQueuedEmailAddress: %v", err)
 		if err := q.IncrementEmailError(ctx, e.ID); err != nil {

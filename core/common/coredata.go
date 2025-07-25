@@ -31,6 +31,16 @@ type IndexItem struct {
 	Link string
 }
 
+// SessionManager defines optional hooks for storing and removing session
+// information. Implementations may persist session metadata in a database or
+// other storage.
+// SessionManager exposes methods used by CoreData to record session information.
+// Typically *db.Queries satisfies this interface.
+type SessionManager interface {
+	InsertSession(ctx context.Context, arg db.InsertSessionParams) error
+	DeleteSessionByID(ctx context.Context, sessionID string) error
+}
+
 // MailProvider defines the interface required by CoreData for sending emails.
 type MailProvider interface {
 	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
@@ -62,7 +72,8 @@ type CoreData struct {
 	Config            config.RuntimeConfig
 	a4codeMapper      func(tag, val string) string
 
-	session *sessions.Session
+	session        *sessions.Session
+	sessionManager SessionManager
 
 	ctx           context.Context
 	queries       *db.Queries
@@ -143,6 +154,11 @@ func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 // WithSession stores the gorilla session on the CoreData object.
 func WithSession(s *sessions.Session) CoreOption {
 	return func(cd *CoreData) { cd.session = s }
+}
+
+// WithSessionManager sets the session manager used by CoreData.
+func WithSessionManager(sm SessionManager) CoreOption {
+	return func(cd *CoreData) { cd.sessionManager = sm }
 }
 
 // WithEvent links an event to the CoreData object.
@@ -307,6 +323,9 @@ func (cd *CoreData) SetSession(s *sessions.Session) { cd.session = s }
 
 // Session returns the request session if available.
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
+
+// SessionManager returns the configured session manager, if any.
+func (cd *CoreData) SessionManager() SessionManager { return cd.sessionManager }
 
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.TaskEvent) { cd.event = evt }

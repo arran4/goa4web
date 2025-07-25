@@ -152,17 +152,24 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	if bus == nil {
 		bus = eventbus.NewBus()
 	}
-	wsMod := websocket.NewModule(bus)
-	wsMod.Register()
-
 	reg := o.RouterReg
 	if reg == nil {
 		reg = routerpkg.NewRegistry()
 	}
+	wsMod := websocket.NewModule(bus)
+	wsMod.Register(reg)
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r, reg)
 
-	srv := server.New(nil, store, dbPool, cfg, reg, navReg, o.DLQReg)
+	navReg := nav.NewRegistry()
+	srv := server.New(
+		server.WithStore(store),
+		server.WithDB(dbPool),
+		server.WithConfig(cfg),
+		server.WithRouterRegistry(reg),
+		server.WithNavRegistry(navReg),
+		server.WithDLQRegistry(o.DLQReg),
+	)
 	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg

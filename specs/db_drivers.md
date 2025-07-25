@@ -6,7 +6,7 @@ The `internal/dbdrivers` package defines a small registry for database connector
 - **PostgreSQL** – relies on `github.com/lib/pq` for connections. Backups and restores call `pg_dump` and `psql` respectively.
 - **SQLite** – uses `github.com/mattn/go-sqlite3` when built with the `sqlite` build tag. The command line `sqlite3` tool handles dumps and loads.
 
-`dbdefaults.Register()` registers all stable drivers so `dbdrivers.Connector()` can look them up by name.
+`dbdefaults.Register()` registers all stable drivers on a `dbdrivers.Registry`. Applications pass this registry to functions that need to open database connections.
 
 Example connection strings are shown in `config/templates/db_conn.txt`:
 

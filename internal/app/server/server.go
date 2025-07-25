@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -34,6 +35,7 @@ type Server struct {
 	Bus         *eventbus.Bus
 	EmailReg    *email.Registry
 	ImageSigner *imagesign.Signer
+	DBReg       *dbdrivers.Registry
 
 	WorkerCancel context.CancelFunc
 
@@ -169,7 +171,8 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
 				common.WithConfig(s.Config),
-				common.WithSessionManager(sm))
+				common.WithSessionManager(sm),
+				common.WithDBRegistry(s.DBReg))
 			cd.UserID = uid
 			_ = cd.UserRoles()
 

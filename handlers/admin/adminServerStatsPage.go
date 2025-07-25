@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -62,7 +61,9 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	for _, t := range tasks.Registered() {
 		data.Registries.Tasks = append(data.Registries.Tasks, t.Name())
 	}
-	data.Registries.DBDrivers = dbdrivers.Names()
+	if reg := data.CoreData.DBRegistry(); reg != nil {
+		data.Registries.DBDrivers = reg.Names()
+	}
 	data.Registries.DLQProviders = dlq.ProviderNames()
 	data.Registries.EmailProviders = email.ProviderNames()
 	data.Registries.UploadProviders = upload.ProviderNames()

@@ -154,6 +154,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg
 	srv.ImageSigner = imgSigner
+	srv.DBReg = o.DBReg
 
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(

@@ -38,12 +38,13 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		Comments map[int32]*db.AdminUserComment
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Search:   r.URL.Query().Get("search"),
 		Role:     r.URL.Query().Get("role"),
 		Status:   r.URL.Query().Get("status"),
-		PageSize: handlers.GetPageSize(r),
+		PageSize: cd.PageSize(),
 		Comments: map[int32]*db.AdminUserComment{},
 	}
 

@@ -54,7 +54,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 	}
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess), config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

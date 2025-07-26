@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -40,7 +39,8 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	username := r.PostFormValue("username")
 	pw := r.PostFormValue("password")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))

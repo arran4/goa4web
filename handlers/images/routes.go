@@ -92,7 +92,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	cfg := cd.Config
 	sub1, sub2 := id[:2], id[2:4]
 	key := path.Join(sub1, sub2, id)
-	if p := upload.CacheProviderFromConfig(cfg); p != nil {
+	if p := upload.CacheProviderFromConfig(*cfg); p != nil {
 		data, err := p.Read(r.Context(), key)
 		if err != nil {
 			http.NotFound(w, r)

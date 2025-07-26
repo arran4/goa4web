@@ -38,6 +38,7 @@ func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 
 // Action processes the submitted login form.
 func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		sess, _ := core.GetSession(r)
 		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), handlers.HashSessionID(sess.ID))
@@ -46,7 +47,6 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	cfg := cd.Config

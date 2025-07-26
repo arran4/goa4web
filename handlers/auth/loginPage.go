@@ -25,14 +25,11 @@ type redirectBackPageHandler struct {
 }
 
 func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+  cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if h.Method == "" || h.Method == http.MethodGet {
-		target := h.BackURL
-		if len(h.Values) != 0 {
-			target += "?" + h.Values.Encode()
-		}
-		cd.AutoRefresh = handlers.RefreshDirectHandler{TargetURL: target}.Content()
-		handlers.TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", nil)
+		rdh := handlers.RefreshDirectHandler{TargetURL: h.BackURL}
+		cd.AutoRefresh = rdh.Content()
+		handlers.TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", rdh)
 		return
 	}
 

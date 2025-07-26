@@ -11,7 +11,6 @@ import (
 
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -40,7 +39,8 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	id := int32(id64)
 	code := r.FormValue("code")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	expiry := time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour)
 	reset, err := queries.GetPasswordResetByCode(r.Context(), db.GetPasswordResetByCodeParams{VerificationCode: code, CreatedAt: expiry})
 	if err != nil || reset.ID != id {

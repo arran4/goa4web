@@ -25,7 +25,7 @@ func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, sqlm
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}
-	cd := common.NewCoreData(context.Background(), queries, common.WithConfig(cfg))
+	cd := common.NewCoreData(context.Background(), queries, &cfg)
 	return cd, mock, cleanup
 }
 
@@ -101,7 +101,7 @@ func TestSecurityHeadersMiddlewareForwardedProto(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
-  }
+	}
 }
 
 func TestSecurityHeadersMiddleware(t *testing.T) {

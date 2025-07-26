@@ -38,6 +38,18 @@ func TestTemplateFuncsLeft(t *testing.T) {
 	}
 }
 
+func TestTemplateFuncsCSRFToken(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	cd := &common.CoreData{}
+	funcs := cd.Funcs(r)
+	if _, ok := funcs["csrfToken"]; !ok {
+		t.Errorf("csrfToken func missing")
+	}
+	if _, ok := funcs["csrf"]; ok {
+		t.Errorf("csrf func should not be present")
+	}
+}
+
 func TestLatestNewsRespectsPermissions(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {

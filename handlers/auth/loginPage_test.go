@@ -321,11 +321,9 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
-	pwHash, alg, _ := HashPassword("pw")
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-		AddRow(1, "e", pwHash, alg, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
+		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(5))
 
 	raw := "https://example.org/ok"
 	ts := time.Now().Add(time.Hour).Unix()

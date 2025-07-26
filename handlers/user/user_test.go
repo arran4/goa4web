@@ -52,7 +52,7 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 }
 
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = ""
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
@@ -62,7 +62,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(*cfg)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -84,7 +84,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 }
 
 func TestUserEmailTestAction_WithProvider(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = "log"
 
 	db, mock, _ := sqlmock.New()
@@ -95,7 +95,7 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(*cfg)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -216,7 +216,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := req.Context()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.PageSizeDefault = 15
 	cd := common.NewCoreData(ctx, queries, cfg, common.WithSession(sess))
 	cd.UserID = 1
@@ -313,7 +313,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 		req.AddCookie(c)
 	}
 	rr := httptest.NewRecorder()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.PageSizeDefault = 15
 
 	ctx := req.Context()

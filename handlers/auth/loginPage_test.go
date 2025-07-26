@@ -322,7 +322,7 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	q := dbpkg.New(db)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -376,7 +376,7 @@ func TestLoginAction_Throttle(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
 		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(rows)
 
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 3
 	cfg.LoginAttemptWindow = 15
 

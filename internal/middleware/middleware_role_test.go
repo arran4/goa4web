@@ -27,7 +27,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
 
@@ -52,7 +52,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(*cfg, "k")
 	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
@@ -72,7 +72,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
 
@@ -82,7 +82,6 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -94,7 +93,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(*cfg, "k")
 	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}

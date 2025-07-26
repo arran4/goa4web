@@ -25,7 +25,7 @@ type redirectBackPageHandler struct {
 }
 
 func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-  cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if h.Method == "" || h.Method == http.MethodGet {
 		rdh := handlers.RefreshDirectHandler{TargetURL: h.BackURL}
 		cd.AutoRefresh = rdh.Content()

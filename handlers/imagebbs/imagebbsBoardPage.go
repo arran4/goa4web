@@ -110,7 +110,6 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
@@ -145,7 +144,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("decode image error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	fname := shaHex + ext
-	if p := upload.ProviderFromConfig(*cd.Config); p != nil {
+	if p := upload.ProviderFromConfig(cd.Config); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

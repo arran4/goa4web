@@ -23,7 +23,11 @@ func TestPaginationConfigPrecedence(t *testing.T) {
 		config.EnvPageSizeDefault: "18",
 	}
 	_ = fs.Parse([]string{"--page-size-min=12", "--page-size-default=15"})
-	cfg := config.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(k string) string { return env[k] }),
+	)
 	if cfg.PageSizeMin != 12 || cfg.PageSizeMax != 20 || cfg.PageSizeDefault != 15 {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -35,7 +39,11 @@ func TestLoadPaginationConfigFromFileValues(t *testing.T) {
 		config.EnvPageSizeMin:     "7",
 		config.EnvPageSizeDefault: "9",
 	}
-	cfg := config.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(string) string { return "" }),
+	)
 	if cfg.PageSizeMin != 7 || cfg.PageSizeDefault != 9 {
 		t.Fatalf("want 7/9 got %#v", cfg)
 	}

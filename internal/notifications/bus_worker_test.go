@@ -125,7 +125,7 @@ func (errProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 
 func TestProcessEventDLQ(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
@@ -154,7 +154,7 @@ func TestProcessEventDLQ(t *testing.T) {
 
 func TestProcessEventSubscribeSelf(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
@@ -175,7 +175,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 
 func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
@@ -195,7 +195,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 
 func TestProcessEventAdminNotify(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.AdminEmails = "a@test"
@@ -218,7 +218,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 
 func TestProcessEventWritingSubscribers(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
@@ -255,7 +255,7 @@ func (targetTask) TargetInternalNotificationTemplate() *string {
 
 func TestProcessEventTargetUsers(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 
 	db, mock, err := sqlmock.New()
@@ -290,7 +290,7 @@ func TestProcessEventTargetUsers(t *testing.T) {
 
 func TestBusWorker(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
@@ -340,7 +340,7 @@ func (autoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, er
 
 func TestProcessEventAutoSubscribe(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 
 	db, mock, err := sqlmock.New()

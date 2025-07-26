@@ -33,7 +33,10 @@ func (c *configReloadCmd) Run() error {
 		return fmt.Errorf("load config file: %w", err)
 	}
 	c.rootCmd.Verbosef("reloading configuration")
-	admin.Srv.Config = *config.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
+	admin.Srv.Config = config.NewRuntimeConfig(
+		config.WithFileValues(cfgMap),
+		config.WithGetenv(os.Getenv),
+	)
 	c.rootCmd.Infof("configuration reloaded")
 	return nil
 }

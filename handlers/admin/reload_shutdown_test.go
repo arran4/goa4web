@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	serverpkg "github.com/arran4/goa4web/internal/app/server"
 )
 
 func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
@@ -34,7 +35,7 @@ func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	RegisterRoutes(ar, *cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
@@ -54,8 +55,8 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 func TestAdminReloadRoute_Authorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	RegisterRoutes(ar, cfg)
+	cfg := config.NewRuntimeConfig()
+	RegisterRoutes(ar, *cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -74,7 +75,7 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	RegisterRoutes(ar, *cfg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
@@ -91,16 +92,12 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	}
 }
 
-type stubServer struct{}
-
-func (stubServer) Shutdown(context.Context) error { return nil }
-
 func TestAdminShutdownRoute_Authorized(t *testing.T) {
-	Srv = &stubServer{}
+	Srv = &serverpkg.Server{}
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	RegisterRoutes(ar, cfg)
+	cfg := config.NewRuntimeConfig()
+	RegisterRoutes(ar, *cfg)
 
 	form := url.Values{}
 	form.Set("task", string(TaskServerShutdown))
@@ -121,7 +118,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 
 func TestServerShutdownTask_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -137,7 +134,7 @@ func TestServerShutdownTask_Unauthorized(t *testing.T) {
 
 func TestServerShutdownMatcher_Denied(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -151,7 +148,7 @@ func TestServerShutdownMatcher_Allowed(t *testing.T) {
 	body := strings.NewReader("task=" + url.QueryEscape(string(TaskServerShutdown)))
 	req := httptest.NewRequest(http.MethodPost, "/admin/shutdown", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	cd.SetRoles([]string{"administrator"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

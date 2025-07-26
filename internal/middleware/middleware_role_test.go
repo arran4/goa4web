@@ -15,11 +15,24 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
 )
 
 func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
+	// Set up isolated globals for the test.
+	nav.SetDefaultRegistry(nav.NewRegistry())
+	t.Cleanup(func() { nav.SetDefaultRegistry(nav.NewRegistry()) })
+	origStore := core.Store
+	origSessionName := core.SessionName
+	core.Store = sessions.NewCookieStore([]byte("test"))
+	core.SessionName = "test-session"
+	t.Cleanup(func() {
+		core.Store = origStore
+		core.SessionName = origSessionName
+	})
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -63,12 +76,25 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 }
 
 func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
+	// Set up isolated globals for the test.
+	nav.SetDefaultRegistry(nav.NewRegistry())
+	t.Cleanup(func() { nav.SetDefaultRegistry(nav.NewRegistry()) })
+	origStore := core.Store
+	origSessionName := core.SessionName
+	core.Store = sessions.NewCookieStore([]byte("test"))
+	core.SessionName = "test-session"
+	t.Cleanup(func() {
+		core.Store = origStore
+		core.SessionName = origSessionName
+	})
+
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	// TODO find a way of avoid tests which impact global state
 	mock.MatchExpectationsInOrder(false)
 
 	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").

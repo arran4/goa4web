@@ -28,15 +28,16 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		PageSize int
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Search:   r.URL.Query().Get("search"),
-		PageSize: handlers.GetPageSize(r),
+		PageSize: cd.PageSize(),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	pageSize := handlers.GetPageSize(r)
+	pageSize := cd.PageSize()
 	rows, err := data.CoreData.Bloggers(r)
 	if err != nil {
 		switch {

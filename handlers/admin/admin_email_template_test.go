@@ -149,7 +149,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 
 	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
 	defer os.Unsetenv(config.EnvAdminEmails)
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg = config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	origEmails := cfg.AdminEmails
 	cfg.AdminEmails = "a@test.com,b@test.com"
 	defer func() { cfg.AdminEmails = origEmails }()
@@ -167,7 +167,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 2, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithQueries(q), notif.WithEmailProvider(rec), notif.WithConfig(cfg))
+	n := notif.New(notif.WithQueries(q), notif.WithEmailProvider(rec), notif.WithConfig(*cfg))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 direct mails, got %d", len(rec.to))
@@ -187,10 +187,9 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 	cfg.AdminEmails = "a@test.com"
 	defer os.Unsetenv(config.EnvAdminEmails)
 	defer os.Unsetenv(config.EnvAdminNotify)
-	origEmails := cfg.AdminEmails
 	cfg.AdminEmails = "a@test.com"
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithEmailProvider(rec), notif.WithConfig(cfg))
+	n := notif.New(notif.WithEmailProvider(rec), notif.WithConfig(*cfg))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))

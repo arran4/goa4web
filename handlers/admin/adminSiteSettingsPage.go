@@ -17,7 +17,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.FeedsEnabled = cd.Config.FeedsEnabled
 
-	values := config.ValuesMap(cd.Config)
+	values := config.ValuesMap(*cd.Config)
 	defaults := config.DefaultMap()
 	usages := config.UsageMap()
 	examples := config.ExamplesMap()

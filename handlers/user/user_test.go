@@ -294,7 +294,6 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	defer db.Close()
 
 	queries := dbpkg.New(db)
-	cfg.PageSizeDefault = 15
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -315,6 +314,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	}
 	rr := httptest.NewRecorder()
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.PageSizeDefault = 15
 
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, queries, cfg, common.WithSession(sess))

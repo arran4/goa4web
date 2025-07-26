@@ -16,11 +16,9 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	notif "github.com/arran4/goa4web/internal/notifications"
-
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // TestTemplateTask queues an email using the template for preview.

@@ -10,8 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/config"
 )
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +27,8 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		StartYear         int
 	}
 	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	queries := data.Queries()
+	cd := data.CoreData
+	queries := cd.Queries()
 
 	var wg sync.WaitGroup
 	wg.Add(8)

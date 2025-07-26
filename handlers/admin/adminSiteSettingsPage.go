@@ -18,7 +18,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	cd.FeedsEnabled = cd.Config.FeedsEnabled
 
 	values := config.ValuesMap(cd.Config)
-	defaults := config.DefaultMap()
+	defaults := config.DefaultMap(config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	usages := config.UsageMap()
 	examples := config.ExamplesMap()
 	flags := config.NameMap()

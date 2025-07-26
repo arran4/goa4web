@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/lazy"
 
 	"github.com/gorilla/mux"
 
@@ -50,7 +51,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd != nil {
-			cd.WritingByID(int32(writingID), common.LazySet[*db.GetWritingByIdForUserDescendingByPublishedDateRow](row))
+			cd.WritingByID(int32(writingID), lazy.Set[*db.GetWritingByIdForUserDescendingByPublishedDateRow](row))
 			cd.SetCurrentWriting(int32(writingID))
 		}
 		if cd != nil && cd.HasAdminRole() {

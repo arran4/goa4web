@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/lazy"
 )
 
 // RequireBlogAuthor ensures the requester authored the blog entry referenced in the URL.
@@ -48,7 +49,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 		}
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd != nil {
-			cd.BlogEntryByID(int32(blogID), common.LazySet[*db.GetBlogEntryForUserByIdRow](row))
+			cd.BlogEntryByID(int32(blogID), lazy.Set[*db.GetBlogEntryForUserByIdRow](row))
 			cd.SetCurrentBlog(int32(blogID))
 		}
 		if cd != nil && cd.HasRole("administrator") {

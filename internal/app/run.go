@@ -190,6 +190,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOpt
 		server.WithImageSigner(imgSigner),
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
+		server.WithTasksRegistry(o.TasksReg),
 	)
 	nav.SetDefaultRegistry(navReg)
 
@@ -211,7 +212,6 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOpt
 	adminhandlers.Srv = srv
 	adminhandlers.DBPool = dbPool
 	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
-	srv.TasksReg = o.TasksReg
 
 	emailProvider := o.EmailReg.ProviderFromConfig(cfg)
 	if cfg.EmailEnabled && cfg.EmailProvider != "" && cfg.EmailFrom == "" {

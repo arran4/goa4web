@@ -51,6 +51,7 @@
   "SESSION_NAME": "my-session",
   "SESSION_SECRET": "",
   "SESSION_SECRET_FILE": ".session_secret",
+  "SESSION_SAME_SITE": "strict",
   "SMTP_AUTH": "plain",
   "SMTP_HOST": "",
   "SMTP_PASS": "",

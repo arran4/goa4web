@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/internal/app/server"
@@ -129,7 +130,16 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	}
 	core.Store = store
 	core.SessionName = cfg.SessionName
-	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode}
+	sameSite := http.SameSiteStrictMode
+	switch strings.ToLower(cfg.SessionSameSite) {
+	case "lax":
+		sameSite = http.SameSiteLaxMode
+	case "none":
+		sameSite = http.SameSiteNoneMode
+	case "strict":
+		sameSite = http.SameSiteStrictMode
+	}
+	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: sameSite}
 
 	dbPool := o.DB
 	if dbPool == nil {
@@ -178,7 +188,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		server.WithDLQRegistry(o.DLQReg),
 	)
 	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
-  // TODO the following should be New.WIth* arguments above - merge conflict issue perhaps resolve.
+	// TODO the following should be New.WIth* arguments above - merge conflict issue perhaps resolve.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg
 	srv.ImageSigner = imgSigner

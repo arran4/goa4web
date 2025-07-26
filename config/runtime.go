@@ -240,6 +240,13 @@ func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 	return generateRuntimeConfig(fs, fileVals, getenv, nil, nil, nil)
 }
 
+// NewRuntimeConfig returns the runtime configuration using OS environment values.
+// It is a convenience wrapper around GenerateRuntimeConfig for tests and
+// commands that only rely on environment variables.
+func NewRuntimeConfig() *RuntimeConfig {
+	return GenerateRuntimeConfig(nil, map[string]string{}, os.Getenv)
+}
+
 // GenerateRuntimeConfigWithOptions is like GenerateRuntimeConfig but also considers
 // the supplied option slices.
 func GenerateRuntimeConfigWithOptions(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption) *RuntimeConfig {

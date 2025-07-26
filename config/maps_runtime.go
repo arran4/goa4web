@@ -12,13 +12,13 @@ func DefaultMap() map[string]string {
 	cfg := GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	m := make(map[string]string)
 	for _, o := range StringOptions {
-		m[o.Env] = *o.Target(&cfg)
+		m[o.Env] = *o.Target(cfg)
 	}
 	for _, o := range IntOptions {
-		m[o.Env] = strconv.Itoa(*o.Target(&cfg))
+		m[o.Env] = strconv.Itoa(*o.Target(cfg))
 	}
 	for _, o := range BoolOptions {
-		m[o.Env] = strconv.FormatBool(*o.Target(&cfg))
+		m[o.Env] = strconv.FormatBool(*o.Target(cfg))
 	}
 	return m
 }

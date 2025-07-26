@@ -9,15 +9,15 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
-	nav.RegisterIndexLink("Writings", "/writings", SectionWeight)
-	nav.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterIndexLink("Writings", "/writings", SectionWeight)
+	navReg.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()
 	wr.Use(handlers.IndexMiddleware(CustomWritingsIndex))
 	wr.HandleFunc("/rss", RssPage).Methods("GET")

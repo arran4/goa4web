@@ -5,13 +5,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterAdminRoutes attaches the admin language endpoints to the router.
-func RegisterAdminRoutes(ar *mux.Router) {
-	nav.RegisterAdminControlCenter("Languages", "/admin/languages", SectionWeight)
+func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
+	navReg.RegisterAdminControlCenter("Languages", "/admin/languages", SectionWeight)
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
 	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
 	ar.HandleFunc("/languages", handlers.TaskHandler(renameLanguageTask)).Methods("POST").MatcherFunc(renameLanguageTask.Matcher())
@@ -21,9 +21,9 @@ func RegisterAdminRoutes(ar *mux.Router) {
 
 // Register registers the languages router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("languages", nil, func(r *mux.Router, cfg *config.RuntimeConfig) {
+	reg.RegisterModule("languages", nil, func(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
-		RegisterAdminRoutes(ar)
+		RegisterAdminRoutes(ar, navReg)
 	})
 }

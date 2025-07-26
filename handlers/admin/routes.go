@@ -16,24 +16,24 @@ import (
 	search "github.com/arran4/goa4web/handlers/search"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
 	writings "github.com/arran4/goa4web/handlers/writings"
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
-func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig) {
-	nav.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
-	nav.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
-	nav.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
-	nav.RegisterAdminControlCenter("Sent Emails", "/admin/email/sent", 115)
-	nav.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
-	nav.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
-	nav.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
-	nav.RegisterAdminControlCenter("Requests", "/admin/requests", 145)
-	nav.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
-	nav.RegisterAdminControlCenter("Pagination", "/admin/page-size", 152)
-	nav.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
+func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
+	navReg.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
+	navReg.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
+	navReg.RegisterAdminControlCenter("Sent Emails", "/admin/email/sent", 115)
+	navReg.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
+	navReg.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
+	navReg.RegisterAdminControlCenter("Server Stats", "/admin/stats", 140)
+	navReg.RegisterAdminControlCenter("Requests", "/admin/requests", 145)
+	navReg.RegisterAdminControlCenter("Site Settings", "/admin/settings", 150)
+	navReg.RegisterAdminControlCenter("Pagination", "/admin/page-size", 152)
+	navReg.RegisterAdminControlCenter("Usage Stats", "/admin/usage", 160)
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
@@ -88,8 +88,8 @@ func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig) {
 	// faq admin
 	faq.RegisterAdminRoutes(ar)
 	search.RegisterAdminRoutes(ar)
-	userhandlers.RegisterAdminRoutes(ar)
-	languages.RegisterAdminRoutes(ar)
+	userhandlers.RegisterAdminRoutes(ar, navReg)
+	languages.RegisterAdminRoutes(ar, navReg)
 	blogs.RegisterAdminRoutes(ar)
 
 	// news admin
@@ -120,10 +120,10 @@ func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig) {
 
 // Register registers the admin router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig) {
+	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		ar.Use(handlers.IndexMiddleware(CustomIndex))
-		RegisterRoutes(ar, cfg)
+		RegisterRoutes(ar, cfg, navReg)
 	})
 }

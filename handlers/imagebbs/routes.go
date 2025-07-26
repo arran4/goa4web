@@ -9,13 +9,13 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
 // RegisterRoutes attaches the public image board endpoints to r.
-func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) {
-	nav.RegisterIndexLink("ImageBBS", "/imagebbs", SectionWeight)
-	nav.RegisterAdminControlCenter("ImageBBS", "/admin/imagebbs", SectionWeight)
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterIndexLink("ImageBBS", "/imagebbs", SectionWeight)
+	navReg.RegisterAdminControlCenter("ImageBBS", "/admin/imagebbs", SectionWeight)
 	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	ibr.Use(handlers.IndexMiddleware(CustomImageBBSIndex))

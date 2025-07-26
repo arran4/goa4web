@@ -62,7 +62,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg.ProviderFromConfig(cfg)), cfg)
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -95,7 +95,7 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg.ProviderFromConfig(cfg)), cfg)
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -218,7 +218,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	ctx := req.Context()
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cfg.PageSizeDefault = 15
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), common.WithConfig(cfg))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithSession(sess))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -266,7 +266,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -317,7 +317,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), cfg)
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithSession(sess))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

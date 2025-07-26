@@ -32,7 +32,7 @@ func setupCommentRequest(t *testing.T, queries *db.Queries, store *sessions.Cook
 		req.AddCookie(c)
 	}
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess

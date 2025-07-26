@@ -182,7 +182,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	req.Host = "example.com"
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cfg.HTTPHostname = ""
-	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), &cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -197,7 +197,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	}
 
 	cfg.HTTPHostname = "https://example.com"
-	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), &cfg)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {

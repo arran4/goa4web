@@ -83,6 +83,8 @@ const (
 	EnvSessionSecret = "SESSION_SECRET"
 	// EnvSessionSecretFile specifies the file containing the session secret.
 	EnvSessionSecretFile = "SESSION_SECRET_FILE"
+	// EnvSessionSameSite sets the cookie SameSite policy for session data.
+	EnvSessionSameSite = "SESSION_SAME_SITE"
 
 	// EnvDocker indicates the application is running inside a Docker container.
 	EnvDocker = "GOA4WEB_DOCKER"

@@ -88,32 +88,16 @@ func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
 	data.CustomIndexItems = []common.IndexItem{}
 	if data.FeedsEnabled {
-		if user == "" {
-			// TODO This is messy change the way RSSs are accessed / listed
-			data.CustomIndexItems = append(data.CustomIndexItems,
-				common.IndexItem{
-					Name: "Everyones Atom Feed",
-					Link: "/blogs/atom",
-				},
-				common.IndexItem{
-					Name: "Everyones RSS Feed",
-					Link: "/blogs/rss",
-				},
-			)
-		} else {
-			data.CustomIndexItems = append(data.CustomIndexItems,
-				common.IndexItem{
-					Name: fmt.Sprintf("%s Atom Feed", user),
-					Link: fmt.Sprintf("/blogs/atom?user=%s", url.QueryEscape(user)),
-				},
-				common.IndexItem{
-					Name: fmt.Sprintf("%s RSS Feed", user),
-					Link: fmt.Sprintf("/blogs/rss?user=%s", url.QueryEscape(user)),
-				},
-			)
+		suffix := ""
+		if user != "" {
+			suffix = "?user=" + url.QueryEscape(user)
 		}
-		data.RSSFeedUrl = "/blogs/rss"
-		data.AtomFeedUrl = "/blogs/atom"
+		data.RSSFeedUrl = "/blogs/rss" + suffix
+		data.AtomFeedUrl = "/blogs/atom" + suffix
+		data.CustomIndexItems = append(data.CustomIndexItems,
+			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
+			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
+		)
 	}
 
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode

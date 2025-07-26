@@ -31,7 +31,7 @@ func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	RegisterRoutes(ar)
+	RegisterRoutes(ar, config.AppRuntimeConfig)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
@@ -50,7 +50,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	RegisterRoutes(ar)
+	RegisterRoutes(ar, config.AppRuntimeConfig)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))

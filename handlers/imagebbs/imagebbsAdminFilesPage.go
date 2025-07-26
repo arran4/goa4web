@@ -29,7 +29,6 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	base := cd.Config.ImageUploadDir
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)

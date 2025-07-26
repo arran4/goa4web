@@ -59,7 +59,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.AdminEmails = "a@test"
@@ -82,7 +82,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 }
 
 func TestNotifierInitialization(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	n := New(WithConfig(*cfg))
 	if n.Queries != nil {
 		t.Fatalf("expected nil Queries")

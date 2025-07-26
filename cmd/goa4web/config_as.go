@@ -29,8 +29,8 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 }
 
 func defaultMap() map[string]string {
-	def := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	m, _ := config.ToEnvMap(*def, "")
+	def := config.NewRuntimeConfig()
+	m, _ := config.ToEnvMap(def, "")
 	return m
 }
 

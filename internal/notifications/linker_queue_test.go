@@ -12,7 +12,7 @@ import (
 
 func TestLinkerQueueNotifierMessages(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailFrom = "from@example.com"
 	ntName := NotificationTemplateFilenameGenerator("linker_approved")
 

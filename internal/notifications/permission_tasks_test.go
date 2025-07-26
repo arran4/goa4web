@@ -34,7 +34,7 @@ func (updateTaskNoEmail) TargetEmailTemplate() *notif.EmailTemplates { return ni
 func TestProcessEventPermissionTasks(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 	cfg.EmailFrom = "from@example.com"
 

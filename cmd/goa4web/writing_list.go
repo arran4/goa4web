@@ -68,7 +68,7 @@ func (c *writingListCmd) Run() error {
 		}
 		return nil
 	}
-	cd := common.NewCoreData(ctx, queries, c.rootCmd.cfg)
+	cd := common.NewCoreData(ctx, queries, &c.rootCmd.cfg)
 	rows, err := cd.LatestWritings(common.WithWritingsOffset(int32(c.Offset)), common.WithWritingsLimit(int32(c.Limit)))
 	if err != nil {
 		return fmt.Errorf("list writings: %w", err)

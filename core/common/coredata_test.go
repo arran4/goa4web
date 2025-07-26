@@ -230,7 +230,7 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 }
 
 func TestBloggersLazy(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -263,7 +263,7 @@ func TestBloggersLazy(t *testing.T) {
 
 func TestWritersLazy(t *testing.T) {
 
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 
 	db, mock, err := sqlmock.New()
 	if err != nil {

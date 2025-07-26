@@ -14,7 +14,7 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
-func TestRedirectBackPageHandlerGET(t *testing.T) {
+func TestRedirectBackPageHandlerGETAlt(t *testing.T) {
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)

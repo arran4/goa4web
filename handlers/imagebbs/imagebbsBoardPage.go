@@ -110,7 +110,6 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))

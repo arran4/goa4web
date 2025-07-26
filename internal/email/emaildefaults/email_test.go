@@ -63,7 +63,11 @@ func TestEmailConfigPrecedence(t *testing.T) {
 		config.EnvSMTPHost:      "file",
 	}
 	_ = fs.Parse([]string{"--email-provider=smtp", "--smtp-port=25"})
-	cfg := config.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(k string) string { return env[k] }),
+	)
 	if cfg.EmailProvider != "smtp" || cfg.EmailSMTPHost != "file" || cfg.EmailSMTPPort != "25" {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -74,7 +78,11 @@ func TestLoadEmailConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvEmailProvider: "log",
 	}
-	cfg := config.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(string) string { return "" }),
+	)
 	if cfg.EmailProvider != "log" {
 		t.Fatalf("want log got %q", cfg.EmailProvider)
 	}
@@ -98,7 +106,7 @@ func TestInsertPendingEmail(t *testing.T) {
 }
 
 func TestEmailQueueWorker(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 
 	db, mock, err := sqlmock.New()
@@ -134,7 +142,7 @@ func (errProvider) Send(context.Context, mail.Address, []byte) error {
 }
 
 func TestProcessPendingEmailDLQ(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 
 	db, mock, err := sqlmock.New()

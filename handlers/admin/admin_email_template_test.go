@@ -29,12 +29,12 @@ func newEmailReg() *email.Registry {
 }
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	reg := newEmailReg()
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithEmailProvider(reg.ProviderFromConfig(*cfg)))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -48,7 +48,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 }
 
 func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = "log"
 
 	sqldb, mock, err := sqlmock.New()
@@ -67,7 +67,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	q := db.New(sqldb)
 	reg := newEmailReg()
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithEmailProvider(reg.ProviderFromConfig(*cfg)))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -125,7 +125,7 @@ func (r *recordAdminMail) Send(ctx context.Context, to mail.Address, rawEmailMes
 }
 
 func TestNotifyAdminsEnv(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.AdminEmails = "a@test.com,b@test.com"
 	cfg.AdminNotify = true
 	cfg.EmailEnabled = true
@@ -149,7 +149,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 
 	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
 	defer os.Unsetenv(config.EnvAdminEmails)
-	cfg = config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg = config.NewRuntimeConfig()
 	origEmails := cfg.AdminEmails
 	cfg.AdminEmails = "a@test.com,b@test.com"
 	defer func() { cfg.AdminEmails = origEmails }()
@@ -178,7 +178,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 }
 
 func TestNotifyAdminsDisabled(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	cfg.AdminEmails = "a@test.com"
 	cfg.AdminNotify = false
 	cfg.EmailEnabled = true

@@ -25,7 +25,13 @@ func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 		config.EnvEmailLogVerbosity: "2",
 	}
 
-	cfg := config.GenerateRuntimeConfigWithOptions(fs, vals, func(k string) string { return env[k] }, []config.StringOption{strOpt}, []config.IntOption{intOpt, intOpt2})
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(k string) string { return env[k] }),
+		config.WithStringOptions([]config.StringOption{strOpt}),
+		config.WithIntOptions([]config.IntOption{intOpt, intOpt2}),
+	)
 
 	if cfg.DBConn != "cli" || cfg.DBLogVerbosity != 5 || cfg.EmailLogVerbosity != 4 {
 		t.Fatalf("merged %#v", cfg)
@@ -39,7 +45,12 @@ func TestGenerateRuntimeConfigWithInjectedFileValue(t *testing.T) {
 
 	vals := map[string]string{config.EnvDBConn: "file"}
 
-	cfg := config.GenerateRuntimeConfigWithOptions(fs, vals, func(string) string { return "" }, []config.StringOption{strOpt}, nil)
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(string) string { return "" }),
+		config.WithStringOptions([]config.StringOption{strOpt}),
+	)
 
 	if cfg.DBConn != "file" {
 		t.Fatalf("want file got %q", cfg.DBConn)

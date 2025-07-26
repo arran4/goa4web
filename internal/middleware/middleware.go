@@ -88,10 +88,13 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity 
 			}
 
 			base := "http://" + r.Host
-			if cfg.HTTPHostname != "" {
+			if cfg != nil && cfg.HTTPHostname != "" {
 				base = strings.TrimRight(cfg.HTTPHostname, "/")
 			}
-			provider := emailReg.ProviderFromConfig(cfg)
+			var provider email.Provider
+			if emailReg != nil && cfg != nil {
+				provider = emailReg.ProviderFromConfig(*cfg)
+			}
 			cd := common.NewCoreData(r.Context(), queries, cfg,
 				common.WithImageSigner(signer),
 				common.WithSession(session),

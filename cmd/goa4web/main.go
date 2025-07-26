@@ -194,7 +194,11 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 
 	r.ConfigFile = cfgPath
-	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
+	r.cfg = *config.NewRuntimeConfig(
+		config.WithFlagSet(r.fs),
+		config.WithFileValues(fileVals),
+		config.WithGetenv(os.Getenv),
+	)
 	return r, nil
 }
 

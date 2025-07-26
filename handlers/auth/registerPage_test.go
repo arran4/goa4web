@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -25,7 +26,8 @@ func TestRegisterActionPageValidation(t *testing.T) {
 	for _, c := range cases {
 		req := httptest.NewRequest("POST", "/register", strings.NewReader(c.form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
 		handlers.TaskHandler(registerTask)(rr, req)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -98,9 +100,9 @@ func TestServerShutdownMatcher_Denied(t *testing.T) {
 }
 
 func TestServerShutdownMatcher_Allowed(t *testing.T) {
-	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	req.Form = make(map[string][]string)
-	req.Form.Set("task", string(TaskServerShutdown))
+	body := strings.NewReader("task=" + url.QueryEscape(string(TaskServerShutdown)))
+	req := httptest.NewRequest(http.MethodPost, "/admin/shutdown", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	cd.SetRoles([]string{"administrator"})

@@ -83,7 +83,7 @@
         link.addEventListener('click', e => {
             e.preventDefault();
             const data = new URLSearchParams();
-            data.set('gorilla.csrf.Token', '{{ csrf }}');
+            data.set('gorilla.csrf.Token', '{{ csrfToken }}');
             data.set('task', 'Toggle read');
             data.set('id', link.dataset.id);
             fetch('/admin/notifications', {method: 'POST', body: data}).then(() => { location.reload(); });

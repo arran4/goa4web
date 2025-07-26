@@ -9,9 +9,8 @@ import (
 	emailpkg "github.com/arran4/goa4web/internal/email"
 )
 
-// Register registers all stable DLQ providers.
-func Register(r *dlqpkg.Registry, er *emailpkg.Registry) {
-	// TODO refactor this out it's incorrectly being used
+// RegisterDefaults registers all stable DLQ providers.
+func RegisterDefaults(r *dlqpkg.Registry, er *emailpkg.Registry) {
 	file.Register(r)
 	dir.Register(r)
 	db.Register(r)

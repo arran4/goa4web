@@ -9,9 +9,9 @@ import (
 )
 
 // RegisterRoutes attaches the search endpoints to r.
-func RegisterRoutes(r *mux.Router) {
-	nav.RegisterIndexLink("Search", "/search", SectionWeight)
-	nav.RegisterAdminControlCenter("Search", "/admin/search", SectionWeight)
+func RegisterRoutes(r *mux.Router, navReg *nav.Registry) {
+	navReg.RegisterIndexLink("Search", "/search", SectionWeight)
+	navReg.RegisterAdminControlCenter("Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.Use(handlers.IndexMiddleware(CustomIndex))
 	sr.HandleFunc("", Page).Methods("GET")
@@ -23,6 +23,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the search router module.
-func Register(reg *router.Registry) {
-	reg.RegisterModule("search", []string{"news"}, RegisterRoutes)
+func Register(reg *router.Registry, navReg *nav.Registry) {
+	reg.RegisterModule("search", []string{"news"}, func(r *mux.Router) { RegisterRoutes(r, navReg) })
 }

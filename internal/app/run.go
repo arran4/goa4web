@@ -58,6 +58,7 @@ type serverOptions struct {
 	Store           *sessions.CookieStore
 	DB              *sql.DB
 	RouterReg       *routerpkg.Registry
+	NavReg          *nav.Registry
 }
 
 // WithSessionSecret supplies the session cookie encryption secret.
@@ -108,6 +109,9 @@ func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db
 func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
 	return func(o *serverOptions) { o.RouterReg = r }
 }
+
+// WithNavRegistry sets the navigation registry used when registering routes.
+func WithNavRegistry(r *nav.Registry) ServerOption { return func(o *serverOptions) { o.NavReg = r } }
 
 // NewServer constructs the server and supporting services using the provided
 // configuration and optional parameters.
@@ -168,7 +172,10 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r, reg)
 
-	navReg := nav.NewRegistry()
+	navReg := o.NavReg
+	if navReg == nil {
+		navReg = nav.NewRegistry()
+	}
 	srv := server.New(
 		server.WithStore(store),
 		server.WithDB(dbPool),
@@ -177,8 +184,8 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		server.WithNavRegistry(navReg),
 		server.WithDLQRegistry(o.DLQReg),
 	)
-	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
-  // TODO the following should be New.WIth* arguments above - merge conflict issue perhaps resolve.
+	// Navigation registry is supplied via options; no global state.
+	// TODO the following should be New.WIth* arguments above - merge conflict issue perhaps resolve.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg
 	srv.ImageSigner = imgSigner

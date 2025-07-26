@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches user account endpoints to the router.
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, _ *nav.Registry) {
 	ur := r.PathPrefix("/usr").Subrouter()
 	ur.Use(handlers.IndexMiddleware(CustomIndex))
 	ur.HandleFunc("", userPage).Methods(http.MethodGet)
@@ -43,6 +44,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the user router module.
-func Register(reg *router.Registry) {
-	reg.RegisterModule("user", nil, RegisterRoutes)
+func Register(reg *router.Registry, navReg *nav.Registry) {
+	reg.RegisterModule("user", nil, func(r *mux.Router) { RegisterRoutes(r, navReg) })
 }

@@ -9,8 +9,8 @@ import (
 )
 
 // RegisterAdminRoutes attaches the admin language endpoints to the router.
-func RegisterAdminRoutes(ar *mux.Router) {
-	nav.RegisterAdminControlCenter("Languages", "/admin/languages", SectionWeight)
+func RegisterAdminRoutes(ar *mux.Router, navReg *nav.Registry) {
+	navReg.RegisterAdminControlCenter("Languages", "/admin/languages", SectionWeight)
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
 	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
 	ar.HandleFunc("/languages", handlers.TaskHandler(renameLanguageTask)).Methods("POST").MatcherFunc(renameLanguageTask.Matcher())
@@ -19,10 +19,10 @@ func RegisterAdminRoutes(ar *mux.Router) {
 }
 
 // Register registers the languages router module.
-func Register(reg *router.Registry) {
+func Register(reg *router.Registry, navReg *nav.Registry) {
 	reg.RegisterModule("languages", nil, func(r *mux.Router) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
-		RegisterAdminRoutes(ar)
+		RegisterAdminRoutes(ar, navReg)
 	})
 }

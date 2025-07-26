@@ -10,8 +10,8 @@ import (
 )
 
 // RegisterRoutes attaches the bookmarks endpoints to r.
-func RegisterRoutes(r *mux.Router) {
-	nav.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
+func RegisterRoutes(r *mux.Router, navReg *nav.Registry) {
+	navReg.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
 	br.Use(handlers.IndexMiddleware(bookmarksCustomIndex))
 	br.HandleFunc("", Page).Methods("GET")
@@ -22,6 +22,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the bookmarks router module.
-func Register(reg *router.Registry) {
-	reg.RegisterModule("bookmarks", nil, RegisterRoutes)
+func Register(reg *router.Registry, navReg *nav.Registry) {
+	reg.RegisterModule("bookmarks", nil, func(r *mux.Router) { RegisterRoutes(r, navReg) })
 }

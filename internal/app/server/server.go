@@ -25,8 +25,8 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	"github.com/arran4/goa4web/internal/tasks"
 	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/tasks"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 )
 
@@ -206,11 +206,16 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithSessionManager(sm),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
-      )
+			)
 			cd.UserID = uid
 			_ = cd.UserRoles()
 
-			idx := nav.IndexItems()
+			idx := []common.IndexItem(nil)
+			if s.Nav != nil {
+				idx = s.Nav.IndexItems()
+			} else {
+				idx = nav.IndexItems()
+			}
 			cd.IndexItems = idx
 			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = s.Config.FeedsEnabled

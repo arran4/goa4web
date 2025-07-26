@@ -33,6 +33,7 @@ import (
 	email "github.com/arran4/goa4web/internal/email"
 	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 
+	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/config"
@@ -93,6 +94,7 @@ type rootCmd struct {
 	emailReg   *email.Registry
 	dlqReg     *dlq.Registry
 	routerReg  *router.Registry
+	navReg     *nav.Registry
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
@@ -138,9 +140,10 @@ func parseRoot(args []string) (*rootCmd, error) {
 		emailReg:  email.NewRegistry(),
 		dlqReg:    dlq.NewRegistry(),
 		routerReg: router.NewRegistry(),
+		navReg:    nav.NewRegistry(),
 	}
 	registerTasks(r.tasksReg)
-	registerModules(r.routerReg)
+	registerModules(r.routerReg, r.navReg)
 	emaildefaults.Register(r.emailReg)
 	dlqreg.Register(r.dlqReg, r.emailReg)
 	dlq.RegisterLogDLQ(r.dlqReg)

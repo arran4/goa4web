@@ -4,7 +4,7 @@ This document summarises how site sections register menu items using the `naviga
 
 ## Package overview
 
-The `internal/navigation/registry.go` file defines a simple registry that collects links for the index page and the admin control centre. Links are represented by a struct containing the name, URL and an integer weight. A `Registry` struct stores the registered entries for the public index and for the admin pages. A single instance of this struct is constructed when the server starts and attached to the server state.
+The `internal/navigation/registry.go` file defines a simple registry that collects links for the index page and the admin control centre. Links are represented by a struct containing the name, URL and an integer weight. A `Registry` struct stores the registered entries for the public index and for the admin pages. A single instance of this struct is constructed when the server starts and passed to each handler during route registration.
 
 ```go
 // link represents a navigation item for either index or admin control center.
@@ -17,7 +17,7 @@ type link struct {
 
 ### RegisterIndexLink
 
-`RegisterIndexLink(name, url string, weight int)` appends an entry to the server's navigation registry. Each handler package calls this function in its `RegisterRoutes` setup to expose its public section in the menu.
+`RegisterIndexLink(name, url string, weight int)` appends an entry to the server's navigation registry. Each handler package receives the registry in its `RegisterRoutes` function and calls this method to expose its public section in the menu.
 
 ### RegisterAdminControlCenter
 
@@ -31,4 +31,4 @@ Handlers declare a `SectionWeight` constant which determines the relative order 
 
 ## Usage
 
-When a section is initialised, typically in its `RegisterRoutes` function, it calls these registration functions. At runtime the templates call `navigation.IndexItems()` or `navigation.AdminLinks()` to obtain the assembled menus.
+When a section is initialised, typically in its `RegisterRoutes` function, it calls these registration methods on the provided registry. At runtime handlers access the registry via dependency injection, for example `srv.Nav.IndexItems()`, instead of relying on package-level state.

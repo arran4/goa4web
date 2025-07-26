@@ -29,9 +29,15 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		Stats      Stats
 	}
 
+	links := []common.IndexItem(nil)
+	if Srv != nil && Srv.Nav != nil {
+		links = Srv.Nav.AdminLinks()
+	} else {
+		links = nav.AdminLinks()
+	}
 	data := Data{
 		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		AdminLinks: nav.AdminLinks(),
+		AdminLinks: links,
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ctx := r.Context()

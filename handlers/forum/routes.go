@@ -12,9 +12,9 @@ import (
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
-func RegisterRoutes(r *mux.Router) {
-	nav.RegisterIndexLink("Forum", "/forum", SectionWeight)
-	nav.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
+func RegisterRoutes(r *mux.Router, navReg *nav.Registry) {
+	navReg.RegisterIndexLink("Forum", "/forum", SectionWeight)
+	navReg.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.Use(handlers.IndexMiddleware(CustomForumIndex))
 	fr.HandleFunc("/topic/{topic}.rss", TopicRssPage).Methods("GET")
@@ -38,6 +38,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the forum router module.
-func Register(reg *router.Registry) {
-	reg.RegisterModule("forum", nil, RegisterRoutes)
+func Register(reg *router.Registry, navReg *nav.Registry) {
+	reg.RegisterModule("forum", nil, func(r *mux.Router) { RegisterRoutes(r, navReg) })
 }

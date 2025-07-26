@@ -14,9 +14,9 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.
-func RegisterRoutes(r *mux.Router) {
-	nav.RegisterIndexLink("Writings", "/writings", SectionWeight)
-	nav.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
+func RegisterRoutes(r *mux.Router, navReg *nav.Registry) {
+	navReg.RegisterIndexLink("Writings", "/writings", SectionWeight)
+	navReg.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()
 	wr.Use(handlers.IndexMiddleware(CustomWritingsIndex))
 	wr.HandleFunc("/rss", RssPage).Methods("GET")
@@ -49,6 +49,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the writings router module.
-func Register(reg *router.Registry) {
-	reg.RegisterModule("writings", nil, RegisterRoutes)
+func Register(reg *router.Registry, navReg *nav.Registry) {
+	reg.RegisterModule("writings", nil, func(r *mux.Router) { RegisterRoutes(r, navReg) })
 }

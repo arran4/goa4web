@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
 func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
@@ -31,7 +32,8 @@ func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	RegisterRoutes(ar)
+	navReg := nav.NewRegistry()
+	RegisterRoutes(ar, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
@@ -50,7 +52,8 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	RegisterRoutes(ar)
+	navReg := nav.NewRegistry()
+	RegisterRoutes(ar, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))

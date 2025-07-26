@@ -14,9 +14,9 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
-func RegisterRoutes(r *mux.Router) {
-	nav.RegisterIndexLink("Linker", "/linker", SectionWeight)
-	nav.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
+func RegisterRoutes(r *mux.Router, navReg *nav.Registry) {
+	navReg.RegisterIndexLink("Linker", "/linker", SectionWeight)
+	navReg.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()
 	lr.Use(handlers.IndexMiddleware(CustomLinkerIndex))
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
@@ -43,6 +43,6 @@ func RegisterRoutes(r *mux.Router) {
 }
 
 // Register registers the linker router module.
-func Register(reg *router.Registry) {
-	reg.RegisterModule("linker", nil, RegisterRoutes)
+func Register(reg *router.Registry, navReg *nav.Registry) {
+	reg.RegisterModule("linker", nil, func(r *mux.Router) { RegisterRoutes(r, navReg) })
 }

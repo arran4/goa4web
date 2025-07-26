@@ -31,7 +31,7 @@ var (
 )
 
 func init() {
-	log.Printf("Embedded Templatee Mode")
+	log.Printf("Embedded Template Mode")
 }
 
 func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {

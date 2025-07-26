@@ -29,7 +29,7 @@ func TestLinkerFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/linker/rss", nil)
-	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(config.RuntimeConfig{}, "k")}
+	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(&config.RuntimeConfig{}, "k")}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := linkerFeed(r, rows)
 	if len(feed.Items) != 1 {
@@ -44,8 +44,6 @@ func TestLinkerFeed(t *testing.T) {
 }
 func TestLinkerApproveAddsToSearch(t *testing.T) {
 	t.Skip("event bus worker requires long wait; skipping")
-	origCfg := config.AppRuntimeConfig
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
 
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
@@ -77,7 +75,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	cd := common.NewCoreData(req.Context(), queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
 	cd.SetEvent(evt)
 	cd.SetEventTask(ApproveTask)
 	ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)

@@ -22,7 +22,7 @@ import (
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
-func RegisterRoutes(ar *mux.Router, _ config.RuntimeConfig) {
+func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig) {
 	nav.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
 	nav.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
 	nav.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
@@ -101,11 +101,14 @@ func RegisterRoutes(ar *mux.Router, _ config.RuntimeConfig) {
 	// writings admin
 	writings.RegisterAdminRoutes(ar)
 
-	// TODO ensure requires administrator to run. Even from CLI.
-	ar.HandleFunc("/reload", AdminReloadConfigPage).
+	// Verify administrator access within the handlers so direct CLI calls
+	// cannot bypass the permission checks.
+	ar.HandleFunc("/reload",
+		handlers.VerifyAccess(AdminReloadConfigPage, "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator"))
-	ar.HandleFunc("/shutdown", handlers.TaskHandler(serverShutdownTask)).
+	ar.HandleFunc("/shutdown",
+		handlers.VerifyAccess(handlers.TaskHandler(serverShutdownTask), "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator")).
 		MatcherFunc(serverShutdownTask.Matcher())
@@ -117,7 +120,7 @@ func RegisterRoutes(ar *mux.Router, _ config.RuntimeConfig) {
 
 // Register registers the admin router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg config.RuntimeConfig) {
+	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		ar.Use(handlers.IndexMiddleware(CustomIndex))

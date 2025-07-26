@@ -10,8 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/config"
 )
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +27,8 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		StartYear         int
 	}
 	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	queries := data.Queries()
+	cd := data.CoreData
+	queries := cd.Queries()
 
 	var wg sync.WaitGroup
 	wg.Add(8)
@@ -97,7 +96,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		defer wg.Done()
-		if rows, err := queries.MonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err == nil {
+		if rows, err := queries.MonthlyUsageCounts(r.Context(), int32(cd.Config.StatsStartYear)); err == nil {
 			data.Monthly = rows
 		} else {
 			log.Printf("monthly usage counts: %v", err)
@@ -107,7 +106,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		defer wg.Done()
-		if rows, err := queries.UserMonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err == nil {
+		if rows, err := queries.UserMonthlyUsageCounts(r.Context(), int32(cd.Config.StatsStartYear)); err == nil {
 			data.UserMonthly = rows
 		} else {
 			log.Printf("user monthly usage counts: %v", err)
@@ -120,7 +119,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	for e := range errCh {
 		data.Errors = append(data.Errors, e)
 	}
-	data.StartYear = config.AppRuntimeConfig.StatsStartYear
+	data.StartYear = cd.Config.StatsStartYear
 
 	handlers.TemplateHandler(w, r, "usageStatsPage.gohtml", data)
 }

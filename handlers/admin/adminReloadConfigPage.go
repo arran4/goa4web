@@ -36,7 +36,10 @@ func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		log.Printf("load config file: %v", err)
 	}
-	Srv.Config = config.GenerateRuntimeConfig(nil, cfgMap, os.Getenv)
+	Srv.Config = config.NewRuntimeConfig(
+		config.WithFileValues(cfgMap),
+		config.WithGetenv(os.Getenv),
+	)
 	if err := corelanguage.ValidateDefaultLanguage(r.Context(), db.New(DBPool), Srv.Config.DefaultLanguage); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	}

@@ -9,7 +9,7 @@ import (
 // TestToEnvMapIncludesAllKeys ensures that the helper returns entries for all
 // runtime options plus special config values.
 func TestToEnvMapIncludesAllKeys(t *testing.T) {
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
 	m, err := config.ToEnvMap(cfg, "")
 	if err != nil {
 		t.Fatalf("ToEnvMap: %v", err)

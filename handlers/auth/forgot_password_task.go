@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -40,7 +39,8 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	username := r.PostFormValue("username")
 	pw := r.PostFormValue("password")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -63,7 +63,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{
 		UserID:    row.Idusers,
-		CreatedAt: time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour),
+		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
 	}); err == nil {
 		if time.Since(reset.CreatedAt) < 24*time.Hour {
 			return handlers.ErrRedirectOnSamePageHandler(errors.New("reset recently requested"))

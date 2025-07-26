@@ -12,11 +12,10 @@ import (
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
-
-	"github.com/arran4/goa4web/config"
 )
 
 func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	type Entry struct {
 		Name  string
 		Path  string
@@ -30,7 +29,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
-	base := config.AppRuntimeConfig.ImageUploadDir
+	base := cd.Config.ImageUploadDir
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)

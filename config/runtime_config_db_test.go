@@ -18,7 +18,11 @@ func TestDBConfigPrecedence(t *testing.T) {
 		config.EnvDBConn: "file",
 	}
 	_ = fs.Parse([]string{"--db-conn=cli"})
-	cfg := config.GenerateRuntimeConfig(fs, vals, func(k string) string { return env[k] })
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(k string) string { return env[k] }),
+	)
 	if cfg.DBConn != "cli" {
 		t.Fatalf("merged %#v", cfg)
 	}
@@ -29,7 +33,11 @@ func TestLoadDBConfigFromFileValues(t *testing.T) {
 	vals := map[string]string{
 		config.EnvDBConn: "fileval",
 	}
-	cfg := config.GenerateRuntimeConfig(fs, vals, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(string) string { return "" }),
+	)
 	if cfg.DBConn != "fileval" {
 		t.Fatalf("want fileval got %q", cfg.DBConn)
 	}

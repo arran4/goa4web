@@ -38,6 +38,18 @@ func TestTemplateFuncsLeft(t *testing.T) {
 	}
 }
 
+func TestTemplateFuncsCSRFToken(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	cd := &common.CoreData{}
+	funcs := cd.Funcs(r)
+	if _, ok := funcs["csrfToken"]; !ok {
+		t.Errorf("csrfToken func missing")
+	}
+	if _, ok := funcs["csrf"]; ok {
+		t.Errorf("csrf func should not be present")
+	}
+}
+
 func TestLatestNewsRespectsPermissions(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -65,7 +77,7 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

@@ -17,7 +17,7 @@ func TestToEnvMapLoops(t *testing.T) {
 		StatsStartYear:       2020,
 	}
 
-	m, err := config.ToEnvMap(cfg, "")
+	m, err := config.ToEnvMap(&cfg, "")
 	if err != nil {
 		t.Fatalf("ToEnvMap: %v", err)
 	}

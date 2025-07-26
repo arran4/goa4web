@@ -12,9 +12,8 @@ import (
 
 func TestLinkerQueueNotifierMessages(t *testing.T) {
 	ctx := context.Background()
-	cfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { config.AppRuntimeConfig = cfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailFrom = "from@example.com"
 	ntName := NotificationTemplateFilenameGenerator("linker_approved")
 
 	db, mock, err := sqlmock.New()
@@ -36,7 +35,7 @@ func TestLinkerQueueNotifierMessages(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
 
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithConfig(*cfg))
 	data := map[string]any{
 		"Title":     "Example",
 		"Username":  "bob",

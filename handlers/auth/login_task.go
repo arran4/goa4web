@@ -38,7 +38,8 @@ func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 
 // Action processes the submitted login form.
 func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		sess, _ := core.GetSession(r)
 		log.Printf("login attempt for %s session=%s", r.PostFormValue("username"), handlers.HashSessionID(sess.ID))
 	}
@@ -46,7 +47,6 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	cfg := cd.Config
@@ -73,7 +73,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
-		expiry := time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour)
+		expiry := time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour)
 		reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{UserID: row.Idusers, CreatedAt: expiry})
 		code := r.FormValue("code")
 		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
@@ -131,13 +131,13 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("session save %w", err)
 	}
 
-	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
+	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("login success uid=%d session=%s", row.Idusers, handlers.HashSessionID(session.ID))
 	}
 
 	if backURL != "" {
 		if backMethod == "" || backMethod == http.MethodGet {
-			return handlers.RedirectHandler(backURL)
+			return handlers.RefreshDirectHandler{TargetURL: backURL}
 		}
 		vals, err := url.ParseQuery(backData)
 		if err != nil {

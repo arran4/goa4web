@@ -69,7 +69,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	}
 	defer dbconn.Close()
 
-	cfg := config.AppRuntimeConfig
+	cfg := config.NewRuntimeConfig()
+
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.AdminEmails = "a@test"
@@ -97,7 +98,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	bus := eventbus.NewBus()
 	q := db.New(dbconn)
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg))
+	cd := common.NewCoreData(req.Context(), q, cfg)
 	cd.UserID = 1
 	cd.SetEvent(evt)
 

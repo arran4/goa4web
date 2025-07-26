@@ -15,10 +15,10 @@ import (
 
 func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.FeedsEnabled = config.AppRuntimeConfig.FeedsEnabled
+	cd.FeedsEnabled = cd.Config.FeedsEnabled
 
-	values := config.ValuesMap(config.AppRuntimeConfig)
-	defaults := config.DefaultMap()
+	values := config.ValuesMap(*cd.Config)
+	defaults := config.DefaultMap(config.NewRuntimeConfig())
 	usages := config.UsageMap()
 	examples := config.ExamplesMap()
 	flags := config.NameMap()

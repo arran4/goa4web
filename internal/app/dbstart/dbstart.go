@@ -37,7 +37,7 @@ func parseS3Dir(raw string) (bucket, prefix string, err error) {
 
 // InitDB opens the database connection using the provided configuration
 // and ensures the schema exists.
-func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *common.UserError) {
+func InitDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *common.UserError) {
 	conn := cfg.DBConn
 	if conn == "" {
 		return nil, &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
@@ -63,7 +63,7 @@ func InitDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *common
 }
 
 // PerformStartupChecks checks the database and upload directory configuration.
-func PerformStartupChecks(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
+func PerformStartupChecks(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
 	if err := MaybeAutoMigrate(cfg, reg); err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func PerformStartupChecks(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*s
 }
 
 // CheckUploadDir verifies that the upload directory is accessible.
-func CheckUploadDir(cfg config.RuntimeConfig) *common.UserError {
+func CheckUploadDir(cfg *config.RuntimeConfig) *common.UserError {
 	if cfg.ImageUploadDir == "" {
 		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}

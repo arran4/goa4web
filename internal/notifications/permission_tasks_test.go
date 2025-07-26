@@ -34,10 +34,9 @@ func (updateTaskNoEmail) TargetEmailTemplate() *notif.EmailTemplates { return ni
 func TestProcessEventPermissionTasks(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.NotificationsEnabled = true
+	cfg.EmailFrom = "from@example.com"
 
 	bus := eventbus.NewBus()
 	db, mock, err := sqlmock.New()
@@ -46,7 +45,7 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := notif.New(notif.WithQueries(q), notif.WithConfig(config.AppRuntimeConfig))
+	n := notif.New(notif.WithQueries(q), notif.WithConfig(*cfg))
 
 	var wg sync.WaitGroup
 	wg.Add(1)

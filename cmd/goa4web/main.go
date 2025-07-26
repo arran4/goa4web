@@ -29,7 +29,7 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 	dlq "github.com/arran4/goa4web/internal/dlq"
-	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
+	dlqdefaults "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 	email "github.com/arran4/goa4web/internal/email"
 	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 
@@ -84,7 +84,7 @@ func main() {
 // rootCmd is the top-level command state.
 type rootCmd struct {
 	fs         *flag.FlagSet
-	cfg        config.RuntimeConfig
+	cfg        *config.RuntimeConfig
 	ConfigFile string
 	db         *sql.DB
 	Verbosity  int
@@ -142,8 +142,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	registerTasks(r.tasksReg)
 	registerModules(r.routerReg)
 	emaildefaults.Register(r.emailReg)
-	dlqreg.Register(r.dlqReg, r.emailReg)
-	dlq.RegisterLogDLQ(r.dlqReg)
+	dlqdefaults.RegisterDefaults(r.dlqReg, r.emailReg)
 	dbdefaults.Register(r.dbReg)
 
 	early := newFlagSet(args[0])
@@ -195,7 +194,11 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 
 	r.ConfigFile = cfgPath
-	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
+	r.cfg = *config.NewRuntimeConfig(
+		config.WithFlagSet(r.fs),
+		config.WithFileValues(fileVals),
+		config.WithGetenv(os.Getenv),
+	)
 	return r, nil
 }
 

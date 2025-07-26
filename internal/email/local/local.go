@@ -34,7 +34,7 @@ func (Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byt
 	return cmd.Run()
 }
 
-func providerFromConfig(config.RuntimeConfig) email.Provider { return Provider{} }
+func providerFromConfig(*config.RuntimeConfig) email.Provider { return Provider{} }
 
 // Register registers the local provider factory.
 func Register(r *email.Registry) { r.RegisterProvider("local", providerFromConfig) }

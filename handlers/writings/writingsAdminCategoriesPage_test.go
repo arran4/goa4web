@@ -29,7 +29,7 @@ func TestWritingsAdminCategoriesPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/writings/categories", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

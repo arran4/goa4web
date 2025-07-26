@@ -18,7 +18,6 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
@@ -72,7 +71,7 @@ type CoreData struct {
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode         bool
 	NotificationCount int32
-	Config            config.RuntimeConfig
+	Config            *config.RuntimeConfig
 	ImageSigner       *imagesign.Signer
 	TasksReg          *tasks.Registry
 	a4codeMapper      func(tag, val string) string
@@ -181,7 +180,7 @@ func WithPreference(p *db.Preference) CoreOption {
 }
 
 // WithConfig sets the runtime config for this CoreData.
-func WithConfig(cfg config.RuntimeConfig) CoreOption {
+func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
 }
 
@@ -206,12 +205,12 @@ func WithDBRegistry(r *dbdrivers.Registry) CoreOption {
 }
 
 // NewCoreData creates a CoreData with context and queries applied.
-func NewCoreData(ctx context.Context, q *db.Queries, opts ...CoreOption) *CoreData {
+func NewCoreData(ctx context.Context, q *db.Queries, cfg *config.RuntimeConfig, opts ...CoreOption) *CoreData {
 	cd := &CoreData{
 		ctx:               ctx,
 		queries:           q,
 		newsAnnouncements: map[int32]*lazy.Value[*db.SiteAnnouncement]{},
-		Config:            config.AppRuntimeConfig,
+		Config:            cfg,
 	}
 	for _, o := range opts {
 		o(cd)
@@ -287,27 +286,6 @@ func ContainsItem(items []IndexItem, name string) bool {
 		}
 	}
 	return false
-}
-
-func pageSize(r *http.Request) int {
-	cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
-	cfg := config.AppRuntimeConfig
-	if cd != nil {
-		cfg = cd.Config
-	}
-	size := cfg.PageSizeDefault
-	if cd != nil {
-		if pref, err := cd.Preference(); err == nil && pref != nil && pref.PageSize != 0 {
-			size = int(pref.PageSize)
-		}
-	}
-	if size < cfg.PageSizeMin {
-		size = cfg.PageSizeMin
-	}
-	if size > cfg.PageSizeMax {
-		size = cfg.PageSizeMax
-	}
-	return size
 }
 
 // UserRoles returns the user roles loaded lazily.

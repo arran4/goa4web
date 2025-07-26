@@ -13,7 +13,7 @@ import (
 func TestCustomNewsIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 
-	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"administrator"})
 	cd.AdminMode = true
 	CustomNewsIndex(cd, req)
@@ -31,7 +31,7 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	ctx := req.Context()
-	cd = common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
+	cd = common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"content writer", "administrator"})
 	CustomNewsIndex(cd, req.WithContext(ctx))
 	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") {
@@ -41,7 +41,7 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 		t.Errorf("content writer should see add news")
 	}
 
-	cd = common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
+	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"anonymous"})
 	CustomNewsIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") || common.ContainsItem(cd.CustomIndexItems, "Add News") {

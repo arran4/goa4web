@@ -24,18 +24,18 @@ import (
 // Module bundles the event bus for websocket handlers.
 type Module struct {
 	Bus    *eventbus.Bus
-	Config config.RuntimeConfig
+	Config *config.RuntimeConfig
 }
 
 // NotificationsHandler provides a websocket endpoint streaming bus events.
 type NotificationsHandler struct {
 	Bus      *eventbus.Bus      // event source
 	Upgrader websocket.Upgrader // websocket upgrader
-	Config   config.RuntimeConfig
+	Config   *config.RuntimeConfig
 }
 
 // NewModule returns a websocket module using bus for events.
-func NewModule(bus *eventbus.Bus, cfg config.RuntimeConfig) *Module {
+func NewModule(bus *eventbus.Bus, cfg *config.RuntimeConfig) *Module {
 	return &Module{Bus: bus, Config: cfg}
 }
 
@@ -72,7 +72,7 @@ func parseHosts(s string) []string {
 	return hosts
 }
 
-func NewNotificationsHandler(bus *eventbus.Bus, cfg config.RuntimeConfig) *NotificationsHandler {
+func NewNotificationsHandler(bus *eventbus.Bus, cfg *config.RuntimeConfig) *NotificationsHandler {
 	h := &NotificationsHandler{Bus: bus, Config: cfg}
 	cfgHosts := parseHosts(cfg.HTTPHostname)
 	upgrader := websocket.Upgrader{}
@@ -201,16 +201,13 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // RegisterRoutes attaches the websocket handler to r.
-func (m *Module) registerRoutes(r *mux.Router) {
-	h := NewNotificationsHandler(m.Bus, m.Config)
+func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig) {
+	h := NewNotificationsHandler(m.Bus, cfg)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/notifications.js", NotificationsJS).Methods(http.MethodGet)
 }
 
 // Register registers the websocket router module.
 func (m *Module) Register(reg *routerpkg.Registry) {
-	cfg := config.AppRuntimeConfig
-	reg.RegisterModule("websocket", nil, func(r *mux.Router) {
-		m.registerRoutes(r, cfg)
-	})
+	reg.RegisterModule("websocket", nil, m.registerRoutes)
 }

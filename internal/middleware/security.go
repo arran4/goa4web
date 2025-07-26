@@ -69,17 +69,18 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		var cfg config.RuntimeConfig
+		var cfg *config.RuntimeConfig
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			cfg = cd.Config
-		} else {
-			cfg = config.AppRuntimeConfig
 		}
-		hsts := cfg.HSTSHeaderValue
+		var hsts string
+		if cfg != nil {
+			hsts = cfg.HSTSHeaderValue
+		}
 		if hsts != "" {
 			if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
 				w.Header().Set("Strict-Transport-Security", hsts)
-			} else if strings.HasPrefix(strings.ToLower(cfg.HTTPHostname), "https://") {
+			} else if cfg != nil && strings.HasPrefix(strings.ToLower(cfg.HTTPHostname), "https://") {
 				w.Header().Set("Strict-Transport-Security", hsts)
 			}
 		}

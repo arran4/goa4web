@@ -29,13 +29,13 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 }
 
 func defaultMap() map[string]string {
-	def := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	def := config.NewRuntimeConfig()
 	m, _ := config.ToEnvMap(def, "")
 	return m
 }
 
 func (c *configAsCmd) asEnvFile() error {
-	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := config.ToEnvMap(&c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -74,7 +74,7 @@ func (c *configAsCmd) asEnvFile() error {
 }
 
 func (c *configAsCmd) asEnv() error {
-	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := config.ToEnvMap(&c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -113,7 +113,7 @@ func (c *configAsCmd) asEnv() error {
 }
 
 func (c *configAsCmd) asJSON() error {
-	m, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	m, err := config.ToEnvMap(&c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}
@@ -126,7 +126,7 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	current, err := config.ToEnvMap(&c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("env map: %w", err)
 	}

@@ -125,12 +125,12 @@ func (errProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 
 func TestProcessEventDLQ(t *testing.T) {
 	ctx := context.Background()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.NotificationsEnabled = true
+	cfg.EmailFrom = "from@example.com"
+
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -138,7 +138,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &errProvider{}
-	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(*cfg))
 	dlqRec := &recordDLQ{}
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, dlqRec); err != nil {
@@ -154,19 +154,19 @@ func TestProcessEventDLQ(t *testing.T) {
 
 func TestProcessEventSubscribeSelf(t *testing.T) {
 	ctx := context.Background()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.NotificationsEnabled = true
+	cfg.EmailFrom = "from@example.com"
+
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithConfig(*cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -175,18 +175,18 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 
 func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	ctx := context.Background()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.NotificationsEnabled = true
+
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithConfig(*cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -195,13 +195,13 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 
 func TestProcessEventAdminNotify(t *testing.T) {
 	ctx := context.Background()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.AdminEmails = "a@test"
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.AdminEmails = "a@test"
+	cfg.EmailFrom = "from@example.com"
+	cfg.NotificationsEnabled = true
+
 	db, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -209,7 +209,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &busDummyProvider{}
-	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(*cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -218,19 +218,19 @@ func TestProcessEventAdminNotify(t *testing.T) {
 
 func TestProcessEventWritingSubscribers(t *testing.T) {
 	ctx := context.Background()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.NotificationsEnabled = true
+	cfg.EmailFrom = "from@example.com"
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithConfig(*cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -255,9 +255,8 @@ func (targetTask) TargetInternalNotificationTemplate() *string {
 
 func TestProcessEventTargetUsers(t *testing.T) {
 	ctx := context.Background()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.NotificationsEnabled = true
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -265,7 +264,7 @@ func TestProcessEventTargetUsers(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithConfig(*cfg))
 
 	for _, id := range []int32{2, 3} {
 		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
@@ -291,12 +290,12 @@ func TestProcessEventTargetUsers(t *testing.T) {
 
 func TestBusWorker(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.NotificationsEnabled = true
+	cfg.EmailFrom = "from@example.com"
+
 	bus := eventbus.NewBus()
 
 	db, _, err := sqlmock.New()
@@ -307,7 +306,7 @@ func TestBusWorker(t *testing.T) {
 	q := dbpkg.New(db)
 
 	prov := &busDummyProvider{}
-	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(*cfg))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -341,16 +340,16 @@ func (autoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, er
 
 func TestProcessEventAutoSubscribe(t *testing.T) {
 	ctx := context.Background()
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.NewRuntimeConfig()
+	cfg.NotificationsEnabled = true
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithConfig(*cfg))
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
 		AddRow(1, 0, 1, nil, 0, true)

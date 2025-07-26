@@ -37,7 +37,8 @@ func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 
 // RegisterActionPage handles user creation from the registration form.
 func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}
 	if err := handlers.ValidateForm(r, []string{"username", "password", "email"}, []string{"username", "password", "email"}); err != nil {
@@ -49,7 +50,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid email"))
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
 		String: username,
@@ -110,7 +111,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
+	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration success uid=%d", lastInsertID)
 	}
 

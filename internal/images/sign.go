@@ -15,12 +15,12 @@ import (
 
 // Signer generates and verifies image signatures without relying on globals.
 type Signer struct {
-	cfg config.RuntimeConfig
+	cfg *config.RuntimeConfig
 	key string
 }
 
 // NewSigner returns a Signer using cfg for hostname resolution and key for HMAC.
-func NewSigner(cfg config.RuntimeConfig, key string) *Signer {
+func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 	return &Signer{cfg: cfg, key: key}
 }
 

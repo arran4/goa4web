@@ -30,7 +30,7 @@ func (c *configJSONAddCmd) Run() error {
 	if c.File == "" {
 		return fmt.Errorf("file required")
 	}
-	values, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	values, err := config.ToEnvMap(&c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}

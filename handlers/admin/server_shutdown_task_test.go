@@ -19,8 +19,9 @@ func TestServerShutdownTask_EventPublished(t *testing.T) {
 	Srv = &serverpkg.Server{Bus: bus}
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 
-	cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	cd.UserID = 1
+	cd.SetRoles([]string{"administrator"})
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)

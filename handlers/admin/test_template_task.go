@@ -16,11 +16,9 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	notif "github.com/arran4/goa4web/internal/notifications"
-
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // TestTemplateTask queues an email using the template for preview.
@@ -48,8 +46,8 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	base := "http://" + r.Host
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		base = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/")
+	if cd.Config.HTTPHostname != "" {
+		base = strings.TrimRight(cd.Config.HTTPHostname, "/")
 	}
 	pageURL := base + r.URL.Path
 
@@ -59,12 +57,12 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	unsub := "/usr/subscriptions"
-	if config.AppRuntimeConfig.HTTPHostname != "" {
-		unsub = strings.TrimRight(config.AppRuntimeConfig.HTTPHostname, "/") + unsub
+	if cd.Config.HTTPHostname != "" {
+		unsub = strings.TrimRight(cd.Config.HTTPHostname, "/") + unsub
 	}
 	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubscribeUrl string }{
 		To:             (&mail.Address{Name: urow.Username.String, Address: urow.Email.String}).String(),
-		From:           config.AppRuntimeConfig.EmailFrom,
+		From:           cd.Config.EmailFrom,
 		Subject:        "Website Update Notification",
 		URL:            pageURL,
 		Action:         string(TaskTestMail),
@@ -78,10 +76,10 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	toAddr := mail.Address{Name: urow.Username.String, Address: urow.Email.String}
 	var fromAddr mail.Address
 
-	if f, err := mail.ParseAddress(config.AppRuntimeConfig.EmailFrom); err == nil {
+	if f, err := mail.ParseAddress(cd.Config.EmailFrom); err == nil {
 		fromAddr = *f
 	} else {
-		fromAddr = mail.Address{Address: config.AppRuntimeConfig.EmailFrom}
+		fromAddr = mail.Address{Address: cd.Config.EmailFrom}
 	}
 	msg, err := email.BuildMessage(fromAddr, toAddr, content.Subject, buf.String(), "")
 	if err != nil {

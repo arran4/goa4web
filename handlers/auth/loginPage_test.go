@@ -49,7 +49,7 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -87,7 +87,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -112,7 +112,7 @@ func TestLoginPageHiddenFields(t *testing.T) {
 	q := dbpkg.New(db)
 
 	req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
-	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -158,7 +158,7 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -180,9 +180,10 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 func TestSanitizeBackURL(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Host = "example.com"
-	cfg := config.AppRuntimeConfig
+	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 10
 	cfg.HTTPHostname = ""
-	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -197,7 +198,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	}
 
 	cfg.HTTPHostname = "https://example.com"
-	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), cfg)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
@@ -209,8 +210,10 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 	raw := "https://evil.com/x"
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Host = "example.com"
-	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
-	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(config.AppRuntimeConfig), common.WithImageSigner(signer))
+	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 10
+	signer := imagesign.NewSigner(*cfg, "k")
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	ts := time.Now().Add(time.Hour).Unix()
@@ -231,7 +234,7 @@ func TestLoginPageInvalidBackURL(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
 	req.Host = "example.com"
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -249,13 +252,15 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 
+	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 10
 	raw := "https://evil.com/x"
 	ts := time.Now().Add(time.Hour).Unix()
 	sig := signBackURL("k", raw, ts)
 	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 	req.Host = "example.com"
-	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig), common.WithImageSigner(signer))
+	signer := imagesign.NewSigner(*cfg, "k")
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -294,7 +299,7 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 	req.RemoteAddr = "1.2.3.4:1111"
 	req.Host = "example.com"
 
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -317,32 +322,31 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
+	cfg := config.NewRuntimeConfig()
 	q := dbpkg.New(db)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
 		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(5))
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	pwHash, alg, _ := HashPassword("pw")
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "e", pwHash, alg, "bob")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
-		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
 	raw := "https://example.org/ok"
 	ts := time.Now().Add(time.Hour).Unix()
 	sig := signBackURL("k", raw, ts)
-	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
+	signer := imagesign.NewSigner(*cfg, "k")
 	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {raw}, "back_ts": {fmt.Sprint(ts)}, "back_sig": {sig}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	req.Host = "example.com"
 
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig), common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -352,11 +356,11 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if loc := rr.Header().Get("Location"); loc != raw {
-		t.Fatalf("location=%q", loc)
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url="+raw) {
+		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
 	}
 }
 
@@ -372,16 +376,15 @@ func TestLoginAction_Throttle(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
 		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(rows)
 
-	orig := config.AppRuntimeConfig
-	config.AppRuntimeConfig.LoginAttemptThreshold = 3
-	config.AppRuntimeConfig.LoginAttemptWindow = 15
-	t.Cleanup(func() { config.AppRuntimeConfig = orig })
+	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 3
+	cfg.LoginAttemptWindow = 15
 
 	form := url.Values{"username": {"bob"}, "password": {"pw"}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -397,4 +400,89 @@ func TestLoginAction_Throttle(t *testing.T) {
 	if !strings.Contains(rr.Body.String(), "Too many failed attempts") {
 		t.Fatalf("body=%q", rr.Body.String())
 	}
+}
+
+func TestRedirectBackPageHandlerGET(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	h := redirectBackPageHandler{BackURL: "/foo", Method: http.MethodGet, Values: url.Values{"x": {"1"}}}
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/foo?x=1") {
+		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+	}
+}
+
+func TestRedirectBackPageHandlerEmptyMethod(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	h := redirectBackPageHandler{BackURL: "/bar", Method: "", Values: url.Values{"y": {"2"}}}
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/bar?y=2") {
+		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+	}
+}
+
+func TestRedirectBackPageHandler(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	cases := map[string]string{"empty": "", "get": http.MethodGet}
+	for name, method := range cases {
+		t.Run(name, func(t *testing.T) {
+			cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+			req = req.WithContext(ctx)
+			rr := httptest.NewRecorder()
+
+			h := redirectBackPageHandler{BackURL: "/back", Method: method, Values: url.Values{"a": {"b"}}}
+			h.ServeHTTP(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("status=%d", rr.Code)
+			}
+			if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/back") {
+				t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+			}
+			if strings.Contains(rr.Body.String(), "<form") {
+				t.Fatalf("unexpected form: %q", rr.Body.String())
+			}
+		})
+	}
+
+	t.Run("post", func(t *testing.T) {
+		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
+		rr := httptest.NewRecorder()
+
+		h := redirectBackPageHandler{BackURL: "/back", Method: http.MethodPost, Values: url.Values{"a": {"b"}}}
+		h.ServeHTTP(rr, req)
+
+		if cd.AutoRefresh != "" {
+			t.Fatalf("unexpected refresh: %q", cd.AutoRefresh)
+		}
+		body := rr.Body.String()
+		if !strings.Contains(body, "<form") || !strings.Contains(body, "action=\"/back\"") {
+			t.Fatalf("missing form: %q", body)
+		}
+	})
 }

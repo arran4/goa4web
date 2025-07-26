@@ -112,7 +112,7 @@ func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
 
 // NewServer constructs the server and supporting services using the provided
 // configuration and optional parameters.
-func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOption) (*server.Server, error) {
+func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOption) (*server.Server, error) {
 	o := &serverOptions{}
 	for _, op := range opts {
 		op(o)
@@ -157,11 +157,10 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		return nil, fmt.Errorf("default language: %w", err)
 	}
 
-	if err := config.ApplySMTPFallbacks(&cfg); err != nil {
+	if err := config.ApplySMTPFallbacks(cfg); err != nil {
 		return nil, fmt.Errorf("smtp fallback: %w", err)
 	}
-	config.AppRuntimeConfig = cfg
-	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
+	imgSigner := imagesign.NewSigner(*cfg, o.ImageSignSecret)
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 

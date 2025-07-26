@@ -43,11 +43,11 @@ type sessionFactory struct{}
 
 func (sessionFactory) New(region string) (api, error) { return newSessionClient(region) }
 
-func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) upload.Provider {
 	return providerFromConfigWithFactory(cfg, sessionFactory{})
 }
 
-func providerFromConfigWithFactory(cfg config.RuntimeConfig, f ClientFactory) upload.Provider {
+func providerFromConfigWithFactory(cfg *config.RuntimeConfig, f ClientFactory) upload.Provider {
 	raw := cfg.ImageUploadS3URL
 	if raw == "" {
 		raw = cfg.ImageUploadDir

@@ -26,7 +26,7 @@ func (p *Provider) Record(_ context.Context, msg string) error {
 	return nil
 }
 
-func providerFromConfig(_ config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
+func providerFromConfig(_ *config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
 	return &Provider{}
 }
 

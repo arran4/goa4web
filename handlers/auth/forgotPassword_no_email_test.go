@@ -25,7 +25,7 @@ func TestForgotPasswordNoEmail(t *testing.T) {
 	q := dbpkg.New(db)
 	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "", "u"))
 
-	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
 	form := url.Values{"username": {"u"}, "password": {"pw"}}
@@ -55,7 +55,7 @@ func TestEmailAssociationRequestTask(t *testing.T) {
 	mock.ExpectExec("INSERT INTO admin_request_comments").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO admin_user_comments").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
 	form := url.Values{"username": {"u"}, "email": {"a@test.com"}, "reason": {"help"}}

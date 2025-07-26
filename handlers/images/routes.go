@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/upload"
 )
@@ -61,7 +62,7 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 }
 
 // RegisterRoutes attaches the image endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ir := r.PathPrefix("/images").Subrouter()
 	ir.Use(handlers.IndexMiddleware(CustomIndex))
 	ir.HandleFunc("/upload/image", handlers.TaskHandler(uploadImageTask)).

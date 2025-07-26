@@ -143,6 +143,9 @@ func WithDBRegistry(r *dbdrivers.Registry) Option { return func(s *Server) { s.D
 // WithWebsocket sets the websocket module.
 func WithWebsocket(w *websocket.Module) Option { return func(s *Server) { s.Websocket = w } }
 
+// WithTasksRegistry sets the tasks registry used by the server.
+func WithTasksRegistry(r *tasks.Registry) Option { return func(s *Server) { s.TasksReg = r } }
+
 // New returns a Server configured using the supplied options.
 func New(opts ...Option) *Server {
 	s := &Server{}
@@ -226,8 +229,9 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			cd.UserID = uid
 			_ = cd.UserRoles()
 
-			idx := nav.IndexItems()
-			cd.IndexItems = idx
+			if s.Nav != nil {
+				cd.IndexItems = s.Nav.IndexItems()
+			}
 			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = s.Config.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"

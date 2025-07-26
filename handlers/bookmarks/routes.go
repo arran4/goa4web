@@ -7,12 +7,12 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
 // RegisterRoutes attaches the bookmarks endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
-	nav.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
 	br.Use(handlers.IndexMiddleware(bookmarksCustomIndex))
 	br.HandleFunc("", Page).Methods("GET")

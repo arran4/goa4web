@@ -175,9 +175,9 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	wsMod := websocket.NewModule(bus, cfg)
 	wsMod.Register(reg)
 	r := mux.NewRouter()
-	routerpkg.RegisterRoutes(r, reg, cfg)
 
 	navReg := nav.NewRegistry()
+	routerpkg.RegisterRoutes(r, reg, cfg, navReg)
 	srv := server.New(
 		server.WithStore(store),
 		server.WithDB(dbPool),
@@ -185,13 +185,14 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithRouterRegistry(reg),
 		server.WithNavRegistry(navReg),
 		server.WithDLQRegistry(o.DLQReg),
+		server.WithTasksRegistry(o.TasksReg),
 		server.WithBus(bus),
 		server.WithEmailRegistry(o.EmailReg),
 		server.WithImageSigner(imgSigner),
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
+		server.WithTasksRegistry(o.TasksReg),
 	)
-	nav.SetDefaultRegistry(navReg)
 
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(
@@ -214,6 +215,11 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		ah.UpdateConfigKeyFunc = config.UpdateConfigKey
 	}
 	srv.TasksReg = o.TasksReg
+
+  adminhandlers.ConfigFile = ConfigFile
+	adminhandlers.Srv = srv
+	adminhandlers.DBPool = dbPool
+	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
 
 	emailProvider := o.EmailReg.ProviderFromConfig(cfg)
 	if cfg.EmailEnabled && cfg.EmailProvider != "" && cfg.EmailFrom == "" {

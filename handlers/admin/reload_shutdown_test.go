@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	serverpkg "github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/navigation"
 )
 
 func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
@@ -38,7 +39,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
 	h := New(WithServer(&serverpkg.Server{Config: &config.RuntimeConfig{}}))
-	h.RegisterRoutes(ar, cfg)
+	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -59,7 +60,8 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
 	h := New(WithServer(&serverpkg.Server{Config: &config.RuntimeConfig{}}))
-	h.RegisterRoutes(ar, cfg)
+	navReg := navigation.NewRegistry()
+	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -80,7 +82,8 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
 	h := New(WithServer(&serverpkg.Server{}))
-	h.RegisterRoutes(ar, cfg)
+	navReg := navigation.NewRegistry()
+	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -101,7 +104,8 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	h.RegisterRoutes(ar, cfg)
+	navReg := navigation.NewRegistry()
+	h.RegisterRoutes(ar, cfg, navReg)
 
 	form := url.Values{}
 	form.Set("task", string(TaskServerShutdown))

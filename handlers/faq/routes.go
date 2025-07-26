@@ -6,7 +6,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
 
@@ -17,9 +17,9 @@ func noTask() mux.MatcherFunc {
 }
 
 // RegisterRoutes attaches the public FAQ endpoints to the router.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
-	nav.RegisterIndexLink("FAQ", "/faq", SectionWeight)
-	nav.RegisterAdminControlCenter("FAQ", "/admin/faq/categories", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterIndexLink("FAQ", "/faq", SectionWeight)
+	navReg.RegisterAdminControlCenter("FAQ", "/admin/faq/categories", SectionWeight)
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	faqr.HandleFunc("", Page).Methods("GET", "POST")

@@ -9,13 +9,13 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
-	nav.RegisterIndexLink("Forum", "/forum", SectionWeight)
-	nav.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterIndexLink("Forum", "/forum", SectionWeight)
+	navReg.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.Use(handlers.IndexMiddleware(CustomForumIndex))
 	fr.HandleFunc("/topic/{topic}.rss", TopicRssPage).Methods("GET")

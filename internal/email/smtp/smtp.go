@@ -124,7 +124,7 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return c.Quit()
 }
 
-func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	host := cfg.EmailSMTPHost
 	port := cfg.EmailSMTPPort
 	user := cfg.EmailSMTPUser

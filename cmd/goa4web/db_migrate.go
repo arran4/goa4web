@@ -15,7 +15,7 @@ import (
 )
 
 // openDB establishes a database connection without verifying the schema version.
-func openDB(cfg config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
+func openDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
 	conn := cfg.DBConn
 	if conn == "" {
 		return nil, fmt.Errorf("connection string required")

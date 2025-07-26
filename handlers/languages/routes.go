@@ -21,7 +21,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 
 // Register registers the languages router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("languages", nil, func(r *mux.Router, cfg config.RuntimeConfig) {
+	reg.RegisterModule("languages", nil, func(r *mux.Router, cfg *config.RuntimeConfig) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		RegisterAdminRoutes(ar)

@@ -11,7 +11,7 @@ import (
 )
 
 // ProviderFactory creates a DLQ provider using runtime configuration.
-type ProviderFactory func(config.RuntimeConfig, *dbpkg.Queries) DLQ
+type ProviderFactory func(*config.RuntimeConfig, *dbpkg.Queries) DLQ
 
 // Registry stores DLQ provider factories.
 type Registry struct {
@@ -42,7 +42,7 @@ func (r *Registry) lookupProvider(name string) ProviderFactory {
 }
 
 // ProviderFromConfig returns a DLQ implementation configured from cfg.
-func (r *Registry) ProviderFromConfig(cfg config.RuntimeConfig, q *dbpkg.Queries) DLQ {
+func (r *Registry) ProviderFromConfig(cfg *config.RuntimeConfig, q *dbpkg.Queries) DLQ {
 	names := strings.Split(cfg.DLQProvider, ",")
 	var qs []DLQ
 	for _, name := range names {

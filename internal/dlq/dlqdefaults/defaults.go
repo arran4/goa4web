@@ -21,6 +21,6 @@ func RegisterDefaults(r *dlqpkg.Registry, er *emailpkg.Registry) {
 // NewRegistry returns a Registry with stable providers registered.
 func NewRegistry(er *emailpkg.Registry) *dlqpkg.Registry {
 	r := dlqpkg.NewRegistry()
-	Register(r, er)
+	RegisterDefaults(r, er)
 	return r
 }

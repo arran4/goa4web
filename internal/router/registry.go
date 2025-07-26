@@ -12,7 +12,7 @@ import (
 type Module struct {
 	Name  string
 	Deps  []string
-	Setup func(*mux.Router, config.RuntimeConfig)
+	Setup func(*mux.Router, *config.RuntimeConfig)
 	once  sync.Once
 }
 
@@ -27,7 +27,7 @@ func NewRegistry() *Registry { return &Registry{modules: map[string]*Module{}} }
 
 // RegisterModule registers a router module with optional dependencies. A module
 // is stored only on the first call.
-func (reg *Registry) RegisterModule(name string, deps []string, setup func(*mux.Router, config.RuntimeConfig)) {
+func (reg *Registry) RegisterModule(name string, deps []string, setup func(*mux.Router, *config.RuntimeConfig)) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 	if _, ok := reg.modules[name]; ok {
@@ -38,7 +38,7 @@ func (reg *Registry) RegisterModule(name string, deps []string, setup func(*mux.
 
 // InitModules initialises all registered modules by resolving their
 // dependencies and invoking their Setup function once.
-func (reg *Registry) InitModules(r *mux.Router, cfg config.RuntimeConfig) {
+func (reg *Registry) InitModules(r *mux.Router, cfg *config.RuntimeConfig) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 

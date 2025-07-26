@@ -21,7 +21,7 @@ func (p Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return nil
 }
 
-func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	return Provider{Verbosity: cfg.EmailLogVerbosity}
 }
 

@@ -36,7 +36,7 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return err
 }
 
-func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	awsCfg := aws.NewConfig()
 	if region := cfg.EmailAWSRegion; region != "" {
 		awsCfg = awsCfg.WithRegion(region)

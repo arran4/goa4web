@@ -103,7 +103,7 @@ func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return nil
 }
 
-func providerFromConfig(cfg config.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	ep := cfg.EmailJMAPEndpoint
 	if ep == "" {
 		fmt.Printf("Email disabled: %s not set\n", config.EnvJMAPEndpoint)

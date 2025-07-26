@@ -15,11 +15,14 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
 )
 
 func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
+	navReg := nav.NewRegistry()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -50,7 +53,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -63,12 +66,14 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 }
 
 func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
+	navReg := nav.NewRegistry()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	defer db.Close()
-	// TODO find a way of avoid tests which impact global state
 	mock.MatchExpectationsInOrder(false)
 
 	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").
@@ -77,7 +82,8 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -89,7 +95,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

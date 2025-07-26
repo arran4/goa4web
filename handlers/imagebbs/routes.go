@@ -5,6 +5,9 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
@@ -13,13 +16,13 @@ import (
 )
 
 // RegisterRoutes attaches the public image board endpoints to r.
-func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) {
 	nav.RegisterIndexLink("ImageBBS", "/imagebbs", SectionWeight)
 	nav.RegisterAdminControlCenter("ImageBBS", "/admin/imagebbs", SectionWeight)
 	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	ibr.Use(handlers.IndexMiddleware(CustomImageBBSIndex))
-	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(cd.Config.ImageUploadDir))))
+	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(cfg.ImageUploadDir))))
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
 	r.HandleFunc("/imagebbs.atom", AtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")

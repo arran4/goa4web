@@ -31,8 +31,9 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),
@@ -71,7 +72,8 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		filtered = append(filtered, &QueueRow{q, FetchPageTitle(r.Context(), q.Url.String)})
 	}
 
-	pageSize := handlers.GetPageSize(r)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	pageSize := cd.PageSize()
 	if data.Offset < 0 {
 		data.Offset = 0
 	}

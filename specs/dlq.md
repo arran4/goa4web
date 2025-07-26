@@ -16,7 +16,7 @@ Providers implement `Record` to persist messages for later inspection.
 
 ## Default Providers
 
-The `internal/dlq/dlqdefaults` package registers the stable implementations:
+The `dlqdefaults.RegisterDefaults` function registers the stable implementations:
 
 - **log** – writes messages to the application log.
 - **file** – appends messages to a single log file specified by `DLQ_FILE`. Each entry begins with an RFC3339 timestamp.

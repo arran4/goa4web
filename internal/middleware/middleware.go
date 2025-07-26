@@ -91,12 +91,11 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity i
 				base = strings.TrimRight(cfg.HTTPHostname, "/")
 			}
 			provider := emailReg.ProviderFromConfig(cfg)
-			cd := common.NewCoreData(r.Context(), queries,
+			cd := common.NewCoreData(r.Context(), queries, cfg,
 				common.WithImageSigner(signer),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
-				common.WithConfig(cfg),
 				common.WithSessionManager(sm))
 			cd.UserID = uid
 			_ = cd.UserRoles()

@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -35,8 +36,20 @@ func (ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CoreData: cd,
 		Back:     "/admin",
 	}
+	path := r.URL.Path
+	uid := cd.UserID
 	go func() {
-		// TODO add to bus
+		if Srv != nil && Srv.Bus != nil {
+			evt := eventbus.TaskEvent{
+				Path:   path,
+				Task:   TaskServerShutdown,
+				UserID: uid,
+				Time:   time.Now(),
+			}
+			if err := Srv.Bus.Publish(evt); err != nil {
+				log.Printf("publish shutdown event: %v", err)
+			}
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := Srv.Shutdown(ctx); err != nil {

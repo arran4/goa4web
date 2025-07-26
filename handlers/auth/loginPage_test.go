@@ -321,6 +321,9 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
+		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(5))
 	pwHash, alg, _ := HashPassword("pw")
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "e", pwHash, alg, "bob")

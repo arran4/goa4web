@@ -1,0 +1,47 @@
+package admin
+
+import (
+	"context"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	serverpkg "github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
+)
+
+func TestServerShutdownTask_EventPublished(t *testing.T) {
+	bus := eventbus.NewBus()
+	Srv = &serverpkg.Server{Bus: bus}
+	ch := bus.Subscribe(eventbus.TaskMessageType)
+
+	cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.AppRuntimeConfig))
+	cd.UserID = 1
+	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
+
+	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+	serverShutdownTask.Action(rr, req)
+
+	select {
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong message type %T", msg)
+		}
+		name, ok := evt.Task.(tasks.Name)
+		if !ok {
+			t.Fatalf("task does not implement Name")
+		}
+		if name.Name() != string(TaskServerShutdown) || evt.Path != "/admin/shutdown" || evt.UserID != 1 {
+			t.Fatalf("unexpected event: %+v", evt)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("event not published")
+	}
+}

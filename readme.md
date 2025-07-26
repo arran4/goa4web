@@ -330,6 +330,7 @@ Database schema changes are stored in the `migrations/` directory. Run
 `goa4web db migrate` to apply all pending scripts using your configured
 database connection. Set `AUTO_MIGRATE=true` to perform this step
 automatically when the server starts.
+Every new migration must conclude with an `UPDATE schema_version` statement, and the `ExpectedSchemaVersion` constant in `handlers/constants.go` should be incremented.
 
 When upgrading from v0.0.1 the script `migrations/0002.sql` must be applied.
 This can be done manually using the `mysql` client:

@@ -53,7 +53,7 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 			NumGC:      mem.NumGC,
 		},
 		Uptime: time.Since(StartTime),
-		Config: cd.Config,
+		Config: *cd.Config,
 	}
 
 	for _, t := range cd.TasksReg.Registered() {

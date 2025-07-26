@@ -137,7 +137,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if backURL != "" {
 		if backMethod == "" || backMethod == http.MethodGet {
-			return handlers.RedirectHandler(backURL)
+			return handlers.RefreshDirectHandler{TargetURL: backURL}
 		}
 		vals, err := url.ParseQuery(backData)
 		if err != nil {

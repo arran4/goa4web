@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd == nil || !cd.HasRole("administrator") {
 		http.Error(w, "Forbidden", http.StatusForbidden)
@@ -32,16 +32,18 @@ func AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 		Back:     "/admin",
 	}
 
-	cfgMap, err := config.LoadAppConfigFile(core.OSFS{}, ConfigFile)
+	cfgMap, err := config.LoadAppConfigFile(core.OSFS{}, h.ConfigFile)
 	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		log.Printf("load config file: %v", err)
 	}
-	Srv.Config = config.NewRuntimeConfig(
+	h.Srv.Config = config.NewRuntimeConfig(
 		config.WithFileValues(cfgMap),
 		config.WithGetenv(os.Getenv),
 	)
-	if err := corelanguage.ValidateDefaultLanguage(r.Context(), db.New(DBPool), Srv.Config.DefaultLanguage); err != nil {
-		data.Errors = append(data.Errors, err.Error())
+	if h.DBPool != nil {
+		if err := corelanguage.ValidateDefaultLanguage(r.Context(), db.New(h.DBPool), h.Srv.Config.DefaultLanguage); err != nil {
+			data.Errors = append(data.Errors, err.Error())
+		}
 	}
 
 	data.Messages = append(data.Messages, "Configuration reloaded")

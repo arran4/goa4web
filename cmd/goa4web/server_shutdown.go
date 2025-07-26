@@ -9,7 +9,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	admin "github.com/arran4/goa4web/handlers/admin"
 	adminapi "github.com/arran4/goa4web/internal/adminapi"
 )
 
@@ -36,7 +35,7 @@ func parseServerShutdownCmd(parent *serverCmd, args []string) (*serverShutdownCm
 func (c *serverShutdownCmd) Run() error {
 	mode := c.Mode
 	if mode == "" {
-		if admin.Srv == nil {
+		if c.rootCmd.adminHandlers.Srv == nil {
 			mode = "rest"
 		} else {
 			mode = "local"
@@ -46,7 +45,7 @@ func (c *serverShutdownCmd) Run() error {
 	case "local":
 		ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
 		defer cancel()
-		if err := admin.Srv.Shutdown(ctx); err != nil {
+		if err := c.rootCmd.adminHandlers.Srv.Shutdown(ctx); err != nil {
 			return fmt.Errorf("shutdown server: %w", err)
 		}
 		return nil

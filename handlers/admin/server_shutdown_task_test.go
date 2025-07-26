@@ -16,7 +16,7 @@ import (
 
 func TestServerShutdownTask_EventPublished(t *testing.T) {
 	bus := eventbus.NewBus()
-	Srv = &serverpkg.Server{Bus: bus}
+	h := New(WithServer(&serverpkg.Server{Bus: bus}))
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
@@ -27,7 +27,7 @@ func TestServerShutdownTask_EventPublished(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	serverShutdownTask.Action(rr, req)
+	h.NewServerShutdownTask().Action(rr, req)
 
 	select {
 	case msg := <-ch:

@@ -3,7 +3,7 @@ package admin
 import "github.com/arran4/goa4web/internal/tasks"
 
 // RegisterTasks returns admin related tasks.
-func RegisterTasks() []tasks.NamedTask {
+func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 	return []tasks.NamedTask{
 		addAnnouncementTask,
 		deleteAnnouncementTask,
@@ -27,6 +27,6 @@ func RegisterTasks() []tasks.NamedTask {
 		queryRequestTask,
 		newsUserAllow,
 		newsUserRemove,
-		serverShutdownTask,
+		h.NewServerShutdownTask(),
 	}
 }

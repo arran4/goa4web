@@ -112,7 +112,7 @@ func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
 
 // NewServer constructs the server and supporting services using the provided
 // configuration and optional parameters.
-func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOption) (*server.Server, error) {
+func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers.Handlers, opts ...ServerOption) (*server.Server, error) {
 	o := &serverOptions{}
 	for _, op := range opts {
 		op(o)
@@ -207,10 +207,12 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOpt
 
 	srv.Router = handler
 
-	adminhandlers.ConfigFile = ConfigFile
-	adminhandlers.Srv = srv
-	adminhandlers.DBPool = dbPool
-	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
+	if ah != nil {
+		ah.ConfigFile = ConfigFile
+		ah.Srv = srv
+		ah.DBPool = dbPool
+		ah.UpdateConfigKeyFunc = config.UpdateConfigKey
+	}
 	srv.TasksReg = o.TasksReg
 
 	emailProvider := o.EmailReg.ProviderFromConfig(cfg)

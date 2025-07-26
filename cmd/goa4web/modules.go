@@ -22,8 +22,8 @@ import (
 var extraRegistrations []func(*router.Registry)
 
 // registerModules registers all router modules used by the application.
-func registerModules(reg *router.Registry) {
-	admin.Register(reg)
+func registerModules(reg *router.Registry, ah *admin.Handlers) {
+	ah.Register(reg)
 	auth.Register(reg)
 	blogs.Register(reg)
 	bookmarks.Register(reg)

@@ -59,7 +59,7 @@ func (c *serveCmd) Run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	srv, err := app.NewServer(ctx, cfg,
+	srv, err := app.NewServer(ctx, cfg, c.rootCmd.adminHandlers,
 		app.WithSessionSecret(secret),
 		app.WithImageSignSecret(signKey),
 		app.WithDBRegistry(c.rootCmd.dbReg),

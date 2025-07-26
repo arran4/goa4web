@@ -23,9 +23,10 @@ func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
+	h := New()
 	rr := httptest.NewRecorder()
 
-	AdminReloadConfigPage(rr, req)
+	h.AdminReloadConfigPage(rr, req)
 
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
@@ -36,7 +37,8 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, cfg)
+	h := New(WithServer(&serverpkg.Server{Config: &config.RuntimeConfig{}}))
+	h.RegisterRoutes(ar, cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -56,7 +58,8 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, cfg)
+	h := New(WithServer(&serverpkg.Server{Config: &config.RuntimeConfig{}}))
+	h.RegisterRoutes(ar, cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -76,7 +79,8 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, cfg)
+	h := New(WithServer(&serverpkg.Server{}))
+	h.RegisterRoutes(ar, cfg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -93,11 +97,11 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 }
 
 func TestAdminShutdownRoute_Authorized(t *testing.T) {
-	Srv = &serverpkg.Server{}
+	h := New(WithServer(&serverpkg.Server{}))
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, cfg)
+	h.RegisterRoutes(ar, cfg)
 
 	form := url.Values{}
 	form.Set("task", string(TaskServerShutdown))
@@ -123,9 +127,10 @@ func TestServerShutdownTask_Unauthorized(t *testing.T) {
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
+	h := New()
 	rr := httptest.NewRecorder()
 
-	handlers.TaskHandler(serverShutdownTask)(rr, req)
+	handlers.TaskHandler(h.NewServerShutdownTask())(rr, req)
 
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
@@ -139,7 +144,8 @@ func TestServerShutdownMatcher_Denied(t *testing.T) {
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-	if serverShutdownTask.Matcher()(req, &mux.RouteMatch{}) {
+	h := New()
+	if h.NewServerShutdownTask().Matcher()(req, &mux.RouteMatch{}) {
 		t.Fatal("expected matcher failure")
 	}
 }
@@ -153,7 +159,8 @@ func TestServerShutdownMatcher_Allowed(t *testing.T) {
 	cd.SetRoles([]string{"administrator"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-	if !serverShutdownTask.Matcher()(req, &mux.RouteMatch{}) {
+	h := New()
+	if !h.NewServerShutdownTask().Matcher()(req, &mux.RouteMatch{}) {
 		t.Fatal("expected matcher success")
 	}
 }

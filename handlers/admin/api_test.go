@@ -13,7 +13,8 @@ import (
 func TestAdminAPIServerShutdown_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
 	rr := httptest.NewRecorder()
-	AdminAPIServerShutdown(rr, req)
+	h := New()
+	h.AdminAPIServerShutdown(rr, req)
 	if rr.Code != http.StatusUnauthorized {
 		t.Fatalf("want %d got %d", http.StatusUnauthorized, rr.Code)
 	}
@@ -22,12 +23,12 @@ func TestAdminAPIServerShutdown_Unauthorized(t *testing.T) {
 func TestAdminAPIServerShutdown_Authorized(t *testing.T) {
 	AdminAPISecret = "k"
 	signer := adminapi.NewSigner("k")
-	Srv = &serverpkg.Server{}
+	h := New(WithServer(&serverpkg.Server{}))
 	ts, sig := signer.Sign("POST", "/admin/api/shutdown")
 	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Goa4web %d:%s", ts, sig))
 	rr := httptest.NewRecorder()
-	AdminAPIServerShutdown(rr, req)
+	h.AdminAPIServerShutdown(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("want %d got %d", http.StatusOK, rr.Code)
 	}

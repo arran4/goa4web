@@ -259,6 +259,7 @@ environment variables listed below.
 | `HOSTNAME` | `--hostname` | No | `http://localhost:8080` | Base URL advertised by the HTTP server. |
 | `SESSION_SECRET` | `--session-secret` | No | generated | Secret used to encrypt session cookies. |
 | `SESSION_SECRET_FILE` | `--session-secret-file` | No | auto | File containing the session secret. |
+| `SESSION_SAME_SITE` | `--session-same-site` | No | `strict` | Cookie SameSite policy for sessions. |
 | `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |

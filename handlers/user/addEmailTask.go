@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -42,6 +43,9 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	emailAddr := r.FormValue("new_email")
 	if emailAddr == "" {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
+	}
+	if _, err := mail.ParseAddress(emailAddr); err != nil {
+		return handlers.RefreshDirectHandler{TargetURL: "/usr/email?error=invalid+email"}
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {

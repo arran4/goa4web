@@ -52,7 +52,11 @@ func (p Provider) safePath(name string) (string, error) {
 	if !fs.ValidPath(name) || filepath.IsAbs(name) {
 		return "", fmt.Errorf("invalid path")
 	}
-	return filepath.Join(p.Dir, filepath.Clean(name)), nil
+	path := filepath.Join(p.Dir, filepath.Clean(name))
+	if rel, err := filepath.Rel(p.Dir, path); err != nil || strings.HasPrefix(rel, "..") {
+		return "", fmt.Errorf("invalid path")
+	}
+	return path, nil
 }
 
 func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {

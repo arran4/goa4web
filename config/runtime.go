@@ -93,6 +93,8 @@ type RuntimeConfig struct {
 	SessionSecret string
 	// SessionSecretFile specifies the path to the session secret file.
 	SessionSecretFile string
+	// SessionSameSite selects the cookie SameSite mode used for sessions.
+	SessionSameSite string
 	// ImageSignSecret is used to sign image URLs.
 	ImageSignSecret string
 	// ImageSignSecretFile specifies the path to the image signing key.
@@ -261,6 +263,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.SessionName == "" {
 		cfg.SessionName = "my-session"
+	}
+	if cfg.SessionSameSite == "" {
+		cfg.SessionSameSite = "strict"
 	}
 	if cfg.PageSizeMin == 0 {
 		cfg.PageSizeMin = 5

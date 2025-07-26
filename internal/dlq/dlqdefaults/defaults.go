@@ -18,3 +18,10 @@ func Register(r *dlqpkg.Registry, er *emailpkg.Registry) {
 	email.Register(r, er)
 	dlqpkg.RegisterLogDLQ(r)
 }
+
+// NewRegistry returns a Registry with stable providers registered.
+func NewRegistry(er *emailpkg.Registry) *dlqpkg.Registry {
+	r := dlqpkg.NewRegistry()
+	Register(r, er)
+	return r
+}

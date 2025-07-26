@@ -182,7 +182,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	req.Host = "example.com"
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cfg.HTTPHostname = ""
-	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -197,7 +197,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	}
 
 	cfg.HTTPHostname = "https://example.com"
-	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), cfg)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
@@ -210,7 +210,7 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Host = "example.com"
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	signer := imagesign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(*cfg, "k")
 	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -256,7 +256,7 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 	sig := signBackURL("k", raw, ts)
 	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 	req.Host = "example.com"
-	signer := imagesign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(*cfg, "k")
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -338,7 +338,7 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	raw := "https://example.org/ok"
 	ts := time.Now().Add(time.Hour).Unix()
 	sig := signBackURL("k", raw, ts)
-	signer := imagesign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(*cfg, "k")
 	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {raw}, "back_ts": {fmt.Sprint(ts)}, "back_sig": {sig}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

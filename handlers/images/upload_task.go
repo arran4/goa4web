@@ -66,7 +66,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	sub1, sub2 := id[:2], id[2:4]
 	fname := id + ext
-	if p := upload.ProviderFromConfig(cfg); p != nil {
+	if p := upload.ProviderFromConfig(*cfg); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			log.Printf("upload write: %v", err)
 			return fmt.Errorf("upload write %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -97,7 +97,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := enc(&tbuf, thumb); err != nil {
 		return fmt.Errorf("thumb encode %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if cp := upload.CacheProviderFromConfig(cfg); cp != nil {
+	if cp := upload.CacheProviderFromConfig(*cfg); cp != nil {
 		if err := cp.Write(r.Context(), path.Join(sub1, sub2, thumbName), tbuf.Bytes()); err != nil {
 			log.Printf("cache write: %v", err)
 			return fmt.Errorf("cache write %w", handlers.ErrRedirectOnSamePageHandler(err))

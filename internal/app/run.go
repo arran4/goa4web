@@ -176,7 +176,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	wsMod := websocket.NewModule(bus)
 	wsMod.Register(reg)
 	r := mux.NewRouter()
-	routerpkg.RegisterRoutes(r, reg)
+	routerpkg.RegisterRoutes(r, reg, cfg)
 
 	navReg := nav.NewRegistry()
 	srv := server.New(

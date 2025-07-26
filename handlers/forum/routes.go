@@ -13,7 +13,7 @@ import (
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
-func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
 	nav.RegisterIndexLink("Forum", "/forum", SectionWeight)
 	nav.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()

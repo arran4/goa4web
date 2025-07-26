@@ -115,7 +115,7 @@ func WithStore(store *sessions.CookieStore) Option { return func(s *Server) { s.
 func WithDB(db *sql.DB) Option { return func(s *Server) { s.DB = db } }
 
 // WithConfig supplies the runtime configuration.
-func WithConfig(cfg config.RuntimeConfig) Option { return func(s *Server) { s.Config = &cfg } }
+func WithConfig(cfg *config.RuntimeConfig) Option { return func(s *Server) { s.Config = cfg } }
 
 // WithRouterRegistry sets the router registry.
 func WithRouterRegistry(r *router.Registry) Option { return func(s *Server) { s.RouterReg = r } }

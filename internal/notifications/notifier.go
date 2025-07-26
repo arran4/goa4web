@@ -24,7 +24,7 @@ type Notifier struct {
 	Bus            *eventbus.Bus
 	EmailProvider  email.Provider
 	Queries        *dbpkg.Queries
-	Config         config.RuntimeConfig
+	Config         *config.RuntimeConfig
 	noteOnce       sync.Once
 	noteTmpls      *ttemplate.Template
 	emailTextOnce  sync.Once
@@ -46,7 +46,7 @@ func WithEmailProvider(p email.Provider) Option { return func(n *Notifier) { n.E
 func WithBus(b *eventbus.Bus) Option { return func(n *Notifier) { n.Bus = b } }
 
 // WithConfig derives dependencies from cfg when they are not supplied.
-func WithConfig(cfg config.RuntimeConfig) Option {
+func WithConfig(cfg *config.RuntimeConfig) Option {
 	return func(n *Notifier) {
 		n.Config = cfg
 	}
@@ -83,7 +83,10 @@ func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 }
 
 func (n *Notifier) adminEmails(ctx context.Context) []string {
-	env := n.Config.AdminEmails
+	var env string
+	if n.Config != nil {
+		env = n.Config.AdminEmails
+	}
 	if env == "" {
 		env = os.Getenv(config.EnvAdminEmails)
 	}
@@ -120,7 +123,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 	if n.Queries == nil {
 		return nil
 	}
-	if !n.Config.AdminNotify {
+	if n.Config != nil && !n.Config.AdminNotify {
 		return nil
 	}
 	for _, addr := range n.adminEmails(ctx) {

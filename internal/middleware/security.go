@@ -73,11 +73,14 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			cfg = cd.Config
 		}
-		hsts := cfg.HSTSHeaderValue
+		var hsts string
+		if cfg != nil {
+			hsts = cfg.HSTSHeaderValue
+		}
 		if hsts != "" {
 			if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
 				w.Header().Set("Strict-Transport-Security", hsts)
-			} else if strings.HasPrefix(strings.ToLower(cfg.HTTPHostname), "https://") {
+			} else if cfg != nil && strings.HasPrefix(strings.ToLower(cfg.HTTPHostname), "https://") {
 				w.Header().Set("Strict-Transport-Security", hsts)
 			}
 		}

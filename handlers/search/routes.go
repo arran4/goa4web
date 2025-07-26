@@ -10,7 +10,7 @@ import (
 )
 
 // RegisterRoutes attaches the search endpoints to r.
-func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
 	nav.RegisterIndexLink("Search", "/search", SectionWeight)
 	nav.RegisterAdminControlCenter("Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()

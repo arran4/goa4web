@@ -84,7 +84,7 @@ func main() {
 // rootCmd is the top-level command state.
 type rootCmd struct {
 	fs         *flag.FlagSet
-	cfg        config.RuntimeConfig
+	cfg        *config.RuntimeConfig
 	ConfigFile string
 	db         *sql.DB
 	Verbosity  int
@@ -194,7 +194,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 
 	r.ConfigFile = cfgPath
-	r.cfg = *config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
+	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
 	return r, nil
 }
 

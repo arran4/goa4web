@@ -25,7 +25,7 @@ func autoMigrateEnabled() bool {
 }
 
 // applyMigrations connects to the database and executes SQL migrations.
-func applyMigrations(ctx context.Context, cfg config.RuntimeConfig, reg *dbdrivers.Registry) error {
+func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdrivers.Registry) error {
 	conn := cfg.DBConn
 	if conn == "" {
 		return fmt.Errorf("connection string required")
@@ -45,7 +45,7 @@ func applyMigrations(ctx context.Context, cfg config.RuntimeConfig, reg *dbdrive
 }
 
 // MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.
-func MaybeAutoMigrate(cfg config.RuntimeConfig, reg *dbdrivers.Registry) error {
+func MaybeAutoMigrate(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) error {
 	if !autoMigrateEnabled() {
 		return nil
 	}

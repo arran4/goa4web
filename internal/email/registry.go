@@ -10,7 +10,7 @@ import (
 )
 
 // ProviderFactory creates a mail provider from cfg.
-type ProviderFactory func(config.RuntimeConfig) Provider
+type ProviderFactory func(*config.RuntimeConfig) Provider
 
 // Registry stores email provider factories.
 type Registry struct {
@@ -41,7 +41,7 @@ func (r *Registry) providerFactory(name string) ProviderFactory {
 }
 
 // ProviderFromConfig returns a provider configured from cfg.
-func (r *Registry) ProviderFromConfig(cfg config.RuntimeConfig) Provider {
+func (r *Registry) ProviderFromConfig(cfg *config.RuntimeConfig) Provider {
 	mode := strings.ToLower(cfg.EmailProvider)
 	if f := r.providerFactory(mode); f != nil {
 		return f(cfg)

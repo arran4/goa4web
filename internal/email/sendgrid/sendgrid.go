@@ -90,7 +90,7 @@ func providerFromConfig(key string, from string) email.Provider {
 
 // Register registers the SendGrid provider factory.
 func Register(r *email.Registry) {
-	r.RegisterProvider("sendgrid", func(cfg config.RuntimeConfig) email.Provider {
+	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) email.Provider {
 		return providerFromConfig(cfg.EmailSendGridKey, cfg.EmailFrom)
 	})
 }

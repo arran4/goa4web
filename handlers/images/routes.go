@@ -61,7 +61,7 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 }
 
 // RegisterRoutes attaches the image endpoints to r.
-func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
 	ir := r.PathPrefix("/images").Subrouter()
 	ir.Use(handlers.IndexMiddleware(CustomIndex))
 	ir.HandleFunc("/upload/image", handlers.TaskHandler(uploadImageTask)).
@@ -92,7 +92,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	cfg := cd.Config
 	sub1, sub2 := id[:2], id[2:4]
 	key := path.Join(sub1, sub2, id)
-	if p := upload.CacheProviderFromConfig(*cfg); p != nil {
+	if p := upload.CacheProviderFromConfig(cfg); p != nil {
 		data, err := p.Read(r.Context(), key)
 		if err != nil {
 			http.NotFound(w, r)

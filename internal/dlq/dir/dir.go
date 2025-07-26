@@ -31,7 +31,7 @@ func (d *DLQ) Record(_ context.Context, message string) error {
 
 // Register registers the directory provider.
 func Register(r *dlq.Registry) {
-	r.RegisterProvider("dir", func(cfg config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
+	r.RegisterProvider("dir", func(cfg *config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
 		return &DLQ{Dir: cfg.DLQFile}
 	})
 }

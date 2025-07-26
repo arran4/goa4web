@@ -25,8 +25,8 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	"github.com/arran4/goa4web/internal/tasks"
 	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/tasks"
 	websocket "github.com/arran4/goa4web/internal/websocket"
 )
 
@@ -126,6 +126,20 @@ func WithNavRegistry(n *nav.Registry) Option { return func(s *Server) { s.Nav = 
 // WithDLQRegistry sets the dead letter queue registry.
 func WithDLQRegistry(r *dlq.Registry) Option { return func(s *Server) { s.DLQReg = r } }
 
+// WithBus sets the event bus used by the server.
+func WithBus(b *eventbus.Bus) Option { return func(s *Server) { s.Bus = b } }
+
+// WithEmailRegistry sets the email provider registry.
+func WithEmailRegistry(r *email.Registry) Option { return func(s *Server) { s.EmailReg = r } }
+
+// WithImageSigner sets the image signer used by the server.
+func WithImageSigner(signer *imagesign.Signer) Option {
+	return func(s *Server) { s.ImageSigner = signer }
+}
+
+// WithDBRegistry sets the database driver registry used by the server.
+func WithDBRegistry(r *dbdrivers.Registry) Option { return func(s *Server) { s.DBReg = r } }
+
 // New returns a Server configured using the supplied options.
 func New(opts ...Option) *Server {
 	s := &Server{}
@@ -206,7 +220,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithSessionManager(sm),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
-      )
+			)
 			cd.UserID = uid
 			_ = cd.UserRoles()
 

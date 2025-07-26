@@ -35,14 +35,14 @@ func CheckUploadTarget(cfg config.RuntimeConfig) *common.UserError {
 	if cfg.ImageUploadDir == "" {
 		return &common.UserError{Err: fmt.Errorf("dir empty"), ErrorMessage: "image upload directory not set"}
 	}
-	p := upload.ProviderFromConfig(cfg)
+	p := upload.ProviderFromConfig(&cfg)
 	if p == nil {
 		return &common.UserError{Err: fmt.Errorf("no provider"), ErrorMessage: "image upload directory invalid"}
 	}
 	if err := p.Check(context.Background()); err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "image upload directory invalid"}
 	}
-	if cp := upload.CacheProviderFromConfig(cfg); cp != nil {
+	if cp := upload.CacheProviderFromConfig(&cfg); cp != nil {
 		if err := cp.Check(context.Background()); err != nil {
 			return &common.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
 		}

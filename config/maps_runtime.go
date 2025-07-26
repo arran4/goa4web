@@ -8,8 +8,7 @@ import (
 
 // DefaultMap returns a map of environment variable names to their
 // built-in default values.
-func DefaultMap() map[string]string {
-	cfg := GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+func DefaultMap(cfg *RuntimeConfig) map[string]string {
 	m := make(map[string]string)
 	for _, o := range StringOptions {
 		m[o.Env] = *o.Target(cfg)

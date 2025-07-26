@@ -27,5 +27,5 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	handlers.TemplateHandler(w, r, "iPBanPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "ipBanPage.gohtml", data)
 }

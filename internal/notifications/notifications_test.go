@@ -71,7 +71,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
-	n := New(WithQueries(q), WithEmailProvider(rec), WithConfig(cfg))
+	n := New(WithQueries(q), WithEmailProvider(rec), WithConfig(*cfg))
 	n.NotifyAdmins(context.Background(), &EmailTemplates{}, EmailData{})
 	if rec.to != "" {
 		t.Fatalf("expected no direct mail got %s", rec.to)
@@ -82,7 +82,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 }
 
 func TestNotifierInitialization(t *testing.T) {
-	n := New(WithConfig(cfg))
+	n := New(WithConfig(*cfg))
 	if n.Queries != nil {
 		t.Fatalf("expected nil Queries")
 	}
@@ -92,7 +92,7 @@ func TestNotifierInitialization(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n = New(WithQueries(q), WithConfig(cfg))
+	n = New(WithQueries(q), WithConfig(*cfg))
 	if n.Queries != q {
 		t.Fatalf("queries not set via option")
 	}

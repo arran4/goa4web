@@ -23,7 +23,7 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -49,7 +49,7 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -75,7 +75,7 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -101,7 +101,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -127,7 +127,7 @@ func TestCustomForumIndexSubscribeLink(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.UserID = 1
 
 	mock.ExpectQuery("SELECT id, pattern, method FROM subscriptions").
@@ -154,7 +154,7 @@ func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
 	defer sqldb.Close()
 	q := dbpkg.New(sqldb)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.UserID = 1
 
 	pattern := topicSubscriptionPattern(2)

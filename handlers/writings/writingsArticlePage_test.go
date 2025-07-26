@@ -52,7 +52,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	}
 
 	q := db.New(dbconn)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

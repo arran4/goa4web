@@ -12,8 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
-
-	"github.com/arran4/goa4web/config"
 )
 
 func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +28,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	base := cd.Config.ImageUploadDir
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)

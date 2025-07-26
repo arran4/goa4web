@@ -62,7 +62,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	form.Set("task", string(TaskUserAllow))
 	req := httptest.NewRequest("POST", "/admin/users/permissions", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), queries, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	evt := &eventbus.TaskEvent{}
 	cd.SetEvent(evt)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

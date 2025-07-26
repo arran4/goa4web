@@ -45,7 +45,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -96,7 +96,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -133,7 +133,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

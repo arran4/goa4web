@@ -11,7 +11,7 @@ import (
 func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), nil, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.SetRoles([]string{"administrator"})
 	cd.AdminMode = true
 	CustomBlogIndex(cd, req)
@@ -22,7 +22,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("admin should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	cd = common.NewCoreData(req.Context(), nil, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.SetRoles([]string{"content writer"})
 	CustomBlogIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") {
@@ -32,7 +32,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("content writer should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	cd = common.NewCoreData(req.Context(), nil, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.SetRoles([]string{"anonymous"})
 	CustomBlogIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") || common.ContainsItem(cd.CustomIndexItems, "Write blog") {

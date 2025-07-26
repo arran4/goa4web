@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/gorilla/mux"
 )
 
@@ -29,7 +30,8 @@ func TestValidID(t *testing.T) {
 
 func TestImageRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
-	RegisterRoutes(r)
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	RegisterRoutes(r, *cfg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/image/abc!", nil)
 
@@ -42,7 +44,8 @@ func TestImageRouteInvalidID(t *testing.T) {
 
 func TestCacheRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
-	RegisterRoutes(r)
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	RegisterRoutes(r, *cfg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/cache/abc!", nil)
 

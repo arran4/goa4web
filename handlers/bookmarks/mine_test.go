@@ -96,7 +96,7 @@ func TestMinePage_NoBookmarks(t *testing.T) {
 	}
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }), common.WithSession(sess))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

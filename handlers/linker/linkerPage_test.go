@@ -75,7 +75,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/queue?qid=1", nil)
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), queries, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.SetEvent(evt)
 	cd.SetEventTask(ApproveTask)
 	ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)

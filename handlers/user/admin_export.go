@@ -31,7 +31,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := common.NewCoreData(r.Context(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(r.Context(), queries, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.UserID = int32(uid)
 
 	user, err := cd.CurrentUser()

@@ -14,7 +14,7 @@ import (
 
 func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), nil, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.SetRoles([]string{"administrator"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -39,7 +39,7 @@ func TestRoleCheckerMiddlewareAllowed(t *testing.T) {
 
 func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), nil, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

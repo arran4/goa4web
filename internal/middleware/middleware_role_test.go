@@ -77,7 +77,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

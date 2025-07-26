@@ -65,7 +65,7 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" }))
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

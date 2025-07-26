@@ -185,6 +185,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOpt
 		server.WithRouterRegistry(reg),
 		server.WithNavRegistry(navReg),
 		server.WithDLQRegistry(o.DLQReg),
+		server.WithTasksRegistry(o.TasksReg),
 		server.WithBus(bus),
 		server.WithEmailRegistry(o.EmailReg),
 		server.WithImageSigner(imgSigner),

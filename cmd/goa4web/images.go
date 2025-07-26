@@ -56,7 +56,7 @@ func (c *imagesCmd) runCache(args []string) error {
 	dir := c.rootCmd.cfg.ImageCacheDir
 	switch args[0] {
 	case "prune":
-		if cp := upload.CacheProviderFromConfig(&c.rootCmd.cfg); cp != nil {
+		if cp := upload.CacheProviderFromConfig(c.rootCmd.cfg); cp != nil {
 			if ccp, ok := cp.(upload.CacheProvider); ok {
 				return ccp.Cleanup(context.Background(), int64(c.rootCmd.cfg.ImageCacheMaxBytes))
 			}

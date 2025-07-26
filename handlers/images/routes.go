@@ -16,6 +16,29 @@ import (
 	"github.com/arran4/goa4web/internal/upload"
 )
 
+// validID reports whether s consists solely of alphanumeric characters.
+func validID(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
+			return false
+		}
+	}
+	return true
+}
+
+// hasValidID matches routes whose {id} path variable is at least four
+// characters long and contains only alphanumeric characters.
+func hasValidID() mux.MatcherFunc {
+	return func(r *http.Request, m *mux.RouteMatch) bool {
+		id := mux.Vars(r)["id"]
+		return len(id) >= 4 && validID(id)
+	}
+}
+
 func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,16 +68,16 @@ func RegisterRoutes(r *mux.Router) {
 		MatcherFunc(handlers.RequiresAnAccount()).
 		MatcherFunc(uploadImageTask.Matcher())
 	ir.HandleFunc("/pasteimg.js", handlers.PasteImageJS).Methods(http.MethodGet)
-	ir.Handle("/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).Methods(http.MethodGet)
-	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).Methods(http.MethodGet)
+	ir.Handle("/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).
+		Methods(http.MethodGet).
+		MatcherFunc(hasValidID())
+	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).
+		Methods(http.MethodGet).
+		MatcherFunc(hasValidID())
 }
 
 func serveImage(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	if len(id) < 4 {
-		http.NotFound(w, r)
-		return
-	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 	sub1, sub2 := id[:2], id[2:4]
@@ -64,10 +87,6 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 
 func serveCache(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	if len(id) < 4 {
-		http.NotFound(w, r)
-		return
-	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 	sub1, sub2 := id[:2], id[2:4]

@@ -37,7 +37,7 @@ func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 
 // RegisterActionPage handles user creation from the registration form.
 func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
+	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}
 	if err := handlers.ValidateForm(r, []string{"username", "password", "email"}, []string{"username", "password", "email"}); err != nil {
@@ -110,7 +110,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if config.AppRuntimeConfig.LogFlags&config.LogFlagAuth != 0 {
+	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration success uid=%d", lastInsertID)
 	}
 

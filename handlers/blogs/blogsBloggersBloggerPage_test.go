@@ -28,7 +28,7 @@ func TestBloggersBloggerPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/blogs/bloggers/blogger", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

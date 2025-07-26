@@ -69,7 +69,8 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	}
 	defer dbconn.Close()
 
-	cfg := config.AppRuntimeConfig
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
 	cfg.AdminEmails = "a@test"

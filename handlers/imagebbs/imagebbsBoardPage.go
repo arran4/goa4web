@@ -117,8 +117,8 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("get image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, int64(config.AppRuntimeConfig.ImageMaxBytes))
-	if err := r.ParseMultipartForm(int64(config.AppRuntimeConfig.ImageMaxBytes)); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, int64(cd.Config.ImageMaxBytes))
+	if err := r.ParseMultipartForm(int64(cd.Config.ImageMaxBytes)); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
@@ -144,7 +144,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("decode image error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	fname := shaHex + ext
-	if p := upload.ProviderFromConfig(config.AppRuntimeConfig); p != nil {
+	if p := upload.ProviderFromConfig(cd.Config); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

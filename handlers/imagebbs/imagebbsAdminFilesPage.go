@@ -30,7 +30,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
-	base := config.AppRuntimeConfig.ImageUploadDir
+	base := cd.Config.ImageUploadDir
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)

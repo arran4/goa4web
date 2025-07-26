@@ -97,7 +97,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		defer wg.Done()
-		if rows, err := queries.MonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err == nil {
+		if rows, err := queries.MonthlyUsageCounts(r.Context(), int32(cd.Config.StatsStartYear)); err == nil {
 			data.Monthly = rows
 		} else {
 			log.Printf("monthly usage counts: %v", err)
@@ -107,7 +107,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		defer wg.Done()
-		if rows, err := queries.UserMonthlyUsageCounts(r.Context(), int32(config.AppRuntimeConfig.StatsStartYear)); err == nil {
+		if rows, err := queries.UserMonthlyUsageCounts(r.Context(), int32(cd.Config.StatsStartYear)); err == nil {
 			data.UserMonthly = rows
 		} else {
 			log.Printf("user monthly usage counts: %v", err)
@@ -120,7 +120,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	for e := range errCh {
 		data.Errors = append(data.Errors, e)
 	}
-	data.StartYear = config.AppRuntimeConfig.StatsStartYear
+	data.StartYear = cd.Config.StatsStartYear
 
 	handlers.TemplateHandler(w, r, "usageStatsPage.gohtml", data)
 }

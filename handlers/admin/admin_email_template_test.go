@@ -29,11 +29,12 @@ func newEmailReg() *email.Registry {
 }
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
-	config.AppRuntimeConfig.EmailProvider = ""
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	reg := newEmailReg()
-	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(reg.ProviderFromConfig(config.AppRuntimeConfig)), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), nil, common.WithEmailProvider(reg.ProviderFromConfig(cfg)), cfg)
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -47,7 +48,8 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 }
 
 func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
-	config.AppRuntimeConfig.EmailProvider = "log"
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.EmailProvider = "log"
 
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
@@ -65,7 +67,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	q := db.New(sqldb)
 	reg := newEmailReg()
-	cd := common.NewCoreData(req.Context(), q, common.WithEmailProvider(reg.ProviderFromConfig(config.AppRuntimeConfig)), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, common.WithEmailProvider(reg.ProviderFromConfig(cfg)), cfg)
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -123,12 +125,11 @@ func (r *recordAdminMail) Send(ctx context.Context, to mail.Address, rawEmailMes
 }
 
 func TestNotifyAdminsEnv(t *testing.T) {
-	cfgOrig := config.AppRuntimeConfig
-	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	t.Cleanup(func() { config.AppRuntimeConfig = cfgOrig })
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.AdminEmails = "a@test.com,b@test.com"
+	cfg.AdminNotify = true
+	cfg.EmailEnabled = true
+	cfg.EmailFrom = "from@example.com"
 
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
@@ -148,9 +149,10 @@ func TestNotifyAdminsEnv(t *testing.T) {
 
 	os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
 	defer os.Unsetenv(config.EnvAdminEmails)
-	origEmails := config.AppRuntimeConfig.AdminEmails
-	config.AppRuntimeConfig.AdminEmails = "a@test.com,b@test.com"
-	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	origEmails := cfg.AdminEmails
+	cfg.AdminEmails = "a@test.com,b@test.com"
+	defer func() { cfg.AdminEmails = origEmails }()
 	sqldb, mock, err = sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -165,7 +167,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 2, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithQueries(q), notif.WithEmailProvider(rec), notif.WithConfig(config.AppRuntimeConfig))
+	n := notif.New(notif.WithQueries(q), notif.WithEmailProvider(rec), notif.WithConfig(cfg))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 direct mails, got %d", len(rec.to))
@@ -176,23 +178,19 @@ func TestNotifyAdminsEnv(t *testing.T) {
 }
 
 func TestNotifyAdminsDisabled(t *testing.T) {
-	cfgOrig := config.AppRuntimeConfig
-	config.AppRuntimeConfig.AdminEmails = "a@test.com"
-	config.AppRuntimeConfig.AdminNotify = false
-	config.AppRuntimeConfig.EmailEnabled = true
-	t.Cleanup(func() { config.AppRuntimeConfig = cfgOrig })
-	orig := config.AppRuntimeConfig
-	defer func() { config.AppRuntimeConfig = orig }()
-	config.AppRuntimeConfig.AdminEmails = "a@test.com"
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.AdminEmails = "a@test.com"
+	cfg.AdminNotify = false
+	cfg.EmailEnabled = true
+	cfg.AdminEmails = "a@test.com"
 	os.Setenv(config.EnvAdminNotify, "false")
-	config.AppRuntimeConfig.AdminEmails = "a@test.com"
+	cfg.AdminEmails = "a@test.com"
 	defer os.Unsetenv(config.EnvAdminEmails)
 	defer os.Unsetenv(config.EnvAdminNotify)
-	origEmails := config.AppRuntimeConfig.AdminEmails
-	config.AppRuntimeConfig.AdminEmails = "a@test.com"
-	defer func() { config.AppRuntimeConfig.AdminEmails = origEmails }()
+	origEmails := cfg.AdminEmails
+	cfg.AdminEmails = "a@test.com"
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithEmailProvider(rec), notif.WithConfig(config.AppRuntimeConfig))
+	n := notif.New(notif.WithEmailProvider(rec), notif.WithConfig(cfg))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))

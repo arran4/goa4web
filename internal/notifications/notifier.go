@@ -55,7 +55,6 @@ func WithConfig(cfg config.RuntimeConfig) Option {
 // New constructs a Notifier with the provided dependencies.
 func New(opts ...Option) *Notifier {
 	n := &Notifier{}
-	WithConfig(config.AppRuntimeConfig)(n)
 	for _, o := range opts {
 		o(n)
 	}

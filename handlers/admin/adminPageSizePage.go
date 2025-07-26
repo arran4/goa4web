@@ -15,6 +15,7 @@ import (
 // The change only affects the in-memory configuration. Update the
 // configuration file separately to persist the values.
 func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -23,14 +24,14 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 		min, _ := strconv.Atoi(r.PostFormValue("min"))
 		max, _ := strconv.Atoi(r.PostFormValue("max"))
 		def, _ := strconv.Atoi(r.PostFormValue("default"))
-		config.UpdatePaginationConfig(&config.AppRuntimeConfig, min, max, def)
+		config.UpdatePaginationConfig(cd.Config, min, max, def)
 
 		data := struct {
 			*common.CoreData
 			Messages []string
 			Back     string
 		}{
-			CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+			CoreData: cd,
 			Back:     "/admin/page-size",
 			Messages: []string{"Pagination settings updated in memory. Update the configuration file to persist."},
 		}
@@ -44,10 +45,10 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max     int
 		Default int
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Min:      config.AppRuntimeConfig.PageSizeMin,
-		Max:      config.AppRuntimeConfig.PageSizeMax,
-		Default:  config.AppRuntimeConfig.PageSizeDefault,
+		CoreData: cd,
+		Min:      cd.Config.PageSizeMin,
+		Max:      cd.Config.PageSizeMax,
+		Default:  cd.Config.PageSizeDefault,
 	}
 	handlers.TemplateHandler(w, r, "pageSizePage.gohtml", data)
 }

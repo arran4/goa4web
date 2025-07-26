@@ -41,7 +41,7 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	id := int32(id64)
 	code := r.FormValue("code")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	expiry := time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour)
+	expiry := time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour)
 	reset, err := queries.GetPasswordResetByCode(r.Context(), db.GetPasswordResetByCodeParams{VerificationCode: code, CreatedAt: expiry})
 	if err != nil || reset.ID != id {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid code"))

@@ -31,7 +31,7 @@ func TestForgotPasswordEventData(t *testing.T) {
 	mock.ExpectExec("INSERT INTO pending_passwords").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	cd := common.NewCoreData(context.Background(), q, common.WithEvent(evt), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(context.Background(), q, common.WithEvent(evt), config.NewRuntimeConfig())
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
 	form := url.Values{"username": {"u"}, "password": {"pw"}}

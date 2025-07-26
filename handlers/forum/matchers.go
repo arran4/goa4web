@@ -47,7 +47,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
-			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
+			if cd.Config.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic thread uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
 			}
 			http.NotFound(w, r)
@@ -56,7 +56,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 
 		topicRow, err := cd.ForumTopicByID(threadRow.ForumtopicIdforumtopic)
 		if err != nil {
-			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
+			if cd.Config.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic topic uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
 			}
 			http.NotFound(w, r)
@@ -64,7 +64,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 		}
 
 		if int(topicRow.Idforumtopic) != topicID {
-			if config.AppRuntimeConfig.LogFlags&config.LogFlagAccess != 0 {
+			if cd.Config.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic mismatch uid=%d urlTopic=%d threadTopic=%d", uid, topicID, topicRow.Idforumtopic)
 			}
 			http.NotFound(w, r)

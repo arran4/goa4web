@@ -24,6 +24,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
 
@@ -37,7 +38,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -48,8 +49,8 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
-	CoreAdderMiddlewareWithDB(db, config.AppRuntimeConfig, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	signer := imagesign.NewSigner(cfg, "k")
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -76,7 +77,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := dbpkg.New(db)
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -87,8 +88,8 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(config.AppRuntimeConfig, "k")
-	CoreAdderMiddlewareWithDB(db, config.AppRuntimeConfig, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	signer := imagesign.NewSigner(cfg, "k")
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

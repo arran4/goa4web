@@ -72,8 +72,6 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		var cfg config.RuntimeConfig
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			cfg = cd.Config
-		} else {
-			cfg = config.AppRuntimeConfig
 		}
 		hsts := cfg.HSTSHeaderValue
 		if hsts != "" {

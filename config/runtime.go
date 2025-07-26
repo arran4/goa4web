@@ -109,9 +109,6 @@ type RuntimeConfig struct {
 	CreateDirs bool
 }
 
-// AppRuntimeConfig stores the current application configuration.
-var AppRuntimeConfig RuntimeConfig
-
 // newRuntimeFlagSet returns a FlagSet containing the provided options merged
 // with the built-in ones.
 func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption, bopts []BoolOption) *flag.FlagSet {
@@ -152,7 +149,7 @@ func NewRuntimeFlagSetWithOptions(name string, sopts []StringOption, iopts []Int
 // generateRuntimeConfig constructs the RuntimeConfig from the provided option
 // slices applying the standard precedence order of command line flags,
 // configuration file values and environment variables.
-func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption, bopts []BoolOption) RuntimeConfig {
+func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption, bopts []BoolOption) *RuntimeConfig {
 	if getenv == nil {
 		getenv = os.Getenv
 	}
@@ -161,14 +158,14 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		fs.Visit(func(f *flag.Flag) { setFlags[f.Name] = true })
 	}
 
-	cfg := RuntimeConfig{}
+	cfg := &RuntimeConfig{}
 
 	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
 	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
 	bools := append(append([]BoolOption(nil), BoolOptions...), bopts...)
 
 	for _, o := range strings {
-		dst := o.Target(&cfg)
+		dst := o.Target(cfg)
 		var val string
 		if fs != nil && setFlags[o.Name] {
 			if f := fs.Lookup(o.Name); f != nil {
@@ -188,7 +185,7 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 	}
 
 	for _, o := range ints {
-		dst := o.Target(&cfg)
+		dst := o.Target(cfg)
 		var val string
 		if fs != nil && setFlags[o.Name] {
 			if f := fs.Lookup(o.Name); f != nil {
@@ -211,7 +208,7 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 	}
 
 	for _, o := range bools {
-		dst := o.Target(&cfg)
+		dst := o.Target(cfg)
 		var cliVal string
 		if fs != nil && o.Name != "" && setFlags[o.Name] {
 			if f := fs.Lookup(o.Name); f != nil {
@@ -228,8 +225,7 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 		cfg.AdminAPISecretFile = DefaultAdminAPISecretPath()
 	}
 
-	normalizeRuntimeConfig(&cfg)
-	AppRuntimeConfig = cfg
+	normalizeRuntimeConfig(cfg)
 	return cfg
 }
 
@@ -240,13 +236,13 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 // optional config file values and environment variables following the
 // precedence rules from AGENTS.md. The getenv function is used to
 // retrieve environment values and defaults to os.Getenv when nil.
-func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string) RuntimeConfig {
+func GenerateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string) *RuntimeConfig {
 	return generateRuntimeConfig(fs, fileVals, getenv, nil, nil, nil)
 }
 
 // GenerateRuntimeConfigWithOptions is like GenerateRuntimeConfig but also considers
 // the supplied option slices.
-func GenerateRuntimeConfigWithOptions(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption) RuntimeConfig {
+func GenerateRuntimeConfigWithOptions(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption) *RuntimeConfig {
 	return generateRuntimeConfig(fs, fileVals, getenv, sopts, iopts, nil)
 }
 

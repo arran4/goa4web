@@ -37,7 +37,7 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -71,7 +71,7 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "category", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 
@@ -102,7 +102,7 @@ func TestAnnouncementForNewsCaching(t *testing.T) {
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnRows(annRows)
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
 	if _, err := cd.AnnouncementForNews(1); err != nil {
 		t.Fatalf("AnnouncementForNews: %v", err)
@@ -128,7 +128,7 @@ func TestAnnouncementForNewsError(t *testing.T) {
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrConnDone)
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
 	if _, err := cd.AnnouncementForNews(1); !errors.Is(err, sql.ErrConnDone) {
 		t.Fatalf("AnnouncementForNews error=%v", err)
@@ -167,7 +167,7 @@ func TestPublicWritingsLazy(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -211,7 +211,7 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	cd.SetRoles([]string{"user"})
 
@@ -230,9 +230,7 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 }
 
 func TestBloggersLazy(t *testing.T) {
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig = config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -247,7 +245,7 @@ func TestBloggersLazy(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, cfg)
 	cd.UserID = 1
 	req = req.WithContext(ctx)
 
@@ -265,9 +263,7 @@ func TestBloggersLazy(t *testing.T) {
 
 func TestWritersLazy(t *testing.T) {
 
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig = config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -283,7 +279,7 @@ func TestWritersLazy(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, cfg)
 	cd.UserID = 1
 	req = req.WithContext(ctx)
 

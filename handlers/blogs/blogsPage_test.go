@@ -54,7 +54,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 	}
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), config.NewRuntimeConfig())
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -102,7 +102,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
 	q := db.New(sqldb)
-	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -127,7 +127,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -140,7 +140,7 @@ func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 
 func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
-	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -153,7 +153,7 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 
 func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/blogs/user/permissions", nil)
-	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

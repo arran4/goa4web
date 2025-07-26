@@ -38,7 +38,7 @@ func TestAddEmailTaskInvalid(t *testing.T) {
 
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, q, common.WithSession(sess), common.WithEvent(evt), config.NewRuntimeConfig())
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

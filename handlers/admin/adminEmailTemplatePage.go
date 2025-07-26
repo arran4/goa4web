@@ -60,21 +60,21 @@ func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 	return infos
 }
 
-func defaultTemplate(name string) string {
+func defaultTemplate(name string, cfg *config.RuntimeConfig) string {
 	var buf bytes.Buffer
 	if strings.HasSuffix(name, ".gohtml") {
 		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData()); err == nil {
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
 	} else {
 		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
-		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData()); err == nil {
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
 		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{})
 		buf.Reset()
-		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData()); err == nil {
+		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
 	}
@@ -105,17 +105,17 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 		Name:     name,
 		Body:     body,
-		Default:  defaultTemplate(name),
+		Default:  defaultTemplate(name, cd.Config),
 		Error:    r.URL.Query().Get("error"),
 	}
 	handlers.TemplateHandler(w, r, "emailTemplateEditPage.gohtml", data)
 }
 
-func sampleEmailData() map[string]interface{} {
+func sampleEmailData(cfg *config.RuntimeConfig) map[string]interface{} {
 	return map[string]interface{}{
 		"URL":            "http://example.com",
 		"UnsubscribeUrl": "http://example.com/unsub",
-		"From":           config.AppRuntimeConfig.EmailFrom,
+		"From":           cfg.EmailFrom,
 		"To":             "user@example.com",
 	}
 }

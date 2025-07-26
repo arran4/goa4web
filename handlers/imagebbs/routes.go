@@ -19,7 +19,7 @@ func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
 	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	ibr.Use(handlers.IndexMiddleware(CustomImageBBSIndex))
-	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(config.AppRuntimeConfig.ImageUploadDir))))
+	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(cd.Config.ImageUploadDir))))
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
 	r.HandleFunc("/imagebbs.atom", AtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")

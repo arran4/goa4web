@@ -52,7 +52,8 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 }
 
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
-	config.AppRuntimeConfig.EmailProvider = ""
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.EmailProvider = ""
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 	queries := dbpkg.New(db)
@@ -61,7 +62,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg.ProviderFromConfig(config.AppRuntimeConfig)), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg.ProviderFromConfig(cfg)), cfg)
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -83,7 +84,8 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 }
 
 func TestUserEmailTestAction_WithProvider(t *testing.T) {
-	config.AppRuntimeConfig.EmailProvider = "log"
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.EmailProvider = "log"
 
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
@@ -93,7 +95,7 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg.ProviderFromConfig(config.AppRuntimeConfig)), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, common.WithEmailProvider(reg.ProviderFromConfig(cfg)), cfg)
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -114,7 +116,7 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -139,7 +141,7 @@ func TestUserEmailPage_NoUnverified(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/usr/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -165,7 +167,7 @@ func TestUserEmailPage_NoVerified(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/usr/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -214,7 +216,7 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := req.Context()
-	cfg := config.AppRuntimeConfig
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cfg.PageSizeDefault = 15
 	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), common.WithConfig(cfg))
 	cd.UserID = 1
@@ -264,7 +266,7 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), config.NewRuntimeConfig())
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -292,7 +294,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	defer db.Close()
 
 	queries := dbpkg.New(db)
-	config.AppRuntimeConfig.PageSizeDefault = 15
+	cfg.PageSizeDefault = 15
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -312,17 +314,18 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 		req.AddCookie(c)
 	}
 	rr := httptest.NewRecorder()
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), common.WithConfig(config.AppRuntimeConfig))
+	cd := common.NewCoreData(ctx, queries, common.WithSession(sess), cfg)
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
-		AddRow(1, 1, 1, nil, config.AppRuntimeConfig.PageSizeDefault, true)
+		AddRow(1, 1, 1, nil, cfg.PageSizeDefault, true)
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
-	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(config.AppRuntimeConfig.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(cfg.PageSizeDefault), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	saveLanguageTask.Action(rr, req)
 

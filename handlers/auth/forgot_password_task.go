@@ -63,7 +63,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{
 		UserID:    row.Idusers,
-		CreatedAt: time.Now().Add(-time.Duration(config.AppRuntimeConfig.PasswordResetExpiryHours) * time.Hour),
+		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
 	}); err == nil {
 		if time.Since(reset.CreatedAt) < 24*time.Hour {
 			return handlers.ErrRedirectOnSamePageHandler(errors.New("reset recently requested"))

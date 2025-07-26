@@ -59,19 +59,19 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	origCfg := config.AppRuntimeConfig
-	config.AppRuntimeConfig.EmailEnabled = true
-	config.AppRuntimeConfig.AdminNotify = true
-	config.AppRuntimeConfig.AdminEmails = "a@test"
-	config.AppRuntimeConfig.EmailFrom = "from@example.com"
-	config.AppRuntimeConfig.NotificationsEnabled = true
-	t.Cleanup(func() { config.AppRuntimeConfig = origCfg })
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg.EmailEnabled = true
+	cfg.AdminNotify = true
+	cfg.AdminEmails = "a@test"
+	cfg.EmailFrom = "from@example.com"
+	cfg.NotificationsEnabled = true
+
 	mock.ExpectQuery("UserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
-	n := New(WithQueries(q), WithEmailProvider(rec), WithConfig(config.AppRuntimeConfig))
+	n := New(WithQueries(q), WithEmailProvider(rec), WithConfig(cfg))
 	n.NotifyAdmins(context.Background(), &EmailTemplates{}, EmailData{})
 	if rec.to != "" {
 		t.Fatalf("expected no direct mail got %s", rec.to)
@@ -82,7 +82,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 }
 
 func TestNotifierInitialization(t *testing.T) {
-	n := New(WithConfig(config.AppRuntimeConfig))
+	n := New(WithConfig(cfg))
 	if n.Queries != nil {
 		t.Fatalf("expected nil Queries")
 	}
@@ -92,7 +92,7 @@ func TestNotifierInitialization(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n = New(WithQueries(q), WithConfig(config.AppRuntimeConfig))
+	n = New(WithQueries(q), WithConfig(cfg))
 	if n.Queries != q {
 		t.Fatalf("queries not set via option")
 	}

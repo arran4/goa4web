@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/navigation"
 )
 
 func TestValidID(t *testing.T) {
@@ -32,7 +33,8 @@ func TestValidID(t *testing.T) {
 func TestImageRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(r, cfg)
+	navReg := navigation.NewRegistry()
+	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/image/abc!", nil)
 
@@ -46,7 +48,8 @@ func TestImageRouteInvalidID(t *testing.T) {
 func TestCacheRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(r, cfg)
+	navReg := navigation.NewRegistry()
+	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/cache/abc!", nil)
 

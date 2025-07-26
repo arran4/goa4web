@@ -6,13 +6,14 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
+	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
 // Module represents a router module and its setup function.
 type Module struct {
 	Name  string
 	Deps  []string
-	Setup func(*mux.Router, *config.RuntimeConfig)
+	Setup func(*mux.Router, *config.RuntimeConfig, *nav.Registry)
 	once  sync.Once
 }
 
@@ -27,7 +28,7 @@ func NewRegistry() *Registry { return &Registry{modules: map[string]*Module{}} }
 
 // RegisterModule registers a router module with optional dependencies. A module
 // is stored only on the first call.
-func (reg *Registry) RegisterModule(name string, deps []string, setup func(*mux.Router, *config.RuntimeConfig)) {
+func (reg *Registry) RegisterModule(name string, deps []string, setup func(*mux.Router, *config.RuntimeConfig, *nav.Registry)) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 	if _, ok := reg.modules[name]; ok {
@@ -38,7 +39,7 @@ func (reg *Registry) RegisterModule(name string, deps []string, setup func(*mux.
 
 // InitModules initialises all registered modules by resolving their
 // dependencies and invoking their Setup function once.
-func (reg *Registry) InitModules(r *mux.Router, cfg *config.RuntimeConfig) {
+func (reg *Registry) InitModules(r *mux.Router, cfg *config.RuntimeConfig, navReg *nav.Registry) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 
@@ -69,6 +70,6 @@ func (reg *Registry) InitModules(r *mux.Router, cfg *config.RuntimeConfig) {
 		if m.Setup == nil {
 			continue
 		}
-		m.once.Do(func() { m.Setup(r, cfg) })
+		m.once.Do(func() { m.Setup(r, cfg, navReg) })
 	}
 }

@@ -175,9 +175,9 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOpt
 	wsMod := websocket.NewModule(bus, cfg)
 	wsMod.Register(reg)
 	r := mux.NewRouter()
-	routerpkg.RegisterRoutes(r, reg, cfg)
 
 	navReg := nav.NewRegistry()
+	routerpkg.RegisterRoutes(r, reg, cfg, navReg)
 	srv := server.New(
 		server.WithStore(store),
 		server.WithDB(dbPool),
@@ -191,7 +191,6 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOpt
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
 	)
-	nav.SetDefaultRegistry(navReg)
 
 	taskEventMW := middleware.NewTaskEventMiddleware(bus)
 	handler := middleware.NewMiddlewareChain(

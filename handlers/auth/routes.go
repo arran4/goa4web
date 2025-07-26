@@ -6,11 +6,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
+	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches the login and registration endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	rr := r.PathPrefix("/register").Subrouter()
 	rr.Use(handlers.IndexMiddleware(CustomIndex))
 	rr.HandleFunc("", registerTask.Page).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))

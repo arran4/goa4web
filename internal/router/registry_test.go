@@ -7,17 +7,19 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/navigation"
 )
 
 func TestInitModulesOnce(t *testing.T) {
 	reg := NewRegistry()
 	r := mux.NewRouter()
 	count := 0
-	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig) { count++ })
+	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { count++ })
 
 	cfg := &config.RuntimeConfig{}
-	reg.InitModules(r, cfg)
-	reg.InitModules(r, cfg)
+	navReg := navigation.NewRegistry()
+	reg.InitModules(r, cfg, navReg)
+	reg.InitModules(r, cfg, navReg)
 
 	if count != 1 {
 		t.Fatalf("expected setup to run once, got %d", count)
@@ -29,11 +31,13 @@ func TestInitModulesDependencyOrder(t *testing.T) {
 	r := mux.NewRouter()
 	order := []string{}
 
-	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig) { order = append(order, "a") })
-	reg.RegisterModule("b", []string{"a"}, func(*mux.Router, *config.RuntimeConfig) { order = append(order, "b") })
-	reg.RegisterModule("c", []string{"b"}, func(*mux.Router, *config.RuntimeConfig) { order = append(order, "c") })
+	navReg := navigation.NewRegistry()
 
-	reg.InitModules(r, &config.RuntimeConfig{})
+	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { order = append(order, "a") })
+	reg.RegisterModule("b", []string{"a"}, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { order = append(order, "b") })
+	reg.RegisterModule("c", []string{"b"}, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { order = append(order, "c") })
+
+	reg.InitModules(r, &config.RuntimeConfig{}, navReg)
 
 	want := []string{"a", "b", "c"}
 	if diff := cmp.Diff(want, order); diff != "" {

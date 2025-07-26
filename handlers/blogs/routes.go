@@ -9,13 +9,13 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
 // RegisterRoutes attaches the public blog endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
-	nav.RegisterIndexLink("Blogs", "/blogs", SectionWeight)
-	nav.RegisterAdminControlCenter("Blogs", "/admin/blogs/user/permissions", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterIndexLink("Blogs", "/blogs", SectionWeight)
+	navReg.RegisterAdminControlCenter("Blogs", "/admin/blogs/user/permissions", SectionWeight)
 	br := r.PathPrefix("/blogs").Subrouter()
 	br.Use(handlers.IndexMiddleware(CustomBlogIndex))
 	br.HandleFunc("/rss", RssPage).Methods("GET")

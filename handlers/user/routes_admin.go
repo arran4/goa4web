@@ -4,14 +4,14 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/handlers"
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
 // RegisterAdminRoutes attaches user admin endpoints to the router.
-func RegisterAdminRoutes(ar *mux.Router) {
-	nav.RegisterAdminControlCenter("User Permissions", "/admin/users/permissions", SectionWeight-10)
-	nav.RegisterAdminControlCenter("Pending Users", "/admin/users/pending", SectionWeight-5)
-	nav.RegisterAdminControlCenter("Users", "/admin/users", SectionWeight)
+func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
+	navReg.RegisterAdminControlCenter("User Permissions", "/admin/users/permissions", SectionWeight-10)
+	navReg.RegisterAdminControlCenter("Pending Users", "/admin/users/pending", SectionWeight-5)
+	navReg.RegisterAdminControlCenter("Users", "/admin/users", SectionWeight)
 	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
 	ar.HandleFunc("/users/pending", adminPendingUsersPage).Methods("GET")
 	ar.HandleFunc("/users/pending/approve", adminPendingUsersApprove).Methods("POST")

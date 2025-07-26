@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
-	nav "github.com/arran4/goa4web/internal/navigation"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
 var (
@@ -38,9 +38,9 @@ func runTemplate(name string) http.HandlerFunc {
 }
 
 // RegisterRoutes attaches the public news endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) {
-	nav.RegisterIndexLink("News", "/", SectionWeight)
-	nav.RegisterAdminControlCenter("News", "/admin/news/users/roles", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	navReg.RegisterIndexLink("News", "/", SectionWeight)
+	navReg.RegisterAdminControlCenter("News", "/admin/news/users/roles", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex))
 	r.HandleFunc("/", runTemplate("newsPage")).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")

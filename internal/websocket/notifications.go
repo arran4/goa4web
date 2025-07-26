@@ -17,6 +17,7 @@ import (
 	coreconsts "github.com/arran4/goa4web/core/consts"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -201,7 +202,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // registerRoutes attaches the websocket handler to r.
-func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig) {
+func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *navigation.Registry) {
 	h := NewNotificationsHandler(m.Bus, cfg)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/notifications.js", NotificationsJS).Methods(http.MethodGet)

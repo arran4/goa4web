@@ -24,6 +24,7 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/lazy"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -81,52 +82,52 @@ type CoreData struct {
 
 	ctx           context.Context
 	queries       *db.Queries
-	emailProvider lazyValue[MailProvider]
+	emailProvider lazy.Value[MailProvider]
 
-	allRoles                 lazyValue[[]*db.Role]
-	announcement             lazyValue[*db.GetActiveAnnouncementWithNewsRow]
+	allRoles                 lazy.Value[[]*db.Role]
+	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsRow]
 	annMu                    sync.Mutex
-	bloggers                 lazyValue[[]*db.BloggerCountRow]
-	bookmarks                lazyValue[*db.GetBookmarksForUserRow]
+	bloggers                 lazy.Value[[]*db.BloggerCountRow]
+	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
 	event                    *eventbus.TaskEvent
-	forumCategories          lazyValue[[]*db.Forumcategory]
-	forumThreads             map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
-	forumTopics              map[int32]*lazyValue[*db.GetForumTopicByIdForUserRow]
-	forumThreadRows          map[int32]*lazyValue[*db.GetThreadLastPosterAndPermsRow]
-	forumComments            map[int32]*lazyValue[*db.GetCommentByIdForUserRow]
-	newsPosts                map[int32]*lazyValue[*db.GetForumThreadIdByNewsPostIdRow]
+	forumCategories          lazy.Value[[]*db.Forumcategory]
+	forumThreads             map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	forumTopics              map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
+	forumThreadRows          map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
+	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
+	newsPosts                map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
 	currentThreadID          int32
 	currentTopicID           int32
 	currentCommentID         int32
 	currentNewsPostID        int32
-	imageBoardPosts          map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
-	imageBoards              lazyValue[[]*db.Imageboard]
-	languagesAll             lazyValue[[]*db.Language]
-	langs                    lazyValue[[]*db.Language]
-	latestNews               lazyValue[[]*NewsPost]
-	latestWritings           lazyValue[[]*db.Writing]
-	linkerCategories         lazyValue[[]*db.GetLinkerCategoryLinkCountsRow]
-	newsAnnouncements        map[int32]*lazyValue[*db.SiteAnnouncement]
-	notifCount               lazyValue[int32]
-	perms                    lazyValue[[]*db.GetPermissionsByUserIDRow]
-	pref                     lazyValue[*db.Preference]
-	preferredLanguageID      lazyValue[int32]
-	publicWritings           map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]
-	subImageBoards           map[int32]*lazyValue[[]*db.Imageboard]
-	unreadCount              lazyValue[int64]
-	subscriptions            lazyValue[map[string]bool]
-	user                     lazyValue[*db.User]
-	userRoles                lazyValue[[]string]
-	visibleWritingCategories lazyValue[[]*db.WritingCategory]
-	writerWritings           map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]
-	writers                  lazyValue[[]*db.WriterCountRow]
-	writingCategories        lazyValue[[]*db.WritingCategory]
+	imageBoardPosts          map[int32]*lazy.Value[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
+	imageBoards              lazy.Value[[]*db.Imageboard]
+	languagesAll             lazy.Value[[]*db.Language]
+	langs                    lazy.Value[[]*db.Language]
+	latestNews               lazy.Value[[]*NewsPost]
+	latestWritings           lazy.Value[[]*db.Writing]
+	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
+	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
+	notifCount               lazy.Value[int32]
+	perms                    lazy.Value[[]*db.GetPermissionsByUserIDRow]
+	pref                     lazy.Value[*db.Preference]
+	preferredLanguageID      lazy.Value[int32]
+	publicWritings           map[string]*lazy.Value[[]*db.GetPublicWritingsInCategoryForUserRow]
+	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
+	unreadCount              lazy.Value[int64]
+	subscriptions            lazy.Value[map[string]bool]
+	user                     lazy.Value[*db.User]
+	userRoles                lazy.Value[[]string]
+	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
+	writerWritings           map[int32]*lazy.Value[[]*db.GetPublicWritingsByUserForViewerRow]
+	writers                  lazy.Value[[]*db.WriterCountRow]
+	writingCategories        lazy.Value[[]*db.WritingCategory]
 	currentWritingID         int32
-	writingRows              map[int32]*lazyValue[*db.GetWritingByIdForUserDescendingByPublishedDateRow]
+	writingRows              map[int32]*lazy.Value[*db.GetWritingByIdForUserDescendingByPublishedDateRow]
 	currentBlogID            int32
-	blogEntries              map[int32]*lazyValue[*db.GetBlogEntryForUserByIdRow]
+	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForUserByIdRow]
 
-	absoluteURLBase lazyValue[string]
+	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
 	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
@@ -134,7 +135,7 @@ type CoreData struct {
 }
 
 // SetRoles preloads the current user roles.
-func (cd *CoreData) SetRoles(r []string) { cd.userRoles.set(r) }
+func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) }
 
 // Marked returns true the first time it is called with key. Subsequent
 // calls return false. It is used to avoid re-rendering template sections
@@ -171,12 +172,12 @@ func WithEvent(evt *eventbus.TaskEvent) CoreOption { return func(cd *CoreData) {
 
 // WithAbsoluteURLBase sets the base URL used to build absolute links.
 func WithAbsoluteURLBase(base string) CoreOption {
-	return func(cd *CoreData) { cd.absoluteURLBase.set(strings.TrimRight(base, "/")) }
+	return func(cd *CoreData) { cd.absoluteURLBase.Set(strings.TrimRight(base, "/")) }
 }
 
 // WithPreference preloads the user preference object.
 func WithPreference(p *db.Preference) CoreOption {
-	return func(cd *CoreData) { cd.pref.set(p) }
+	return func(cd *CoreData) { cd.pref.Set(p) }
 }
 
 // WithConfig sets the runtime config for this CoreData.
@@ -209,7 +210,7 @@ func NewCoreData(ctx context.Context, q *db.Queries, opts ...CoreOption) *CoreDa
 	cd := &CoreData{
 		ctx:               ctx,
 		queries:           q,
-		newsAnnouncements: map[int32]*lazyValue[*db.SiteAnnouncement]{},
+		newsAnnouncements: map[int32]*lazy.Value[*db.SiteAnnouncement]{},
 		Config:            config.AppRuntimeConfig,
 	}
 	for _, o := range opts {
@@ -232,12 +233,12 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 // EmailProvider lazily returns the configured email provider.
 // WithEmailProvider sets the email provider used by CoreData.
 func WithEmailProvider(p MailProvider) CoreOption {
-	return func(cd *CoreData) { cd.emailProvider.set(p) }
+	return func(cd *CoreData) { cd.emailProvider.Set(p) }
 }
 
 // EmailProvider returns the configured email provider.
 func (cd *CoreData) EmailProvider() MailProvider {
-	p, err := cd.emailProvider.load(func() (MailProvider, error) { return nil, nil })
+	p, err := cd.emailProvider.Load(func() (MailProvider, error) { return nil, nil })
 	if err != nil {
 		log.Printf("load email provider: %v", err)
 	}
@@ -311,7 +312,7 @@ func pageSize(r *http.Request) int {
 
 // UserRoles returns the user roles loaded lazily.
 func (cd *CoreData) UserRoles() []string {
-	roles, err := cd.userRoles.load(func() ([]string, error) {
+	roles, err := cd.userRoles.Load(func() ([]string, error) {
 		rs := []string{"anonymous"}
 		if cd.UserID == 0 || cd.queries == nil {
 			return rs, nil
@@ -368,7 +369,7 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 // AbsoluteURL returns an absolute URL by combining the configured hostname or
 // the request host with path. The base value is cached per request.
 func (cd *CoreData) AbsoluteURL(path string) string {
-	base, err := cd.absoluteURLBase.load(func() (string, error) { return "", nil })
+	base, err := cd.absoluteURLBase.Load(func() (string, error) { return "", nil })
 	if err != nil {
 		log.Printf("load absolute URL base: %v", err)
 	}
@@ -380,7 +381,7 @@ func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
 
 // CurrentUser returns the logged in user's record loaded on demand.
 func (cd *CoreData) CurrentUser() (*db.User, error) {
-	return cd.user.load(func() (*db.User, error) {
+	return cd.user.Load(func() (*db.User, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}
@@ -397,7 +398,7 @@ func (cd *CoreData) CurrentUser() (*db.User, error) {
 
 // CurrentUserLoaded returns the cached current user without triggering a database lookup.
 func (cd *CoreData) CurrentUserLoaded() *db.User {
-	u, ok := cd.user.peek()
+	u, ok := cd.user.Peek()
 	if !ok {
 		return nil
 	}
@@ -411,7 +412,7 @@ func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 }
 
 // CurrentThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) CurrentThread(ops ...LazyOption[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) CurrentThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	if cd.currentThreadID == 0 {
 		return nil, nil
 	}
@@ -427,7 +428,7 @@ func (cd *CoreData) CurrentThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 	if !ok {
 		return nil
 	}
-	v, ok := lv.peek()
+	v, ok := lv.Peek()
 	if !ok {
 		return nil
 	}
@@ -435,7 +436,7 @@ func (cd *CoreData) CurrentThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 }
 
 // CurrentTopic returns the currently requested topic lazily loaded.
-func (cd *CoreData) CurrentTopic(ops ...LazyOption[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
+func (cd *CoreData) CurrentTopic(ops ...lazy.Option[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
 	if cd.currentTopicID == 0 {
 		return nil, nil
 	}
@@ -451,7 +452,7 @@ func (cd *CoreData) CurrentTopicLoaded() *db.GetForumTopicByIdForUserRow {
 	if !ok {
 		return nil
 	}
-	v, ok := lv.peek()
+	v, ok := lv.Peek()
 	if !ok {
 		return nil
 	}
@@ -462,7 +463,7 @@ func (cd *CoreData) CurrentTopicLoaded() *db.GetForumTopicByIdForUserRow {
 func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
 
 // CurrentWriting returns the currently requested writing lazily loaded.
-func (cd *CoreData) CurrentWriting(ops ...LazyOption[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+func (cd *CoreData) CurrentWriting(ops ...lazy.Option[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
 	if cd.currentWritingID == 0 {
 		return nil, nil
 	}
@@ -478,7 +479,7 @@ func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingBy
 	if !ok {
 		return nil
 	}
-	v, ok := lv.peek()
+	v, ok := lv.Peek()
 	if !ok {
 		return nil
 	}
@@ -489,7 +490,7 @@ func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingBy
 func (cd *CoreData) SetCurrentBlog(id int32) { cd.currentBlogID = id }
 
 // CurrentBlog returns the currently requested blog entry lazily loaded.
-func (cd *CoreData) CurrentBlog(ops ...LazyOption[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
 	if cd.currentBlogID == 0 {
 		return nil, nil
 	}
@@ -505,7 +506,7 @@ func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForUserByIdRow {
 	if !ok {
 		return nil
 	}
-	v, ok := lv.peek()
+	v, ok := lv.Peek()
 	if !ok {
 		return nil
 	}
@@ -514,7 +515,7 @@ func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForUserByIdRow {
 
 // Permissions returns the user's permissions loaded on demand.
 func (cd *CoreData) Permissions() ([]*db.GetPermissionsByUserIDRow, error) {
-	return cd.perms.load(func() ([]*db.GetPermissionsByUserIDRow, error) {
+	return cd.perms.Load(func() ([]*db.GetPermissionsByUserIDRow, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}
@@ -524,7 +525,7 @@ func (cd *CoreData) Permissions() ([]*db.GetPermissionsByUserIDRow, error) {
 
 // Preference returns the user's preferences loaded on demand.
 func (cd *CoreData) Preference() (*db.Preference, error) {
-	return cd.pref.load(func() (*db.Preference, error) {
+	return cd.pref.Load(func() (*db.Preference, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}
@@ -549,7 +550,7 @@ func (cd *CoreData) PageSize() int {
 
 // Languages returns the list of available languages loaded on demand.
 func (cd *CoreData) Languages() ([]*db.Language, error) {
-	return cd.langs.load(func() ([]*db.Language, error) {
+	return cd.langs.Load(func() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -559,7 +560,7 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 
 // AllLanguages returns all languages cached once.
 func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
-	return cd.languagesAll.load(func() ([]*db.Language, error) {
+	return cd.languagesAll.Load(func() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -570,7 +571,7 @@ func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
 // PreferredLanguageID returns the user's preferred language ID if set,
 // otherwise it resolves the site's default language name to an ID.
 func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
-	id, err := cd.preferredLanguageID.load(func() (int32, error) {
+	id, err := cd.preferredLanguageID.Load(func() (int32, error) {
 		if pref, err := cd.Preference(); err == nil && pref != nil {
 			if pref.LanguageIdlanguage != 0 {
 				return pref.LanguageIdlanguage, nil
@@ -593,7 +594,7 @@ func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 
 // AllRoles returns every defined role loaded once from the database.
 func (cd *CoreData) AllRoles() ([]*db.Role, error) {
-	return cd.allRoles.load(func() ([]*db.Role, error) {
+	return cd.allRoles.Load(func() ([]*db.Role, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -603,7 +604,7 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 
 // Announcement returns the active announcement row loaded lazily.
 func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
-	ann, err := cd.announcement.load(func() (*db.GetActiveAnnouncementWithNewsRow, error) {
+	ann, err := cd.announcement.Load(func() (*db.GetActiveAnnouncementWithNewsRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -624,7 +625,7 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 
 // AnnouncementLoaded returns the cached active announcement without querying the database.
 func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsRow {
-	ann, ok := cd.announcement.peek()
+	ann, ok := cd.announcement.Peek()
 	if !ok {
 		return nil
 	}
@@ -635,14 +636,14 @@ func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsRow {
 // only once.
 func (cd *CoreData) AnnouncementForNews(id int32) (*db.SiteAnnouncement, error) {
 	if cd.newsAnnouncements == nil {
-		cd.newsAnnouncements = map[int32]*lazyValue[*db.SiteAnnouncement]{}
+		cd.newsAnnouncements = map[int32]*lazy.Value[*db.SiteAnnouncement]{}
 	}
 	lv, ok := cd.newsAnnouncements[id]
 	if !ok {
-		lv = &lazyValue[*db.SiteAnnouncement]{}
+		lv = &lazy.Value[*db.SiteAnnouncement]{}
 		cd.newsAnnouncements[id] = lv
 	}
-	return lv.load(func() (*db.SiteAnnouncement, error) {
+	return lv.Load(func() (*db.SiteAnnouncement, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -661,12 +662,12 @@ func (cd *CoreData) NewsAnnouncement(id int32) (*db.SiteAnnouncement, error) {
 	cd.annMu.Lock()
 	lv, ok := cd.newsAnnouncements[id]
 	if !ok {
-		lv = &lazyValue[*db.SiteAnnouncement]{}
+		lv = &lazy.Value[*db.SiteAnnouncement]{}
 		cd.newsAnnouncements[id] = lv
 	}
 	cd.annMu.Unlock()
 
-	return lv.load(func() (*db.SiteAnnouncement, error) {
+	return lv.Load(func() (*db.SiteAnnouncement, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -683,7 +684,7 @@ func (cd *CoreData) NewsAnnouncement(id int32) (*db.SiteAnnouncement, error) {
 
 // ForumCategories loads all forum categories once.
 func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
-	return cd.forumCategories.load(func() ([]*db.Forumcategory, error) {
+	return cd.forumCategories.Load(func() ([]*db.Forumcategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -694,14 +695,14 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 // ForumThreads loads the threads for a forum topic once per topic.
 func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 	if cd.forumThreads == nil {
-		cd.forumThreads = make(map[int32]*lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow])
+		cd.forumThreads = make(map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow])
 	}
 	lv, ok := cd.forumThreads[topicID]
 	if !ok {
-		lv = &lazyValue[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]{}
+		lv = &lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]{}
 		cd.forumThreads[topicID] = lv
 	}
-	return lv.load(func() ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+	return lv.Load(func() ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -717,7 +718,7 @@ func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTop
 func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	replyID, _ := strconv.Atoi(r.URL.Query().Get("reply"))
-	return cd.latestNews.load(func() ([]*NewsPost, error) {
+	return cd.latestNews.Load(func() ([]*NewsPost, error) {
 		return cd.fetchLatestNews(int32(offset), 15, replyID)
 	})
 }
@@ -778,7 +779,7 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 }
 
 func (cd *CoreData) LatestWritings(opts ...LatestWritingsOption) ([]*db.Writing, error) {
-	return cd.latestWritings.load(func() ([]*db.Writing, error) {
+	return cd.latestWritings.Load(func() ([]*db.Writing, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -803,7 +804,7 @@ func (cd *CoreData) LatestWritings(opts ...LatestWritingsOption) ([]*db.Writing,
 
 // WritingCategories returns the visible writing categories for userID.
 func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategory, error) {
-	return cd.visibleWritingCategories.load(func() ([]*db.WritingCategory, error) {
+	return cd.visibleWritingCategories.Load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -829,7 +830,7 @@ func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategor
 
 // WritingCategories returns all writing categories cached once.
 func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
-	return cd.writingCategories.load(func() ([]*db.WritingCategory, error) {
+	return cd.writingCategories.Load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -840,16 +841,16 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 // PublicWritings returns public writings in a category, cached per category and offset.
 func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.GetPublicWritingsInCategoryForUserRow, error) {
 	if cd.publicWritings == nil {
-		cd.publicWritings = map[string]*lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]{}
+		cd.publicWritings = map[string]*lazy.Value[[]*db.GetPublicWritingsInCategoryForUserRow]{}
 	}
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	key := fmt.Sprintf("%d:%d", categoryID, offset)
 	lv, ok := cd.publicWritings[key]
 	if !ok {
-		lv = &lazyValue[[]*db.GetPublicWritingsInCategoryForUserRow]{}
+		lv = &lazy.Value[[]*db.GetPublicWritingsInCategoryForUserRow]{}
 		cd.publicWritings[key] = lv
 	}
-	return lv.load(func() ([]*db.GetPublicWritingsInCategoryForUserRow, error) {
+	return lv.Load(func() ([]*db.GetPublicWritingsInCategoryForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -878,7 +879,7 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Get
 
 // Bloggers returns bloggers ordered by username with post counts.
 func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
-	return cd.bloggers.load(func() ([]*db.BloggerCountRow, error) {
+	return cd.bloggers.Load(func() ([]*db.BloggerCountRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -903,7 +904,7 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 
 // Writers returns writers ordered by username with article counts.
 func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
-	return cd.writers.load(func() ([]*db.WriterCountRow, error) {
+	return cd.writers.Load(func() ([]*db.WriterCountRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -927,7 +928,7 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 }
 
 // ForumTopicByID loads a forum topic once per ID using caching.
-func (cd *CoreData) ForumTopicByID(id int32, ops ...LazyOption[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
+func (cd *CoreData) ForumTopicByID(id int32, ops ...lazy.Option[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
 	fetch := func(i int32) (*db.GetForumTopicByIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -938,11 +939,11 @@ func (cd *CoreData) ForumTopicByID(id int32, ops ...LazyOption[*db.GetForumTopic
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazyMap(&cd.forumTopics, id, fetch, ops...)
+	return lazy.Map(&cd.forumTopics, id, fetch, ops...)
 }
 
 // ForumThreadByID returns a single forum thread lazily loading it once per ID.
-func (cd *CoreData) ForumThreadByID(id int32, ops ...LazyOption[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -953,11 +954,11 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...LazyOption[*db.GetThreadLas
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazyMap(&cd.forumThreadRows, id, fetch, ops...)
+	return lazy.Map(&cd.forumThreadRows, id, fetch, ops...)
 }
 
 // WritingByID returns a single writing lazily loading it once per ID.
-func (cd *CoreData) WritingByID(id int32, ops ...LazyOption[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
 	fetch := func(i int32) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -968,11 +969,11 @@ func (cd *CoreData) WritingByID(id int32, ops ...LazyOption[*db.GetWritingByIdFo
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazyMap(&cd.writingRows, id, fetch, ops...)
+	return lazy.Map(&cd.writingRows, id, fetch, ops...)
 }
 
 // BlogEntryByID returns a blog entry lazily loading it once per ID.
-func (cd *CoreData) BlogEntryByID(id int32, ops ...LazyOption[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
 	fetch := func(i int32) (*db.GetBlogEntryForUserByIdRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -982,11 +983,11 @@ func (cd *CoreData) BlogEntryByID(id int32, ops ...LazyOption[*db.GetBlogEntryFo
 			ID:            i,
 		})
 	}
-	return lazyMap(&cd.blogEntries, id, fetch, ops...)
+	return lazy.Map(&cd.blogEntries, id, fetch, ops...)
 }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
-func (cd *CoreData) CommentByID(id int32, ops ...LazyOption[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
+func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
 	fetch := func(i int32) (*db.GetCommentByIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -997,11 +998,11 @@ func (cd *CoreData) CommentByID(id int32, ops ...LazyOption[*db.GetCommentByIdFo
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazyMap(&cd.forumComments, id, fetch, ops...)
+	return lazy.Map(&cd.forumComments, id, fetch, ops...)
 }
 
 // CurrentComment returns the current comment lazily loaded.
-func (cd *CoreData) CurrentComment(r *http.Request, ops ...LazyOption[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
+func (cd *CoreData) CurrentComment(r *http.Request, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
 	if cd.currentCommentID == 0 {
 		if r != nil {
 			idStr := r.URL.Query().Get("comment")
@@ -1034,7 +1035,7 @@ func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
 	if !ok {
 		return nil
 	}
-	v, ok := lv.peek()
+	v, ok := lv.Peek()
 	if !ok {
 		return nil
 	}
@@ -1042,21 +1043,21 @@ func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
 }
 
 // NewsPostByID returns the news post lazily loading it once per ID.
-func (cd *CoreData) NewsPostByID(id int32, ops ...LazyOption[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
+func (cd *CoreData) NewsPostByID(id int32, ops ...lazy.Option[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 	fetch := func(i int32) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		return cd.queries.GetForumThreadIdByNewsPostId(cd.ctx, i)
 	}
-	return lazyMap(&cd.newsPosts, id, fetch, ops...)
+	return lazy.Map(&cd.newsPosts, id, fetch, ops...)
 }
 
 // SetCurrentNewsPost stores the current news post ID.
 func (cd *CoreData) SetCurrentNewsPost(id int32) { cd.currentNewsPostID = id }
 
 // CurrentNewsPost returns the current news post lazily loaded.
-func (cd *CoreData) CurrentNewsPost(ops ...LazyOption[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
+func (cd *CoreData) CurrentNewsPost(ops ...lazy.Option[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 	if cd.currentNewsPostID == 0 {
 		return nil, nil
 	}
@@ -1072,7 +1073,7 @@ func (cd *CoreData) CurrentNewsPostLoaded() *db.GetForumThreadIdByNewsPostIdRow 
 	if !ok {
 		return nil
 	}
-	v, ok := lv.peek()
+	v, ok := lv.Peek()
 	if !ok {
 		return nil
 	}
@@ -1082,14 +1083,14 @@ func (cd *CoreData) CurrentNewsPostLoaded() *db.GetForumThreadIdByNewsPostIdRow 
 // WriterWritings returns public writings for the specified author respecting cd's permissions.
 func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.GetPublicWritingsByUserForViewerRow, error) {
 	if cd.writerWritings == nil {
-		cd.writerWritings = map[int32]*lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]{}
+		cd.writerWritings = map[int32]*lazy.Value[[]*db.GetPublicWritingsByUserForViewerRow]{}
 	}
 	lv, ok := cd.writerWritings[userID]
 	if !ok {
-		lv = &lazyValue[[]*db.GetPublicWritingsByUserForViewerRow]{}
+		lv = &lazy.Value[[]*db.GetPublicWritingsByUserForViewerRow]{}
 		cd.writerWritings[userID] = lv
 	}
-	return lv.load(func() ([]*db.GetPublicWritingsByUserForViewerRow, error) {
+	return lv.Load(func() ([]*db.GetPublicWritingsByUserForViewerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -1117,7 +1118,7 @@ func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.GetPubl
 
 // Bookmarks returns the user's bookmark list loaded lazily.
 func (cd *CoreData) Bookmarks() (*db.GetBookmarksForUserRow, error) {
-	return cd.bookmarks.load(func() (*db.GetBookmarksForUserRow, error) {
+	return cd.bookmarks.Load(func() (*db.GetBookmarksForUserRow, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}
@@ -1136,14 +1137,14 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 		return nil, nil
 	}
 	if cd.subImageBoards == nil {
-		cd.subImageBoards = make(map[int32]*lazyValue[[]*db.Imageboard])
+		cd.subImageBoards = make(map[int32]*lazy.Value[[]*db.Imageboard])
 	}
 	lv, ok := cd.subImageBoards[parentID]
 	if !ok {
-		lv = &lazyValue[[]*db.Imageboard]{}
+		lv = &lazy.Value[[]*db.Imageboard]{}
 		cd.subImageBoards[parentID] = lv
 	}
-	return lv.load(func() ([]*db.Imageboard, error) {
+	return lv.Load(func() ([]*db.Imageboard, error) {
 		return cd.queries.GetAllBoardsByParentBoardIdForUser(cd.ctx, db.GetAllBoardsByParentBoardIdForUserParams{
 			ViewerID:     cd.UserID,
 			ParentID:     parentID,
@@ -1154,7 +1155,7 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 
 // ImageBoards returns all image boards cached once.
 func (cd *CoreData) ImageBoards() ([]*db.Imageboard, error) {
-	return cd.imageBoards.load(func() ([]*db.Imageboard, error) {
+	return cd.imageBoards.Load(func() ([]*db.Imageboard, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -1168,14 +1169,14 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.GetAllImagePostsByBoar
 		return nil, nil
 	}
 	if cd.imageBoardPosts == nil {
-		cd.imageBoardPosts = make(map[int32]*lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow])
+		cd.imageBoardPosts = make(map[int32]*lazy.Value[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow])
 	}
 	lv, ok := cd.imageBoardPosts[boardID]
 	if !ok {
-		lv = &lazyValue[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]{}
+		lv = &lazy.Value[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]{}
 		cd.imageBoardPosts[boardID] = lv
 	}
-	return lv.load(func() ([]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
+	return lv.Load(func() ([]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
 		return cd.queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(cd.ctx, db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
 			ViewerID:     cd.UserID,
 			BoardID:      boardID,
@@ -1188,7 +1189,7 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.GetAllImagePostsByBoar
 // current user. The value is fetched lazily on the first call and cached for
 // subsequent calls.
 func (cd *CoreData) UnreadNotificationCount() int64 {
-	count, err := cd.unreadCount.load(func() (int64, error) {
+	count, err := cd.unreadCount.Load(func() (int64, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return 0, nil
 		}
@@ -1202,7 +1203,7 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 
 // subscriptionMap loads the current user's subscriptions once.
 func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
-	return cd.subscriptions.load(func() (map[string]bool, error) {
+	return cd.subscriptions.Load(func() (map[string]bool, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return map[string]bool{}, nil
 		}
@@ -1228,7 +1229,7 @@ func (cd *CoreData) Subscribed(pattern string) bool {
 
 // LinkerCategoryCounts lazily loads linker category statistics.
 func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
-	return cd.linkerCategories.load(func() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
+	return cd.linkerCategories.Load(func() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}

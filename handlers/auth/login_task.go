@@ -51,12 +51,14 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	cfg := cd.Config
 	ip := strings.Split(r.RemoteAddr, ":")[0]
-	since := time.Now().Add(-time.Duration(cfg.LoginAttemptWindow) * time.Minute)
-	cnt, err := queries.CountRecentLoginAttempts(r.Context(), db.CountRecentLoginAttemptsParams{Username: username, IpAddress: ip, CreatedAt: since})
-	if err != nil {
-		log.Printf("count login attempts: %v", err)
-	} else if cnt >= int64(cfg.LoginAttemptThreshold) {
-		return loginFormHandler{msg: "Too many failed attempts"}
+	if cfg.LoginAttemptThreshold > 0 {
+		since := time.Now().Add(-time.Duration(cfg.LoginAttemptWindow) * time.Minute)
+		cnt, err := queries.CountRecentLoginAttempts(r.Context(), db.CountRecentLoginAttemptsParams{Username: username, IpAddress: ip, CreatedAt: since})
+		if err != nil {
+			log.Printf("count login attempts: %v", err)
+		} else if cnt >= int64(cfg.LoginAttemptThreshold) {
+			return loginFormHandler{msg: "Too many failed attempts"}
+		}
 	}
 
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})

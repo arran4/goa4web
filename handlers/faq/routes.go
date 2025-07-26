@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
@@ -16,7 +17,7 @@ func noTask() mux.MatcherFunc {
 }
 
 // RegisterRoutes attaches the public FAQ endpoints to the router.
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
 	nav.RegisterIndexLink("FAQ", "/faq", SectionWeight)
 	nav.RegisterAdminControlCenter("FAQ", "/admin/faq/categories", SectionWeight)
 	faqr := r.PathPrefix("/faq").Subrouter()

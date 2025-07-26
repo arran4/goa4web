@@ -4,6 +4,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/config"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	router "github.com/arran4/goa4web/internal/router"
 )
@@ -20,7 +21,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 
 // Register registers the languages router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("languages", nil, func(r *mux.Router) {
+	reg.RegisterModule("languages", nil, func(r *mux.Router, cfg config.RuntimeConfig) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		RegisterAdminRoutes(ar)

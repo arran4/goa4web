@@ -23,7 +23,8 @@ import (
 
 // Module bundles the event bus for websocket handlers.
 type Module struct {
-	Bus *eventbus.Bus
+	Bus    *eventbus.Bus
+	Config config.RuntimeConfig
 }
 
 // NotificationsHandler provides a websocket endpoint streaming bus events.
@@ -34,7 +35,9 @@ type NotificationsHandler struct {
 }
 
 // NewModule returns a websocket module using bus for events.
-func NewModule(bus *eventbus.Bus) *Module { return &Module{Bus: bus} }
+func NewModule(bus *eventbus.Bus, cfg config.RuntimeConfig) *Module {
+	return &Module{Bus: bus, Config: cfg}
+}
 
 func buildPatterns(task, path string) []string {
 	name := strings.ToLower(task)
@@ -198,8 +201,8 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // RegisterRoutes attaches the websocket handler to r.
-func (m *Module) registerRoutes(r *mux.Router, cfg config.RuntimeConfig) {
-	h := NewNotificationsHandler(m.Bus, cfg)
+func (m *Module) registerRoutes(r *mux.Router) {
+	h := NewNotificationsHandler(m.Bus, m.Config)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/notifications.js", NotificationsJS).Methods(http.MethodGet)
 }

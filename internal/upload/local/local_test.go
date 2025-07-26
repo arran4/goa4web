@@ -132,6 +132,14 @@ func TestWriteRejectsAbs(t *testing.T) {
 	}
 }
 
+func TestWriteRejectsCleanEscape(t *testing.T) {
+	mfs := newMemFS()
+	p := Provider{Dir: "/cache", FS: mfs}
+	if err := p.Write(context.Background(), "..\\evil", []byte("x")); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
 func TestReadRejectsTraversal(t *testing.T) {
 	mfs := newMemFS()
 	_ = mfs.WriteFile("/cache/good", []byte("data"), 0o644)
@@ -146,6 +154,15 @@ func TestReadRejectsAbs(t *testing.T) {
 	_ = mfs.WriteFile("/cache/good", []byte("data"), 0o644)
 	p := Provider{Dir: "/cache", FS: mfs}
 	if _, err := p.Read(context.Background(), "/abs"); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestReadRejectsCleanEscape(t *testing.T) {
+	mfs := newMemFS()
+	_ = mfs.WriteFile("/cache/good", []byte("data"), 0o644)
+	p := Provider{Dir: "/cache", FS: mfs}
+	if _, err := p.Read(context.Background(), "..\\good"); err == nil {
 		t.Fatalf("expected error")
 	}
 }

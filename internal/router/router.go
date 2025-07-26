@@ -7,16 +7,17 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 )
 
 // RegisterRoutes sets up all application routes on r.
-func RegisterRoutes(r *mux.Router, reg *Registry) {
+func RegisterRoutes(r *mux.Router, reg *Registry, cfg config.RuntimeConfig) {
 	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
 	r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
 
-	reg.InitModules(r)
+	reg.InitModules(r, cfg)
 
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/config"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 )
@@ -14,7 +15,7 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
 	nav.RegisterIndexLink("Linker", "/linker", SectionWeight)
 	nav.RegisterAdminControlCenter("Linker", "/admin/linker/categories", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()

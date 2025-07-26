@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -12,7 +13,7 @@ import (
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
 	nav.RegisterIndexLink("Forum", "/forum", SectionWeight)
 	nav.RegisterAdminControlCenter("Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()

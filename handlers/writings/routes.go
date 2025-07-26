@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 
@@ -14,7 +15,7 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
 	nav.RegisterIndexLink("Writings", "/writings", SectionWeight)
 	nav.RegisterAdminControlCenter("Writings", "/admin/writings/categories", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()

@@ -4,12 +4,13 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches user account endpoints to the router.
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
 	ur := r.PathPrefix("/usr").Subrouter()
 	ur.Use(handlers.IndexMiddleware(CustomIndex))
 	ur.HandleFunc("", userPage).Methods(http.MethodGet)

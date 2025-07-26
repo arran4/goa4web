@@ -35,7 +35,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	RegisterRoutes(ar, cfg)
+	RegisterRoutes(ar, *cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -75,7 +75,7 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	RegisterRoutes(ar, cfg)
+	RegisterRoutes(ar, *cfg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -148,9 +148,9 @@ func TestServerShutdownMatcher_Denied(t *testing.T) {
 }
 
 func TestServerShutdownMatcher_Allowed(t *testing.T) {
-	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	req.Form = make(map[string][]string)
-	req.Form.Set("task", string(TaskServerShutdown))
+	body := strings.NewReader("task=" + url.QueryEscape(string(TaskServerShutdown)))
+	req := httptest.NewRequest(http.MethodPost, "/admin/shutdown", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	cd.SetRoles([]string{"administrator"})

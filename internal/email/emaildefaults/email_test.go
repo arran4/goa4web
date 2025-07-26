@@ -115,7 +115,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	mock.ExpectExec("UPDATE pending_emails SET sent_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	rec := &mockemail.Provider{}
-	if !emailqueue.ProcessPendingEmail(context.Background(), q, rec, nil, cfg) {
+	if !emailqueue.ProcessPendingEmail(context.Background(), q, rec, nil, *cfg) {
 		t.Fatal("no email processed")
 	}
 
@@ -154,7 +154,7 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 
 	p := errProvider{}
 	dlqRec := &mockdlq.Provider{}
-	if !emailqueue.ProcessPendingEmail(context.Background(), q, p, dlqRec, cfg) {
+	if !emailqueue.ProcessPendingEmail(context.Background(), q, p, dlqRec, *cfg) {
 		t.Fatal("no email processed")
 	}
 

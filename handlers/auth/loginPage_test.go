@@ -180,9 +180,10 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 func TestSanitizeBackURL(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Host = "example.com"
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 10
 	cfg.HTTPHostname = ""
-	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -197,7 +198,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	}
 
 	cfg.HTTPHostname = "https://example.com"
-	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), common.WithConfig(cfg))
+	cd = common.NewCoreData(req.Context(), dbpkg.New(nil), cfg)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
@@ -209,8 +210,9 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 	raw := "https://evil.com/x"
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Host = "example.com"
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	signer := imagesign.NewSigner(cfg, "k")
+	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 10
+	signer := imagesign.NewSigner(*cfg, "k")
 	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -250,14 +252,15 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 10
 	raw := "https://evil.com/x"
 	ts := time.Now().Add(time.Hour).Unix()
 	sig := signBackURL("k", raw, ts)
 	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 	req.Host = "example.com"
-	signer := imagesign.NewSigner(cfg, "k")
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithImageSigner(signer))
+	signer := imagesign.NewSigner(*cfg, "k")
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -326,26 +329,24 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	core.SessionName = "test-session"
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
 		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(5))
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	pwHash, alg, _ := HashPassword("pw")
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "e", pwHash, alg, "bob")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
-		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
 	raw := "https://example.org/ok"
 	ts := time.Now().Add(time.Hour).Unix()
 	sig := signBackURL("k", raw, ts)
-	signer := imagesign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(*cfg, "k")
 	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {raw}, "back_ts": {fmt.Sprint(ts)}, "back_sig": {sig}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	req.Host = "example.com"
 
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

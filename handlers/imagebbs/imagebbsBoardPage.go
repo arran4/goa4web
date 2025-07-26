@@ -99,6 +99,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	text := r.PostFormValue("text")
 
 	vars := mux.Vars(r)

@@ -5,6 +5,9 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	router "github.com/arran4/goa4web/internal/router"
@@ -14,6 +17,7 @@ import (
 
 // RegisterRoutes attaches the public image board endpoints to r.
 func RegisterRoutes(r *mux.Router, _ config.RuntimeConfig) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	nav.RegisterIndexLink("ImageBBS", "/imagebbs", SectionWeight)
 	nav.RegisterAdminControlCenter("ImageBBS", "/admin/imagebbs", SectionWeight)
 	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")

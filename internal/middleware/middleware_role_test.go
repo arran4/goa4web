@@ -21,17 +21,7 @@ import (
 )
 
 func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
-	// Set up isolated globals for the test.
-	nav.SetDefaultRegistry(nav.NewRegistry())
-	t.Cleanup(func() { nav.SetDefaultRegistry(nav.NewRegistry()) })
-	origStore := core.Store
-	origSessionName := core.SessionName
-	core.Store = sessions.NewCookieStore([]byte("test"))
-	core.SessionName = "test-session"
-	t.Cleanup(func() {
-		core.Store = origStore
-		core.SessionName = origSessionName
-	})
+	navReg := nav.NewRegistry()
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -62,8 +52,8 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(*cfg, "k")
-	CoreAdderMiddlewareWithDB(db, *cfg, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	signer := imagesign.NewSigner(cfg, "k")
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -76,24 +66,13 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 }
 
 func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
-	// Set up isolated globals for the test.
-	nav.SetDefaultRegistry(nav.NewRegistry())
-	t.Cleanup(func() { nav.SetDefaultRegistry(nav.NewRegistry()) })
-	origStore := core.Store
-	origSessionName := core.SessionName
-	core.Store = sessions.NewCookieStore([]byte("test"))
-	core.SessionName = "test-session"
-	t.Cleanup(func() {
-		core.Store = origStore
-		core.SessionName = origSessionName
-	})
-
-	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	navReg := nav.NewRegistry()
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	defer db.Close()
 	mock.MatchExpectationsInOrder(false)
 
@@ -115,8 +94,8 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(*cfg, "k")
-	CoreAdderMiddlewareWithDB(db, *cfg, 0, reg, signer)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	signer := imagesign.NewSigner(cfg, "k")
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

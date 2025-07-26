@@ -31,7 +31,6 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/image/draw"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
@@ -99,6 +98,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	text := r.PostFormValue("text")
 
 	vars := mux.Vars(r)
@@ -110,7 +110,8 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {
@@ -144,7 +145,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("decode image error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	fname := shaHex + ext
-	if p := upload.ProviderFromConfig(cd.Config); p != nil {
+	if p := upload.ProviderFromConfig(*cd.Config); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

@@ -29,7 +29,7 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 	dlq "github.com/arran4/goa4web/internal/dlq"
-	dlqreg "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
+	dlqdefaults "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 	email "github.com/arran4/goa4web/internal/email"
 	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
 
@@ -142,8 +142,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	registerTasks(r.tasksReg)
 	registerModules(r.routerReg)
 	emaildefaults.Register(r.emailReg)
-	dlqreg.Register(r.dlqReg, r.emailReg)
-	dlq.RegisterLogDLQ(r.dlqReg)
+	dlqdefaults.RegisterDefaults(r.dlqReg, r.emailReg)
 	dbdefaults.Register(r.dbReg)
 
 	early := newFlagSet(args[0])
@@ -195,7 +194,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 
 	r.ConfigFile = cfgPath
-	r.cfg = config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
+	r.cfg = *config.GenerateRuntimeConfig(r.fs, fileVals, os.Getenv)
 	return r, nil
 }
 

@@ -16,14 +16,14 @@ import (
 
 // PerformChecks checks DB connectivity and the upload provider.
 func PerformChecks(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error) {
-	if err := dbstart2.MaybeAutoMigrate(*cfg, reg); err != nil {
+	if err := dbstart2.MaybeAutoMigrate(cfg, reg); err != nil {
 		return nil, err
 	}
-	dbPool, ue := dbstart2.InitDB(*cfg, reg)
+	dbPool, ue := dbstart2.InitDB(cfg, reg)
 	if ue != nil {
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
-	if ue := CheckUploadTarget(*cfg); ue != nil {
+	if ue := CheckUploadTarget(cfg); ue != nil {
 		dbPool.Close()
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}

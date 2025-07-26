@@ -36,7 +36,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, *cfg)
+	RegisterRoutes(ar, cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -56,7 +56,7 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, *cfg)
+	RegisterRoutes(ar, cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -76,7 +76,7 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, *cfg)
+	RegisterRoutes(ar, cfg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -97,7 +97,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	RegisterRoutes(ar, *cfg)
+	RegisterRoutes(ar, cfg)
 
 	form := url.Values{}
 	form.Set("task", string(TaskServerShutdown))

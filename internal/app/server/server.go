@@ -143,6 +143,9 @@ func WithDBRegistry(r *dbdrivers.Registry) Option { return func(s *Server) { s.D
 // WithWebsocket sets the websocket module.
 func WithWebsocket(w *websocket.Module) Option { return func(s *Server) { s.Websocket = w } }
 
+// WithTasksRegistry sets the tasks registry used by the server.
+func WithTasksRegistry(r *tasks.Registry) Option { return func(s *Server) { s.TasksReg = r } }
+
 // New returns a Server configured using the supplied options.
 func New(opts ...Option) *Server {
 	s := &Server{}
@@ -213,7 +216,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			if s.Config.HTTPHostname != "" {
 				base = strings.TrimRight(s.Config.HTTPHostname, "/")
 			}
-			provider := s.EmailReg.ProviderFromConfig(*s.Config)
+			provider := s.EmailReg.ProviderFromConfig(s.Config)
 			cd := common.NewCoreData(r.Context(), queries, s.Config,
 				common.WithImageSigner(s.ImageSigner),
 				common.WithSession(session),

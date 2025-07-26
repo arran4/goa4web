@@ -401,3 +401,52 @@ func TestLoginAction_Throttle(t *testing.T) {
 		t.Fatalf("body=%q", rr.Body.String())
 	}
 }
+
+func TestRedirectBackPageHandler(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	q := dbpkg.New(db)
+
+	cases := map[string]string{"empty": "", "get": http.MethodGet}
+	for name, method := range cases {
+		t.Run(name, func(t *testing.T) {
+			cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+			req = req.WithContext(ctx)
+			rr := httptest.NewRecorder()
+
+			h := redirectBackPageHandler{BackURL: "/back", Method: method, Values: url.Values{"a": {"b"}}}
+			h.ServeHTTP(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("status=%d", rr.Code)
+			}
+			if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/back") {
+				t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+			}
+			if strings.Contains(rr.Body.String(), "<form") {
+				t.Fatalf("unexpected form: %q", rr.Body.String())
+			}
+		})
+	}
+
+	t.Run("post", func(t *testing.T) {
+		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
+		rr := httptest.NewRecorder()
+
+		h := redirectBackPageHandler{BackURL: "/back", Method: http.MethodPost, Values: url.Values{"a": {"b"}}}
+		h.ServeHTTP(rr, req)
+
+		if cd.AutoRefresh != "" {
+			t.Fatalf("unexpected refresh: %q", cd.AutoRefresh)
+		}
+		body := rr.Body.String()
+		if !strings.Contains(body, "<form") || !strings.Contains(body, "action=\"/back\"") {
+			t.Fatalf("missing form: %q", body)
+		}
+	})
+}

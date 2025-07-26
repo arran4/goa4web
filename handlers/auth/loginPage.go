@@ -25,6 +25,14 @@ type redirectBackPageHandler struct {
 }
 
 func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h.Method == "" || h.Method == http.MethodGet {
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		rdh := handlers.RefreshDirectHandler{TargetURL: h.BackURL}
+		cd.AutoRefresh = rdh.Content()
+		handlers.TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", rdh)
+		return
+	}
+
 	type Data struct {
 		*common.CoreData
 		BackURL string
@@ -37,7 +45,6 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Method:   h.Method,
 		Values:   h.Values,
 	}
-	// TODO consider using RefreshDirect if the target method is "GET" or ""
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)

@@ -17,7 +17,7 @@ import (
 func TestProviderFromConfigRegistry(t *testing.T) {
 	reg := dlq.NewRegistry()
 	emailReg := emailpkg.NewRegistry()
-	dlqdefaults.Register(reg, emailReg)
+	dlqdefaults.RegisterDefaults(reg, emailReg)
 
 	cfg := config.RuntimeConfig{DLQProvider: "file", DLQFile: "p"}
 	if _, ok := reg.ProviderFromConfig(cfg, nil).(*filedlq.DLQ); !ok {

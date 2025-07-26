@@ -356,11 +356,11 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if loc := rr.Header().Get("Location"); loc != raw {
-		t.Fatalf("location=%q", loc)
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url="+raw) {
+		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
 	}
 }
 
@@ -399,6 +399,42 @@ func TestLoginAction_Throttle(t *testing.T) {
 	}
 	if !strings.Contains(rr.Body.String(), "Too many failed attempts") {
 		t.Fatalf("body=%q", rr.Body.String())
+	}
+}
+
+func TestRedirectBackPageHandlerGET(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	h := redirectBackPageHandler{BackURL: "/foo", Method: http.MethodGet, Values: url.Values{"x": {"1"}}}
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/foo?x=1") {
+		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+	}
+}
+
+func TestRedirectBackPageHandlerEmptyMethod(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	h := redirectBackPageHandler{BackURL: "/bar", Method: "", Values: url.Values{"y": {"2"}}}
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/bar?y=2") {
+		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
 	}
 }
 

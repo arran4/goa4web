@@ -25,8 +25,8 @@ type redirectBackPageHandler struct {
 }
 
 func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+  cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if h.Method == "" || h.Method == http.MethodGet {
-		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		rdh := handlers.RefreshDirectHandler{TargetURL: h.BackURL}
 		cd.AutoRefresh = rdh.Content()
 		handlers.TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", rdh)
@@ -40,12 +40,11 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Values  url.Values
 	}
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		BackURL:  h.BackURL,
 		Method:   h.Method,
 		Values:   h.Values,
 	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

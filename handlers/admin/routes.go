@@ -22,7 +22,7 @@ import (
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
-func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func (h *Handlers)  RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
 	navReg.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
 	navReg.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
@@ -71,9 +71,9 @@ func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regi
 	ar.HandleFunc("/ipbans", handlers.TaskHandler(addIPBanTask)).Methods("POST").MatcherFunc(addIPBanTask.Matcher())
 	ar.HandleFunc("/ipbans", handlers.TaskHandler(deleteIPBanTask)).Methods("POST").MatcherFunc(deleteIPBanTask.Matcher())
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
-	ar.HandleFunc("/settings", AdminSiteSettingsPage).Methods("GET", "POST")
+	ar.HandleFunc("/settings", h.AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/page-size", AdminPageSizePage).Methods("GET", "POST")
-	ar.HandleFunc("/stats", AdminServerStatsPage).Methods("GET")
+	ar.HandleFunc("/stats", h.AdminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")
 
 	// forum admin routes
@@ -104,18 +104,19 @@ func RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regi
 	// Verify administrator access within the handlers so direct CLI calls
 	// cannot bypass the permission checks.
 	ar.HandleFunc("/reload",
-		handlers.VerifyAccess(AdminReloadConfigPage, "administrator")).
+		handlers.VerifyAccess(h.AdminReloadConfigPage, "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator"))
+	sst := h.NewServerShutdownTask()
 	ar.HandleFunc("/shutdown",
-		handlers.VerifyAccess(handlers.TaskHandler(serverShutdownTask), "administrator")).
+		handlers.VerifyAccess(handlers.TaskHandler(sst), "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator")).
-		MatcherFunc(serverShutdownTask.Matcher())
+		MatcherFunc(sst.Matcher())
 
 	api := ar.PathPrefix("/api").Subrouter()
 	api.Use(router.AdminCheckerMiddleware)
-	api.HandleFunc("/shutdown", AdminAPIServerShutdown).MatcherFunc(AdminAPISigned()).Methods("POST")
+	api.HandleFunc("/shutdown", h.AdminAPIServerShutdown).MatcherFunc(AdminAPISigned()).Methods("POST")
 }
 
 // Register registers the admin router module.

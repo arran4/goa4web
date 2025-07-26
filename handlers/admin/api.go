@@ -11,7 +11,7 @@ import (
 )
 
 // AdminAPIServerShutdown shuts down the server when provided with a valid signed request.
-func AdminAPIServerShutdown(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) AdminAPIServerShutdown(w http.ResponseWriter, r *http.Request) {
 	const prefix = "Goa4web "
 	auth := r.Header.Get("Authorization")
 	if !strings.HasPrefix(auth, prefix) {
@@ -33,7 +33,7 @@ func AdminAPIServerShutdown(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := Srv.Shutdown(ctx); err != nil {
+		if err := h.Srv.Shutdown(ctx); err != nil {
 			log.Printf("shutdown error: %v", err)
 		}
 	}()

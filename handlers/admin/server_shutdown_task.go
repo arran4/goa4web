@@ -19,16 +19,21 @@ import (
 const TaskServerShutdown tasks.TaskString = "Server shutdown"
 
 // ServerShutdownTask gracefully shuts down the running server.
-type ServerShutdownTask struct{ tasks.TaskString }
+type ServerShutdownTask struct {
+	tasks.TaskString
+	h *Handlers
+}
 
-// serverShutdownTask exposes the shutdown task through the task system.
-// This is 100% auditable via the audit log.
-var serverShutdownTask = &ServerShutdownTask{TaskString: TaskServerShutdown}
+// NewServerShutdownTask exposes the shutdown task through the task system. This
+// is 100% auditable via the audit log.
+func (h *Handlers) NewServerShutdownTask() *ServerShutdownTask {
+	return &ServerShutdownTask{TaskString: TaskServerShutdown, h: h}
+}
 
 var _ tasks.Task = (*ServerShutdownTask)(nil)
 var _ tasks.TaskMatcher = (*ServerShutdownTask)(nil)
 
-func (ServerShutdownTask) Matcher() mux.MatcherFunc {
+func (t *ServerShutdownTask) Matcher() mux.MatcherFunc {
 	taskM := tasks.HasTask(string(TaskServerShutdown))
 	adminM := handlers.RequiredAccess("administrator")
 	return func(r *http.Request, m *mux.RouteMatch) bool {
@@ -36,7 +41,7 @@ func (ServerShutdownTask) Matcher() mux.MatcherFunc {
 	}
 }
 
-func (ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any {
+func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd == nil || !cd.HasRole("administrator") {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -55,21 +60,23 @@ func (ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any {
 	path := r.URL.Path
 	uid := cd.UserID
 	go func() {
-		if Srv != nil && Srv.Bus != nil {
+		if t.h != nil && t.h.Srv != nil && t.h.Srv.Bus != nil {
 			evt := eventbus.TaskEvent{
 				Path:   path,
 				Task:   TaskServerShutdown,
 				UserID: uid,
 				Time:   time.Now(),
 			}
-			if err := Srv.Bus.Publish(evt); err != nil {
+			if err := t.h.Srv.Bus.Publish(evt); err != nil {
 				log.Printf("publish shutdown event: %v", err)
 			}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := Srv.Shutdown(ctx); err != nil {
-			log.Printf("shutdown error: %v", err)
+		if t.h != nil && t.h.Srv != nil {
+			if err := t.h.Srv.Shutdown(ctx); err != nil {
+				log.Printf("shutdown error: %v", err)
+			}
 		}
 	}()
 	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)

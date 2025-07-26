@@ -13,7 +13,7 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
-func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.FeedsEnabled = cd.Config.FeedsEnabled
 
@@ -23,7 +23,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	examples := config.ExamplesMap()
 	flags := config.NameMap()
 
-	fileVals, _ := config.LoadAppConfigFile(core.OSFS{}, ConfigFile)
+	fileVals, _ := config.LoadAppConfigFile(core.OSFS{}, h.ConfigFile)
 	hide := map[string]struct{}{
 		config.EnvDBConn:              {},
 		config.EnvSMTPPass:            {},
@@ -84,7 +84,7 @@ func AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 		Config     []detail
 	}{
 		CoreData:   cd,
-		ConfigFile: ConfigFile,
+		ConfigFile: h.ConfigFile,
 		Config:     cfg,
 	}
 

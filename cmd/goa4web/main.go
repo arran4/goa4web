@@ -41,13 +41,13 @@ import (
 
 var version = "dev"
 
-func registerTasks(reg *tasks.Registry) {
+func registerTasks(reg *tasks.Registry, ah *adminhandlers.Handlers) {
 	register := func(ts []tasks.NamedTask) {
 		for _, t := range ts {
 			reg.Register(t)
 		}
 	}
-	register(adminhandlers.RegisterTasks())
+	register(ah.RegisterTasks())
 	register(authhandlers.RegisterTasks())
 	register(bloghandlers.RegisterTasks())
 	register(bookmarkhandlers.RegisterTasks())
@@ -83,16 +83,17 @@ func main() {
 
 // rootCmd is the top-level command state.
 type rootCmd struct {
-	fs         *flag.FlagSet
-	cfg        *config.RuntimeConfig
-	ConfigFile string
-	db         *sql.DB
-	Verbosity  int
-	tasksReg   *tasks.Registry
-	dbReg      *dbdrivers.Registry
-	emailReg   *email.Registry
-	dlqReg     *dlq.Registry
-	routerReg  *router.Registry
+	fs            *flag.FlagSet
+	cfg           *config.RuntimeConfig
+	ConfigFile    string
+	db            *sql.DB
+	Verbosity     int
+	tasksReg      *tasks.Registry
+	dbReg         *dbdrivers.Registry
+	emailReg      *email.Registry
+	dlqReg        *dlq.Registry
+	routerReg     *router.Registry
+	adminHandlers *adminhandlers.Handlers
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
@@ -133,14 +134,15 @@ func (r *rootCmd) Verbosef(format string, args ...any) {
 
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{
-		tasksReg:  tasks.NewRegistry(),
-		dbReg:     dbdrivers.NewRegistry(),
-		emailReg:  email.NewRegistry(),
-		dlqReg:    dlq.NewRegistry(),
-		routerReg: router.NewRegistry(),
+		tasksReg:      tasks.NewRegistry(),
+		dbReg:         dbdrivers.NewRegistry(),
+		emailReg:      email.NewRegistry(),
+		dlqReg:        dlq.NewRegistry(),
+		routerReg:     router.NewRegistry(),
+		adminHandlers: adminhandlers.New(),
 	}
-	registerTasks(r.tasksReg)
-	registerModules(r.routerReg)
+	registerTasks(r.tasksReg, r.adminHandlers)
+	registerModules(r.routerReg, r.adminHandlers)
 	emaildefaults.Register(r.emailReg)
 	dlqdefaults.RegisterDefaults(r.dlqReg, r.emailReg)
 	dbdefaults.Register(r.dbReg)

@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/upload"
 )
 
-func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Stats struct {
 		Goroutines int
 		Alloc      uint64
@@ -62,11 +62,11 @@ func AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	if reg := data.CoreData.DBRegistry(); reg != nil {
 		data.Registries.DBDrivers = reg.Names()
 	}
-	if Srv != nil && Srv.DLQReg != nil {
-		data.Registries.DLQProviders = Srv.DLQReg.ProviderNames()
+	if h.Srv != nil && h.Srv.DLQReg != nil {
+		data.Registries.DLQProviders = h.Srv.DLQReg.ProviderNames()
 	}
-	if Srv != nil && Srv.EmailReg != nil {
-		data.Registries.EmailProviders = Srv.EmailReg.ProviderNames()
+	if h.Srv != nil && h.Srv.EmailReg != nil {
+		data.Registries.EmailProviders = h.Srv.EmailReg.ProviderNames()
 	}
 	data.Registries.UploadProviders = upload.ProviderNames()
 

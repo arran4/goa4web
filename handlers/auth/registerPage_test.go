@@ -20,7 +20,7 @@ func TestRegisterActionPageValidation(t *testing.T) {
 		{"no username", url.Values{"password": {"p"}, "email": {"e@example.com"}}},
 		{"no password", url.Values{"username": {"u"}, "email": {"e@example.com"}}},
 		{"no email", url.Values{"username": {"u"}, "password": {"p"}}},
-		{"invalid email", url.Values{"username": {"u"}, "password": {"p"}, "email": {"bad"}}},
+		{"invalid email", url.Values{"username": {"u"}, "password": {"p"}, "email": {"foo@bar..com"}}},
 	}
 	for _, c := range cases {
 		req := httptest.NewRequest("POST", "/register", strings.NewReader(c.form.Encode()))

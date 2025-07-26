@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"net/mail"
 	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -45,7 +46,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 	email := r.PostFormValue("email")
-	if !strings.Contains(email, "@") {
+	if _, err := mail.ParseAddress(email); err != nil {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid email"))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

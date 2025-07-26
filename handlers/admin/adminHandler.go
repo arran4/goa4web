@@ -9,7 +9,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
 func AdminPage(w http.ResponseWriter, r *http.Request) {
@@ -29,9 +28,10 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		Stats      Stats
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		AdminLinks: nav.AdminLinks(),
+		CoreData:   cd,
+		AdminLinks: cd.NavReg.AdminLinks(),
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ctx := r.Context()

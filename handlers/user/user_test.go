@@ -62,7 +62,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(*cfg)))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -95,7 +95,7 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(*cfg)))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

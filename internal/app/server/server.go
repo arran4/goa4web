@@ -214,7 +214,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				base = strings.TrimRight(s.Config.HTTPHostname, "/")
 			}
 			provider := s.EmailReg.ProviderFromConfig(s.Config)
-			cd := common.NewCoreData(r.Context(), queries, &s.Config,
+			cd := common.NewCoreData(r.Context(), queries, s.Config,
 				common.WithImageSigner(s.ImageSigner),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),

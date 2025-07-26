@@ -59,7 +59,7 @@ func (p Provider) safePath(name string) (string, error) {
 	return path, nil
 }
 
-func providerFromConfig(cfg config.RuntimeConfig) upload.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) upload.Provider {
 	return Provider{Dir: cfg.ImageUploadDir, FS: osFS{}}
 }
 

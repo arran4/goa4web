@@ -53,7 +53,7 @@ func (m *mockClient) GetObject(*awsS3.GetObjectInput) (*awsS3.GetObjectOutput, e
 
 func TestProviderCheckSuccess(t *testing.T) {
 	mock := &mockClient{}
-	p := providerFromConfigWithFactory(config.RuntimeConfig{EmailAWSRegion: "us-east-1", ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
+	p := providerFromConfigWithFactory(&config.RuntimeConfig{EmailAWSRegion: "us-east-1", ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
 	if p == nil {
 		t.Fatal("nil provider")
 	}
@@ -67,7 +67,7 @@ func TestProviderCheckSuccess(t *testing.T) {
 
 func TestProviderCheckWriteError(t *testing.T) {
 	mock := &mockClient{putErr: fmt.Errorf("fail")}
-	p := providerFromConfigWithFactory(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
+	p := providerFromConfigWithFactory(&config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
 	if err := p.Check(nil); err == nil {
 		t.Fatal("expected error")
 	}
@@ -75,7 +75,7 @@ func TestProviderCheckWriteError(t *testing.T) {
 
 func TestProviderRead(t *testing.T) {
 	mock := &mockClient{getData: []byte("hello")}
-	p := providerFromConfigWithFactory(config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
+	p := providerFromConfigWithFactory(&config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
 	if p == nil {
 		t.Fatal("nil provider")
 	}

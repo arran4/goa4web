@@ -10,7 +10,7 @@ import (
 )
 
 // ProviderFactory creates an upload provider from cfg.
-type ProviderFactory func(config.RuntimeConfig) Provider
+type ProviderFactory func(*config.RuntimeConfig) Provider
 
 var (
 	regMu    sync.RWMutex

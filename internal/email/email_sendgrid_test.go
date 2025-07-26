@@ -19,7 +19,7 @@ func newRegistry() *email.Registry {
 
 func TestSendGridProviderFromConfig(t *testing.T) {
 	reg := newRegistry()
-	p := reg.ProviderFromConfig(config.RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k", EmailFrom: "from@example.com"})
+	p := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "sendgrid", EmailSendGridKey: "k", EmailFrom: "from@example.com"})
 	if _, ok := p.(sendgridProv.Provider); !ok {
 		t.Fatalf("expected SendGridProvider, got %#v", p)
 	}

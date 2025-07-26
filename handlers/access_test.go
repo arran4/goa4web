@@ -27,6 +27,7 @@ func TestVerifyAccess(t *testing.T) {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Code)
 	}
 
+	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"administrator"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 	rr = httptest.NewRecorder()

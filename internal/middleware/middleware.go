@@ -93,7 +93,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity 
 			}
 			var provider email.Provider
 			if emailReg != nil && cfg != nil {
-				provider = emailReg.ProviderFromConfig(*cfg)
+				provider = emailReg.ProviderFromConfig(cfg)
 			}
 			cd := common.NewCoreData(r.Context(), queries, cfg,
 				common.WithImageSigner(signer),

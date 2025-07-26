@@ -24,7 +24,7 @@ import (
 // Module bundles the event bus for websocket handlers.
 type Module struct {
 	Bus    *eventbus.Bus
-	Config *config.RuntimeConfig
+	Config config.RuntimeConfig
 }
 
 // NotificationsHandler provides a websocket endpoint streaming bus events.
@@ -35,7 +35,7 @@ type NotificationsHandler struct {
 }
 
 // NewModule returns a websocket module using bus for events.
-func NewModule(bus *eventbus.Bus, cfg *config.RuntimeConfig) *Module {
+func NewModule(bus *eventbus.Bus, cfg config.RuntimeConfig) *Module {
 	return &Module{Bus: bus, Config: cfg}
 }
 

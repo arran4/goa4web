@@ -138,7 +138,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &errProvider{}
-	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(*cfg))
+	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 	dlqRec := &recordDLQ{}
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, dlqRec); err != nil {
@@ -166,7 +166,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(*cfg))
+	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -186,7 +186,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(*cfg))
+	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -209,7 +209,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 	prov := &busDummyProvider{}
-	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(*cfg))
+	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -230,7 +230,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(*cfg))
+	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -264,7 +264,7 @@ func TestProcessEventTargetUsers(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(*cfg))
+	n := New(WithQueries(q), WithConfig(cfg))
 
 	for _, id := range []int32{2, 3} {
 		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
@@ -306,7 +306,7 @@ func TestBusWorker(t *testing.T) {
 	q := dbpkg.New(db)
 
 	prov := &busDummyProvider{}
-	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(*cfg))
+	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -349,7 +349,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	n := New(WithQueries(q), WithConfig(*cfg))
+	n := New(WithQueries(q), WithConfig(cfg))
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
 		AddRow(1, 0, 1, nil, 0, true)

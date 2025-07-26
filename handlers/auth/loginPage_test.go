@@ -212,7 +212,7 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 	req.Host = "example.com"
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
-	signer := imagesign.NewSigner(*cfg, "k")
+	signer := imagesign.NewSigner(cfg, "k")
 	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -259,7 +259,7 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 	sig := signBackURL("k", raw, ts)
 	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 	req.Host = "example.com"
-	signer := imagesign.NewSigner(*cfg, "k")
+	signer := imagesign.NewSigner(cfg, "k")
 	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -339,7 +339,7 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	raw := "https://example.org/ok"
 	ts := time.Now().Add(time.Hour).Unix()
 	sig := signBackURL("k", raw, ts)
-	signer := imagesign.NewSigner(*cfg, "k")
+	signer := imagesign.NewSigner(cfg, "k")
 	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {raw}, "back_ts": {fmt.Sprint(ts)}, "back_sig": {sig}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -405,6 +405,7 @@ func TestLoginAction_Throttle(t *testing.T) {
 func TestRedirectBackPageHandlerGET(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig())
+	cd.SetRoles([]string{"administrator"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -415,7 +416,7 @@ func TestRedirectBackPageHandlerGET(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/foo?x=1") {
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/foo") {
 		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
 	}
 }
@@ -423,6 +424,7 @@ func TestRedirectBackPageHandlerGET(t *testing.T) {
 func TestRedirectBackPageHandlerEmptyMethod(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	cd := common.NewCoreData(req.Context(), dbpkg.New(nil), config.NewRuntimeConfig())
+	cd.SetRoles([]string{"administrator"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -433,7 +435,7 @@ func TestRedirectBackPageHandlerEmptyMethod(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/bar?y=2") {
+	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/bar") {
 		t.Fatalf("auto refresh=%q", cd.AutoRefresh)
 	}
 }

@@ -163,7 +163,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 	if reg == nil {
 		reg = routerpkg.NewRegistry()
 	}
-	wsMod := websocket.NewModule(bus)
+	wsMod := websocket.NewModule(bus, cfg)
 	wsMod.Register(reg)
 	r := mux.NewRouter()
 	routerpkg.RegisterRoutes(r, reg)
@@ -178,7 +178,7 @@ func NewServer(ctx context.Context, cfg config.RuntimeConfig, opts ...ServerOpti
 		server.WithDLQRegistry(o.DLQReg),
 	)
 	nav.SetDefaultRegistry(navReg) // TODO make it work like the others.
-  // TODO the following should be New.WIth* arguments above - merge conflict issue perhaps resolve.
+	// TODO the following should be New.WIth* arguments above - merge conflict issue perhaps resolve.
 	srv.Bus = bus
 	srv.EmailReg = o.EmailReg
 	srv.ImageSigner = imgSigner

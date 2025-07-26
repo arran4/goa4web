@@ -347,11 +347,11 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Code != http.StatusOK {
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if !strings.Contains(rr.Body.String(), "Too many failed attempts") {
-		t.Fatalf("body=%q", rr.Body.String())
+	if loc := rr.Header().Get("Location"); loc != raw {
+		t.Fatalf("location=%q", loc)
 	}
 }
 

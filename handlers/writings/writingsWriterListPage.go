@@ -30,13 +30,13 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		Search:     r.URL.Query().Get("search"),
-		PageSize:   handlers.GetPageSize(r),
+		PageSize:   cd.PageSize(),
 		CategoryId: 0,
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	pageSize := handlers.GetPageSize(r)
+	pageSize := cd.PageSize()
 	rows, err := cd.Writers(r)
 	if err != nil {
 		switch {

@@ -71,7 +71,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		var cfg config.RuntimeConfig
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			cfg = cd.Config
+			cfg = *cd.Config
 		}
 		hsts := cfg.HSTSHeaderValue
 		if hsts != "" {

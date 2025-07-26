@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -33,7 +35,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
-	RegisterRoutes(ar, cfg)
+	RegisterRoutes(ar, *cfg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -49,11 +51,31 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	}
 }
 
-func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
+func TestAdminReloadRoute_Authorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	RegisterRoutes(ar, cfg)
+
+	req := httptest.NewRequest("POST", "/admin/reload", nil)
+	cd := common.NewCoreData(req.Context(), nil, cfg)
+	cd.SetRoles([]string{"administrator"})
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected %d got %d", http.StatusOK, rr.Code)
+	}
+}
+
+func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
+	r := mux.NewRouter()
+	ar := r.PathPrefix("/admin").Subrouter()
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	RegisterRoutes(ar, *cfg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -66,6 +88,34 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("expected %d got %d", http.StatusNotFound, rr.Code)
+	}
+}
+
+type stubServer struct{}
+
+func (stubServer) Shutdown(context.Context) error { return nil }
+
+func TestAdminShutdownRoute_Authorized(t *testing.T) {
+	Srv = &stubServer{}
+	r := mux.NewRouter()
+	ar := r.PathPrefix("/admin").Subrouter()
+	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
+	RegisterRoutes(ar, cfg)
+
+	form := url.Values{}
+	form.Set("task", string(TaskServerShutdown))
+	req := httptest.NewRequest("POST", "/admin/shutdown", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	cd := common.NewCoreData(req.Context(), nil, cfg)
+	cd.SetRoles([]string{"administrator"})
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected %d got %d", http.StatusOK, rr.Code)
 	}
 }
 
@@ -98,9 +148,9 @@ func TestServerShutdownMatcher_Denied(t *testing.T) {
 }
 
 func TestServerShutdownMatcher_Allowed(t *testing.T) {
-	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	req.Form = make(map[string][]string)
-	req.Form.Set("task", string(TaskServerShutdown))
+	body := strings.NewReader("task=" + url.QueryEscape(string(TaskServerShutdown)))
+	req := httptest.NewRequest(http.MethodPost, "/admin/shutdown", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cfg := config.GenerateRuntimeConfig(nil, map[string]string{}, func(string) string { return "" })
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	cd.SetRoles([]string{"administrator"})

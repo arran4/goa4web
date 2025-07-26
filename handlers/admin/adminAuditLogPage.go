@@ -34,11 +34,12 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		PageSize int
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		User:     r.URL.Query().Get("user"),
 		Action:   r.URL.Query().Get("action"),
-		PageSize: handlers.GetPageSize(r),
+		PageSize: cd.PageSize(),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

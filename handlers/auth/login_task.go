@@ -75,7 +75,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{UserID: row.Idusers, CreatedAt: expiry})
 		code := r.FormValue("code")
 		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
-			if code != "" && code == reset.VerificationCode {
+			if code != "" && HashResetCode(code) == reset.VerificationCode {
 				_ = queries.MarkPasswordResetVerified(r.Context(), reset.ID)
 				_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
 			} else {

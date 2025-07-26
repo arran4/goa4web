@@ -55,3 +55,11 @@ func VerifyPassword(pw, storedHash, alg string) bool {
 		return false
 	}
 }
+
+// HashResetCode returns the SHA-256 hash of a password reset code in
+// hexadecimal form. The hash is used when storing and comparing reset
+// verification codes in the database.
+func HashResetCode(code string) string {
+	sum := sha256.Sum256([]byte(code))
+	return hex.EncodeToString(sum[:])
+}

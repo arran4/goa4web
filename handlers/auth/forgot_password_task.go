@@ -82,7 +82,8 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("rand %w", err)
 	}
 	code := hex.EncodeToString(buf[:])
-	if err := queries.CreatePasswordReset(r.Context(), db.CreatePasswordResetParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
+	hashed := HashResetCode(code)
+	if err := queries.CreatePasswordReset(r.Context(), db.CreatePasswordResetParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: hashed}); err != nil {
 		log.Printf("create reset: %v", err)
 		return fmt.Errorf("create reset %w", err)
 	}

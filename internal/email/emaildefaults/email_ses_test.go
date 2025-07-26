@@ -19,7 +19,7 @@ func newRegistry() *email.Registry {
 
 func TestGetEmailProviderSESNoCreds(t *testing.T) {
 	reg := newRegistry()
-	if p := reg.ProviderFromConfig(config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
+	if p := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
 		t.Errorf("expected nil provider, got %#v", p)
 	}
 }

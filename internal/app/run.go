@@ -160,7 +160,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, opts ...ServerOpt
 	if err := config.ApplySMTPFallbacks(cfg); err != nil {
 		return nil, fmt.Errorf("smtp fallback: %w", err)
 	}
-	imgSigner := imagesign.NewSigner(*cfg, o.ImageSignSecret)
+	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 

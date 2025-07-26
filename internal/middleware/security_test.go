@@ -101,7 +101,7 @@ func TestSecurityHeadersMiddlewareForwardedProto(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
-  }
+	}
 }
 
 func TestSecurityHeadersMiddleware(t *testing.T) {

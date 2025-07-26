@@ -30,8 +30,9 @@ func handleDie(w http.ResponseWriter, message string) {
 
 // CoreAdderMiddlewareWithDB populates request context with CoreData for
 // templates using the supplied database handle. The verbosity controls optional
-// logging of database pool statistics.
-func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity int, emailReg *email.Registry, signer *imagesign.Signer) func(http.Handler) http.Handler {
+// logging of database pool statistics. The navigation registry provides menu
+// links for templates and allows dependency injection during tests.
+func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity int, emailReg *email.Registry, signer *imagesign.Signer, navReg *nav.Registry) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := core.GetSession(r)
@@ -101,8 +102,9 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg config.RuntimeConfig, verbosity i
 			cd.UserID = uid
 			_ = cd.UserRoles()
 
-			idx := nav.IndexItems()
-			cd.IndexItems = idx
+			if navReg != nil {
+				cd.IndexItems = navReg.IndexItems()
+			}
 			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = cfg.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"

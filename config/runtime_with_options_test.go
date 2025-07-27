@@ -11,18 +11,26 @@ func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 		config.EnvDBConn:            "env",
 		config.EnvDBLogVerbosity:    "2",
 		config.EnvEmailLogVerbosity: "1",
+		config.EnvFeedsEnabled:      "1",
 	}
 
 	strOpt := config.StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Usage: "", ExtendedUsage: "", Target: func(c *config.RuntimeConfig) *string { return &c.DBConn }}
 	intOpt := config.IntOption{Name: "db-verb-alt", Env: config.EnvDBLogVerbosity, Usage: "", ExtendedUsage: "", Target: func(c *config.RuntimeConfig) *int { return &c.DBLogVerbosity }}
 	intOpt2 := config.IntOption{Name: "email-verb-alt", Env: config.EnvEmailLogVerbosity, Usage: "", ExtendedUsage: "", Target: func(c *config.RuntimeConfig) *int { return &c.EmailLogVerbosity }}
-	fs := config.NewRuntimeFlagSetWithOptions("test", []config.StringOption{strOpt}, []config.IntOption{intOpt, intOpt2})
-	_ = fs.Parse([]string{"--db-conn-alt=cli", "--db-verb-alt=5", "--email-verb-alt=4"})
+	boolOpt := config.BoolOption{Name: "feeds-alt", Env: config.EnvFeedsEnabled, Usage: "", ExtendedUsage: "", Default: true, Target: func(c *config.RuntimeConfig) *bool { return &c.FeedsEnabled }}
+
+	fs := config.NewRuntimeFlagSet("test")
+	fs.String(strOpt.Name, strOpt.Default, strOpt.Usage)
+	fs.Int(intOpt.Name, intOpt.Default, intOpt.Usage)
+	fs.Int(intOpt2.Name, intOpt2.Default, intOpt2.Usage)
+	fs.String(boolOpt.Name, "", boolOpt.Usage)
+	_ = fs.Parse([]string{"--db-conn-alt=cli", "--db-verb-alt=5", "--email-verb-alt=4", "--feeds-alt=0"})
 
 	vals := map[string]string{
 		config.EnvDBConn:            "file",
 		config.EnvDBLogVerbosity:    "3",
 		config.EnvEmailLogVerbosity: "2",
+		config.EnvFeedsEnabled:      "0",
 	}
 
 	cfg := config.NewRuntimeConfig(
@@ -31,28 +39,33 @@ func TestGenerateRuntimeConfigWithInjectedOptions(t *testing.T) {
 		config.WithGetenv(func(k string) string { return env[k] }),
 		config.WithStringOptions([]config.StringOption{strOpt}),
 		config.WithIntOptions([]config.IntOption{intOpt, intOpt2}),
+		config.WithBoolOptions([]config.BoolOption{boolOpt}),
 	)
 
-	if cfg.DBConn != "cli" || cfg.DBLogVerbosity != 5 || cfg.EmailLogVerbosity != 4 {
+	if cfg.DBConn != "cli" || cfg.DBLogVerbosity != 5 || cfg.EmailLogVerbosity != 4 || cfg.FeedsEnabled {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
 
 func TestGenerateRuntimeConfigWithInjectedFileValue(t *testing.T) {
 	strOpt := config.StringOption{Name: "db-conn-alt", Env: config.EnvDBConn, Usage: "", ExtendedUsage: "", Target: func(c *config.RuntimeConfig) *string { return &c.DBConn }}
-	fs := config.NewRuntimeFlagSetWithOptions("test", []config.StringOption{strOpt}, nil)
+	boolOpt := config.BoolOption{Name: "feeds-alt", Env: config.EnvFeedsEnabled, Usage: "", ExtendedUsage: "", Default: true, Target: func(c *config.RuntimeConfig) *bool { return &c.FeedsEnabled }}
+	fs := config.NewRuntimeFlagSet("test")
+	fs.String(strOpt.Name, strOpt.Default, strOpt.Usage)
+	fs.String(boolOpt.Name, "", boolOpt.Usage)
 	_ = fs.Parse(nil)
 
-	vals := map[string]string{config.EnvDBConn: "file"}
+	vals := map[string]string{config.EnvDBConn: "file", config.EnvFeedsEnabled: "0"}
 
 	cfg := config.NewRuntimeConfig(
 		config.WithFlagSet(fs),
 		config.WithFileValues(vals),
 		config.WithGetenv(func(string) string { return "" }),
 		config.WithStringOptions([]config.StringOption{strOpt}),
+		config.WithBoolOptions([]config.BoolOption{boolOpt}),
 	)
 
-	if cfg.DBConn != "file" {
-		t.Fatalf("want file got %q", cfg.DBConn)
+	if cfg.DBConn != "file" || cfg.FeedsEnabled {
+		t.Fatalf("merged %#v", cfg)
 	}
 }

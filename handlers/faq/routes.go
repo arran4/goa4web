@@ -19,7 +19,9 @@ func noTask() mux.MatcherFunc {
 // RegisterRoutes attaches the public FAQ endpoints to the router.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLink("FAQ", "/faq", SectionWeight)
-	navReg.RegisterAdminControlCenter("FAQ", "/admin/faq/categories", SectionWeight)
+	navReg.RegisterAdminControlCenter("FAQ Questions", "/admin/faq/questions", SectionWeight)
+	navReg.RegisterAdminControlCenter("FAQ Answers", "/admin/faq/answer", SectionWeight+1)
+	navReg.RegisterAdminControlCenter("FAQ Categories", "/admin/faq/categories", SectionWeight+2)
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	faqr.HandleFunc("", Page).Methods("GET", "POST")

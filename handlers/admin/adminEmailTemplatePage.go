@@ -16,13 +16,16 @@ import (
 )
 
 type taskTemplateInfo struct {
-	Task          string
-	SelfEmail     []string
-	SelfInternal  string
-	SubEmail      []string
-	SubInternal   string
-	AdminEmail    []string
-	AdminInternal string
+	Task           string
+	SelfEmail      []string
+	SelfInternal   string
+	DirectEmail    []string
+	SubEmail       []string
+	SubInternal    string
+	TargetEmail    []string
+	TargetInternal string
+	AdminEmail     []string
+	AdminInternal  string
 }
 
 func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
@@ -36,6 +39,11 @@ func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 			}
 			if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
 				info.SelfInternal = *nt
+			}
+		}
+		if tp, ok := t.(notif.DirectEmailNotificationTemplateProvider); ok {
+			if et := tp.DirectEmailTemplate(); et != nil {
+				info.DirectEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 		}
 		if tp, ok := t.(notif.SubscribersNotificationTemplateProvider); ok {
@@ -52,6 +60,14 @@ func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 			}
 			if nt := tp.AdminInternalNotificationTemplate(); nt != nil {
 				info.AdminInternal = *nt
+			}
+		}
+		if tp, ok := t.(notif.TargetUsersNotificationProvider); ok {
+			if et := tp.TargetEmailTemplate(); et != nil {
+				info.TargetEmail = []string{et.Text, et.HTML, et.Subject}
+			}
+			if nt := tp.TargetInternalNotificationTemplate(); nt != nil {
+				info.TargetInternal = *nt
 			}
 		}
 		infos = append(infos, info)

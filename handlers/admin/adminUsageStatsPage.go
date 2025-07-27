@@ -1,11 +1,14 @@
 package admin
 
 import (
+	"context"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"sync"
+	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -30,96 +33,150 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	cd := data.CoreData
 	queries := cd.Queries()
 
-	var wg sync.WaitGroup
-	wg.Add(8)
-	errCh := make(chan string, 8)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
+	defer cancel()
 
+	var wg sync.WaitGroup
+	errCh := make(chan string)
+	var errWG sync.WaitGroup
+
+	log.Print("start error consumer")
+	errWG.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := queries.ForumTopicThreadCounts(r.Context()); err == nil {
+		defer func() {
+			log.Print("stop error consumer")
+			errWG.Done()
+		}()
+		for e := range errCh {
+			log.Printf("error reported: %s", e)
+			data.Errors = append(data.Errors, e)
+		}
+	}()
+
+	addErr := func(name string, err error) {
+		log.Printf("%s: %v", name, err)
+		errCh <- fmt.Errorf("%s: %w", name, err).Error()
+	}
+
+	log.Print("start forum topic counts")
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Print("stop forum topic counts")
+			wg.Done()
+		}()
+		if rows, err := queries.ForumTopicThreadCounts(ctx); err == nil {
 			data.ForumTopics = rows
 		} else {
-			log.Printf("forum topic counts: %v", err)
-			errCh <- fmt.Errorf("forum topic counts: %w", err).Error()
+			addErr("forum topic counts", err)
 		}
 	}()
 
+	log.Print("start forum category counts")
+	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := queries.ForumCategoryThreadCounts(r.Context()); err == nil {
+		defer func() {
+			log.Print("stop forum category counts")
+			wg.Done()
+		}()
+		if rows, err := queries.ForumCategoryThreadCounts(ctx); err == nil {
 			data.ForumCategories = rows
 		} else {
-			log.Printf("forum category counts: %v", err)
-			errCh <- fmt.Errorf("forum category counts: %w", err).Error()
+			addErr("forum category counts", err)
 		}
 	}()
 
+	log.Print("start imageboard post counts")
+	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := queries.ImageboardPostCounts(r.Context()); err == nil {
+		defer func() {
+			log.Print("stop imageboard post counts")
+			wg.Done()
+		}()
+		if rows, err := queries.ImageboardPostCounts(ctx); err == nil {
 			data.Imageboards = rows
 		} else {
-			log.Printf("imageboard post counts: %v", err)
-			errCh <- fmt.Errorf("imageboard post counts: %w", err).Error()
+			addErr("imageboard post counts", err)
 		}
 	}()
 
+	log.Print("start user post counts")
+	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := queries.UserPostCounts(r.Context()); err == nil {
+		defer func() {
+			log.Print("stop user post counts")
+			wg.Done()
+		}()
+		if rows, err := queries.UserPostCounts(ctx); err == nil {
 			data.Users = rows
 		} else {
-			log.Printf("user post counts: %v", err)
-			errCh <- fmt.Errorf("user post counts: %w", err).Error()
+			addErr("user post counts", err)
 		}
 	}()
 
+	log.Print("start writing category counts")
+	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := queries.WritingCategoryCounts(r.Context()); err == nil {
+		defer func() {
+			log.Print("stop writing category counts")
+			wg.Done()
+		}()
+		if rows, err := queries.WritingCategoryCounts(ctx); err == nil {
 			data.WritingCategories = rows
 		} else {
-			log.Printf("writing category counts: %v", err)
-			errCh <- fmt.Errorf("writing category counts: %w", err).Error()
+			addErr("writing category counts", err)
 		}
 	}()
 
+	log.Print("start linker category counts")
+	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := data.LinkerCategoryCounts(); err == nil {
+		defer func() {
+			log.Print("stop linker category counts")
+			wg.Done()
+		}()
+		if rows, err := queries.GetLinkerCategoryLinkCounts(ctx); err == nil {
 			data.LinkerCategories = rows
 		} else {
-			log.Printf("linker category counts: %v", err)
-			errCh <- fmt.Errorf("linker category counts: %w", err).Error()
+			addErr("linker category counts", err)
 		}
 	}()
 
+	log.Print("start monthly usage counts")
+	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := queries.MonthlyUsageCounts(r.Context(), int32(cd.Config.StatsStartYear)); err == nil {
+		defer func() {
+			log.Print("stop monthly usage counts")
+			wg.Done()
+		}()
+		if rows, err := queries.MonthlyUsageCounts(ctx, int32(cd.Config.StatsStartYear)); err == nil {
 			data.Monthly = rows
 		} else {
-			log.Printf("monthly usage counts: %v", err)
-			errCh <- fmt.Errorf("monthly usage counts: %w", err).Error()
+			addErr("monthly usage counts", err)
 		}
 	}()
 
+	log.Print("start user monthly usage counts")
+	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if rows, err := queries.UserMonthlyUsageCounts(r.Context(), int32(cd.Config.StatsStartYear)); err == nil {
+		defer func() {
+			log.Print("stop user monthly usage counts")
+			wg.Done()
+		}()
+		if rows, err := queries.UserMonthlyUsageCounts(ctx, int32(cd.Config.StatsStartYear)); err == nil {
 			data.UserMonthly = rows
 		} else {
-			log.Printf("user monthly usage counts: %v", err)
-			errCh <- fmt.Errorf("user monthly usage counts: %w", err).Error()
+			addErr("user monthly usage counts", err)
 		}
 	}()
 
+	log.Print("wait for goroutines")
 	wg.Wait()
+	log.Print("close error channel")
 	close(errCh)
-	for e := range errCh {
-		data.Errors = append(data.Errors, e)
-	}
+	errWG.Wait()
 	data.StartYear = cd.Config.StatsStartYear
 
+	log.Print("render usage stats page")
 	handlers.TemplateHandler(w, r, "usageStatsPage.gohtml", data)
 }

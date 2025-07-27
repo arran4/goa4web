@@ -153,22 +153,19 @@ func WithRuntimeConfig(fn func(*RuntimeConfig)) Option {
 	return func(a *runtimeArgs) { a.post = append(a.post, fn) }
 }
 
-// newRuntimeFlagSet returns a FlagSet containing the provided options merged
-// with the built-in ones.
-func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption, bopts []BoolOption) *flag.FlagSet {
+// NewRuntimeFlagSet returns a FlagSet containing all runtime configuration
+// options. The returned FlagSet uses ContinueOnError to allow tests to supply
+// their own arguments without triggering os.Exit.
+func NewRuntimeFlagSet(name string) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 
-	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
-	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
-	bools := append(append([]BoolOption(nil), BoolOptions...), bopts...)
-
-	for _, o := range strings {
+	for _, o := range StringOptions {
 		fs.String(o.Name, o.Default, o.Usage)
 	}
-	for _, o := range ints {
+	for _, o := range IntOptions {
 		fs.Int(o.Name, o.Default, o.Usage)
 	}
-	for _, o := range bools {
+	for _, o := range BoolOptions {
 		if o.Name != "" {
 			fs.String(o.Name, "", o.Usage)
 		}
@@ -177,50 +174,65 @@ func newRuntimeFlagSet(name string, sopts []StringOption, iopts []IntOption, bop
 	return fs
 }
 
-// NewRuntimeFlagSet returns a FlagSet containing all runtime configuration
-// options. The returned FlagSet uses ContinueOnError to allow tests to supply
-// their own arguments without triggering os.Exit.
-func NewRuntimeFlagSet(name string) *flag.FlagSet {
-	return newRuntimeFlagSet(name, nil, nil, nil)
-}
-
 // NewRuntimeFlagSetWithOptions returns a FlagSet containing the built-in options
 // merged with the provided slices.
 func NewRuntimeFlagSetWithOptions(name string, sopts []StringOption, iopts []IntOption) *flag.FlagSet {
-	return newRuntimeFlagSet(name, sopts, iopts, nil)
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+
+	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
+	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
+
+	for _, o := range strings {
+		fs.String(o.Name, o.Default, o.Usage)
+	}
+	for _, o := range ints {
+		fs.Int(o.Name, o.Default, o.Usage)
+	}
+	for _, o := range BoolOptions {
+		if o.Name != "" {
+			fs.String(o.Name, "", o.Usage)
+		}
+	}
+
+	return fs
 }
 
-// generateRuntimeConfig constructs the RuntimeConfig from the provided option
-// slices applying the standard precedence order of command line flags,
-// configuration file values and environment variables.
-func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv func(string) string, sopts []StringOption, iopts []IntOption, bopts []BoolOption) *RuntimeConfig {
-	if getenv == nil {
-		getenv = os.Getenv
+// NewRuntimeConfig constructs the runtime configuration by merging command line
+// flags, values loaded from a config file and environment variables. Options can
+// supply custom flag sets, configuration maps or environment lookup functions
+// and may modify the resulting RuntimeConfig after it has been built.
+func NewRuntimeConfig(ops ...Option) *RuntimeConfig {
+	args := runtimeArgs{fileVals: map[string]string{}, getenv: os.Getenv}
+	for _, op := range ops {
+		op(&args)
+	}
+	if args.getenv == nil {
+		args.getenv = os.Getenv
 	}
 	setFlags := map[string]bool{}
-	if fs != nil {
-		fs.Visit(func(f *flag.Flag) { setFlags[f.Name] = true })
+	if args.fs != nil {
+		args.fs.Visit(func(f *flag.Flag) { setFlags[f.Name] = true })
 	}
 
 	cfg := &RuntimeConfig{}
 
-	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
-	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
-	bools := append(append([]BoolOption(nil), BoolOptions...), bopts...)
+	strings := append(append([]StringOption(nil), StringOptions...), args.sopts...)
+	ints := append(append([]IntOption(nil), IntOptions...), args.iopts...)
+	bools := append(append([]BoolOption(nil), BoolOptions...), args.bopts...)
 
 	for _, o := range strings {
 		dst := o.Target(cfg)
 		var val string
-		if fs != nil && setFlags[o.Name] {
-			if f := fs.Lookup(o.Name); f != nil {
+		if args.fs != nil && setFlags[o.Name] {
+			if f := args.fs.Lookup(o.Name); f != nil {
 				val = f.Value.String()
 			}
 		}
 		if val == "" {
-			val = fileVals[o.Env]
+			val = args.fileVals[o.Env]
 		}
 		if val == "" {
-			val = getenv(o.Env)
+			val = args.getenv(o.Env)
 		}
 		if val == "" {
 			val = o.Default
@@ -231,16 +243,16 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 	for _, o := range ints {
 		dst := o.Target(cfg)
 		var val string
-		if fs != nil && setFlags[o.Name] {
-			if f := fs.Lookup(o.Name); f != nil {
+		if args.fs != nil && setFlags[o.Name] {
+			if f := args.fs.Lookup(o.Name); f != nil {
 				val = f.Value.String()
 			}
 		}
 		if val == "" {
-			val = fileVals[o.Env]
+			val = args.fileVals[o.Env]
 		}
 		if val == "" {
-			val = getenv(o.Env)
+			val = args.getenv(o.Env)
 		}
 		if val != "" {
 			if n, err := strconv.Atoi(val); err == nil {
@@ -254,12 +266,12 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 	for _, o := range bools {
 		dst := o.Target(cfg)
 		var cliVal string
-		if fs != nil && o.Name != "" && setFlags[o.Name] {
-			if f := fs.Lookup(o.Name); f != nil {
+		if args.fs != nil && o.Name != "" && setFlags[o.Name] {
+			if f := args.fs.Lookup(o.Name); f != nil {
 				cliVal = f.Value.String()
 			}
 		}
-		*dst = resolveBool(o.Default, cliVal, fileVals[o.Env], getenv(o.Env))
+		*dst = resolveBool(o.Default, cliVal, args.fileVals[o.Env], args.getenv(o.Env))
 	}
 
 	if cfg.SessionSecretFile == "" {
@@ -270,19 +282,6 @@ func generateRuntimeConfig(fs *flag.FlagSet, fileVals map[string]string, getenv 
 	}
 
 	normalizeRuntimeConfig(cfg)
-	return cfg
-}
-
-// NewRuntimeConfig constructs the runtime configuration by merging command line
-// flags, values loaded from a config file and environment variables. Options can
-// supply custom flag sets, configuration maps or environment lookup functions
-// and may modify the resulting RuntimeConfig after it has been built.
-func NewRuntimeConfig(ops ...Option) *RuntimeConfig {
-	args := runtimeArgs{fileVals: map[string]string{}, getenv: os.Getenv}
-	for _, op := range ops {
-		op(&args)
-	}
-	cfg := generateRuntimeConfig(args.fs, args.fileVals, args.getenv, args.sopts, args.iopts, args.bopts)
 	for _, fn := range args.post {
 		fn(cfg)
 	}

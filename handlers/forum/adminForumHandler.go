@@ -2,25 +2,88 @@ package forum
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
+	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+
+	"github.com/arran4/goa4web/core"
 )
 
 func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
+		Categories              []*ForumcategoryPlus
+		CategoryBreadcrumbs     []*ForumcategoryPlus
+		Admin                   bool
+		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
+		Category                *ForumcategoryPlus
+		Back                    bool
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	data := &Data{
+		CoreData: cd,
+		Admin:    cd.CanEditAny(),
 	}
-	handlers.TemplateHandler(w, r, "forumAdminPage", data)
+
+	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
+		d := *data
+		d.Categories = rootCategory.Categories
+		d.Category = rootCategory
+		d.Back = false
+		return &d
+	}
+	data.CopyDataToSubCategories = copyDataToSubCategories
+
+	categoryRows, err := cd.ForumCategories()
+	if err != nil {
+		log.Printf("getAllForumCategories Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+
+	queries := cd.Queries()
+	rows, err := queries.GetAllForumTopicsForUser(r.Context(), db.GetAllForumTopicsForUserParams{
+		ViewerID:      uid,
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("showTableTopics Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	var topicRows []*ForumtopicPlus
+	for _, row := range rows {
+		topicRows = append(topicRows, &ForumtopicPlus{
+			Idforumtopic:                 row.Idforumtopic,
+			Lastposter:                   row.Lastposter,
+			ForumcategoryIdforumcategory: row.ForumcategoryIdforumcategory,
+			Title:                        row.Title,
+			Description:                  row.Description,
+			Threads:                      row.Threads,
+			Comments:                     row.Comments,
+			Lastaddition:                 row.Lastaddition,
+		})
+	}
+
+	categoryTree := NewCategoryTree(categoryRows, topicRows)
+	data.Categories = categoryTree.CategoryChildrenLookup[0]
+
+	handlers.TemplateHandler(w, r, "forumPage", data)
 }
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {

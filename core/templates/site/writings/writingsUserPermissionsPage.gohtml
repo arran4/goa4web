@@ -9,10 +9,10 @@
             </tr>
             {{range .Rows}}
                 <tr>
-                    <td>{{.ID}}
-                    <td>{{.Username}}
+                    <td>{{.IduserRoles}}
+                    <td>{{.Username.String}}
                     <td>{{.Email}}
-                                        <td>{{.Role}}
+                    <td>{{.Role}}
                     <td>
                         <form method="post">
         {{ csrfField }}

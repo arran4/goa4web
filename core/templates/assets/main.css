@@ -18,6 +18,19 @@ body {
         background-color: #FFF6E0;
 }
 
+.navbar-left,
+.navbar-right {
+        flex: 1;
+}
+
+.navbar-center {
+        flex: 1;
+        text-align: center;
+        font-weight: bold;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        color: #800000;
+}
+
 .layout {
         display: flex;
         flex: 1;

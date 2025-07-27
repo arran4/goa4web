@@ -89,11 +89,10 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Categories          []*db.WritingCategory
 			CategoryBreadcrumbs []*db.WritingCategory
-			EditingCategoryId   int32
 			CategoryId          int32
 			WritingCategoryID   int32
 			Abstracts           []*db.GetPublicWritingsInCategoryRow
-		}{&common.CoreData{}, nil, nil, 0, 0, 0, nil}},
+		}{&common.CoreData{}, nil, nil, 0, 0, nil}},
 		{"searchPage", struct {
 			*common.CoreData
 			SearchWords string

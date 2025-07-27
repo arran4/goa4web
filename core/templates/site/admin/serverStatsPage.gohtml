@@ -18,7 +18,10 @@
     <li>DLQ Providers: {{ range $i, $d := .Registries.DLQProviders }}{{ if $i }}, {{ end }}{{ $d }}{{ end }}</li>
     <li>Email Providers: {{ range $i, $e := .Registries.EmailProviders }}{{ if $i }}, {{ end }}{{ $e }}{{ end }}</li>
     <li>Upload Providers: {{ range $i, $u := .Registries.UploadProviders }}{{ if $i }}, {{ end }}{{ $u }}{{ end }}</li>
+    <li>Router Modules: {{ range $i, $m := .Registries.RouterModules }}{{ if $i }}, {{ end }}{{ $m }}{{ end }}</li>
 </ul>
 <h3>Current Configuration</h3>
-<pre>{{ printf "%+v" .Config }}</pre>
+<pre>{{ .ConfigEnv }}</pre>
+<h3>Configuration JSON</h3>
+<pre>{{ .ConfigJSON }}</pre>
 {{ template "tail" $ }}

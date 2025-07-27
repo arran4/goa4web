@@ -44,3 +44,13 @@ func TestInitModulesDependencyOrder(t *testing.T) {
 		t.Fatalf("order mismatch (-want +got):\n%s", diff)
 	}
 }
+
+func TestRegistryNames(t *testing.T) {
+	reg := NewRegistry()
+	reg.RegisterModule("b", nil, nil)
+	reg.RegisterModule("a", nil, nil)
+	want := []string{"a", "b"}
+	if diff := cmp.Diff(want, reg.Names()); diff != "" {
+		t.Fatalf("names mismatch (-want +got):\n%s", diff)
+	}
+}

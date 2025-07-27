@@ -1,8 +1,12 @@
 package admin
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"runtime"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/config"
@@ -27,13 +31,15 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 		*common.CoreData
 		Stats      Stats
 		Uptime     time.Duration
-		Config     config.RuntimeConfig
+		ConfigEnv  string
+		ConfigJSON string
 		Registries struct {
 			Tasks           []string
 			DBDrivers       []string
 			DLQProviders    []string
 			EmailProviders  []string
 			UploadProviders []string
+			RouterModules   []string
 		}
 	}
 
@@ -53,7 +59,42 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 			NumGC:      mem.NumGC,
 		},
 		Uptime: time.Since(StartTime),
-		Config: *cd.Config,
+	}
+
+	envMap, err := config.ToEnvMap(cd.Config, h.ConfigFile)
+	if err == nil {
+		defMap, _ := config.ToEnvMap(config.NewRuntimeConfig(), "")
+		usage := config.UsageMap()
+		ext := config.ExtendedUsageMap(cd.DBRegistry())
+		ex := config.ExamplesMap()
+		keys := make([]string, 0, len(envMap))
+		for k := range envMap {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		var sb strings.Builder
+		for _, k := range keys {
+			line := "# "
+			if u := usage[k]; u != "" {
+				line += fmt.Sprintf("%s (default: %s)", u, defMap[k])
+			} else {
+				line += fmt.Sprintf("default: %s", defMap[k])
+			}
+			if xs := ex[k]; len(xs) > 0 {
+				line += fmt.Sprintf(" (examples: %s)", strings.Join(xs, ", "))
+			}
+			sb.WriteString(line + "\n")
+			if e := ext[k]; e != "" {
+				for _, ln := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
+					sb.WriteString("# " + ln + "\n")
+				}
+			}
+			sb.WriteString(fmt.Sprintf("%s=%s\n", k, envMap[k]))
+		}
+		data.ConfigEnv = sb.String()
+		if b, err := json.MarshalIndent(envMap, "", "  "); err == nil {
+			data.ConfigJSON = string(b)
+		}
 	}
 
 	for _, t := range cd.TasksReg.Registered() {
@@ -62,11 +103,16 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	if reg := data.CoreData.DBRegistry(); reg != nil {
 		data.Registries.DBDrivers = reg.Names()
 	}
-	if h.Srv != nil && h.Srv.DLQReg != nil {
-		data.Registries.DLQProviders = h.Srv.DLQReg.ProviderNames()
-	}
-	if h.Srv != nil && h.Srv.EmailReg != nil {
-		data.Registries.EmailProviders = h.Srv.EmailReg.ProviderNames()
+	if h.Srv != nil {
+		if h.Srv.DLQReg != nil {
+			data.Registries.DLQProviders = h.Srv.DLQReg.ProviderNames()
+		}
+		if h.Srv.EmailReg != nil {
+			data.Registries.EmailProviders = h.Srv.EmailReg.ProviderNames()
+		}
+		if h.Srv.RouterReg != nil {
+			data.Registries.RouterModules = h.Srv.RouterReg.Names()
+		}
 	}
 	data.Registries.UploadProviders = upload.ProviderNames()
 

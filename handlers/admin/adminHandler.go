@@ -31,7 +31,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:   cd,
-		AdminLinks: cd.NavReg.AdminLinks(),
+		AdminLinks: cd.Nav.AdminLinks(),
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ctx := r.Context()

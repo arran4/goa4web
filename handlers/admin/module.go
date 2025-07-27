@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 	"github.com/gorilla/mux"
 )
@@ -47,10 +48,10 @@ func WithUpdateConfigKeyFunc(fn func(fs core.FileSystem, path, key, value string
 
 // Register registers the admin router module using h's dependencies.
 func (h *Handlers) Register(reg *router.Registry) {
-	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig) {
+	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig, navReg *navigation.Registry) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		ar.Use(handlers.IndexMiddleware(CustomIndex))
-		h.RegisterRoutes(ar, cfg)
+		h.RegisterRoutes(ar, cfg, navReg)
 	})
 }

@@ -22,7 +22,7 @@ import (
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
-func (h *Handlers)  RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
 	navReg.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
 	navReg.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
@@ -120,11 +120,3 @@ func (h *Handlers)  RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navR
 }
 
 // Register registers the admin router module.
-func Register(reg *router.Registry) {
-	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
-		ar := r.PathPrefix("/admin").Subrouter()
-		ar.Use(router.AdminCheckerMiddleware)
-		ar.Use(handlers.IndexMiddleware(CustomIndex))
-		RegisterRoutes(ar, cfg, navReg)
-	})
-}

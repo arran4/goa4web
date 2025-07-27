@@ -20,7 +20,6 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Categories          []*db.WritingCategory
 		CategoryBreadcrumbs []*db.WritingCategory
-		EditingCategoryId   int32
 		CategoryId          int32
 		WritingCategoryID   int32
 		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
@@ -28,9 +27,6 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{}
-
-	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
-	data.EditingCategoryId = int32(editID)
 
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])

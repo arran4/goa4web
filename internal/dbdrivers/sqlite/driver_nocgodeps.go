@@ -3,7 +3,7 @@
 package sqlite
 
 import (
-	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	"log"
 )
 

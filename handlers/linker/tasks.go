@@ -55,4 +55,10 @@ const (
 
 	// TaskUserDisallow removes a user's role.
 	TaskUserDisallow tasks.TaskString = "User Disallow"
+
+	// TaskCategoryGrantCreate adds a new grant to a linker category.
+	TaskCategoryGrantCreate tasks.TaskString = "Create grant"
+
+	// TaskCategoryGrantDelete removes an existing linker category grant.
+	TaskCategoryGrantDelete tasks.TaskString = "Delete grant"
 )

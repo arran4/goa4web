@@ -8,7 +8,7 @@ import (
 	"testing"
 	"text/template"
 
-	templates "github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/core/templates"
 )
 
 //go:embed notifications/*.gotxt email/*.gotxt

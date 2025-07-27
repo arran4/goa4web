@@ -9,7 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	adminapi "github.com/arran4/goa4web/internal/adminapi"
+	"github.com/arran4/goa4web/internal/adminapi"
 )
 
 // serverShutdownCmd implements "server shutdown".

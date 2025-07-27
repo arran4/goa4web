@@ -18,15 +18,15 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
-	email "github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
-	middleware "github.com/arran4/goa4web/internal/middleware"
+	"github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/tasks"
-	websocket "github.com/arran4/goa4web/internal/websocket"
+	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -140,15 +140,14 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	}
 	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: sameSite}
 
-	dbPool := o.DB
-	if dbPool == nil {
+	if o.DB == nil {
 		var err error
-		dbPool, err = PerformChecks(cfg, o.DBReg)
+		o.DB, err = PerformChecks(cfg, o.DBReg)
 		if err != nil {
 			return nil, fmt.Errorf("startup checks: %w", err)
 		}
 	}
-	queries := dbpkg.New(dbPool)
+	queries := dbpkg.New(o.DB)
 	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
 		return nil, fmt.Errorf("ensure default language: %w", err)
 	}
@@ -163,29 +162,27 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 
-	bus := o.Bus
-	if bus == nil {
-		bus = eventbus.NewBus()
+	if o.Bus == nil {
+		o.Bus = eventbus.NewBus()
 	}
-	reg := o.RouterReg
-	if reg == nil {
-		reg = routerpkg.NewRegistry()
+	if o.RouterReg == nil {
+		o.RouterReg = routerpkg.NewRegistry()
 	}
-	wsMod := websocket.NewModule(bus, cfg)
-	wsMod.Register(reg)
+	wsMod := websocket.NewModule(o.Bus, cfg)
+	wsMod.Register(o.RouterReg)
 	r := mux.NewRouter()
 
 	navReg := nav.NewRegistry()
-	routerpkg.RegisterRoutes(r, reg, cfg, navReg)
+	routerpkg.RegisterRoutes(r, o.RouterReg, cfg, navReg)
 	srv := server.New(
 		server.WithStore(store),
-		server.WithDB(dbPool),
+		server.WithDB(o.DB),
 		server.WithConfig(cfg),
-		server.WithRouterRegistry(reg),
+		server.WithRouterRegistry(o.RouterReg),
 		server.WithNavRegistry(navReg),
 		server.WithDLQRegistry(o.DLQReg),
 		server.WithTasksRegistry(o.TasksReg),
-		server.WithBus(bus),
+		server.WithBus(o.Bus),
 		server.WithEmailRegistry(o.EmailReg),
 		server.WithImageSigner(imgSigner),
 		server.WithDBRegistry(o.DBReg),
@@ -193,7 +190,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithTasksRegistry(o.TasksReg),
 	)
 
-	taskEventMW := middleware.NewTaskEventMiddleware(bus)
+	taskEventMW := middleware.NewTaskEventMiddleware(o.Bus)
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
 		srv.CoreDataMiddleware(),
@@ -210,7 +207,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	if ah != nil {
 		ah.ConfigFile = ConfigFile
 		ah.Srv = srv
-		ah.DBPool = dbPool
+		ah.DBPool = o.DB
 		ah.UpdateConfigKeyFunc = config.UpdateConfigKey
 	}
 	srv.TasksReg = o.TasksReg

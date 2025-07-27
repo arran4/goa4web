@@ -25,10 +25,10 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/tasks"
-	websocket "github.com/arran4/goa4web/internal/websocket"
 	"github.com/arran4/goa4web/workers"
+	"github.com/arran4/goa4web/internal/websocket"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
@@ -237,6 +237,9 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = s.Config.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+			if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
+				cd.AdminMode = true
+			}
 			if uid != 0 && s.Config.NotificationsEnabled {
 				cd.NotificationCount = int32(cd.UnreadNotificationCount())
 			}

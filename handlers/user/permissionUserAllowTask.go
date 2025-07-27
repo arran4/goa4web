@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -36,6 +38,11 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
+	idStr := mux.Vars(r)["id"]
+	back := "/admin/users/permissions"
+	if idStr != "" {
+		back = "/admin/user/" + idStr + "/permissions"
+	}
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -43,7 +50,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/users/permissions",
+		Back:     back,
 	}
 	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())

@@ -5,10 +5,10 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	dbpkg "github.com/arran4/goa4web/internal/db"
-	dlq "github.com/arran4/goa4web/internal/dlq"
+	"github.com/arran4/goa4web/internal/dlq"
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
 	dirdlq "github.com/arran4/goa4web/internal/dlq/dir"
-	dlqdefaults "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
+	"github.com/arran4/goa4web/internal/dlq/dlqdefaults"
 	emaildlq "github.com/arran4/goa4web/internal/dlq/email"
 	filedlq "github.com/arran4/goa4web/internal/dlq/file"
 	emailpkg "github.com/arran4/goa4web/internal/email"

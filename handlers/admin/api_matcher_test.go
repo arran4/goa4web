@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	adminapi "github.com/arran4/goa4web/internal/adminapi"
+	"github.com/arran4/goa4web/internal/adminapi"
 	"github.com/gorilla/mux"
 )
 

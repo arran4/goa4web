@@ -6,18 +6,18 @@ import (
 
 	"github.com/arran4/goa4web/config"
 
-	blogs "github.com/arran4/goa4web/handlers/blogs"
-	faq "github.com/arran4/goa4web/handlers/faq"
-	forum "github.com/arran4/goa4web/handlers/forum"
-	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
-	languages "github.com/arran4/goa4web/handlers/languages"
-	linker "github.com/arran4/goa4web/handlers/linker"
-	news "github.com/arran4/goa4web/handlers/news"
-	search "github.com/arran4/goa4web/handlers/search"
+	"github.com/arran4/goa4web/handlers/blogs"
+	"github.com/arran4/goa4web/handlers/faq"
+	"github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/handlers/imagebbs"
+	"github.com/arran4/goa4web/handlers/languages"
+	"github.com/arran4/goa4web/handlers/linker"
+	"github.com/arran4/goa4web/handlers/news"
+	"github.com/arran4/goa4web/handlers/search"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
-	writings "github.com/arran4/goa4web/handlers/writings"
+	"github.com/arran4/goa4web/handlers/writings"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
@@ -26,6 +26,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	navReg.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
 	navReg.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
 	navReg.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
+	navReg.RegisterAdminControlCenter("Failed Emails", "/admin/email/failed", 112)
 	navReg.RegisterAdminControlCenter("Sent Emails", "/admin/email/sent", 115)
 	navReg.RegisterAdminControlCenter("Email Template", "/admin/email/template", 120)
 	navReg.RegisterAdminControlCenter("Dead Letter Queue", "/admin/dlq", 130)
@@ -39,6 +40,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
+	ar.HandleFunc("/email/failed", AdminFailedEmailsPage).Methods("GET")
 	ar.HandleFunc("/email/sent", AdminSentEmailsPage).Methods("GET")
 	ar.HandleFunc("/email/queue", handlers.TaskHandler(resendQueueTask)).Methods("POST").MatcherFunc(resendQueueTask.Matcher())
 	ar.HandleFunc("/email/queue", handlers.TaskHandler(deleteQueueTask)).Methods("POST").MatcherFunc(deleteQueueTask.Matcher())

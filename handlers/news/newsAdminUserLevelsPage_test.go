@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/core/templates"
-	admin "github.com/arran4/goa4web/handlers/admin"
+	"github.com/arran4/goa4web/handlers/admin"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 

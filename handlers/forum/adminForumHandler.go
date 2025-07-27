@@ -20,7 +20,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
-	handlers.TemplateHandler(w, r, "forumPage", data)
+	handlers.TemplateHandler(w, r, "forumAdminPage", data)
 }
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {

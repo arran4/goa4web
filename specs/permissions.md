@@ -190,6 +190,14 @@ Many queries now filter results directly in SQL using `viewer_id` together with 
 | `linker` | `category` | `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `linker` | `category` | `view` | `NULL` | viewer role ID | role-based grant |
 | `linker` | `category` | `view` | `NULL` | `NULL` | public grant for everyone |
+| `forum` | `category` | `see` | `viewer_id` | `NULL` | grant specific to that user |
+| `forum` | `category` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `forum` | `category` | `see` | `NULL` | viewer role ID | role-based grant |
+| `forum` | `category` | `see` | `NULL` | `NULL` | public grant for everyone |
+| `forum` | `category` | `view` | `viewer_id` | `NULL` | grant specific to that user |
+| `forum` | `category` | `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `forum` | `category` | `view` | `NULL` | viewer role ID | role-based grant |
+| `forum` | `category` | `view` | `NULL` | `NULL` | public grant for everyone |
 | `linker` | `link` | `see` | `viewer_id` | `NULL` | grant specific to that user |
 | `linker` | `link` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `linker` | `link` | `see` | `NULL` | viewer role ID | role-based grant |

@@ -24,7 +24,8 @@
                         <input type="submit" name="task" value="Forum category change">
                         {{ if eq .Topiccount 0 }}
                         <input type="submit" name="task" formaction="/admin/forum/category/delete" value="Delete Category">
-                        {{ end }}
+                        {{ end }}<br>
+                        <a href="/forum/admin/category/{{ .Idforumcategory }}/grants">Permissions</a>
                     </td>
                 </form>
             </tr>

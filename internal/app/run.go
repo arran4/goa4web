@@ -216,11 +216,6 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	}
 	srv.TasksReg = o.TasksReg
 
-  adminhandlers.ConfigFile = ConfigFile
-	adminhandlers.Srv = srv
-	adminhandlers.DBPool = dbPool
-	adminhandlers.UpdateConfigKeyFunc = config.UpdateConfigKey
-
 	emailProvider := o.EmailReg.ProviderFromConfig(cfg)
 	if cfg.EmailEnabled && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)

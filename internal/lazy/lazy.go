@@ -11,6 +11,7 @@ type Value[T any] struct {
 	value  T
 	err    error
 	loaded bool
+	mu     *sync.Mutex
 }
 
 // load executes fn only once and caches its result.
@@ -75,7 +76,7 @@ func Must[T any]() Option[T] { return func(a *args[T]) { a.must = true } }
 func DefaultValue[T any](v T) Option[T] { return func(a *args[T]) { a.defaultValue = &v } }
 
 // Map performs a lazy lookup of id using fetch, caching the result in m.
-func Map[T any](m *map[int32]*Value[T], id int32, fetch func(int32) (T, error), opts ...Option[T]) (T, error) {
+func Map[T any](m *map[int32]*Value[T], mu *sync.Mutex, id int32, fetch func(int32) (T, error), opts ...Option[T]) (T, error) {
 	var zero T
 	args := &args[T]{}
 	for _, opt := range opts {
@@ -87,18 +88,24 @@ func Map[T any](m *map[int32]*Value[T], id int32, fetch func(int32) (T, error), 
 	if m == nil {
 		return zero, fmt.Errorf("lazy map pointer nil")
 	}
+	if mu == nil {
+		return zero, fmt.Errorf("lazy map mutex nil")
+	}
+	mu.Lock()
 	if *m == nil {
 		*m = make(map[int32]*Value[T])
 	}
 	if args.clear {
 		delete(*m, id)
+		mu.Unlock()
 		return zero, nil
 	}
 	lv, ok := (*m)[id]
 	if !ok || args.refresh {
-		lv = &Value[T]{}
+		lv = &Value[T]{mu: mu}
 		(*m)[id] = lv
 	}
+	mu.Unlock()
 	if args.setValue != nil {
 		lv.Set(*args.setValue)
 		return *args.setValue, nil

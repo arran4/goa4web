@@ -223,6 +223,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
 				common.WithSessionManager(sm),
+				common.WithNavRegistry(s.Nav),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
 			)

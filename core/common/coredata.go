@@ -48,6 +48,12 @@ type MailProvider interface {
 	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
 }
 
+// NavigationProvider exposes index and admin navigation links.
+type NavigationProvider interface {
+	IndexItems() []IndexItem
+	AdminLinks() []IndexItem
+}
+
 // No package-level pagination constants as runtime config provides these values.
 
 // NewsPost describes a news entry with access metadata.
@@ -73,6 +79,8 @@ type CoreData struct {
 	NotificationCount int32
 	Config            *config.RuntimeConfig
 	ImageSigner       *imagesign.Signer
+	Nav               NavigationProvider
+	mapMu             sync.Mutex
 	TasksReg          *tasks.Registry
 	a4codeMapper      func(tag, val string) string
 
@@ -202,6 +210,11 @@ func WithTasksRegistry(r *tasks.Registry) CoreOption {
 // WithDBRegistry sets the database driver registry for CoreData.
 func WithDBRegistry(r *dbdrivers.Registry) CoreOption {
 	return func(cd *CoreData) { cd.dbRegistry = r }
+}
+
+// WithNavRegistry registers the navigation registry on CoreData.
+func WithNavRegistry(r NavigationProvider) CoreOption {
+	return func(cd *CoreData) { cd.Nav = r }
 }
 
 // NewCoreData creates a CoreData with context and queries applied.
@@ -917,7 +930,7 @@ func (cd *CoreData) ForumTopicByID(id int32, ops ...lazy.Option[*db.GetForumTopi
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazy.Map(&cd.forumTopics, id, fetch, ops...)
+	return lazy.Map(&cd.forumTopics, &cd.mapMu, id, fetch, ops...)
 }
 
 // ForumThreadByID returns a single forum thread lazily loading it once per ID.
@@ -932,7 +945,7 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazy.Map(&cd.forumThreadRows, id, fetch, ops...)
+	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
 }
 
 // WritingByID returns a single writing lazily loading it once per ID.
@@ -947,7 +960,7 @@ func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingByIdF
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazy.Map(&cd.writingRows, id, fetch, ops...)
+	return lazy.Map(&cd.writingRows, &cd.mapMu, id, fetch, ops...)
 }
 
 // BlogEntryByID returns a blog entry lazily loading it once per ID.
@@ -961,7 +974,7 @@ func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryF
 			ID:            i,
 		})
 	}
-	return lazy.Map(&cd.blogEntries, id, fetch, ops...)
+	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)
 }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
@@ -976,7 +989,7 @@ func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[*db.GetCommentByIdF
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazy.Map(&cd.forumComments, id, fetch, ops...)
+	return lazy.Map(&cd.forumComments, &cd.mapMu, id, fetch, ops...)
 }
 
 // CurrentComment returns the current comment lazily loaded.
@@ -1028,7 +1041,7 @@ func (cd *CoreData) NewsPostByID(id int32, ops ...lazy.Option[*db.GetForumThread
 		}
 		return cd.queries.GetForumThreadIdByNewsPostId(cd.ctx, i)
 	}
-	return lazy.Map(&cd.newsPosts, id, fetch, ops...)
+	return lazy.Map(&cd.newsPosts, &cd.mapMu, id, fetch, ops...)
 }
 
 // SetCurrentNewsPost stores the current news post ID.

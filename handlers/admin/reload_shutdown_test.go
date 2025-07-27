@@ -39,6 +39,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
 	h := New(WithServer(&serverpkg.Server{Config: &config.RuntimeConfig{}}))
+	navReg := navigation.NewRegistry()
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)

@@ -27,7 +27,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		Actions    []string
 	}
 
-  cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
@@ -35,12 +35,12 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-  data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view", "post", "edit"}}
+	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view", "post", "edit"}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
 
-  grants, err := queries.ListGrants(r.Context())
+	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
 		log.Printf("ListGrants: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

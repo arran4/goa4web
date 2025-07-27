@@ -27,6 +27,7 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/workers"
 	"github.com/arran4/goa4web/internal/websocket"
 )
 
@@ -248,6 +249,21 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
+// startWorkers launches the background workers when the server starts.
+func (s *Server) startWorkers(ctx context.Context) {
+	if s.WorkerCancel != nil {
+		return
+	}
+	workerCtx, cancel := context.WithCancel(ctx)
+	emailProvider := s.EmailReg.ProviderFromConfig(s.Config)
+	if s.Config.EmailEnabled && s.Config.EmailProvider != "" && s.Config.EmailFrom == "" {
+		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, s.Config.EmailProvider)
+	}
+	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, dbpkg.New(s.DB))
+	workers.Start(workerCtx, s.DB, emailProvider, dlqProvider, s.Config, s.Bus)
+	s.WorkerCancel = cancel
+}
+
 // Run starts the HTTP server and blocks until the context is cancelled.
 func Run(ctx context.Context, srv *Server, addr string) error {
 	go func() {
@@ -267,5 +283,6 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 
 // RunContext starts the server using the configured HTTPListen address.
 func (s *Server) RunContext(ctx context.Context) error {
+	s.startWorkers(ctx)
 	return Run(ctx, s, s.Config.HTTPListen)
 }

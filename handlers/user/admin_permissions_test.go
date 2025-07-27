@@ -49,7 +49,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 
 	mock.ExpectQuery("SELECT idusers").
 		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "bob@test", "bob"))
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "bob@test", "bob", nil))
 	mock.ExpectExec("INSERT INTO user_roles").
 		WithArgs(int32(2), "moderator").
 		WillReturnResult(sqlmock.NewResult(1, 1))

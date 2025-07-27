@@ -209,6 +209,7 @@ CREATE TABLE `roles` (
   `name` tinytext NOT NULL,
   `can_login` tinyint(1) NOT NULL DEFAULT 0,
   `is_admin` tinyint(1) NOT NULL DEFAULT 0,
+  `public_profile_allowed_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `roles_name_idx` (`name`(255))
 );
@@ -302,6 +303,7 @@ CREATE TABLE `users` (
   `idusers` int(10) NOT NULL AUTO_INCREMENT,
   `username` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
+  `public_profile_enabled_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idusers`),
   UNIQUE KEY `users_username_idx` (`username`(255))
 );

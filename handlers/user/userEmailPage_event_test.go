@@ -32,8 +32,8 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	mock.ExpectQuery("SELECT id, user_id, email").WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO user_emails").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT u.idusers").WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).
-			AddRow(1, nil, "alice"))
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
+			AddRow(1, nil, "alice", nil))
 
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store

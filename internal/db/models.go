@@ -360,10 +360,11 @@ type Preference struct {
 }
 
 type Role struct {
-	ID       int32
-	Name     string
-	CanLogin bool
-	IsAdmin  bool
+	ID                     int32
+	Name                   string
+	CanLogin               bool
+	IsAdmin                bool
+	PublicProfileAllowedAt sql.NullTime
 }
 
 type SchemaVersion struct {
@@ -434,9 +435,10 @@ type UploadedImage struct {
 }
 
 type User struct {
-	Idusers   int32
-	Username  sql.NullString
-	DeletedAt sql.NullTime
+	Idusers                int32
+	Username               sql.NullString
+	DeletedAt              sql.NullTime
+	PublicProfileEnabledAt sql.NullTime
 }
 
 type UserEmail struct {

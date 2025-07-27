@@ -26,7 +26,7 @@ func TestForgotPasswordRateLimit(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 
-	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "u"))
+	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "a@test.com", "u", nil))
 	resetRows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 		AddRow(1, 1, "hash", "alg", "code", time.Now(), nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnRows(resetRows)
@@ -57,7 +57,7 @@ func TestForgotPasswordReplaceOld(t *testing.T) {
 	defer db.Close()
 	q := dbpkg.New(db)
 
-	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "u"))
+	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "a@test.com", "u", nil))
 	oldRows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 		AddRow(1, 1, "hash", "alg", "code", time.Now().Add(-25*time.Hour), nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnRows(oldRows)

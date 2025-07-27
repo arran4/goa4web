@@ -23,7 +23,7 @@ func TestForgotPasswordNoEmail(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "", "u"))
+	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "", "u", nil))
 
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
@@ -50,7 +50,7 @@ func TestEmailAssociationRequestTask(t *testing.T) {
 	}
 	defer db.Close()
 	q := dbpkg.New(db)
-	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "", "u"))
+	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "", "u", nil))
 	mock.ExpectExec("INSERT INTO admin_request_queue").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO admin_request_comments").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO admin_user_comments").WillReturnResult(sqlmock.NewResult(1, 1))

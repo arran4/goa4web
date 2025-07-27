@@ -470,6 +470,21 @@ func (q *Queries) UserHasLoginRole(ctx context.Context, usersIdusers int32) (int
 	return column_1, err
 }
 
+const userHasPublicProfileRole = `-- name: UserHasPublicProfileRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.public_profile_allowed_at IS NOT NULL
+LIMIT 1
+`
+
+func (q *Queries) UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, userHasPublicProfileRole, usersIdusers)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const userHasRole = `-- name: UserHasRole :one
 SELECT 1
 FROM user_roles ur

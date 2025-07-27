@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	serverpkg "github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -38,7 +38,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	h := New(WithServer(&serverpkg.Server{Config: &config.RuntimeConfig{}}))
+	h := New(WithServer(&server.Server{Config: &config.RuntimeConfig{}}))
 	navReg := navigation.NewRegistry()
 	h.RegisterRoutes(ar, cfg, navReg)
 
@@ -60,7 +60,7 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	h := New(WithServer(&serverpkg.Server{Config: &config.RuntimeConfig{}}))
+	h := New(WithServer(&server.Server{Config: &config.RuntimeConfig{}}))
 	navReg := navigation.NewRegistry()
 	h.RegisterRoutes(ar, cfg, navReg)
 
@@ -82,7 +82,7 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()
-	h := New(WithServer(&serverpkg.Server{}))
+	h := New(WithServer(&server.Server{}))
 	navReg := navigation.NewRegistry()
 	h.RegisterRoutes(ar, cfg, navReg)
 
@@ -101,7 +101,7 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 }
 
 func TestAdminShutdownRoute_Authorized(t *testing.T) {
-	h := New(WithServer(&serverpkg.Server{}))
+	h := New(WithServer(&server.Server{}))
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	cfg := config.NewRuntimeConfig()

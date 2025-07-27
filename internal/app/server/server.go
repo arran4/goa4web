@@ -25,9 +25,9 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/tasks"
-	websocket "github.com/arran4/goa4web/internal/websocket"
+	"github.com/arran4/goa4web/internal/websocket"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.

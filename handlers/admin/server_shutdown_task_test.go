@@ -9,14 +9,14 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	serverpkg "github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestServerShutdownTask_EventPublished(t *testing.T) {
 	bus := eventbus.NewBus()
-	h := New(WithServer(&serverpkg.Server{Bus: bus}))
+	h := New(WithServer(&server.Server{Bus: bus}))
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())

@@ -6,7 +6,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterAdminRoutes attaches the admin language endpoints to the router.

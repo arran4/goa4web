@@ -6,18 +6,18 @@ import (
 
 	"github.com/arran4/goa4web/config"
 
-	blogs "github.com/arran4/goa4web/handlers/blogs"
-	faq "github.com/arran4/goa4web/handlers/faq"
-	forum "github.com/arran4/goa4web/handlers/forum"
-	imagebbs "github.com/arran4/goa4web/handlers/imagebbs"
-	languages "github.com/arran4/goa4web/handlers/languages"
-	linker "github.com/arran4/goa4web/handlers/linker"
-	news "github.com/arran4/goa4web/handlers/news"
-	search "github.com/arran4/goa4web/handlers/search"
+	"github.com/arran4/goa4web/handlers/blogs"
+	"github.com/arran4/goa4web/handlers/faq"
+	"github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/handlers/imagebbs"
+	"github.com/arran4/goa4web/handlers/languages"
+	"github.com/arran4/goa4web/handlers/linker"
+	"github.com/arran4/goa4web/handlers/news"
+	"github.com/arran4/goa4web/handlers/search"
 	userhandlers "github.com/arran4/goa4web/handlers/user"
-	writings "github.com/arran4/goa4web/handlers/writings"
+	"github.com/arran4/goa4web/handlers/writings"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to

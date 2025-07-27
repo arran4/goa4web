@@ -7,7 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches the login and registration endpoints to r.

@@ -27,13 +27,13 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/internal/dbdrivers"
-	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
-	dlq "github.com/arran4/goa4web/internal/dlq"
-	dlqdefaults "github.com/arran4/goa4web/internal/dlq/dlqdefaults"
-	email "github.com/arran4/goa4web/internal/email"
-	emaildefaults "github.com/arran4/goa4web/internal/email/emaildefaults"
+	"github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
+	"github.com/arran4/goa4web/internal/dlq"
+	"github.com/arran4/goa4web/internal/dlq/dlqdefaults"
+	"github.com/arran4/goa4web/internal/email"
+	"github.com/arran4/goa4web/internal/email/emaildefaults"
 
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"

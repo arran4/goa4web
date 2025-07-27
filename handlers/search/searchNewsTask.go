@@ -3,7 +3,7 @@ package search
 import (
 	"net/http"
 
-	news "github.com/arran4/goa4web/handlers/news"
+	"github.com/arran4/goa4web/handlers/news"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 

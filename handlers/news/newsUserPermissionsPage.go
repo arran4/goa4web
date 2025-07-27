@@ -44,5 +44,5 @@ func NewsUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "userPermissionsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "newsUserPermissionsPage.gohtml", data)
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	auth "github.com/arran4/goa4web/handlers/auth"
+	"github.com/arran4/goa4web/handlers/auth"
 	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 

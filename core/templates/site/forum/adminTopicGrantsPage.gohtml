@@ -15,7 +15,7 @@
         <td>{{ if .RoleName.Valid }}{{ .RoleName.String }}{{ end }}</td>
         <td>{{ .Action }}</td>
         <td>
-            <form method="post" action="/forum/admin/topic/{{ $.TopicID }}/grant/delete">
+            <form method="post" action="/admin/forum/topic/{{ $.TopicID }}/grant/delete">
         {{ csrfField }}
                 <input type="hidden" name="grantid" value="{{ .ID }}">
                 <input type="submit" name="task" value="Delete grant">
@@ -24,7 +24,7 @@
     </tr>
     {{- end }}
     <tr>
-        <form method="post" action="/forum/admin/topic/{{ $.TopicID }}/grant">
+        <form method="post" action="/admin/forum/topic/{{ $.TopicID }}/grant">
         {{ csrfField }}
             <td>NEW</td>
             <td><input name="username"></td>

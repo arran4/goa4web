@@ -1,9 +1,11 @@
 package file
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"sync"
 	"time"
 
@@ -58,4 +60,49 @@ func Register(r *dlq.Registry) {
 	r.RegisterProvider("file", func(cfg *config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
 		return &DLQ{Path: cfg.DLQFile, Appender: osAppender{}}
 	})
+}
+
+// Record represents a DLQ entry stored in a file.
+type Record struct {
+	Time    time.Time
+	Message string
+}
+
+// List reads path and returns up to limit records in newest-first order.
+func List(path string, limit int) ([]Record, error) {
+	fh, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer fh.Close()
+	var recs []Record
+	s := bufio.NewScanner(fh)
+	for s.Scan() {
+		if s.Text() != fileSeparator {
+			continue
+		}
+		if !s.Scan() {
+			break
+		}
+		t, err := time.Parse(time.RFC3339, s.Text())
+		if err != nil {
+			break
+		}
+		if !s.Scan() {
+			break
+		}
+		msg := s.Text()
+		if !s.Scan() {
+			break
+		}
+		recs = append(recs, Record{Time: t, Message: msg})
+		if limit > 0 && len(recs) >= limit {
+			break
+		}
+	}
+	sort.Slice(recs, func(i, j int) bool { return recs[i].Time.After(recs[j].Time) })
+	if err := s.Err(); err != nil {
+		return recs, err
+	}
+	return recs, nil
 }

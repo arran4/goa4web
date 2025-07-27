@@ -127,6 +127,33 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			data.IsReplyable = false
 			data.Blog.IsReplyable = false
 		}
+
+		rows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
+			ViewerID: uid,
+			ThreadID: blog.ForumthreadID.Int32,
+			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		})
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				log.Printf("getCommentsByThreadIdForUser Error: %s", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		for i, row := range rows {
+			editUrl := ""
+			if data.CoreData.CanEditAny() || row.IsOwner {
+				editUrl = fmt.Sprintf("/blogs/blog/%d/comments?comment=%d#edit", blog.Idblogs, row.Idcomments)
+			}
+			data.Comments = append(data.Comments, &BlogComment{
+				GetCommentsByThreadIdForUserRow: row,
+				ShowReply:                       true,
+				EditUrl:                         editUrl,
+				Offset:                          i + offset,
+				Idblogs:                         blog.Idblogs,
+			})
+		}
 	}
 
 	handlers.TemplateHandler(w, r, "blogPage.gohtml", data)

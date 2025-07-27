@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	adminapi "github.com/arran4/goa4web/internal/adminapi"
+	"github.com/arran4/goa4web/internal/adminapi"
 )
 
 // AdminAPISigned returns a matcher verifying the admin API signature.

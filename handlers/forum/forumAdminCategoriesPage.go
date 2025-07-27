@@ -70,7 +70,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
 }
 
 func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +98,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
 }
 
 func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
@@ -112,5 +112,5 @@ func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	http.Redirect(w, r, "/forum/admin/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
 }

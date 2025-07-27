@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	adminapi "github.com/arran4/goa4web/internal/adminapi"
-	serverpkg "github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/adminapi"
+	"github.com/arran4/goa4web/internal/app/server"
 )
 
 func TestAdminAPIServerShutdown_Unauthorized(t *testing.T) {
@@ -23,7 +23,7 @@ func TestAdminAPIServerShutdown_Unauthorized(t *testing.T) {
 func TestAdminAPIServerShutdown_Authorized(t *testing.T) {
 	AdminAPISecret = "k"
 	signer := adminapi.NewSigner("k")
-	h := New(WithServer(&serverpkg.Server{}))
+	h := New(WithServer(&server.Server{}))
 	ts, sig := signer.Sign("POST", "/admin/api/shutdown")
 	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Goa4web %d:%s", ts, sig))

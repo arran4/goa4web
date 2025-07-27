@@ -6,7 +6,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -17,16 +16,12 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Categories          []*db.WritingCategory
 		CategoryBreadcrumbs []*db.WritingCategory
-		EditingCategoryId   int32
 		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
 		WritingCategoryID   int32
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{}
-
-	editID, _ := strconv.Atoi(r.URL.Query().Get("edit"))
-	data.EditingCategoryId = int32(editID)
 	data.WritingCategoryID = 0
 
 	categoryRows, err := cd.VisibleWritingCategories(cd.UserID)

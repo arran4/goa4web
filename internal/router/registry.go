@@ -1,6 +1,7 @@
 package router
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -72,4 +73,16 @@ func (reg *Registry) InitModules(r *mux.Router, cfg *config.RuntimeConfig, navRe
 		}
 		m.once.Do(func() { m.Setup(r, cfg, navReg) })
 	}
+}
+
+// Names returns the names of registered modules in sorted order.
+func (reg *Registry) Names() []string {
+	reg.mu.Lock()
+	names := make([]string, 0, len(reg.modules))
+	for n := range reg.modules {
+		names = append(names, n)
+	}
+	reg.mu.Unlock()
+	sort.Strings(names)
+	return names
 }

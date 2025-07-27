@@ -67,5 +67,5 @@ func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	http.Redirect(w, r, "/forum/admin/conversations", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/forum/conversations", http.StatusTemporaryRedirect)
 }

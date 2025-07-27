@@ -197,6 +197,9 @@ const (
 	// TaskResend attempts to send queued emails immediately.
 	TaskResend tasks.TaskString = "Resend"
 
+	// TaskRetry queues a previously sent email for another attempt.
+	TaskRetry tasks.TaskString = "Retry"
+
 	// TaskDismiss marks a notification as read.
 	TaskDismiss tasks.TaskString = "Dismiss"
 

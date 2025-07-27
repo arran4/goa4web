@@ -17,7 +17,7 @@
         {{- $u := .User }}
         {{- range .Topics }}
         <tr>
-            <form method="post" action="/forum/admin/user/{{ $u.Idusers }}/levels">
+            <form method="post" action="/admin/forum/user/{{ $u.Idusers }}/levels">
         {{ csrfField }}
                 <td><input type="hidden" name="tid" value="{{ .Idforumtopic }}">{{ .Title.String }}</td>
                 <td>{{ with index $.Categories .ForumcategoryIdforumcategory }}{{ .Title.String }}{{ end }}</td>
@@ -32,7 +32,7 @@
         </tr>
         {{- end }}
     </table>
-    <a href="/forum/admin/user/{{ .User.Idusers }}/levels">Configure users access levels</a>
+    <a href="/admin/forum/user/{{ .User.Idusers }}/levels">Configure users access levels</a>
     {{- end }}
     {{- if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous 15</a>{{ end }}
     {{- if $.NextLink }} <a href="{{ $.NextLink }}">Next 15</a>{{ end }}

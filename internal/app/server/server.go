@@ -25,9 +25,10 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/tasks"
-	websocket "github.com/arran4/goa4web/internal/websocket"
+	"github.com/arran4/goa4web/workers"
+	"github.com/arran4/goa4web/internal/websocket"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.
@@ -236,6 +237,9 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = s.Config.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+			if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
+				cd.AdminMode = true
+			}
 			if uid != 0 && s.Config.NotificationsEnabled {
 				cd.NotificationCount = int32(cd.UnreadNotificationCount())
 			}
@@ -243,6 +247,21 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// startWorkers launches the background workers when the server starts.
+func (s *Server) startWorkers(ctx context.Context) {
+	if s.WorkerCancel != nil {
+		return
+	}
+	workerCtx, cancel := context.WithCancel(ctx)
+	emailProvider := s.EmailReg.ProviderFromConfig(s.Config)
+	if s.Config.EmailEnabled && s.Config.EmailProvider != "" && s.Config.EmailFrom == "" {
+		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, s.Config.EmailProvider)
+	}
+	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, dbpkg.New(s.DB))
+	workers.Start(workerCtx, s.DB, emailProvider, dlqProvider, s.Config, s.Bus)
+	s.WorkerCancel = cancel
 }
 
 // Run starts the HTTP server and blocks until the context is cancelled.
@@ -264,5 +283,6 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 
 // RunContext starts the server using the configured HTTPListen address.
 func (s *Server) RunContext(ctx context.Context) error {
+	s.startWorkers(ctx)
 	return Run(ctx, s, s.Config.HTTPListen)
 }

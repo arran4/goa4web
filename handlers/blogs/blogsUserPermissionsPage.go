@@ -64,7 +64,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "userPermissionsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "blogsUserPermissionsPage.gohtml", data)
 }
 
 func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Request) {

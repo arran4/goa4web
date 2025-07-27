@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/core/common"
-	templates "github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/core/templates"
 )
 
 type commentForTest struct {

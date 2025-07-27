@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/internal/dbdrivers"
-	dbdefaults "github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
+	"github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 )
 
 type testConnector struct{}

@@ -38,3 +38,10 @@ FROM pending_emails
 WHERE sent_at IS NOT NULL
 ORDER BY sent_at DESC
 LIMIT ? OFFSET ?;
+
+-- name: ListFailedEmails :many
+SELECT id, to_user_id, body, error_count, created_at, direct_email
+FROM pending_emails
+WHERE sent_at IS NULL AND error_count > 0
+ORDER BY id
+LIMIT ? OFFSET ?;

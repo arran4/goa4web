@@ -236,6 +236,9 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = s.Config.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+			if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
+				cd.AdminMode = true
+			}
 			if uid != 0 && s.Config.NotificationsEnabled {
 				cd.NotificationCount = int32(cd.UnreadNotificationCount())
 			}

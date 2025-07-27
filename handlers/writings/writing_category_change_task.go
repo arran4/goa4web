@@ -1,7 +1,9 @@
 package writings
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -23,14 +25,20 @@ var _ tasks.Task = (*WritingCategoryChangeTask)(nil)
 func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) any {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
-	wcid, err := strconv.Atoi(r.PostFormValue("wcid"))
+	parentID, err := strconv.Atoi(r.PostFormValue("pcid"))
 	if err != nil {
-		return fmt.Errorf("wcid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		return fmt.Errorf("pcid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	if loop, err := writingCategoryWouldLoop(r.Context(), queries, int32(cid), int32(parentID)); err != nil {
+		return fmt.Errorf("check writing category loop %w", handlers.ErrRedirectOnSamePageHandler(err))
+	} else if loop {
+		return fmt.Errorf("invalid parent category %w", handlers.ErrRedirectOnSamePageHandler(errors.New("category hierarchy loop")))
 	}
 
 	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{
@@ -43,10 +51,43 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 			String: desc,
 		},
 		Idwritingcategory: int32(cid),
-		WritingCategoryID: int32(wcid),
+		WritingCategoryID: int32(parentID),
 	}); err != nil {
 		return fmt.Errorf("update writing category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	return nil
+}
+
+func writingCategoryWouldLoop(ctx context.Context, queries *db.Queries, cid, parentID int32) (bool, error) {
+	if parentID == 0 {
+		return false, nil
+	}
+	if parentID == cid {
+		return true, nil
+	}
+	cats, err := queries.FetchAllCategories(ctx)
+	if err != nil {
+		return false, err
+	}
+	parents := make(map[int32]int32, len(cats))
+	for _, c := range cats {
+		parents[c.Idwritingcategory] = c.WritingCategoryID
+	}
+	seen := map[int32]struct{}{}
+	for p := parentID; p != 0; {
+		if _, ok := seen[p]; ok {
+			return true, nil
+		}
+		seen[p] = struct{}{}
+		if p == cid {
+			return true, nil
+		}
+		np, ok := parents[p]
+		if !ok {
+			break
+		}
+		p = np
+	}
+	return false, nil
 }

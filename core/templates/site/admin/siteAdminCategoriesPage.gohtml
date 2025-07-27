@@ -24,7 +24,7 @@
     </tr>
     {{ range .ForumCategories }}
     <tr>
-        <form method="post" action="/forum/admin/category/{{ .Idforumcategory }}">
+        <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}">
         {{ csrfField }}
             <td><a id="fc{{ .Idforumcategory }}" href="/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
             <td>{{ $fcid := .ForumcategoryIdforumcategory }} <a href="#fc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
@@ -35,13 +35,13 @@
             <td>
                 <input type="hidden" name="cid" value="{{ .Idforumcategory }}">
                 <input type="submit" name="task" value="Forum category change">
-                {{ if eq .Topiccount 0 }}<input type="submit" name="task" formaction="/forum/admin/category/delete" value="Delete Category">{{ end }}
+                {{ if eq .Topiccount 0 }}<input type="submit" name="task" formaction="/admin/forum/category/delete" value="Delete Category">{{ end }}
             </td>
         </form>
     </tr>
     {{ end }}
     <tr>
-        <form method="post" action="/forum/admin/category">
+        <form method="post" action="/admin/forum/category">
         {{ csrfField }}
             <td>NEW</td>
             <td><select name="pcid" value=""><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>{{ end }}</select></td>

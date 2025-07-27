@@ -174,29 +174,6 @@ func NewRuntimeFlagSet(name string) *flag.FlagSet {
 	return fs
 }
 
-// NewRuntimeFlagSetWithOptions returns a FlagSet containing the built-in options
-// merged with the provided slices.
-func NewRuntimeFlagSetWithOptions(name string, sopts []StringOption, iopts []IntOption) *flag.FlagSet {
-	fs := flag.NewFlagSet(name, flag.ContinueOnError)
-
-	strings := append(append([]StringOption(nil), StringOptions...), sopts...)
-	ints := append(append([]IntOption(nil), IntOptions...), iopts...)
-
-	for _, o := range strings {
-		fs.String(o.Name, o.Default, o.Usage)
-	}
-	for _, o := range ints {
-		fs.Int(o.Name, o.Default, o.Usage)
-	}
-	for _, o := range BoolOptions {
-		if o.Name != "" {
-			fs.String(o.Name, "", o.Usage)
-		}
-	}
-
-	return fs
-}
-
 // NewRuntimeConfig constructs the runtime configuration by merging command line
 // flags, values loaded from a config file and environment variables. Options can
 // supply custom flag sets, configuration maps or environment lookup functions

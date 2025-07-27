@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/internal/app/server"
-	"github.com/arran4/goa4web/workers"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -215,17 +214,6 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		ah.UpdateConfigKeyFunc = config.UpdateConfigKey
 	}
 	srv.TasksReg = o.TasksReg
-
-	emailProvider := o.EmailReg.ProviderFromConfig(cfg)
-	if cfg.EmailEnabled && cfg.EmailProvider != "" && cfg.EmailFrom == "" {
-		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, cfg.EmailProvider)
-	}
-
-	dlqProvider := o.DLQReg.ProviderFromConfig(cfg, dbpkg.New(dbPool))
-
-	workerCtx, workerCancel := context.WithCancel(context.Background())
-	workers.Start(workerCtx, dbPool, emailProvider, dlqProvider, cfg, bus)
-	srv.WorkerCancel = workerCancel
 
 	return srv, nil
 }

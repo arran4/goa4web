@@ -31,7 +31,13 @@ const (
 	// TaskWritingCategoryCreate creates a new writing category.
 	TaskWritingCategoryCreate = "writing category create"
 
-	// TaskCategoryGrantCreate adds a new grant to a writing category.
+	// TaskWritingCategoryGrantCreate adds a new grant to a writing category.
+	TaskWritingCategoryGrantCreate tasks.TaskString = "Create grant"
+
+	// TaskWritingCategoryGrantDelete removes a grant from a writing category.
+	TaskWritingCategoryGrantDelete tasks.TaskString = "Delete grant"
+
+  // TaskCategoryGrantCreate adds a new grant to a writing category.
 	TaskCategoryGrantCreate tasks.TaskString = "Create grant"
 
 	// TaskCategoryGrantDelete removes an existing grant from a writing category.

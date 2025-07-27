@@ -66,9 +66,9 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 			WithArgs(int32(2)).
-			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(2, "u@test", "bob"))
+			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "u@test", "bob", nil))
 		mock.ExpectQuery("LastNotificationByMessage").
 			WithArgs(int32(2), "missing email address").
 			WillReturnError(sql.ErrNoRows)

@@ -11,7 +11,8 @@ FROM users u;
 -- name: GetUserByUsername :one
 SELECT idusers,
        (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       username
+       username,
+       public_profile_enabled_at
 FROM users
 WHERE username = ?;
 
@@ -25,7 +26,7 @@ ORDER BY p.created_at DESC
 LIMIT 1;
 
 -- name: GetUserById :one
-SELECT u.idusers, ue.email, u.username
+SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
 FROM users u
 LEFT JOIN user_emails ue ON ue.id = (
         SELECT id FROM user_emails ue2
@@ -37,7 +38,8 @@ WHERE u.idusers = ?;
 -- name: UserByUsername :one
 SELECT idusers,
        (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       username
+       username,
+       public_profile_enabled_at
 FROM users
 WHERE username = ?;
 

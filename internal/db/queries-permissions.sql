@@ -112,6 +112,13 @@ JOIN roles r ON ur.role_id = r.id
 WHERE ur.users_idusers = ? AND r.can_login = 1
 LIMIT 1;
 
+-- name: UserHasPublicProfileRole :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.public_profile_allowed_at IS NOT NULL
+LIMIT 1;
+
 -- name: GetPermissionsByUserID :many
 -- Lists the role names granted to a user.
 SELECT ur.iduser_roles, ur.users_idusers, r.name

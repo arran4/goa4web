@@ -42,6 +42,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	// legacy redirects
 	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))
 	r.HandleFunc("/user/email", handlers.RedirectPermanent("/usr/email"))
+
+	r.HandleFunc("/user/profile/{username}", userPublicProfilePage).Methods(http.MethodGet)
+	r.HandleFunc("/user/profile/{username}/", userPublicProfilePage).Methods(http.MethodGet)
 }
 
 // Register registers the user router module.

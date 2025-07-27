@@ -11,7 +11,7 @@ import (
 )
 
 const listRoles = `-- name: ListRoles :many
-SELECT id, name, can_login, is_admin FROM roles ORDER BY id
+SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id
 `
 
 func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
@@ -28,6 +28,7 @@ func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
 			&i.Name,
 			&i.CanLogin,
 			&i.IsAdmin,
+			&i.PublicProfileAllowedAt,
 		); err != nil {
 			return nil, err
 		}

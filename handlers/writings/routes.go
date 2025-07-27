@@ -7,7 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
-	router "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/router"
 
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )

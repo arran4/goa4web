@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	adminapi "github.com/arran4/goa4web/internal/adminapi"
+	"github.com/arran4/goa4web/internal/adminapi"
 )
 
 // AdminAPIServerShutdown shuts down the server when provided with a valid signed request.

@@ -1,7 +1,7 @@
 package dbdefaults
 
 import (
-	dbdrivers "github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dbdrivers/mysql"
 	"github.com/arran4/goa4web/internal/dbdrivers/postgres"
 	"github.com/arran4/goa4web/internal/dbdrivers/sqlite"

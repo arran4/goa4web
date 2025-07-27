@@ -109,3 +109,4 @@ dbbackups
 /dev-config.env
 /dlq
 /.idea/
+/.admin_api_secret

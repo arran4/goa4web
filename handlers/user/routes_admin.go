@@ -9,7 +9,6 @@ import (
 
 // RegisterAdminRoutes attaches user admin endpoints to the router.
 func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
-	navReg.RegisterAdminControlCenter("User Permissions", "/admin/users/permissions", SectionWeight-10)
 	navReg.RegisterAdminControlCenter("Pending Users", "/admin/users/pending", SectionWeight-5)
 	navReg.RegisterAdminControlCenter("Users", "/admin/users", SectionWeight)
 	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
@@ -20,8 +19,8 @@ func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
 	ar.HandleFunc("/sessions", adminSessionsPage).Methods("GET")
 	ar.HandleFunc("/sessions/delete", adminSessionsDeletePage).Methods("POST")
 	ar.HandleFunc("/login/attempts", adminLoginAttemptsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", adminUsersPermissionsPage).Methods("GET")
-	ar.HandleFunc("/users/permissions", handlers.TaskHandler(permissionUserAllowTask)).Methods("POST").MatcherFunc(permissionUserAllowTask.Matcher())
-	ar.HandleFunc("/users/permissions", handlers.TaskHandler(permissionUserDisallowTask)).Methods("POST").MatcherFunc(permissionUserDisallowTask.Matcher())
-	ar.HandleFunc("/users/permissions", handlers.TaskHandler(permissionUpdateTask)).Methods("POST").MatcherFunc(permissionUpdateTask.Matcher())
+	ar.HandleFunc("/user/{id}/permissions", adminUserPermissionsPage).Methods("GET")
+	ar.HandleFunc("/user/{id}/permissions", handlers.TaskHandler(permissionUserAllowTask)).Methods("POST").MatcherFunc(permissionUserAllowTask.Matcher())
+	ar.HandleFunc("/user/{id}/permissions", handlers.TaskHandler(permissionUserDisallowTask)).Methods("POST").MatcherFunc(permissionUserDisallowTask.Matcher())
+	ar.HandleFunc("/user/{id}/permissions", handlers.TaskHandler(permissionUpdateTask)).Methods("POST").MatcherFunc(permissionUpdateTask.Matcher())
 }

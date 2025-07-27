@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -30,6 +32,11 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 
+	idStr := mux.Vars(r)["id"]
+	back := "/admin/users/permissions"
+	if idStr != "" {
+		back = "/admin/user/" + idStr + "/permissions"
+	}
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -37,7 +44,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/users/permissions",
+		Back:     back,
 	}
 
 	if id, err := strconv.Atoi(permid); err != nil {

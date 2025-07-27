@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -35,6 +37,11 @@ func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
+	idStr := mux.Vars(r)["id"]
+	back := "/admin/users/permissions"
+	if idStr != "" {
+		back = "/admin/user/" + idStr + "/permissions"
+	}
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -42,7 +49,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/users/permissions",
+		Back:     back,
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())

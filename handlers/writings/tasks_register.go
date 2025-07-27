@@ -16,5 +16,7 @@ func RegisterTasks() []tasks.NamedTask {
 		writingCategoryCreateTask,
 		writingCategoryGrantCreateTask,
 		writingCategoryGrantDeleteTask,
+		categoryGrantCreateTask,
+		categoryGrantDeleteTask,
 	}
 }

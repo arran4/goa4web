@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-<h3>Topic {{ .TopicID }} Grants</h3>
+<h3>Category {{ .CategoryID }} Grants</h3>
 <table border="1">
     <tr>
         <th>ID</th>
@@ -15,7 +15,7 @@
         <td>{{ if .RoleName.Valid }}{{ .RoleName.String }}{{ end }}</td>
         <td>{{ .Action }}</td>
         <td>
-            <form method="post" action="/admin/forum/topic/{{ $.TopicID }}/grant/delete">
+            <form method="post" action="/admin/writings/category/{{ $.CategoryID }}/grant/delete">
         {{ csrfField }}
                 <input type="hidden" name="grantid" value="{{ .ID }}">
                 <input type="submit" name="task" value="Delete grant">
@@ -24,7 +24,7 @@
     </tr>
     {{- end }}
     <tr>
-        <form method="post" action="/admin/forum/topic/{{ $.TopicID }}/grant">
+        <form method="post" action="/admin/writings/category/{{ $.CategoryID }}/grant">
         {{ csrfField }}
             <td>NEW</td>
             <td><input name="username"></td>

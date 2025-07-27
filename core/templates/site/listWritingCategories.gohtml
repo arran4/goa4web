@@ -8,50 +8,9 @@
             {{ $title := .Title.String }}
             {{ $description := .Description.String }}
             {{ $id := .Idwritingcategory }}
-            {{ if and cd.HasAdminRole (eq $.EditingCategoryId $id) }}
-                <tr>
-                    <th><a href="/admin/writings/categories?category={{ $id }}">{{ $title }}</a></th>
-                    <td>{{ $description }}</td>
-                </tr>
-                <tr>
-                    <td>
-                        <form method="post">
-        {{ csrfField }}
-                            <input name="name" value="{{ $title }}">
-                        </td>
-                        <td>
-                            <textarea name="desc">{{ $description }}</textarea>
-                        </td>
-                        <input type="hidden" name="wcid" value="{{ $id }}">
-                        <input type="hidden" name="pwcid" value="{{ .Idwritingcategory }}">
-                        <td>
-                            <input type="submit" name="task" value="Modify category">
-                        </form>
-                    </td>
-                </tr>
-            {{ else }}
-                <tr>
-                    <th><a href="/writings/category/{{ $id }}">{{ $title }}</a>{{ if cd.HasAdminRole }} [<a href="?edit={{ $id }}">Edit</a>]{{ end }}</th>
-                    <td>{{ $description }}</td>
-                </tr>
-            {{ end }}
-        {{ end }}
-        {{ if cd.HasAdminRole }}
             <tr>
-                <td>
-                    <form method="post">
-        {{ csrfField }}
-                        <input name="name" value="New">
-                    </td>
-                    <td>
-                        <textarea name="desc">New</textarea>
-                    </td>
-                    <input type="hidden" name="wcid" value="0">
-                    <input type="hidden" name="pwcid" value="{{ $.CategoryId }}">
-                    <td>
-                        <input type="submit" name="task" value="New category">
-                    </form>
-                </td>
+                <th><a href="/writings/category/{{ $id }}">{{ $title }}</a>{{ if cd.HasAdminRole }} [<a href="/admin/writings/categories?category={{ $id }}">Admin</a>]{{ end }}</th>
+                <td>{{ $description }}</td>
             </tr>
         {{ end }}
     </table><br>

@@ -75,6 +75,12 @@ const (
 	// TaskTopicGrantDelete removes an existing forum topic grant.
 	TaskTopicGrantDelete tasks.TaskString = "Delete grant"
 
+	// TaskCategoryGrantCreate adds a new grant to a forum category.
+	TaskCategoryGrantCreate tasks.TaskString = "Create grant"
+
+	// TaskCategoryGrantDelete removes an existing forum category grant.
+	TaskCategoryGrantDelete tasks.TaskString = "Delete grant"
+
 	// TaskSubscribeToTopic subscribes the user to new threads in a topic.
 	TaskSubscribeToTopic tasks.TaskString = "Subscribe To Topic"
 

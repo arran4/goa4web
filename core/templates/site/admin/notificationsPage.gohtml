@@ -24,7 +24,8 @@
     <tr>
         <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
         <td>{{ .ID }}</td>
-        <td>{{ with $name := index $.Usernames .UsersIdusers }}<a href="/admin/user/{{ .UsersIdusers }}">{{ $name }}</a>{{ else }}{{ .UsersIdusers }}{{ end }}</td>
+        {{- $id := .UsersIdusers -}}
+        <td>{{ with index $.Usernames $id }}<a href="/admin/user/{{ $id }}">{{ . }}</a>{{ else }}{{ $id }}{{ end }}</td>
         <td>{{ .Message.String }}</td>
         <td>{{ .Link.String }}</td>
         <td><a href="#" class="toggle-read" data-id="{{ .ID }}">{{ if .ReadAt.Valid }}yes{{ else }}no{{ end }}</a></td>

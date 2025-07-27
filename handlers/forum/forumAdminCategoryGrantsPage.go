@@ -1,4 +1,4 @@
-package writings
+package forum
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-// AdminCategoryGrantsPage shows grants for a writing category.
+// AdminCategoryGrantsPage displays grants for a forum category.
 func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	type GrantInfo struct {
 		*db.Grant
@@ -26,28 +26,25 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		Roles      []*db.Role
 		Actions    []string
 	}
-
-  cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-
-  data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view", "post", "edit"}}
+	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view"}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
-
-  grants, err := queries.ListGrants(r.Context())
+	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
 		log.Printf("ListGrants: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	for _, g := range grants {
-		if g.Section == "writing" && g.Item.Valid && g.Item.String == "category" && g.ItemID.Valid && g.ItemID.Int32 == int32(cid) {
+		if g.Section == "forum" && g.Item.Valid && g.Item.String == "category" && g.ItemID.Valid && g.ItemID.Int32 == int32(cid) {
 			gi := GrantInfo{Grant: g}
 			if g.UserID.Valid {
 				if u, err := queries.GetUserById(r.Context(), g.UserID.Int32); err == nil {
@@ -66,6 +63,4 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TemplateHandler(w, r, "adminCategoryGrantsPage.gohtml", data)
-
-	// TODO ??? handlers.TemplateHandler(w, r, "writingsAdminCategoryGrantsPage.gohtml", data)
 }

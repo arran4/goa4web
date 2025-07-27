@@ -21,4 +21,6 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	war.HandleFunc("/category/{category}/permissions", AdminCategoryGrantsPage).Methods("GET")
 	war.HandleFunc("/category/{category}/permission", handlers.TaskHandler(writingCategoryGrantCreateTask)).Methods("POST").MatcherFunc(writingCategoryGrantCreateTask.Matcher())
 	war.HandleFunc("/category/{category}/permission/delete", handlers.TaskHandler(writingCategoryGrantDeleteTask)).Methods("POST").MatcherFunc(writingCategoryGrantDeleteTask.Matcher())
+	war.HandleFunc("/category/{category}/grant", handlers.TaskHandler(categoryGrantCreateTask)).Methods("POST").MatcherFunc(categoryGrantCreateTask.Matcher())
+	war.HandleFunc("/category/{category}/grant/delete", handlers.TaskHandler(categoryGrantDeleteTask)).Methods("POST").MatcherFunc(categoryGrantDeleteTask.Matcher())
 }

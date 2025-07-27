@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <h4>Edit Topic</h4>
-<form method="post" action="/forum/admin/topic/{{ .Topic.Idforumtopic }}/edit">
+<form method="post" action="/admin/forum/topic/{{ .Topic.Idforumtopic }}/edit">
 {{ csrfField }}
 Title: <input name="name" value="{{ .Topic.Title.String }}"><br>
 Description:<br>

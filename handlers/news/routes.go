@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	htemplate "html/template"
+	"log"
 	"net/http"
 	"sync"
 
@@ -39,6 +40,7 @@ func runTemplate(name string) http.HandlerFunc {
 
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	log.Printf("News: Registering Routes")
 	navReg.RegisterIndexLink("News", "/", SectionWeight)
 	navReg.RegisterAdminControlCenter("News", "/admin/news/users/roles", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex))
@@ -66,5 +68,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 // Register registers the news router module.
 func Register(reg *router.Registry) {
+	log.Printf("News: Registering")
 	reg.RegisterModule("news", nil, RegisterRoutes)
 }

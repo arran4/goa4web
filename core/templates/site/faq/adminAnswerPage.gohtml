@@ -1,6 +1,7 @@
 {{ template "head" $ }}
     <font size="5">Section: Unanswered/Uncategorized Questions</font><br>
-    {{- range .Rows }}
+    {{- if .Rows }}
+        {{- range .Rows }}
         <form method="post" action="">
         {{ csrfField }}
             <table width="100%">
@@ -38,5 +39,8 @@
                 </tr>
             </table>
         </form><br>
+        {{- end }}
+    {{- else }}
+        <p>No unanswered questions.</p>
     {{- end }}
 {{ template "tail" $ }}

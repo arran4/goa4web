@@ -110,6 +110,9 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity 
 			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = cfg.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+			if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
+				cd.AdminMode = true
+			}
 			if uid != 0 && cfg.NotificationsEnabled {
 				cd.NotificationCount = int32(cd.UnreadNotificationCount())
 			}

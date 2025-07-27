@@ -15,6 +15,11 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+const (
+	// usageTimeout defines the maximum duration allowed for loading usage statistics
+	usageTimeout = 5 * time.Minute
+)
+
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
@@ -33,7 +38,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	cd := data.CoreData
 	queries := cd.Queries()
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(r.Context(), usageTimeout)
 	defer cancel()
 
 	var wg sync.WaitGroup

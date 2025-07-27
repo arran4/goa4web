@@ -8,7 +8,7 @@
             <tr>
                 <td>
                     {{ if and $.Admin .Edit }}
-                        <form method="post" action="/forum/admin/category/{{ .Idforumcategory }}">
+                        <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}">
         {{ csrfField }}
                             Title <input name="name" value="{{ .Title.String }}">: -
                             Description: <textarea name="desc" cols="30" rows="2">{{ .Description.String }}</textarea>
@@ -18,7 +18,7 @@
                             <input type="hidden" name="cid" value="{{ .Idforumcategory }}">
                             <input type="submit" name="task" value="Forum category change">
                             {{ if eq (len .Topics) 0 }}
-                            <input type="submit" name="task" formaction="/forum/admin/category/delete" value="Delete Category">
+                            <input type="submit" name="task" formaction="/admin/forum/category/delete" value="Delete Category">
                             {{ end }}
                         </form>
                     {{ else }}
@@ -31,9 +31,9 @@
                     {{ template "getAllForumCategories" (call $.CopyDataToSubCategories .) }}
                     {{ template "tableTopics" (call $.CopyDataToSubCategories .) }}
                     {{ if $.Admin }}
-                        <a href="/forum/admin/categories/create?category={{ .Idforumcategory }}">Create Category</a><br>
+                        <a href="/admin/forum/categories/create?category={{ .Idforumcategory }}">Create Category</a><br>
                         {{ if ne .Idforumcategory 0 }}
-                            <a href="/forum/admin/topics/create?category={{ .Idforumcategory }}">Create Topic</a><br>
+                            <a href="/admin/forum/topics/create?category={{ .Idforumcategory }}">Create Topic</a><br>
                         {{ end }}
                     {{ end }}
                 </td>

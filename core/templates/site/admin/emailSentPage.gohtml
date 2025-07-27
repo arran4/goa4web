@@ -1,16 +1,23 @@
 {{ template "head" $ }}
 [<a href="/admin">Admin:</a> <a href="/admin/email/sent">(This page/Refresh)</a> | <a href="/admin/email/queue">Queue</a>]<br />
+<form method="post">
+    {{ csrfField }}
 <table border="1">
-<tr><th>ID</th><th>To</th><th>Subject</th><th>Sent</th></tr>
+<tr><th>Select</th><th>ID</th><th>To</th><th>Subject</th><th>Retries</th><th>Outcome</th></tr>
 {{- range .Emails }}
 <tr>
+    <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
     <td>{{ .ID }}</td>
     <td>{{ .Email }}</td>
     <td>{{ .Subject }}</td>
-    <td>{{ if .SentAt.Valid }}{{ .SentAt.Time }}{{ end }}</td>
+    <td>{{ .ErrorCount }}</td>
+    <td>{{ if .SentAt.Valid }}Sent {{ .SentAt.Time }}{{ else }}Unknown{{ end }}</td>
 </tr>
 {{- end }}
 </table>
+<input type="submit" name="task" value="Resend">
+<input type="submit" name="task" value="Retry">
+</form>
 {{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous {{$.PageSize}}</a>{{end}}
 {{if $.NextLink}}<a href="{{$.NextLink}}">Next {{$.PageSize}}</a>{{end}}
 {{ template "tail" $ }}

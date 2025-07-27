@@ -166,6 +166,14 @@ Many queries now filter results directly in SQL using `viewer_id` together with 
 | `writing` | `article` | `edit` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `writing` | `article` | `edit` | `NULL` | viewer role ID | role-based grant |
 | `writing` | `article` | `edit` | `NULL` | `NULL` | public grant for everyone |
+| `writing` | `category` | `see` | `viewer_id` | `NULL` | grant specific to that user |
+| `writing` | `category` | `see` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `writing` | `category` | `see` | `NULL` | viewer role ID | role-based grant |
+| `writing` | `category` | `see` | `NULL` | `NULL` | public grant for everyone |
+| `writing` | `category` | `view` | `viewer_id` | `NULL` | grant specific to that user |
+| `writing` | `category` | `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `writing` | `category` | `view` | `NULL` | viewer role ID | role-based grant |
+| `writing` | `category` | `view` | `NULL` | `NULL` | public grant for everyone |
 | `imagebbs` | `board` | `see` or `view` | `viewer_id` | `NULL` | grant specific to that user |
 | `imagebbs` | `board` | `see` or `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `imagebbs` | `board` | `see` or `view` | `NULL` | viewer role ID | role-based grant |

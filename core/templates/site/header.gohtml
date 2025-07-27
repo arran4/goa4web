@@ -1,12 +1,23 @@
 {{define "header"}}
 <header class="navbar">
-    <div class="title"><strong>{{cd.Title}}</strong></div>
-    <div class="user-links">
+    <div class="navbar-left">
+        {{ if cd.HasRole "administrator" }}
+            {{ if cd.AdminMode }}
+                <a href="{{ addmode "/admin" }}">Admin Dashboard</a>
+                <a href="?">Disable admin mode</a>
+            {{ else }}
+                <a href="?mode=admin">Enable admin mode</a>
+            {{ end }}
+        {{ end }}
+    </div>
+    <div class="navbar-center"><strong>{{cd.Title}}</strong></div>
+    <div class="navbar-right user-links">
         {{ if cd.UserID }}
             {{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<span class="username">{{ $u.Username.String }}</span>{{ end }}{{ end }}
             <a href="/usr/logout">Logout</a>
         {{ else }}
             <a href="/login">Login</a>
+            <a href="/register">Register</a>
         {{ end }}
     </div>
 </header>

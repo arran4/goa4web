@@ -67,6 +67,7 @@ func (c *serveCmd) Run() error {
 		app.WithDLQRegistry(c.rootCmd.dlqReg),
 		app.WithTasksRegistry(c.rootCmd.tasksReg),
 		app.WithAPISecret(apiKey),
+		app.WithRouterRegistry(c.rootCmd.routerReg),
 	)
 	if err != nil {
 		return err

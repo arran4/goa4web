@@ -27,8 +27,8 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers"
 	"github.com/arran4/goa4web/internal/websocket"
+	"github.com/arran4/goa4web/workers"
 )
 
 // Server bundles the application's configuration, router and runtime dependencies.

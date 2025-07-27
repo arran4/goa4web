@@ -2,11 +2,13 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -14,6 +16,8 @@ import (
 	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/internal/db"
+	dirdlq "github.com/arran4/goa4web/internal/dlq/dir"
+	filedlq "github.com/arran4/goa4web/internal/dlq/file"
 )
 
 // DeleteDLQTask deletes entries from the dead letter queue.
@@ -26,19 +30,46 @@ var _ tasks.Task = (*DeleteDLQTask)(nil)
 var _ tasks.AuditableTask = (*DeleteDLQTask)(nil)
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := struct {
 		*common.CoreData
-		Errors []*db.DeadLetter
+		Errors     []*db.DeadLetter
+		FileErrors []filedlq.Record
+		DirErrors  []dirdlq.Record
+		Providers  string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:  cd,
+		Providers: cd.Config.DLQProvider,
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	rows, err := queries.ListDeadLetters(r.Context(), 100)
-	if err != nil {
-		log.Printf("list dead letters: %v", err)
-	} else {
-		data.Errors = rows
+
+	names := strings.Split(cd.Config.DLQProvider, ",")
+	for i, n := range names {
+		names[i] = strings.TrimSpace(strings.ToLower(n))
 	}
+	queries := cd.Queries()
+	for _, n := range names {
+		switch n {
+		case "db":
+			if rows, err := queries.ListDeadLetters(r.Context(), 100); err == nil {
+				data.Errors = rows
+			} else {
+				log.Printf("list dead letters: %v", err)
+			}
+		case "file":
+			if recs, err := filedlq.List(cd.Config.DLQFile, 100); err == nil {
+				data.FileErrors = recs
+			} else {
+				log.Printf("read dlq file: %v", err)
+			}
+		case "dir":
+			if recs, err := dirdlq.List(cd.Config.DLQFile, 100); err == nil {
+				data.DirErrors = recs
+			} else {
+				log.Printf("read dlq dir: %v", err)
+			}
+		}
+	}
+
 	handlers.TemplateHandler(w, r, "dlqPage.gohtml", data)
 }
 

@@ -1,5 +1,29 @@
 {{ template "head" $ }}
 [<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]<br />
+Configured providers: {{ .Providers }}<br />
+
+{{- if .FileErrors }}
+<h2>File DLQ</h2>
+<table border="1">
+<tr><th>Time</th><th>Message</th></tr>
+{{- range .FileErrors }}
+<tr><td>{{ .Time }}</td><td>{{ .Message }}</td></tr>
+{{- end }}
+</table>
+{{- end }}
+
+{{- if .DirErrors }}
+<h2>Directory DLQ</h2>
+<table border="1">
+<tr><th>Name</th><th>Message</th></tr>
+{{- range .DirErrors }}
+<tr><td>{{ .Name }}</td><td>{{ .Message }}</td></tr>
+{{- end }}
+</table>
+{{- end }}
+
+{{- if .Errors }}
+<h2>Database DLQ</h2>
 <form method="post">
     {{ csrfField }}
 <table border="1">
@@ -17,4 +41,5 @@ Before: <input type="date" name="before">
 <input type="submit" name="task" value="Delete">
 <input type="submit" name="task" value="Purge">
 </form>
+{{- end }}
 {{ template "tail" $ }}

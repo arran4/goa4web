@@ -83,7 +83,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	categoryTree := NewCategoryTree(categoryRows, topicRows)
 	data.Categories = categoryTree.CategoryChildrenLookup[0]
 
-	handlers.TemplateHandler(w, r, "forumPage", data)
+	handlers.TemplateHandler(w, r, "forumAdminPage", data)
 }
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {

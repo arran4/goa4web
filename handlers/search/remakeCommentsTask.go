@@ -2,15 +2,13 @@ package search
 
 import (
 	"context"
-	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
-
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -19,48 +17,47 @@ type RemakeCommentsTask struct{ tasks.TaskString }
 
 var remakeCommentsTask = &RemakeCommentsTask{TaskString: TaskRemakeCommentsSearch}
 var _ tasks.Task = (*RemakeCommentsTask)(nil)
+var _ tasks.BackgroundTasker = (*RemakeCommentsTask)(nil)
 
 func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := struct {
 		*common.CoreData
-		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
+		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}
-	ctx := r.Context()
-	if err := queries.DeleteCommentsSearch(ctx); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("DeleteCommentsSearch: %w", err).Error())
-	}
+	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+}
 
-	rows, err := queries.GetAllCommentsForIndex(ctx)
+func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
+	if err := q.DeleteCommentsSearch(ctx); err != nil {
+		return nil, err
+	}
+	rows, err := q.GetAllCommentsForIndex(ctx)
 	if err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("GetAllCommentsForIndex: %w", err).Error())
-	} else {
-		for _, row := range rows {
-			text := strings.TrimSpace(row.Text.String)
-			if text == "" {
-				continue
-			}
-			err := indexText(ctx, queries, text, func(c context.Context, wid int64, count int32) error {
-				return queries.AddToForumCommentSearch(c, db.AddToForumCommentSearchParams{
-					CommentID:                      row.Idcomments,
-					SearchwordlistIdsearchwordlist: int32(wid),
-					WordCount:                      count,
-				})
+		return nil, err
+	}
+	for _, row := range rows {
+		text := strings.TrimSpace(row.Text.String)
+		if text == "" {
+			continue
+		}
+		if err := indexText(ctx, q, text, func(c context.Context, wid int64, count int32) error {
+			return q.AddToForumCommentSearch(c, dbpkg.AddToForumCommentSearchParams{
+				CommentID:                      row.Idcomments,
+				SearchwordlistIdsearchwordlist: int32(wid),
+				WordCount:                      count,
 			})
-			if err != nil {
-				data.Errors = append(data.Errors, fmt.Errorf("index comment %d: %w", row.Idcomments, err).Error())
-				continue
-			}
-			if err := queries.SetCommentLastIndex(ctx, row.Idcomments); err != nil {
-				data.Errors = append(data.Errors, fmt.Errorf("SetCommentLastIndex %d: %w", row.Idcomments, err).Error())
-			}
+		}); err != nil {
+			return nil, err
+		}
+		if err := q.SetCommentLastIndex(ctx, row.Idcomments); err != nil {
+			return nil, err
 		}
 	}
-
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return remakeCommentsFinishedTask, nil
 }

@@ -367,8 +367,9 @@ func (q *Queries) CountWordListByPrefix(ctx context.Context, prefix interface{})
 }
 
 const createSearchWord = `-- name: CreateSearchWord :execlastid
-INSERT IGNORE INTO searchwordlist (word)
+INSERT INTO searchwordlist (word)
 VALUES (lcase(?))
+ON DUPLICATE KEY UPDATE idsearchwordlist=LAST_INSERT_ID(idsearchwordlist)
 `
 
 func (q *Queries) CreateSearchWord(ctx context.Context, word string) (int64, error) {

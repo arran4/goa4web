@@ -21,6 +21,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Writing Categories")
 	data := Data{}
 	data.WritingCategoryID = 0
 

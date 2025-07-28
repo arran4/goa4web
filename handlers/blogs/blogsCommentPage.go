@@ -80,6 +80,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		ViewerIdusers: uid,
 		ID:            int32(blogId),
 	})
+	if err == nil {
+		handlers.SetPageTitlef(r, "Blog %d Comments", blog.Idblogs)
+	}
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

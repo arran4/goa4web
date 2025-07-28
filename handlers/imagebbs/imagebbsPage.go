@@ -18,8 +18,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		BoardNumber int
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Image Board")
 	data := Data{
-		CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:    cd,
 		IsSubBoard:  false,
 		BoardNumber: 0,
 	}

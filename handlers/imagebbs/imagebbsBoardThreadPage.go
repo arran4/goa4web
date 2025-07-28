@@ -87,6 +87,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 	thid, _ := strconv.Atoi(vars["thread"])
+	handlers.SetPageTitlef(r, "Thread %d/%d", bid, thid)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

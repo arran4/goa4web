@@ -21,11 +21,13 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Admin Categories")
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Section:  r.URL.Query().Get("section"),
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	if data.Section == "" || data.Section == "forum" {
 		rows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())

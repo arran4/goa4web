@@ -83,6 +83,10 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(boards) > 0 {
+		handlers.SetPageTitlef(r, "Board %s", boards[0].Title.String)
+	}
+
 	data.Boards = boards
 
 	posts, err := data.CoreData.ImageBoardPosts(int32(bid))

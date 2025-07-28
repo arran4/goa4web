@@ -53,6 +53,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Writing")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := Data{
 		CoreData:           cd,
@@ -78,6 +79,13 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		Idwriting:     int32(articleId),
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
+	if err == nil {
+		if writing.Title.Valid {
+			handlers.SetPageTitlef(r, "Writing: %s", writing.Title.String)
+		} else {
+			handlers.SetPageTitlef(r, "Writing %d", writing.Idwriting)
+		}
+	}
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

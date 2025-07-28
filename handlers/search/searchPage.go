@@ -14,8 +14,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		SearchWords string
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Search")
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 
 	handlers.TemplateHandler(w, r, "searchPage", data)

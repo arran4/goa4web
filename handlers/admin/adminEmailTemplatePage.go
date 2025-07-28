@@ -16,6 +16,7 @@ import (
 )
 
 type taskTemplateInfo struct {
+	Section        string
 	Task           string
 	SelfEmail      []string
 	SelfInternal   string
@@ -29,10 +30,11 @@ type taskTemplateInfo struct {
 }
 
 func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
-	tasksSlice := reg.Registered()
-	infos := make([]taskTemplateInfo, 0, len(tasksSlice))
-	for _, t := range tasksSlice {
-		info := taskTemplateInfo{Task: t.Name()}
+	entries := reg.Entries()
+	infos := make([]taskTemplateInfo, 0, len(entries))
+	for _, e := range entries {
+		info := taskTemplateInfo{Section: e.Section, Task: e.Task.Name()}
+		t := e.Task
 		if tp, ok := t.(notif.SelfNotificationTemplateProvider); ok {
 			if et := tp.SelfEmailTemplate(); et != nil {
 				info.SelfEmail = []string{et.Text, et.HTML, et.Subject}

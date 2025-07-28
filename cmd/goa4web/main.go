@@ -42,24 +42,24 @@ import (
 var version = "dev"
 
 func registerTasks(reg *tasks.Registry, ah *adminhandlers.Handlers) {
-	register := func(ts []tasks.NamedTask) {
+	register := func(section string, ts []tasks.NamedTask) {
 		for _, t := range ts {
-			reg.Register(t)
+			reg.Register(section, t)
 		}
 	}
-	register(ah.RegisterTasks())
-	register(authhandlers.RegisterTasks())
-	register(bloghandlers.RegisterTasks())
-	register(bookmarkhandlers.RegisterTasks())
-	register(faqhandlers.RegisterTasks())
-	register(forumhandlers.RegisterTasks())
-	register(imagehandlers.RegisterTasks())
-	register(imagebbshandlers.RegisterTasks())
-	register(linkerhandlers.RegisterTasks())
-	register(newshandlers.RegisterTasks())
-	register(searchhandlers.RegisterTasks())
-	register(userhandlers.RegisterTasks())
-	register(writinghandlers.RegisterTasks())
+	register("admin", ah.RegisterTasks())
+	register("auth", authhandlers.RegisterTasks())
+	register("blogs", bloghandlers.RegisterTasks())
+	register("bookmarks", bookmarkhandlers.RegisterTasks())
+	register("faq", faqhandlers.RegisterTasks())
+	register("forum", forumhandlers.RegisterTasks())
+	register("images", imagehandlers.RegisterTasks())
+	register("imagebbs", imagebbshandlers.RegisterTasks())
+	register("linker", linkerhandlers.RegisterTasks())
+	register("news", newshandlers.RegisterTasks())
+	register("search", searchhandlers.RegisterTasks())
+	register("user", userhandlers.RegisterTasks())
+	register("writings", writinghandlers.RegisterTasks())
 }
 
 func main() {

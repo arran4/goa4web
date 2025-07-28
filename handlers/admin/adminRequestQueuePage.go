@@ -156,6 +156,16 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 			evt.Data["Status"] = status
 		}
 	}
+	data := struct {
+		*common.CoreData
+		Errors   []string
+		Messages []string
+		Back     string
+	}{
+		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		Back:     "/admin/requests",
+	}
+	data.Messages = append(data.Messages, auto)
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 

@@ -170,6 +170,24 @@ func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
 	return items, nil
 }
 
+const getFAQByID = `-- name: GetFAQByID :one
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE idfaq = ?
+`
+
+func (q *Queries) GetFAQByID(ctx context.Context, idfaq int32) (*Faq, error) {
+	row := q.db.QueryRowContext(ctx, getFAQByID, idfaq)
+	var i Faq
+	err := row.Scan(
+		&i.Idfaq,
+		&i.FaqcategoriesIdfaqcategories,
+		&i.LanguageIdlanguage,
+		&i.UsersIdusers,
+		&i.Answer,
+		&i.Question,
+	)
+	return &i, err
+}
+
 const getFAQCategoriesWithQuestionCount = `-- name: GetFAQCategoriesWithQuestionCount :many
 SELECT c.idfaqcategories, c.name, COUNT(f.idfaq) AS QuestionCount
 FROM faq_categories c
@@ -193,6 +211,40 @@ func (q *Queries) GetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*Get
 	for rows.Next() {
 		var i GetFAQCategoriesWithQuestionCountRow
 		if err := rows.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFAQRevisionsForFAQ = `-- name: GetFAQRevisionsForFAQ :many
+SELECT id, faq_id, users_idusers, question, answer, created_at FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC
+`
+
+func (q *Queries) GetFAQRevisionsForFAQ(ctx context.Context, faqID int32) ([]*FaqRevision, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQRevisionsForFAQ, faqID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*FaqRevision
+	for rows.Next() {
+		var i FaqRevision
+		if err := rows.Scan(
+			&i.ID,
+			&i.FaqID,
+			&i.UsersIdusers,
+			&i.Question,
+			&i.Answer,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -240,6 +292,28 @@ func (q *Queries) GetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 		return nil, err
 	}
 	return items, nil
+}
+
+const insertFAQRevision = `-- name: InsertFAQRevision :exec
+INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
+VALUES (?, ?, ?, ?)
+`
+
+type InsertFAQRevisionParams struct {
+	FaqID        int32
+	UsersIdusers int32
+	Question     sql.NullString
+	Answer       sql.NullString
+}
+
+func (q *Queries) InsertFAQRevision(ctx context.Context, arg InsertFAQRevisionParams) error {
+	_, err := q.db.ExecContext(ctx, insertFAQRevision,
+		arg.FaqID,
+		arg.UsersIdusers,
+		arg.Question,
+		arg.Answer,
+	)
+	return err
 }
 
 const renameFAQCategory = `-- name: RenameFAQCategory :exec

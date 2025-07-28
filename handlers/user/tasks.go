@@ -15,6 +15,8 @@ const (
 	TaskSaveLanguage tasks.TaskString = "Save language"
 	// TaskSaveSize saves a user's paging preference.
 	TaskSaveSize tasks.TaskString = "Save size"
+	// TaskSavePublicProfile toggles a user's public profile setting.
+	TaskSavePublicProfile tasks.TaskString = "Save public profile"
 	// TaskSaveAll saves all changes in bulk.
 	TaskSaveAll tasks.TaskString = "Save all"
 	// TaskTestMail sends a test email to the current user.

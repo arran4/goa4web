@@ -170,7 +170,7 @@ func (q *Queries) GetAdministratorUserRole(ctx context.Context, usersIdusers int
 }
 
 const getPermissionsByUserID = `-- name: GetPermissionsByUserID :many
-SELECT ur.iduser_roles, ur.users_idusers, r.name
+SELECT ur.iduser_roles, ur.users_idusers, ur.role_id, r.name
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
 WHERE ur.users_idusers = ?
@@ -179,6 +179,7 @@ WHERE ur.users_idusers = ?
 type GetPermissionsByUserIDRow struct {
 	IduserRoles  int32
 	UsersIdusers int32
+	RoleID       int32
 	Name         string
 }
 
@@ -192,7 +193,12 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, usersIdusers int32
 	var items []*GetPermissionsByUserIDRow
 	for rows.Next() {
 		var i GetPermissionsByUserIDRow
-		if err := rows.Scan(&i.IduserRoles, &i.UsersIdusers, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.IduserRoles,
+			&i.UsersIdusers,
+			&i.RoleID,
+			&i.Name,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -368,6 +374,47 @@ SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, i
 
 func (q *Queries) ListGrants(ctx context.Context) ([]*Grant, error) {
 	rows, err := q.db.QueryContext(ctx, listGrants)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Grant
+	for rows.Next() {
+		var i Grant
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.Section,
+			&i.Item,
+			&i.RuleType,
+			&i.ItemID,
+			&i.ItemRule,
+			&i.Action,
+			&i.Extra,
+			&i.Active,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGrantsByUserID = `-- name: ListGrantsByUserID :many
+SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE user_id = ? ORDER BY id
+`
+
+func (q *Queries) ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error) {
+	rows, err := q.db.QueryContext(ctx, listGrantsByUserID, userID)
 	if err != nil {
 		return nil, err
 	}

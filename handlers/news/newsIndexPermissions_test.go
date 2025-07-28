@@ -17,8 +17,8 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	cd.SetRoles([]string{"administrator"})
 	cd.AdminMode = true
 	CustomNewsIndex(cd, req)
-	if !common.ContainsItem(cd.CustomIndexItems, "User Permissions") {
-		t.Errorf("admin should see user permissions")
+	if !common.ContainsItem(cd.CustomIndexItems, "User Roles") {
+		t.Errorf("admin should see user roles")
 	}
 	if !common.ContainsItem(cd.CustomIndexItems, "Add News") {
 		t.Errorf("admin should see add news")
@@ -34,8 +34,8 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	cd = common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"content writer", "administrator"})
 	CustomNewsIndex(cd, req.WithContext(ctx))
-	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") {
-		t.Errorf("content writer should not see user permissions")
+	if common.ContainsItem(cd.CustomIndexItems, "User Roles") {
+		t.Errorf("content writer should not see user roles")
 	}
 	if !common.ContainsItem(cd.CustomIndexItems, "Add News") {
 		t.Errorf("content writer should see add news")
@@ -44,7 +44,7 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"anonymous"})
 	CustomNewsIndex(cd, req)
-	if common.ContainsItem(cd.CustomIndexItems, "User Permissions") || common.ContainsItem(cd.CustomIndexItems, "Add News") {
+	if common.ContainsItem(cd.CustomIndexItems, "User Roles") || common.ContainsItem(cd.CustomIndexItems, "Add News") {
 		t.Errorf("anonymous should not see admin items")
 	}
 }

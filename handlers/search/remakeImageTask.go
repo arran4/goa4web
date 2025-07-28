@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -39,20 +40,19 @@ func (RemakeImageTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (ta
 	}
 	rows, err := q.GetAllImagePostsForIndex(ctx)
 	if err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("GetAllImagePostsForIndex: %w", err).Error())
-	} else {
-		cache := map[string]int64{}
-		for _, row := range rows {
-			text := strings.TrimSpace(row.Description.String)
-			if text == "" {
-				continue
-			}
-			err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-				return queries.AddToImagePostSearch(c, db.AddToImagePostSearchParams{
-					ImagePostID:                    row.Idimagepost,
-					SearchwordlistIdsearchwordlist: int32(wid),
-					WordCount:                      count,
-				})
+		return nil, fmt.Errorf("GetAllImagePostsForIndex: %w", err)
+	}
+	cache := map[string]int64{}
+	for _, row := range rows {
+		text := strings.TrimSpace(row.Description.String)
+		if text == "" {
+			continue
+		}
+		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
+			return q.AddToImagePostSearch(c, dbpkg.AddToImagePostSearchParams{
+				ImagePostID:                    row.Idimagepost,
+				SearchwordlistIdsearchwordlist: int32(wid),
+				WordCount:                      count,
 			})
 		}); err != nil {
 			return nil, err

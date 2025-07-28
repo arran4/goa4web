@@ -16,5 +16,11 @@ func RegisterTasks() []tasks.NamedTask {
 		remakeLinkerTask,
 		remakeWritingTask,
 		remakeImageTask,
+		remakeCommentsFinishedTask,
+		remakeNewsFinishedTask,
+		remakeBlogFinishedTask,
+		remakeLinkerFinishedTask,
+		remakeWritingFinishedTask,
+		remakeImageFinishedTask,
 	}
 }

@@ -74,8 +74,9 @@ FROM searchwordlist
 WHERE word = lcase(?);
 
 -- name: CreateSearchWord :execlastid
-INSERT IGNORE INTO searchwordlist (word)
-VALUES (lcase(sqlc.arg(word)));
+INSERT INTO searchwordlist (word)
+VALUES (lcase(sqlc.arg(word)))
+ON DUPLICATE KEY UPDATE idsearchwordlist=LAST_INSERT_ID(idsearchwordlist);
 
 -- name: AddToForumCommentSearch :exec
 INSERT INTO comments_search

@@ -34,7 +34,23 @@ ORDER BY wc.title;
 
 -- name: UserPostCounts :many
 SELECT u.username,
-       COUNT(DISTINCT b.idblogs) AS blogs,
+       COALESCE(b.blogs, 0)     AS blogs,
+       COALESCE(n.news, 0)      AS news,
+       COALESCE(c.comments, 0)  AS comments,
+       COALESCE(i.images, 0)    AS images,
+       COALESCE(l.links, 0)     AS links,
+       COALESCE(w.writings, 0)  AS writings
+FROM users u
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS blogs FROM blogs GROUP BY users_idusers) b ON b.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS news FROM site_news GROUP BY users_idusers) n ON n.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS comments FROM comments GROUP BY users_idusers) c ON c.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS images FROM imagepost GROUP BY users_idusers) i ON i.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS links FROM linker GROUP BY users_idusers) l ON l.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS writings FROM writing GROUP BY users_idusers) w ON w.uid = u.idusers
+ORDER BY u.username;
+
+-- name: UserPostCountsByID :one
+SELECT COUNT(DISTINCT b.idblogs) AS blogs,
        COUNT(DISTINCT n.idsiteNews) AS news,
        COUNT(DISTINCT c.idcomments) AS comments,
        COUNT(DISTINCT i.idimagepost) AS images,
@@ -47,8 +63,7 @@ LEFT JOIN comments c ON c.users_idusers = u.idusers
 LEFT JOIN imagepost i ON i.users_idusers = u.idusers
 LEFT JOIN linker l ON l.users_idusers = u.idusers
 LEFT JOIN writing w ON w.users_idusers = u.idusers
-GROUP BY u.idusers
-ORDER BY u.username;
+WHERE u.idusers = ?;
 
 -- name: GetTemplateOverride :one
 SELECT body FROM template_overrides WHERE name = ?;

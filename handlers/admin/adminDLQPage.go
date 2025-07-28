@@ -31,6 +31,7 @@ var _ tasks.AuditableTask = (*DeleteDLQTask)(nil)
 
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Dead Letter Queue"
 	data := struct {
 		*common.CoreData
 		Errors     []*db.DeadLetter

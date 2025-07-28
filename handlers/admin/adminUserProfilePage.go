@@ -2,6 +2,7 @@ package admin
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
@@ -17,7 +18,8 @@ import (
 func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(idStr)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	user, err := queries.GetUserById(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
@@ -36,6 +38,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	grants, _ := queries.ListGrantsByUserID(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
+	cd.PageTitle = fmt.Sprintf("User %s", user.Username.String)
 	data := struct {
 		*common.CoreData
 		User         *db.User
@@ -46,7 +49,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		BookmarkSize int
 		Grants       []*db.Grant
 	}{
-		CoreData:     r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:     cd,
 		User:         &db.User{Idusers: user.Idusers, Username: user.Username},
 		Emails:       emails,
 		Comments:     comments,

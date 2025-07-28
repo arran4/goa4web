@@ -15,6 +15,7 @@ import (
 
 func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Site Settings"
 	cd.FeedsEnabled = cd.Config.FeedsEnabled
 
 	values := config.ValuesMap(*cd.Config)

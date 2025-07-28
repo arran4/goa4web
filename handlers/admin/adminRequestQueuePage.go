@@ -14,7 +14,9 @@ import (
 )
 
 func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Admin Requests"
+	queries := cd.Queries()
 	rows, err := queries.ListPendingAdminRequests(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -27,7 +29,7 @@ func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData
 		Rows []Row
-	}{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	}{CoreData: cd}
 	for _, row := range rows {
 		user, err := queries.GetUserById(r.Context(), row.UsersIdusers)
 		if err != nil {
@@ -39,7 +41,9 @@ func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Request Archive"
+	queries := cd.Queries()
 	rows, err := queries.ListArchivedAdminRequests(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -52,7 +56,7 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData
 		Rows []Row
-	}{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	}{CoreData: cd}
 	for _, row := range rows {
 		user, err := queries.GetUserById(r.Context(), row.UsersIdusers)
 		if err != nil {
@@ -65,7 +69,9 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = fmt.Sprintf("Request %d", id)
+	queries := cd.Queries()
 	req, err := queries.GetAdminRequestByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
@@ -79,7 +85,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		User     *db.GetUserByIdRow
 		Comments []*db.AdminRequestComment
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Req:      req,
 		User:     user,
 		Comments: comments,
@@ -90,14 +96,16 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	comment := r.PostFormValue("comment")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Add Comment"
+	queries := cd.Queries()
 	data := struct {
 		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     fmt.Sprintf("/admin/request/%d", id),
 	}
 	if comment == "" || id == 0 {
@@ -113,7 +121,9 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	comment := r.PostFormValue("comment")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = fmt.Sprintf("Request %d", id)
+	queries := cd.Queries()
 	req, err := queries.GetAdminRequestByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
@@ -125,7 +135,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/requests",
 	}
 

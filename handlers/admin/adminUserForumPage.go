@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -15,7 +16,8 @@ import (
 func adminUserForumPage(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(idStr)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	user, err := queries.GetUserById(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
@@ -26,12 +28,13 @@ func adminUserForumPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Forum threads by %s", user.Username.String)
 	data := struct {
 		*common.CoreData
 		User    *db.User
 		Threads []*db.Forumthread
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
 		Threads:  rows,
 	}

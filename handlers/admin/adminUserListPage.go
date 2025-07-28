@@ -10,7 +10,9 @@ import (
 )
 
 func adminUserListPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Users"
+	queries := cd.Queries()
 	users, err := queries.AllUsers(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -20,7 +22,7 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Users []*db.AllUsersRow
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Users:    users,
 	}
 	handlers.TemplateHandler(w, r, "userList.gohtml", data)

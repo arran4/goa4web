@@ -36,6 +36,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
 	cd := data.CoreData
+	cd.PageTitle = "Usage Stats"
 	queries := cd.Queries()
 
 	ctx, cancel := context.WithTimeout(r.Context(), usageTimeout)

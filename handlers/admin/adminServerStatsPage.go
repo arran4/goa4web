@@ -47,6 +47,7 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	runtime.ReadMemStats(&mem)
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Server Stats"
 	data := Data{
 		CoreData: cd,
 		Stats: Stats{

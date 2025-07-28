@@ -20,10 +20,12 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Roles         []*db.Role
 		Usernames     map[int32]string
 	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Notifications"
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	roles, err := data.AllRoles()
 	if err != nil {
 		log.Printf("load roles: %v", err)

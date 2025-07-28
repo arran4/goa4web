@@ -103,6 +103,7 @@ func defaultTemplate(name string, cfg *config.RuntimeConfig) string {
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Email Templates"
 	if name == "" {
 		data := struct {
 			*common.CoreData

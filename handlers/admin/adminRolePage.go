@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -26,6 +27,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "role not found", http.StatusNotFound)
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Role %s", role.Name)
 
 	users, err := queries.ListUsersByRoleID(r.Context(), int32(id))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

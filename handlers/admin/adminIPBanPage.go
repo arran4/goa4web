@@ -18,8 +18,10 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Bans []*db.BannedIp
 	}
-	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "IP Bans"
+	data := Data{CoreData: cd}
+	queries := cd.Queries()
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)

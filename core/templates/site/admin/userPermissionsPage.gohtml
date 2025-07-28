@@ -12,8 +12,8 @@
     <tbody>
         {{- range .Rows}}
         <tr data-id="{{.IduserRoles}}">
-            <td>{{.IduserRoles}}</td>
-            <td class="role">{{.Name}}</td>
+            <td><a href="/admin/role/{{.RoleID}}">{{.IduserRoles}}</a></td>
+            <td class="role"><a href="/admin/role/{{.RoleID}}">{{.Name}}</a></td>
             <td><button class="edit-btn" data-id="{{.IduserRoles}}">Edit</button></td>
             <td><button class="delete-btn" data-id="{{.IduserRoles}}">Delete</button></td>
         </tr>

@@ -10,6 +10,64 @@ import (
 	"database/sql"
 )
 
+const getRoleByID = `-- name: GetRoleByID :one
+SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles WHERE id = ?
+`
+
+func (q *Queries) GetRoleByID(ctx context.Context, id int32) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, getRoleByID, id)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CanLogin,
+		&i.IsAdmin,
+		&i.PublicProfileAllowedAt,
+	)
+	return &i, err
+}
+
+const listGrantsByRoleID = `-- name: ListGrantsByRoleID :many
+SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE role_id = ? ORDER BY id
+`
+
+func (q *Queries) ListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error) {
+	rows, err := q.db.QueryContext(ctx, listGrantsByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Grant
+	for rows.Next() {
+		var i Grant
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.Section,
+			&i.Item,
+			&i.RuleType,
+			&i.ItemID,
+			&i.ItemRule,
+			&i.Action,
+			&i.Extra,
+			&i.Active,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRoles = `-- name: ListRoles :many
 SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id
 `
@@ -68,6 +126,43 @@ func (q *Queries) ListRolesWithUsers(ctx context.Context) ([]*ListRolesWithUsers
 	for rows.Next() {
 		var i ListRolesWithUsersRow
 		if err := rows.Scan(&i.ID, &i.Name, &i.Users); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersByRoleID = `-- name: ListUsersByRoleID :many
+SELECT u.idusers, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+FROM users u
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+WHERE ur.role_id = ?
+ORDER BY u.username
+`
+
+type ListUsersByRoleIDRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    string
+}
+
+func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]*ListUsersByRoleIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListUsersByRoleIDRow
+	for rows.Next() {
+		var i ListUsersByRoleIDRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

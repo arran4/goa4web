@@ -266,7 +266,8 @@ CREATE TABLE `preferences` (
 CREATE TABLE `searchwordlist` (
   `idsearchwordlist` int(10) NOT NULL AUTO_INCREMENT,
   `word` tinytext DEFAULT NULL,
-  PRIMARY KEY (`idsearchwordlist`)
+  PRIMARY KEY (`idsearchwordlist`),
+  UNIQUE KEY `searchwordlist_word_idx` (`word`(255))
 );
 
 CREATE TABLE `searchwordlist_has_linker` (

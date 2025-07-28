@@ -1,3 +1,7 @@
+-- Add unique index for searchwordlist words
+ALTER TABLE searchwordlist
+    ADD UNIQUE KEY searchwordlist_word_idx (word(255));
+
 -- Create FAQ revision history table
 CREATE TABLE IF NOT EXISTS faq_revisions (
     id INT NOT NULL AUTO_INCREMENT,

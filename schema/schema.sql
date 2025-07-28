@@ -73,6 +73,17 @@ CREATE TABLE `faq_categories` (
   PRIMARY KEY (`idfaqCategories`)
 );
 
+CREATE TABLE IF NOT EXISTS `faq_revisions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `faq_id` int NOT NULL,
+  `users_idusers` int NOT NULL,
+  `question` mediumtext,
+  `answer` mediumtext,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `faq_revisions_faq_idx` (`faq_id`)
+);
+
 CREATE TABLE `forumcategory` (
   `idforumcategory` int(10) NOT NULL AUTO_INCREMENT,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,

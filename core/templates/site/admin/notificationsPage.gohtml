@@ -5,7 +5,7 @@
     {{ csrfField }}
     Message: <input type="text" name="message" size="40"><br />
     Link: <input type="text" name="link" size="40"><br />
-    Users: <input type="text" name="users" size="20"> (comma separated usernames)<br />
+    Users: <input type="text" name="users" id="users" size="20"> (comma separated usernames)<br />
     Role: <select name="role">
         <option value="">Everyone</option>
         {{- range $.Roles }}
@@ -22,9 +22,9 @@
         <button type="button" id="select-invert">Invert</button></th><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>
     {{- range .Notifications }}
     <tr>
-        <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
-        <td>{{ .ID }}</td>
         {{- $id := .UsersIdusers -}}
+        <td><input type="checkbox" name="id" value="{{ .ID }}"{{ with index $.Usernames $id }} data-user="{{ . }}"{{ end }}></td>
+        <td>{{ .ID }}</td>
         <td>{{ with index $.Usernames $id }}<a href="/admin/user/{{ $id }}">{{ . }}</a>{{ else }}{{ $id }}{{ end }}</td>
         <td>{{ .Message.String }}</td>
         <td>{{ .Link.String }}</td>
@@ -43,35 +43,51 @@
     const selectNone = document.getElementById('select-none');
     const selectInvert = document.getElementById('select-invert');
     const boxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="id"]'));
+    const usersInput = document.getElementById('users');
     let last;
 
+    function visibleBoxes() {
+        return boxes.filter(cb => cb.offsetParent !== null);
+    }
+
+    function syncUsersInput() {
+        if (!usersInput) { return; }
+        const names = boxes.filter(b => b.checked && b.dataset.user).map(b => b.dataset.user);
+        usersInput.value = Array.from(new Set(names)).join(', ');
+    }
+
     function updateAll() {
-        selectAll.checked = boxes.every(cb => cb.checked);
+        const vis = visibleBoxes();
+        selectAll.checked = vis.length > 0 && vis.every(cb => cb.checked);
+        syncUsersInput();
     }
 
     selectAll.addEventListener('change', () => {
-        boxes.forEach(cb => { cb.checked = selectAll.checked; });
+        visibleBoxes().forEach(cb => { cb.checked = selectAll.checked; });
         updateAll();
     });
 
     selectNone.addEventListener('click', () => {
-        boxes.forEach(cb => { cb.checked = false; });
+        visibleBoxes().forEach(cb => { cb.checked = false; });
         updateAll();
     });
 
     selectInvert.addEventListener('click', () => {
-        boxes.forEach(cb => { cb.checked = !cb.checked; });
+        visibleBoxes().forEach(cb => { cb.checked = !cb.checked; });
         updateAll();
     });
 
     boxes.forEach(cb => {
         cb.addEventListener('click', e => {
             if (last && e.shiftKey) {
-                const start = boxes.indexOf(last);
-                const end = boxes.indexOf(cb);
-                const [s, eIdx] = start < end ? [start, end] : [end, start];
-                for (let i = s; i <= eIdx; i++) {
-                    boxes[i].checked = cb.checked;
+                const vis = visibleBoxes();
+                const start = vis.indexOf(last);
+                const end = vis.indexOf(cb);
+                if (start !== -1 && end !== -1) {
+                    const [s, eIdx] = start < end ? [start, end] : [end, start];
+                    for (let i = s; i <= eIdx; i++) {
+                        vis[i].checked = cb.checked;
+                    }
                 }
             }
             last = cb;

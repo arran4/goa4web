@@ -50,3 +50,13 @@ FROM faq_categories c
 LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
 GROUP BY c.idfaqCategories;
 
+
+-- name: GetFAQByID :one
+SELECT * FROM faq WHERE idfaq = ?;
+
+-- name: InsertFAQRevision :exec
+INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
+VALUES (?, ?, ?, ?);
+
+-- name: GetFAQRevisionsForFAQ :many
+SELECT * FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC;

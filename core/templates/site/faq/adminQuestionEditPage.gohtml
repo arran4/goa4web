@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+<h4>Edit FAQ Entry</h4>
+<form method="post" action="/admin/faq/questions">
+{{ csrfField }}
+<textarea name="question" cols="80" rows="15">{{ .Faq.Question.String }}</textarea><br>
+<textarea name="answer" cols="80" rows="15">{{ .Faq.Answer.String }}</textarea><br>
+<select name="category">
+    <option value="0">Hidden</option>
+    {{$cat := .Faq.FaqcategoriesIdfaqcategories}}
+    {{- range .Categories }}
+    <option value="{{ .Idfaqcategories }}" {{if eq $cat .Idfaqcategories}}selected{{end}}>{{ .Name.String }}</option>
+    {{- end }}
+</select><br>
+<input type="hidden" name="faq" value="{{ .Faq.Idfaq }}">
+<input type="submit" name="task" value="Edit">
+</form>
+{{ template "tail" $ }}

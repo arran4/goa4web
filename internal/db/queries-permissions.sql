@@ -98,6 +98,9 @@ DELETE FROM grants WHERE id = ?;
 -- name: ListGrants :many
 SELECT * FROM grants ORDER BY id;
 
+-- name: ListGrantsByUserID :many
+SELECT * FROM grants WHERE user_id = ? ORDER BY id;
+
 -- name: UserHasRole :one
 SELECT 1
 FROM user_roles ur

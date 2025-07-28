@@ -1,0 +1,7 @@
+{{ template "head" $ }}
+<form method="post">
+    {{ csrfField }}
+    <input type="checkbox" name="enable" value="1" {{ if .Enabled }}checked{{ end }}> Enable my public profile<br>
+    <input type="submit" name="task" value="Save public profile">
+</form>
+{{ template "tail" $ }}

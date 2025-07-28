@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
@@ -24,16 +25,35 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	}
 	emails, _ := queries.GetUserEmailsByUserID(r.Context(), int32(id))
 	comments, _ := queries.ListAdminUserComments(r.Context(), int32(id))
+	roles, _ := queries.GetPermissionsByUserID(r.Context(), int32(id))
+	stats, _ := queries.UserPostCountsByID(r.Context(), int32(id))
+	bm, _ := queries.GetBookmarksForUser(r.Context(), int32(id))
+	var bmSize int
+	if bm != nil {
+		list := strings.TrimSpace(bm.List.String)
+		if list != "" {
+			bmSize = len(strings.Split(list, "\n"))
+		}
+	}
+	grants, _ := queries.ListGrantsByUserID(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
 	data := struct {
 		*common.CoreData
-		User     *db.User
-		Emails   []*db.UserEmail
-		Comments []*db.AdminUserComment
+		User         *db.User
+		Emails       []*db.UserEmail
+		Comments     []*db.AdminUserComment
+		Roles        []*db.GetPermissionsByUserIDRow
+		Stats        *db.UserPostCountsByIDRow
+		BookmarkSize int
+		Grants       []*db.Grant
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
-		Emails:   emails,
-		Comments: comments,
+		CoreData:     r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		User:         &db.User{Idusers: user.Idusers, Username: user.Username},
+		Emails:       emails,
+		Comments:     comments,
+		Roles:        roles,
+		Stats:        stats,
+		BookmarkSize: bmSize,
+		Grants:       grants,
 	}
 	handlers.TemplateHandler(w, r, "userProfile.gohtml", data)
 }
@@ -43,8 +63,9 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(idStr)
 	data := struct {
 		*common.CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/user/" + idStr,
@@ -58,6 +79,8 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 		if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: int32(id), Comment: comment}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
+		} else {
+			data.Messages = append(data.Messages, "comment added")
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)

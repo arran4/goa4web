@@ -29,6 +29,7 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		queryRequestTask,
 		newsUserAllow,
 		newsUserRemove,
+		userPasswordResetTask,
 		h.NewServerShutdownTask(),
 	}
 }

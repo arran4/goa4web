@@ -1,0 +1,26 @@
+{{ template "head" $ }}
+<h2>Role {{ .Role.Name }} (ID {{ .Role.ID }})</h2>
+<h3>Users</h3>
+<ul>
+    {{- if .Users }}
+        {{- range .Users }}
+        <li><a href="/admin/user/{{ .Idusers }}">{{ .Username.String }}</a> ({{ .Email }})</li>
+        {{- end }}
+    {{- else }}
+        <li>No users</li>
+    {{- end }}
+</ul>
+<h3>Grants</h3>
+<table border="1">
+    <tr><th>ID</th><th>Section</th><th>Item</th><th>Item ID</th><th>Action</th></tr>
+    {{- range .Grants }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .Section }}</td>
+        <td>{{ .Item.String }}</td>
+        <td>{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}</td>
+        <td>{{ .Action }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

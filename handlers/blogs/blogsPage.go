@@ -105,8 +105,8 @@ func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "User Permissions",
-			Link: "/admin/blogs/user/permissions",
+			Name: "User Roles",
+			Link: "/admin/blogs/users/roles",
 		})
 	}
 	userHasWriter := data.HasRole("content writer")

@@ -274,4 +274,7 @@ const (
 
 	// TaskPurge removes old records.
 	TaskPurge tasks.TaskString = "Purge"
+
+	// TaskToggleRolePublicProfile toggles whether a role allows public profiles.
+	TaskToggleRolePublicProfile tasks.TaskString = "Toggle role public profile"
 )

@@ -110,7 +110,10 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Stats struct{ Categories, Topics, Threads int64 }
 		}{&common.CoreData{}, struct{ Categories, Topics, Threads int64 }{}}},
-		{"imagebbsAdminPage", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"imagebbsAdminPage", struct {
+			*common.CoreData
+			Stats []*db.ImageboardPostCountsRow
+		}{&common.CoreData{}, nil}},
 	}
 
 	for _, p := range pages {

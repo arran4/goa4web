@@ -16,6 +16,7 @@ Each role includes the following flags:
 
 - **can_login** – whether accounts assigned the role are permitted to authenticate
 - **is_admin** – marks administrator roles that bypass permission checks
+- **public_profile_allowed_at** – when set, users with this role may expose a public profile
 
 Users can hold multiple roles through the `user_roles` table. Role inheritance is
 modelled via entries in the `grants` table with `section = 'role'`. For example,

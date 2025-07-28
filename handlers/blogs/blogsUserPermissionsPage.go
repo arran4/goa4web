@@ -13,7 +13,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/arran4/goa4web/handlers"
 )
@@ -140,7 +139,7 @@ func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 
 func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	names := strings.FieldsFunc(r.PostFormValue("usernames"), func(r rune) bool { return r == ',' || r == '\n' || r == ' ' || r == '\t' })
+	permids := r.PostForm["permid"]
 	role := r.PostFormValue("role")
 	data := struct {
 		*common.CoreData
@@ -152,20 +151,34 @@ func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 		Back:     "/blogs/bloggers",
 	}
 
-	for _, n := range names {
-		if n == "" {
+	for _, id := range permids {
+		if id == "" {
 			continue
 		}
-		u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: n})
+		permidi, err := strconv.Atoi(id)
 		if err != nil {
-			data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername %s: %w", n, err).Error())
+			data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi %s: %w", id, err).Error())
+			continue
+		}
+		uid, username, _, err2 := roleInfoByPermID(r.Context(), queries, int32(permidi))
+		if err2 != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("lookup role %s: %w", id, err2).Error())
 			continue
 		}
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
-			UsersIdusers: u.Idusers,
+			UsersIdusers: uid,
 			Name:         role,
 		}); err != nil {
-			data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow %s: %w", n, err).Error())
+			data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow %s: %w", id, err).Error())
+		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["targetUserID"] = uid
+				evt.Data["Username"] = username
+				evt.Data["Role"] = role
+			}
 		}
 	}
 

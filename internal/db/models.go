@@ -191,6 +191,15 @@ type FaqCategory struct {
 	Name            sql.NullString
 }
 
+type FaqRevision struct {
+	ID           int32
+	FaqID        int32
+	UsersIdusers int32
+	Question     sql.NullString
+	Answer       sql.NullString
+	CreatedAt    time.Time
+}
+
 type Forumcategory struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32

@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/auth"
@@ -121,8 +123,31 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "usersPage.gohtml", data)
 }
 
+func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
+	idStr := mux.Vars(r)["id"]
+	id, _ := strconv.Atoi(idStr)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	u, err := cd.Queries().GetUserById(r.Context(), int32(id))
+	if err != nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+	data := struct {
+		*common.CoreData
+		Message      string
+		ConfirmLabel string
+		Back         string
+	}{
+		CoreData:     cd,
+		Message:      fmt.Sprintf("Are you sure you want to disable user %s (ID %d)?", u.Username.String, u.Idusers),
+		ConfirmLabel: "Confirm disable",
+		Back:         "/admin/users",
+	}
+	handlers.TemplateHandler(w, r, "confirmPage.gohtml", data)
+}
+
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
-	uid := r.PostFormValue("uid")
+	uid := mux.Vars(r)["id"]
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -142,7 +167,8 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
+	idStr := mux.Vars(r)["id"]
+	uid, _ := strconv.Atoi(idStr)
 	urow, err := queries.GetUserById(r.Context(), int32(uid))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -161,7 +187,11 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	idStr := mux.Vars(r)["id"]
 	uid := r.PostFormValue("uid")
+	if uid == "" {
+		uid = idStr
+	}
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	data := struct {

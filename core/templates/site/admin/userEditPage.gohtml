@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-    [<a href="/admin">Admin:</a> <a href="/admin/users">Users</a>: <a href="/admin/users/edit?uid={{.User.Idusers}}">(This page/Refresh)</a>]<br />
+    [<a href="/admin">Admin:</a> <a href="/admin/users">Users</a>: <a href="/admin/user/{{.User.Idusers}}/edit">(This page/Refresh)</a>]<br />
     <form method="post">
         {{ csrfField }}
         <input type="hidden" name="uid" value="{{.User.Idusers}}">

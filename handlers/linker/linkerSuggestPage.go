@@ -28,6 +28,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Suggest Link"
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
@@ -64,8 +65,6 @@ type SuggestTask struct{ tasks.TaskString }
 
 var suggestTask = SuggestTask{TaskString: TaskSuggest}
 var _ tasks.Task = (*SuggestTask)(nil)
-
-func (SuggestTask) Page(w http.ResponseWriter, r *http.Request) { SuggestPage(w, r) }
 
 func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

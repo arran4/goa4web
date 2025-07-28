@@ -32,6 +32,7 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Search:   r.URL.Query().Get("search"),
 	}
+	data.CoreData.PageTitle = "User Roles"
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	if roles, err := data.AllRoles(); err == nil {

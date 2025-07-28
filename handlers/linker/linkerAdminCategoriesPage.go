@@ -21,6 +21,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+	data.CoreData.PageTitle = "Link Categories"
 
 	categoryRows, err := data.LinkerCategoryCounts()
 	if err != nil {

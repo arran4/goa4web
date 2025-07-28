@@ -21,6 +21,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+	data.CoreData.PageTitle = "Categories"
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 

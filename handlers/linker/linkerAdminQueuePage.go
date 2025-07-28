@@ -32,6 +32,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Approval Queue"
 	data := Data{
 		CoreData: cd,
 		Search:   r.URL.Query().Get("search"),

@@ -107,6 +107,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Link = link
+	data.CoreData.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
 	data.CanEdit = cd.HasRole("administrator") || uid == link.UsersIdusers
 
 	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
@@ -180,8 +181,6 @@ type replyTask struct{ tasks.TaskString }
 
 var replyTaskEvent = &replyTask{TaskString: TaskReply}
 var _ tasks.Task = (*replyTask)(nil)
-
-func (replyTask) Page(w http.ResponseWriter, r *http.Request) { CommentsPage(w, r) }
 
 func (replyTask) IndexType() string { return searchworker.TypeComment }
 

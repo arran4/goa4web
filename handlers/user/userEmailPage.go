@@ -31,7 +31,8 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd.PageTitle = "Email Settings"
+	queries := cd.Queries()
 	user, _ := cd.CurrentUser()
 	pref, _ := cd.Preference()
 
@@ -45,7 +46,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := Data{
-		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:   cd,
 		UserData:   user,
 		Verified:   verified,
 		Unverified: unverified,
@@ -64,6 +65,8 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Verify Email"
 	session, err := core.GetSession(r)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -108,7 +111,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ue.VerifiedAt.Valid {
-		handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)})
+		handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{cd})
 		return
 	}
 
@@ -117,7 +120,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		Code  string
 		Email string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Code:     code,
 		Email:    ue.Email,
 	}

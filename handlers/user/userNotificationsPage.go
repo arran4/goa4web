@@ -23,6 +23,7 @@ var _ tasks.Task = (*DismissTask)(nil)
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Notifications"
 	if !cd.Config.NotificationsEnabled {
 		http.NotFound(w, r)
 		return
@@ -32,7 +33,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
 	if err != nil {
 		log.Printf("get notifications: %v", err)
@@ -52,7 +53,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Emails        []*db.UserEmail
 		MaxPriority   int32
 	}{
-		CoreData:      r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:      cd,
 		Notifications: notifs,
 		Emails:        emails,
 		MaxPriority:   maxPr,

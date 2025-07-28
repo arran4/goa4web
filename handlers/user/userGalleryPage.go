@@ -37,6 +37,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Gallery"
 	size := cd.Config.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {
 		size = int(pref.PageSize)

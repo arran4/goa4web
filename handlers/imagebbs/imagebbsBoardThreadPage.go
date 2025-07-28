@@ -87,7 +87,8 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bid, _ := strconv.Atoi(vars["boardno"])
 	thid, _ := strconv.Atoi(vars["thread"])
-	handlers.SetPageTitlef(r, "Thread %d/%d", bid, thid)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -95,16 +96,15 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	var uid int32
 	uid, _ = session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	data := Data{
-		CoreData:      r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:      cd,
 		Replyable:     true,
 		BoardId:       bid,
 		ForumThreadId: thid,
 	}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
 	}
@@ -181,7 +181,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 			return
 		default:
@@ -199,6 +198,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
@@ -218,7 +218,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(errors.New("no bid")))
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
 		ViewerID:     uid,
@@ -228,7 +228,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 			return nil
 		default:

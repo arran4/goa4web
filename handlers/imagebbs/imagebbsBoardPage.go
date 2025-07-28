@@ -84,7 +84,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(boards) > 0 {
-		handlers.SetPageTitlef(r, "Board %s", boards[0].Title.String)
+		data.CoreData.PageTitle = fmt.Sprintf("Board %s", boards[0].Title.String)
 	}
 
 	data.Boards = boards

@@ -3,6 +3,7 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -27,9 +28,9 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
 	username := vars["username"]
-	handlers.SetPageTitlef(r, "Images by %s", username)
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = fmt.Sprintf("Images by %s", username)
+	queries := cd.Queries()
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
@@ -42,7 +43,6 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, err := queries.GetImagePostsByUserDescendingForUser(r.Context(), db.GetImagePostsByUserDescendingForUserParams{
 		ViewerID:     cd.UserID,
 		UserID:       u.Idusers,

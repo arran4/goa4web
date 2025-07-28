@@ -21,6 +21,7 @@ func UserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		Rows  []*db.GetUserRolesRow
 		Roles []*db.Role
 	}
+	handlers.SetPageTitle(r, "Writing Permissions")
 
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),

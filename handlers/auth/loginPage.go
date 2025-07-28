@@ -64,8 +64,10 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 		Method  string
 		Data    string
 	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Login")
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Error:    errMsg,
 		Code:     r.FormValue("code"),
 		Back:     r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back")),

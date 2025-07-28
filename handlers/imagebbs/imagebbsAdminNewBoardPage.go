@@ -39,6 +39,7 @@ func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Boards []*db.Imageboard
 	}
+	handlers.SetPageTitle(r, "New Image Board")
 
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),

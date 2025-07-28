@@ -11,5 +11,6 @@ import (
 
 func AdminPage(w http.ResponseWriter, r *http.Request) {
 	data := struct{ *common.CoreData }{r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	handlers.SetPageTitle(r, "Image Board Admin")
 	handlers.TemplateHandler(w, r, "imagebbsAdminPage", data)
 }

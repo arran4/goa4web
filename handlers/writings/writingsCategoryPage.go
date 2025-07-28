@@ -61,6 +61,11 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 			data.Categories = append(data.Categories, cat)
 		}
 	}
+	if cat, ok := categoryMap[data.CategoryId]; ok {
+		handlers.SetPageTitlef(r, "Category: %s", cat.Title.String)
+	} else {
+		handlers.SetPageTitlef(r, "Category %d", data.CategoryId)
+	}
 	for cid := data.CategoryId; len(data.CategoryBreadcrumbs) < len(categoryRows); {
 		cat, ok := categoryMap[cid]
 		if ok {

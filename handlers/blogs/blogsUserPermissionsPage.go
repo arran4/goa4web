@@ -20,6 +20,7 @@ import (
 
 func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Blog Permissions")
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return

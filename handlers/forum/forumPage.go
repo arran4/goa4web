@@ -29,7 +29,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		Back                    bool
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Forum")
+	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -38,7 +40,6 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := &Data{
 		CoreData: cd,
 		Admin:    cd.CanEditAny(),

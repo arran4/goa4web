@@ -77,6 +77,13 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		ViewerIdusers: uid,
 		ID:            int32(blogId),
 	})
+	if err == nil {
+		if blog.Username.Valid {
+			handlers.SetPageTitlef(r, "Blog by %s", blog.Username.String)
+		} else {
+			handlers.SetPageTitlef(r, "Blog %d", blog.Idblogs)
+		}
+	}
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

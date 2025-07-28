@@ -22,6 +22,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Writings")
 	data := Data{}
 	data.CategoryId = 0
 	data.WritingCategoryID = data.CategoryId

@@ -146,3 +146,6 @@ SELECT idusers FROM users ORDER BY idusers;
 SELECT idusers, username
 FROM users
 WHERE idusers IN (sqlc.slice('ids'));
+
+-- name: UpdatePublicProfileEnabledAtByUserID :exec
+UPDATE users SET public_profile_enabled_at = ? WHERE idusers = ?;

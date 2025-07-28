@@ -403,6 +403,47 @@ func (q *Queries) ListGrants(ctx context.Context) ([]*Grant, error) {
 	return items, nil
 }
 
+const listGrantsByUserID = `-- name: ListGrantsByUserID :many
+SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE user_id = ? ORDER BY id
+`
+
+func (q *Queries) ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error) {
+	rows, err := q.db.QueryContext(ctx, listGrantsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Grant
+	for rows.Next() {
+		var i Grant
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.Section,
+			&i.Item,
+			&i.RuleType,
+			&i.ItemID,
+			&i.ItemRule,
+			&i.Action,
+			&i.Extra,
+			&i.Active,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsersWithRoles = `-- name: ListUsersWithRoles :many
 SELECT u.idusers, u.username, GROUP_CONCAT(r.name ORDER BY r.name) AS roles
 FROM users u

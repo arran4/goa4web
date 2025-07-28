@@ -63,8 +63,9 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(idStr)
 	data := struct {
 		*common.CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/user/" + idStr,
@@ -78,6 +79,8 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 		if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: int32(id), Comment: comment}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
+		} else {
+			data.Messages = append(data.Messages, "comment added")
 		}
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)

@@ -37,8 +37,9 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
 		*common.CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/pending",
@@ -48,6 +49,8 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{UsersIdusers: id, Name: "user"}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("add role: %w", err).Error())
+		} else {
+			data.Messages = append(data.Messages, "user approved")
 		}
 
 	}
@@ -62,8 +65,9 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
 		*common.CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/users/pending",
@@ -73,10 +77,14 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{UsersIdusers: id, Name: "rejected"}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("add role:%w", err).Error())
+		} else {
+			data.Messages = append(data.Messages, "user rejected")
 		}
 		if reason != "" {
 			if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: id, Comment: reason}); err != nil {
 				log.Printf("insert admin user comment: %v", err)
+			} else {
+				data.Messages = append(data.Messages, "comment added")
 			}
 		}
 

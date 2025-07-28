@@ -93,8 +93,9 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := struct {
 		*common.CoreData
-		Errors []string
-		Back   string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     fmt.Sprintf("/admin/request/%d", id),
@@ -103,6 +104,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, "invalid")
 	} else {
 		_ = queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: comment})
+		data.Messages = append(data.Messages, "comment added")
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
@@ -135,11 +137,14 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	}
 	data := struct {
 		*common.CoreData
-		Back string
+		Errors   []string
+		Messages []string
+		Back     string
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/requests",
 	}
+	data.Messages = append(data.Messages, auto)
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 

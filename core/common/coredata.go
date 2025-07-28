@@ -69,11 +69,13 @@ type CoreData struct {
 	IndexItems       []IndexItem
 	CustomIndexItems []IndexItem
 	UserID           int32
-	Title            string
-	AutoRefresh      string
-	FeedsEnabled     bool
-	RSSFeedUrl       string
-	AtomFeedUrl      string
+	// PageTitle holds the title of the current page.
+	PageTitle    string
+	Title        string
+	AutoRefresh  string
+	FeedsEnabled bool
+	RSSFeedUrl   string
+	AtomFeedUrl  string
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode         bool
 	NotificationCount int32

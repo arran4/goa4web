@@ -35,7 +35,8 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
 	username := vars["username"]
-	handlers.SetPageTitlef(r, "Posts by %s", username)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = fmt.Sprintf("Posts by %s", username)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

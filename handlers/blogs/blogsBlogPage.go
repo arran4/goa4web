@@ -79,9 +79,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err == nil {
 		if blog.Username.Valid {
-			handlers.SetPageTitlef(r, "Blog by %s", blog.Username.String)
+			cd.PageTitle = fmt.Sprintf("Blog by %s", blog.Username.String)
 		} else {
-			handlers.SetPageTitlef(r, "Blog %d", blog.Idblogs)
+			cd.PageTitle = fmt.Sprintf("Blog %d", blog.Idblogs)
 		}
 	}
 	if err != nil {

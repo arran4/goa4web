@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/internal/notifications"
 
 	"github.com/arran4/goa4web/workers/auditworker"
+	"github.com/arran4/goa4web/workers/backgroundtaskworker"
 	"github.com/arran4/goa4web/workers/emailqueue"
 	"github.com/arran4/goa4web/workers/logworker"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -66,6 +67,8 @@ func Start(ctx context.Context, db *sql.DB, provider email.Provider, dlqProvider
 	})
 	log.Printf("Starting search index worker")
 	safeGo(func() { searchworker.Worker(ctx, bus, dbpkg.New(db)) })
+	log.Printf("Starting background task worker")
+	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, dbpkg.New(db)) })
 	log.Printf("Starting post count worker")
 	safeGo(func() { postcountworker.Worker(ctx, bus, dbpkg.New(db)) })
 }

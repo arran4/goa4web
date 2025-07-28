@@ -139,20 +139,6 @@ func (q *Queries) ListRolesWithUsers(ctx context.Context) ([]*ListRolesWithUsers
 	return items, nil
 }
 
-const updateRolePublicProfileAllowed = `-- name: UpdateRolePublicProfileAllowed :exec
-UPDATE roles SET public_profile_allowed_at = ? WHERE id = ?
-`
-
-type UpdateRolePublicProfileAllowedParams struct {
-	PublicProfileAllowedAt sql.NullTime
-	ID                     int32
-}
-
-func (q *Queries) UpdateRolePublicProfileAllowed(ctx context.Context, arg UpdateRolePublicProfileAllowedParams) error {
-	_, err := q.db.ExecContext(ctx, updateRolePublicProfileAllowed, arg.PublicProfileAllowedAt, arg.ID)
-	return err
-}
-
 const listUsersByRoleID = `-- name: ListUsersByRoleID :many
 SELECT u.idusers, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM users u
@@ -188,4 +174,18 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]*ListU
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateRolePublicProfileAllowed = `-- name: UpdateRolePublicProfileAllowed :exec
+UPDATE roles SET public_profile_allowed_at = ? WHERE id = ?
+`
+
+type UpdateRolePublicProfileAllowedParams struct {
+	PublicProfileAllowedAt sql.NullTime
+	ID                     int32
+}
+
+func (q *Queries) UpdateRolePublicProfileAllowed(ctx context.Context, arg UpdateRolePublicProfileAllowedParams) error {
+	_, err := q.db.ExecContext(ctx, updateRolePublicProfileAllowed, arg.PublicProfileAllowedAt, arg.ID)
+	return err
 }

@@ -18,26 +18,25 @@ Filter by role:
             <th>ID</th>
             <th>User</th>
             <th>Email</th>
-            <th>Role</th>
+            <th>Roles</th>
         </tr>
         {{range .Rows}}
         <tr>
             <td><input type="checkbox" name="permid" value="{{.IduserRoles}}"></td>
-            <td>{{.IduserRoles}}</td>
+            <td><a href="/admin/user/{{.UsersIdusers}}">{{.IduserRoles}}</a></td>
             <td>{{.Username.String}}</td>
             <td>{{.Email}}</td>
             <td>{{.Role}}</td>
         </tr>
         {{end}}
     </table>
-    <input type="submit" name="task" value="Users Disallow"><br><br>
-    Usernames (comma or newline separated):<br>
-    <textarea name="usernames" rows="3" cols="40"></textarea><br>
+    <button type="submit" name="task" value="Users Disallow">Remove role</button>
+    <br><br>
     Role:
     <select name="role">
         {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
     </select>
-    <input type="submit" name="task" value="Users Allow">
+    <button type="submit" name="task" value="Users Allow">Add role</button>
 </form>
 
 Permissions should be valid only.

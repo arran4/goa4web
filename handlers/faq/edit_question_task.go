@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/core"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -36,6 +38,11 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return handlers.SessionFetchFail{}
+	}
+	uid, _ := session.Values["UID"].(int32)
 
 	if err := queries.UpdateFAQQuestionAnswer(r.Context(), db.UpdateFAQQuestionAnswerParams{
 		Answer:                       sql.NullString{Valid: true, String: answer},
@@ -45,6 +52,13 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}); err != nil {
 		return fmt.Errorf("update faq question fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+
+	_ = queries.InsertFAQRevision(r.Context(), db.InsertFAQRevisionParams{
+		FaqID:        int32(faq),
+		UsersIdusers: uid,
+		Question:     sql.NullString{String: question, Valid: true},
+		Answer:       sql.NullString{String: answer, Valid: true},
+	})
 
 	return nil
 }

@@ -1,0 +1,14 @@
+{{ template "head" $ }}
+<h2>Links by {{ .User.Username.String }}</h2>
+<table border="1">
+    <tr><th>ID</th><th>Date</th><th>Title</th><th>Link</th></tr>
+    {{- range .Links }}
+    <tr>
+        <td>{{ .Idlinker }}</td>
+        <td>{{ .Listed }}</td>
+        <td>{{ .Title }}</td>
+        <td><a href="/linker/link/{{ .Idlinker }}">View</a></td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

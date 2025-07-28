@@ -8,3 +8,6 @@ LEFT JOIN user_roles ur ON ur.role_id = r.id
 LEFT JOIN users u ON u.idusers = ur.users_idusers
 GROUP BY r.id
 ORDER BY r.id;
+
+-- name: UpdateRolePublicProfileAllowed :exec
+UPDATE roles SET public_profile_allowed_at = ? WHERE id = ?;

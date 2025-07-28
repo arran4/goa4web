@@ -80,3 +80,17 @@ func (q *Queries) ListRolesWithUsers(ctx context.Context) ([]*ListRolesWithUsers
 	}
 	return items, nil
 }
+
+const updateRolePublicProfileAllowed = `-- name: UpdateRolePublicProfileAllowed :exec
+UPDATE roles SET public_profile_allowed_at = ? WHERE id = ?
+`
+
+type UpdateRolePublicProfileAllowedParams struct {
+	PublicProfileAllowedAt sql.NullTime
+	ID                     int32
+}
+
+func (q *Queries) UpdateRolePublicProfileAllowed(ctx context.Context, arg UpdateRolePublicProfileAllowedParams) error {
+	_, err := q.db.ExecContext(ctx, updateRolePublicProfileAllowed, arg.PublicProfileAllowedAt, arg.ID)
+	return err
+}

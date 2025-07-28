@@ -1,4 +1,3 @@
--- Add unique index for searchwordlist words
 ALTER TABLE searchwordlist
     ADD UNIQUE KEY searchwordlist_word_idx (word(255));
 

@@ -26,13 +26,12 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		Writing            *db.GetWritingByIdForUserDescendingByPublishedDateRow
 		UserId             int32
 	}
-	handlers.SetPageTitle(r, "Edit Article")
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
+	data.CoreData.PageTitle = "Edit Article"
 
 	// article ID is validated by the RequireWritingAuthor middleware, so we
 	// no longer need to parse it here.

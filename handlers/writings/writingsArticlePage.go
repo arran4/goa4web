@@ -53,8 +53,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	handlers.SetPageTitle(r, "Writing")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd.PageTitle = "Writing"
+	queries := cd.Queries()
 	data := Data{
 		CoreData:           cd,
 		CanReply:           cd.UserID != 0,
@@ -81,9 +81,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err == nil {
 		if writing.Title.Valid {
-			handlers.SetPageTitlef(r, "Writing: %s", writing.Title.String)
+			cd.PageTitle = fmt.Sprintf("Writing: %s", writing.Title.String)
 		} else {
-			handlers.SetPageTitlef(r, "Writing %d", writing.Idwriting)
+			cd.PageTitle = fmt.Sprintf("Writing %d", writing.Idwriting)
 		}
 	}
 	if err != nil {

@@ -3,6 +3,7 @@ package writings
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -26,9 +27,9 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
 	username := vars["username"]
-	handlers.SetPageTitlef(r, "Writer: %s", username)
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = fmt.Sprintf("Writer: %s", username)
+
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {

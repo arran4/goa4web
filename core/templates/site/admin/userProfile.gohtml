@@ -1,5 +1,6 @@
 {{ template "head" $ }}
 <h2>User {{ .User.Username.String }} (ID {{ .User.Idusers }})</h2>
+<p><a href="/admin/user/{{.User.Idusers}}/edit">Edit User</a></p>
 <p><a href="/admin/user/{{.User.Idusers}}/permissions">Permissions</a></p>
 <table border="1">
 <tr><th>Email</th><th>Verified</th><th>Priority</th></tr>

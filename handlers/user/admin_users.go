@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/auth"
@@ -142,7 +144,8 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
+	idStr := mux.Vars(r)["id"]
+	uid, _ := strconv.Atoi(idStr)
 	urow, err := queries.GetUserById(r.Context(), int32(uid))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -161,7 +164,11 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	idStr := mux.Vars(r)["id"]
 	uid := r.PostFormValue("uid")
+	if uid == "" {
+		uid = idStr
+	}
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	data := struct {

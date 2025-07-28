@@ -3,6 +3,7 @@ package faq
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -50,6 +51,12 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Faq:        faq,
 		Categories: cats,
+	}
+	cd := data.CoreData
+	if id != 0 {
+		cd.PageTitle = fmt.Sprintf("Edit FAQ %d", id)
+	} else {
+		cd.PageTitle = "New FAQ"
 	}
 	handlers.TemplateHandler(w, r, "adminQuestionEditPage.gohtml", data)
 }

@@ -13,6 +13,7 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 	if cd == nil {
 		cd = &common.CoreData{}
 	}
+	cd.PageTitle = "Error"
 	data := struct {
 		*common.CoreData
 		Error   string

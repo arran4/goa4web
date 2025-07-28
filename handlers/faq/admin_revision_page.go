@@ -3,6 +3,7 @@ package faq
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -45,5 +46,7 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 		Faq:       faq,
 		Revisions: revs,
 	}
+	cd := data.CoreData
+	cd.PageTitle = fmt.Sprintf("FAQ %d History", id)
 	handlers.TemplateHandler(w, r, "adminFaqRevisionPage.gohtml", data)
 }

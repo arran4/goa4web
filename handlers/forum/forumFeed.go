@@ -74,7 +74,7 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
+	cd.PageTitle = fmt.Sprintf("Forum - %s Feed", topic.Title.String)
 	rows, err := cd.ForumThreads(int32(topicID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
@@ -107,6 +107,7 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cd.PageTitle = fmt.Sprintf("Forum - %s Feed", topic.Title.String)
 	rows, err := cd.ForumThreads(int32(topicID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)

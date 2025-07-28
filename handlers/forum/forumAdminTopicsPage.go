@@ -18,7 +18,9 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Categories []*db.Forumcategory
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum Admin Topics"
+	queries := cd.Queries()
 
 	topics, err := queries.GetAllForumTopics(r.Context())
 	if err != nil {
@@ -35,7 +37,7 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData:   cd,
 		Topics:     topics,
 		Categories: cats,
 	}

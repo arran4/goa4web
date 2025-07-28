@@ -29,6 +29,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum Admin"
 	data := &Data{
 		CoreData: cd,
 		Admin:    cd.CanEditAny(),
@@ -87,14 +88,16 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum - Rebuild Threads"
+	queries := cd.Queries()
 	data := struct {
 		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/forum",
 	}
 
@@ -112,14 +115,16 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum - Rebuild Topics"
+	queries := cd.Queries()
 	data := struct {
 		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/forum",
 	}
 

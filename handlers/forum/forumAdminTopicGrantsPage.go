@@ -2,6 +2,7 @@ package forum
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -26,12 +27,13 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		Actions []string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Forum - Topic %d Grants", tid)
 	data := Data{CoreData: cd, TopicID: int32(tid), Actions: []string{"see", "view", "reply", "post", "edit"}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles

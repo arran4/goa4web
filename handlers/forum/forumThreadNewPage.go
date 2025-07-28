@@ -90,6 +90,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum - New Thread"
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),

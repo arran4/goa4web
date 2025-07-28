@@ -38,3 +38,18 @@ const (
 	// TaskRemakeImageSearch rebuilds the image search index.
 	TaskRemakeImageSearch tasks.TaskString = "Remake image search"
 )
+
+const (
+	// TaskRemakeCommentsSearchComplete notifies comment index rebuild completion.
+	TaskRemakeCommentsSearchComplete tasks.TaskString = "Remake comments search complete"
+	// TaskRemakeNewsSearchComplete notifies news index rebuild completion.
+	TaskRemakeNewsSearchComplete tasks.TaskString = "Remake news search complete"
+	// TaskRemakeBlogSearchComplete notifies blog index rebuild completion.
+	TaskRemakeBlogSearchComplete tasks.TaskString = "Remake blog search complete"
+	// TaskRemakeLinkerSearchComplete notifies linker index rebuild completion.
+	TaskRemakeLinkerSearchComplete tasks.TaskString = "Remake linker search complete"
+	// TaskRemakeWritingSearchComplete notifies writing index rebuild completion.
+	TaskRemakeWritingSearchComplete tasks.TaskString = "Remake writing search complete"
+	// TaskRemakeImageSearchComplete notifies image index rebuild completion.
+	TaskRemakeImageSearchComplete tasks.TaskString = "Remake image search complete"
+)

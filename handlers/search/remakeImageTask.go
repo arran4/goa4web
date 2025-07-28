@@ -2,15 +2,13 @@ package search
 
 import (
 	"context"
-	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
-
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -19,24 +17,27 @@ type RemakeImageTask struct{ tasks.TaskString }
 
 var remakeImageTask = &RemakeImageTask{TaskString: TaskRemakeImageSearch}
 var _ tasks.Task = (*RemakeImageTask)(nil)
+var _ tasks.BackgroundTasker = (*RemakeImageTask)(nil)
 
 func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := struct {
 		*common.CoreData
-		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
+		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}
-	ctx := r.Context()
-	if err := queries.DeleteImagePostSearch(ctx); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("DeleteImagePostSearch: %w", err).Error())
-	}
+	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+}
 
-	rows, err := queries.GetAllImagePostsForIndex(ctx)
+func (RemakeImageTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
+	if err := q.DeleteImagePostSearch(ctx); err != nil {
+		return nil, err
+	}
+	rows, err := q.GetAllImagePostsForIndex(ctx)
 	if err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetAllImagePostsForIndex: %w", err).Error())
 	} else {
@@ -46,22 +47,19 @@ func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if text == "" {
 				continue
 			}
-			err := indexText(ctx, queries, cache, text, func(c context.Context, wid int64, count int32) error {
+			err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
 				return queries.AddToImagePostSearch(c, db.AddToImagePostSearchParams{
 					ImagePostID:                    row.Idimagepost,
 					SearchwordlistIdsearchwordlist: int32(wid),
 					WordCount:                      count,
 				})
 			})
-			if err != nil {
-				data.Errors = append(data.Errors, fmt.Errorf("index image %d: %w", row.Idimagepost, err).Error())
-				continue
-			}
-			if err := queries.SetImagePostLastIndex(ctx, row.Idimagepost); err != nil {
-				data.Errors = append(data.Errors, fmt.Errorf("SetImagePostLastIndex %d: %w", row.Idimagepost, err).Error())
-			}
+		}); err != nil {
+			return nil, err
+		}
+		if err := q.SetImagePostLastIndex(ctx, row.Idimagepost); err != nil {
+			return nil, err
 		}
 	}
-
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return remakeImageFinishedTask, nil
 }

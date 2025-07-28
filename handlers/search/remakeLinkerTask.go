@@ -2,15 +2,13 @@ package search
 
 import (
 	"context"
-	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
-
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -19,24 +17,27 @@ type RemakeLinkerTask struct{ tasks.TaskString }
 
 var remakeLinkerTask = &RemakeLinkerTask{TaskString: TaskRemakeLinkerSearch}
 var _ tasks.Task = (*RemakeLinkerTask)(nil)
+var _ tasks.BackgroundTasker = (*RemakeLinkerTask)(nil)
 
 func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := struct {
 		*common.CoreData
-		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
+		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}
-	ctx := r.Context()
-	if err := queries.DeleteLinkerSearch(ctx); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("DeleteLinkerSearch: %w", err).Error())
-	}
+	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+}
 
-	rows, err := queries.GetAllLinkersForIndex(ctx)
+func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
+	if err := q.DeleteLinkerSearch(ctx); err != nil {
+		return nil, err
+	}
+	rows, err := q.GetAllLinkersForIndex(ctx)
 	if err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetAllLinkersForIndex: %w", err).Error())
 	} else {
@@ -46,22 +47,19 @@ func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if text == "" {
 				continue
 			}
-			err := indexText(ctx, queries, cache, text, func(c context.Context, wid int64, count int32) error {
+			err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
 				return queries.AddToLinkerSearch(c, db.AddToLinkerSearchParams{
 					LinkerID:                       row.Idlinker,
 					SearchwordlistIdsearchwordlist: int32(wid),
 					WordCount:                      count,
 				})
 			})
-			if err != nil {
-				data.Errors = append(data.Errors, fmt.Errorf("index linker %d: %w", row.Idlinker, err).Error())
-				continue
-			}
-			if err := queries.SetLinkerLastIndex(ctx, row.Idlinker); err != nil {
-				data.Errors = append(data.Errors, fmt.Errorf("SetLinkerLastIndex %d: %w", row.Idlinker, err).Error())
-			}
+		}); err != nil {
+			return nil, err
+		}
+		if err := q.SetLinkerLastIndex(ctx, row.Idlinker); err != nil {
+			return nil, err
 		}
 	}
-
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return remakeLinkerFinishedTask, nil
 }

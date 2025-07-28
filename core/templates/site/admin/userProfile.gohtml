@@ -1,12 +1,54 @@
 {{ template "head" $ }}
 <h2>User {{ .User.Username.String }} (ID {{ .User.Idusers }})</h2>
-<p><a href="/admin/user/{{.User.Idusers}}/permissions">Permissions</a></p>
+<p>
+    <a href="/admin/user/{{.User.Idusers}}/permissions">Permissions</a>
+    {{- if .User.PublicProfileEnabledAt.Valid }} |
+    <a href="/user/profile/{{ .User.Username.String }}">Public Profile</a>{{- end }}
+    {{- if and .Stats (gt .Stats.Blogs 0) }} |
+    <a href="/blogs/blogger/{{ .User.Username.String }}">Blogs</a>{{- end }}
+    {{- if and .Stats (gt .Stats.Writings 0) }} |
+    <a href="/writings/writer/{{ .User.Username.String }}">Writings</a>{{- end }}
+</p>
 <table border="1">
 <tr><th>Email</th><th>Verified</th><th>Priority</th></tr>
 {{ range .Emails }}
 <tr><td>{{ .Email }}</td><td>{{ if .VerifiedAt.Valid }}{{ .VerifiedAt.Time }}{{ else }}no{{ end }}</td><td>{{ .NotificationPriority }}</td></tr>
 {{ end }}
 </table>
+{{ if .Roles }}
+<h3>Groups</h3>
+<ul>
+    {{- range .Roles }}
+    <li>{{ .Name }}</li>
+    {{- end }}
+</ul>
+{{ end }}
+{{ if .Stats }}
+<h3>Stats</h3>
+<ul>
+    <li>Blogs: {{ .Stats.Blogs }}</li>
+    <li>News: {{ .Stats.News }}</li>
+    <li>Comments: {{ .Stats.Comments }}</li>
+    <li>Images: {{ .Stats.Images }}</li>
+    <li>Links: {{ .Stats.Links }}</li>
+    <li>Writings: {{ .Stats.Writings }}</li>
+    <li>Bookmark entries: {{ .BookmarkSize }}</li>
+</ul>
+{{ end }}
+{{ if .Grants }}
+<h3>Direct Grants</h3>
+<table border="1">
+    <tr><th>Section</th><th>Item</th><th>Action</th><th>Extra</th></tr>
+    {{- range .Grants }}
+    <tr>
+        <td>{{ .Section }}</td>
+        <td>{{ .Item.String }}{{ if .ItemID.Valid }} ({{ .ItemID.Int32 }}){{ end }}</td>
+        <td>{{ .Action }}</td>
+        <td>{{ .Extra.String }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ end }}
 <h3>Admin Comments</h3>
 <form method="post" action="/admin/user/{{.User.Idusers}}/comment">
     {{ csrfField }}

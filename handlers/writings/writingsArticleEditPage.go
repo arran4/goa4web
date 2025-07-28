@@ -26,6 +26,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		Writing            *db.GetWritingByIdForUserDescendingByPublishedDateRow
 		UserId             int32
 	}
+	handlers.SetPageTitle(r, "Edit Article")
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{

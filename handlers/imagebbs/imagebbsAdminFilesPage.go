@@ -16,6 +16,7 @@ import (
 
 func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Image Files")
 	type Entry struct {
 		Name  string
 		Path  string

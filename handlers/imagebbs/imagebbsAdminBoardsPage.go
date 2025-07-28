@@ -28,6 +28,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+	handlers.SetPageTitle(r, "Image Boards")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	boardRows, err := data.CoreData.ImageBoards()
 	if err != nil {

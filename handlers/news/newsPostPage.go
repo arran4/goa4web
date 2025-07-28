@@ -56,8 +56,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		ReplyText          string
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "News")
+	queries := cd.Queries()
 	data := Data{
 		IsReplying:         r.URL.Query().Has("comment"),
 		IsReplyable:        true,

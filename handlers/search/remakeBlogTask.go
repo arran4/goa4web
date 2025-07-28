@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -39,20 +40,19 @@ func (RemakeBlogTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tas
 	}
 	rows, err := q.GetAllBlogsForIndex(ctx)
 	if err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("GetAllBlogsForIndex: %w", err).Error())
-	} else {
-		cache := map[string]int64{}
-		for _, row := range rows {
-			text := strings.TrimSpace(row.Blog.String)
-			if text == "" {
-				continue
-			}
-			err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-				return queries.AddToBlogsSearch(c, db.AddToBlogsSearchParams{
-					BlogID:                         row.Idblogs,
-					SearchwordlistIdsearchwordlist: int32(wid),
-					WordCount:                      count,
-				})
+		return nil, fmt.Errorf("GetAllBlogsForIndex: %w", err)
+	}
+	cache := map[string]int64{}
+	for _, row := range rows {
+		text := strings.TrimSpace(row.Blog.String)
+		if text == "" {
+			continue
+		}
+		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
+			return q.AddToBlogsSearch(c, dbpkg.AddToBlogsSearchParams{
+				BlogID:                         row.Idblogs,
+				SearchwordlistIdsearchwordlist: int32(wid),
+				WordCount:                      count,
 			})
 		}); err != nil {
 			return nil, err

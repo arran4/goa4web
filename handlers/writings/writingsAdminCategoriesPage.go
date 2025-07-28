@@ -17,8 +17,10 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Categories []*db.WritingCategory
 	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	handlers.SetPageTitle(r, "Writing Categories")
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 
 	categoryRows, err := data.CoreData.WritingCategories()

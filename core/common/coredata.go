@@ -359,6 +359,11 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 	}
 }
 
+// SetPageTitle updates the Title field used by templates.
+func (cd *CoreData) SetPageTitle(title string) {
+	cd.Title = title
+}
+
 // AbsoluteURL returns an absolute URL by combining the configured hostname or
 // the request host with path. The base value is cached per request.
 func (cd *CoreData) AbsoluteURL(path string) string {

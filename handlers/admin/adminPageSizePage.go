@@ -16,6 +16,7 @@ import (
 // configuration file separately to persist the values.
 func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Page Size"
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "Bad Request", http.StatusBadRequest)

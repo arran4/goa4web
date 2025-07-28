@@ -18,8 +18,10 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 		Announcements []*db.ListAnnouncementsWithNewsRow
 		NewsID        string
 	}
-	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Admin Announcements"
+	data := Data{CoreData: cd}
+	queries := cd.Queries()
 	rows, err := queries.ListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list announcements: %v", err)

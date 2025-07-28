@@ -29,6 +29,7 @@ func AdminSentEmailsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Sent Emails"
 	pageSize := cd.PageSize()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 

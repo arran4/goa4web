@@ -29,6 +29,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Admin"
 	data := Data{
 		CoreData:   cd,
 		AdminLinks: cd.Nav.AdminLinks(),

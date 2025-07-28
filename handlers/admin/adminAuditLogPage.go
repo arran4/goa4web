@@ -35,6 +35,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Admin Audit Log"
 	data := Data{
 		CoreData: cd,
 		User:     r.URL.Query().Get("user"),

@@ -107,6 +107,7 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Reset Password"
 	queries := cd.Queries()
 	userRow, err := queries.GetUserById(r.Context(), int32(id))
 	if err != nil {

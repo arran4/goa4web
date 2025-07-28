@@ -3,6 +3,7 @@ package writings
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -62,9 +63,9 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if cat, ok := categoryMap[data.CategoryId]; ok {
-		handlers.SetPageTitlef(r, "Category: %s", cat.Title.String)
+		cd.PageTitle = fmt.Sprintf("Category: %s", cat.Title.String)
 	} else {
-		handlers.SetPageTitlef(r, "Category %d", data.CategoryId)
+		cd.PageTitle = fmt.Sprintf("Category %d", data.CategoryId)
 	}
 	for cid := data.CategoryId; len(data.CategoryBreadcrumbs) < len(categoryRows); {
 		cat, ok := categoryMap[cid]

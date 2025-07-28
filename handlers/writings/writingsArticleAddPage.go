@@ -23,11 +23,10 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Languages []*db.Language
 	}
-	handlers.SetPageTitle(r, "Add Article")
-
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+	data.CoreData.PageTitle = "Add Article"
 
 	languageRows, err := data.CoreData.Languages()
 	if err != nil {

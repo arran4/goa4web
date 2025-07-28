@@ -49,6 +49,22 @@ LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS links FROM linker GROUP BY u
 LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS writings FROM writing GROUP BY users_idusers) w ON w.uid = u.idusers
 ORDER BY u.username;
 
+-- name: UserPostCountsByID :one
+SELECT COUNT(DISTINCT b.idblogs) AS blogs,
+       COUNT(DISTINCT n.idsiteNews) AS news,
+       COUNT(DISTINCT c.idcomments) AS comments,
+       COUNT(DISTINCT i.idimagepost) AS images,
+       COUNT(DISTINCT l.idlinker) AS links,
+       COUNT(DISTINCT w.idwriting) AS writings
+FROM users u
+LEFT JOIN blogs b ON b.users_idusers = u.idusers
+LEFT JOIN site_news n ON n.users_idusers = u.idusers
+LEFT JOIN comments c ON c.users_idusers = u.idusers
+LEFT JOIN imagepost i ON i.users_idusers = u.idusers
+LEFT JOIN linker l ON l.users_idusers = u.idusers
+LEFT JOIN writing w ON w.users_idusers = u.idusers
+WHERE u.idusers = ?;
+
 -- name: GetTemplateOverride :one
 SELECT body FROM template_overrides WHERE name = ?;
 

@@ -327,6 +327,46 @@ func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountsRow, err
 	return items, nil
 }
 
+const userPostCountsByID = `-- name: UserPostCountsByID :one
+SELECT COUNT(DISTINCT b.idblogs) AS blogs,
+       COUNT(DISTINCT n.idsiteNews) AS news,
+       COUNT(DISTINCT c.idcomments) AS comments,
+       COUNT(DISTINCT i.idimagepost) AS images,
+       COUNT(DISTINCT l.idlinker) AS links,
+       COUNT(DISTINCT w.idwriting) AS writings
+FROM users u
+LEFT JOIN blogs b ON b.users_idusers = u.idusers
+LEFT JOIN site_news n ON n.users_idusers = u.idusers
+LEFT JOIN comments c ON c.users_idusers = u.idusers
+LEFT JOIN imagepost i ON i.users_idusers = u.idusers
+LEFT JOIN linker l ON l.users_idusers = u.idusers
+LEFT JOIN writing w ON w.users_idusers = u.idusers
+WHERE u.idusers = ?
+`
+
+type UserPostCountsByIDRow struct {
+	Blogs    int64
+	News     int64
+	Comments int64
+	Images   int64
+	Links    int64
+	Writings int64
+}
+
+func (q *Queries) UserPostCountsByID(ctx context.Context, idusers int32) (*UserPostCountsByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, userPostCountsByID, idusers)
+	var i UserPostCountsByIDRow
+	err := row.Scan(
+		&i.Blogs,
+		&i.News,
+		&i.Comments,
+		&i.Images,
+		&i.Links,
+		&i.Writings,
+	)
+	return &i, err
+}
+
 const writingCategoryCounts = `-- name: WritingCategoryCounts :many
 SELECT wc.title, COUNT(w.idwriting) AS count
 FROM writing_category wc

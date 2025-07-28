@@ -129,10 +129,12 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 		Back:     "/admin/requests",
 	}
 
+	var auto string
+
 	if err := queries.UpdateAdminRequestStatus(r.Context(), db.UpdateAdminRequestStatusParams{Status: status, ID: int32(id)}); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	} else {
-		auto := fmt.Sprintf("status changed to %s", status)
+		auto = fmt.Sprintf("status changed to %s", status)
 		data.Messages = append(data.Messages, auto)
 		if err := queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: auto}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
@@ -155,15 +157,6 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 			evt.Data["RequestID"] = id
 			evt.Data["Status"] = status
 		}
-	}
-	data := struct {
-		*common.CoreData
-		Errors   []string
-		Messages []string
-		Back     string
-	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/requests",
 	}
 	data.Messages = append(data.Messages, auto)
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)

@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -39,20 +40,19 @@ func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) 
 	}
 	rows, err := q.GetAllCommentsForIndex(ctx)
 	if err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("GetAllCommentsForIndex: %w", err).Error())
-	} else {
-		cache := map[string]int64{}
-		for _, row := range rows {
-			text := strings.TrimSpace(row.Text.String)
-			if text == "" {
-				continue
-			}
-			err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-				return queries.AddToForumCommentSearch(c, db.AddToForumCommentSearchParams{
-					CommentID:                      row.Idcomments,
-					SearchwordlistIdsearchwordlist: int32(wid),
-					WordCount:                      count,
-				})
+		return nil, fmt.Errorf("GetAllCommentsForIndex: %w", err)
+	}
+	cache := map[string]int64{}
+	for _, row := range rows {
+		text := strings.TrimSpace(row.Text.String)
+		if text == "" {
+			continue
+		}
+		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
+			return q.AddToForumCommentSearch(c, dbpkg.AddToForumCommentSearchParams{
+				CommentID:                      row.Idcomments,
+				SearchwordlistIdsearchwordlist: int32(wid),
+				WordCount:                      count,
 			})
 		}); err != nil {
 			return nil, err

@@ -17,6 +17,7 @@ import (
 // userPublicProfileSettingPage allows users to enable or disable their public profile.
 func userPublicProfileSettingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Public Profile"
 	if _, err := cd.Queries().UserHasPublicProfileRole(r.Context(), cd.UserID); err != nil {
 		http.NotFound(w, r)
 		return

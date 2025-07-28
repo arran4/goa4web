@@ -26,6 +26,7 @@ var _ tasks.Task = (*PagingSaveTask)(nil)
 
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Pagination"
 	pref, _ := cd.Preference()
 	size := cd.Config.PageSizeDefault
 	if pref != nil {

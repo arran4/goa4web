@@ -85,8 +85,10 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 					*common.CoreData
 					ID int32
 				}
+				cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+				cd.PageTitle = "Verify Password"
 				data := Data{
-					CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+					CoreData: cd,
 					ID:       reset.ID,
 				}
 				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", data)

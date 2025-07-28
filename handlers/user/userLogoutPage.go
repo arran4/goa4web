@@ -13,6 +13,8 @@ import (
 )
 
 func userLogoutPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Logout"
 	session, err := core.GetSession(r)
 	if err != nil {
 		core.SessionError(w, r, err)
@@ -24,14 +26,14 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 
 	// session retrieved earlier
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	if session.ID != "" {
 		if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
 			log.Printf("delete session: %v", err)

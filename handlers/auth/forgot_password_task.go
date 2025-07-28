@@ -57,6 +57,8 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 			RequestTask: string(TaskEmailAssociationRequest),
 		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			cd.PageTitle = "Password Reset"
 			handlers.TemplateHandler(w, r, "forgotPasswordNoEmailPage.gohtml", data)
 		})
 	}
@@ -101,7 +103,8 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	return handlers.TemplateWithDataHandler("forgotPasswordEmailSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
+	cd.PageTitle = "Password Reset"
+	return handlers.TemplateWithDataHandler("forgotPasswordEmailSentPage.gohtml", cd)
 }
 
 func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
@@ -141,5 +144,7 @@ func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
 func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
-	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", r.Context().Value(consts.KeyCoreData))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Password Reset"
+	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", cd)
 }

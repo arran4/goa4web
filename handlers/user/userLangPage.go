@@ -29,7 +29,8 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd.PageTitle = "Languages"
+	queries := cd.Queries()
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

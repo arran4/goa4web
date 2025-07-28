@@ -27,12 +27,14 @@ var userSubscriptionOptions = []subscriptionOption{
 }
 
 func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Subscriptions"
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	rows, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)
@@ -51,7 +53,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		SubMap  map[string]bool
 		Error   string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Subs:     rows,
 		Options:  userSubscriptionOptions,
 		SubMap:   subMap,

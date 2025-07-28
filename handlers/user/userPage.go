@@ -17,8 +17,10 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "User Preferences"
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 
 	if data.CoreData.UserID == 0 {

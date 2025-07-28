@@ -2,6 +2,7 @@ package user
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -30,6 +31,7 @@ func userPublicProfilePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Profile for %s", u.Username.String)
 	data := struct {
 		*common.CoreData
 		User *db.User

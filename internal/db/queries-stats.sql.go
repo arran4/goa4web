@@ -270,20 +270,19 @@ func (q *Queries) SetTemplateOverride(ctx context.Context, arg SetTemplateOverri
 
 const userPostCounts = `-- name: UserPostCounts :many
 SELECT u.username,
-       COUNT(DISTINCT b.idblogs) AS blogs,
-       COUNT(DISTINCT n.idsiteNews) AS news,
-       COUNT(DISTINCT c.idcomments) AS comments,
-       COUNT(DISTINCT i.idimagepost) AS images,
-       COUNT(DISTINCT l.idlinker) AS links,
-       COUNT(DISTINCT w.idwriting) AS writings
+       COALESCE(b.blogs, 0)     AS blogs,
+       COALESCE(n.news, 0)      AS news,
+       COALESCE(c.comments, 0)  AS comments,
+       COALESCE(i.images, 0)    AS images,
+       COALESCE(l.links, 0)     AS links,
+       COALESCE(w.writings, 0)  AS writings
 FROM users u
-LEFT JOIN blogs b ON b.users_idusers = u.idusers
-LEFT JOIN site_news n ON n.users_idusers = u.idusers
-LEFT JOIN comments c ON c.users_idusers = u.idusers
-LEFT JOIN imagepost i ON i.users_idusers = u.idusers
-LEFT JOIN linker l ON l.users_idusers = u.idusers
-LEFT JOIN writing w ON w.users_idusers = u.idusers
-GROUP BY u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS blogs FROM blogs GROUP BY users_idusers) b ON b.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS news FROM site_news GROUP BY users_idusers) n ON n.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS comments FROM comments GROUP BY users_idusers) c ON c.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS images FROM imagepost GROUP BY users_idusers) i ON i.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS links FROM linker GROUP BY users_idusers) l ON l.uid = u.idusers
+LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS writings FROM writing GROUP BY users_idusers) w ON w.uid = u.idusers
 ORDER BY u.username
 `
 
@@ -326,6 +325,46 @@ func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountsRow, err
 		return nil, err
 	}
 	return items, nil
+}
+
+const userPostCountsByID = `-- name: UserPostCountsByID :one
+SELECT COUNT(DISTINCT b.idblogs) AS blogs,
+       COUNT(DISTINCT n.idsiteNews) AS news,
+       COUNT(DISTINCT c.idcomments) AS comments,
+       COUNT(DISTINCT i.idimagepost) AS images,
+       COUNT(DISTINCT l.idlinker) AS links,
+       COUNT(DISTINCT w.idwriting) AS writings
+FROM users u
+LEFT JOIN blogs b ON b.users_idusers = u.idusers
+LEFT JOIN site_news n ON n.users_idusers = u.idusers
+LEFT JOIN comments c ON c.users_idusers = u.idusers
+LEFT JOIN imagepost i ON i.users_idusers = u.idusers
+LEFT JOIN linker l ON l.users_idusers = u.idusers
+LEFT JOIN writing w ON w.users_idusers = u.idusers
+WHERE u.idusers = ?
+`
+
+type UserPostCountsByIDRow struct {
+	Blogs    int64
+	News     int64
+	Comments int64
+	Images   int64
+	Links    int64
+	Writings int64
+}
+
+func (q *Queries) UserPostCountsByID(ctx context.Context, idusers int32) (*UserPostCountsByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, userPostCountsByID, idusers)
+	var i UserPostCountsByIDRow
+	err := row.Scan(
+		&i.Blogs,
+		&i.News,
+		&i.Comments,
+		&i.Images,
+		&i.Links,
+		&i.Writings,
+	)
+	return &i, err
 }
 
 const writingCategoryCounts = `-- name: WritingCategoryCounts :many

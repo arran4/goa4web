@@ -103,7 +103,7 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "User Permissions",
+			Name: "User Roles",
 			Link: "/admin/linker/users/roles",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{

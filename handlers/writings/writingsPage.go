@@ -12,8 +12,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-var writingsPermissionsPageEnabled = true
-
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Categories        []*db.WritingCategory
@@ -47,10 +45,10 @@ func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
 	data.AtomFeedUrl = "/writings/atom"
 
 	userHasAdmin := data.HasAdminRole() && data.AdminMode
-	if userHasAdmin && writingsPermissionsPageEnabled {
+	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "User Permissions",
-			Link: "/writings/user/permissions",
+			Name: "User Roles",
+			Link: "/admin/writings/users/roles",
 		})
 	}
 	userHasWriter := data.HasContentWriterRole()

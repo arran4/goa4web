@@ -768,6 +768,20 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*Se
 	return items, nil
 }
 
+const updatePublicProfileEnabledAtByUserID = `-- name: UpdatePublicProfileEnabledAtByUserID :exec
+UPDATE users SET public_profile_enabled_at = ? WHERE idusers = ?
+`
+
+type UpdatePublicProfileEnabledAtByUserIDParams struct {
+	PublicProfileEnabledAt sql.NullTime
+	Idusers                int32
+}
+
+func (q *Queries) UpdatePublicProfileEnabledAtByUserID(ctx context.Context, arg UpdatePublicProfileEnabledAtByUserIDParams) error {
+	_, err := q.db.ExecContext(ctx, updatePublicProfileEnabledAtByUserID, arg.PublicProfileEnabledAt, arg.Idusers)
+	return err
+}
+
 const updateUserEmail = `-- name: UpdateUserEmail :exec
 UPDATE user_emails SET email = ? WHERE user_id = ?
 `

@@ -12,7 +12,7 @@ The code in this repository exposes all pages using the [Gorilla Mux](https://gi
 
 - **News** – publish posts and allow discussion in comment threads. Writers,
   moderators and administrators may edit posts.
-- **FAQ** – manage question and answer entries with administrative tools.
+- **Help** – manage question and answer entries with administrative tools.
 - **Blogs** – users can write blogs, comment on posts and subscribe to bloggers.
 - **Forum** – a traditional threaded forum with categories, topics and moderation tools.
 - **Linker** – a directory of community links with suggestion and approval queues.
@@ -104,7 +104,7 @@ Example weights:
 
 ```
 News        10
-FAQ         20
+Help        20
 Blogs       30
 Forum       40
 Linker      50

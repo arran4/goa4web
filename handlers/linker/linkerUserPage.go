@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -56,6 +57,7 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{CoreData: cd, Username: username, HasOffset: offset != 0}
+	cd.PageTitle = fmt.Sprintf("Links by %s", username)
 	for _, row := range rows {
 		if !cd.HasGrant("linker", "link", "see", row.Idlinker) {
 			continue

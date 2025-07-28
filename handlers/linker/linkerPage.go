@@ -32,6 +32,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+	data.CoreData.PageTitle = "Links"
 
 	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
 		data.Offset = off

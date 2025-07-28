@@ -23,10 +23,6 @@ type EditReplyTask struct{ tasks.TaskString }
 var commentEditAction = &EditReplyTask{TaskString: TaskEditReply}
 var _ tasks.Task = (*EditReplyTask)(nil)
 
-func (t EditReplyTask) Page(w http.ResponseWriter, r *http.Request) {
-	t.Action(w, r)
-}
-
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {

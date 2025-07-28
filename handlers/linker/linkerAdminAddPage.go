@@ -29,6 +29,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Add Link"
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),

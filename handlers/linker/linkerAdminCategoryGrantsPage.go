@@ -2,6 +2,7 @@ package linker
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -34,6 +35,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view"}}
+	cd.PageTitle = fmt.Sprintf("Category %d Grants", cid)
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}

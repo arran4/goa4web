@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -63,6 +64,12 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+	}
+
+	if len(linkerPosts) > 0 && linkerPosts[0].CategoryTitle.Valid {
+		data.CoreData.PageTitle = fmt.Sprintf("Category: %s", linkerPosts[0].CategoryTitle.String)
+	} else {
+		data.CoreData.PageTitle = fmt.Sprintf("Category %d", data.CatId)
 	}
 
 	for _, row := range linkerPosts {

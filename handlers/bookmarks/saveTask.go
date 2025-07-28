@@ -23,7 +23,7 @@ var saveTask = &SaveTask{TaskString: TaskSave}
 // ensure SaveTask implements tasks.Task for routing
 var _ tasks.Task = (*SaveTask)(nil)
 
-func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
+func EditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		BookmarkContent string
@@ -54,6 +54,7 @@ func (SaveTask) Page(w http.ResponseWriter, r *http.Request) {
 		data.Bid = bookmarks.Idbookmarks
 	}
 
+	cd.PageTitle = "Edit Bookmarks"
 	handlers.TemplateHandler(w, r, "editPage.gohtml", data)
 }
 

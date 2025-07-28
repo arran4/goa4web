@@ -62,6 +62,11 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Link = link
+	if link.Title.Valid {
+		cd.PageTitle = fmt.Sprintf("Link: %s", link.Title.String)
+	} else {
+		cd.PageTitle = fmt.Sprintf("Link %d", link.Idlinker)
+	}
 
 	handlers.TemplateHandler(w, r, "showPage.gohtml", data)
 }

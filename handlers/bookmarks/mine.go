@@ -83,7 +83,7 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = session
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	handlers.SetPageTitle(r, "My Bookmarks")
+	cd.PageTitle = "My Bookmarks"
 	bookmarks, err := cd.Bookmarks()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("error getBookmarksForUser: %s", err)

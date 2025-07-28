@@ -20,10 +20,12 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum Admin Categories"
+	queries := cd.Queries()
 
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 
 	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())

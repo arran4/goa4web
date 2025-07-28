@@ -13,6 +13,8 @@ func AdminForumModeratorLogsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 	}
-	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum - Moderator Logs"
+	data := Data{CoreData: cd}
 	handlers.TemplateHandler(w, r, "forumModeratorLogsPage.gohtml", data)
 }

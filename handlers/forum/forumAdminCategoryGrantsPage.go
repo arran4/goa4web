@@ -2,6 +2,7 @@ package forum
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -33,6 +34,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Forum - Category %d Grants", cid)
 	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view"}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles

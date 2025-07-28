@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -63,6 +64,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Forum - %s", topicRow.Title.String)
 	data.Topic = &ForumtopicPlus{
 		Idforumtopic:                 topicRow.Idforumtopic,
 		Lastposter:                   topicRow.Lastposter,

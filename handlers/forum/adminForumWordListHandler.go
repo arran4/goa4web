@@ -17,11 +17,13 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 		Rows []sql.NullString
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum - Word List"
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	rows, err := queries.CompleteWordList(r.Context())
 	if err != nil {

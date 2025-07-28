@@ -30,7 +30,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	handlers.SetPageTitle(r, "Forum")
+	cd.PageTitle = "Forum"
 	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

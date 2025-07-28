@@ -13,6 +13,8 @@ func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 	}
-	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum - Flagged Posts"
+	data := Data{CoreData: cd}
 	handlers.TemplateHandler(w, r, "forumFlaggedPostsPage.gohtml", data)
 }

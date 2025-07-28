@@ -72,6 +72,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Forum - %s", topicRow.Title.String)
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

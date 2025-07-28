@@ -24,7 +24,9 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 		Order  []int32
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Forum Admin Threads"
+	queries := cd.Queries()
 
 	rows, err := queries.GetAllForumThreadsWithTopic(r.Context())
 	if err != nil {
@@ -34,7 +36,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Groups:   make(map[int32]*Group),
 	}
 
